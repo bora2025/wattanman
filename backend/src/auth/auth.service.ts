@@ -75,22 +75,7 @@ export class AuthService {
   }
 
   async register(email: string, password: string, name: string, role: string, departmentId?: string) {
-    // Validate role against allowed values
-    const allowedRoles = [
-      'ADMIN', 'TEACHER', 'STUDENT', 'PARENT',
-      'PRIMARY_SCHOOL_PRINCIPAL', 'SECONDARY_SCHOOL_PRINCIPAL', 'HIGH_SCHOOL_PRINCIPAL',
-      'UNIVERSITY_RECTOR', 'OFFICER', 'STAFF', 'OFFICE_HEAD', 'DEPUTY_OFFICE_HEAD',
-      'DEPARTMENT_HEAD', 'DEPUTY_DEPARTMENT_HEAD', 'GENERAL_DEPARTMENT_DIRECTOR',
-      'DEPUTY_GENERAL_DEPARTMENT_DIRECTOR', 'COMPANY_CEO', 'CREDIT_OFFICER',
-      'SECURITY_GUARD', 'JANITOR', 'PROJECT_MANAGER', 'BRANCH_MANAGER',
-      'EXECUTIVE_DIRECTOR', 'HR_MANAGER', 'ATHLETE_MALE', 'ATHLETE_FEMALE',
-      'TRAINER', 'BARISTA', 'CASHIER', 'RECEPTIONIST', 'GENERAL_MANAGER',
-      'WATTAMAN',
-    ];
-    const normalizedRole = role.toUpperCase();
-    if (!allowedRoles.includes(normalizedRole)) {
-      throw new Error('Invalid role');
-    }
+    const normalizedRole = role.trim();
     try {
       const hashedPassword = await bcrypt.hash(password, 12);
       const user = await this.prisma.user.create({
@@ -175,22 +160,7 @@ export class AuthService {
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.departmentId !== undefined) updateData.departmentId = data.departmentId || null;
     if (data.role) {
-      const allowedRoles = [
-        'ADMIN', 'TEACHER', 'STUDENT', 'PARENT',
-        'PRIMARY_SCHOOL_PRINCIPAL', 'SECONDARY_SCHOOL_PRINCIPAL', 'HIGH_SCHOOL_PRINCIPAL',
-        'UNIVERSITY_RECTOR', 'OFFICER', 'STAFF', 'OFFICE_HEAD', 'DEPUTY_OFFICE_HEAD',
-        'DEPARTMENT_HEAD', 'DEPUTY_DEPARTMENT_HEAD', 'GENERAL_DEPARTMENT_DIRECTOR',
-        'DEPUTY_GENERAL_DEPARTMENT_DIRECTOR', 'COMPANY_CEO', 'CREDIT_OFFICER',
-        'SECURITY_GUARD', 'JANITOR', 'PROJECT_MANAGER', 'BRANCH_MANAGER',
-        'EXECUTIVE_DIRECTOR', 'HR_MANAGER', 'ATHLETE_MALE', 'ATHLETE_FEMALE',
-        'TRAINER', 'BARISTA', 'CASHIER', 'RECEPTIONIST', 'GENERAL_MANAGER',
-        'WATTAMAN',
-      ];
-      const normalizedRole = data.role.toUpperCase();
-      if (!allowedRoles.includes(normalizedRole)) {
-        throw new Error('Invalid role');
-      }
-      updateData.role = normalizedRole;
+      updateData.role = data.role.trim();
     }
     try {
       return await this.prisma.user.update({
