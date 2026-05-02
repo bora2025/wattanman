@@ -180,13 +180,14 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
   };
 
   const arrangeItem = (id: string, mode: 'front' | 'forward' | 'backward' | 'back') => {
-    // Build sorted list (lowest z first)
+    // Build sorted list in the SAME spread order as CardCanvas (photo, qr, shapes, logos, texts)
+    // so stable-sort tie-breaking for equal z-indices matches the visual render order.
     const ordered = [
-      ...design.texts.map((t) => ({ id: t.id, z: t.zIndex ?? 0 })),
-      ...design.logos.map((l) => ({ id: l.id, z: l.zIndex ?? 0 })),
-      ...(design.shapes ?? []).map((s) => ({ id: s.id, z: s.zIndex ?? 0 })),
       ...(design.photo ? [{ id: '__photo__', z: design.photo.zIndex ?? 0 }] : []),
       ...(design.qr ? [{ id: '__qr__', z: design.qr.zIndex ?? 0 }] : []),
+      ...(design.shapes ?? []).map((s) => ({ id: s.id, z: s.zIndex ?? 0 })),
+      ...design.logos.map((l) => ({ id: l.id, z: l.zIndex ?? 0 })),
+      ...design.texts.map((t) => ({ id: t.id, z: t.zIndex ?? 0 })),
     ].sort((a, b) => a.z - b.z);
 
     const idx = ordered.findIndex((item) => item.id === id);

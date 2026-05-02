@@ -461,13 +461,14 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
 
   const ctxArrange = (id: string, mode: 'front' | 'forward' | 'backward' | 'back') => {
     setDesign((prev) => {
-      // Build sorted list (lowest z first)
+      // Build sorted list in the SAME spread order as CardCanvas (photo, qr, shapes, logos, texts)
+      // so stable-sort tie-breaking for equal z-indices matches the visual render order.
       const ordered = [
-        ...prev.texts.map((t) => ({ id: t.id, z: t.zIndex ?? 0 })),
-        ...prev.logos.map((l) => ({ id: l.id, z: l.zIndex ?? 0 })),
-        ...(prev.shapes ?? []).map((s) => ({ id: s.id, z: s.zIndex ?? 0 })),
         ...(prev.photo ? [{ id: '__photo__', z: prev.photo.zIndex ?? 0 }] : []),
         ...(prev.qr ? [{ id: '__qr__', z: prev.qr.zIndex ?? 0 }] : []),
+        ...(prev.shapes ?? []).map((s) => ({ id: s.id, z: s.zIndex ?? 0 })),
+        ...prev.logos.map((l) => ({ id: l.id, z: l.zIndex ?? 0 })),
+        ...prev.texts.map((t) => ({ id: t.id, z: t.zIndex ?? 0 })),
       ].sort((a, b) => a.z - b.z);
 
       const idx = ordered.findIndex((item) => item.id === id);
