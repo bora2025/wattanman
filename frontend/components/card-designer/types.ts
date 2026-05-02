@@ -242,6 +242,12 @@ export function saveDesign(design: CardDesign): void {
   }
 }
 
+export function clearAllCache(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(DESIGN_STORAGE_KEY);
+  localStorage.removeItem(TEMPLATES_STORAGE_KEY);
+}
+
 export const BLANK_TEMPLATE: CardDesign = {
   cardType: 'student',
   size: 'credit',

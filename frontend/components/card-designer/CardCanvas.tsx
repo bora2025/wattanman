@@ -18,9 +18,10 @@ interface CardCanvasProps {
   onResizePhoto?: (changes: Partial<PhotoPlaceholder>) => void;
   onMoveQr?: (x: number, y: number) => void;
   onResizeQr?: (changes: Partial<QrPlaceholder>) => void;
+  onContextMenu?: (e: React.MouseEvent, id: string | null) => void;
 }
 
-export default function CardCanvas({ design, selectedId, onSelect, onMoveText, onMoveLogo, onResizeLogo, onMoveShape, onResizeShape, onMovePhoto, onResizePhoto, onMoveQr, onResizeQr }: CardCanvasProps) {
+export default function CardCanvas({ design, selectedId, onSelect, onMoveText, onMoveLogo, onResizeLogo, onMoveShape, onResizeShape, onMovePhoto, onResizePhoto, onMoveQr, onResizeQr, onContextMenu }: CardCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
     type: 'text' | 'logo' | 'shape' | 'photo' | 'qr' | 'resize' | 'photo-resize' | 'qr-resize' | 'logo-resize' | 'rotate';
@@ -353,6 +354,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
             overflow: 'hidden',
           }}
           onMouseDown={() => onSelect(null)}
+          onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(e, null); }}
         >
           {/* Photo placeholder — rendered with other elements via z-index sorting below */}
 
@@ -404,6 +406,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                       document.addEventListener('mousemove', handleMouseMove);
                       document.addEventListener('mouseup', handleMouseUp);
                     }}
+                    onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); onSelect('__photo__'); onContextMenu?.(e, '__photo__'); }}
                   >
                     <div className="text-center leading-tight pointer-events-none">
                       <span className="block text-lg">👤</span>
@@ -448,6 +451,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                       document.addEventListener('mousemove', handleMouseMove);
                       document.addEventListener('mouseup', handleMouseUp);
                     }}
+                    onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); onSelect('__qr__'); onContextMenu?.(e, '__qr__'); }}
                   >
                     <div className="text-center leading-tight pointer-events-none">
                       <span className="block text-base">📱</span>
@@ -483,6 +487,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                       opacity: shape.opacity,
                     }}
                     onMouseDown={(e) => handleMouseDown(e, 'shape', shape.id, shape.x, shape.y)}
+                    onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); onSelect(shape.id); onContextMenu?.(e, shape.id); }}
                   >
                     {shape.type === 'line' && (
                       <div
@@ -504,6 +509,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                     className={`absolute cursor-move select-none ${selectedId === logo.id ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
                     style={{ left: logo.x, top: logo.y, width: logo.width, height: logo.height, zIndex: logo.zIndex ?? 0 }}
                     onMouseDown={(e) => handleMouseDown(e, 'logo', logo.id, logo.x, logo.y)}
+                    onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); onSelect(logo.id); onContextMenu?.(e, logo.id); }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -534,6 +540,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                     zIndex: text.zIndex ?? 0,
                   }}
                   onMouseDown={(e) => handleMouseDown(e, 'text', text.id, text.x, text.y)}
+                  onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); onSelect(text.id); onContextMenu?.(e, text.id); }}
                 >
                   {text.content || 'Double-click to edit'}
                 </div>

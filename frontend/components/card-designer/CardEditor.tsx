@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, MouseEvent as ReactMouseEvent } from 'react';
-import { CardDesign, CardType, LogoElement, PhotoPlaceholder, QrPlaceholder, ShapeElement, STUDENT_TEMPLATE, STAFF_TEMPLATE, BLANK_TEMPLATE, STUDENT_CLASSIC_BLUE, STUDENT_DARK_NAVY, STUDENT_SKY_WAVE, STUDENT_GEOMETRIC, STUDENT_MINIMAL, STAFF_CORPORATE_TEAL, STAFF_DEEP_OCEAN, STAFF_ROSE, STAFF_FOREST, STAFF_SLATE_EXECUTIVE, loadSavedDesign, saveDesign, SavedTemplate, loadSavedTemplates, saveTemplate, deleteTemplate } from './types';
+import { CardDesign, CardType, LogoElement, PhotoPlaceholder, QrPlaceholder, ShapeElement, TextElement, STUDENT_TEMPLATE, STAFF_TEMPLATE, BLANK_TEMPLATE, STUDENT_CLASSIC_BLUE, STUDENT_DARK_NAVY, STUDENT_SKY_WAVE, STUDENT_GEOMETRIC, STUDENT_MINIMAL, STAFF_CORPORATE_TEAL, STAFF_DEEP_OCEAN, STAFF_ROSE, STAFF_FOREST, STAFF_SLATE_EXECUTIVE, loadSavedDesign, saveDesign, clearAllCache, SavedTemplate, loadSavedTemplates, saveTemplate, deleteTemplate } from './types';
 import { renderDesignToCanvas } from './renderDesignToCanvas';
 import { downloadSingleCardPDF } from './generateCardPDF';
 import CardCanvas from './CardCanvas';
@@ -16,9 +16,40 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
   const [design, setDesign] = useState<CardDesign>(initialCardType === 'staff' ? STAFF_TEMPLATE : STUDENT_TEMPLATE);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const canvasRef = useRef<HTMLDivElement>(null);
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const isResizing = useRef(false);
+  const isFirstRenderRef = useRef(true);
+
+  // --- Undo / Redo history ---
+  const historyStackRef = useRef<CardDesign[]>([]);
+  const historyIndexRef = useRef(-1);
+  const isUndoRedoRef = useRef(false);
+  const [historyTick, setHistoryTick] = useState(0);
+
+  const canUndo = historyTick >= 0 && historyIndexRef.current > 0;
+  const canRedo = historyTick >= 0 && historyIndexRef.current < historyStackRef.current.length - 1;
+
+  const undo = useCallback(() => {
+    if (historyIndexRef.current <= 0) return;
+    isUndoRedoRef.current = true;
+    historyIndexRef.current--;
+    setDesign(historyStackRef.current[historyIndexRef.current]);
+    setHistoryTick((t) => t + 1);
+  }, []);
+
+  const redo = useCallback(() => {
+    if (historyIndexRef.current >= historyStackRef.current.length - 1) return;
+    isUndoRedoRef.current = true;
+    historyIndexRef.current++;
+    setDesign(historyStackRef.current[historyIndexRef.current]);
+    setHistoryTick((t) => t + 1);
+  }, []);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; targetId: string | null } | null>(null);
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
 
   // Template management
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
@@ -28,6 +59,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
   const [templateSaved, setTemplateSaved] = useState(false);
   const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>({});
   const [exporting, setExporting] = useState<'png' | 'pdf' | null>(null);
+  const [showClearCache, setShowClearCache] = useState(false);
 
   const handleResizeStart = useCallback((e: ReactMouseEvent) => {
     e.preventDefault();
@@ -61,6 +93,65 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
     const savedStudent = loadSavedDesign(initialCardType ?? 'student');
     if (savedStudent) setDesign(savedStudent);
   }, [initialCardType]);
+
+  // Push design changes to history (debounced 400ms to batch drag moves)
+  useEffect(() => {
+    if (isUndoRedoRef.current) {
+      isUndoRedoRef.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      historyStackRef.current = [
+        ...historyStackRef.current.slice(0, historyIndexRef.current + 1),
+        design,
+      ].slice(-50);
+      historyIndexRef.current = historyStackRef.current.length - 1;
+      setHistoryTick((t) => t + 1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [design]);
+
+  // Keyboard shortcuts: Ctrl+Z undo, Ctrl+Y / Ctrl+Shift+Z redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
+
+  // Auto-save: debounced 1.5s after every design change
+  useEffect(() => {
+    // Skip the very first render (design loaded from storage)
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      return;
+    }
+    setAutoSaveStatus('saving');
+    const timer = setTimeout(() => {
+      saveDesign(design);
+      setAutoSaveStatus('saved');
+      const reset = setTimeout(() => setAutoSaveStatus('idle'), 2500);
+      return () => clearTimeout(reset);
+    }, 1500);
+    return () => { clearTimeout(timer); };
+  }, [design]);
+
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handler = () => closeContextMenu();
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [contextMenu, closeContextMenu]);
 
   // Refresh template list and generate previews when picker opens
   useEffect(() => {
@@ -246,7 +337,8 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
   const handleSave = () => {
     saveDesign(design);
     setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setAutoSaveStatus('saved');
+    setTimeout(() => { setSaved(false); setAutoSaveStatus('idle'); }, 2000);
     onSave?.();
   };
 
@@ -254,6 +346,173 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
     setDesign(TEMPLATES[design.cardType]);
     setSelectedId(null);
   };
+
+  const handleClearCache = () => {
+    clearAllCache();
+    setDesign(STUDENT_TEMPLATE);
+    setSelectedId(null);
+    setSavedTemplates([]);
+    isFirstRenderRef.current = true;
+    setAutoSaveStatus('idle');
+    setShowClearCache(false);
+  };
+
+  // --- Context menu helpers ---
+  const ctxGenId = () => Math.random().toString(36).slice(2, 10);
+  const ctxGetMaxZ = (d: CardDesign) => {
+    const all = [
+      ...d.texts.map((t) => t.zIndex ?? 0),
+      ...d.logos.map((l) => l.zIndex ?? 0),
+      ...(d.shapes ?? []).map((s) => s.zIndex ?? 0),
+      ...(d.photo ? [d.photo.zIndex ?? 0] : []),
+      ...(d.qr ? [d.qr.zIndex ?? 0] : []),
+    ];
+    return all.length > 0 ? Math.max(...all) : 0;
+  };
+
+  const ctxAddText = () => {
+    const newText: TextElement = {
+      id: ctxGenId(),
+      content: 'New Text',
+      x: 20,
+      y: 20 + design.texts.length * 30,
+      fontSize: 16,
+      color: '#1e293b',
+      fontWeight: 'normal',
+      fontStyle: 'normal',
+      textAlign: 'left',
+      fontFamily: 'Inter, sans-serif',
+      zIndex: ctxGetMaxZ(design) + 1,
+    };
+    setDesign((prev) => ({ ...prev, texts: [...prev.texts, newText] }));
+    setSelectedId(newText.id);
+    closeContextMenu();
+  };
+
+  const ctxAddShape = (type: 'rectangle' | 'circle' | 'line') => {
+    const newShape: ShapeElement = {
+      id: ctxGenId(),
+      type,
+      x: 20,
+      y: 20 + (design.shapes ?? []).length * 20,
+      width: type === 'line' ? 120 : 80,
+      height: type === 'line' ? 4 : 60,
+      color: '#4f46e5',
+      borderColor: '#1e293b',
+      borderWidth: type === 'line' ? 2 : 0,
+      borderRadius: type === 'circle' ? 9999 : 8,
+      opacity: 1,
+      rotation: 0,
+      zIndex: ctxGetMaxZ(design) + 1,
+      lineStyle: type === 'line' ? 'solid' : undefined,
+      gradient: {
+        enabled: false,
+        type: 'linear',
+        angle: 90,
+        stops: [
+          { offset: 0, color: '#4f46e5' },
+          { offset: 1, color: '#06b6d4' },
+        ],
+      },
+    };
+    setDesign((prev) => ({ ...prev, shapes: [...(prev.shapes ?? []), newShape] }));
+    setSelectedId(newShape.id);
+    closeContextMenu();
+  };
+
+  const ctxDuplicate = (id: string) => {
+    const offset = 12;
+    setDesign((prev) => {
+      const text = prev.texts.find((t) => t.id === id);
+      if (text) {
+        const dup = { ...text, id: ctxGenId(), x: text.x + offset, y: text.y + offset, zIndex: ctxGetMaxZ(prev) + 1 };
+        setSelectedId(dup.id);
+        return { ...prev, texts: [...prev.texts, dup] };
+      }
+      const logo = prev.logos.find((l) => l.id === id);
+      if (logo) {
+        const dup = { ...logo, id: ctxGenId(), x: logo.x + offset, y: logo.y + offset, zIndex: ctxGetMaxZ(prev) + 1 };
+        setSelectedId(dup.id);
+        return { ...prev, logos: [...prev.logos, dup] };
+      }
+      const shape = (prev.shapes ?? []).find((s) => s.id === id);
+      if (shape) {
+        const dup = { ...shape, id: ctxGenId(), x: shape.x + offset, y: shape.y + offset, zIndex: ctxGetMaxZ(prev) + 1 };
+        setSelectedId(dup.id);
+        return { ...prev, shapes: [...(prev.shapes ?? []), dup] };
+      }
+      return prev;
+    });
+    closeContextMenu();
+  };
+
+  const ctxDelete = (id: string) => {
+    setDesign((prev) => ({
+      ...prev,
+      texts: prev.texts.filter((t) => t.id !== id),
+      logos: prev.logos.filter((l) => l.id !== id),
+      shapes: (prev.shapes ?? []).filter((s) => s.id !== id),
+      photo: id === '__photo__' ? null : prev.photo,
+      qr: id === '__qr__' ? null : prev.qr,
+    }));
+    setSelectedId(null);
+    closeContextMenu();
+  };
+
+  const ctxArrange = (id: string, mode: 'front' | 'forward' | 'backward' | 'back') => {
+    setDesign((prev) => {
+      // Build sorted list (lowest z first)
+      const ordered = [
+        ...prev.texts.map((t) => ({ id: t.id, z: t.zIndex ?? 0 })),
+        ...prev.logos.map((l) => ({ id: l.id, z: l.zIndex ?? 0 })),
+        ...(prev.shapes ?? []).map((s) => ({ id: s.id, z: s.zIndex ?? 0 })),
+        ...(prev.photo ? [{ id: '__photo__', z: prev.photo.zIndex ?? 0 }] : []),
+        ...(prev.qr ? [{ id: '__qr__', z: prev.qr.zIndex ?? 0 }] : []),
+      ].sort((a, b) => a.z - b.z);
+
+      const idx = ordered.findIndex((item) => item.id === id);
+      if (idx < 0) return prev;
+
+      // Remove item and re-insert at the new position
+      const [item] = ordered.splice(idx, 1);
+      if (mode === 'front') {
+        ordered.push(item);
+      } else if (mode === 'back') {
+        ordered.unshift(item);
+      } else if (mode === 'forward') {
+        if (idx >= ordered.length) return prev; // already at top
+        ordered.splice(idx + 1, 0, item);
+      } else { // backward
+        if (idx === 0) return prev; // already at bottom
+        ordered.splice(idx - 1, 0, item);
+      }
+
+      // Reassign consecutive z-indices so they are always unique
+      const zMap: Record<string, number> = {};
+      ordered.forEach((el, i) => { zMap[el.id] = i; });
+
+      return {
+        ...prev,
+        texts: prev.texts.map((t) => ({ ...t, zIndex: zMap[t.id] ?? t.zIndex ?? 0 })),
+        logos: prev.logos.map((l) => ({ ...l, zIndex: zMap[l.id] ?? l.zIndex ?? 0 })),
+        shapes: (prev.shapes ?? []).map((s) => ({ ...s, zIndex: zMap[s.id] ?? s.zIndex ?? 0 })),
+        photo: prev.photo ? { ...prev.photo, zIndex: zMap['__photo__'] ?? prev.photo.zIndex ?? 0 } : null,
+        qr: prev.qr ? { ...prev.qr, zIndex: zMap['__qr__'] ?? prev.qr.zIndex ?? 0 } : null,
+      };
+    });
+    closeContextMenu();
+  };
+
+  const handleCanvasContextMenu = useCallback((e: React.MouseEvent, id: string | null) => {
+    e.preventDefault();
+    // Position menu within viewport
+    const menuW = 220;
+    const menuH = id ? 340 : 220;
+    const x = Math.min(e.clientX, window.innerWidth - menuW - 8);
+    const y = Math.min(e.clientY, window.innerHeight - menuH - 8);
+    setContextMenu({ x, y, targetId: id });
+    if (id) setSelectedId(id);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -285,6 +544,26 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
 
         <div className="w-px h-7 bg-slate-200 mx-1 hidden sm:block" />
 
+        {/* Undo / Redo */}
+        <button
+          onClick={undo}
+          disabled={!canUndo}
+          title="Undo (Ctrl+Z)"
+          className="px-2.5 py-1.5 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          ↩ Undo
+        </button>
+        <button
+          onClick={redo}
+          disabled={!canRedo}
+          title="Redo (Ctrl+Y)"
+          className="px-2.5 py-1.5 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          ↪ Redo
+        </button>
+
+        <div className="w-px h-7 bg-slate-200 mx-1 hidden sm:block" />
+
         {/* Template */}
         <button onClick={() => setShowTemplatePicker(true)} className="px-3 py-1.5 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors">
           📂 Template
@@ -300,6 +579,16 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
           {templateSaved ? '✅ Saved!' : '📋 Save as Template'}
         </button>
 
+        {/* Auto-save status */}
+        <span className={`flex items-center gap-1.5 text-xs font-medium transition-all duration-300 ${autoSaveStatus === 'idle' ? 'opacity-0' : 'opacity-100'}`}>
+          {autoSaveStatus === 'saving' && (
+            <><span className="inline-block w-3 h-3 rounded-full border-2 border-slate-400 border-t-transparent animate-spin" /><span className="text-slate-400">Saving…</span></>
+          )}
+          {autoSaveStatus === 'saved' && (
+            <><span className="text-emerald-500">✓</span><span className="text-emerald-600">Auto-saved</span></>
+          )}
+        </span>
+
         <div className="w-px h-7 bg-slate-200 mx-1 hidden sm:block" />
 
         {/* Export */}
@@ -314,6 +603,9 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
         <div className="flex-1" />
         <button onClick={handleReset} className="px-3 py-1.5 text-sm font-medium rounded-lg border border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors">
           🗑️ Reset
+        </button>
+        <button onClick={() => setShowClearCache(true)} className="px-3 py-1.5 text-sm font-medium rounded-lg border border-orange-200 text-orange-500 hover:bg-orange-50 hover:text-orange-600 transition-colors" title="Clear all saved designs and templates from browser cache">
+          🧹 Clear Cache
         </button>
       </div>
 
@@ -335,6 +627,42 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowSaveTemplate(false)} className="px-4 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
               <button onClick={handleSaveAsTemplate} disabled={!templateName.trim()} className="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Save Template</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear Cache Confirmation Modal */}
+      {showClearCache && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowClearCache(false)}>
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-3xl">🧹</span>
+              <h3 className="text-lg font-bold text-slate-800">Clear Cache</h3>
+            </div>
+            <p className="text-sm text-slate-600 mb-2">
+              This will permanently delete:
+            </p>
+            <ul className="text-sm text-slate-600 mb-5 list-disc list-inside space-y-1">
+              <li>All saved card designs (Student &amp; Staff)</li>
+              <li>All saved custom templates</li>
+            </ul>
+            <p className="text-xs text-orange-600 bg-orange-50 rounded-lg px-3 py-2 mb-5">
+              ⚠️ This cannot be undone. The canvas will reset to the default Student template.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowClearCache(false)}
+                className="px-4 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearCache}
+                className="px-4 py-2 text-sm rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors font-medium"
+              >
+                Clear Cache
+              </button>
             </div>
           </div>
         </div>
@@ -562,6 +890,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
             onResizePhoto={handleResizePhoto}
             onMoveQr={handleMoveQr}
             onResizeQr={handleResizeQr}
+            onContextMenu={handleCanvasContextMenu}
           />
         </div>
 
@@ -581,6 +910,84 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
           width={sidebarWidth}
         />
       </div>
+
+      {/* Right-click Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-[9999] bg-white rounded-xl shadow-2xl border border-slate-200 py-1.5 select-none"
+          style={{ left: contextMenu.x, top: contextMenu.y, minWidth: 210 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {contextMenu.targetId && (
+            <>
+              {/* Element label */}
+              <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                {contextMenu.targetId === '__photo__' ? 'Photo Placeholder'
+                  : contextMenu.targetId === '__qr__' ? 'QR Placeholder'
+                  : design.texts.find((t) => t.id === contextMenu.targetId) ? 'Text Element'
+                  : design.logos.find((l) => l.id === contextMenu.targetId) ? 'Image / Logo'
+                  : 'Shape'}
+              </div>
+              <div className="h-px bg-slate-100 mx-2 my-1" />
+
+              {/* Arrange */}
+              <button onClick={() => ctxArrange(contextMenu.targetId!, 'front')} className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left">
+                <span className="text-base">⬆️</span> Bring to Front
+              </button>
+              <button onClick={() => ctxArrange(contextMenu.targetId!, 'forward')} className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left">
+                <span className="text-base">▲</span> Move Forward
+              </button>
+              <button onClick={() => ctxArrange(contextMenu.targetId!, 'backward')} className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left">
+                <span className="text-base">▼</span> Move Backward
+              </button>
+              <button onClick={() => ctxArrange(contextMenu.targetId!, 'back')} className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left">
+                <span className="text-base">⬇️</span> Send to Back
+              </button>
+
+              <div className="h-px bg-slate-100 mx-2 my-1" />
+
+              {/* Duplicate / Delete — not for photo/qr since those are singletons */}
+              {contextMenu.targetId !== '__photo__' && contextMenu.targetId !== '__qr__' && (
+                <button onClick={() => ctxDuplicate(contextMenu.targetId!)} className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors text-left">
+                  <span className="text-base">📋</span> Duplicate
+                </button>
+              )}
+              <button onClick={() => ctxDelete(contextMenu.targetId!)} className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left">
+                <span className="text-base">🗑️</span> Delete
+              </button>
+
+              <div className="h-px bg-slate-100 mx-2 my-1" />
+            </>
+          )}
+
+          {/* Add Elements */}
+          <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Add Element</div>
+          <button onClick={ctxAddText} className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors text-left">
+            <span className="text-base">✏️</span> Add Text
+          </button>
+          <button onClick={() => ctxAddShape('rectangle')} className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors text-left">
+            <span className="text-base">▭</span> Add Rectangle
+          </button>
+          <button onClick={() => ctxAddShape('circle')} className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors text-left">
+            <span className="text-base">◯</span> Add Circle
+          </button>
+          <button onClick={() => ctxAddShape('line')} className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors text-left">
+            <span className="text-base">─</span> Add Line
+          </button>
+
+          <div className="h-px bg-slate-100 mx-2 my-1" />
+
+          {/* Undo / Redo */}
+          <button onClick={() => { undo(); closeContextMenu(); }} disabled={!canUndo} className="w-full flex items-center justify-between gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-left">
+            <span className="flex items-center gap-2.5"><span className="text-base">↩</span> Undo</span>
+            <span className="text-[11px] text-slate-400">Ctrl+Z</span>
+          </button>
+          <button onClick={() => { redo(); closeContextMenu(); }} disabled={!canRedo} className="w-full flex items-center justify-between gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-left">
+            <span className="flex items-center gap-2.5"><span className="text-base">↪</span> Redo</span>
+            <span className="text-[11px] text-slate-400">Ctrl+Y</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -180,49 +180,43 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
   };
 
   const arrangeItem = (id: string, mode: 'front' | 'forward' | 'backward' | 'back') => {
-    const sorted = getAllZIndices();
-    const idx = sorted.findIndex((item) => item.id === id);
+    // Build sorted list (lowest z first)
+    const ordered = [
+      ...design.texts.map((t) => ({ id: t.id, z: t.zIndex ?? 0 })),
+      ...design.logos.map((l) => ({ id: l.id, z: l.zIndex ?? 0 })),
+      ...(design.shapes ?? []).map((s) => ({ id: s.id, z: s.zIndex ?? 0 })),
+      ...(design.photo ? [{ id: '__photo__', z: design.photo.zIndex ?? 0 }] : []),
+      ...(design.qr ? [{ id: '__qr__', z: design.qr.zIndex ?? 0 }] : []),
+    ].sort((a, b) => a.z - b.z);
+
+    const idx = ordered.findIndex((item) => item.id === id);
     if (idx < 0) return;
 
-    let newZ: number;
+    // Remove item and re-insert at the new position
+    const [item] = ordered.splice(idx, 1);
     if (mode === 'front') {
-      newZ = getMaxZIndex() + 1;
+      ordered.push(item);
     } else if (mode === 'back') {
-      newZ = getMinZIndex() - 1;
+      ordered.unshift(item);
     } else if (mode === 'forward') {
-      if (idx === sorted.length - 1) return;
-      const aboveZ = sorted[idx + 1].z;
-      newZ = aboveZ + 1;
-    } else {
-      if (idx === 0) return;
-      const belowZ = sorted[idx - 1].z;
-      newZ = belowZ - 1;
+      if (idx >= ordered.length) return; // already at top
+      ordered.splice(idx + 1, 0, item);
+    } else { // backward
+      if (idx === 0) return; // already at bottom
+      ordered.splice(idx - 1, 0, item);
     }
 
-    // Apply to whichever array contains this id
-    const textIdx = design.texts.findIndex((t) => t.id === id);
-    if (textIdx >= 0) {
-      update({ texts: design.texts.map((t) => (t.id === id ? { ...t, zIndex: newZ } : t)) });
-      return;
-    }
-    const logoIdx = design.logos.findIndex((l) => l.id === id);
-    if (logoIdx >= 0) {
-      update({ logos: design.logos.map((l) => (l.id === id ? { ...l, zIndex: newZ } : l)) });
-      return;
-    }
-    const shapes = design.shapes ?? [];
-    const shapeIdx = shapes.findIndex((s) => s.id === id);
-    if (shapeIdx >= 0) {
-      update({ shapes: shapes.map((s) => (s.id === id ? { ...s, zIndex: newZ } : s)) });
-      return;
-    }
-    if (id === '__photo__' && design.photo) {
-      update({ photo: { ...design.photo, zIndex: newZ } });
-      return;
-    }
-    if (id === '__qr__' && design.qr) {
-      update({ qr: { ...design.qr, zIndex: newZ } });
-    }
+    // Reassign consecutive z-indices so they are always unique
+    const zMap: Record<string, number> = {};
+    ordered.forEach((el, i) => { zMap[el.id] = i; });
+
+    update({
+      texts: design.texts.map((t) => ({ ...t, zIndex: zMap[t.id] ?? t.zIndex ?? 0 })),
+      logos: design.logos.map((l) => ({ ...l, zIndex: zMap[l.id] ?? l.zIndex ?? 0 })),
+      shapes: (design.shapes ?? []).map((s) => ({ ...s, zIndex: zMap[s.id] ?? s.zIndex ?? 0 })),
+      photo: design.photo ? { ...design.photo, zIndex: zMap['__photo__'] ?? design.photo.zIndex ?? 0 } : null,
+      qr: design.qr ? { ...design.qr, zIndex: zMap['__qr__'] ?? design.qr.zIndex ?? 0 } : null,
+    });
   };
 
   const selectedText = design.texts.find((t) => t.id === selectedId);
