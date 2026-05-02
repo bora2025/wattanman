@@ -96,6 +96,7 @@ export default function ManageEmployees() {
   const [password, setPassword] = useState('')
   const [phone, setPhone] = useState('')
   const [role, setRole] = useState('OFFICER')
+  const [customRole, setCustomRole] = useState('')
   const [photo, setPhoto] = useState('')
   const [departmentId, setDepartmentId] = useState('')
 
@@ -105,6 +106,7 @@ export default function ManageEmployees() {
   const [editEmail, setEditEmail] = useState('')
   const [editPhone, setEditPhone] = useState('')
   const [editRole, setEditRole] = useState('')
+  const [editCustomRole, setEditCustomRole] = useState('')
   const [editPhoto, setEditPhoto] = useState('')
   const [editDepartmentId, setEditDepartmentId] = useState('')
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -156,10 +158,11 @@ export default function ManageEmployees() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const effectiveRole = role === '__custom__' ? customRole.trim() : role
       const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name, role, ...(departmentId ? { departmentId } : {}) }),
+        body: JSON.stringify({ email, password, name, role: effectiveRole, ...(departmentId ? { departmentId } : {}) }),
       })
       const data = await res.json()
       if (res.ok) {
@@ -180,7 +183,7 @@ export default function ManageEmployees() {
           }
         }
         showMsg('Employee created successfully!', 'success')
-        setName(''); setEmail(''); setPassword(''); setPhone(''); setPhoto(''); setDepartmentId(''); setShowForm(false)
+        setName(''); setEmail(''); setPassword(''); setPhone(''); setPhoto(''); setDepartmentId(''); setCustomRole(''); setShowForm(false)
         fetchUsers()
       } else {
         showMsg('Error: ' + data.message, 'error')
@@ -195,7 +198,13 @@ export default function ManageEmployees() {
     setEditName(user.name)
     setEditEmail(user.email)
     setEditPhone(user.phone || '')
-    setEditRole(user.role)
+    if (employeeRoles.includes(user.role)) {
+      setEditRole(user.role)
+      setEditCustomRole('')
+    } else {
+      setEditRole('__custom__')
+      setEditCustomRole(user.role)
+    }
     setEditPhoto(user.photo || '')
     setEditDepartmentId(user.departmentId || '')
   }
@@ -204,10 +213,11 @@ export default function ManageEmployees() {
     e.preventDefault()
     if (!editingUser) return
     try {
+      const effectiveEditRole = editRole === '__custom__' ? editCustomRole.trim() : editRole
       const res = await apiFetch(`/api/auth/users/${editingUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editName, email: editEmail, phone: editPhone, role: editRole, departmentId: editDepartmentId || null }),
+        body: JSON.stringify({ name: editName, email: editEmail, phone: editPhone, role: effectiveEditRole, departmentId: editDepartmentId || null }),
       })
       if (res.ok) {
         if (editPhoto !== (editingUser.photo || '')) {
@@ -406,11 +416,21 @@ export default function ManageEmployees() {
                         </div>
                         <div>
                           <label className="form-label">Position *</label>
-                          <select value={role} onChange={e => setRole(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                          <select value={role} onChange={e => { setRole(e.target.value); if (e.target.value !== '__custom__') setCustomRole('') }} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
                             {employeeRoles.map(r => (
                               <option key={r} value={r}>{getRoleLabel(r)} ({r})</option>
                             ))}
+                            <option value="__custom__">＋ Add new position...</option>
                           </select>
+                          {role === '__custom__' && (
+                            <input
+                              value={customRole}
+                              onChange={e => setCustomRole(e.target.value)}
+                              required
+                              className="w-full mt-1.5 rounded-lg border border-indigo-400 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300"
+                              placeholder="Type new position name..."
+                            />
+                          )}
                         </div>
                         <div>
                           <label className="form-label">Department</label>
@@ -606,11 +626,21 @@ export default function ManageEmployees() {
                 </div>
                 <div>
                   <label className="form-label">Position</label>
-                  <select value={editRole} onChange={e => setEditRole(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                  <select value={editRole} onChange={e => { setEditRole(e.target.value); if (e.target.value !== '__custom__') setEditCustomRole('') }} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
                     {employeeRoles.map(r => (
                       <option key={r} value={r}>{getRoleLabel(r)} ({r})</option>
                     ))}
+                    <option value="__custom__">＋ Add new position...</option>
                   </select>
+                  {editRole === '__custom__' && (
+                    <input
+                      value={editCustomRole}
+                      onChange={e => setEditCustomRole(e.target.value)}
+                      required
+                      className="w-full mt-1.5 rounded-lg border border-indigo-400 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300"
+                      placeholder="Type new position name..."
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="form-label">Department</label>
