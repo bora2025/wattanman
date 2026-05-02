@@ -157,8 +157,12 @@ export default function ManageEmployees() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const effectiveRole = role === '__custom__' ? customRole.trim() : role
+    if (!effectiveRole) {
+      showMsg('Please type the new position name.', 'error')
+      return
+    }
     try {
-      const effectiveRole = role === '__custom__' ? customRole.trim() : role
       const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -171,7 +175,7 @@ export default function ManageEmployees() {
             await apiFetch(`/api/auth/users/${data.user.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name, email, phone, role }),
+              body: JSON.stringify({ name, email, phone, role: effectiveRole }),
             })
           }
           if (photo) {
@@ -212,8 +216,12 @@ export default function ManageEmployees() {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingUser) return
+    const effectiveEditRole = editRole === '__custom__' ? editCustomRole.trim() : editRole
+    if (!effectiveEditRole) {
+      showMsg('Please type the new position name.', 'error')
+      return
+    }
     try {
-      const effectiveEditRole = editRole === '__custom__' ? editCustomRole.trim() : editRole
       const res = await apiFetch(`/api/auth/users/${editingUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

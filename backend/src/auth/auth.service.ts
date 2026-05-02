@@ -76,6 +76,9 @@ export class AuthService {
 
   async register(email: string, password: string, name: string, role: string, departmentId?: string) {
     const normalizedRole = role.trim();
+    if (!normalizedRole || normalizedRole.startsWith('__')) {
+      throw new Error('Invalid role');
+    }
     try {
       const hashedPassword = await bcrypt.hash(password, 12);
       const user = await this.prisma.user.create({
@@ -160,7 +163,11 @@ export class AuthService {
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.departmentId !== undefined) updateData.departmentId = data.departmentId || null;
     if (data.role) {
-      updateData.role = data.role.trim();
+      const trimmed = data.role.trim();
+      if (!trimmed || trimmed.startsWith('__')) {
+        throw new Error('Invalid role');
+      }
+      updateData.role = trimmed;
     }
     try {
       return await this.prisma.user.update({
