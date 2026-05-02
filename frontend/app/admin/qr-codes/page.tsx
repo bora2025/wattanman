@@ -163,19 +163,11 @@ export default function GenerateQRCodes() {
   };
 
   const fetchStaff = async () => {
+    const NON_STAFF_ROLES = ['STUDENT', 'PARENT'];
     try {
-      const staffRoles = [
-        'ADMIN','TEACHER','OFFICER','STAFF','OFFICE_HEAD','DEPUTY_OFFICE_HEAD',
-        'DEPARTMENT_HEAD','DEPUTY_DEPARTMENT_HEAD','GENERAL_DEPARTMENT_DIRECTOR',
-        'DEPUTY_GENERAL_DEPARTMENT_DIRECTOR','COMPANY_CEO','CREDIT_OFFICER',
-        'SECURITY_GUARD','JANITOR','PROJECT_MANAGER','BRANCH_MANAGER',
-        'EXECUTIVE_DIRECTOR','HR_MANAGER','ATHLETE_MALE','ATHLETE_FEMALE',
-        'TRAINER','BARISTA','CASHIER','RECEPTIONIST','GENERAL_MANAGER',
-        'PRIMARY_SCHOOL_PRINCIPAL','SECONDARY_SCHOOL_PRINCIPAL',
-        'HIGH_SCHOOL_PRINCIPAL','UNIVERSITY_RECTOR',
-      ];
-      const res = await apiFetch(`/api/auth/users?roles=${staffRoles.join(',')}`);
-      const staff: StaffUser[] = res.ok ? await res.json() : [];
+      const res = await apiFetch('/api/auth/users');
+      const all: StaffUser[] = res.ok ? await res.json() : [];
+      const staff = all.filter((u) => !NON_STAFF_ROLES.includes(u.role));
       setStaffUsers(staff);
       await generateQRCodesForList(staff.map((s) => ({ id: s.id, name: s.name, type: 'staff' })));
     } catch (err) {

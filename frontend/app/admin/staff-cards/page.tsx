@@ -102,10 +102,13 @@ export default function StaffCardsPage() {
     return () => window.removeEventListener('storage', onStorage);
   }, [reloadDesign]);
 
+  const NON_STAFF_ROLES = ['STUDENT', 'PARENT'];
+
   const fetchStaff = async () => {
     try {
-      const res = await apiFetch(`/api/auth/users?roles=${STAFF_ROLES.join(',')}`);
-      const staff: StaffUser[] = res.ok ? await res.json() : [];
+      const res = await apiFetch('/api/auth/users');
+      const all: StaffUser[] = res.ok ? await res.json() : [];
+      const staff = all.filter((u) => !NON_STAFF_ROLES.includes(u.role));
       setStaffUsers(staff);
       const codes: { [key: string]: string } = {};
       for (const s of staff) {
@@ -443,7 +446,7 @@ export default function StaffCardsPage() {
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${staff.role === 'ADMIN' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
-                          {roleLabels[staff.role]?.icon} {staff.role}
+                          {roleLabels[staff.role]?.icon ?? '👤'} {roleLabels[staff.role]?.label ?? staff.role}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-500 truncate hidden md:table-cell max-w-[180px]">{staff.email}</td>
