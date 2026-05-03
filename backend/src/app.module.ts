@@ -12,6 +12,7 @@ import { SessionConfigModule } from './session-config/session-config.module';
 import { HolidaysModule } from './holidays/holidays.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { StudyYearsModule } from './study-years/study-years.module';
+import { CardTemplatesModule } from './card-templates/card-templates.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { StudyYearsModule } from './study-years/study-years.module';
     HolidaysModule,
     DepartmentsModule,
     StudyYearsModule,
+    CardTemplatesModule,
   ],
   controllers: [AppController],
   providers: [

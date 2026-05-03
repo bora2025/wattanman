@@ -248,6 +248,43 @@ export function clearAllCache(): void {
   localStorage.removeItem(TEMPLATES_STORAGE_KEY);
 }
 
+// --- API-backed template functions (server-side, shared across all admins) ---
+
+import { apiFetch } from '../../lib/api';
+
+export async function apiLoadTemplates(): Promise<SavedTemplate[]> {
+  try {
+    const res = await apiFetch('/api/card-templates');
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data as SavedTemplate[];
+  } catch {
+    return [];
+  }
+}
+
+export async function apiSaveTemplate(name: string, design: CardDesign): Promise<SavedTemplate | null> {
+  try {
+    const res = await apiFetch('/api/card-templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, cardType: design.cardType, design }),
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function apiDeleteTemplate(id: string): Promise<void> {
+  try {
+    await apiFetch(`/api/card-templates/${id}`, { method: 'DELETE' });
+  } catch {
+    // ignore
+  }
+}
+
 export const BLANK_TEMPLATE: CardDesign = {
   cardType: 'student',
   size: 'credit',

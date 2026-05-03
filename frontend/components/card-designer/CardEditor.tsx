@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, MouseEvent as ReactMouseEvent } from 'react';
-import { CardDesign, CardType, LogoElement, PhotoPlaceholder, QrPlaceholder, ShapeElement, TextElement, STUDENT_TEMPLATE, STAFF_TEMPLATE, BLANK_TEMPLATE, STUDENT_CLASSIC_BLUE, STUDENT_DARK_NAVY, STUDENT_SKY_WAVE, STUDENT_GEOMETRIC, STUDENT_MINIMAL, STAFF_CORPORATE_TEAL, STAFF_DEEP_OCEAN, STAFF_ROSE, STAFF_FOREST, STAFF_SLATE_EXECUTIVE, loadSavedDesign, saveDesign, clearAllCache, SavedTemplate, loadSavedTemplates, saveTemplate, deleteTemplate } from './types';
+import { CardDesign, CardType, LogoElement, PhotoPlaceholder, QrPlaceholder, ShapeElement, TextElement, STUDENT_TEMPLATE, STAFF_TEMPLATE, BLANK_TEMPLATE, STUDENT_CLASSIC_BLUE, STUDENT_DARK_NAVY, STUDENT_SKY_WAVE, STUDENT_GEOMETRIC, STUDENT_MINIMAL, STAFF_CORPORATE_TEAL, STAFF_DEEP_OCEAN, STAFF_ROSE, STAFF_FOREST, STAFF_SLATE_EXECUTIVE, loadSavedDesign, saveDesign, clearAllCache, SavedTemplate, apiLoadTemplates, apiSaveTemplate, apiDeleteTemplate } from './types';
 import { renderDesignToCanvas } from './renderDesignToCanvas';
 import { downloadSingleCardPDF } from './generateCardPDF';
 import CardCanvas from './CardCanvas';
@@ -156,28 +156,30 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
   // Refresh template list and generate previews when picker opens
   useEffect(() => {
     if (!showTemplatePicker) return;
-    const templates = loadSavedTemplates();
-    setSavedTemplates(templates);
-
-    // Generate preview thumbnails for built-in + saved templates
-    const allDesigns: { key: string; design: CardDesign }[] = [
-      { key: '__builtin_blank', design: BLANK_TEMPLATE },
-      { key: '__builtin_student', design: STUDENT_TEMPLATE },
-      { key: '__builtin_staff', design: STAFF_TEMPLATE },
-      { key: '__preset_st1', design: STUDENT_CLASSIC_BLUE },
-      { key: '__preset_st2', design: STUDENT_DARK_NAVY },
-      { key: '__preset_st3', design: STUDENT_SKY_WAVE },
-      { key: '__preset_st4', design: STUDENT_GEOMETRIC },
-      { key: '__preset_st5', design: STUDENT_MINIMAL },
-      { key: '__preset_sf1', design: STAFF_CORPORATE_TEAL },
-      { key: '__preset_sf2', design: STAFF_DEEP_OCEAN },
-      { key: '__preset_sf3', design: STAFF_ROSE },
-      { key: '__preset_sf4', design: STAFF_FOREST },
-      { key: '__preset_sf5', design: STAFF_SLATE_EXECUTIVE },
-      ...templates.map((t) => ({ key: t.id, design: t.design })),
-    ];
     let cancelled = false;
+
     (async () => {
+      const templates = await apiLoadTemplates();
+      if (!cancelled) setSavedTemplates(templates);
+
+      // Generate preview thumbnails for built-in + saved templates
+      const allDesigns: { key: string; design: CardDesign }[] = [
+        { key: '__builtin_blank', design: BLANK_TEMPLATE },
+        { key: '__builtin_student', design: STUDENT_TEMPLATE },
+        { key: '__builtin_staff', design: STAFF_TEMPLATE },
+        { key: '__preset_st1', design: STUDENT_CLASSIC_BLUE },
+        { key: '__preset_st2', design: STUDENT_DARK_NAVY },
+        { key: '__preset_st3', design: STUDENT_SKY_WAVE },
+        { key: '__preset_st4', design: STUDENT_GEOMETRIC },
+        { key: '__preset_st5', design: STUDENT_MINIMAL },
+        { key: '__preset_sf1', design: STAFF_CORPORATE_TEAL },
+        { key: '__preset_sf2', design: STAFF_DEEP_OCEAN },
+        { key: '__preset_sf3', design: STAFF_ROSE },
+        { key: '__preset_sf4', design: STAFF_FOREST },
+        { key: '__preset_sf5', design: STAFF_SLATE_EXECUTIVE },
+        ...templates.map((t) => ({ key: t.id, design: t.design })),
+      ];
+
       const previews: Record<string, string> = {};
       for (const item of allDesigns) {
         if (cancelled) break;
@@ -190,13 +192,14 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
       }
       if (!cancelled) setTemplatePreviews(previews);
     })();
+
     return () => { cancelled = true; };
   }, [showTemplatePicker]);
 
-  const handleSaveAsTemplate = () => {
+  const handleSaveAsTemplate = async () => {
     const name = templateName.trim();
     if (!name) return;
-    saveTemplate(name, design);
+    await apiSaveTemplate(name, design);
     setTemplateName('');
     setShowSaveTemplate(false);
     setTemplateSaved(true);
@@ -210,9 +213,9 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
     setShowTemplatePicker(false);
   };
 
-  const handleDeleteTemplate = (id: string) => {
-    deleteTemplate(id);
-    setSavedTemplates(loadSavedTemplates());
+  const handleDeleteTemplate = async (id: string) => {
+    await apiDeleteTemplate(id);
+    setSavedTemplates((prev) => prev.filter((t) => t.id !== id));
   };
 
   const handleCardTypeChange = (type: CardType) => {

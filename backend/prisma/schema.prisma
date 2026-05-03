@@ -195,6 +195,15 @@ model RefreshToken {
   @@index([expiresAt])
 }
 
+model CardTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  cardType  String   // "student" or "staff"
+  design    Json     // full CardDesign JSON
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model AttendanceFormatRule {
   id                    String   @id @default(cuid())
   scope                 String   // CLASS or STAFF
