@@ -56,13 +56,13 @@ export default function EditStaffAttendance() {
       if (res.ok) {
         const data = await res.json()
         setRows(data)
-        // Initialize per-row permissionType from existing session records
+        // Initialize per-row permissionType from server data (server is always source of truth)
         const init: Record<string, string> = {}
         data.forEach((row: StaffRow) => {
           const permSess = row.sessions.find((s: SessionRecord) => s.permissionType)
           if (permSess?.permissionType) init[row.userId] = permSess.permissionType
         })
-        setPermissionTypes(prev => ({ ...init, ...prev }))
+        setPermissionTypes(init)
       } else setError('Failed to load staff attendance records.')
     } catch (err) {
       console.error('Error:', err)
@@ -73,6 +73,28 @@ export default function EditStaffAttendance() {
   const handleStatusChange = async (staffRow: StaffRow, session: number, newStatus: string) => {
     const sessionRec = staffRow.sessions.find(s => s.session === session)
     if (!sessionRec) return
+
+    // "Not Set" selected: delete the existing record if one exists
+    if (newStatus === '') {
+      if (!sessionRec.attendanceId) return
+      setSaving(`${staffRow.userId}-${session}`)
+      setError('')
+      setSuccess('')
+      try {
+        const res = await apiFetch('/api/attendance/staff/record', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ staffAttendanceId: sessionRec.attendanceId }),
+        })
+        if (!res.ok) throw new Error('Failed to delete')
+        setSuccess(`Cleared ${staffRow.staffName} session ${session}`)
+        setTimeout(() => setSuccess(''), 3000)
+        await fetchRecords()
+      } catch {
+        setError('Failed to clear record. Please try again.')
+      } finally { setSaving(null) }
+      return
+    }
 
     setSaving(`${staffRow.userId}-${session}`)
     setError('')
@@ -122,7 +144,7 @@ export default function EditStaffAttendance() {
       setSuccess(`Updated ${staffRow.staffName} session ${session} to ${newStatus}`)
       setTimeout(() => setSuccess(''), 3000)
       await fetchRecords()
-    } catch (err) {
+    } catch {
       setError('Failed to save change. Please try again.')
     } finally { setSaving(null) }
   }
@@ -130,27 +152,25 @@ export default function EditStaffAttendance() {
   const handlePermissionTypeChange = async (staffRow: StaffRow, newType: string) => {
     setPermissionTypes(prev => ({ ...prev, [staffRow.userId]: newType }))
 
-    const permissionSession = staffRow.sessions.find(s => s.status === 'PERMISSION' && s.attendanceId)
-    if (!permissionSession?.attendanceId) return
+    const hasPermissionSession = staffRow.sessions.some(s => s.status === 'PERMISSION')
+    if (!hasPermissionSession) return
 
-    setSaving(`${staffRow.userId}-${permissionSession.session}`)
+    setSaving(`${staffRow.userId}-perm`)
     setError('')
     setSuccess('')
 
     try {
-      const res = await apiFetch('/api/attendance/staff/update', {
+      const res = await apiFetch('/api/attendance/staff/edit-permission-type', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          staffAttendanceId: permissionSession.attendanceId,
-          status: 'PERMISSION',
+          userId: staffRow.userId,
+          date: selectedDate,
           permissionType: newType,
-          permissionStartDate: selectedDate,
-          permissionEndDate: selectedDate,
         }),
       })
       if (!res.ok) throw new Error('Failed to update permission type')
-      setSuccess(`Updated ${staffRow.staffName}: ${newType} applied to ${permissionScopeLabel(newType)}`)
+      setSuccess(`Updated ${staffRow.staffName}: ${permissionScopeLabel(newType)}`)
       setTimeout(() => setSuccess(''), 3000)
       await fetchRecords()
     } catch {

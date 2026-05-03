@@ -77,13 +77,13 @@ export default function EditAttendance() {
       if (res.ok) {
         const data = await res.json()
         setRows(data)
-        // Initialize per-row permissionType from existing session records
+        // Initialize per-row permissionType from server data (server is always source of truth)
         const init: Record<string, string> = {}
         data.forEach((row: StudentRow) => {
           const permSess = row.sessions.find((s: SessionRecord) => s.permissionType)
           if (permSess?.permissionType) init[row.studentId] = permSess.permissionType
         })
-        setPermissionTypes(prev => ({ ...init, ...prev }))
+        setPermissionTypes(init)
       } else setError('Failed to load attendance records.')
     } catch (err) {
       console.error('Error:', err)
@@ -95,14 +95,34 @@ export default function EditAttendance() {
     const sessionRec = studentRow.sessions.find(s => s.session === session)
     if (!sessionRec) return
 
+    // "Not Set" selected: delete the existing record if one exists
+    if (newStatus === '') {
+      if (!sessionRec.attendanceId) return
+      setSaving(`${studentRow.studentId}-${session}`)
+      setError('')
+      setSuccess('')
+      try {
+        const res = await apiFetch('/api/attendance/record', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ attendanceId: sessionRec.attendanceId }),
+        })
+        if (!res.ok) throw new Error('Failed to delete')
+        setSuccess(`Cleared ${studentRow.studentName} session ${session}`)
+        setTimeout(() => setSuccess(''), 3000)
+        await fetchRecords()
+      } catch {
+        setError('Failed to clear record. Please try again.')
+      } finally { setSaving(null) }
+      return
+    }
+
     setSaving(`${studentRow.studentId}-${session}`)
     setError('')
     setSuccess('')
 
     try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-              }
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
 
       if (sessionRec.attendanceId) {
         // Update existing record
@@ -143,9 +163,8 @@ export default function EditAttendance() {
 
       setSuccess(`Updated ${studentRow.studentName} session ${session} to ${newStatus}`)
       setTimeout(() => setSuccess(''), 3000)
-      // Refresh data
       await fetchRecords()
-    } catch (err) {
+    } catch {
       setError('Failed to save change. Please try again.')
     } finally { setSaving(null) }
   }

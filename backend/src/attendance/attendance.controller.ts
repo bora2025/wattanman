@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Get, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Delete, Body, Query, UseGuards, Request } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -311,6 +311,37 @@ export class AttendanceController {
       body.permissionStartDate ? new Date(body.permissionStartDate) : undefined,
       body.permissionEndDate ? new Date(body.permissionEndDate) : undefined,
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('staff/edit-permission-type')
+  async editStaffPermissionType(
+    @Request() req,
+    @Body() body: { userId: string; date: string; permissionType: string },
+  ) {
+    const adminId = req.user.userId;
+    return this.attendanceService.editPermissionTypeForStaff(
+      body.userId,
+      body.date,
+      adminId,
+      body.permissionType,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('record')
+  async deleteAttendanceRecord(
+    @Body() body: { attendanceId: string },
+  ) {
+    return this.attendanceService.deleteAttendanceRecord(body.attendanceId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('staff/record')
+  async deleteStaffAttendanceRecord(
+    @Body() body: { staffAttendanceId: string },
+  ) {
+    return this.attendanceService.deleteStaffAttendanceRecord(body.staffAttendanceId);
   }
 
   @UseGuards(JwtAuthGuard)

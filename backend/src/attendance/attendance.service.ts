@@ -1498,6 +1498,91 @@ export class AttendanceService {
       checkInTime: record.checkInTime?.toISOString() ?? null,
     };
   }
+
+  async deleteAttendanceRecord(attendanceId: string) {
+    const record = await this.prisma.attendance.findUnique({ where: { id: attendanceId } });
+    if (!record) throw new NotFoundException('Attendance record not found');
+    return this.prisma.attendance.delete({ where: { id: attendanceId } });
+  }
+
+  async deleteStaffAttendanceRecord(staffAttendanceId: string) {
+    const record = await this.prisma.staffAttendance.findUnique({ where: { id: staffAttendanceId } });
+    if (!record) throw new NotFoundException('Staff attendance record not found');
+    return this.prisma.staffAttendance.delete({ where: { id: staffAttendanceId } });
+  }
+
+  /**
+   * Edit permission type for a staff member on a specific date (edit-attendance context).
+   * Mirrors editPermissionType for students.
+   */
+  async editPermissionTypeForStaff(
+    userId: string,
+    date: string,
+    adminId: string,
+    newPermissionType: string,
+  ) {
+    const attendanceDate = toUTCMidnight(new Date(date));
+    const newType = normalizePermissionType(newPermissionType);
+    const inScopeSessions = permissionSessions(newType);
+    const allSessions = [1, 2, 3, 4];
+    const outOfScopeSessions = allSessions.filter(s => !inScopeSessions.includes(s));
+
+    const existing = await this.prisma.staffAttendance.findMany({
+      where: { userId, date: attendanceDate },
+    });
+    const existingMap = new Map(existing.map(r => [r.session, r]));
+
+    const ops: any[] = [];
+
+    for (const session of inScopeSessions) {
+      const rec = existingMap.get(session);
+      if (rec && (rec.status === 'PRESENT' || rec.status === 'LATE')) continue;
+      ops.push(
+        this.prisma.staffAttendance.upsert({
+          where: { userId_date_session: { userId, date: attendanceDate, session } },
+          update: {
+            status: 'PERMISSION',
+            permissionType: newType,
+            permissionStartDate: attendanceDate,
+            permissionEndDate: attendanceDate,
+            markedById: adminId,
+            checkInTime: null,
+            checkOutTime: null,
+          },
+          create: {
+            userId,
+            date: attendanceDate,
+            session,
+            status: 'PERMISSION',
+            permissionType: newType,
+            permissionStartDate: attendanceDate,
+            permissionEndDate: attendanceDate,
+            markedById: adminId,
+            checkInTime: null,
+            checkOutTime: null,
+          },
+        }),
+      );
+    }
+
+    for (const session of outOfScopeSessions) {
+      ops.push(
+        this.prisma.staffAttendance.updateMany({
+          where: { userId, date: attendanceDate, session, status: 'PERMISSION' },
+          data: {
+            status: 'ABSENT',
+            permissionType: null,
+            permissionStartDate: null,
+            permissionEndDate: null,
+            markedById: adminId,
+          },
+        }),
+      );
+    }
+
+    if (ops.length > 0) await this.prisma.$transaction(ops);
+    return { success: true, permissionType: newType };
+  }
 }
 
 type PermissionType = 'HALF_DAY_MORNING' | 'HALF_DAY_AFTERNOON' | 'FULL_DAY' | 'MULTI_DAY';
