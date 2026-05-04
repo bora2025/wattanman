@@ -17,11 +17,11 @@ export class AuthService {
     return null;
   }
 
-  /** Issue a short-lived access token (15 min) */
+  /** Issue an access token (default 2h) */
   signAccessToken(user: any): string {
     const payload = { email: user.email, sub: user.id, role: user.role };
     return this.jwtService.sign(payload, {
-      expiresIn: process.env.JWT_ACCESS_EXPIRY || '15m',
+      expiresIn: process.env.JWT_ACCESS_EXPIRY || '2h',
     });
   }
 

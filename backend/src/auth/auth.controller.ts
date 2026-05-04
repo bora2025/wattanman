@@ -153,7 +153,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Delete('users/:id')
-  async deleteUser(@Param('id') id: string) {
+  async deleteUser(@Param('id') id: string, @Request() req: any) {
+    if (req.user?.userId === id) {
+      throw new HttpException('Cannot delete your own account', HttpStatus.FORBIDDEN);
+    }
     try {
       return await this.authService.deleteUser(id);
     } catch (error: any) {

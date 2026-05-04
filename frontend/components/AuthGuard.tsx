@@ -73,6 +73,14 @@ export default function AuthGuard({ children, requiredRole, allowedRoles }: Auth
       });
   }, [router, requiredRole, allowedRoles, loginUrl]);
 
+  // Proactively refresh the access token every 10 minutes so it never expires mid-session
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' }).catch(() => {});
+    }, 10 * 60 * 1000); // 10 minutes
+    return () => clearInterval(interval);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">

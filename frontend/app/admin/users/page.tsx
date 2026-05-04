@@ -93,6 +93,7 @@ export default function ManageUsers() {
   const [message, setMessage] = useState('')
   const [msgType, setMsgType] = useState<'success' | 'error'>('success')
   const [users, setUsers] = useState<User[]>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [filter, setFilter] = useState('ALL')
@@ -111,6 +112,13 @@ export default function ManageUsers() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   useEffect(() => { fetchUsers() }, [])
+
+  useEffect(() => {
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(u => { if (u?.id) setCurrentUserId(u.id) })
+      .catch(() => {})
+  }, [])
 
   const fetchUsers = async () => {
     try {
@@ -534,6 +542,8 @@ export default function ManageUsers() {
                         <button
                           onClick={() => setDeleteId(user.id)}
                           className="btn-danger btn-sm"
+                          disabled={user.id === currentUserId}
+                          title={user.id === currentUserId ? 'Cannot delete your own account' : undefined}
                         >
                           🗑️ Delete
                         </button>

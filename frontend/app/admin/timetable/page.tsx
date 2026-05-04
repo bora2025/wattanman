@@ -595,6 +595,7 @@ export default function TimetablePage() {
               </div>
               <button
                 className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 text-white rounded-full text-[8px] items-center justify-center hidden group-hover:flex leading-none"
+                onMouseDown={e => e.stopPropagation()}
                 onClick={e => { e.stopPropagation(); removeEntry(entry) }}
                 title="Remove"
               >×</button>
