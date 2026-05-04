@@ -11,9 +11,10 @@ interface TimetableListItem { id: string; name: string; academicYear: string }
 interface TClass { id: string; name: string; short: string }
 interface TLesson {
   id: string; perWeek: number; lessonType: string
-  teacher: { lastName: string; firstName: string; short: string }
-  subject: { name: string; short: string }
-  class: { name: string; short: string }
+  teacherId: string; subjectId: string; classId: string
+  teacher: { lastName: string; firstName: string; short: string; color: string | null }
+  subject: { name: string; short: string; color: string | null }
+  class: { name: string; short: string; color: string | null }
 }
 interface TTeacher {
   id: string; lastName: string; firstName: string; short: string
@@ -35,6 +36,7 @@ export default function TeachersPage() {
   const [selectedTT, setSelectedTT] = useState('')
   const [teachers, setTeachers] = useState<TTeacher[]>([])
   const [classes, setClasses] = useState<TClass[]>([])
+  const [allLessons, setAllLessons] = useState<TLesson[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedTeacher, setSelectedTeacher] = useState<TTeacher | null>(null)
 
@@ -83,6 +85,7 @@ export default function TeachersPage() {
       setTeachers(tt.teachers ?? [])
       setClasses(tt.classes ?? [])
       setAllSubjects(tt.subjects ?? [])
+      setAllLessons(tt.lessons ?? [])
     }
     setLoading(false)
   }, [selectedTT])
@@ -131,9 +134,9 @@ export default function TeachersPage() {
 
   function openLessonModal(item?: TLesson, teacherId?: string) {
     setEditingLesson(item ?? null)
-    setFLTeacher(item?.teacher ? (teachers.find(t => t.short === item.teacher.short)?.id ?? '') : (teacherId ?? ''))
-    setFLSubject(item ? (allSubjects.find(s => s.short === item.subject.short)?.id ?? '') : '')
-    setFLClass(item ? (classes.find(c => c.short === item.class.short)?.id ?? '') : '')
+    setFLTeacher(item?.teacherId ?? teacherId ?? '')
+    setFLSubject(item?.subjectId ?? '')
+    setFLClass(item?.classId ?? '')
     setFLPerWeek(item?.perWeek ?? 2); setFLType(item?.lessonType ?? 'SINGLE')
     setShowLessonModal(true)
   }
@@ -155,14 +158,7 @@ export default function TeachersPage() {
     await fetchTimetableData(); setDeleteLessonId(null)
   }
 
-  // Get lessons for currently selected teacher (for sidebar detail view)
-  const teacherLessons = teachers.flatMap(t =>
-    t.lessons ? t.lessons.map(l => ({ ...l, _teacherId: t.id })) : []
-  ).filter(l => l._teacherId === selectedTeacher?.id)
-
-  // Since the API returns all lessons in timetable, filter by teacher from full data
-  // We need to get lessons from the timetable response - they're on teachers via separate fetch
-  // The teacher has .lessons when the full timetable is fetched with includes
+  const teacherLessons = allLessons.filter(l => l.teacherId === selectedTeacher?.id)
 
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
@@ -207,6 +203,7 @@ export default function TeachersPage() {
                             <th className="px-4 py-3 text-left font-semibold text-gray-600">Short</th>
                             <th className="px-4 py-3 text-left font-semibold text-gray-600">Contact</th>
                             <th className="px-4 py-3 text-left font-semibold text-gray-600">Class Teacher</th>
+                            <th className="px-4 py-3 text-center font-semibold text-gray-600">Lessons</th>
                             <th className="px-4 py-3 text-right font-semibold text-gray-600">Actions</th>
                           </tr></thead>
                           <tbody>
@@ -231,9 +228,20 @@ export default function TeachersPage() {
                                 <td className="px-4 py-3 text-gray-600 text-sm">
                                   {t.classTeacher?.short ?? '—'}
                                 </td>
+                                <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
+                                  {(() => {
+                                    const cnt = allLessons.filter(l => l.teacherId === t.id).length
+                                    return cnt > 0
+                                      ? <button onClick={() => setSelectedTeacher(t)}
+                                          className="bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-full px-2.5 py-0.5 hover:bg-emerald-200">
+                                          {cnt} lesson{cnt !== 1 ? 's' : ''}
+                                        </button>
+                                      : <span className="text-gray-300 text-xs">none</span>
+                                  })()}
+                                </td>
                                 <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                                   <button onClick={() => openTeacherModal(t)} className="text-blue-600 hover:underline text-sm mr-2">Edit</button>
-                                  <button onClick={() => { openLessonModal(undefined, t.id); }} className="text-emerald-600 hover:underline text-sm mr-2">+ Lesson</button>
+                                  <button onClick={() => { setSelectedTeacher(t); openLessonModal(undefined, t.id) }} className="text-emerald-600 hover:underline text-sm mr-2">+ Lesson</button>
                                   <button onClick={() => setDeleteTeacherId(t.id)} className="text-red-500 hover:underline text-sm">Remove</button>
                                 </td>
                               </tr>
@@ -258,12 +266,46 @@ export default function TeachersPage() {
                     <div className="flex-1 overflow-auto p-3">
                       {!selectedTeacher ? (
                         <p className="text-gray-400 text-xs text-center mt-8">Click a teacher row to see their lesson contracts</p>
+                      ) : teacherLessons.length === 0 ? (
+                        <div className="text-center mt-8">
+                          <p className="text-gray-400 text-xs mb-3">No lesson contracts yet</p>
+                          <button onClick={() => openLessonModal(undefined, selectedTeacher.id)}
+                            className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded font-medium hover:bg-indigo-700">
+                            + Add First Lesson
+                          </button>
+                        </div>
                       ) : (
                         <div className="space-y-2">
-                          {/* All lessons are embedded in timetable response under teachers if included */}
-                          <p className="text-xs text-gray-400 text-center mt-4">
-                            Use "+ New Lesson" to add lesson contracts.<br/>All lessons are also visible in the wizard.
-                          </p>
+                          {teacherLessons.map(l => (
+                            <div key={l.id} className="border border-gray-200 rounded-lg p-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="space-y-1 flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold text-white flex-shrink-0"
+                                      style={{ backgroundColor: l.subject.color ?? '#6366f1' }}>{l.subject.short}</span>
+                                    <span className="text-sm text-gray-800 truncate">{l.subject.name}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold text-white flex-shrink-0"
+                                      style={{ backgroundColor: l.class.color ?? '#f97316' }}>{l.class.short}</span>
+                                    <span className="text-sm text-gray-600">{l.class.name}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 pt-0.5">
+                                    <span className="bg-indigo-50 text-indigo-700 text-[10px] font-semibold rounded px-1.5 py-0.5">
+                                      {l.perWeek}×/week
+                                    </span>
+                                    <span className="text-gray-400 text-[10px] capitalize">{l.lessonType.toLowerCase()}</span>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col gap-1 flex-shrink-0">
+                                  <button onClick={() => openLessonModal(l)}
+                                    className="text-xs text-blue-600 hover:underline text-right">Edit</button>
+                                  <button onClick={() => setDeleteLessonId(l.id)}
+                                    className="text-xs text-red-500 hover:underline text-right">Remove</button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
