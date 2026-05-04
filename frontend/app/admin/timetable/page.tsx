@@ -508,9 +508,17 @@ export default function TimetablePage() {
           <tbody>
             {classes.map(cls => (
               <tr key={cls.id} className="even:bg-gray-50">
-                <td className="border border-gray-300 px-2 py-1 font-semibold align-middle whitespace-nowrap">
-                  {colorBadge(cls.color, cls.short)}
-                  <div className="text-gray-500 text-[10px] mt-0.5">{cls.name}</div>
+                <td className="border border-gray-300 px-2 py-1 align-middle whitespace-nowrap">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-[10px]"
+                      style={{ backgroundColor: cls.color ?? '#6366f1' }}>
+                      {cls.short.slice(0, 2)}
+                    </span>
+                    <div>
+                      <div className="font-semibold text-xs text-gray-800">{cls.short}</div>
+                      <div className="text-gray-400 text-[10px] leading-tight">{cls.name}</div>
+                    </div>
+                  </div>
                 </td>
                 {days.map(day => (
                   <Fragment key={day}>
