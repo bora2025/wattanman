@@ -25,7 +25,7 @@ interface TSubject {
 }
 interface TClass {
   id: string; name: string; short: string; color: string | null
-  printSubjectPicture: boolean; customFields: any; classTeacher?: TTeacher | null
+  printSubjectPicture: boolean; customFields: any; classTeachers?: TTeacher[]
 }
 interface TClassroom {
   id: string; name: string; short: string; color: string | null; customFields: any
@@ -871,16 +871,9 @@ export default function TimetablePage() {
             <div className="flex items-center gap-2">
               <select className="input-field" value={fTClassTeacher} onChange={e => setFTClassTeacher(e.target.value)}>
                 <option value="">— None —</option>
-                {current?.classes
-                  .filter(c => {
-                    // Only show classes not already assigned to another teacher
-                    const usedByOther = current.teachers.some(
-                      t => t.classTeacherId === c.id && t.id !== editingItem?.id
-                    )
-                    return !usedByOther
-                  })
-                  .map((c: TClass) => <option key={c.id} value={c.id}>{c.name}</option>)
-                }
+                {current?.classes.map((c: TClass) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
               <button type="button" onClick={() => setFTClassTeacher('')} className="tt-btn bg-gray-100 text-gray-700 text-xs whitespace-nowrap">Clear</button>
             </div>

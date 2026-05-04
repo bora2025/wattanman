@@ -334,16 +334,7 @@ export default function TeachersPage() {
                 <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={fClassTeacher} onChange={e => setFClassTeacher(e.target.value)}>
                   <option value="">— None —</option>
-                  {classes
-                    .filter(c => {
-                      // Only show classes not already used as classTeacherId by another teacher
-                      const usedByOther = teachers.some(
-                        t => t.classTeacherId === c.id && t.id !== editingTeacher?.id
-                      )
-                      return !usedByOther
-                    })
-                    .map(c => <option key={c.id} value={c.id}>{c.name}</option>)
-                  }
+                  {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>

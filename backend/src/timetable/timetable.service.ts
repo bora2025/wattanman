@@ -24,7 +24,7 @@ export class TimetableService {
       where: { id },
       include: {
         subjects: { orderBy: { name: 'asc' } },
-        classes: { orderBy: { name: 'asc' }, include: { classTeacher: true } },
+        classes: { orderBy: { name: 'asc' }, include: { classTeachers: true } },
         classrooms: { orderBy: { name: 'asc' } },
         teachers: { orderBy: { lastName: 'asc' }, include: { classTeacher: true } },
         lessons: {

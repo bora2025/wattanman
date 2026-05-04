@@ -275,7 +275,7 @@ model TimetableClass {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  classTeacher TimetableTeacher? @relation("ClassTeacher")
+  classTeachers TimetableTeacher[] @relation("ClassTeacherRel")
   lessons      TimetableLesson[]
   entries      TimetableEntry[]
 }
@@ -306,8 +306,8 @@ model TimetableTeacher {
   email          String?
   phone          String?
   color          String?
-  classTeacherId String?   @unique
-  classTeacher   TimetableClass? @relation("ClassTeacher", fields: [classTeacherId], references: [id])
+  classTeacherId String?   // FK to TimetableClass (no unique — multiple teachers can share a class)
+  classTeacher   TimetableClass? @relation("ClassTeacherRel", fields: [classTeacherId], references: [id])
   qrCode         String?   @unique
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
