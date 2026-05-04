@@ -120,7 +120,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
   return (
     <>
       {/* ── Mobile: Top greeting bar ── */}
-      <div className="lg:hidden mobile-topbar-wrap">
+      <div className="lg:hidden print:hidden mobile-topbar-wrap">
         <div className="mobile-topbar" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div>
             <h1 className="font-bold text-lg leading-tight" style={{ color: 'var(--color-text)' }}>{title}</h1>
@@ -148,7 +148,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
       </div>
 
       {/* ── Mobile: Bottom tab bar (matches mobile app) ── */}
-      <div className="lg:hidden mobile-bottomnav-wrap" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="lg:hidden print:hidden mobile-bottomnav-wrap" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <nav className="mobile-bottomnav">
           {tabs.map((tab, idx) => {
             if (tab.href === '__more__') {
