@@ -155,6 +155,11 @@ export default function TimetablePage() {
   const [showPrintModal, setShowPrintModal] = useState(false)
   const [printMode, setPrintMode] = useState<'all' | 'class'>('all')
   const [printClassId, setPrintClassId] = useState<string>('')
+
+  // Workload modal
+  const [showWorkloadModal, setShowWorkloadModal] = useState(false)
+  const [weeksPerMonth, setWeeksPerMonth] = useState(4)
+  const [workloadSort, setWorkloadSort] = useState<'name' | 'week' | 'month'>('week')
   const [sPeriods, setSPeriods] = useState(8)
   const [sDays, setSDays] = useState(5)
   const [sWeekend, setSWeekend] = useState<string[]>(['SATURDAY','SUNDAY'])
@@ -917,6 +922,14 @@ export default function TimetablePage() {
                     </svg>
                     <span className="text-[10px] leading-none">{generating ? 'Running…' : 'Auto-fill'}</span>
                   </button>
+                  {/* Workload */}
+                  <button onClick={() => setShowWorkloadModal(true)} disabled={!current}
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-emerald-50 text-emerald-700 transition-colors disabled:opacity-35 min-w-[52px]">
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                    </svg>
+                    <span className="text-[10px] leading-none">Workload</span>
+                  </button>
                 </div>
                 <span className="text-[9px] text-gray-400 pb-0.5 font-medium tracking-wide uppercase">Tools</span>
               </div>
@@ -1547,6 +1560,182 @@ export default function TimetablePage() {
           </Field>
         </ItemModal>
       )}
+
+      {/* ── Workload Modal ── */}
+      {showWorkloadModal && current && (() => {
+        // Compute per-teacher stats from timetable entries
+        const rows = current.teachers.map(teacher => {
+          const teacherEntries = current.entries.filter(e => e.teacherId === teacher.id)
+          const periodsPerWeek = teacherEntries.length
+          const periodsPerMonth = periodsPerWeek * weeksPerMonth
+          // Lessons contracted (sum of perWeek)
+          const contractedPerWeek = current.lessons
+            .filter(l => l.teacherId === teacher.id)
+            .reduce((sum, l) => sum + l.perWeek, 0)
+          // Subject breakdown: subject name → count of placed entries
+          const subjectMap: Record<string, { name: string; color: string | null; count: number }> = {}
+          for (const e of teacherEntries) {
+            const key = e.subjectId
+            if (!subjectMap[key]) subjectMap[key] = { name: e.subject.short, color: e.subject.color, count: 0 }
+            subjectMap[key].count++
+          }
+          const subjects = Object.values(subjectMap).sort((a, b) => b.count - a.count)
+          return { teacher, periodsPerWeek, periodsPerMonth, contractedPerWeek, subjects }
+        })
+
+        const sorted = [...rows].sort((a, b) => {
+          if (workloadSort === 'name') return a.teacher.lastName.localeCompare(b.teacher.lastName)
+          if (workloadSort === 'week') return b.periodsPerWeek - a.periodsPerWeek
+          return b.periodsPerMonth - a.periodsPerMonth
+        })
+
+        const totalWeek = rows.reduce((s, r) => s + r.periodsPerWeek, 0)
+        const totalMonth = totalWeek * weeksPerMonth
+        const maxWeek = Math.max(...rows.map(r => r.periodsPerWeek), 1)
+
+        return (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between bg-emerald-50 rounded-t-xl">
+                <div>
+                  <h2 className="font-bold text-gray-800 text-base">Teacher Workload</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">{current.name} · {current.academicYear} · {current.teachers.length} teachers</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-600 font-medium">Weeks/month</label>
+                    <select value={weeksPerMonth} onChange={e => setWeeksPerMonth(+e.target.value)}
+                      className="border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      {[3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </div>
+                  <button onClick={() => setShowWorkloadModal(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+                </div>
+              </div>
+
+              {/* Summary cards */}
+              <div className="px-5 py-3 grid grid-cols-3 gap-3 border-b border-gray-100">
+                <div className="bg-emerald-50 rounded-lg px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-emerald-700">{totalWeek}</div>
+                  <div className="text-xs text-gray-500">Total periods/week</div>
+                </div>
+                <div className="bg-blue-50 rounded-lg px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-blue-700">{totalMonth}</div>
+                  <div className="text-xs text-gray-500">Total periods/month ({weeksPerMonth}w)</div>
+                </div>
+                <div className="bg-indigo-50 rounded-lg px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-indigo-700">{current.teachers.length > 0 ? (totalWeek / current.teachers.length).toFixed(1) : 0}</div>
+                  <div className="text-xs text-gray-500">Avg periods/teacher/week</div>
+                </div>
+              </div>
+
+              {/* Sort controls */}
+              <div className="px-5 py-2 flex items-center gap-2 border-b border-gray-100">
+                <span className="text-xs text-gray-500">Sort by:</span>
+                {(['name', 'week', 'month'] as const).map(s => (
+                  <button key={s} onClick={() => setWorkloadSort(s)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+                      workloadSort === s ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 text-gray-600 hover:border-emerald-300'
+                    }`}>
+                    {s === 'name' ? 'Name' : s === 'week' ? 'Periods/Week ↓' : 'Periods/Month ↓'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Table */}
+              <div className="flex-1 overflow-y-auto">
+                {sorted.length === 0 ? (
+                  <p className="text-center text-gray-400 text-sm py-10">No teachers in this timetable.</p>
+                ) : (
+                  <table className="w-full text-xs border-collapse">
+                    <thead className="sticky top-0 bg-gray-50">
+                      <tr>
+                        <th className="border-b border-gray-200 px-4 py-2 text-left font-semibold text-gray-600">Teacher</th>
+                        <th className="border-b border-gray-200 px-3 py-2 text-center font-semibold text-gray-600">Contracted/w</th>
+                        <th className="border-b border-gray-200 px-3 py-2 text-center font-semibold text-gray-600">Scheduled/w</th>
+                        <th className="border-b border-gray-200 px-3 py-2 text-center font-semibold text-gray-600">Periods/month</th>
+                        <th className="border-b border-gray-200 px-4 py-2 text-left font-semibold text-gray-600">Subjects (placed)</th>
+                        <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-600 w-32">Load bar</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sorted.map((row, idx) => {
+                        const diff = row.periodsPerWeek - row.contractedPerWeek
+                        const barPct = Math.round((row.periodsPerWeek / maxWeek) * 100)
+                        const overload = diff > 0
+                        const underload = diff < 0
+                        return (
+                          <tr key={row.teacher.id} className={`border-b border-gray-100 ${idx % 2 === 0 ? '' : 'bg-gray-50'}`}>
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: row.teacher.color ?? '#6366f1' }} />
+                                <div>
+                                  <div className="font-semibold text-gray-800">{row.teacher.lastName} {row.teacher.firstName}</div>
+                                  <div className="text-[10px] text-gray-400">{row.teacher.short}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2.5 text-center">
+                              <span className="font-medium text-gray-700">{row.contractedPerWeek}</span>
+                              <span className="text-gray-400"> /w</span>
+                            </td>
+                            <td className="px-3 py-2.5 text-center">
+                              <span className={`font-bold ${
+                                overload ? 'text-orange-600' : underload ? 'text-red-500' : 'text-emerald-600'
+                              }`}>{row.periodsPerWeek}</span>
+                              {diff !== 0 && (
+                                <span className={`ml-1 text-[10px] font-medium ${overload ? 'text-orange-500' : 'text-red-400'}`}>
+                                  ({overload ? '+' : ''}{diff})
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2.5 text-center">
+                              <span className="font-bold text-blue-700">{row.periodsPerMonth}</span>
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <div className="flex flex-wrap gap-1">
+                                {row.subjects.length === 0 ? (
+                                  <span className="text-gray-300">no entries</span>
+                                ) : row.subjects.map(s => (
+                                  <span key={s.name} className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-white text-[10px] font-medium"
+                                    style={{ backgroundColor: s.color ?? '#6366f1' }}>
+                                    {s.name} ×{s.count}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2.5">
+                              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div className="h-2 rounded-full transition-all" style={{
+                                  width: `${barPct}%`,
+                                  backgroundColor: overload ? '#f97316' : underload ? '#ef4444' : '#10b981'
+                                }} />
+                              </div>
+                              <div className="text-[9px] text-gray-400 mt-0.5 text-right">{barPct}%</div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Footer legend */}
+              <div className="px-5 py-3 border-t border-gray-200 bg-gray-50 rounded-b-xl flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 text-[10px] text-gray-500">
+                  <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-emerald-500 inline-block" /> Scheduled = Contracted</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-orange-500 inline-block" /> Over-contracted</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-red-500 inline-block" /> Under-scheduled</span>
+                </div>
+                <button onClick={() => setShowWorkloadModal(false)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Close</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Print Modal ── */}
       {showPrintModal && current && (
