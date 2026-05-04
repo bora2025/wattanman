@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
@@ -99,6 +99,7 @@ function colorBadge(color: string | null, text: string) {
 export default function TimetablePage() {
   const { t } = useLanguage()
   const router = useRouter()
+  const pathname = usePathname()
 
   const [timetableList, setTimetableList] = useState<TimetableListItem[]>([])
   const [current, setCurrent] = useState<Timetable | null>(null)
@@ -249,6 +250,26 @@ export default function TimetablePage() {
       if (match) loadTimetable(match.id)
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reload current timetable when the user returns from a sub-page (e.g. lessons, teachers)
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') {
+        const needsRefresh = sessionStorage.getItem('timetable_needs_refresh')
+        if (needsRefresh && current?.id) {
+          sessionStorage.removeItem('timetable_needs_refresh')
+          loadTimetable(current.id)
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    // Also check immediately on same-tab navigation back to this page
+    if (sessionStorage.getItem('timetable_needs_refresh') && current?.id) {
+      sessionStorage.removeItem('timetable_needs_refresh')
+      loadTimetable(current.id)
+    }
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [pathname, current?.id, loadTimetable])
 
   const ttId = () => wizardTimetableId ?? current?.id ?? ''
 

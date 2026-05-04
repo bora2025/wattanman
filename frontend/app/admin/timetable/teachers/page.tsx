@@ -118,6 +118,7 @@ export default function TeachersPage() {
       }),
     })
     if (res.ok) {
+      sessionStorage.setItem('timetable_needs_refresh', '1')
       await fetchTimetableData(); setShowTeacherModal(false)
     } else {
       const err = await res.json().catch(() => ({}))
@@ -129,6 +130,7 @@ export default function TeachersPage() {
 
   async function deleteTeacher(id: string) {
     await apiFetch(`/api/timetable/teachers/${id}`, { method: 'DELETE' })
+    sessionStorage.setItem('timetable_needs_refresh', '1')
     await fetchTimetableData(); setDeleteTeacherId(null); setSelectedTeacher(null)
   }
 
@@ -150,11 +152,13 @@ export default function TeachersPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ teacherId: fLTeacher, subjectId: fLSubject, classId: fLClass, perWeek: fLPerWeek, lessonType: fLType }),
     })
+    sessionStorage.setItem('timetable_needs_refresh', '1')
     await fetchTimetableData(); setShowLessonModal(false); setSavingLesson(false)
   }
 
   async function deleteLesson(id: string) {
     await apiFetch(`/api/timetable/lessons/${id}`, { method: 'DELETE' })
+    sessionStorage.setItem('timetable_needs_refresh', '1')
     await fetchTimetableData(); setDeleteLessonId(null)
   }
 

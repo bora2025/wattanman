@@ -101,6 +101,7 @@ export default function LessonsPage() {
       body: JSON.stringify({ teacherId: fTeacher, subjectId: fSubject, classId: fClass, perWeek: fPerWeek, lessonType: fType }),
     })
     if (res.ok) {
+      sessionStorage.setItem('timetable_needs_refresh', '1')
       await fetchData(); setShowModal(false)
     } else {
       const err = await res.json().catch(() => ({}))
@@ -112,6 +113,7 @@ export default function LessonsPage() {
 
   async function handleDelete(id: string) {
     await apiFetch(`/api/timetable/lessons/${id}`, { method: 'DELETE' })
+    sessionStorage.setItem('timetable_needs_refresh', '1')
     await fetchData(); setDeleteId(null)
   }
 

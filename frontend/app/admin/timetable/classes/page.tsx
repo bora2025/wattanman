@@ -84,11 +84,13 @@ export default function ClassesPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: fName, short: fShort, color: fColor, printSubjectPicture: fPrint }),
     })
+    sessionStorage.setItem('timetable_needs_refresh', '1')
     await fetchData(); setShowModal(false); setSaving(false)
   }
 
   async function handleDelete(id: string) {
     await apiFetch(`/api/timetable/classes/${id}`, { method: 'DELETE' })
+    sessionStorage.setItem('timetable_needs_refresh', '1')
     await fetchData(); setDeleteId(null)
     if (managingClass?.id === id) setManagingClass(null)
   }

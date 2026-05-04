@@ -78,6 +78,7 @@ export default function SubjectsPage() {
       method, headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: fName, short: fShort, color: fColor, classroomCount: fRooms }),
     })
+    sessionStorage.setItem('timetable_needs_refresh', '1')
     await fetchSubjects()
     setShowModal(false)
     setSaving(false)
@@ -85,6 +86,7 @@ export default function SubjectsPage() {
 
   async function handleDelete(id: string) {
     await apiFetch(`/api/timetable/subjects/${id}`, { method: 'DELETE' })
+    sessionStorage.setItem('timetable_needs_refresh', '1')
     await fetchSubjects()
     setDeleteId(null)
   }

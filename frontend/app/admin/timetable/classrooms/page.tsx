@@ -65,11 +65,13 @@ export default function ClassroomsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: fName, short: fShort, color: fColor }),
     })
+    sessionStorage.setItem('timetable_needs_refresh', '1')
     await fetchClassrooms(); setShowModal(false); setSaving(false)
   }
 
   async function handleDelete(id: string) {
     await apiFetch(`/api/timetable/classrooms/${id}`, { method: 'DELETE' })
+    sessionStorage.setItem('timetable_needs_refresh', '1')
     await fetchClassrooms(); setDeleteId(null)
   }
 
