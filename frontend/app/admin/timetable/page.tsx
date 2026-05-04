@@ -58,6 +58,11 @@ const COLOR_PALETTE = [
 ]
 const WIZARD_STEPS = ['School Info', 'Subjects', 'Classes', 'Classrooms', 'Teachers & Contracts']
 
+// ─── Toast ──────────────────────────────────────────────────────────────────
+
+type Toast = { id: number; msg: string; ok: boolean }
+let _toastId = 0
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function colorBadge(color: string | null, text: string) {
@@ -79,6 +84,13 @@ export default function TimetablePage() {
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [showOpenModal, setShowOpenModal] = useState(false)
+  const [toasts, setToasts] = useState<Toast[]>([])
+
+  function showToast(msg: string, ok = true) {
+    const id = ++_toastId
+    setToasts(prev => [...prev, { id, msg, ok }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500)
+  }
 
   const [showWizard, setShowWizard] = useState(false)
   const [wizardStep, setWizardStep] = useState(0)
@@ -205,10 +217,13 @@ export default function TimetablePage() {
         await loadTimetable(tt.id)
         await fetchList()
         setWizardSaving(false)
+        showToast(`Timetable "${tt.name}" created successfully.`)
         setWizardStep(1)  // only advance when create succeeded
       } else {
         const body = await res.json().catch(() => ({}))
-        setWizardError(body?.message ?? `Error ${res.status} — could not create timetable.`)
+        const msg = body?.message ?? `Error ${res.status} — could not create timetable.`
+        setWizardError(msg)
+        showToast(msg, false)
         setWizardSaving(false)
       }
       return
@@ -227,82 +242,123 @@ export default function TimetablePage() {
   // CRUD
   async function saveSubject() {
     const id = ttId(); if (!id) return
-    const url = editingItem ? `/api/timetable/subjects/${editingItem.id}` : `/api/timetable/${id}/subjects`
-    await apiFetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
+    const isEdit = !!editingItem
+    const url = isEdit ? `/api/timetable/subjects/${editingItem.id}` : `/api/timetable/${id}/subjects`
+    const res = await apiFetch(url, { method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: fSubName, short: fSubShort, color: fSubColor, classroomCount: fSubRooms,
         customFields: fSubCustom ? { note: fSubCustom } : undefined }) })
-    await loadTimetable(id); setShowSubjectModal(false)
+    if (res.ok) {
+      showToast(isEdit ? `Subject "${fSubName}" updated.` : `Subject "${fSubName}" added.`)
+      await loadTimetable(id); setShowSubjectModal(false)
+    } else { showToast(`Failed to ${isEdit ? 'update' : 'add'} subject.`, false) }
   }
-  async function removeSubject(subId: string) {
+  async function removeSubject(subId: string, name: string) {
     const id = ttId(); if (!id) return
-    await apiFetch(`/api/timetable/subjects/${subId}`, { method: 'DELETE' }); await loadTimetable(id)
+    const res = await apiFetch(`/api/timetable/subjects/${subId}`, { method: 'DELETE' })
+    if (res.ok) { showToast(`Subject "${name}" removed.`); await loadTimetable(id) }
+    else showToast('Failed to remove subject.', false)
   }
   async function saveClass() {
     const id = ttId(); if (!id) return
-    const url = editingItem ? `/api/timetable/classes/${editingItem.id}` : `/api/timetable/${id}/classes`
-    await apiFetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
+    const isEdit = !!editingItem
+    const url = isEdit ? `/api/timetable/classes/${editingItem.id}` : `/api/timetable/${id}/classes`
+    const res = await apiFetch(url, { method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: fClsName, short: fClsShort, color: fClsColor,
         printSubjectPicture: fClsPrint, customFields: fClsCustom ? { note: fClsCustom } : undefined }) })
-    await loadTimetable(id); setShowClassModal(false)
+    if (res.ok) {
+      showToast(isEdit ? `Class "${fClsName}" updated.` : `Class "${fClsName}" added.`)
+      await loadTimetable(id); setShowClassModal(false)
+    } else { showToast(`Failed to ${isEdit ? 'update' : 'add'} class.`, false) }
   }
-  async function removeClass(clsId: string) {
+  async function removeClass(clsId: string, name: string) {
     const id = ttId(); if (!id) return
-    await apiFetch(`/api/timetable/classes/${clsId}`, { method: 'DELETE' }); await loadTimetable(id)
+    const res = await apiFetch(`/api/timetable/classes/${clsId}`, { method: 'DELETE' })
+    if (res.ok) { showToast(`Class "${name}" removed.`); await loadTimetable(id) }
+    else showToast('Failed to remove class.', false)
   }
   async function saveClassroom() {
     const id = ttId(); if (!id) return
-    const url = editingItem ? `/api/timetable/classrooms/${editingItem.id}` : `/api/timetable/${id}/classrooms`
-    await apiFetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
+    const isEdit = !!editingItem
+    const url = isEdit ? `/api/timetable/classrooms/${editingItem.id}` : `/api/timetable/${id}/classrooms`
+    const res = await apiFetch(url, { method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: fRmName, short: fRmShort, color: fRmColor,
         customFields: fRmCustom ? { note: fRmCustom } : undefined }) })
-    await loadTimetable(id); setShowClassroomModal(false)
+    if (res.ok) {
+      showToast(isEdit ? `Classroom "${fRmName}" updated.` : `Classroom "${fRmName}" added.`)
+      await loadTimetable(id); setShowClassroomModal(false)
+    } else { showToast(`Failed to ${isEdit ? 'update' : 'add'} classroom.`, false) }
   }
-  async function removeClassroom(rmId: string) {
+  async function removeClassroom(rmId: string, name: string) {
     const id = ttId(); if (!id) return
-    await apiFetch(`/api/timetable/classrooms/${rmId}`, { method: 'DELETE' }); await loadTimetable(id)
+    const res = await apiFetch(`/api/timetable/classrooms/${rmId}`, { method: 'DELETE' })
+    if (res.ok) { showToast(`Classroom "${name}" removed.`); await loadTimetable(id) }
+    else showToast('Failed to remove classroom.', false)
   }
   async function saveTeacher() {
     const id = ttId(); if (!id) return
-    const url = editingItem ? `/api/timetable/teachers/${editingItem.id}` : `/api/timetable/${id}/teachers`
-    await apiFetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
+    const isEdit = !!editingItem
+    const url = isEdit ? `/api/timetable/teachers/${editingItem.id}` : `/api/timetable/${id}/teachers`
+    const res = await apiFetch(url, { method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lastName: fTLast, firstName: fTFirst, short: fTShort,
         sex: fTSex || null, email: fTEmail || null, phone: fTPhone || null,
         color: fTColor, classTeacherId: fTClassTeacher || null }) })
-    await loadTimetable(id); setShowTeacherModal(false)
+    const fullName = `${fTFirst} ${fTLast}`.trim()
+    if (res.ok) {
+      showToast(isEdit ? `Teacher "${fullName}" updated.` : `Teacher "${fullName}" added.`)
+      await loadTimetable(id); setShowTeacherModal(false)
+    } else { showToast(`Failed to ${isEdit ? 'update' : 'add'} teacher.`, false) }
   }
-  async function removeTeacher(tchId: string) {
+  async function removeTeacher(tchId: string, name: string) {
     const id = ttId(); if (!id) return
-    await apiFetch(`/api/timetable/teachers/${tchId}`, { method: 'DELETE' }); await loadTimetable(id)
+    const res = await apiFetch(`/api/timetable/teachers/${tchId}`, { method: 'DELETE' })
+    if (res.ok) { showToast(`Teacher "${name}" removed.`); await loadTimetable(id) }
+    else showToast('Failed to remove teacher.', false)
   }
   async function saveLesson() {
     const id = ttId(); if (!id) return
-    const url = editingItem ? `/api/timetable/lessons/${editingItem.id}` : `/api/timetable/${id}/lessons`
-    await apiFetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
+    const isEdit = !!editingItem
+    const url = isEdit ? `/api/timetable/lessons/${editingItem.id}` : `/api/timetable/${id}/lessons`
+    const res = await apiFetch(url, { method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ teacherId: fLTeacher, subjectId: fLSubject, classId: fLClass,
         perWeek: fLPerWeek, lessonType: fLType }) })
-    if (id) await loadTimetable(id); setShowLessonModal(false)
+    if (res.ok) {
+      showToast(isEdit ? 'Lesson contract updated.' : 'Lesson contract added.')
+      await loadTimetable(id); setShowLessonModal(false)
+    } else { showToast(`Failed to ${isEdit ? 'update' : 'add'} lesson.`, false) }
   }
   async function removeLesson(lsnId: string) {
     const id = ttId(); if (!id) return
-    await apiFetch(`/api/timetable/lessons/${lsnId}`, { method: 'DELETE' }); await loadTimetable(id)
+    const res = await apiFetch(`/api/timetable/lessons/${lsnId}`, { method: 'DELETE' })
+    if (res.ok) { showToast('Lesson contract removed.'); await loadTimetable(id) }
+    else showToast('Failed to remove lesson.', false)
   }
   async function handleGenerate() {
     const id = current?.id; if (!id) return
     setGenerating(true)
     const res = await apiFetch(`/api/timetable/${id}/generate`, { method: 'POST' })
-    if (res.ok) await loadTimetable(id); setGenerating(false)
+    if (res.ok) {
+      const data = await res.json()
+      showToast(`Timetable generated — ${data.generated} entries created.`)
+      await loadTimetable(id)
+    } else { showToast('Timetable generation failed.', false) }
+    setGenerating(false)
   }
   async function handleSave() {
     if (!current) return
-    await apiFetch(`/api/timetable/${current.id}`, { method: 'PUT',
+    const res = await apiFetch(`/api/timetable/${current.id}`, { method: 'PUT',
       headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: current.status }) })
+    if (res.ok) showToast('Timetable saved.')
+    else showToast('Failed to save timetable.', false)
   }
 
   async function handleDeleteTimetable(id: string, name: string) {
     if (!window.confirm(`Delete "${name}"?\n\nThis will permanently remove the timetable and all its subjects, classes, classrooms, teachers, lessons and entries.`)) return
-    await apiFetch(`/api/timetable/${id}`, { method: 'DELETE' })
-    if (current?.id === id) setCurrent(null)
-    await fetchList()
+    const res = await apiFetch(`/api/timetable/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      showToast(`Timetable "${name}" deleted.`)
+      if (current?.id === id) setCurrent(null)
+      await fetchList()
+    } else { showToast(`Failed to delete "${name}".`, false) }
   }
 
   // Open modals
@@ -587,7 +643,7 @@ export default function TimetablePage() {
                   title="Subjects" addLabel="Enter Subject" items={current.subjects} onNew={() => openSubjectModal()}
                   columns={['Name', 'Short', 'Rooms', 'Color']}
                   renderRow={(s: TSubject) => [s.name, s.short, String(s.classroomCount), colorBadge(s.color, '  ')]}
-                  onEdit={(s: TSubject) => openSubjectModal(s)} onRemove={(s: TSubject) => removeSubject(s.id)}
+                  onEdit={(s: TSubject) => openSubjectModal(s)} onRemove={(s: TSubject) => removeSubject(s.id, s.name)}
                 />
               )}
 
@@ -597,7 +653,7 @@ export default function TimetablePage() {
                   title="Classes" addLabel="Enter Class" items={current.classes} onNew={() => openClassModal()}
                   columns={['Name', 'Short', 'Color', 'Print Pic']}
                   renderRow={(c: TClass) => [c.name, c.short, colorBadge(c.color, '  '), c.printSubjectPicture ? '✓' : '—']}
-                  onEdit={(c: TClass) => openClassModal(c)} onRemove={(c: TClass) => removeClass(c.id)}
+                  onEdit={(c: TClass) => openClassModal(c)} onRemove={(c: TClass) => removeClass(c.id, c.name)}
                 />
               )}
 
@@ -607,7 +663,7 @@ export default function TimetablePage() {
                   title="Classrooms" addLabel="Enter Classroom" items={current.classrooms} onNew={() => openClassroomModal()}
                   columns={['Name', 'Short', 'Color']}
                   renderRow={(r: TClassroom) => [r.name, r.short, colorBadge(r.color, '  ')]}
-                  onEdit={(r: TClassroom) => openClassroomModal(r)} onRemove={(r: TClassroom) => removeClassroom(r.id)}
+                  onEdit={(r: TClassroom) => openClassroomModal(r)} onRemove={(r: TClassroom) => removeClassroom(r.id, r.name)}
                 />
               )}
 
@@ -617,7 +673,8 @@ export default function TimetablePage() {
                   title="Teachers" addLabel="Enter Teacher" items={current.teachers} onNew={() => openTeacherModal()}
                   columns={['Last Name', 'First Name', 'Short', 'Color', 'Class Teacher']}
                   renderRow={(t: TTeacher) => [t.lastName, t.firstName, t.short, colorBadge(t.color, '  '), t.classTeacher?.short ?? '—']}
-                  onEdit={(t: TTeacher) => openTeacherModal(t)} onRemove={(t: TTeacher) => removeTeacher(t.id)}
+                  onEdit={(t: TTeacher) => openTeacherModal(t)}
+                  onRemove={(t: TTeacher) => removeTeacher(t.id, `${t.firstName} ${t.lastName}`.trim())}
                   extraAction={(t: TTeacher) => (
                     <button onClick={() => openContractPanel(t)} className="text-emerald-600 hover:underline mr-2 text-xs font-medium">Contract</button>
                   )}
@@ -866,12 +923,26 @@ export default function TimetablePage() {
         </div>
       )}
 
+      {/* Toast notifications */}
+      <div className="fixed bottom-5 right-5 z-[100] flex flex-col gap-2 pointer-events-none">
+        {toasts.map(t => (
+          <div key={t.id}
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-medium
+              animate-[slideUp_.25s_ease-out]
+              ${t.ok ? 'bg-emerald-600' : 'bg-red-600'}`}>
+            <span>{t.ok ? '✓' : '✗'}</span>
+            <span>{t.msg}</span>
+          </div>
+        ))}
+      </div>
+
       <style jsx global>{`
         .tt-btn { padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: opacity .15s; }
         .tt-btn:hover { opacity: .85; }
         .label-sm { display: block; font-size: 11px; font-weight: 600; color: #4b5563; margin-bottom: 3px; }
         .input-field { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 10px; font-size: 13px; outline: none; background: #fff; }
         .input-field:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
+        @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
         @media print { .print\\:hidden { display: none !important; } .print\\:bg-white { background: white !important; } }
       `}</style>
     </AuthGuard>
