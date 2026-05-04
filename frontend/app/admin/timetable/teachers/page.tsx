@@ -470,6 +470,20 @@ export default function TeachersPage() {
           </div>
         </div>
       )}
+
+      {/* Delete lesson confirm */}
+      {deleteLessonId && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
+            <p className="text-gray-800 font-semibold mb-2">Remove this lesson contract?</p>
+            <p className="text-xs text-gray-500 mb-4">Scheduled entries linked to this lesson will lose their lesson reference.</p>
+            <div className="flex justify-center gap-3">
+              <button onClick={() => setDeleteLessonId(null)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => deleteLesson(deleteLessonId)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm">Remove</button>
+            </div>
+          </div>
+        </div>
+      )}
     </AuthGuard>
   )
 }
