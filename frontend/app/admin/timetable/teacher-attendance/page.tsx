@@ -124,7 +124,7 @@ export default function TeacherAttendancePage() {
   const periodArr = Array.from({ length: periods }, (_, i) => i + 1)
 
   return (
-    <AuthGuard allowedRoles={['admin']}>
+    <AuthGuard allowedRoles={['ADMIN']}>
       <div className="flex h-screen bg-gray-100">
         <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
         <div className="flex-1 flex flex-col overflow-hidden">

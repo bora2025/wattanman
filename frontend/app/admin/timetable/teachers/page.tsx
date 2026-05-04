@@ -155,7 +155,7 @@ export default function TeachersPage() {
   // The teacher has .lessons when the full timetable is fetched with includes
 
   return (
-    <AuthGuard allowedRoles={['admin']}>
+    <AuthGuard allowedRoles={['ADMIN']}>
       <div className="flex h-screen bg-gray-100">
         <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
         <div className="flex-1 flex flex-col overflow-hidden">

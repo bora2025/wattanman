@@ -479,7 +479,7 @@ export default function TimetablePage() {
   // ─── Render ────────────────────────────────────────────────────────
 
   return (
-    <AuthGuard allowedRoles={['admin']}>
+    <AuthGuard allowedRoles={['ADMIN']}>
       <div className="flex h-screen bg-gray-100 print:bg-white">
         <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
 
