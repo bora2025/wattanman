@@ -42,7 +42,7 @@ interface TLesson {
 }
 interface TEntry {
   id: string; classId: string; teacherId: string; subjectId: string
-  classroomId: string | null; day: number; period: number
+  lessonId: string | null; classroomId: string | null; day: number; period: number
   class: TClass; teacher: TTeacher; subject: TSubject; classroom: TClassroom | null
 }
 interface TimetableListItem {
@@ -474,8 +474,25 @@ export default function TimetablePage() {
   const [showLessonPanel, setShowLessonPanel] = useState(true)
   const [lessonFilterClass, setLessonFilterClass] = useState<string>('ALL')
 
-  async function placeEntry(classId: string, day: number, period: number, lesson: TLesson) {
-    if (!current) return
+  async function placeEntry(classId: string, day: number, period: number, lesson: TLesson, sourceEntryId?: string): Promise<boolean> {
+    if (!current) return false
+    // Enforce perWeek limit — when moving an existing entry, exclude it from the count
+    if (lesson.id) {
+      const placed = current.entries.filter(e => e.lessonId === lesson.id && e.id !== sourceEntryId).length
+      if (placed >= lesson.perWeek) {
+        showToast(`Fully scheduled: ${lesson.subject.short} for ${lesson.class.short} already placed ${placed}/${lesson.perWeek}×/week`, false)
+        return false
+      }
+    }
+    // Detect teacher conflict at same day+period in a different class
+    const conflict = current.entries.find(
+      e => e.teacherId === lesson.teacherId && e.day === day && e.period === period
+        && e.classId !== classId && e.id !== sourceEntryId
+    )
+    if (conflict) {
+      showToast(`Conflict: ${lesson.teacher.short} already has ${conflict.subject.short} (${conflict.class.short}) at this slot`, false)
+      return false
+    }
     const res = await apiFetch(`/api/timetable/${current.id}/entries`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -493,8 +510,10 @@ export default function TimetablePage() {
         const filtered = prev.entries.filter(e => !(e.classId === classId && e.day === day && e.period === period))
         return { ...prev, entries: [...filtered, entry] }
       })
+      return true
     } else {
       showToast('Failed to place entry.', false)
+      return false
     }
   }
 
@@ -597,7 +616,18 @@ export default function TimetablePage() {
             const raw = e.dataTransfer.getData('lesson')
             if (!raw) return
             const lesson: TLesson = JSON.parse(raw)
-            await placeEntry(cls.id, day, period, lesson)
+            const srcId = e.dataTransfer.getData('sourceEntryId') || undefined
+            // No-op if dropped onto the same cell it was dragged from
+            if (srcId) {
+              const src = current?.entries.find(en => en.id === srcId)
+              if (src && src.classId === cls.id && src.day === day && src.period === period) return
+            }
+            const ok = await placeEntry(cls.id, day, period, lesson, srcId)
+            // If moving from another cell, delete the source entry
+            if (ok && srcId) {
+              const delRes = await apiFetch(`/api/timetable/entries/${srcId}`, { method: 'DELETE' })
+              if (delRes.ok) setCurrent(prev => prev ? { ...prev, entries: prev.entries.filter(e => e.id !== srcId) } : prev)
+            }
           }}
         >
           {entry ? (
@@ -607,10 +637,10 @@ export default function TimetablePage() {
               draggable
               onDragStart={e => {
                 setDragEntry(entry)
-                // create a synthetic lesson from the entry so it can be re-placed
+                // Synth carries the original lessonId so perWeek checks work correctly
                 const synth: TLesson = {
-                  id: '', teacherId: entry.teacherId, subjectId: entry.subjectId,
-                  classId: entry.classId, perWeek: 1, lessonType: 'SINGLE',
+                  id: entry.lessonId ?? '', teacherId: entry.teacherId, subjectId: entry.subjectId,
+                  classId: entry.classId, perWeek: 999, lessonType: 'SINGLE',
                   teacher: entry.teacher, subject: entry.subject, class: entry.class,
                 }
                 e.dataTransfer.setData('lesson', JSON.stringify(synth))
@@ -940,7 +970,10 @@ export default function TimetablePage() {
                           ? <p className="text-[10px] text-gray-400 text-center pt-4">
                               {current.lessons.length === 0 ? <>No lessons yet.<br/>Add via Lesson button.</> : 'No lessons for this class.'}
                             </p>
-                          : filtered.map(lesson => (
+                          : filtered.map(lesson => {
+                              const placed = current.entries.filter(e => e.lessonId === lesson.id).length
+                              const full = placed >= lesson.perWeek
+                              return (
                               <div
                                 key={lesson.id}
                                 draggable
@@ -949,11 +982,16 @@ export default function TimetablePage() {
                                   e.dataTransfer.setData('lesson', JSON.stringify(lesson))
                                 }}
                                 onDragEnd={() => setDragLesson(null)}
-                                className="rounded-lg px-2 py-1.5 text-white text-[10px] cursor-grab active:cursor-grabbing select-none shadow-sm hover:opacity-90 transition-opacity"
+                                className={`rounded-lg px-2 py-1.5 text-white text-[10px] cursor-grab active:cursor-grabbing select-none shadow-sm transition-opacity ${full ? 'opacity-40 hover:opacity-60' : 'hover:opacity-90'}`}
                                 style={{ backgroundColor: lesson.subject.color ?? '#6366f1' }}
-                                title={`${lesson.subject.name} · ${lesson.teacher.lastName} ${lesson.teacher.firstName} · ${lesson.class.name}`}
+                                title={`${lesson.subject.name} · ${lesson.teacher.lastName} ${lesson.teacher.firstName} · ${lesson.class.name}\n${placed}/${lesson.perWeek} periods scheduled`}
                               >
-                                <div className="font-bold truncate">{lesson.subject.short}</div>
+                                <div className="flex items-center justify-between">
+                                  <div className="font-bold truncate">{lesson.subject.short}</div>
+                                  <span className={`text-[9px] font-bold px-1 rounded ml-1 flex-shrink-0 ${full ? 'bg-green-400/80' : placed > 0 ? 'bg-yellow-400/80 text-yellow-900' : 'bg-black/25'}`}>
+                                    {placed}/{lesson.perWeek}
+                                  </span>
+                                </div>
                                 <div className="flex items-center gap-1 mt-0.5">
                                   <span className="rounded px-1 py-0 text-[9px] font-medium"
                                     style={{ backgroundColor: lesson.teacher.color ?? '#374151' }}>
@@ -965,9 +1003,10 @@ export default function TimetablePage() {
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[9px] opacity-70 mt-0.5">{lesson.perWeek}×/w · {lesson.lessonType.toLowerCase()}</div>
+                                <div className="text-[9px] opacity-70 mt-0.5">{lesson.lessonType.toLowerCase()}{full ? ' ✓' : ''}</div>
                               </div>
-                            ))
+                              )
+                            })
                       })()}
                     </div>
                   </>
