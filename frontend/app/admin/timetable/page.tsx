@@ -68,16 +68,23 @@ let _toastId = 0
 function defaultPeriodTimes(n: number): string[] {
   const morning = ['07:00', '08:00', '09:00', '10:00', '11:00']
   const afternoon = ['13:00', '14:00', '15:00', '16:00', '17:00']
-  const m = Math.min(n, 4)
+  const m = Math.min(n, 5)
   const a = Math.max(0, n - m)
   return [...morning.slice(0, m), ...afternoon.slice(0, a)]
 }
 
 function getPeriodTimes(tt: { periodsPerDay: number; periodTimes?: string | null }): string[] {
+  const defaults = defaultPeriodTimes(tt.periodsPerDay)
   if (tt.periodTimes) {
-    try { return JSON.parse(tt.periodTimes) } catch {}
+    try {
+      const saved: string[] = JSON.parse(tt.periodTimes)
+      // Always return exactly periodsPerDay entries, extending with defaults if saved has fewer
+      const result = [...saved]
+      while (result.length < tt.periodsPerDay) result.push(defaults[result.length] ?? '00:00')
+      return result.slice(0, tt.periodsPerDay)
+    } catch {}
   }
-  return defaultPeriodTimes(tt.periodsPerDay)
+  return defaults
 }
 
 function colorBadge(color: string | null, text: string) {
