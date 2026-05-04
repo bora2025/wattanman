@@ -298,6 +298,13 @@ export default function TimetablePage() {
       headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: current.status }) })
   }
 
+  async function handleDeleteTimetable(id: string, name: string) {
+    if (!window.confirm(`Delete "${name}"?\n\nThis will permanently remove the timetable and all its subjects, classes, classrooms, teachers, lessons and entries.`)) return
+    await apiFetch(`/api/timetable/${id}`, { method: 'DELETE' })
+    if (current?.id === id) setCurrent(null)
+    await fetchList()
+  }
+
   // Open modals
   function openSubjectModal(item?: TSubject) {
     setEditingItem(item ?? null); setFSubName(item?.name ?? ''); setFSubShort(item?.short ?? '')
@@ -399,6 +406,11 @@ export default function TimetablePage() {
               className="tt-btn bg-emerald-600 text-white disabled:opacity-40">
               {generating ? 'Generating…' : 'Test'}
             </button>
+            <button onClick={() => current && handleDeleteTimetable(current.id, current.name)}
+              disabled={!current}
+              className="tt-btn bg-red-50 text-red-600 border border-red-200 disabled:opacity-40">
+              Delete
+            </button>
             {current && (
               <span className="ml-auto text-sm text-gray-500 truncate max-w-[220px]">
                 {current.name} · {current.academicYear}
@@ -444,11 +456,18 @@ export default function TimetablePage() {
           <div className="space-y-1 max-h-80 overflow-y-auto">
             {timetableList.length === 0 && <p className="text-gray-400 text-sm text-center py-8">No timetables saved yet.</p>}
             {timetableList.map(tt => (
-              <button key={tt.id} className="w-full text-left px-3 py-2 rounded hover:bg-indigo-50 border border-transparent hover:border-indigo-200"
-                onClick={async () => { await loadTimetable(tt.id); setShowOpenModal(false) }}>
-                <div className="font-medium text-gray-800">{tt.name}</div>
-                <div className="text-xs text-gray-500">{tt.academicYear} · {tt.status}</div>
-              </button>
+              <div key={tt.id} className="flex items-center gap-2 rounded border border-transparent hover:border-indigo-200 hover:bg-indigo-50 px-3 py-2 transition-colors">
+                <button className="flex-1 text-left"
+                  onClick={async () => { await loadTimetable(tt.id); setShowOpenModal(false) }}>
+                  <div className="font-medium text-gray-800">{tt.name}</div>
+                  <div className="text-xs text-gray-500">{tt.academicYear} · {tt.status}</div>
+                </button>
+                <button
+                  onClick={async () => { await handleDeleteTimetable(tt.id, tt.name); }}
+                  className="shrink-0 px-2 py-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded border border-transparent hover:border-red-200">
+                  Delete
+                </button>
+              </div>
             ))}
           </div>
         </ModalShell>
