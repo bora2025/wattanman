@@ -451,6 +451,7 @@ export default function TimetablePage() {
   const [dragEntry, setDragEntry] = useState<TEntry | null>(null)
   const [dropTarget, setDropTarget] = useState<{ classId: string; day: number; period: number } | null>(null)
   const [showLessonPanel, setShowLessonPanel] = useState(true)
+  const [lessonFilterClass, setLessonFilterClass] = useState<string>('ALL')
 
   async function placeEntry(classId: string, day: number, period: number, lesson: TLesson) {
     if (!current) return
@@ -726,37 +727,62 @@ export default function TimetablePage() {
                   </button>
                 </div>
                 {showLessonPanel && (
-                  <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                    {current.lessons.length === 0 && (
-                      <p className="text-[10px] text-gray-400 text-center pt-4">No lessons yet.<br/>Add via Lesson button.</p>
-                    )}
-                    {current.lessons.map(lesson => (
-                      <div
-                        key={lesson.id}
-                        draggable
-                        onDragStart={e => {
-                          setDragLesson(lesson)
-                          e.dataTransfer.setData('lesson', JSON.stringify(lesson))
-                        }}
-                        onDragEnd={() => setDragLesson(null)}
-                        className="rounded-lg px-2 py-1.5 text-white text-[10px] cursor-grab active:cursor-grabbing select-none shadow-sm hover:opacity-90 transition-opacity"
-                        style={{ backgroundColor: lesson.subject.color ?? '#6366f1' }}
-                        title={`${lesson.subject.name} · ${lesson.teacher.lastName} ${lesson.teacher.firstName} · ${lesson.class.name}`}
+                  <>
+                    {/* Class filter */}
+                    <div className="px-2 py-1.5 border-b border-gray-100">
+                      <select
+                        value={lessonFilterClass}
+                        onChange={e => setLessonFilterClass(e.target.value)}
+                        className="w-full text-[10px] rounded border border-gray-200 bg-gray-50 px-1 py-0.5 text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                       >
-                        <div className="font-bold truncate">{lesson.subject.short}</div>
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <span className="rounded px-1 py-0 text-[9px] font-medium"
-                            style={{ backgroundColor: lesson.teacher.color ?? '#374151' }}>
-                            {lesson.teacher.short}
-                          </span>
-                          <span className="rounded px-1 py-0 text-[9px] font-medium bg-black/20">
-                            {lesson.class.short}
-                          </span>
-                        </div>
-                        <div className="text-[9px] opacity-70 mt-0.5">{lesson.perWeek}×/w · {lesson.lessonType.toLowerCase()}</div>
-                      </div>
-                    ))}
-                  </div>
+                        <option value="ALL">All Classes</option>
+                        {[...current.classes]
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map(cls => (
+                            <option key={cls.id} value={cls.id}>{cls.short || cls.name}</option>
+                          ))}
+                      </select>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                      {(() => {
+                        const filtered = current.lessons.filter(
+                          l => lessonFilterClass === 'ALL' || l.classId === lessonFilterClass
+                        )
+                        return filtered.length === 0
+                          ? <p className="text-[10px] text-gray-400 text-center pt-4">
+                              {current.lessons.length === 0 ? <>No lessons yet.<br/>Add via Lesson button.</> : 'No lessons for this class.'}
+                            </p>
+                          : filtered.map(lesson => (
+                              <div
+                                key={lesson.id}
+                                draggable
+                                onDragStart={e => {
+                                  setDragLesson(lesson)
+                                  e.dataTransfer.setData('lesson', JSON.stringify(lesson))
+                                }}
+                                onDragEnd={() => setDragLesson(null)}
+                                className="rounded-lg px-2 py-1.5 text-white text-[10px] cursor-grab active:cursor-grabbing select-none shadow-sm hover:opacity-90 transition-opacity"
+                                style={{ backgroundColor: lesson.subject.color ?? '#6366f1' }}
+                                title={`${lesson.subject.name} · ${lesson.teacher.lastName} ${lesson.teacher.firstName} · ${lesson.class.name}`}
+                              >
+                                <div className="font-bold truncate">{lesson.subject.short}</div>
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <span className="rounded px-1 py-0 text-[9px] font-medium"
+                                    style={{ backgroundColor: lesson.teacher.color ?? '#374151' }}>
+                                    {lesson.teacher.short}
+                                  </span>
+                                  {lessonFilterClass === 'ALL' && (
+                                    <span className="rounded px-1 py-0 text-[9px] font-medium bg-black/20">
+                                      {lesson.class.short}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[9px] opacity-70 mt-0.5">{lesson.perWeek}×/w · {lesson.lessonType.toLowerCase()}</div>
+                              </div>
+                            ))
+                      })()}
+                    </div>
+                  </>
                 )}
               </div>
             )}
