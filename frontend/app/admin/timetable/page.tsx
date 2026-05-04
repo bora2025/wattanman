@@ -225,6 +225,18 @@ export default function TimetablePage() {
   }, [])
 
   // Auto-load the timetable whose academicYear matches the current year on first mount
+  // Prevent browser from navigating when a lesson card is accidentally dropped
+  // on a sidebar link or any non-grid element
+  useEffect(() => {
+    const prevent = (e: DragEvent) => { e.preventDefault() }
+    document.addEventListener('dragover', prevent)
+    document.addEventListener('drop', prevent)
+    return () => {
+      document.removeEventListener('dragover', prevent)
+      document.removeEventListener('drop', prevent)
+    }
+  }, [])
+
   useEffect(() => {
     const currentYear = new Date().getFullYear()
     fetchList().then(list => {
@@ -449,7 +461,7 @@ export default function TimetablePage() {
         classId, day, period,
         teacherId: lesson.teacherId,
         subjectId: lesson.subjectId,
-        lessonId: lesson.id,
+        ...(lesson.id ? { lessonId: lesson.id } : {}),
       }),
     })
     if (res.ok) {
