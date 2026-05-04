@@ -904,7 +904,7 @@ export default function TimetablePage() {
                 <span className="text-[9px] text-gray-400 pb-0.5 font-medium tracking-wide uppercase">{t('timetable.view')}</span>
               </div>
 
-              {/* ── Group: Tools ── */}}
+              {/* ── Group: Tools ── */}
               <div className="flex flex-col items-center border-r border-gray-200 px-1">
                 <div className="flex items-end gap-1 py-1.5 flex-1">
                   {/* Schedule */}
