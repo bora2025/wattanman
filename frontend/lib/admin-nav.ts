@@ -29,4 +29,7 @@ export const adminNav = [
   { label: 'nav.sessionSettings', href: '/admin/session-settings', icon: 'clock' },
   { label: 'nav.holidays', href: '/admin/holidays', icon: 'holiday' },
   { label: 'nav.settings', href: '/admin/settings', icon: 'settings' },
+
+  // Timetable
+  { label: 'nav.timetable', href: '/admin/timetable', icon: 'calendar' },
 ]

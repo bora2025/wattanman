@@ -218,3 +218,156 @@ model AttendanceFormatRule {
   @@unique([scope, organizationId])
 }
 
+// ─── Timetable Module ────────────────────────────────────────────────────────
+
+model Timetable {
+  id            String   @id @default(cuid())
+  name          String
+  short         String?
+  academicYear  String
+  periodsPerDay Int      @default(8)
+  numberOfDays  Int      @default(5)
+  weekend       String[] // e.g. ["SATURDAY","SUNDAY"]
+  timeOffRules  String?  // JSON: time-off window config
+  distribution  String?  // Distribution constraints (JSON)
+  homeworkPrep  String?  // Homework preparation constraints (JSON)
+  maxOnDay      Int?     // Max lessons allowed on one day
+  docNotes      String?  // Freeform doc / notes field
+  status        String   @default("DRAFT") // DRAFT | PUBLISHED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  subjects    TimetableSubject[]
+  classes     TimetableClass[]
+  classrooms  TimetableClassroom[]
+  teachers    TimetableTeacher[]
+  lessons     TimetableLesson[]
+  entries     TimetableEntry[]
+}
+
+model TimetableSubject {
+  id             String    @id @default(cuid())
+  timetableId    String
+  timetable      Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+  name           String
+  short          String
+  color          String?
+  picture        String?
+  classroomCount Int       @default(1)
+  customFields   Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  lessons TimetableLesson[]
+  entries TimetableEntry[]
+}
+
+model TimetableClass {
+  id                  String    @id @default(cuid())
+  timetableId         String
+  timetable           Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+  name                String
+  short               String
+  color               String?
+  picture             String?
+  printSubjectPicture Boolean   @default(false)
+  customFields        Json?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  classTeacher TimetableTeacher? @relation("ClassTeacher")
+  lessons      TimetableLesson[]
+  entries      TimetableEntry[]
+}
+
+model TimetableClassroom {
+  id           String    @id @default(cuid())
+  timetableId  String
+  timetable    Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+  name         String
+  short        String
+  color        String?
+  picture      String?
+  customFields Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  entries TimetableEntry[]
+}
+
+model TimetableTeacher {
+  id             String    @id @default(cuid())
+  timetableId    String
+  timetable      Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+  lastName       String
+  firstName      String
+  short          String
+  sex            String?   // MALE | FEMALE
+  email          String?
+  phone          String?
+  color          String?
+  classTeacherId String?   @unique
+  classTeacher   TimetableClass? @relation("ClassTeacher", fields: [classTeacherId], references: [id])
+  qrCode         String?   @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  lessons     TimetableLesson[]
+  entries     TimetableEntry[]
+  attendances TimetableTeacherAttendance[]
+}
+
+model TimetableLesson {
+  id          String           @id @default(cuid())
+  timetableId String
+  timetable   Timetable        @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+  teacherId   String
+  teacher     TimetableTeacher @relation(fields: [teacherId], references: [id])
+  subjectId   String
+  subject     TimetableSubject @relation(fields: [subjectId], references: [id])
+  classId     String
+  class       TimetableClass   @relation(fields: [classId], references: [id])
+  perWeek     Int              @default(1)
+  lessonType  String           @default("SINGLE") // SINGLE | DOUBLE | TRIPLE
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  entries TimetableEntry[]
+}
+
+model TimetableEntry {
+  id          String              @id @default(cuid())
+  timetableId String
+  timetable   Timetable           @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+  lessonId    String?
+  lesson      TimetableLesson?    @relation(fields: [lessonId], references: [id])
+  classId     String
+  class       TimetableClass      @relation(fields: [classId], references: [id])
+  teacherId   String
+  teacher     TimetableTeacher    @relation(fields: [teacherId], references: [id])
+  subjectId   String
+  subject     TimetableSubject    @relation(fields: [subjectId], references: [id])
+  classroomId String?
+  classroom   TimetableClassroom? @relation(fields: [classroomId], references: [id])
+  day         Int                 // 1=Mon … 6=Sat
+  period      Int                 // 1-based period
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([timetableId, classId, day, period])
+}
+
+model TimetableTeacherAttendance {
+  id        String           @id @default(cuid())
+  teacherId String
+  teacher   TimetableTeacher @relation(fields: [teacherId], references: [id])
+  date      DateTime
+  period    Int
+  status    String           @default("PRESENT") // PRESENT | ABSENT | LATE
+  checkIn   DateTime?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([teacherId, date, period])
+}
+

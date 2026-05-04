@@ -13,6 +13,7 @@ import { HolidaysModule } from './holidays/holidays.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { StudyYearsModule } from './study-years/study-years.module';
 import { CardTemplatesModule } from './card-templates/card-templates.module';
+import { TimetableModule } from './timetable/timetable.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CardTemplatesModule } from './card-templates/card-templates.module';
     DepartmentsModule,
     StudyYearsModule,
     CardTemplatesModule,
+    TimetableModule,
   ],
   controllers: [AppController],
   providers: [

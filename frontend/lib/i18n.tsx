@@ -544,6 +544,30 @@ const en: Record<string, string> = {
   // Teacher classes
   'teacherClasses.title': 'My Classes',
   'teacherClasses.contactAdmin': 'Contact your admin to get classes assigned',
+
+  // Timetable
+  'nav.timetable': 'Timetable',
+  'timetable.title': 'Timetable',
+  'timetable.subtitle': 'Build and manage class timetables (ASC-style)',
+  'timetable.new': 'New',
+  'timetable.open': 'Open',
+  'timetable.save': 'Save',
+  'timetable.print': 'Print',
+  'timetable.printPreview': 'Print Preview',
+  'timetable.subject': 'Subject',
+  'timetable.class': 'Class',
+  'timetable.classrooms': 'Classrooms',
+  'timetable.teacher': 'Teacher',
+  'timetable.test': 'Test',
+  'timetable.generate': 'Generate Timetable',
+  'timetable.noOpen': 'No timetable open',
+  'timetable.noOpenHint': 'Click New to create one or Open to load an existing one.',
+  'timetable.zoom': 'Zoom',
+  'timetable.subjects': 'Subjects',
+  'timetable.classes': 'Classes',
+  'timetable.teachers': 'Teachers',
+  'timetable.lessons': 'Lessons',
+  'timetable.teacherAttendance': 'Teacher Attendance',
 }
 
 /* ───────── Khmer translations ───────── */
@@ -1088,6 +1112,23 @@ const kh: Record<string, string> = {
   // Teacher classes
   'teacherClasses.title': 'ថ្នាក់របស់ខ្ញុំ',
   'teacherClasses.contactAdmin': 'សូមទាក់ទងអ្នកគ្រប់គ្រងដើម្បីបន្ថែមថ្នាក់',
+
+  // Timetable
+  'nav.timetable': 'តារាងពេលវេលា',
+  'timetable.title': 'តារាងពេលវេលា',
+  'timetable.subtitle': 'បង្កើតនិងគ្រប់គ្រងតារាងពេលវេលា',
+  'timetable.new': 'បង្កើតថ្មី',
+  'timetable.open': 'បើក',
+  'timetable.save': 'រក្សាទុក',
+  'timetable.print': 'បោះពុម្ព',
+  'timetable.printPreview': 'មើលមុនបោះពុម្ព',
+  'timetable.subject': 'មុខវិជ្ជា',
+  'timetable.class': 'ថ្នាក់',
+  'timetable.classrooms': 'បន្ទប់រៀន',
+  'timetable.teacher': 'គ្រូ',
+  'timetable.test': 'សាកល្បង',
+  'timetable.generate': 'បង្កើតតារាងពេលវេលា',
+  'timetable.teacherAttendance': 'វត្តមានគ្រូ',
 }
 
 /* ───────── All translations ───────── */
