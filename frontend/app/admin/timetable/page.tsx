@@ -150,6 +150,11 @@ export default function TimetablePage() {
 
   // Timetable settings modal
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+
+  // Print modal
+  const [showPrintModal, setShowPrintModal] = useState(false)
+  const [printMode, setPrintMode] = useState<'all' | 'class'>('all')
+  const [printClassId, setPrintClassId] = useState<string>('')
   const [sPeriods, setSPeriods] = useState(8)
   const [sDays, setSDays] = useState(5)
   const [sWeekend, setSWeekend] = useState<string[]>(['SATURDAY','SUNDAY'])
@@ -725,11 +730,11 @@ export default function TimetablePage() {
 
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
-      <div className="flex h-screen bg-gray-100 print:bg-white">
+      <div className="flex h-screen bg-gray-100 print:bg-white print:h-auto print:block">
         <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden print:hidden">
           {/* Ribbon Toolbar */}
-          <div className="bg-white border-b-2 border-indigo-100 print:hidden select-none">
+          <div className="bg-white border-b-2 border-indigo-100 select-none">
             {/* Timetable name bar */}
             {current && (
               <div className="bg-indigo-700 text-white text-xs px-4 py-0.5 flex items-center gap-2">
@@ -771,7 +776,7 @@ export default function TimetablePage() {
                     <span className="text-[10px] leading-none">Save</span>
                   </button>
                   {/* Print */}
-                  <button onClick={() => window.print()} disabled={!current}
+                  <button onClick={() => { if (!current) return; setPrintClassId(''); setShowPrintModal(true) }} disabled={!current}
                     className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 transition-colors disabled:opacity-35 min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 15.75H5.25a2.25 2.25 0 01-2.25-2.25v-4.5A2.25 2.25 0 015.25 6.75h13.5A2.25 2.25 0 0121 9v4.5a2.25 2.25 0 01-2.25 2.25h-1.5" />
@@ -1543,6 +1548,82 @@ export default function TimetablePage() {
         </ItemModal>
       )}
 
+      {/* ── Print Modal ── */}
+      {showPrintModal && current && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
+            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="font-bold text-gray-800">Print Timetable</h2>
+              <button onClick={() => setShowPrintModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+            </div>
+            <div className="px-5 py-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-2">What to print</label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors"
+                    style={{ borderColor: printMode === 'all' ? '#6366f1' : '#e5e7eb', backgroundColor: printMode === 'all' ? '#eef2ff' : '' }}>
+                    <input type="radio" name="printMode" value="all" checked={printMode === 'all'}
+                      onChange={() => setPrintMode('all')} className="accent-indigo-600" />
+                    <div>
+                      <div className="font-medium text-sm text-gray-800">Whole Timetable</div>
+                      <div className="text-xs text-gray-500">One page per class — all {current.classes.length} classes</div>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors"
+                    style={{ borderColor: printMode === 'class' ? '#6366f1' : '#e5e7eb', backgroundColor: printMode === 'class' ? '#eef2ff' : '' }}>
+                    <input type="radio" name="printMode" value="class" checked={printMode === 'class'}
+                      onChange={() => { setPrintMode('class'); if (!printClassId && current.classes.length > 0) setPrintClassId(current.classes[0].id) }}
+                      className="accent-indigo-600" />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm text-gray-800">Single Class</div>
+                      <div className="text-xs text-gray-500">One class only</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              {printMode === 'class' && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Select Class</label>
+                  <select className="input-field" value={printClassId}
+                    onChange={e => setPrintClassId(e.target.value)}>
+                    {[...current.classes].sort((a,b) => a.name.localeCompare(b.name)).map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
+              <button onClick={() => setShowPrintModal(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Cancel</button>
+              <button
+                onClick={() => {
+                  setShowPrintModal(false)
+                  setTimeout(() => window.print(), 150)
+                }}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 15.75H5.25a2.25 2.25 0 01-2.25-2.25v-4.5A2.25 2.25 0 015.25 6.75h13.5A2.25 2.25 0 0121 9v4.5a2.25 2.25 0 01-2.25 2.25h-1.5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75V3.75h10.5v3M6.75 15.75v4.5h10.5v-4.5" />
+                </svg>
+                Print
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Print Layout (hidden on screen, visible on print) ── */}
+      {current && (
+        <div className="hidden print:block">
+          <PrintLayout
+            timetable={current}
+            mode={printMode}
+            classId={printClassId}
+          />
+        </div>
+      )}
+
       {/* Color Picker */}
       {showColorPicker && (
         <div className="fixed inset-0 bg-black/40 z-[70] flex items-center justify-center p-4">
@@ -1589,9 +1670,184 @@ export default function TimetablePage() {
         .input-field { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 10px; font-size: 13px; outline: none; background: #fff; }
         .input-field:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
         @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-        @media print { .print\\:hidden { display: none !important; } .print\\:bg-white { background: white !important; } }
+        @media print {
+          .print\\:hidden { display: none !important; }
+          .print\\:bg-white { background: white !important; }
+          .print-page { page-break-after: always; }
+          .print-page:last-child { page-break-after: avoid; }
+          body { margin: 0; }
+        }
       `}</style>
     </AuthGuard>
+  )
+}
+
+// ═══ Print Layout ═══════════════════════════════════════════════════════════
+
+function PrintLayout({ timetable, mode, classId }: {
+  timetable: Timetable
+  mode: 'all' | 'class'
+  classId: string
+}) {
+  const times = getPeriodTimes(timetable)
+  const days = Array.from({ length: timetable.numberOfDays }, (_, i) => i + 1)
+
+  const khmerToArabic = (s: string) => s.replace(/[០-៩]/g, d => String(d.charCodeAt(0) - 0x17E0))
+  const gradeNum = (s: string) => { const d = khmerToArabic(s).match(/\d+/); return d ? parseInt(d[0], 10) : 9999 }
+  const allClasses = [...timetable.classes].sort((a, b) => {
+    const gA = gradeNum(a.short), gB = gradeNum(b.short)
+    if (gA !== gB) return gA - gB
+    return khmerToArabic(a.name).localeCompare(khmerToArabic(b.name), undefined, { numeric: true, sensitivity: 'base' })
+  })
+
+  const classesToPrint = mode === 'class'
+    ? allClasses.filter(c => c.id === classId)
+    : allClasses
+
+  const morningPeriods = times.map((t, i) => ({ time: t, period: i + 1 })).filter(p => p.time < '12:00')
+  const afternoonPeriods = times.map((t, i) => ({ time: t, period: i + 1 })).filter(p => p.time >= '12:00')
+
+  function getEntry(classId: string, day: number, period: number) {
+    return timetable.entries.find(e => e.classId === classId && e.day === day && e.period === period) ?? null
+  }
+
+  function nextTime(periodIdx: number): string {
+    const next = times[periodIdx + 1]
+    if (next) return next
+    // estimate +1h
+    const [h, m] = times[periodIdx].split(':').map(Number)
+    return `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  }
+
+  const cellStyle: React.CSSProperties = {
+    border: '1px solid #d1d5db',
+    padding: '4px 6px',
+    fontSize: 11,
+    verticalAlign: 'top',
+    minWidth: 90,
+  }
+  const headerStyle: React.CSSProperties = {
+    border: '1px solid #6366f1',
+    padding: '4px 8px',
+    fontSize: 11,
+    fontWeight: 700,
+    backgroundColor: '#4f46e5',
+    color: '#fff',
+    textAlign: 'center',
+    whiteSpace: 'nowrap',
+  }
+  const sectionRowStyle: React.CSSProperties = {
+    backgroundColor: '#e0e7ff',
+    fontWeight: 700,
+    fontSize: 11,
+    color: '#3730a3',
+    border: '1px solid #c7d2fe',
+  }
+
+  return (
+    <>
+      {classesToPrint.map((cls, clsIdx) => (
+        <div key={cls.id} className="print-page" style={{ padding: '20px 24px', fontFamily: 'sans-serif' }}>
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 12 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1b4b' }}>{timetable.name}</div>
+            <div style={{ fontSize: 13, color: '#4b5563', marginTop: 2 }}>Academic Year: {timetable.academicYear}</div>
+            <div style={{ marginTop: 6, display: 'inline-block', background: '#4f46e5', color: '#fff', borderRadius: 6, padding: '3px 16px', fontSize: 14, fontWeight: 700 }}>
+              Class: {cls.name}
+            </div>
+          </div>
+
+          <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+            <thead>
+              <tr>
+                <th style={{ ...headerStyle, minWidth: 110, textAlign: 'left' }}>Time</th>
+                {days.map(d => (
+                  <th key={d} style={headerStyle}>{DAY_LABELS[d - 1] ?? `Day ${d}`}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {/* Morning */}
+              {morningPeriods.length > 0 && (
+                <>
+                  <tr>
+                    <td colSpan={days.length + 1} style={sectionRowStyle}>
+                      <div style={{ padding: '3px 8px' }}>☀ Morning</div>
+                    </td>
+                  </tr>
+                  {morningPeriods.map(({ time, period }, idx) => {
+                    const endTime = nextTime(period - 1)
+                    return (
+                      <tr key={period} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                        <td style={{ ...cellStyle, fontWeight: 600, whiteSpace: 'nowrap', color: '#374151', backgroundColor: '#f3f4f6' }}>
+                          {time} – {endTime}
+                        </td>
+                        {days.map(day => {
+                          const entry = getEntry(cls.id, day, period)
+                          return (
+                            <td key={day} style={cellStyle}>
+                              {entry ? (
+                                <div>
+                                  <div style={{ fontWeight: 700, color: entry.subject.color ?? '#6366f1', fontSize: 11 }}>{entry.subject.name}</div>
+                                  <div style={{ fontSize: 10, color: '#374151', marginTop: 1 }}>{entry.teacher.lastName} {entry.teacher.firstName}</div>
+                                </div>
+                              ) : (
+                                <span style={{ color: '#d1d5db', fontSize: 10 }}>—</span>
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    )
+                  })}
+                </>
+              )}
+
+              {/* Afternoon */}
+              {afternoonPeriods.length > 0 && (
+                <>
+                  <tr>
+                    <td colSpan={days.length + 1} style={sectionRowStyle}>
+                      <div style={{ padding: '3px 8px' }}>🌙 Afternoon</div>
+                    </td>
+                  </tr>
+                  {afternoonPeriods.map(({ time, period }, idx) => {
+                    const endTime = nextTime(period - 1)
+                    return (
+                      <tr key={period} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                        <td style={{ ...cellStyle, fontWeight: 600, whiteSpace: 'nowrap', color: '#374151', backgroundColor: '#f3f4f6' }}>
+                          {time} – {endTime}
+                        </td>
+                        {days.map(day => {
+                          const entry = getEntry(cls.id, day, period)
+                          return (
+                            <td key={day} style={cellStyle}>
+                              {entry ? (
+                                <div>
+                                  <div style={{ fontWeight: 700, color: entry.subject.color ?? '#6366f1', fontSize: 11 }}>{entry.subject.name}</div>
+                                  <div style={{ fontSize: 10, color: '#374151', marginTop: 1 }}>{entry.teacher.lastName} {entry.teacher.firstName}</div>
+                                </div>
+                              ) : (
+                                <span style={{ color: '#d1d5db', fontSize: 10 }}>—</span>
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    )
+                  })}
+                </>
+              )}
+            </tbody>
+          </table>
+
+          {/* Footer */}
+          <div style={{ marginTop: 12, fontSize: 9, color: '#9ca3af', textAlign: 'right' }}>
+            Printed {new Date().toLocaleDateString()} · {timetable.name} · {cls.name}
+          </div>
+        </div>
+      ))}
+    </>
   )
 }
 
