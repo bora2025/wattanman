@@ -567,7 +567,7 @@ export default function TimetablePage() {
                 setDragEntry(entry)
                 // create a synthetic lesson from the entry so it can be re-placed
                 const synth: TLesson = {
-                  id: entry.lessonId ?? '', teacherId: entry.teacherId, subjectId: entry.subjectId,
+                  id: '', teacherId: entry.teacherId, subjectId: entry.subjectId,
                   classId: entry.classId, perWeek: 1, lessonType: 'SINGLE',
                   teacher: entry.teacher, subject: entry.subject, class: entry.class,
                 }
