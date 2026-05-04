@@ -84,6 +84,7 @@ export default function TimetablePage() {
   const [wizardStep, setWizardStep] = useState(0)
   const [wizardTimetableId, setWizardTimetableId] = useState<string | null>(null)
   const [wizardSaving, setWizardSaving] = useState(false)
+  const [wizardError, setWizardError] = useState('')
 
   // Step 1 fields
   const [wSchoolName, setWSchoolName] = useState('')
@@ -177,7 +178,7 @@ export default function TimetablePage() {
   const ttId = () => wizardTimetableId ?? current?.id ?? ''
 
   function openWizard() {
-    setWizardStep(0); setWizardTimetableId(null)
+    setWizardStep(0); setWizardTimetableId(null); setWizardError('')
     setWSchoolName(''); setWAcademicYear('2025-2026')
     setWPeriods(8); setWDays(5); setWWeekend(['SATURDAY','SUNDAY'])
     setWTimeOff(''); setWDistrib(''); setWHomework(''); setWMaxOn(''); setWDoc('')
@@ -185,7 +186,9 @@ export default function TimetablePage() {
   }
 
   async function wizardNext() {
+    setWizardError('')
     if (wizardStep === 0) {
+      // Step 1 → create timetable, only advance on success
       setWizardSaving(true)
       const res = await apiFetch('/api/timetable', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -199,10 +202,18 @@ export default function TimetablePage() {
       if (res.ok) {
         const tt = await res.json()
         setWizardTimetableId(tt.id)
-        await loadTimetable(tt.id); await fetchList()
+        await loadTimetable(tt.id)
+        await fetchList()
+        setWizardSaving(false)
+        setWizardStep(1)  // only advance when create succeeded
+      } else {
+        const body = await res.json().catch(() => ({}))
+        setWizardError(body?.message ?? `Error ${res.status} — could not create timetable.`)
+        setWizardSaving(false)
       }
-      setWizardSaving(false)
+      return
     }
+    // Steps 1-4: just advance
     if (wizardStep < WIZARD_STEPS.length - 1) setWizardStep(s => s + 1)
   }
 
@@ -540,6 +551,17 @@ export default function TimetablePage() {
                 </div>
               )}
 
+              {/* Loading state for steps 2-5 while timetable is being fetched */}
+              {wizardStep >= 1 && !current && (
+                <div className="flex flex-col items-center justify-center py-14 gap-3 text-gray-400">
+                  <svg className="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>
+                  <span className="text-sm">Loading timetable data…</span>
+                </div>
+              )}
+
               {/* STEP 2: Subjects */}
               {wizardStep === 1 && current && (
                 <WizardListStep
@@ -583,6 +605,13 @@ export default function TimetablePage() {
                 />
               )}
             </div>
+
+            {/* Error message */}
+            {wizardError && (
+              <div className="mx-6 mb-1 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {wizardError}
+              </div>
+            )}
 
             {/* Footer */}
             <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between bg-gray-50 rounded-b-xl">
