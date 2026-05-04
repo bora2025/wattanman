@@ -663,6 +663,30 @@ const en: Record<string, string> = {
   'timetable.roomsNeeded': 'rooms needed',
   // Misc
   'timetable.teacherAttendance': 'Teacher Attendance',
+  // Extra UI strings
+  'timetable.timeOffRules': 'Time Off Rules',
+  'timetable.saving': 'Saving…',
+  'timetable.printTitle': 'Print Timetable',
+  'timetable.whatToPrint': 'What to print',
+  'timetable.wholeTimetable': 'Whole Timetable',
+  'timetable.singleClass': 'Single Class',
+  'timetable.onePagePerClass': 'One page per class',
+  'timetable.oneClassOnly': 'One class only',
+  'timetable.selectClassLabel': 'Select Class',
+  'timetable.noEntries': 'no entries',
+  'timetable.loadingData': 'Loading timetable data…',
+  'timetable.sortName': 'Name',
+  'timetable.sortWeek': 'Periods/Week ↓',
+  'timetable.sortMonth': 'Periods/Month ↓',
+  'timetable.periodTimesHint': 'Periods before 12:00 = morning · From 12:00 = afternoon (break shown automatically)',
+  'timetable.settingsWarning': 'Changing periods/days may affect the period time configuration. Update Periods times after saving.',
+  'timetable.step': 'Step',
+  'timetable.of': 'of',
+  'timetable.noContractsYet': 'No lesson contracts yet. Click + New Lesson.',
+  'timetable.removeFailed': 'Failed to remove.',
+  'timetable.placeFailed': 'Failed to place entry.',
+  'timetable.academicYearLabel': 'Academic Year:',
+  'timetable.classLabel': 'Class:',
 }
 
 /* ───────── Khmer translations ───────── */
@@ -1326,6 +1350,30 @@ const kh: Record<string, string> = {
   'timetable.roomsNeeded': 'បន្ទប់ដែលត្រូវការ',
   // Misc
   'timetable.teacherAttendance': 'វត្តមានគ្រូ',
+  // Extra UI strings
+  'timetable.timeOffRules': 'វិធានឡើងសម្រាក',
+  'timetable.saving': 'កំពុងរក្សាទុក…',
+  'timetable.printTitle': 'បោះពុម្ពតារាងពេលវេលា',
+  'timetable.whatToPrint': 'ជ្រើសសិធ្តិបោះពុម្ព',
+  'timetable.wholeTimetable': 'តារាងពេលវេលាទាំងមួល',
+  'timetable.singleClass': 'ថ្នាក់តែមួយ',
+  'timetable.onePagePerClass': 'តំព័រមួយក្នុងថ្នាក់',
+  'timetable.oneClassOnly': 'ថ្នាក់តែមួយប័ណ្ណោះ',
+  'timetable.selectClassLabel': 'ជ្រើសរើសថ្នាក់',
+  'timetable.noEntries': 'គ្មានវត្តុ',
+  'timetable.loadingData': 'កំពុងផ្ទុកទិន្នន័យ…',
+  'timetable.sortName': 'ឈ្មោះ',
+  'timetable.sortWeek': 'វេន/សប្តាហ៍ ↓',
+  'timetable.sortMonth': 'វេន/ខែ ↓',
+  'timetable.periodTimesHint': 'វេនមុន ម៉ោង ḀḀ:ḀḀ = ព្រឹក · ចាប់ពីម៉ោង ḀḀ:ḀḀ = រសៀល (ផ្អាកត្រូវបង្ហាញដោយស្វ័យប្រវត្តិ)',
+  'timetable.settingsWarning': 'ការផ្លាស់ប្តូរវេន/ថ្ងៃ អាចប័ក្រះដល់តែរក្សាទុកសម់ការកំណត់។ សូមកំណត់ពេលវេលាវេននៅក្រោយ។',
+  'timetable.step': 'ជំហាន',
+  'timetable.of': 'ក្នុង',
+  'timetable.noContractsYet': 'មិនទាន់មានកិច្ចសន្យាមេរៀន។ ចុច + មេរៀនថ្មី',
+  'timetable.removeFailed': 'មិនអាចដកចេញបាន។',
+  'timetable.placeFailed': 'មិនអាចដាក់ចូលបាន។',
+  'timetable.academicYearLabel': 'ឆ្នាំសិក្សា:',
+  'timetable.classLabel': 'ថ្នាក់:',
 }
 
 /* ───────── All translations ───────── */
