@@ -434,6 +434,45 @@ export default function TimetablePage() {
     } else { showToast(`Failed to delete "${name}".`, false) }
   }
 
+  // Drag-and-drop state
+  const [dragLesson, setDragLesson] = useState<TLesson | null>(null)
+  const [dragEntry, setDragEntry] = useState<TEntry | null>(null)
+  const [dropTarget, setDropTarget] = useState<{ classId: string; day: number; period: number } | null>(null)
+  const [showLessonPanel, setShowLessonPanel] = useState(true)
+
+  async function placeEntry(classId: string, day: number, period: number, lesson: TLesson) {
+    if (!current) return
+    const res = await apiFetch(`/api/timetable/${current.id}/entries`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        classId, day, period,
+        teacherId: lesson.teacherId,
+        subjectId: lesson.subjectId,
+        lessonId: lesson.id,
+      }),
+    })
+    if (res.ok) {
+      const entry = await res.json()
+      setCurrent(prev => {
+        if (!prev) return prev
+        const filtered = prev.entries.filter(e => !(e.classId === classId && e.day === day && e.period === period))
+        return { ...prev, entries: [...filtered, entry] }
+      })
+    } else {
+      showToast('Failed to place entry.', false)
+    }
+  }
+
+  async function removeEntry(entry: TEntry) {
+    const res = await apiFetch(`/api/timetable/entries/${entry.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setCurrent(prev => prev ? { ...prev, entries: prev.entries.filter(e => e.id !== entry.id) } : prev)
+    } else {
+      showToast('Failed to remove entry.', false)
+    }
+  }
+
   // Open modals
   function openSubjectModal(item?: TSubject) {
     setEditingItem(item ?? null); setFSubName(item?.name ?? ''); setFSubShort(item?.short ?? '')
@@ -486,12 +525,8 @@ export default function TimetablePage() {
   function buildGrid() {
     if (!current) return null
     const { entries, numberOfDays } = current
-    // Sort classes: primary by grade number (from short name), secondary A→Z by full name
     const khmerToArabic = (s: string) => s.replace(/[០-៩]/g, d => String(d.charCodeAt(0) - 0x17E0))
-    const gradeNum = (s: string) => {
-      const digits = khmerToArabic(s).match(/\d+/)
-      return digits ? parseInt(digits[0], 10) : 9999
-    }
+    const gradeNum = (s: string) => { const d = khmerToArabic(s).match(/\d+/); return d ? parseInt(d[0], 10) : 9999 }
     const classes = [...current.classes].sort((a, b) => {
       const gA = gradeNum(a.short), gB = gradeNum(b.short)
       if (gA !== gB) return gA - gB
@@ -499,18 +534,72 @@ export default function TimetablePage() {
     })
     const days = Array.from({ length: numberOfDays }, (_, i) => i + 1)
     const times = getPeriodTimes(current)
-    // Split into morning (before noon) and afternoon (noon+)
     const morningTimes = times.filter(t => t < '12:00')
     const afternoonTimes = times.filter(t => t >= '12:00')
     const morningCount = morningTimes.length
     const hasBrk = morningCount > 0 && afternoonTimes.length > 0
     const dayColSpan = morningCount + (hasBrk ? 1 : 0) + afternoonTimes.length
 
+    function renderCell(cls: TClass, day: number, period: number, cellKey: string) {
+      const entry = entries.find(e => e.classId === cls.id && e.day === day && e.period === period)
+      const isTarget = dropTarget?.classId === cls.id && dropTarget?.day === day && dropTarget?.period === period
+      return (
+        <td key={cellKey}
+          className={`border p-0 text-center align-middle transition-colors ${isTarget ? 'bg-indigo-100 border-indigo-400' : 'border-gray-200'}`}
+          style={{ minWidth: 56, height: 46 }}
+          onDragOver={e => { e.preventDefault(); setDropTarget({ classId: cls.id, day, period }) }}
+          onDragLeave={() => setDropTarget(null)}
+          onDrop={async e => {
+            e.preventDefault()
+            setDropTarget(null)
+            const raw = e.dataTransfer.getData('lesson')
+            if (!raw) return
+            const lesson: TLesson = JSON.parse(raw)
+            await placeEntry(cls.id, day, period, lesson)
+          }}
+        >
+          {entry ? (
+            <div
+              className="relative group rounded mx-0.5 my-0.5 px-1 py-0.5 text-white text-[10px] leading-tight cursor-grab active:cursor-grabbing"
+              style={{ backgroundColor: entry.subject.color ?? '#6366f1' }}
+              draggable
+              onDragStart={e => {
+                setDragEntry(entry)
+                // create a synthetic lesson from the entry so it can be re-placed
+                const synth: TLesson = {
+                  id: entry.lessonId ?? '', teacherId: entry.teacherId, subjectId: entry.subjectId,
+                  classId: entry.classId, perWeek: 1, lessonType: 'SINGLE',
+                  teacher: entry.teacher, subject: entry.subject, class: entry.class,
+                }
+                e.dataTransfer.setData('lesson', JSON.stringify(synth))
+                e.dataTransfer.setData('sourceEntryId', entry.id)
+              }}
+              onDragEnd={() => setDragEntry(null)}
+            >
+              <div className="font-semibold">{entry.subject.short}</div>
+              <div className="opacity-90 text-[9px] rounded px-0.5 mt-0.5 inline-block"
+                style={{ backgroundColor: entry.teacher.color ?? '#374151' }}>
+                {entry.teacher.short}
+              </div>
+              <button
+                className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 text-white rounded-full text-[8px] items-center justify-center hidden group-hover:flex leading-none"
+                onClick={e => { e.stopPropagation(); removeEntry(entry) }}
+                title="Remove"
+              >×</button>
+            </div>
+          ) : (
+            <div className={`w-full h-full flex items-center justify-center text-gray-200 text-[9px] ${isTarget ? 'text-indigo-400' : ''}`}>
+              {isTarget ? '↓' : ''}
+            </div>
+          )}
+        </td>
+      )
+    }
+
     return (
       <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.2s' }}>
         <table className="border-collapse text-xs select-none" style={{ minWidth: 'max-content' }}>
           <thead>
-            {/* Row 1: day group headers */}
             <tr className="bg-indigo-700 text-white">
               <th rowSpan={2} className="border border-indigo-800 px-2 py-1 min-w-[90px] text-left align-middle">Class</th>
               {days.map(d => (
@@ -519,18 +608,15 @@ export default function TimetablePage() {
                 </th>
               ))}
             </tr>
-            {/* Row 2: period time headers */}
             <tr className="bg-indigo-600 text-white text-[10px]">
               {days.map(d => (
                 <Fragment key={d}>
                   {morningTimes.map((time, idx) => (
-                    <th key={`${d}-m${idx}`} className="border border-indigo-700 px-1 py-1 min-w-[52px] text-center font-normal">{time}</th>
+                    <th key={`${d}-m${idx}`} className="border border-indigo-700 px-1 py-1 min-w-[56px] text-center font-normal">{time}</th>
                   ))}
-                  {hasBrk && (
-                    <th className="border border-indigo-900 bg-indigo-900/60 text-indigo-400 px-1 py-1 text-[9px] font-normal">☕<br/>break</th>
-                  )}
+                  {hasBrk && <th className="border border-indigo-900 bg-indigo-900/60 text-indigo-400 px-1 py-1 text-[9px] font-normal">☕<br/>break</th>}
                   {afternoonTimes.map((time, idx) => (
-                    <th key={`${d}-a${idx}`} className="border border-indigo-700 px-1 py-1 min-w-[52px] text-center font-normal">{time}</th>
+                    <th key={`${d}-a${idx}`} className="border border-indigo-700 px-1 py-1 min-w-[56px] text-center font-normal">{time}</th>
                   ))}
                 </Fragment>
               ))}
@@ -542,9 +628,7 @@ export default function TimetablePage() {
                 <td className="border border-gray-300 px-2 py-1 align-middle whitespace-nowrap">
                   <div className="flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-[10px]"
-                      style={{ backgroundColor: cls.color ?? '#6366f1' }}>
-                      {cls.short.slice(0, 2)}
-                    </span>
+                      style={{ backgroundColor: cls.color ?? '#6366f1' }}>{cls.short.slice(0, 2)}</span>
                     <div>
                       <div className="font-semibold text-xs text-gray-800">{cls.short}</div>
                       <div className="text-gray-400 text-[10px] leading-tight">{cls.name}</div>
@@ -553,45 +637,9 @@ export default function TimetablePage() {
                 </td>
                 {days.map(day => (
                   <Fragment key={day}>
-                    {morningTimes.map((_, idx) => {
-                      const period = idx + 1
-                      const entry = entries.find(e => e.classId === cls.id && e.day === day && e.period === period)
-                      return (
-                        <td key={`${day}-m${idx}`} className="border border-gray-200 p-0.5 text-center align-middle" style={{ minWidth: 52, height: 44 }}>
-                          {entry && (
-                            <div className="rounded px-1 py-0.5 text-white text-[10px] leading-tight"
-                              style={{ backgroundColor: entry.subject.color ?? '#6366f1' }}>
-                              <div className="font-semibold">{entry.subject.short}</div>
-                              <div className="opacity-90 text-[9px] rounded px-0.5 mt-0.5 inline-block"
-                                style={{ backgroundColor: entry.teacher.color ?? '#374151' }}>
-                                {entry.teacher.short}
-                              </div>
-                            </div>
-                          )}
-                        </td>
-                      )
-                    })}
-                    {hasBrk && (
-                      <td className="border border-gray-200 bg-gray-100" style={{ width: 28 }} />
-                    )}
-                    {afternoonTimes.map((_, idx) => {
-                      const period = morningCount + idx + 1
-                      const entry = entries.find(e => e.classId === cls.id && e.day === day && e.period === period)
-                      return (
-                        <td key={`${day}-a${idx}`} className="border border-gray-200 p-0.5 text-center align-middle" style={{ minWidth: 52, height: 44 }}>
-                          {entry && (
-                            <div className="rounded px-1 py-0.5 text-white text-[10px] leading-tight"
-                              style={{ backgroundColor: entry.subject.color ?? '#6366f1' }}>
-                              <div className="font-semibold">{entry.subject.short}</div>
-                              <div className="opacity-90 text-[9px] rounded px-0.5 mt-0.5 inline-block"
-                                style={{ backgroundColor: entry.teacher.color ?? '#374151' }}>
-                                {entry.teacher.short}
-                              </div>
-                            </div>
-                          )}
-                        </td>
-                      )
-                    })}
+                    {morningTimes.map((_, idx) => renderCell(cls, day, idx + 1, `${day}-m${idx}`))}
+                    {hasBrk && <td className="border border-gray-200 bg-gray-100" style={{ width: 28 }} />}
+                    {afternoonTimes.map((_, idx) => renderCell(cls, day, morningCount + idx + 1, `${day}-a${idx}`))}
                   </Fragment>
                 ))}
               </tr>
@@ -653,19 +701,74 @@ export default function TimetablePage() {
             )}
           </div>
           {/* Content */}
-          <div className="flex-1 overflow-auto p-4">
-            {loading && <div className="flex items-center justify-center h-40 text-gray-400">Loading…</div>}
-            {!loading && !current && (
-              <div className="flex flex-col items-center justify-center h-64 gap-4 text-gray-400">
-                <svg className="w-16 h-16 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p className="text-lg">No timetable open</p>
-                <p className="text-sm">Click <strong>New</strong> to create or <strong>Open</strong> to load one.</p>
+          <div className="flex-1 overflow-hidden flex">
+            {/* Lesson Panel */}
+            {current && (
+              <div className={`flex-shrink-0 bg-white border-r border-gray-200 flex flex-col transition-all duration-200 print:hidden ${showLessonPanel ? 'w-48' : 'w-8'}`}>
+                <div className="flex items-center justify-between px-2 py-2 border-b border-gray-200">
+                  {showLessonPanel && <span className="text-xs font-semibold text-gray-600 truncate">Lessons</span>}
+                  <button onClick={() => setShowLessonPanel(p => !p)}
+                    className="ml-auto text-gray-400 hover:text-gray-600 text-xs w-5 h-5 flex items-center justify-center rounded hover:bg-gray-100">
+                    {showLessonPanel ? '◀' : '▶'}
+                  </button>
+                </div>
+                {showLessonPanel && (
+                  <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                    {current.lessons.length === 0 && (
+                      <p className="text-[10px] text-gray-400 text-center pt-4">No lessons yet.<br/>Add via Lesson button.</p>
+                    )}
+                    {current.lessons.map(lesson => (
+                      <div
+                        key={lesson.id}
+                        draggable
+                        onDragStart={e => {
+                          setDragLesson(lesson)
+                          e.dataTransfer.setData('lesson', JSON.stringify(lesson))
+                        }}
+                        onDragEnd={() => setDragLesson(null)}
+                        className="rounded-lg px-2 py-1.5 text-white text-[10px] cursor-grab active:cursor-grabbing select-none shadow-sm hover:opacity-90 transition-opacity"
+                        style={{ backgroundColor: lesson.subject.color ?? '#6366f1' }}
+                        title={`${lesson.subject.name} · ${lesson.teacher.lastName} ${lesson.teacher.firstName} · ${lesson.class.name}`}
+                      >
+                        <div className="font-bold truncate">{lesson.subject.short}</div>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className="rounded px-1 py-0 text-[9px] font-medium"
+                            style={{ backgroundColor: lesson.teacher.color ?? '#374151' }}>
+                            {lesson.teacher.short}
+                          </span>
+                          <span className="rounded px-1 py-0 text-[9px] font-medium bg-black/20">
+                            {lesson.class.short}
+                          </span>
+                        </div>
+                        <div className="text-[9px] opacity-70 mt-0.5">{lesson.perWeek}×/w · {lesson.lessonType.toLowerCase()}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
-            {!loading && current && <div className="overflow-auto">{buildGrid()}</div>}
+            {/* Grid area */}
+            <div className="flex-1 overflow-auto p-4">
+              {loading && <div className="flex items-center justify-center h-40 text-gray-400">Loading…</div>}
+              {!loading && !current && (
+                <div className="flex flex-col items-center justify-center h-64 gap-4 text-gray-400">
+                  <svg className="w-16 h-16 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <p className="text-lg">No timetable open</p>
+                  <p className="text-sm">Click <strong>New</strong> to create or <strong>Open</strong> to load one.</p>
+                </div>
+              )}
+              {!loading && current && (
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-2 print:hidden">
+                    ← Drag a lesson card onto a cell to place it · Hover an entry and click <strong>×</strong> to remove it · Drag an entry to move it
+                  </p>
+                  {buildGrid()}
+                </div>
+              )}
+            </div>
           </div>
           {/* Footer zoom */}
           <div className="bg-white border-t border-gray-200 px-4 py-2 flex items-center gap-3 print:hidden">
