@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
@@ -15,7 +15,7 @@ interface Timetable {
   periodsPerDay: number; numberOfDays: number; weekend: string[]
   timeOffRules?: string | null; distribution?: string | null
   homeworkPrep?: string | null; maxOnDay?: number | null
-  docNotes?: string | null; status: string
+  docNotes?: string | null; periodTimes?: string | null; status: string
   subjects: TSubject[]; classes: TClass[]; classrooms: TClassroom[]
   teachers: TTeacher[]; lessons: TLesson[]; entries: TEntry[]
 }
@@ -64,6 +64,21 @@ type Toast = { id: number; msg: string; ok: boolean }
 let _toastId = 0
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function defaultPeriodTimes(n: number): string[] {
+  const morning = ['07:00', '08:00', '09:00', '10:00', '11:00']
+  const afternoon = ['13:00', '14:00', '15:00', '16:00', '17:00']
+  const m = Math.min(n, 4)
+  const a = Math.max(0, n - m)
+  return [...morning.slice(0, m), ...afternoon.slice(0, a)]
+}
+
+function getPeriodTimes(tt: { periodsPerDay: number; periodTimes?: string | null }): string[] {
+  if (tt.periodTimes) {
+    try { return JSON.parse(tt.periodTimes) } catch {}
+  }
+  return defaultPeriodTimes(tt.periodsPerDay)
+}
 
 function colorBadge(color: string | null, text: string) {
   return (
@@ -119,6 +134,11 @@ export default function TimetablePage() {
   const [showContractPanel, setShowContractPanel] = useState(false)
   const [contractTeacher, setContractTeacher] = useState<TTeacher | null>(null)
   const [editingItem, setEditingItem] = useState<any>(null)
+
+  // Period time config
+  const [showPeriodModal, setShowPeriodModal] = useState(false)
+  const [periodInputs, setPeriodInputs] = useState<string[]>([])
+  const [savingPeriods, setSavingPeriods] = useState(false)
 
   // Subject form
   const [fSubName, setFSubName] = useState('')
@@ -411,48 +431,118 @@ export default function TimetablePage() {
   }
   function openContractPanel(teacher: TTeacher) { setContractTeacher(teacher); setShowContractPanel(true) }
 
+  async function savePeriodTimes() {
+    if (!current) return
+    setSavingPeriods(true)
+    const res = await apiFetch(`/api/timetable/${current.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ periodTimes: JSON.stringify(periodInputs) }),
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      setCurrent(prev => prev ? { ...prev, periodTimes: updated.periodTimes } : null)
+      showToast('Period times saved')
+      setShowPeriodModal(false)
+    } else {
+      showToast('Failed to save period times', false)
+    }
+    setSavingPeriods(false)
+  }
+
   // Grid
   function buildGrid() {
     if (!current) return null
-    const { classes, entries, periodsPerDay, numberOfDays } = current
+    const { classes, entries, numberOfDays } = current
     const days = Array.from({ length: numberOfDays }, (_, i) => i + 1)
+    const times = getPeriodTimes(current)
+    // Split into morning (before noon) and afternoon (noon+)
+    const morningTimes = times.filter(t => t < '12:00')
+    const afternoonTimes = times.filter(t => t >= '12:00')
+    const morningCount = morningTimes.length
+    const hasBrk = morningCount > 0 && afternoonTimes.length > 0
+    const dayColSpan = morningCount + (hasBrk ? 1 : 0) + afternoonTimes.length
+
     return (
       <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.2s' }}>
-        <table className="border-collapse text-xs select-none">
+        <table className="border-collapse text-xs select-none" style={{ minWidth: 'max-content' }}>
           <thead>
+            {/* Row 1: day group headers */}
             <tr className="bg-indigo-700 text-white">
-              <th className="border border-indigo-800 px-2 py-1 min-w-[80px] text-left">Class</th>
+              <th rowSpan={2} className="border border-indigo-800 px-2 py-1 min-w-[90px] text-left align-middle">Class</th>
               {days.map(d => (
-                <th key={d} className="border border-indigo-800 px-2 py-1 min-w-[120px] text-center">
+                <th key={d} colSpan={dayColSpan} className="border border-indigo-800 px-2 py-1 text-center">
                   {DAY_LABELS[d - 1] ?? `Day ${d}`}
                 </th>
+              ))}
+            </tr>
+            {/* Row 2: period time headers */}
+            <tr className="bg-indigo-600 text-white text-[10px]">
+              {days.map(d => (
+                <Fragment key={d}>
+                  {morningTimes.map((time, idx) => (
+                    <th key={`${d}-m${idx}`} className="border border-indigo-700 px-1 py-1 min-w-[52px] text-center font-normal">{time}</th>
+                  ))}
+                  {hasBrk && (
+                    <th className="border border-indigo-900 bg-indigo-900/60 text-indigo-400 px-1 py-1 text-[9px] font-normal">☕<br/>break</th>
+                  )}
+                  {afternoonTimes.map((time, idx) => (
+                    <th key={`${d}-a${idx}`} className="border border-indigo-700 px-1 py-1 min-w-[52px] text-center font-normal">{time}</th>
+                  ))}
+                </Fragment>
               ))}
             </tr>
           </thead>
           <tbody>
             {classes.map(cls => (
               <tr key={cls.id} className="even:bg-gray-50">
-                <td className="border border-gray-300 px-2 py-1 font-semibold align-top whitespace-nowrap">
+                <td className="border border-gray-300 px-2 py-1 font-semibold align-middle whitespace-nowrap">
                   {colorBadge(cls.color, cls.short)}
                   <div className="text-gray-500 text-[10px] mt-0.5">{cls.name}</div>
                 </td>
-                {days.map(day => {
-                  const sorted = entries.filter(e => e.classId === cls.id && e.day === day).sort((a, b) => a.period - b.period)
-                  return (
-                    <td key={day} className="border border-gray-300 align-top p-0.5 min-h-[60px]">
-                      {sorted.map(e => (
-                        <div key={e.id} className="rounded mb-0.5 px-1 py-0.5 text-white text-[10px] leading-tight"
-                          style={{ backgroundColor: e.subject.color ?? '#6366f1' }}>
-                          <div className="font-semibold">{e.subject.short}</div>
-                          <div className="opacity-90 rounded px-0.5 mt-0.5 inline-block"
-                            style={{ backgroundColor: e.teacher.color ?? '#374151' }}>
-                            P{e.period} · {e.teacher.short}
-                          </div>
-                        </div>
-                      ))}
-                    </td>
-                  )
-                })}
+                {days.map(day => (
+                  <Fragment key={day}>
+                    {morningTimes.map((_, idx) => {
+                      const period = idx + 1
+                      const entry = entries.find(e => e.classId === cls.id && e.day === day && e.period === period)
+                      return (
+                        <td key={`${day}-m${idx}`} className="border border-gray-200 p-0.5 text-center align-middle" style={{ minWidth: 52, height: 44 }}>
+                          {entry && (
+                            <div className="rounded px-1 py-0.5 text-white text-[10px] leading-tight"
+                              style={{ backgroundColor: entry.subject.color ?? '#6366f1' }}>
+                              <div className="font-semibold">{entry.subject.short}</div>
+                              <div className="opacity-90 text-[9px] rounded px-0.5 mt-0.5 inline-block"
+                                style={{ backgroundColor: entry.teacher.color ?? '#374151' }}>
+                                {entry.teacher.short}
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                      )
+                    })}
+                    {hasBrk && (
+                      <td className="border border-gray-200 bg-gray-100" style={{ width: 28 }} />
+                    )}
+                    {afternoonTimes.map((_, idx) => {
+                      const period = morningCount + idx + 1
+                      const entry = entries.find(e => e.classId === cls.id && e.day === day && e.period === period)
+                      return (
+                        <td key={`${day}-a${idx}`} className="border border-gray-200 p-0.5 text-center align-middle" style={{ minWidth: 52, height: 44 }}>
+                          {entry && (
+                            <div className="rounded px-1 py-0.5 text-white text-[10px] leading-tight"
+                              style={{ backgroundColor: entry.subject.color ?? '#6366f1' }}>
+                              <div className="font-semibold">{entry.subject.short}</div>
+                              <div className="opacity-90 text-[9px] rounded px-0.5 mt-0.5 inline-block"
+                                style={{ backgroundColor: entry.teacher.color ?? '#374151' }}>
+                                {entry.teacher.short}
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                      )
+                    })}
+                  </Fragment>
+                ))}
               </tr>
             ))}
           </tbody>
@@ -479,6 +569,11 @@ export default function TimetablePage() {
             <button onClick={() => router.push('/admin/timetable/classrooms')} className="tt-btn bg-blue-50 text-blue-700">Classrooms</button>
             <button onClick={() => router.push('/admin/timetable/teachers')} className="tt-btn bg-blue-50 text-blue-700">Teacher</button>
             <button onClick={() => router.push('/admin/timetable/lessons')} className="tt-btn bg-blue-50 text-blue-700">Lesson</button>
+            <button onClick={() => {
+              if (!current) return
+              setPeriodInputs(getPeriodTimes(current))
+              setShowPeriodModal(true)
+            }} disabled={!current} className="tt-btn bg-purple-50 text-purple-700 disabled:opacity-40">Periods</button>
             <div className="w-px h-6 bg-gray-300 mx-1" />
             <button onClick={() => router.push('/admin/timetable/schedule')}
               className="tt-btn bg-emerald-700 text-white">
@@ -531,6 +626,50 @@ export default function TimetablePage() {
           </div>
         </div>
       </div>
+
+      {/* Period Times Config Modal */}
+      {showPeriodModal && current && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
+            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h2 className="font-bold text-gray-800">Period Times</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Set start time for each period (24-hour HH:mm)</p>
+              </div>
+              <button onClick={() => setShowPeriodModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+            </div>
+            <div className="px-5 py-4 space-y-2 max-h-80 overflow-y-auto">
+              {periodInputs.map((time, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-indigo-600 w-16 flex-shrink-0">Period {idx + 1}</span>
+                  <input
+                    type="time"
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={time}
+                    onChange={e => {
+                      const next = [...periodInputs]
+                      next[idx] = e.target.value
+                      setPeriodInputs(next)
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="px-5 py-3 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+              <p className="text-xs text-gray-400 mb-3">
+                Periods before 12:00 = morning · Periods from 12:00 = afternoon (break shown automatically)
+              </p>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setShowPeriodModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Cancel</button>
+                <button onClick={savePeriodTimes} disabled={savingPeriods}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-40">
+                  {savingPeriods ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Open Modal */}
       {showOpenModal && (

@@ -61,7 +61,7 @@ export class TimetableService {
     name: string; short: string; academicYear: string;
     periodsPerDay: number; numberOfDays: number; weekend: string[];
     timeOffRules: string; distribution: string; homeworkPrep: string;
-    maxOnDay: number; docNotes: string; status: string;
+    maxOnDay: number; docNotes: string; periodTimes: string; status: string;
   }>) {
     return this.prisma.timetable.update({ where: { id }, data });
   }

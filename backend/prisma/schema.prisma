@@ -233,6 +233,7 @@ model Timetable {
   homeworkPrep  String?  // Homework preparation constraints (JSON)
   maxOnDay      Int?     // Max lessons allowed on one day
   docNotes      String?  // Freeform doc / notes field
+  periodTimes   String?  // JSON array of "HH:mm" time strings, one per period e.g. ["07:00","08:00","09:00","10:00","13:00","14:00","15:00","16:00"]
   status        String   @default("DRAFT") // DRAFT | PUBLISHED
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
