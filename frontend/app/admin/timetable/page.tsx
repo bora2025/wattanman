@@ -175,7 +175,12 @@ export default function TimetablePage() {
 
   const fetchList = useCallback(async () => {
     const res = await apiFetch('/api/timetable')
-    if (res.ok) setTimetableList(await res.json())
+    if (res.ok) {
+      const list: TimetableListItem[] = await res.json()
+      setTimetableList(list)
+      return list
+    }
+    return [] as TimetableListItem[]
   }, [])
 
   const loadTimetable = useCallback(async (id: string) => {
@@ -185,7 +190,19 @@ export default function TimetablePage() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetchList() }, [fetchList])
+  // Auto-load the timetable whose academicYear matches the current year on first mount
+  useEffect(() => {
+    const currentYear = new Date().getFullYear()
+    fetchList().then(list => {
+      if (!list || list.length === 0) return
+      // Prefer a timetable whose academicYear contains the current calendar year
+      const match =
+        list.find(tt => tt.academicYear?.includes(String(currentYear))) ??
+        list.find(tt => tt.status === 'PUBLISHED') ??
+        list[0]
+      if (match) loadTimetable(match.id)
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const ttId = () => wizardTimetableId ?? current?.id ?? ''
 
