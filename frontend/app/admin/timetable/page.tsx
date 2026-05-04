@@ -458,6 +458,10 @@ export default function TimetablePage() {
             <button onClick={() => router.push('/admin/timetable/classrooms')} className="tt-btn bg-blue-50 text-blue-700">Classrooms</button>
             <button onClick={() => router.push('/admin/timetable/teachers')} className="tt-btn bg-blue-50 text-blue-700">Teacher</button>
             <div className="w-px h-6 bg-gray-300 mx-1" />
+            <button onClick={() => router.push('/admin/timetable/schedule')}
+              className="tt-btn bg-emerald-700 text-white">
+              Schedule ↗
+            </button>
             <button onClick={handleGenerate} disabled={!current || generating}
               className="tt-btn bg-emerald-600 text-white disabled:opacity-40">
               {generating ? 'Generating…' : 'Test'}
