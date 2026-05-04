@@ -560,7 +560,15 @@ export default function TimetablePage() {
         <td key={cellKey}
           className={`border p-0 text-center align-middle transition-colors ${isTarget ? 'bg-indigo-100 border-indigo-400' : 'border-gray-200'}`}
           style={{ minWidth: 56, height: 46 }}
-          onDragOver={e => { e.preventDefault(); setDropTarget({ classId: cls.id, day, period }) }}
+          onDragOver={e => {
+            e.preventDefault()
+            // Only update state when the target cell actually changes to avoid constant re-renders
+            setDropTarget(prev =>
+              prev?.classId === cls.id && prev?.day === day && prev?.period === period
+                ? prev
+                : { classId: cls.id, day, period }
+            )
+          }}
           onDragLeave={() => setDropTarget(null)}
           onDrop={async e => {
             e.preventDefault()

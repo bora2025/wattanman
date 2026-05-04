@@ -1,6 +1,6 @@
 import { Controller, Post, Body, UseGuards, Get, Query, Put, Delete, Param, HttpException, HttpStatus, Request, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
@@ -46,6 +46,7 @@ export class AuthController {
     return { access_token, refresh_token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
   }
 
+  @SkipThrottle()
   @Post('refresh')
   async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
     const oldToken = req.cookies?.refresh_token;
@@ -94,6 +95,7 @@ export class AuthController {
     return req.user;
   }
 
+  @SkipThrottle()
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getCurrentUser(@Request() req) {

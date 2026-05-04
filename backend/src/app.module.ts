@@ -17,8 +17,8 @@ import { TimetableModule } from './timetable/timetable.module';
 
 @Module({
   imports: [
-    // Rate limiting: max 60 requests per 60 seconds per IP
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
+    // Rate limiting: max 300 requests per 60 seconds per IP
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 300 }]),
     AuthModule,
     AttendanceModule,
     NotificationModule,
