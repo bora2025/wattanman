@@ -461,11 +461,17 @@ export default function TimetablePage() {
   function buildGrid() {
     if (!current) return null
     const { entries, numberOfDays } = current
-    // Sort classes naturally — convert Khmer digits (០-៩) to Arabic so numeric sort works
+    // Sort classes: primary by grade number (from short name), secondary A→Z by full name
     const khmerToArabic = (s: string) => s.replace(/[០-៩]/g, d => String(d.charCodeAt(0) - 0x17E0))
-    const classes = [...current.classes].sort((a, b) =>
-      khmerToArabic(a.name).localeCompare(khmerToArabic(b.name), undefined, { numeric: true, sensitivity: 'base' })
-    )
+    const gradeNum = (s: string) => {
+      const digits = khmerToArabic(s).match(/\d+/)
+      return digits ? parseInt(digits[0], 10) : 9999
+    }
+    const classes = [...current.classes].sort((a, b) => {
+      const gA = gradeNum(a.short), gB = gradeNum(b.short)
+      if (gA !== gB) return gA - gB
+      return khmerToArabic(a.name).localeCompare(khmerToArabic(b.name), undefined, { numeric: true, sensitivity: 'base' })
+    })
     const days = Array.from({ length: numberOfDays }, (_, i) => i + 1)
     const times = getPeriodTimes(current)
     // Split into morning (before noon) and afternoon (noon+)
