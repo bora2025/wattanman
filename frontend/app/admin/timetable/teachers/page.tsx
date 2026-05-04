@@ -50,6 +50,7 @@ export default function TeachersPage() {
   const [fColor, setFColor] = useState('#22c55e')
   const [fClassTeacher, setFClassTeacher] = useState('')
   const [savingTeacher, setSavingTeacher] = useState(false)
+  const [teacherError, setTeacherError] = useState('')
   const [deleteTeacherId, setDeleteTeacherId] = useState<string | null>(null)
 
   // Lesson modal
@@ -95,14 +96,16 @@ export default function TeachersPage() {
     setFShort(item?.short ?? ''); setFSex(item?.sex ?? '')
     setFEmail(item?.email ?? ''); setFPhone(item?.phone ?? '')
     setFColor(item?.color ?? '#22c55e'); setFClassTeacher(item?.classTeacherId ?? '')
+    setTeacherError('')
     setShowTeacherModal(true)
   }
 
   async function saveTeacher() {
     if (!selectedTT || !fLastName || !fFirstName || !fShort) return
     setSavingTeacher(true)
+    setTeacherError('')
     const url = editingTeacher ? `/api/timetable/teachers/${editingTeacher.id}` : `/api/timetable/${selectedTT}/teachers`
-    await apiFetch(url, {
+    const res = await apiFetch(url, {
       method: editingTeacher ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -111,7 +114,14 @@ export default function TeachersPage() {
         color: fColor, classTeacherId: fClassTeacher || null,
       }),
     })
-    await fetchTimetableData(); setShowTeacherModal(false); setSavingTeacher(false)
+    if (res.ok) {
+      await fetchTimetableData(); setShowTeacherModal(false)
+    } else {
+      const err = await res.json().catch(() => ({}))
+      const reason = Array.isArray(err?.message) ? err.message[0] : (err?.message ?? `Error ${res.status}`)
+      setTeacherError(reason)
+    }
+    setSavingTeacher(false)
   }
 
   async function deleteTeacher(id: string) {
@@ -324,7 +334,16 @@ export default function TeachersPage() {
                 <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={fClassTeacher} onChange={e => setFClassTeacher(e.target.value)}>
                   <option value="">— None —</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {classes
+                    .filter(c => {
+                      // Only show classes not already used as classTeacherId by another teacher
+                      const usedByOther = teachers.some(
+                        t => t.classTeacherId === c.id && t.id !== editingTeacher?.id
+                      )
+                      return !usedByOther
+                    })
+                    .map(c => <option key={c.id} value={c.id}>{c.name}</option>)
+                  }
                 </select>
               </div>
               <div>
@@ -339,12 +358,19 @@ export default function TeachersPage() {
                 </div>
               </div>
             </div>
-            <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
-              <button onClick={() => setShowTeacherModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Cancel</button>
-              <button onClick={saveTeacher} disabled={savingTeacher || !fLastName || !fFirstName || !fShort}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
-                {savingTeacher ? 'Saving…' : 'OK'}
-              </button>
+            <div className="px-5 py-3 border-t border-gray-200 flex flex-col gap-2">
+              {teacherError && (
+                <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs">
+                  ⚠️ {teacherError}
+                </div>
+              )}
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setShowTeacherModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Cancel</button>
+                <button onClick={saveTeacher} disabled={savingTeacher || !fLastName || !fFirstName || !fShort}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
+                  {savingTeacher ? 'Saving…' : 'OK'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

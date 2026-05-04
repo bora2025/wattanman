@@ -306,7 +306,11 @@ export default function TimetablePage() {
     if (res.ok) {
       showToast(isEdit ? `Teacher "${fullName}" updated.` : `Teacher "${fullName}" added.`)
       await loadTimetable(id); setShowTeacherModal(false)
-    } else { showToast(`Failed to ${isEdit ? 'update' : 'add'} teacher.`, false) }
+    } else {
+      const err = await res.json().catch(() => ({}))
+      const reason = Array.isArray(err?.message) ? err.message[0] : (err?.message ?? `HTTP ${res.status}`)
+      showToast(`Failed to ${isEdit ? 'update' : 'add'} teacher: ${reason}`, false)
+    }
   }
   async function removeTeacher(tchId: string, name: string) {
     const id = ttId(); if (!id) return
@@ -850,9 +854,18 @@ export default function TimetablePage() {
             <div className="flex items-center gap-2">
               <select className="input-field" value={fTClassTeacher} onChange={e => setFTClassTeacher(e.target.value)}>
                 <option value="">— None —</option>
-                {current?.classes.map((c: TClass) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {current?.classes
+                  .filter(c => {
+                    // Only show classes not already assigned to another teacher
+                    const usedByOther = current.teachers.some(
+                      t => t.classTeacherId === c.id && t.id !== editingItem?.id
+                    )
+                    return !usedByOther
+                  })
+                  .map((c: TClass) => <option key={c.id} value={c.id}>{c.name}</option>)
+                }
               </select>
-              <button type="button" onClick={() => setFTClassTeacher('')} className="tt-btn bg-gray-100 text-gray-700 text-xs whitespace-nowrap">Change</button>
+              <button type="button" onClick={() => setFTClassTeacher('')} className="tt-btn bg-gray-100 text-gray-700 text-xs whitespace-nowrap">Clear</button>
             </div>
           </Field>
           <Field label="Color">
