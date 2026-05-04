@@ -56,11 +56,19 @@ export default function EditStaffAttendance() {
       if (res.ok) {
         const data = await res.json()
         setRows(data)
-        // Initialize per-row permissionType from server data (server is always source of truth)
+        // Initialize per-row permissionType from server data — infer scope from actual PERMISSION sessions
         const init: Record<string, string> = {}
         data.forEach((row: StaffRow) => {
-          const permSess = row.sessions.find((s: SessionRecord) => s.permissionType)
-          if (permSess?.permissionType) init[row.userId] = permSess.permissionType
+          const amPerm = row.sessions.some((s: SessionRecord) => (s.session === 1 || s.session === 2) && s.status === 'PERMISSION')
+          const pmPerm = row.sessions.some((s: SessionRecord) => (s.session === 3 || s.session === 4) && s.status === 'PERMISSION')
+          if (amPerm && pmPerm) {
+            const stored = row.sessions.find((s: SessionRecord) => s.permissionType === 'MULTI_DAY')
+            init[row.userId] = stored ? 'MULTI_DAY' : 'FULL_DAY'
+          } else if (amPerm) {
+            init[row.userId] = 'HALF_DAY_MORNING'
+          } else if (pmPerm) {
+            init[row.userId] = 'HALF_DAY_AFTERNOON'
+          }
         })
         setPermissionTypes(init)
       } else setError('Failed to load staff attendance records.')
@@ -114,7 +122,7 @@ export default function EditStaffAttendance() {
             staffAttendanceId: sessionRec.attendanceId,
             status: newStatus,
             ...(newStatus === 'PERMISSION' ? {
-              permissionType: permissionTypes[staffRow.userId] || 'FULL_DAY',
+              permissionType: permissionTypes[staffRow.userId] || (session <= 2 ? 'HALF_DAY_MORNING' : 'HALF_DAY_AFTERNOON'),
               permissionStartDate: selectedDate,
               permissionEndDate: selectedDate,
             } : {}),
@@ -132,7 +140,7 @@ export default function EditStaffAttendance() {
             status: newStatus,
             date: selectedDate,
             ...(newStatus === 'PERMISSION' ? {
-              permissionType: permissionTypes[staffRow.userId] || 'FULL_DAY',
+              permissionType: permissionTypes[staffRow.userId] || (session <= 2 ? 'HALF_DAY_MORNING' : 'HALF_DAY_AFTERNOON'),
               permissionStartDate: selectedDate,
               permissionEndDate: selectedDate,
             } : {}),

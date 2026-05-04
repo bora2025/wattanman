@@ -112,15 +112,24 @@ function permissionTypeLabel(value?: string | null): string {
 }
 
 function getRowPermissionLabel(row: GridRow): string | null {
-  const statuses = [row.session1Status, row.session2Status, row.session3Status, row.session4Status]
-  const hasPermission = statuses.some(s => s === 'PERMISSION' || s === 'DAY_OFF')
+  const s = [row.session1Status, row.session2Status, row.session3Status, row.session4Status]
+  const hasPermission = s.some(st => st === 'PERMISSION' || st === 'DAY_OFF')
   if (!hasPermission) return null
 
-  const types = [row.session1PermissionType, row.session2PermissionType, row.session3PermissionType, row.session4PermissionType]
-  const firstType = types.find(Boolean)
-  if (firstType) return permissionTypeLabel(firstType)
+  if (s.some(st => st === 'DAY_OFF')) return 'Day Off'
 
-  if (statuses.some(s => s === 'DAY_OFF')) return 'Day Off'
+  // Infer the actual scope from which sessions carry PERMISSION status
+  const amPerm = s[0] === 'PERMISSION' || s[1] === 'PERMISSION'
+  const pmPerm = s[2] === 'PERMISSION' || s[3] === 'PERMISSION'
+  if (amPerm && pmPerm) {
+    // Full day — confirm via stored type in case it's MULTI_DAY
+    const types = [row.session1PermissionType, row.session2PermissionType, row.session3PermissionType, row.session4PermissionType]
+    const t = types.find(Boolean)
+    if (t === 'MULTI_DAY') return permissionTypeLabel('MULTI_DAY')
+    return permissionTypeLabel('FULL_DAY')
+  }
+  if (amPerm) return permissionTypeLabel('HALF_DAY_MORNING')
+  if (pmPerm) return permissionTypeLabel('HALF_DAY_AFTERNOON')
   return 'Permission'
 }
 
