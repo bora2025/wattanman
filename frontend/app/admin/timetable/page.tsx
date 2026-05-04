@@ -460,7 +460,11 @@ export default function TimetablePage() {
   // Grid
   function buildGrid() {
     if (!current) return null
-    const { classes, entries, numberOfDays } = current
+    const { entries, numberOfDays } = current
+    // Sort classes naturally (1, 2, … 10) instead of lexicographically
+    const classes = [...current.classes].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+    )
     const days = Array.from({ length: numberOfDays }, (_, i) => i + 1)
     const times = getPeriodTimes(current)
     // Split into morning (before noon) and afternoon (noon+)
