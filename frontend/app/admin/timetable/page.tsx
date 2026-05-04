@@ -147,6 +147,13 @@ export default function TimetablePage() {
   const [periodInputs, setPeriodInputs] = useState<string[]>([])
   const [savingPeriods, setSavingPeriods] = useState(false)
 
+  // Timetable settings modal
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [sPeriods, setSPeriods] = useState(8)
+  const [sDays, setSDays] = useState(5)
+  const [sWeekend, setSWeekend] = useState<string[]>(['SATURDAY','SUNDAY'])
+  const [savingSettings, setSavingSettings] = useState(false)
+
   // Subject form
   const [fSubName, setFSubName] = useState('')
   const [fSubShort, setFSubShort] = useState('')
@@ -399,6 +406,24 @@ export default function TimetablePage() {
     else showToast('Failed to save timetable.', false)
   }
 
+  async function saveSettings() {
+    if (!current) return
+    setSavingSettings(true)
+    const res = await apiFetch(`/api/timetable/${current.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ periodsPerDay: sPeriods, numberOfDays: sDays, weekend: sWeekend }),
+    })
+    if (res.ok) {
+      setCurrent(prev => prev ? { ...prev, periodsPerDay: sPeriods, numberOfDays: sDays, weekend: sWeekend } : null)
+      showToast('Settings saved.')
+      setShowSettingsModal(false)
+    } else {
+      showToast('Failed to save settings.', false)
+    }
+    setSavingSettings(false)
+  }
+
   async function handleDeleteTimetable(id: string, name: string) {
     if (!window.confirm(`Delete "${name}"?\n\nThis will permanently remove the timetable and all its subjects, classes, classrooms, teachers, lessons and entries.`)) return
     const res = await apiFetch(`/api/timetable/${id}`, { method: 'DELETE' })
@@ -597,6 +622,13 @@ export default function TimetablePage() {
             <button onClick={() => router.push('/admin/timetable/lessons')} className="tt-btn bg-blue-50 text-blue-700">Lesson</button>
             <button onClick={() => {
               if (!current) return
+              setSPeriods(current.periodsPerDay)
+              setSDays(current.numberOfDays)
+              setSWeekend(current.weekend ?? ['SATURDAY','SUNDAY'])
+              setShowSettingsModal(true)
+            }} disabled={!current} className="tt-btn bg-gray-50 text-gray-700 border border-gray-300 disabled:opacity-40">⚙ Settings</button>
+            <button onClick={() => {
+              if (!current) return
               setPeriodInputs(getPeriodTimes(current))
               setShowPeriodModal(true)
             }} disabled={!current} className="tt-btn bg-purple-50 text-purple-700 disabled:opacity-40">Periods</button>
@@ -652,6 +684,58 @@ export default function TimetablePage() {
           </div>
         </div>
       </div>
+
+      {/* Timetable Settings Modal */}
+      {showSettingsModal && current && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
+            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h2 className="font-bold text-gray-800">Timetable Settings</h2>
+                <p className="text-xs text-gray-500 mt-0.5">{current.name} · {current.academicYear}</p>
+              </div>
+              <button onClick={() => setShowSettingsModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Periods per Day</label>
+                <input type="number" min={1} max={20}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={sPeriods} onChange={e => setSPeriods(+e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Number of Days</label>
+                <input type="number" min={1} max={7}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={sDays} onChange={e => setSDays(+e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Weekend (non-teaching days)</label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {WEEKENDS.map(d => (
+                    <button key={d} type="button"
+                      onClick={() => setSWeekend(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
+                        ${sWeekend.includes(d) ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-600 hover:border-indigo-300'}`}>
+                      {d.slice(0, 3)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                Changing periods/days may affect the period time configuration. Update <strong>Periods</strong> times after saving.
+              </p>
+            </div>
+            <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
+              <button onClick={() => setShowSettingsModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Cancel</button>
+              <button onClick={saveSettings} disabled={savingSettings || sPeriods < 1 || sDays < 1}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
+                {savingSettings ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Period Times Config Modal */}
       {showPeriodModal && current && (
