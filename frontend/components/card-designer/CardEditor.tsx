@@ -224,11 +224,23 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
     setTimeout(() => setTemplateSaved(false), 2000);
   };
 
-  const handleLoadTemplate = (tpl: SavedTemplate) => {
-    const d = JSON.parse(JSON.stringify(tpl.design)) as CardDesign;
-    setDesign(d);
+  /**
+   * Central handler for ALL template selections (built-in, preset, saved).
+   * Immediately pushes to API so all browsers see the change — does NOT rely
+   * on the debounced auto-save which can be skipped by isLoadingRef or navigation.
+   */
+  const handleApplyTemplate = useCallback((d: CardDesign) => {
+    const copy = JSON.parse(JSON.stringify(d)) as CardDesign;
+    isLoadingRef.current = false; // user made an explicit choice — allow future auto-saves
+    setDesign(copy);
     setSelectedId(null);
     setShowTemplatePicker(false);
+    saveDesign(copy);           // keep localStorage in sync
+    apiSetActiveDesign(copy);   // immediately share with all other browsers
+  }, []);
+
+  const handleLoadTemplate = (tpl: SavedTemplate) => {
+    handleApplyTemplate(tpl.design);
   };
 
   const handleDeleteTemplate = async (id: string) => {
@@ -715,7 +727,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
               <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Built-in Templates</h4>
               <div className="grid grid-cols-3 gap-3">
                 <button
-                  onClick={() => { setDesign({ ...BLANK_TEMPLATE }); setSelectedId(null); setShowTemplatePicker(false); }}
+                  onClick={() => handleApplyTemplate(BLANK_TEMPLATE)}
                   className="rounded-xl border-2 border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50 transition-all text-left group overflow-hidden"
                 >
                   <div className="bg-slate-50 flex items-center justify-center p-3 border-b border-slate-100">
@@ -735,7 +747,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
                   </div>
                 </button>
                 <button
-                  onClick={() => { setDesign({ ...STUDENT_TEMPLATE }); setSelectedId(null); setShowTemplatePicker(false); }}
+                  onClick={() => handleApplyTemplate(STUDENT_TEMPLATE)}
                   className="rounded-xl border-2 border-indigo-200 bg-indigo-50/50 hover:border-indigo-400 hover:bg-indigo-50 transition-all text-left group overflow-hidden"
                 >
                   <div className="bg-slate-100 flex items-center justify-center p-3 border-b border-indigo-100">
@@ -755,7 +767,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
                   </div>
                 </button>
                 <button
-                  onClick={() => { setDesign({ ...STAFF_TEMPLATE }); setSelectedId(null); setShowTemplatePicker(false); }}
+                  onClick={() => handleApplyTemplate(STAFF_TEMPLATE)}
                   className="rounded-xl border-2 border-emerald-200 bg-emerald-50/50 hover:border-emerald-400 hover:bg-emerald-50 transition-all text-left group overflow-hidden"
                 >
                   <div className="bg-slate-100 flex items-center justify-center p-3 border-b border-emerald-100">
@@ -790,7 +802,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
                 ] as const).map(({ key, design: tplDesign, label, emoji }) => (
                   <button
                     key={key}
-                    onClick={() => { setDesign({ ...tplDesign }); setSelectedId(null); setShowTemplatePicker(false); }}
+                    onClick={() => handleApplyTemplate(tplDesign)}
                     className="rounded-xl border-2 border-indigo-100 bg-white hover:border-indigo-400 hover:bg-indigo-50 transition-all text-left overflow-hidden group"
                   >
                     <div className="bg-slate-50 flex items-center justify-center p-2 border-b border-indigo-100 h-32">
@@ -822,7 +834,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
                 ] as const).map(({ key, design: tplDesign, label, emoji }) => (
                   <button
                     key={key}
-                    onClick={() => { setDesign({ ...tplDesign }); setSelectedId(null); setShowTemplatePicker(false); }}
+                    onClick={() => handleApplyTemplate(tplDesign)}
                     className="rounded-xl border-2 border-emerald-100 bg-white hover:border-emerald-400 hover:bg-emerald-50 transition-all text-left overflow-hidden group"
                   >
                     <div className="bg-slate-50 flex items-center justify-center p-2 border-b border-emerald-100 h-32">
