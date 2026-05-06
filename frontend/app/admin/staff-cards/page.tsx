@@ -107,7 +107,13 @@ export default function StaffCardsPage() {
       if (e.key === DESIGN_STORAGE_KEY) reloadDesign();
     };
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    // Re-fetch when the tab becomes visible again (e.g. user switches back)
+    const onVisibility = () => { if (document.visibilityState === 'visible') reloadDesign(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [reloadDesign]);
 
   const NON_STAFF_ROLES = ['STUDENT', 'PARENT'];

@@ -133,7 +133,13 @@ export default function GenerateQRCodes() {
       }
     };
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    // Re-fetch when the tab becomes visible again
+    const onVisibility = () => { if (document.visibilityState === 'visible') reloadDesigns(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [reloadDesigns]);
 
   const fetchAll = async () => {

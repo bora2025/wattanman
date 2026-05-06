@@ -52,15 +52,22 @@ export default function MyIDCard() {
 
   // Load active staff card design (API-first so employees see the latest shared design)
   useEffect(() => {
-    apiGetActiveDesign('staff').then((apiDesign) => {
-      if (apiDesign) {
-        saveDesign(apiDesign);
-        setDesign(apiDesign);
-      } else {
-        const saved = loadSavedDesign('staff')
-        if (saved) setDesign(saved)
-      }
-    });
+    const loadDesign = () => {
+      apiGetActiveDesign('staff').then((apiDesign) => {
+        if (apiDesign) {
+          saveDesign(apiDesign);
+          setDesign(apiDesign);
+        } else {
+          const saved = loadSavedDesign('staff')
+          if (saved) setDesign(saved)
+        }
+      });
+    };
+    loadDesign();
+    // Re-fetch when the tab becomes visible again
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadDesign(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [])
 
   // Generate QR code

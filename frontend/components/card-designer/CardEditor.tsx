@@ -101,6 +101,11 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
       if (apiDesign) {
         saveDesign(apiDesign); // keep localStorage in sync
         setDesign(apiDesign);
+      } else if (localDesign) {
+        // Bootstrap: API has no shared design yet (first run after feature deploy).
+        // Push the local design immediately so all other browsers can see it.
+        saveDesign(localDesign);
+        apiSetActiveDesign(localDesign);
       }
     }).finally(() => {
       // Wait longer than the auto-save debounce (1.5s) before allowing API pushes
