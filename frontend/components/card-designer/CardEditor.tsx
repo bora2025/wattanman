@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, MouseEvent as ReactMouseEvent } from 'react';
-import { CardDesign, CardType, LogoElement, PhotoPlaceholder, QrPlaceholder, ShapeElement, TextElement, STUDENT_TEMPLATE, STAFF_TEMPLATE, BLANK_TEMPLATE, STUDENT_CLASSIC_BLUE, STUDENT_DARK_NAVY, STUDENT_SKY_WAVE, STUDENT_GEOMETRIC, STUDENT_MINIMAL, STAFF_CORPORATE_TEAL, STAFF_DEEP_OCEAN, STAFF_ROSE, STAFF_FOREST, STAFF_SLATE_EXECUTIVE, loadSavedDesign, saveDesign, clearAllCache, SavedTemplate, apiLoadTemplates, apiSaveTemplate, apiDeleteTemplate } from './types';
+import { CardDesign, CardType, LogoElement, PhotoPlaceholder, QrPlaceholder, ShapeElement, TextElement, STUDENT_TEMPLATE, STAFF_TEMPLATE, BLANK_TEMPLATE, STUDENT_CLASSIC_BLUE, STUDENT_DARK_NAVY, STUDENT_SKY_WAVE, STUDENT_GEOMETRIC, STUDENT_MINIMAL, STAFF_CORPORATE_TEAL, STAFF_DEEP_OCEAN, STAFF_ROSE, STAFF_FOREST, STAFF_SLATE_EXECUTIVE, loadSavedDesign, saveDesign, clearAllCache, SavedTemplate, apiLoadTemplates, apiSaveTemplate, apiDeleteTemplate, apiGetActiveDesign, apiSetActiveDesign } from './types';
 import { renderDesignToCanvas } from './renderDesignToCanvas';
 import { downloadSingleCardPDF } from './generateCardPDF';
 import CardCanvas from './CardCanvas';
@@ -88,10 +88,17 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
     document.addEventListener('mouseup', onMouseUp);
   }, [sidebarWidth]);
 
-  // Load saved design on mount
+  // Load saved design on mount (localStorage first, then API overrides with shared design)
   useEffect(() => {
-    const savedStudent = loadSavedDesign(initialCardType ?? 'student');
-    if (savedStudent) setDesign(savedStudent);
+    const cardType = initialCardType ?? 'student';
+    const localDesign = loadSavedDesign(cardType);
+    if (localDesign) setDesign(localDesign);
+    apiGetActiveDesign(cardType).then((apiDesign) => {
+      if (apiDesign) {
+        saveDesign(apiDesign); // keep localStorage in sync
+        setDesign(apiDesign);
+      }
+    });
   }, [initialCardType]);
 
   // Push design changes to history (debounced 400ms to batch drag moves)
@@ -138,6 +145,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
     setAutoSaveStatus('saving');
     const timer = setTimeout(() => {
       saveDesign(design);
+      apiSetActiveDesign(design); // persist shared design to server
       setAutoSaveStatus('saved');
       const reset = setTimeout(() => setAutoSaveStatus('idle'), 2500);
       return () => clearTimeout(reset);
@@ -339,6 +347,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
 
   const handleSave = () => {
     saveDesign(design);
+    apiSetActiveDesign(design); // persist shared design to server
     setSaved(true);
     setAutoSaveStatus('saved');
     setTimeout(() => { setSaved(false); setAutoSaveStatus('idle'); }, 2000);

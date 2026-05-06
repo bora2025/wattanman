@@ -7,7 +7,7 @@ import Sidebar from '../../../components/Sidebar';
 import { adminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../lib/i18n';
-import { CardDesign, STUDENT_TEMPLATE, DESIGN_STORAGE_KEY, loadSavedDesign } from '../../../components/card-designer/types';
+import { CardDesign, STUDENT_TEMPLATE, DESIGN_STORAGE_KEY, loadSavedDesign, apiGetActiveDesign, saveDesign } from '../../../components/card-designer/types';
 import { renderDesignToCanvas } from '../../../components/card-designer/renderDesignToCanvas';
 import CardEditor from '../../../components/card-designer/CardEditor';
 import { downloadSingleCardPDF, downloadA4CardsPDF } from '../../../components/card-designer/generateCardPDF';
@@ -73,7 +73,15 @@ export default function StudentCardsPage() {
   }, []);
 
   const reloadDesign = useCallback(() => {
-    setLiveDesign(loadSavedDesign('student') ?? STUDENT_TEMPLATE);
+    // Try API first so all users see the shared active design
+    apiGetActiveDesign('student').then((apiDesign) => {
+      if (apiDesign) {
+        saveDesign(apiDesign);
+        setLiveDesign(apiDesign);
+      } else {
+        setLiveDesign(loadSavedDesign('student') ?? STUDENT_TEMPLATE);
+      }
+    });
   }, []);
 
   useEffect(() => { reloadDesign(); }, [reloadDesign]);

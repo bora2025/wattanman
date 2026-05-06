@@ -7,7 +7,7 @@ import { employeeNav } from '../../../lib/employee-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
 import QRCode from 'qrcode'
-import { CardDesign, STAFF_TEMPLATE, loadSavedDesign } from '../../../components/card-designer/types'
+import { CardDesign, STAFF_TEMPLATE, loadSavedDesign, apiGetActiveDesign, saveDesign } from '../../../components/card-designer/types'
 import { renderDesignToCanvas } from '../../../components/card-designer/renderDesignToCanvas'
 import { downloadSingleCardPDF } from '../../../components/card-designer/generateCardPDF'
 
@@ -50,10 +50,17 @@ export default function MyIDCard() {
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
-  // Load saved staff card design
+  // Load active staff card design (API-first so employees see the latest shared design)
   useEffect(() => {
-    const saved = loadSavedDesign('staff')
-    if (saved) setDesign(saved)
+    apiGetActiveDesign('staff').then((apiDesign) => {
+      if (apiDesign) {
+        saveDesign(apiDesign);
+        setDesign(apiDesign);
+      } else {
+        const saved = loadSavedDesign('staff')
+        if (saved) setDesign(saved)
+      }
+    });
   }, [])
 
   // Generate QR code

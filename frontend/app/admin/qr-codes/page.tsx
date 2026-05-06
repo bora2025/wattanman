@@ -7,7 +7,7 @@ import Sidebar from '../../../components/Sidebar';
 import { adminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../lib/i18n';
-import { CardDesign, CardType, ShapeElement, STUDENT_TEMPLATE, STAFF_TEMPLATE, BLANK_TEMPLATE, DESIGN_STORAGE_KEY, loadSavedDesign, saveDesign, SavedTemplate, loadSavedTemplates, saveTemplate, deleteTemplate } from '../../../components/card-designer/types';
+import { CardDesign, CardType, ShapeElement, STUDENT_TEMPLATE, STAFF_TEMPLATE, BLANK_TEMPLATE, DESIGN_STORAGE_KEY, loadSavedDesign, saveDesign, SavedTemplate, loadSavedTemplates, saveTemplate, deleteTemplate, apiGetActiveDesign } from '../../../components/card-designer/types';
 import { renderDesignToCanvas } from '../../../components/card-designer/renderDesignToCanvas';
 import CardCanvas from '../../../components/card-designer/CardCanvas';
 import Toolbar from '../../../components/card-designer/Toolbar';
@@ -99,15 +99,21 @@ export default function GenerateQRCodes() {
     fetchAll();
   }, []);
 
-  // Reload designs from localStorage (used on mount + whenever we need a refresh)
+  // Reload designs from API (used on mount + whenever we need a refresh)
   const reloadDesigns = useCallback(() => {
-    setLiveDesigns({
-      student: loadSavedDesign('student') ?? STUDENT_TEMPLATE,
-      staff: loadSavedDesign('staff') ?? STAFF_TEMPLATE,
+    Promise.all([
+      apiGetActiveDesign('student'),
+      apiGetActiveDesign('staff'),
+    ]).then(([studentDesign, staffDesign]) => {
+      const student = studentDesign ?? loadSavedDesign('student') ?? STUDENT_TEMPLATE;
+      const staff = staffDesign ?? loadSavedDesign('staff') ?? STAFF_TEMPLATE;
+      if (studentDesign) saveDesign(studentDesign);
+      if (staffDesign) saveDesign(staffDesign);
+      setLiveDesigns({ student, staff });
     });
   }, []);
 
-  // Load designs from localStorage on mount
+  // Load designs on mount
   useEffect(() => {
     reloadDesigns();
   }, [reloadDesigns]);

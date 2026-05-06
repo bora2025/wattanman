@@ -285,6 +285,30 @@ export async function apiDeleteTemplate(id: string): Promise<void> {
   }
 }
 
+export async function apiGetActiveDesign(cardType: CardType): Promise<CardDesign | null> {
+  try {
+    const res = await apiFetch(`/api/card-templates/active/${cardType}`);
+    if (!res.ok) return null;
+    const record = await res.json();
+    if (!record || !record.design) return null;
+    return record.design as CardDesign;
+  } catch {
+    return null;
+  }
+}
+
+export async function apiSetActiveDesign(design: CardDesign): Promise<void> {
+  try {
+    await apiFetch(`/api/card-templates/active/${design.cardType}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ design }),
+    });
+  } catch {
+    // ignore
+  }
+}
+
 export const BLANK_TEMPLATE: CardDesign = {
   cardType: 'student',
   size: 'credit',
