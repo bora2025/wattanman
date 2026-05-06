@@ -904,7 +904,7 @@ export class AttendanceService {
     const attendanceDate = toUTCMidnight(d);
 
     const staff = await this.prisma.user.findMany({
-      where: { role: { in: ['TEACHER', 'ADMIN'] } },
+      where: { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } },
       orderBy: { name: 'asc' },
     });
 
