@@ -21,6 +21,9 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const isResizing = useRef(false);
   const isFirstRenderRef = useRef(true);
+  // True while the design is being loaded from API/localStorage — prevents the
+  // auto-save effect from pushing a stale local design back to the server.
+  const isLoadingRef = useRef(true);
 
   // --- Undo / Redo history ---
   const historyStackRef = useRef<CardDesign[]>([]);
@@ -90,6 +93,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
 
   // Load saved design on mount (localStorage first, then API overrides with shared design)
   useEffect(() => {
+    isLoadingRef.current = true;
     const cardType = initialCardType ?? 'student';
     const localDesign = loadSavedDesign(cardType);
     if (localDesign) setDesign(localDesign);
@@ -98,6 +102,9 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
         saveDesign(apiDesign); // keep localStorage in sync
         setDesign(apiDesign);
       }
+    }).finally(() => {
+      // Wait longer than the auto-save debounce (1.5s) before allowing API pushes
+      setTimeout(() => { isLoadingRef.current = false; }, 2000);
     });
   }, [initialCardType]);
 
@@ -145,7 +152,10 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
     setAutoSaveStatus('saving');
     const timer = setTimeout(() => {
       saveDesign(design);
-      apiSetActiveDesign(design); // persist shared design to server
+      // Only push to server when the admin has actually edited — not during initial load
+      if (!isLoadingRef.current) {
+        apiSetActiveDesign(design);
+      }
       setAutoSaveStatus('saved');
       const reset = setTimeout(() => setAutoSaveStatus('idle'), 2500);
       return () => clearTimeout(reset);
@@ -227,7 +237,8 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
   };
 
   const handleCardTypeChange = (type: CardType) => {
-    // Show local design immediately, then override with the server's shared active design
+    // Block API push while we load the new type's shared design
+    isLoadingRef.current = true;
     const savedDesign = loadSavedDesign(type);
     setDesign(savedDesign ?? TEMPLATES[type]);
     setSelectedId(null);
@@ -236,6 +247,8 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
         saveDesign(apiDesign);
         setDesign(apiDesign);
       }
+    }).finally(() => {
+      setTimeout(() => { isLoadingRef.current = false; }, 2000);
     });
   };
 
@@ -354,7 +367,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
 
   const handleSave = () => {
     saveDesign(design);
-    apiSetActiveDesign(design); // persist shared design to server
+    apiSetActiveDesign(design); // always push on explicit save regardless of loading state
     setSaved(true);
     setAutoSaveStatus('saved');
     setTimeout(() => { setSaved(false); setAutoSaveStatus('idle'); }, 2000);
