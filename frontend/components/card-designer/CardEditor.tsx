@@ -17,6 +17,8 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
+  const lastDesignRef = useRef<CardDesign | null>(null); // track last successfully synced design
   const canvasRef = useRef<HTMLDivElement>(null);
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const isResizing = useRef(false);
@@ -91,6 +93,19 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
     document.addEventListener('mouseup', onMouseUp);
   }, [sidebarWidth]);
 
+  /** Push design to the shared API and update syncStatus accordingly. */
+  const syncToServer = useCallback(async (d: CardDesign) => {
+    setSyncStatus('syncing');
+    const ok = await apiSetActiveDesign(d);
+    if (ok) {
+      lastDesignRef.current = d;
+      setSyncStatus('synced');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    } else {
+      setSyncStatus('error');
+    }
+  }, []);
+
   // Load saved design on mount (localStorage first, then API overrides with shared design)
   useEffect(() => {
     isLoadingRef.current = true;
@@ -101,17 +116,18 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
       if (apiDesign) {
         saveDesign(apiDesign); // keep localStorage in sync
         setDesign(apiDesign);
+        lastDesignRef.current = apiDesign;
       } else if (localDesign) {
         // Bootstrap: API has no shared design yet (first run after feature deploy).
         // Push the local design immediately so all other browsers can see it.
         saveDesign(localDesign);
-        apiSetActiveDesign(localDesign);
+        syncToServer(localDesign);
       }
     }).finally(() => {
       // Wait longer than the auto-save debounce (1.5s) before allowing API pushes
       setTimeout(() => { isLoadingRef.current = false; }, 2000);
     });
-  }, [initialCardType]);
+  }, [initialCardType, syncToServer]);
 
   // Push design changes to history (debounced 400ms to batch drag moves)
   useEffect(() => {
@@ -159,14 +175,14 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
       saveDesign(design);
       // Only push to server when the admin has actually edited — not during initial load
       if (!isLoadingRef.current) {
-        apiSetActiveDesign(design);
+        syncToServer(design);
       }
       setAutoSaveStatus('saved');
       const reset = setTimeout(() => setAutoSaveStatus('idle'), 2500);
       return () => clearTimeout(reset);
     }, 1500);
     return () => { clearTimeout(timer); };
-  }, [design]);
+  }, [design, syncToServer]);
 
   // Close context menu on outside click
   useEffect(() => {
@@ -240,9 +256,9 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
     setDesign(copy);
     setSelectedId(null);
     setShowTemplatePicker(false);
-    saveDesign(copy);           // keep localStorage in sync
-    apiSetActiveDesign(copy);   // immediately share with all other browsers
-  }, []);
+    saveDesign(copy);        // keep localStorage in sync
+    syncToServer(copy);      // immediately share with all other browsers (with status feedback)
+  }, [syncToServer]);
 
   const handleLoadTemplate = (tpl: SavedTemplate) => {
     handleApplyTemplate(tpl.design);
@@ -384,7 +400,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
 
   const handleSave = () => {
     saveDesign(design);
-    apiSetActiveDesign(design); // always push on explicit save regardless of loading state
+    syncToServer(design); // always push on explicit save regardless of loading state
     setSaved(true);
     setAutoSaveStatus('saved');
     setTimeout(() => { setSaved(false); setAutoSaveStatus('idle'); }, 2000);
@@ -638,6 +654,30 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
             <><span className="text-emerald-500">✓</span><span className="text-emerald-600">Auto-saved</span></>
           )}
         </span>
+
+        {/* Sync-to-server status */}
+        {syncStatus === 'syncing' && (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-indigo-500">
+            <span className="inline-block w-3 h-3 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+            Sharing…
+          </span>
+        )}
+        {syncStatus === 'synced' && (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+            <span>✓</span> Shared with all admins
+          </span>
+        )}
+        {syncStatus === 'error' && (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-red-500">
+            <span>⚠</span> Sync failed —{' '}
+            <button
+              onClick={() => syncToServer(design)}
+              className="underline hover:text-red-700 transition-colors"
+            >
+              Retry
+            </button>
+          </span>
+        )}
 
         <div className="w-px h-7 bg-slate-200 mx-1 hidden sm:block" />
 

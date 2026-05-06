@@ -83,11 +83,13 @@ export default function StaffCardsPage() {
   const [staffDownloadMenuOpen, setStaffDownloadMenuOpen] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [liveDesign, setLiveDesign] = useState<CardDesign>(STAFF_TEMPLATE);
+  const [designLoading, setDesignLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => { fetchStaff(); }, []);
 
   const reloadDesign = useCallback(() => {
+    setDesignLoading(true);
     // Try API first so all users see the shared active design
     apiGetActiveDesign('staff').then((apiDesign) => {
       if (apiDesign) {
@@ -96,7 +98,7 @@ export default function StaffCardsPage() {
       } else {
         setLiveDesign(loadSavedDesign('staff') ?? STAFF_TEMPLATE);
       }
-    });
+    }).finally(() => setDesignLoading(false));
   }, []);
 
   useEffect(() => { reloadDesign(); }, [reloadDesign]);
@@ -338,6 +340,21 @@ export default function StaffCardsPage() {
           {/* Edit Design */}
           <div className="flex items-center gap-2 flex-wrap">
             <div className="ml-auto flex items-center gap-2">
+              {/* Design sync status */}
+              {designLoading ? (
+                <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                  <span className="inline-block w-3 h-3 rounded-full border-2 border-slate-300 border-t-transparent animate-spin" />
+                  Loading template…
+                </span>
+              ) : (
+                <button
+                  onClick={reloadDesign}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors"
+                  title="Re-fetch the active template from the server"
+                >
+                  🔄 Refresh Template
+                </button>
+              )}
               <button
                 onClick={() => (showEditor ? handleEditorClose() : setShowEditor(true))}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showEditor ? 'bg-amber-500 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}

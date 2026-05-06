@@ -288,24 +288,36 @@ export async function apiDeleteTemplate(id: string): Promise<void> {
 export async function apiGetActiveDesign(cardType: CardType): Promise<CardDesign | null> {
   try {
     const res = await apiFetch(`/api/card-templates/active/${cardType}`);
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error(`[apiGetActiveDesign] HTTP ${res.status} for cardType=${cardType}`);
+      return null;
+    }
     const record = await res.json();
     if (!record || !record.design) return null;
-    return record.design as CardDesign;
-  } catch {
+    // Prisma Json field may occasionally come back as a string in some DB drivers
+    const design = typeof record.design === 'string' ? JSON.parse(record.design) : record.design;
+    return design as CardDesign;
+  } catch (err) {
+    console.error('[apiGetActiveDesign] Network/parse error:', err);
     return null;
   }
 }
 
-export async function apiSetActiveDesign(design: CardDesign): Promise<void> {
+export async function apiSetActiveDesign(design: CardDesign): Promise<boolean> {
   try {
-    await apiFetch(`/api/card-templates/active/${design.cardType}`, {
+    const res = await apiFetch(`/api/card-templates/active/${design.cardType}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ design }),
     });
-  } catch {
-    // ignore
+    if (!res.ok) {
+      console.error(`[apiSetActiveDesign] HTTP ${res.status} for cardType=${design.cardType}`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[apiSetActiveDesign] Network error:', err);
+    return false;
   }
 }
 

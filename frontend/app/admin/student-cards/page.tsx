@@ -66,6 +66,7 @@ export default function StudentCardsPage() {
   const [studentPageSize, setStudentPageSize] = useState(20);
   const [showEditor, setShowEditor] = useState(false);
   const [liveDesign, setLiveDesign] = useState<CardDesign>(STUDENT_TEMPLATE);
+  const [designLoading, setDesignLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function StudentCardsPage() {
   }, []);
 
   const reloadDesign = useCallback(() => {
+    setDesignLoading(true);
     // Try API first so all users see the shared active design
     apiGetActiveDesign('student').then((apiDesign) => {
       if (apiDesign) {
@@ -81,7 +83,7 @@ export default function StudentCardsPage() {
       } else {
         setLiveDesign(loadSavedDesign('student') ?? STUDENT_TEMPLATE);
       }
-    });
+    }).finally(() => setDesignLoading(false));
   }, []);
 
   useEffect(() => { reloadDesign(); }, [reloadDesign]);
@@ -344,6 +346,21 @@ export default function StudentCardsPage() {
           {/* Edit Design */}
           <div className="flex items-center gap-2 flex-wrap">
             <div className="ml-auto flex items-center gap-2">
+              {/* Design sync status */}
+              {designLoading ? (
+                <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                  <span className="inline-block w-3 h-3 rounded-full border-2 border-slate-300 border-t-transparent animate-spin" />
+                  Loading template…
+                </span>
+              ) : (
+                <button
+                  onClick={reloadDesign}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors"
+                  title="Re-fetch the active template from the server"
+                >
+                  🔄 Refresh Template
+                </button>
+              )}
               <button
                 onClick={() => (showEditor ? handleEditorClose() : setShowEditor(true))}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showEditor ? 'bg-amber-500 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
