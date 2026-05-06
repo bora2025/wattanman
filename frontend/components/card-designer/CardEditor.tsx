@@ -227,9 +227,16 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
   };
 
   const handleCardTypeChange = (type: CardType) => {
+    // Show local design immediately, then override with the server's shared active design
     const savedDesign = loadSavedDesign(type);
     setDesign(savedDesign ?? TEMPLATES[type]);
     setSelectedId(null);
+    apiGetActiveDesign(type).then((apiDesign) => {
+      if (apiDesign) {
+        saveDesign(apiDesign);
+        setDesign(apiDesign);
+      }
+    });
   };
 
   const handleMoveText = useCallback(

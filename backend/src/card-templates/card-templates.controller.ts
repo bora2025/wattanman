@@ -6,24 +6,29 @@ import { Roles } from '../auth/roles.decorator';
 
 @Controller('card-templates')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN')
 export class CardTemplatesController {
   constructor(private readonly cardTemplatesService: CardTemplatesService) {}
 
   @Get()
+  @Roles('ADMIN')
   findAll() {
     return this.cardTemplatesService.findAll();
   }
 
-  /** Get the active (shared) design for a card type — accessible to all authenticated users */
+  /**
+   * GET active/:cardType — returns the shared active design for a card type.
+   * Accessible to ALL authenticated users (no @Roles needed).
+   */
   @Get('active/:cardType')
-  @Roles()
   getActiveDesign(@Param('cardType') cardType: string) {
     return this.cardTemplatesService.getActiveDesign(cardType);
   }
 
-  /** Set the active (shared) design for a card type — ADMIN only */
+  /**
+   * PUT active/:cardType — saves the shared active design. ADMIN only.
+   */
   @Put('active/:cardType')
+  @Roles('ADMIN')
   setActiveDesign(
     @Param('cardType') cardType: string,
     @Body() body: { design: object },
@@ -32,11 +37,13 @@ export class CardTemplatesController {
   }
 
   @Post()
+  @Roles('ADMIN')
   create(@Body() body: { name: string; cardType: string; design: object }) {
     return this.cardTemplatesService.create(body);
   }
 
   @Delete(':id')
+  @Roles('ADMIN')
   delete(@Param('id') id: string) {
     return this.cardTemplatesService.delete(id);
   }
