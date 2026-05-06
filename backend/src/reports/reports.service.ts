@@ -447,7 +447,7 @@ export class ReportsService {
       },
     });
     const totalStudents = allStudents.length;
-    const totalStaff = await this.prisma.user.count({ where: { role: { notIn: ['STUDENT', 'PARENT'] } } });
+    const totalStaff = await this.prisma.user.count({ where: { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } } });
 
     // Student summary — headcount: each student counted once by dominant status for the day
     const classRule = await this.sessionConfigService.getFormatRules('CLASS', organizationId);
@@ -478,7 +478,7 @@ export class ReportsService {
     // Staff with no attendance record = absent (not recorded)
     const staffWithRecords = new Set(staffAttendances.map(a => a.userId));
     const allStaffUsers = await this.prisma.user.findMany({
-      where: { role: { notIn: ['STUDENT', 'PARENT'] } },
+      where: { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } },
       select: { id: true, name: true, role: true, department: { select: { name: true } } },
     });
     const staffNoRecord = allStaffUsers.filter(u => !staffWithRecords.has(u.id));
@@ -1048,7 +1048,7 @@ export class ReportsService {
     const end = new Date(toUTCMidnight(endDate).getTime() + 24 * 60 * 60 * 1000);
 
     const staff = await this.prisma.user.findMany({
-      where: { role: { notIn: ['STUDENT', 'PARENT'] } },
+      where: { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } },
       orderBy: { name: 'asc' },
     });
 
@@ -1201,7 +1201,7 @@ export class ReportsService {
     const isHoliday = await this.holidaysService.isHoliday(date);
 
     const staff = await this.prisma.user.findMany({
-      where: { role: { notIn: ['STUDENT', 'PARENT'] } },
+      where: { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } },
       orderBy: { name: 'asc' },
     });
 
@@ -1295,7 +1295,7 @@ export class ReportsService {
     const yearEnd = new Date(Date.UTC(y + 1, 0, 1));
 
     const staff = await this.prisma.user.findMany({
-      where: { role: { notIn: ['STUDENT', 'PARENT'] } },
+      where: { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } },
       orderBy: { name: 'asc' },
     });
 
@@ -1340,7 +1340,7 @@ export class ReportsService {
     const end = new Date(toUTCMidnight(endDate).getTime() + 24 * 60 * 60 * 1000);
 
     const staff = await this.prisma.user.findMany({
-      where: { role: { notIn: ['STUDENT', 'PARENT'] } },
+      where: { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } },
       orderBy: { name: 'asc' },
     });
 
@@ -2104,7 +2104,7 @@ export class ReportsService {
     const m = d.getUTCMonth();
 
     const staff = await this.prisma.user.findMany({
-      where: { role: { notIn: ['STUDENT', 'PARENT'] } },
+      where: { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } },
       orderBy: { name: 'asc' },
     });
 
