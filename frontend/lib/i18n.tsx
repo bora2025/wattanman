@@ -751,6 +751,14 @@ const en: Record<string, string> = {
   'scoring.manageMonths': 'Manage Exam Tabs',
   'scoring.printTitle': 'Score Report',
   'scoring.printKhEn': 'Print (Khmer / English)',
+  'scoring.classStep': 'Add Class',
+  'scoring.classStepHint': 'Select the class whose students will appear in the score table.',
+  'scoring.changeClass': 'Change Class',
+  'scoring.addRow': 'Add Row',
+  'scoring.addColumn': 'Add Column (Subject)',
+  'scoring.addRowHint': 'To add students, go to Students management and assign them to a class.',
+  'scoring.autoSaved': 'Auto-saved',
+  'scoring.scoringView': 'Go to Scoring',
 }
 
 /* ───────── Khmer translations ───────── */
@@ -1502,6 +1510,14 @@ const kh: Record<string, string> = {
   'scoring.manageMonths': 'គ្រប់គ្រងខែ/ប្រឡង',
   'scoring.printTitle': 'របាយការណ៍ពិន្ទុ',
   'scoring.printKhEn': 'បោះពុម្ព (ខ្មែរ / អង់គ្លេស)',
+  'scoring.classStep': 'បន្ថែមថ្នាក់',
+  'scoring.classStepHint': 'ជ្រើសរើសថ្នាក់ដែលសិស្សនឹងបង្ហាញក្នុងតារាងពិន្ទុ។',
+  'scoring.changeClass': 'ផ្លាស់ប្តូរថ្នាក់',
+  'scoring.addRow': 'បន្ថែមជួរដេក',
+  'scoring.addColumn': 'បន្ថែមជួរឈរ (មុខវិជ្ជា)',
+  'scoring.addRowHint': 'ដើម្បីបន្ថែមសិស្ស សូមចូលទំព័រគ្រប់គ្រងសិស្ស។',
+  'scoring.autoSaved': 'រក្សាទុកដោយស្វ័យប្រវត្តិ',
+  'scoring.scoringView': 'ទៅកាន់ពិន្ទុ',
 }
 
 /* ───────── All translations ───────── */
