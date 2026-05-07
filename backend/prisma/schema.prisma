@@ -372,3 +372,59 @@ model TimetableTeacherAttendance {
   @@unique([teacherId, date, period])
 }
 
+// ─── Student Scoring Module ───────────────────────────────────────────────────
+
+model ScoreSheet {
+  id          String   @id @default(cuid())
+  name        String   // School / gradebook name
+  logoUrl     String?  // School logo URL
+  classId     String?  // Linked class (optional)
+  studyYearId String?  // Linked study year (optional)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subjects ScoreSubject[]
+  examTabs ScoreExamTab[]
+}
+
+model ScoreSubject {
+  id           String     @id @default(cuid())
+  scoreSheetId String
+  scoreSheet   ScoreSheet @relation(fields: [scoreSheetId], references: [id], onDelete: Cascade)
+  name         String
+  maxScore     Float      @default(100)
+  color        String     @default("#000000")
+  order        Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  entries ScoreEntry[]
+}
+
+model ScoreExamTab {
+  id           String     @id @default(cuid())
+  scoreSheetId String
+  scoreSheet   ScoreSheet @relation(fields: [scoreSheetId], references: [id], onDelete: Cascade)
+  label        String     // e.g., "January", "Q1", "Semester 1"
+  type         String     // MONTHLY | QUARTERLY | SEMESTER
+  order        Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  entries ScoreEntry[]
+}
+
+model ScoreEntry {
+  id        String       @id @default(cuid())
+  examTabId String
+  examTab   ScoreExamTab @relation(fields: [examTabId], references: [id], onDelete: Cascade)
+  subjectId String
+  subject   ScoreSubject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  studentId String       // Reference to Student.id
+  score     Float?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([examTabId, subjectId, studentId])
+}
+

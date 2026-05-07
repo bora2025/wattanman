@@ -32,4 +32,7 @@ export const adminNav = [
 
   // Timetable
   { label: 'nav.timetable', href: '/admin/timetable', icon: 'calendar' },
+
+  // Scoring
+  { label: 'nav.scoring', href: '/admin/scoring', icon: 'chart' },
 ]
