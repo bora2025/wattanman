@@ -159,7 +159,8 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
                   className="mobile-tab-btn"
                   style={{ color: 'var(--color-text-secondary)' }}
                 >
-                  <NavIcon icon={tab.icon} size={24} />
+                  <NavIcon icon={tab.icon} size={22} />
+                  <span className="mobile-tab-label">{t('common.more') || 'More'}</span>
                 </button>
               );
             }
@@ -172,7 +173,8 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
                 className={`mobile-tab-btn ${isCameraCenter ? 'mobile-tab-camera' : ''}`}
                 style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}
               >
-                <NavIcon icon={tab.icon} size={24} />
+                <NavIcon icon={tab.icon} size={22} />
+                <span className="mobile-tab-label">{t(tab.label)}</span>
                 {isActive && <span className="mobile-tab-indicator" style={{ background: 'var(--color-primary)' }} />}
               </Link>
             );
