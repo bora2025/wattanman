@@ -53,6 +53,31 @@ function ScheduledTeacherContent() {
     }
   }
 
+  const downloadCSV = () => {
+    const rows: string[][] = [
+      ['No.', 'Teacher Name', 'Short', 'Timetable', 'Weekly Lessons', 'Subjects & Classes', 'Today\'s Periods'],
+    ]
+    teachers.forEach((t, i) => {
+      rows.push([
+        String(i + 1),
+        t.name,
+        t.short ?? '',
+        t.timetableName,
+        String(t.weeklyLessons),
+        t.lessons.map(l => `${l.subjectName}/${l.className}(${l.perWeek}×)`).join(' | '),
+        t.todayPeriods.length > 0 ? t.todayPeriods.map(p => `P${p}`).join(', ') : 'None',
+      ])
+    })
+    const csv = rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `scheduled-teachers-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const filtered = teachers.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase()) ||
     t.timetableName.toLowerCase().includes(search.toLowerCase()) ||
@@ -88,16 +113,32 @@ function ScheduledTeacherContent() {
                 Teachers with lessons from the active timetable · Today: <span className="font-semibold text-emerald-600">{todayName}</span>
               </p>
             </div>
-            <Link
-              href="/wattaman/teacher-scan"
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm"
-            >
-              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-              Scan Teacher
-            </Link>
+            <div className="flex items-center gap-2">
+              {teachers.length > 0 && (
+                <button
+                  onClick={downloadCSV}
+                  className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold px-3 py-2 rounded-xl transition-colors shadow-sm"
+                  title="Download as CSV"
+                >
+                  <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  CSV
+                </button>
+              )}
+              <Link
+                href="/wattaman/teacher-scan"
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm"
+              >
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+                Scan Teacher
+              </Link>
+            </div>
           </div>
         </div>
 
