@@ -790,8 +790,8 @@ export default function ScoringPage() {
                                             ${isEditing ? 'bg-yellow-50 ring-1 ring-inset ring-indigo-400' : ''}
                                             ${formula && !isEditing ? 'text-blue-700 font-mono' : ''}`}
                                           value={isEditing
-                                            ? (formula ?? (scoreVal !== null ? String(scoreVal) : ''))
-                                            : (scoreVal !== null ? String(Number(scoreVal.toFixed(2))) : '')}
+                                            ? (formula ?? (scoreVal != null ? String(scoreVal) : ''))
+                                            : (scoreVal != null ? String(Number((scoreVal as number).toFixed(2))) : '')}
                                           title={formula ?? undefined}
                                           onFocus={() => setEditingCell({ sId: student.id, subId: sub.id })}
                                           onBlur={(e: React.FocusEvent<HTMLInputElement>) => handleCellBlur(student.id, sub.id, e.target.value)}
@@ -801,8 +801,8 @@ export default function ScoringPage() {
                                       </td>
                                     )
                                   })}
-                                  <td className="border border-gray-200 px-2 py-1 text-center font-semibold text-indigo-700 bg-indigo-50">{total.toFixed(1)}</td>
-                                  <td className="border border-gray-200 px-2 py-1 text-center text-gray-700 bg-indigo-50">{avg.toFixed(1)}</td>
+                                  <td className="border border-gray-200 px-2 py-1 text-center font-semibold text-indigo-700 bg-indigo-50">{(total ?? 0).toFixed(1)}</td>
+                                  <td className="border border-gray-200 px-2 py-1 text-center text-gray-700 bg-indigo-50">{(avg ?? 0).toFixed(1)}</td>
                                   <td className="border border-gray-200 px-2 py-1 text-center font-bold text-indigo-800 bg-indigo-50">{rank}</td>
                                 </tr>
                               )
