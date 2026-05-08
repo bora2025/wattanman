@@ -36,61 +36,7 @@ interface TimetableSubject {
   timetable: { name: string; academicYear: string }
 }
 interface ScoreEntryData {
-  studentId: string; subjectId: string; score: number | null; formula?: string | null
-}
-
-// ─── Formula Evaluator ────────────────────────────────────────────────────────
-
-function isSafeFormula(expr: string): boolean {
-  return /^[0-9A-Za-z\s\+\-\*\/\.\,\(\)\<\>\=\!\?:\s]+$/.test(expr)
-}
-
-function evalFormula(
-  formula: string,
-  rowScores: Record<string, number | null>,
-  subjects: ScoreSubject[],
-): number | null {
-  const expr = formula.slice(1).trim()
-  if (!isSafeFormula(expr)) return null
-
-  // Replace column letters A,B,C... with numeric values from same-row subjects
-  let js = expr
-    .replace(/\bAVERAGE\b/gi, '__AVG__')
-    .replace(/\bSUM\b/gi, '__SUM__')
-    .replace(/\bIF\b/gi, '__IF__')
-
-  // Replace subject names (full word match) with their scores
-  for (const sub of subjects) {
-    const safe = sub.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    js = js.replace(new RegExp(`\\b${safe}\\b`, 'gi'), String(rowScores[sub.id] ?? 0))
-  }
-
-  // Replace column refs A,B,C...
-  js = js.replace(/\b([A-Z])\b/g, (_, col) => {
-    const idx = col.charCodeAt(0) - 65
-    const sub = subjects[idx]
-    return sub ? String(rowScores[sub.id] ?? 0) : '0'
-  })
-
-  // Expand SUM(a,b,c) -> (a+b+c)
-  js = js.replace(/__SUM__\(([^)]+)\)/g, (_: string, args: string) => `(${args.split(',').join('+')})`  )
-
-  // Expand AVERAGE(a,b,c) -> ((a+b+c)/n)
-  js = js.replace(/__AVG__\(([^)]+)\)/g, (_: string, args: string) => {
-    const parts = args.split(',')
-    return `((${parts.join('+')})/${parts.length})`
-  })
-
-  // IF(cond,t,f) -> (cond?t:f)
-  js = js.replace(/__IF__\(([^,]+),([^,]+),([^)]+)\)/g, (_: string, c: string, t: string, f: string) => `((${c})?(${t}):(${f}))`)
-
-  try {
-    const fn = new Function(`"use strict"; return (${js})`)
-    const result = fn()
-    return typeof result === 'number' && isFinite(result) ? result : null
-  } catch {
-    return null
-  }
+  studentId: string; subjectId: string; score: number | null
 }
 
 // ─── UI helpers ───────────────────────────────────────────────────────────────
@@ -142,8 +88,6 @@ export default function ScoringPage() {
   const [activeTabId, setActiveTabId] = useState<string | null>(null)
   const [students, setStudents] = useState<StudentRow[]>([])
   const [scores, setScores] = useState<Record<string, Record<string, number | null>>>({})
-  const [formulas, setFormulas] = useState<Record<string, Record<string, string>>>({})
-  const [editingCell, setEditingCell] = useState<{ sId: string; subId: string } | null>(null)
   const [dirtyScores, setDirtyScores] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
   const [autoSaveLabel, setAutoSaveLabel] = useState<string | null>(null)
@@ -210,7 +154,7 @@ export default function ScoringPage() {
   useEffect(() => { fetchSheets(); fetchRefs() }, [fetchSheets, fetchRefs])
 
   useEffect(() => {
-    if (!activeTabId || !activeSheet) { setStudents([]); setScores({}); setFormulas({}); return }
+    if (!activeTabId || !activeSheet) { setStudents([]); setScores({}); return }
     const classIds = activeSheet.classes?.map(c => c.classId) ?? []
     const q = classIds.length ? `?classIds=${classIds.join(',')}` : ''
     apiFetch(`/api/scoring/exam-tabs/${activeTabId}/scores${q}`).then(async res => {
@@ -224,16 +168,11 @@ export default function ScoringPage() {
         sex: s.sex, classId: s.class?.id ?? null, className: s.class?.name ?? null,
       })))
       const scoreMap: Record<string, Record<string, number | null>> = {}
-      const formulaMap: Record<string, Record<string, string>> = {}
       for (const e of data.entries) {
         if (!scoreMap[e.studentId]) scoreMap[e.studentId] = {}
         scoreMap[e.studentId][e.subjectId] = e.score
-        if (e.formula) {
-          if (!formulaMap[e.studentId]) formulaMap[e.studentId] = {}
-          formulaMap[e.studentId][e.subjectId] = e.formula
-        }
       }
-      setScores(scoreMap); setFormulas(formulaMap); setDirtyScores(new Set())
+      setScores(scoreMap); setDirtyScores(new Set())
     })
   }, [activeTabId, activeSheet])
 
@@ -265,12 +204,11 @@ export default function ScoringPage() {
   const performSave = useCallback(async (
     tabId: string, dirty: Set<string>,
     sc: Record<string, Record<string, number | null>>,
-    fm: Record<string, Record<string, string>>,
   ) => {
     if (!dirty.size) return
     const entries = Array.from(dirty).map((key: string) => {
       const [studentId, subjectId] = key.split(':')
-      return { examTabId: tabId, subjectId, studentId, score: sc[studentId]?.[subjectId] ?? null, formula: fm[studentId]?.[subjectId] ?? null }
+      return { examTabId: tabId, subjectId, studentId, score: sc[studentId]?.[subjectId] ?? null }
     })
     const res = await apiFetch('/api/scoring/entries/bulk', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -285,7 +223,7 @@ export default function ScoringPage() {
     try {
       const entries = Array.from(dirtyScores).map((key: string) => {
         const [studentId, subjectId] = key.split(':')
-        return { examTabId: activeTabId, subjectId, studentId, score: scores[studentId]?.[subjectId] ?? null, formula: formulas[studentId]?.[subjectId] ?? null }
+        return { examTabId: activeTabId, subjectId, studentId, score: scores[studentId]?.[subjectId] ?? null }
       })
       const res = await apiFetch('/api/scoring/entries/bulk', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -442,25 +380,13 @@ export default function ScoringPage() {
   // ─── Score entry ──────────────────────────────────────────────────────────
 
   const handleScoreChange = (sId: string, subId: string, val: string) => {
-    if (val.startsWith('=')) return // don't update while typing formula
     const num = val === '' ? null : parseFloat(val)
     setScores(prev => ({ ...prev, [sId]: { ...(prev[sId] ?? {}), [subId]: isNaN(num as number) ? null : num } }))
-    setFormulas(prev => { const next = { ...prev }; if (next[sId]) delete next[sId][subId]; return next })
     setDirtyScores(prev => { const s = new Set(prev); s.add(`${sId}:${subId}`); return s })
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
     autoSaveTimer.current = setTimeout(() => {
-      setDirtyScores(d => { setScores(sc => { setFormulas(fm => { if (activeTabId && d.size > 0) performSave(activeTabId, d, sc, fm); return fm }); return sc }); return d })
+      setDirtyScores(d => { setScores(sc => { if (activeTabId && d.size > 0) performSave(activeTabId, d, sc); return sc }); return d })
     }, 2500)
-  }
-
-  const handleCellBlur = (sId: string, subId: string, val: string) => {
-    if (val.startsWith('=') && activeSheet) {
-      const result = evalFormula(val, scores[sId] ?? {}, activeSheet.subjects)
-      setScores(prev => ({ ...prev, [sId]: { ...(prev[sId] ?? {}), [subId]: result } }))
-      setFormulas(prev => ({ ...prev, [sId]: { ...(prev[sId] ?? {}), [subId]: val } }))
-      setDirtyScores(prev => { const s = new Set(prev); s.add(`${sId}:${subId}`); return s })
-    }
-    setEditingCell(null)
   }
 
   // ─── Classes modal for active sheet ──────────────────────────────────────
@@ -502,10 +428,6 @@ export default function ScoringPage() {
     const sorted = [...visibleStudents].sort((a, b) => getTotal(b.id) - getTotal(a.id))
     const map: Record<string, number> = {}; sorted.forEach((s, i) => { map[s.id] = i + 1 }); return map
   })()
-
-  // ─── Selected cell formula bar ────────────────────────────────────────────
-
-  const selectedFormula = editingCell ? (formulas[editingCell.sId]?.[editingCell.subId] ?? '') : ''
 
   // ─── Sub panels ───────────────────────────────────────────────────────────
 
@@ -651,17 +573,6 @@ export default function ScoringPage() {
             </div>
           </div>
 
-          {/* ── Formula bar */}
-          {activeSheet && editingCell && (
-            <div className="bg-gray-50 border-b px-4 py-1.5 flex items-center gap-2 text-xs print:hidden flex-shrink-0">
-              <span className="text-gray-400 font-mono">ƒx</span>
-              <span className="flex-1 font-mono text-indigo-700 bg-white border rounded px-2 py-1">
-                {selectedFormula || (scores[editingCell.sId]?.[editingCell.subId] !== null ? String(scores[editingCell.sId]?.[editingCell.subId] ?? '') : '')}
-              </span>
-              <span className="text-gray-400 text-[10px]">{t('scoring.formulaHint')}</span>
-            </div>
-          )}
-
           {/* ── Body */}
           <div className="flex-1 overflow-auto">
             {!activeSheet ? (
@@ -779,24 +690,15 @@ export default function ScoringPage() {
                                     <td className="border border-gray-200 px-2 py-1 text-center text-gray-500 text-[10px]">{student.className}</td>
                                   )}
                                   {activeSheet.subjects.map(sub => {
-                                    const isEditing = editingCell?.sId === student.id && editingCell?.subId === sub.id
-                                    const formula = formulas[student.id]?.[sub.id]
                                     const scoreVal = scores[student.id]?.[sub.id]
                                     return (
                                       <td key={sub.id} className="border border-gray-200 p-0">
                                         <input
-                                          type="text"
-                                          className={`w-full px-2 py-1.5 text-center bg-transparent focus:outline-none text-xs
-                                            ${isEditing ? 'bg-yellow-50 ring-1 ring-inset ring-indigo-400' : ''}
-                                            ${formula && !isEditing ? 'text-blue-700 font-mono' : ''}`}
-                                          value={isEditing
-                                            ? (formula ?? (scoreVal != null ? String(scoreVal) : ''))
-                                            : (scoreVal != null ? String(Number((scoreVal as number).toFixed(2))) : '')}
-                                          title={formula ?? undefined}
-                                          onFocus={() => setEditingCell({ sId: student.id, subId: sub.id })}
-                                          onBlur={(e: React.FocusEvent<HTMLInputElement>) => handleCellBlur(student.id, sub.id, e.target.value)}
+                                          type="number"
+                                          className="w-full px-2 py-1.5 text-center bg-transparent focus:outline-none focus:bg-yellow-50 focus:ring-1 focus:ring-inset focus:ring-indigo-400 text-xs"
+                                          value={scoreVal != null ? scoreVal : ''}
+                                          min={0}
                                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleScoreChange(student.id, sub.id, e.target.value)}
-                                          placeholder={isEditing ? `=SUM(A,B)` : ''}
                                         />
                                       </td>
                                     )
