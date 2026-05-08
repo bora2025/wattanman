@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// build: 2026-05-08
 const nextConfig = {
   // Standalone output for Docker deployment
   output: 'standalone',
