@@ -57,7 +57,7 @@ function WattamanDashboardContent() {
 
   return (
     <div className="page-shell">
-      <Sidebar title="Wattaman" subtitle="QR Attendance" navItems={wattamanNav} accentColor="emerald" bottomTabs={['/wattaman', '/wattaman/scan']} />
+      <Sidebar title="Wattaman" subtitle="QR Attendance" navItems={wattamanNav} accentColor="emerald" bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/scheduled-teacher', '/wattaman/teacher-reports']} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
 
