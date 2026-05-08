@@ -110,6 +110,7 @@ export default function ScoringPage() {
   const [showDeleteSheetConfirm, setShowDeleteSheetConfirm] = useState(false)
   const [showAddMenu, setShowAddMenu] = useState(false)
   const [showPrintMenu, setShowPrintMenu] = useState(false)
+  const [showPrintModal, setShowPrintModal] = useState(false)
   const [subjectTab, setSubjectTab] = useState<'manual' | 'import'>('manual')
 
   // ── Wizard state
@@ -200,24 +201,10 @@ export default function ScoringPage() {
 
   const yearLabel = (sy: StudyYearOption) => sy.label || `${sy.year}-${sy.year + 1}`
 
-  const handlePrint = useCallback((classId: string) => {
-    if (!activeSheet || !activeTabId) return
+  const handlePrint = useCallback(() => {
     setShowPrintMenu(false)
-    const tab = activeSheet.examTabs.find(t => t.id === activeTabId)
-    const sheetClassIds = activeSheet.classes?.map(c => c.classId) ?? []
-    const printClasses = classes.filter(c => sheetClassIds.includes(c.id))
-    const params = new URLSearchParams({
-      tabId: activeTabId,
-      classId,
-      sheetName: activeSheet.name,
-      tabLabel: tab?.label ?? '',
-      logoUrl: activeSheet.logoUrl ?? '',
-      subjects: JSON.stringify(activeSheet.subjects.map(s => ({ id: s.id, name: s.name, maxScore: s.maxScore, color: s.color }))),
-      sheetClasses: JSON.stringify(printClasses.map(c => ({ id: c.id, name: c.name }))),
-      signers: JSON.stringify(['Teacher', 'Admin']),
-    })
-    window.open(`/admin/scoring/print?${params.toString()}`, '_blank')
-  }, [activeSheet, activeTabId, classes])
+    setShowPrintModal(true)
+  }, [])
 
   // ─── Save / auto-save ─────────────────────────────────────────────────────
 
@@ -592,33 +579,7 @@ export default function ScoringPage() {
               <ToolBtn icon="📂" label={t('scoring.open')} onClick={() => setShowOpenModal(true)} />
               <ToolBtn icon={saving ? '⏳' : '💾'} label={saving ? t('scoring.saving') : t('scoring.save')} onClick={saveScores} disabled={dirtyScores.size === 0 || !activeTabId} />
               <Divider />
-              {(!activeSheet || sheetClasses.length <= 1) ? (
-                <ToolBtn icon="🖨️" label={t('scoring.print')} onClick={() => window.print()} />
-              ) : (
-                <div className="relative">
-                  <button
-                    onClick={e => { e.stopPropagation(); setShowPrintMenu(v => !v) }}
-                    className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs font-medium transition-colors text-gray-700 hover:bg-gray-100">
-                    <span className="text-base leading-none select-none">🖨️</span>
-                    <span className="whitespace-nowrap">{t('scoring.print')} ▾</span>
-                  </button>
-                  {showPrintMenu && (
-                    <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-30 w-44" onClick={e => e.stopPropagation()}>
-                      <button onClick={() => handlePrint('ALL')}
-                        className="w-full text-left px-4 py-2.5 text-xs hover:bg-indigo-50 text-gray-700 flex items-center gap-2">
-                        <span>📋</span> {t('scoring.printAll')}
-                      </button>
-                      <div className="border-t" />
-                      {sheetClasses.map(c => (
-                        <button key={c.id} onClick={() => handlePrint(c.id)}
-                          className="w-full text-left px-4 py-2.5 text-xs hover:bg-indigo-50 text-gray-700 flex items-center gap-2">
-                          <span>🏫</span> {c.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+              <ToolBtn icon="🖨️" label={t('scoring.print')} onClick={handlePrint} disabled={!activeSheet} />
               <Divider />
               <ToolBtn icon="📚" label={t('scoring.subject')} onClick={() => { resetSubjectForm(); setSubjectTab('manual'); setShowSubjectModal(true) }} disabled={!activeSheet} />
               <ToolBtn icon="🏫" label={t('scoring.class')} onClick={openClassModal} disabled={!activeSheet} />
@@ -1013,7 +974,208 @@ export default function ScoringPage() {
             </div>
           </Modal>
         )}
+
+        {/* ══ Print Modal ══ */}
+        {showPrintModal && activeSheet && (
+          <ScoringPrintModal
+            sheet={activeSheet}
+            activeTabId={activeTabId}
+            sheetClasses={sheetClasses}
+            onClose={() => setShowPrintModal(false)}
+          />
+        )}
       </div>
     </AuthGuard>
+  )
+}
+
+// ─── Scoring Print Modal ──────────────────────────────────────────────────────
+
+function ScoringPrintModal({
+  sheet, activeTabId, sheetClasses, onClose,
+}: {
+  sheet: ScoreSheet
+  activeTabId: string | null
+  sheetClasses: ClassOption[]
+  onClose: () => void
+}) {
+  const { t } = useLanguage()
+
+  const [printClassId, setPrintClassId] = useState<string>('ALL')
+  const [orgName, setOrgName] = useState('Wattaman School')
+  const [logoUrl, setLogoUrl] = useState(sheet.logoUrl ?? '')
+  const [logoTextLines, setLogoTextLines] = useState<string[]>([''])
+  const [logoGap, setLogoGap] = useState('4')
+  const [logoTextGap, setLogoTextGap] = useState('4')
+  const [headerLines, setHeaderLines] = useState<string[]>(['ព្រះរាជាណាចក្រកម្ពុជា', 'ជាតិ សាសនា ព្រះមហាក្សត្រ'])
+  const [headerGap, setHeaderGap] = useState('6')
+  const [signers, setSigners] = useState<string[]>(['Teacher', 'Admin'])
+
+  const tab = sheet.examTabs.find(e => e.id === activeTabId)
+
+  const handlePrint = () => {
+    if (!activeTabId) return
+    const params = new URLSearchParams({
+      tabId: activeTabId,
+      classId: printClassId,
+      sheetName: sheet.name,
+      tabLabel: tab?.label ?? '',
+      logoUrl,
+      orgName,
+      logoTextLines: JSON.stringify(logoTextLines.filter(l => l.trim())),
+      logoGap,
+      logoTextGap,
+      headerLines: JSON.stringify(headerLines.filter(l => l.trim())),
+      headerGap,
+      subjects: JSON.stringify(sheet.subjects.map(s => ({ id: s.id, name: s.name, maxScore: s.maxScore, color: s.color }))),
+      sheetClasses: JSON.stringify(sheetClasses.map(c => ({ id: c.id, name: c.name }))),
+      signers: JSON.stringify(signers.filter(s => s.trim())),
+    })
+    window.open(`/admin/scoring/print?${params.toString()}`, '_blank')
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-white rounded-t-2xl">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">🖨️ {t('scoring.print')}</h2>
+            <p className="text-xs text-slate-500 mt-0.5">{sheet.name} — {tab?.label ?? '—'}</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm">✕</button>
+        </div>
+
+        <div className="p-6 space-y-5">
+
+          {sheetClasses.length > 1 && (
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">🏫 {t('scoring.filterClass')}</label>
+              <select value={printClassId} onChange={e => setPrintClassId(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white">
+                <option value="ALL">{t('scoring.allClasses')}</option>
+                {sheetClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          )}
+
+          <div className="space-y-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200">
+            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">📜 Letter Header</h3>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Logo URL</label>
+              <input type="text" value={logoUrl} onChange={e => setLogoUrl(e.target.value)}
+                placeholder="https://example.com/logo.png"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo (px)</label>
+              <div className="flex items-center gap-2">
+                <input type="range" min="0" max="20" step="1" value={logoGap}
+                  onChange={e => setLogoGap(e.target.value)} className="flex-1 accent-indigo-500" />
+                <span className="text-xs text-slate-500 w-8 text-center">{logoGap}</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Text Below Logo</label>
+              <div className="space-y-1.5">
+                {logoTextLines.map((line, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5">
+                    <input type="text" value={line} placeholder={`Line ${idx + 1}`}
+                      onChange={e => { const l = [...logoTextLines]; l[idx] = e.target.value; setLogoTextLines(l) }}
+                      className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                    {logoTextLines.length > 1 && (
+                      <button onClick={() => setLogoTextLines(logoTextLines.filter((_, i) => i !== idx))}
+                        className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-xs">✕</button>
+                    )}
+                  </div>
+                ))}
+                <button onClick={() => setLogoTextLines([...logoTextLines, ''])}
+                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">+ Add line</button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo Text (px)</label>
+              <div className="flex items-center gap-2">
+                <input type="range" min="0" max="20" step="1" value={logoTextGap}
+                  onChange={e => setLogoTextGap(e.target.value)} className="flex-1 accent-indigo-500" />
+                <span className="text-xs text-slate-500 w-8 text-center">{logoTextGap}</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Header Lines (top → bottom)</label>
+              <div className="space-y-1.5">
+                {headerLines.map((line, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5">
+                    <input type="text" value={line} placeholder={`Line ${idx + 1}`}
+                      onChange={e => { const h = [...headerLines]; h[idx] = e.target.value; setHeaderLines(h) }}
+                      className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-center" />
+                    {headerLines.length > 1 && (
+                      <button onClick={() => setHeaderLines(headerLines.filter((_, i) => i !== idx))}
+                        className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-xs">✕</button>
+                    )}
+                  </div>
+                ))}
+                <button onClick={() => setHeaderLines([...headerLines, ''])}
+                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">+ Add line</button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Header Lines (px)</label>
+              <div className="flex items-center gap-2">
+                <input type="range" min="0" max="20" step="1" value={headerGap}
+                  onChange={e => setHeaderGap(e.target.value)} className="flex-1 accent-indigo-500" />
+                <span className="text-xs text-slate-500 w-8 text-center">{headerGap}</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Organization Name</label>
+              <input type="text" value={orgName} onChange={e => setOrgName(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">✍️ Signers</label>
+            <div className="space-y-2">
+              {signers.map((signer, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input type="text" value={signer} placeholder={`Signer ${idx + 1}`}
+                    onChange={e => { const s = [...signers]; s[idx] = e.target.value; setSigners(s) }}
+                    className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                  {signers.length > 1 && (
+                    <button onClick={() => setSigners(signers.filter((_, i) => i !== idx))}
+                      className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-sm">✕</button>
+                  )}
+                </div>
+              ))}
+              <button onClick={() => setSigners([...signers, ''])}
+                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+                + Add signer
+              </button>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button onClick={onClose}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+              {t('common.cancel') || 'Cancel'}
+            </button>
+            <button onClick={handlePrint} disabled={!activeTabId}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-sm flex items-center justify-center gap-2">
+              🖨️ {t('reports.preview')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

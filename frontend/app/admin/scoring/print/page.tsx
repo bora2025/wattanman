@@ -83,6 +83,10 @@ function ScoringPrintContent() {
   const sheetName = searchParams.get('sheetName') || ''
   const tabLabel = searchParams.get('tabLabel') || ''
   const logoUrl = searchParams.get('logoUrl') || ''
+  const orgName = searchParams.get('orgName') || ''
+  const logoGap = parseInt(searchParams.get('logoGap') || '4')
+  const logoTextGap = parseInt(searchParams.get('logoTextGap') || '4')
+  const headerGap = parseInt(searchParams.get('headerGap') || '6')
 
   const subjects: SubjectInfo[] = (() => {
     try { return JSON.parse(searchParams.get('subjects') || '[]') } catch { return [] }
@@ -90,6 +94,10 @@ function ScoringPrintContent() {
 
   const sheetClasses: ClassInfo[] = (() => {
     try { return JSON.parse(searchParams.get('sheetClasses') || '[]') } catch { return [] }
+  })()
+
+  const logoTextLines: string[] = (() => {
+    try { return JSON.parse(searchParams.get('logoTextLines') || '[]') } catch { return [] }
   })()
 
   const headerLines: string[] = (() => {
@@ -342,16 +350,26 @@ function ScoringPrintContent() {
             <div className="mb-5 border-b-2 border-slate-800 pb-4">
               <div className="flex items-start gap-4">
                 {logoUrl && (
-                  <div className="flex-shrink-0 pt-1">
-                    <img src={logoUrl} alt="logo" className="h-16 w-16 object-contain" />
+                  <div className="flex-shrink-0 pt-1 text-center">
+                    <img src={logoUrl} alt="logo" className="h-20 w-20 object-contain" style={{ marginBottom: `${logoGap}px` }} />
+                    {logoTextLines.length > 0 && (
+                      <div style={{ marginBottom: `${logoTextGap}px` }}>
+                        {logoTextLines.map((line, idx) => (
+                          <p key={idx} className="text-[9px] text-slate-600 leading-tight whitespace-nowrap">{line}</p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
-                <div className="flex-1 text-center">
+                <div className="flex-1 text-center" style={{ marginBottom: `${headerGap}px` }}>
                   {headerLines.map((line, i) => (
                     <p key={i} className={i === 0 ? 'text-base font-bold text-slate-900' : 'text-sm font-semibold text-slate-700'}>{line}</p>
                   ))}
+                  {orgName && (
+                    <p className="text-lg font-bold text-slate-900 uppercase tracking-wide mt-1">{orgName}</p>
+                  )}
                 </div>
-                {logoUrl && <div className="w-16 flex-shrink-0" />}
+                {logoUrl && <div className="w-20 flex-shrink-0" />}
               </div>
               <div className="text-center mt-3">
                 <h2 className="text-lg font-semibold text-slate-700">{sheetName}</h2>
