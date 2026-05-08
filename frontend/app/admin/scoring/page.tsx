@@ -425,8 +425,19 @@ export default function ScoringPage() {
   const getAverage = (sId: string) => { const n = activeSheet?.subjects.length ?? 0; return n ? getTotal(sId) / n : 0 }
 
   const rankings = (() => {
-    const sorted = [...visibleStudents].sort((a, b) => getTotal(b.id) - getTotal(a.id))
-    const map: Record<string, number> = {}; sorted.forEach((s, i) => { map[s.id] = i + 1 }); return map
+    // Group students by classId (null counts as its own group)
+    const groups: Record<string, StudentRow[]> = {}
+    visibleStudents.forEach(s => {
+      const key = s.classId ?? '__none__'
+      if (!groups[key]) groups[key] = []
+      groups[key].push(s)
+    })
+    const map: Record<string, number> = {}
+    Object.values(groups).forEach(group => {
+      const sorted = [...group].sort((a, b) => getTotal(b.id) - getTotal(a.id))
+      sorted.forEach((s, i) => { map[s.id] = i + 1 })
+    })
+    return map
   })()
 
   // ─── Sub panels ───────────────────────────────────────────────────────────
@@ -662,10 +673,12 @@ export default function ScoringPage() {
                           ) : (() => {
                             const rows: React.ReactNode[] = []
                             let lastClassName: string | null = null
+                            let classRowIdx = 0
                             visibleStudents.forEach((student, idx) => {
                               const showClassHeader = sheetClasses.length > 1 && filterClassId === 'ALL' && student.className !== lastClassName
                               if (showClassHeader) {
                                 lastClassName = student.className
+                                classRowIdx = 0
                                 rows.push(
                                   <tr key={`cls-${student.classId}`} className="print:break-before-page">
                                     <td colSpan={5 + activeSheet.subjects.length}
@@ -675,13 +688,15 @@ export default function ScoringPage() {
                                   </tr>
                                 )
                               }
+                              classRowIdx++
+                              const rowNum = (sheetClasses.length > 1 && filterClassId === 'ALL') ? classRowIdx : idx + 1
                               const total = getTotal(student.id)
                               const avg = getAverage(student.id)
                               const rank = rankings[student.id] ?? '-'
                               const isDirty = activeSheet.subjects.some(sub => dirtyScores.has(`${student.id}:${sub.id}`))
                               rows.push(
                                 <tr key={student.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${isDirty ? 'ring-1 ring-inset ring-amber-200' : ''}`}>
-                                  <td className="border border-gray-200 px-3 py-1 text-center text-gray-500 sticky left-0 bg-inherit">{idx + 1}</td>
+                                  <td className="border border-gray-200 px-3 py-1 text-center text-gray-500 sticky left-0 bg-inherit">{rowNum}</td>
                                   <td className="border border-gray-200 px-3 py-1 font-medium text-gray-800 sticky left-10 bg-inherit">{student.name}</td>
                                   <td className="border border-gray-200 px-2 py-1 text-center text-gray-500">
                                     {student.sex === 'FEMALE' ? '♀' : student.sex === 'MALE' ? '♂' : '—'}
