@@ -280,4 +280,250 @@ export class TimetableService {
     });
     return teachers;
   }
+
+  // ─── Auto-detect current period from periodTimes JSON (Cambodia time) ─
+
+  private detectCurrentPeriod(periodTimes: string[]): number | null {
+    if (!periodTimes || periodTimes.length === 0) return null;
+    const now = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
+    const nowMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+    const toMin = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+    for (let i = 0; i < periodTimes.length; i++) {
+      const startMin = toMin(periodTimes[i]);
+      const nextMin = i + 1 < periodTimes.length ? toMin(periodTimes[i + 1]) : startMin + 60;
+      if (nowMinutes >= startMin && nowMinutes < nextMin) return i + 1;
+    }
+    if (nowMinutes < toMin(periodTimes[0])) return 1;
+    return periodTimes.length;
+  }
+
+  // ─── Wattaman: scan a teacher QR code and record attendance ────────
+
+  async wattamanTeacherScan(
+    qrCode: string,
+    scannedById: string,
+    latitude?: number,
+    longitude?: number,
+    location?: string,
+  ) {
+    const teacher = await this.prisma.timetableTeacher.findUnique({
+      where: { qrCode },
+      include: {
+        timetable: { select: { id: true, name: true, periodTimes: true } },
+        lessons: {
+          include: {
+            subject: { select: { name: true, color: true } },
+            class: { select: { name: true } },
+          },
+        },
+      },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException(`Teacher QR code not found`);
+    }
+
+    // Cambodia date / day-of-week (1=Mon … 6=Sat per timetable convention)
+    const cambodiaDate = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
+    const jsDay = cambodiaDate.getUTCDay(); // 0=Sun
+    const day = jsDay === 0 ? 7 : jsDay;   // 1=Mon … 7=Sun
+    const dateStr = `${cambodiaDate.getUTCFullYear()}-${String(cambodiaDate.getUTCMonth() + 1).padStart(2, '0')}-${String(cambodiaDate.getUTCDate()).padStart(2, '0')}`;
+    const dateObj = new Date(dateStr + 'T00:00:00.000Z');
+
+    // Today's scheduled entries for this teacher
+    const todayEntries = await this.prisma.timetableEntry.findMany({
+      where: { teacherId: teacher.id, timetableId: teacher.timetableId, day },
+      include: {
+        subject: { select: { name: true, color: true } },
+        class: { select: { name: true } },
+        classroom: { select: { name: true } },
+      },
+      orderBy: { period: 'asc' },
+    });
+
+    // Detect current period from timetable period times
+    const periodTimes: string[] = teacher.timetable.periodTimes
+      ? JSON.parse(teacher.timetable.periodTimes)
+      : [];
+    const currentPeriod = this.detectCurrentPeriod(periodTimes);
+
+    // Find best matching entry (current period → first scheduled → fallback 1)
+    let targetEntry = todayEntries.find(e => e.period === currentPeriod);
+    if (!targetEntry && todayEntries.length > 0) targetEntry = todayEntries[0];
+    const period = targetEntry?.period ?? (currentPeriod ?? 1);
+
+    const teacherName = `${teacher.firstName} ${teacher.lastName}`;
+    const subjectName = targetEntry?.subject?.name ?? '';
+    const className = targetEntry?.class?.name ?? '';
+
+    // Check for duplicate
+    const existing = await this.prisma.timetableTeacherAttendance.findUnique({
+      where: { teacherId_date_period: { teacherId: teacher.id, date: dateObj, period } },
+    });
+
+    if (existing) {
+      return {
+        action: 'ALREADY_RECORDED',
+        teacherId: teacher.id,
+        teacherName,
+        period,
+        status: existing.status,
+        checkIn: existing.checkIn?.toISOString() ?? null,
+        subjectName,
+        className,
+        timetableName: teacher.timetable.name,
+        scheduledPeriods: todayEntries.map(e => e.period),
+      };
+    }
+
+    // Auto-detect LATE (>20 min after period start)
+    let status = 'PRESENT';
+    if (periodTimes.length >= period) {
+      const [ph, pm] = periodTimes[period - 1].split(':').map(Number);
+      const lateAfterMin = ph * 60 + pm + 20;
+      const cambodiaNow = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
+      const nowMin = cambodiaNow.getUTCHours() * 60 + cambodiaNow.getUTCMinutes();
+      if (nowMin > lateAfterMin) status = 'LATE';
+    }
+
+    const attendance = await this.prisma.timetableTeacherAttendance.create({
+      data: { teacherId: teacher.id, date: dateObj, period, status, checkIn: new Date() },
+    });
+
+    return {
+      action: 'CHECK_IN',
+      teacherId: teacher.id,
+      teacherName,
+      period,
+      status,
+      checkIn: attendance.checkIn?.toISOString() ?? null,
+      subjectName,
+      className,
+      timetableName: teacher.timetable.name,
+      scheduledPeriods: todayEntries.map(e => e.period),
+    };
+  }
+
+  // ─── Get all scheduled teachers (from PUBLISHED timetables) ────────
+
+  async getAllScheduledTeachers() {
+    const timetables = await this.prisma.timetable.findMany({
+      where: { status: 'PUBLISHED' },
+      select: { id: true, name: true, periodTimes: true, numberOfDays: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (timetables.length === 0) {
+      // Fallback: use the most recent timetable regardless of status
+      const latest = await this.prisma.timetable.findFirst({
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, name: true, periodTimes: true, numberOfDays: true },
+      });
+      if (!latest) return [];
+      timetables.push(latest);
+    }
+
+    const results: any[] = [];
+    for (const tt of timetables) {
+      const teachers = await this.prisma.timetableTeacher.findMany({
+        where: { timetableId: tt.id, lessons: { some: {} } },
+        include: {
+          lessons: {
+            include: {
+              subject: { select: { name: true, color: true } },
+              class: { select: { name: true } },
+            },
+          },
+          entries: { orderBy: [{ day: 'asc' }, { period: 'asc' }] },
+        },
+        orderBy: { lastName: 'asc' },
+      });
+
+      const cambodiaDate = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
+      const jsDay = cambodiaDate.getUTCDay();
+      const todayDay = jsDay === 0 ? 7 : jsDay;
+
+      for (const t of teachers) {
+        const weeklyLessons = t.lessons.reduce((s, l) => s + l.perWeek, 0);
+        const todayEntries = t.entries.filter(e => e.day === todayDay);
+        results.push({
+          id: t.id,
+          timetableId: tt.id,
+          timetableName: tt.name,
+          name: `${t.firstName} ${t.lastName}`,
+          short: t.short,
+          sex: t.sex,
+          color: t.color,
+          qrCode: t.qrCode,
+          weeklyLessons,
+          lessons: t.lessons.map(l => ({
+            id: l.id,
+            subjectName: (l.subject as any)?.name ?? '',
+            className: (l.class as any)?.name ?? '',
+            perWeek: l.perWeek,
+          })),
+          todayPeriods: todayEntries.map(e => e.period),
+          totalEntries: t.entries.length,
+        });
+      }
+    }
+
+    return results;
+  }
+
+  // ─── Teacher monthly attendance report ──────────────────────────────
+
+  async getTeacherAttendanceMonthly(timetableId: string, startDate: string, endDate: string) {
+    const start = new Date(startDate + 'T00:00:00.000Z');
+    const end = new Date(endDate + 'T23:59:59.999Z');
+
+    const teachers = await this.prisma.timetableTeacher.findMany({
+      where: { timetableId, lessons: { some: {} } },
+      include: {
+        lessons: {
+          include: {
+            subject: { select: { name: true } },
+            class: { select: { name: true } },
+          },
+        },
+        attendances: {
+          where: { date: { gte: start, lte: end } },
+          orderBy: [{ date: 'asc' }, { period: 'asc' }],
+        },
+      },
+      orderBy: { lastName: 'asc' },
+    });
+
+    return teachers.map(t => {
+      const present = t.attendances.filter(a => a.status === 'PRESENT').length;
+      const late = t.attendances.filter(a => a.status === 'LATE').length;
+      const absent = t.attendances.filter(a => a.status === 'ABSENT').length;
+      return {
+        id: t.id,
+        name: `${t.firstName} ${t.lastName}`,
+        short: t.short,
+        color: t.color,
+        weeklyLessons: t.lessons.reduce((s, l) => s + l.perWeek, 0),
+        lessons: t.lessons.map(l => ({
+          subjectName: (l.subject as any)?.name ?? '',
+          className: (l.class as any)?.name ?? '',
+          perWeek: l.perWeek,
+        })),
+        present,
+        late,
+        absent,
+        total: present + late + absent,
+        attendances: t.attendances.map(a => ({
+          id: a.id,
+          date: a.date.toISOString(),
+          period: a.period,
+          status: a.status,
+          checkIn: a.checkIn?.toISOString() ?? null,
+        })),
+      };
+    });
+  }
 }

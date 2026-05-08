@@ -149,6 +149,26 @@ export class TimetableController {
     return this.svc.markTeacherAttendanceByQr(body.qrCode, body.period);
   }
 
+  @Roles('ADMIN', 'WATTAMAN')
+  @Post('teacher-attendance/wattaman-scan')
+  wattamanTeacherScan(
+    @Request() req,
+    @Body() body: { qrCode: string; latitude?: number; longitude?: number; location?: string },
+  ) {
+    return this.svc.wattamanTeacherScan(
+      body.qrCode,
+      req.user.userId,
+      body.latitude,
+      body.longitude,
+      body.location,
+    );
+  }
+
+  @Get('scheduled-teachers/all')
+  getAllScheduledTeachers() {
+    return this.svc.getAllScheduledTeachers();
+  }
+
   @Roles('ADMIN')
   @Post('teacher-attendance/mark')
   markAttendance(@Body() body: { teacherId: string; date: string; period: number; status: string }) {
@@ -163,5 +183,14 @@ export class TimetableController {
     @Query('endDate') endDate: string,
   ) {
     return this.svc.getTeacherAttendanceReport(timetableId, startDate, endDate);
+  }
+
+  @Get(':id/teacher-attendance/monthly')
+  getTeacherMonthly(
+    @Param('id') timetableId: string,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.svc.getTeacherAttendanceMonthly(timetableId, startDate, endDate);
   }
 }

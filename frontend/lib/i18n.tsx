@@ -29,6 +29,8 @@ const en: Record<string, string> = {
   'nav.reports': 'Reports',
   'nav.staffReports': 'Staff Reports',
   'nav.scanAttendance': 'Scan Attendance',
+  'nav.scheduledTeacher': 'Scheduled Teacher',
+  'nav.teacherReports': 'Teacher Reports',
   'nav.myReports': 'My Reports',
   'nav.myCard': 'My Card',
 
@@ -809,6 +811,8 @@ const kh: Record<string, string> = {
   'nav.reports': 'របាយការណ៍',
   'nav.staffReports': 'របាយការណ៍បុគ្គលិក',
   'nav.scanAttendance': 'ស្កេនវត្តមាន',
+  'nav.scheduledTeacher': 'គ្រូមានកាលវិភាគ',
+  'nav.teacherReports': 'របាយការណ៍គ្រូ',
   'nav.myReports': 'របាយការណ៍របស់ខ្ញុំ',
   'nav.myCard': 'កាតរបស់ខ្ញុំ',
 
