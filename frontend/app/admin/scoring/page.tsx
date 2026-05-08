@@ -211,7 +211,7 @@ export default function ScoringPage() {
 
   useEffect(() => {
     if (!activeTabId || !activeSheet) { setStudents([]); setScores({}); setFormulas({}); return }
-    const classIds = activeSheet.classes.map(c => c.classId)
+    const classIds = activeSheet.classes?.map(c => c.classId) ?? []
     const q = classIds.length ? `?classIds=${classIds.join(',')}` : ''
     apiFetch(`/api/scoring/exam-tabs/${activeTabId}/scores${q}`).then(async res => {
       if (!res.ok) return
@@ -467,7 +467,7 @@ export default function ScoringPage() {
 
   const openClassModal = () => {
     if (!activeSheet) return
-    setEditClassIds(new Set(activeSheet.classes.map(c => c.classId)))
+    setEditClassIds(new Set(activeSheet.classes?.map(c => c.classId) ?? []))
     setShowClassModal(true)
   }
 
@@ -604,7 +604,7 @@ export default function ScoringPage() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
-  const sheetClassIds = activeSheet?.classes.map(c => c.classId) ?? []
+  const sheetClassIds = activeSheet?.classes?.map(c => c.classId) ?? []
   const sheetClasses = classes.filter(c => sheetClassIds.includes(c.id))
   const yearClasses = classes.filter(c => !wStudyYearId || c.studyYearId === wStudyYearId)
 
@@ -941,7 +941,7 @@ export default function ScoringPage() {
                     {t('scoring.importSubject')}
                   </button>
                 </div>
-                {subjectTab === 'manual' ? <SubjectFormPanel /> : <TimetableImportPanel />}
+                {subjectTab === 'manual' ? SubjectFormPanel() : TimetableImportPanel()}
               </div>
             )}
 
@@ -949,7 +949,7 @@ export default function ScoringPage() {
             {wizardStep === 'month' && (
               <div className="space-y-3">
                 <p className="text-sm text-gray-500">{t('scoring.addMonth')}</p>
-                <MonthFormPanel />
+                {MonthFormPanel()}
               </div>
             )}
 
@@ -972,7 +972,7 @@ export default function ScoringPage() {
             {sheets.length === 0 ? <p className="text-gray-500 text-sm text-center py-6">{t('scoring.noSheets')}</p> : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
                 {sheets.map(sheet => {
-                  const sc = classes.filter(c => sheet.classes.some(x => x.classId === c.id))
+                  const sc = classes.filter(c => sheet.classes?.some(x => x.classId === c.id))
                   const sy = studyYears.find(y => y.id === sheet.studyYearId)
                   return (
                     <button key={sheet.id} onClick={() => openSheet(sheet)}
@@ -981,7 +981,7 @@ export default function ScoringPage() {
                         <p className="font-medium text-gray-800 text-sm">{sheet.name}</p>
                         {sy && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{yearLabel(sy)}</span>}
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">{sc.map(c => c.name).join(', ') || 'No classes'} · {sheet.subjects.length} subjects · {sheet.examTabs.length} tabs</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{sc.map(c => c.name).join(', ') || 'No classes'} · {sheet.subjects?.length ?? 0} subjects · {sheet.examTabs?.length ?? 0} tabs</p>
                     </button>
                   )
                 })}
@@ -1003,7 +1003,7 @@ export default function ScoringPage() {
                 {t('scoring.importSubject')}
               </button>
             </div>
-            {subjectTab === 'manual' ? <SubjectFormPanel /> : <TimetableImportPanel />}
+            {subjectTab === 'manual' ? SubjectFormPanel() : TimetableImportPanel()}
             <div className="flex justify-end pt-4">
               <button onClick={() => setShowSubjectModal(false)} className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50">{t('common.close') || 'Close'}</button>
             </div>
@@ -1013,7 +1013,7 @@ export default function ScoringPage() {
         {/* ══ Month Modal ══ */}
         {showMonthModal && !showNewWizard && (
           <Modal title={t('scoring.manageMonths')} onClose={() => setShowMonthModal(false)}>
-            <MonthFormPanel />
+            {MonthFormPanel()}
             <div className="flex justify-end pt-4">
               <button onClick={() => setShowMonthModal(false)} className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50">{t('common.close') || 'Close'}</button>
             </div>
