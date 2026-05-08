@@ -266,24 +266,6 @@ function ScoringPrintContent() {
               </>
             )
           })}
-          {/* Totals row */}
-          <tr className="bg-slate-200 font-semibold text-xs">
-            <td colSpan={3 + (showClass ? 1 : 0)} className="border border-slate-400 px-1 py-2 text-center">
-              {t('common.total')} ({rows.length})
-            </td>
-            {subjects.map(sub => (
-              <td key={sub.id} className="border border-slate-400 px-1 py-1.5 text-center text-slate-600 whitespace-nowrap">
-                {rows.reduce((s, st) => s + (scores[st.id]?.[sub.id] ?? 0), 0).toFixed(1)}
-              </td>
-            ))}
-            <td className="border border-slate-400 px-1 py-1.5 text-center text-indigo-700 whitespace-nowrap">
-              {rows.reduce((s, st) => s + getTotal(subjects, scores, st.id), 0).toFixed(1)}
-            </td>
-            <td className="border border-slate-400 px-1 py-1.5 text-center text-slate-600 whitespace-nowrap">
-              {rows.length ? (rows.reduce((s, st) => s + getAverage(subjects, scores, st.id), 0) / rows.length).toFixed(1) : '—'}
-            </td>
-            <td className="border border-slate-400" />
-          </tr>
         </tbody>
       </table>
     )
