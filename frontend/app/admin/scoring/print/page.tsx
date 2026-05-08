@@ -176,27 +176,37 @@ function ScoringPrintContent() {
     let lastClassName: string | null = null
 
     return (
-      <table className="w-full border-collapse text-xs">
+      <table className="w-full border-collapse text-xs table-fixed">
+        <colgroup>
+          <col style={{ width: '28px' }} />       {/* No. */}
+          <col />                                  {/* Name — takes remaining space */}
+          <col style={{ width: '36px' }} />        {/* Gender */}
+          {showClass && <col style={{ width: '80px' }} />}
+          {subjects.map(sub => <col key={sub.id} style={{ width: '60px' }} />)}
+          <col style={{ width: '52px' }} />        {/* Total */}
+          <col style={{ width: '52px' }} />        {/* Average */}
+          <col style={{ width: '36px' }} />        {/* Rank */}
+        </colgroup>
         <thead>
           <tr className="bg-slate-800 text-white">
-            <th className="border border-slate-600 px-2 py-2 text-center font-semibold w-8">{t('scoring.no')}</th>
-            <th className="border border-slate-600 px-2 py-2 text-left font-semibold min-w-[140px]">{t('scoring.studentName')}</th>
-            <th className="border border-slate-600 px-2 py-2 text-center font-semibold w-8">{t('scoring.gender')}</th>
+            <th className="border border-slate-600 px-1 py-2 text-center font-semibold">{t('scoring.no')}</th>
+            <th className="border border-slate-600 px-2 py-2 text-left font-semibold">{t('scoring.studentName')}</th>
+            <th className="border border-slate-600 px-1 py-2 text-center font-semibold">{t('scoring.gender')}</th>
             {showClass && (
-              <th className="border border-slate-600 px-2 py-2 text-center font-semibold">{t('scoring.classGroup')}</th>
+              <th className="border border-slate-600 px-1 py-2 text-center font-semibold">{t('scoring.classGroup')}</th>
             )}
             {subjects.map((sub, subIdx) => (
-              <th key={sub.id} className="border border-slate-600 px-2 py-1 text-center font-semibold min-w-[52px]">
+              <th key={sub.id} className="border border-slate-600 px-1 py-1 text-center font-semibold">
                 <div className="flex flex-col items-center leading-tight">
                   <span className="text-[9px] text-slate-300 font-normal">{String.fromCharCode(65 + subIdx)}</span>
-                  <span style={{ color: sub.color === '#000000' ? 'white' : sub.color }}>{sub.name}</span>
+                  <span className="truncate w-full text-center" style={{ color: sub.color === '#000000' ? 'white' : sub.color }}>{sub.name}</span>
                   <span className="text-slate-400 font-normal text-[9px]">/{sub.maxScore}</span>
                 </div>
               </th>
             ))}
-            <th className="border border-slate-600 px-2 py-2 text-center font-semibold w-14 bg-slate-900">{t('scoring.total')}</th>
-            <th className="border border-slate-600 px-2 py-2 text-center font-semibold w-14 bg-slate-900">{t('scoring.average')}</th>
-            <th className="border border-slate-600 px-2 py-2 text-center font-semibold w-10 bg-slate-900">{t('scoring.ranking')}</th>
+            <th className="border border-slate-600 px-1 py-2 text-center font-semibold bg-slate-900">{t('scoring.total')}</th>
+            <th className="border border-slate-600 px-1 py-2 text-center font-semibold bg-slate-900">{t('scoring.average')}</th>
+            <th className="border border-slate-600 px-1 py-2 text-center font-semibold bg-slate-900">{t('scoring.ranking')}</th>
           </tr>
         </thead>
         <tbody>
@@ -225,43 +235,43 @@ function ScoringPrintContent() {
                   </tr>
                 )}
                 <tr key={student.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                  <td className="border border-slate-300 px-2 py-1.5 text-center text-slate-500">{rowNum}</td>
-                  <td className="border border-slate-300 px-2 py-1.5 text-slate-800">{student.name}</td>
-                  <td className="border border-slate-300 px-2 py-1.5 text-center text-slate-500">
+                  <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-500 whitespace-nowrap">{rowNum}</td>
+                  <td className="border border-slate-300 px-2 py-1.5 text-slate-800 truncate">{student.name}</td>
+                  <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-500 whitespace-nowrap">
                     {student.sex === 'FEMALE' ? '♀' : student.sex === 'MALE' ? '♂' : '—'}
                   </td>
                   {showClass && (
-                    <td className="border border-slate-300 px-2 py-1.5 text-center text-slate-500 text-[10px]">{student.className}</td>
+                    <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-500 text-[10px] truncate">{student.className}</td>
                   )}
                   {subjects.map(sub => {
                     const val = scores[student.id]?.[sub.id]
                     return (
-                      <td key={sub.id} className="border border-slate-300 px-2 py-1.5 text-center text-slate-700">
+                      <td key={sub.id} className="border border-slate-300 px-1 py-1.5 text-center text-slate-700 whitespace-nowrap">
                         {val != null ? val.toFixed(1) : '—'}
                       </td>
                     )
                   })}
-                  <td className="border border-slate-300 px-2 py-1.5 text-center font-semibold text-indigo-700 bg-indigo-50">{total.toFixed(1)}</td>
-                  <td className="border border-slate-300 px-2 py-1.5 text-center text-slate-700 bg-indigo-50">{avg.toFixed(1)}</td>
-                  <td className="border border-slate-300 px-2 py-1.5 text-center font-bold text-indigo-800 bg-indigo-50">{rank}</td>
+                  <td className="border border-slate-300 px-1 py-1.5 text-center font-semibold text-indigo-700 bg-indigo-50 whitespace-nowrap">{total.toFixed(1)}</td>
+                  <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-700 bg-indigo-50 whitespace-nowrap">{avg.toFixed(1)}</td>
+                  <td className="border border-slate-300 px-1 py-1.5 text-center font-bold text-indigo-800 bg-indigo-50 whitespace-nowrap">{rank}</td>
                 </tr>
               </>
             )
           })}
           {/* Totals row */}
           <tr className="bg-slate-200 font-semibold text-xs">
-            <td colSpan={3 + (showClass ? 1 : 0)} className="border border-slate-400 px-2 py-2 text-center">
+            <td colSpan={3 + (showClass ? 1 : 0)} className="border border-slate-400 px-1 py-2 text-center">
               {t('common.total')} ({rows.length})
             </td>
             {subjects.map(sub => (
-              <td key={sub.id} className="border border-slate-400 px-2 py-1.5 text-center text-slate-600">
+              <td key={sub.id} className="border border-slate-400 px-1 py-1.5 text-center text-slate-600 whitespace-nowrap">
                 {rows.reduce((s, st) => s + (scores[st.id]?.[sub.id] ?? 0), 0).toFixed(1)}
               </td>
             ))}
-            <td className="border border-slate-400 px-2 py-1.5 text-center text-indigo-700">
+            <td className="border border-slate-400 px-1 py-1.5 text-center text-indigo-700 whitespace-nowrap">
               {rows.reduce((s, st) => s + getTotal(subjects, scores, st.id), 0).toFixed(1)}
             </td>
-            <td className="border border-slate-400 px-2 py-1.5 text-center text-slate-600">
+            <td className="border border-slate-400 px-1 py-1.5 text-center text-slate-600 whitespace-nowrap">
               {rows.length ? (rows.reduce((s, st) => s + getAverage(subjects, scores, st.id), 0) / rows.length).toFixed(1) : '—'}
             </td>
             <td className="border border-slate-400" />
