@@ -376,27 +376,39 @@ model TimetableTeacherAttendance {
 
 model ScoreSheet {
   id          String   @id @default(cuid())
-  name        String   // School / gradebook name
+  name        String   // Gradebook label (e.g. "2026-2027")
   logoUrl     String?  // School logo URL
-  classId     String?  // Linked class (optional)
-  studyYearId String?  // Linked study year (optional)
+  studyYearId String?  // Linked study year
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  classes  ScoreSheetClass[]
   subjects ScoreSubject[]
   examTabs ScoreExamTab[]
 }
 
-model ScoreSubject {
+// Join table: one score sheet → many classes
+model ScoreSheetClass {
   id           String     @id @default(cuid())
   scoreSheetId String
   scoreSheet   ScoreSheet @relation(fields: [scoreSheetId], references: [id], onDelete: Cascade)
-  name         String
-  maxScore     Float      @default(100)
-  color        String     @default("#000000")
-  order        Int        @default(0)
+  classId      String     // Reference to Class.id
   createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+
+  @@unique([scoreSheetId, classId])
+}
+
+model ScoreSubject {
+  id                 String     @id @default(cuid())
+  scoreSheetId       String
+  scoreSheet         ScoreSheet @relation(fields: [scoreSheetId], references: [id], onDelete: Cascade)
+  name               String
+  maxScore           Float      @default(100)
+  color              String     @default("#000000")
+  order              Int        @default(0)
+  timetableSubjectId String?    // Optional link to TimetableSubject.id
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
   entries ScoreEntry[]
 }
@@ -422,6 +434,7 @@ model ScoreEntry {
   subject   ScoreSubject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   studentId String       // Reference to Student.id
   score     Float?
+  formula   String?      // Original formula string if entered (e.g. "=SUM(A,B)")
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 

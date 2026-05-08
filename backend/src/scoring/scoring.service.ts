@@ -7,8 +7,21 @@ export class ScoringService {
 
   // ─── Score Sheets ─────────────────────────────────────────────────────────
 
-  async createSheet(data: { name: string; logoUrl?: string; classId?: string; studyYearId?: string }) {
-    return this.prisma.scoreSheet.create({ data, include: { subjects: true, examTabs: true } });
+  async createSheet(data: { name: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
+    const { classIds, ...sheetData } = data;
+    return this.prisma.scoreSheet.create({
+      data: {
+        ...sheetData,
+        ...(classIds?.length ? {
+          classes: { create: classIds.map(classId => ({ classId })) },
+        } : {}),
+      },
+      include: {
+        subjects: { orderBy: { order: 'asc' } },
+        examTabs: { orderBy: { order: 'asc' } },
+        classes: true,
+      },
+    });
   }
 
   async getSheets() {
@@ -16,6 +29,7 @@ export class ScoringService {
       include: {
         subjects: { orderBy: { order: 'asc' } },
         examTabs: { orderBy: { order: 'asc' } },
+        classes: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -27,14 +41,33 @@ export class ScoringService {
       include: {
         subjects: { orderBy: { order: 'asc' } },
         examTabs: { orderBy: { order: 'asc' } },
+        classes: true,
       },
     });
     if (!sheet) throw new NotFoundException('Score sheet not found');
     return sheet;
   }
 
-  async updateSheet(id: string, data: { name?: string; logoUrl?: string; classId?: string; studyYearId?: string }) {
-    return this.prisma.scoreSheet.update({ where: { id }, data });
+  async updateSheet(id: string, data: { name?: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
+    const { classIds, ...sheetData } = data;
+
+    if (classIds !== undefined) {
+      await this.prisma.$transaction([
+        this.prisma.scoreSheetClass.deleteMany({ where: { scoreSheetId: id } }),
+        ...(classIds.length > 0
+          ? [this.prisma.scoreSheetClass.createMany({
+              data: classIds.map(classId => ({ scoreSheetId: id, classId })),
+              skipDuplicates: true,
+            })]
+          : []),
+      ]);
+    }
+
+    if (Object.keys(sheetData).length > 0) {
+      await this.prisma.scoreSheet.update({ where: { id }, data: sheetData });
+    }
+
+    return this.getSheet(id);
   }
 
   async deleteSheet(id: string) {
@@ -43,7 +76,13 @@ export class ScoringService {
 
   // ─── Subjects ─────────────────────────────────────────────────────────────
 
-  async addSubject(scoreSheetId: string, data: { name: string; maxScore?: number; color?: string; order?: number }) {
+  async addSubject(scoreSheetId: string, data: {
+    name: string;
+    maxScore?: number;
+    color?: string;
+    order?: number;
+    timetableSubjectId?: string;
+  }) {
     return this.prisma.scoreSubject.create({ data: { scoreSheetId, ...data } });
   }
 
@@ -53,6 +92,22 @@ export class ScoringService {
 
   async deleteSubject(id: string) {
     return this.prisma.scoreSubject.delete({ where: { id } });
+  }
+
+  // ─── Timetable subjects (for import picker) ───────────────────────────────
+
+  async getTimetableSubjects() {
+    return this.prisma.timetableSubject.findMany({
+      select: {
+        id: true,
+        name: true,
+        short: true,
+        color: true,
+        timetableId: true,
+        timetable: { select: { name: true, academicYear: true } },
+      },
+      orderBy: [{ timetable: { academicYear: 'desc' } }, { name: 'asc' }],
+    });
   }
 
   // ─── Exam Tabs ────────────────────────────────────────────────────────────
@@ -67,27 +122,38 @@ export class ScoringService {
 
   // ─── Score Entries ────────────────────────────────────────────────────────
 
-  async getTabScores(examTabId: string, classId?: string) {
-    // Fetch all students in the class
-    const studentsQuery: any = {};
-    if (classId) studentsQuery.classId = classId;
+  async getTabScores(examTabId: string, classIds?: string[]) {
+    const studentsWhere: Record<string, unknown> = {};
+    if (classIds?.length) {
+      studentsWhere.classId = { in: classIds };
+    }
 
     const [entries, students] = await Promise.all([
       this.prisma.scoreEntry.findMany({
         where: { examTabId },
-        include: { subject: true },
+        select: { studentId: true, subjectId: true, score: true, formula: true },
       }),
       this.prisma.student.findMany({
-        where: studentsQuery,
-        include: { user: { select: { name: true } } },
-        orderBy: { studentNumber: 'asc' },
+        where: studentsWhere,
+        include: {
+          user: { select: { name: true } },
+          class: { select: { id: true, name: true } },
+        },
+        orderBy: [{ class: { name: 'asc' } }, { studentNumber: 'asc' }],
       }),
     ]);
 
     return { entries, students };
   }
 
-  async upsertEntry(data: { examTabId: string; subjectId: string; studentId: string; score: number | null }) {
+  async upsertEntry(data: {
+    examTabId: string;
+    subjectId: string;
+    studentId: string;
+    score: number | null;
+    formula?: string | null;
+  }) {
+    const { formula, ...rest } = data;
     return this.prisma.scoreEntry.upsert({
       where: {
         examTabId_subjectId_studentId: {
@@ -96,14 +162,23 @@ export class ScoringService {
           studentId: data.studentId,
         },
       },
-      create: data,
-      update: { score: data.score },
+      create: { ...rest, formula: formula ?? null },
+      update: { score: data.score, formula: formula ?? null },
     });
   }
 
-  async bulkUpsertEntries(entries: Array<{ examTabId: string; subjectId: string; studentId: string; score: number | null }>) {
-    const ops = entries.map(e =>
-      this.prisma.scoreEntry.upsert({
+  async bulkUpsertEntries(
+    entries: Array<{
+      examTabId: string;
+      subjectId: string;
+      studentId: string;
+      score: number | null;
+      formula?: string | null;
+    }>,
+  ) {
+    const ops = entries.map(e => {
+      const { formula, ...rest } = e;
+      return this.prisma.scoreEntry.upsert({
         where: {
           examTabId_subjectId_studentId: {
             examTabId: e.examTabId,
@@ -111,10 +186,10 @@ export class ScoringService {
             studentId: e.studentId,
           },
         },
-        create: e,
-        update: { score: e.score },
-      }),
-    );
+        create: { ...rest, formula: formula ?? null },
+        update: { score: e.score, formula: formula ?? null },
+      });
+    });
     return this.prisma.$transaction(ops);
   }
 }

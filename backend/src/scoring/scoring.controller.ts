@@ -13,7 +13,7 @@ export class ScoringController {
 
   @Roles('ADMIN', 'TEACHER')
   @Post('sheets')
-  createSheet(@Body() data: { name: string; logoUrl?: string; classId?: string; studyYearId?: string }) {
+  createSheet(@Body() data: { name: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
     return this.scoringService.createSheet(data);
   }
 
@@ -31,7 +31,7 @@ export class ScoringController {
 
   @Roles('ADMIN', 'TEACHER')
   @Put('sheets/:id')
-  updateSheet(@Param('id') id: string, @Body() data: { name?: string; logoUrl?: string; classId?: string; studyYearId?: string }) {
+  updateSheet(@Param('id') id: string, @Body() data: { name?: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
     return this.scoringService.updateSheet(id, data);
   }
 
@@ -45,7 +45,10 @@ export class ScoringController {
 
   @Roles('ADMIN', 'TEACHER')
   @Post('sheets/:id/subjects')
-  addSubject(@Param('id') scoreSheetId: string, @Body() data: { name: string; maxScore?: number; color?: string; order?: number }) {
+  addSubject(
+    @Param('id') scoreSheetId: string,
+    @Body() data: { name: string; maxScore?: number; color?: string; order?: number; timetableSubjectId?: string },
+  ) {
     return this.scoringService.addSubject(scoreSheetId, data);
   }
 
@@ -59,6 +62,14 @@ export class ScoringController {
   @Delete('subjects/:id')
   deleteSubject(@Param('id') id: string) {
     return this.scoringService.deleteSubject(id);
+  }
+
+  // ─── Timetable subjects (for import) ──────────────────────────────────────
+
+  @Roles('ADMIN', 'TEACHER')
+  @Get('timetable-subjects')
+  getTimetableSubjects() {
+    return this.scoringService.getTimetableSubjects();
   }
 
   // ─── Exam Tabs ────────────────────────────────────────────────────────────
@@ -79,19 +90,30 @@ export class ScoringController {
 
   @Roles('ADMIN', 'TEACHER')
   @Get('exam-tabs/:id/scores')
-  getTabScores(@Param('id') examTabId: string, @Query('classId') classId?: string) {
-    return this.scoringService.getTabScores(examTabId, classId);
+  getTabScores(
+    @Param('id') examTabId: string,
+    @Query('classIds') classIds?: string, // comma-separated
+  ) {
+    const ids = classIds ? classIds.split(',').filter(Boolean) : undefined;
+    return this.scoringService.getTabScores(examTabId, ids);
   }
 
   @Roles('ADMIN', 'TEACHER')
   @Put('entries')
-  upsertEntry(@Body() data: { examTabId: string; subjectId: string; studentId: string; score: number | null }) {
+  upsertEntry(
+    @Body() data: { examTabId: string; subjectId: string; studentId: string; score: number | null; formula?: string | null },
+  ) {
     return this.scoringService.upsertEntry(data);
   }
 
   @Roles('ADMIN', 'TEACHER')
   @Post('entries/bulk')
-  bulkUpsertEntries(@Body() body: { entries: Array<{ examTabId: string; subjectId: string; studentId: string; score: number | null }> }) {
+  bulkUpsertEntries(
+    @Body() body: {
+      entries: Array<{ examTabId: string; subjectId: string; studentId: string; score: number | null; formula?: string | null }>;
+    },
+  ) {
     return this.scoringService.bulkUpsertEntries(body.entries);
   }
 }
+
