@@ -271,14 +271,18 @@ function ScoringPrintContent() {
     )
   }
 
+  // Sort helper — rank ascending (1st = best)
+  const sortByRank = (rows: StudentRow[]) =>
+    [...rows].sort((a, b) => (rankings[a.id] ?? 9999) - (rankings[b.id] ?? 9999))
+
   // Group students by class for per-class-page printing (all classes mode)
   const classGroups: { classId: string; className: string; rows: StudentRow[] }[] = isMultiClass
     ? sheetClasses.map(cls => ({
         classId: cls.id,
         className: cls.name,
-        rows: students.filter(s => s.classId === cls.id),
+        rows: sortByRank(students.filter(s => s.classId === cls.id)),
       })).filter(g => g.rows.length > 0)
-    : [{ classId: classId, className: selectedClassName, rows: students }]
+    : [{ classId: classId, className: selectedClassName, rows: sortByRank(students) }]
 
   const printDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
