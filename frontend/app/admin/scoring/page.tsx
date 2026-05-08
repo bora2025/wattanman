@@ -81,6 +81,7 @@ export default function ScoringPage() {
   const { t } = useLanguage()
   const tableRef = useRef<HTMLDivElement>(null)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const prevFilterRef = useRef<string>('ALL')
 
   // ── Sheet state
   const [sheets, setSheets] = useState<ScoreSheet[]>([])
@@ -109,6 +110,7 @@ export default function ScoringPage() {
   const [showClassModal, setShowClassModal] = useState(false)
   const [showDeleteSheetConfirm, setShowDeleteSheetConfirm] = useState(false)
   const [showAddMenu, setShowAddMenu] = useState(false)
+  const [showPrintMenu, setShowPrintMenu] = useState(false)
   const [subjectTab, setSubjectTab] = useState<'manual' | 'import'>('manual')
 
   // ── Wizard state
@@ -198,6 +200,18 @@ export default function ScoringPage() {
   const currentSheet = showNewWizard ? creatingSheet : activeSheet
 
   const yearLabel = (sy: StudyYearOption) => sy.label || `${sy.year}-${sy.year + 1}`
+
+  const handlePrint = useCallback((classId: string) => {
+    setShowPrintMenu(false)
+    prevFilterRef.current = filterClassId
+    setFilterClassId(classId)
+    const restore = () => {
+      setFilterClassId(prevFilterRef.current)
+      window.removeEventListener('afterprint', restore)
+    }
+    window.addEventListener('afterprint', restore)
+    setTimeout(() => window.print(), 200)
+  }, [filterClassId])
 
   // ─── Save / auto-save ─────────────────────────────────────────────────────
 
@@ -543,7 +557,7 @@ export default function ScoringPage() {
 
   return (
     <AuthGuard allowedRoles={['ADMIN', 'TEACHER']}>
-      <div className="flex h-screen bg-gray-50 overflow-hidden" onClick={() => setShowAddMenu(false)}>
+      <div className="flex h-screen bg-gray-50 overflow-hidden" onClick={() => { setShowAddMenu(false); setShowPrintMenu(false) }}>
         <Sidebar title="Wattaman" subtitle="Admin" navItems={adminNav} accentColor="indigo" />
 
         {toast && (
@@ -572,7 +586,33 @@ export default function ScoringPage() {
               <ToolBtn icon="📂" label={t('scoring.open')} onClick={() => setShowOpenModal(true)} />
               <ToolBtn icon={saving ? '⏳' : '💾'} label={saving ? t('scoring.saving') : t('scoring.save')} onClick={saveScores} disabled={dirtyScores.size === 0 || !activeTabId} />
               <Divider />
-              <ToolBtn icon="🖨️" label={t('scoring.print')} onClick={() => window.print()} />
+              {(!activeSheet || sheetClasses.length <= 1) ? (
+                <ToolBtn icon="🖨️" label={t('scoring.print')} onClick={() => window.print()} />
+              ) : (
+                <div className="relative">
+                  <button
+                    onClick={e => { e.stopPropagation(); setShowPrintMenu(v => !v) }}
+                    className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded text-xs font-medium transition-colors text-gray-700 hover:bg-gray-100">
+                    <span className="text-base leading-none select-none">🖨️</span>
+                    <span className="whitespace-nowrap">{t('scoring.print')} ▾</span>
+                  </button>
+                  {showPrintMenu && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-30 w-44" onClick={e => e.stopPropagation()}>
+                      <button onClick={() => handlePrint('ALL')}
+                        className="w-full text-left px-4 py-2.5 text-xs hover:bg-indigo-50 text-gray-700 flex items-center gap-2">
+                        <span>📋</span> {t('scoring.printAll')}
+                      </button>
+                      <div className="border-t" />
+                      {sheetClasses.map(c => (
+                        <button key={c.id} onClick={() => handlePrint(c.id)}
+                          className="w-full text-left px-4 py-2.5 text-xs hover:bg-indigo-50 text-gray-700 flex items-center gap-2">
+                          <span>🏫</span> {c.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <Divider />
               <ToolBtn icon="📚" label={t('scoring.subject')} onClick={() => { resetSubjectForm(); setSubjectTab('manual'); setShowSubjectModal(true) }} disabled={!activeSheet} />
               <ToolBtn icon="🏫" label={t('scoring.class')} onClick={openClassModal} disabled={!activeSheet} />
