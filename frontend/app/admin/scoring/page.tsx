@@ -81,7 +81,6 @@ export default function ScoringPage() {
   const { t } = useLanguage()
   const tableRef = useRef<HTMLDivElement>(null)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const prevFilterRef = useRef<string>('ALL')
 
   // ── Sheet state
   const [sheets, setSheets] = useState<ScoreSheet[]>([])
@@ -202,16 +201,23 @@ export default function ScoringPage() {
   const yearLabel = (sy: StudyYearOption) => sy.label || `${sy.year}-${sy.year + 1}`
 
   const handlePrint = useCallback((classId: string) => {
+    if (!activeSheet || !activeTabId) return
     setShowPrintMenu(false)
-    prevFilterRef.current = filterClassId
-    setFilterClassId(classId)
-    const restore = () => {
-      setFilterClassId(prevFilterRef.current)
-      window.removeEventListener('afterprint', restore)
-    }
-    window.addEventListener('afterprint', restore)
-    setTimeout(() => window.print(), 200)
-  }, [filterClassId])
+    const tab = activeSheet.examTabs.find(t => t.id === activeTabId)
+    const sheetClassIds = activeSheet.classes?.map(c => c.classId) ?? []
+    const printClasses = classes.filter(c => sheetClassIds.includes(c.id))
+    const params = new URLSearchParams({
+      tabId: activeTabId,
+      classId,
+      sheetName: activeSheet.name,
+      tabLabel: tab?.label ?? '',
+      logoUrl: activeSheet.logoUrl ?? '',
+      subjects: JSON.stringify(activeSheet.subjects.map(s => ({ id: s.id, name: s.name, maxScore: s.maxScore, color: s.color }))),
+      sheetClasses: JSON.stringify(printClasses.map(c => ({ id: c.id, name: c.name }))),
+      signers: JSON.stringify(['Teacher', 'Admin']),
+    })
+    window.open(`/admin/scoring/print?${params.toString()}`, '_blank')
+  }, [activeSheet, activeTabId, classes])
 
   // ─── Save / auto-save ─────────────────────────────────────────────────────
 
