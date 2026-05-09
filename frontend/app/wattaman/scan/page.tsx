@@ -286,7 +286,7 @@ function WattamanScanContent() {
           to { transform: translateY(0); opacity: 1; }
         }
       `}</style>
-      <Sidebar title="Wattaman" subtitle="QR Attendance" navItems={wattamanNav} accentColor="emerald" bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/scheduled-teacher', '/wattaman/teacher-reports']} />
+      <Sidebar title="Wattaman" subtitle="QR Attendance" navItems={wattamanNav} accentColor="emerald" bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/teacher-reports']} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
 

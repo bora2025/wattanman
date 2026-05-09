@@ -32,7 +32,7 @@ export const adminNav = [
 
   // Timetable
   { label: 'nav.timetable', href: '/admin/timetable', icon: 'calendar' },
-  { label: 'nav.scheduledTeacher', href: '/wattaman/scheduled-teacher', icon: 'graduation' },
+  { label: 'nav.manageTeachers', href: '/wattaman/scheduled-teacher', icon: 'graduation' },
   { label: 'nav.teacherReports', href: '/wattaman/teacher-reports', icon: 'clipboard' },
 
   // Scoring

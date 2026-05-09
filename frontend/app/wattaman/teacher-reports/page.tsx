@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { wattamanNav } from '../../../lib/wattaman-nav'
@@ -44,6 +46,8 @@ function statusBadge(status: string) {
 }
 
 function TeacherReportsContent() {
+  const searchParams = useSearchParams()
+  const preselectedTimetableId = searchParams.get('timetableId') ?? ''
   const [timetables, setTimetables] = useState<TimetableInfo[]>([])
   const [selectedTimetableId, setSelectedTimetableId] = useState('')
   const [teachers, setTeachers] = useState<TeacherMonthlyRow[]>([])
@@ -63,7 +67,9 @@ function TeacherReportsContent() {
       .then(r => r.ok ? r.json() : [])
       .then((data: TimetableInfo[]) => {
         setTimetables(data)
-        const published = data.find(t => t.status === 'PUBLISHED') ?? data[0]
+        const published = preselectedTimetableId
+          ? (data.find(t => t.id === preselectedTimetableId) ?? data.find(t => t.status === 'PUBLISHED') ?? data[0])
+          : (data.find(t => t.status === 'PUBLISHED') ?? data[0])
         if (published) setSelectedTimetableId(published.id)
       })
       .catch(() => {})
@@ -117,7 +123,7 @@ function TeacherReportsContent() {
         subtitle="QR Attendance"
         navItems={wattamanNav}
         accentColor="emerald"
-        bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/scheduled-teacher', '/wattaman/teacher-reports']}
+        bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/teacher-reports']}
       />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
@@ -389,7 +395,9 @@ function TeacherReportsContent() {
 export default function TeacherReportsPage() {
   return (
     <AuthGuard allowedRoles={['WATTAMAN', 'ADMIN']}>
-      <TeacherReportsContent />
+      <Suspense>
+        <TeacherReportsContent />
+      </Suspense>
     </AuthGuard>
   )
 }
