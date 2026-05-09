@@ -5,7 +5,6 @@ import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { wattamanNav } from '../../../lib/wattaman-nav'
 import { apiFetch } from '../../../lib/api'
-import { getCurrentUser } from '../../../lib/api'
 import QRCode from 'qrcode'
 import Link from 'next/link'
 
@@ -308,12 +307,10 @@ function ManageTeachersContent() {
   const [orgName, setOrgName] = useState<string>('School')
   const [editingOrg, setEditingOrg] = useState(false)
   const [editTeacher, setEditTeacher] = useState<ScheduledTeacher | null>(null)
-  const [userRole, setUserRole] = useState<string>('')
 
   useEffect(() => {
     const saved = localStorage.getItem('wattaman-org-name')
     if (saved) setOrgName(saved)
-    getCurrentUser().then(u => { if (u) setUserRole(u.role) })
   }, [])
 
   useEffect(() => { fetchTeachers() }, [])
@@ -369,8 +366,6 @@ function ManageTeachersContent() {
   const printCards = (ids: string[]) => {
     window.open(`/wattaman/scheduled-teacher/print?teacherIds=${ids.join(',')}&orgName=${encodeURIComponent(orgName)}`, '_blank')
   }
-
-  const canEdit = userRole === 'ADMIN'
 
   return (
     <div className="page-shell">
@@ -579,18 +574,16 @@ function ManageTeachersContent() {
 
                     {/* Actions row */}
                     <div className="flex gap-1.5 mt-1.5 ml-2">
-                      {canEdit && (
-                        <button
-                          onClick={() => setEditTeacher(teacher)}
-                          className="flex items-center gap-1 text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-2.5 py-1.5 rounded-lg shadow-sm transition-colors"
-                        >
-                          <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                          Edit
-                        </button>
-                      )}
+                      <button
+                        onClick={() => setEditTeacher(teacher)}
+                        className="flex items-center gap-1 text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-2.5 py-1.5 rounded-lg shadow-sm transition-colors"
+                      >
+                        <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        Edit
+                      </button>
                       <button
                         onClick={() => printCards([teacher.id])}
                         className="flex items-center gap-1 text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-2.5 py-1.5 rounded-lg shadow-sm transition-colors"
@@ -639,7 +632,7 @@ function ManageTeachersContent() {
 
 export default function ScheduledTeacherPage() {
   return (
-    <AuthGuard allowedRoles={['ADMIN', 'WATTAMAN']}>
+    <AuthGuard requiredRole="ADMIN">
       <ManageTeachersContent />
     </AuthGuard>
   )
