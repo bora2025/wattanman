@@ -420,7 +420,7 @@ export class TimetableService {
     const results: any[] = [];
     for (const tt of timetables) {
       const teachers = await this.prisma.timetableTeacher.findMany({
-        where: { timetableId: tt.id, lessons: { some: {} } },
+        where: { timetableId: tt.id },
         include: {
           lessons: {
             include: {
