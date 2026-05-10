@@ -131,7 +131,7 @@ function EditModal({
             <div>
               <label className="form-label">Sex</label>
               <select value={form.sex} onChange={e => set('sex', e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                <option value="">— unset —</option>
+                <option value="">â€” unset â€”</option>
                 <option value="MALE">Male</option>
                 <option value="FEMALE">Female</option>
               </select>
@@ -258,7 +258,7 @@ function ManageTeachersContent() {
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">Manage Scheduled Teachers</h1>
                 <p className="text-sm text-slate-500 mt-1">
-                  {filtered.length} teacher{filtered.length !== 1 ? 's' : ''} · {timetables.length} timetable{timetables.length !== 1 ? 's' : ''}
+                  {filtered.length} teacher{filtered.length !== 1 ? 's' : ''} Â· {timetables.length} timetable{timetables.length !== 1 ? 's' : ''}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -364,10 +364,10 @@ function ManageTeachersContent() {
                             </td>
                             <td className="text-slate-500">{teacher.timetableName}</td>
                             <td className="text-slate-500">
-                              {teacher.sex === 'MALE' ? 'Male' : teacher.sex === 'FEMALE' ? 'Female' : '—'}
+                              {teacher.sex === 'MALE' ? 'Male' : teacher.sex === 'FEMALE' ? 'Female' : 'â€”'}
                             </td>
-                            <td className="text-slate-500">{teacher.email || '—'}</td>
-                            <td className="text-slate-500">{teacher.phone || '—'}</td>
+                            <td className="text-slate-500">{teacher.email || 'â€”'}</td>
+                            <td className="text-slate-500">{teacher.phone || 'â€”'}</td>
                             <td className="text-slate-500">{teacher.weeklyLessons}</td>
                             <td>
                               <div className="flex gap-1">
