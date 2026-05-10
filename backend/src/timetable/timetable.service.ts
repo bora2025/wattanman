@@ -411,20 +411,11 @@ export class TimetableService {
 
   async getAllScheduledTeachers() {
     const timetables = await this.prisma.timetable.findMany({
-      where: { status: 'PUBLISHED' },
-      select: { id: true, name: true, periodTimes: true, numberOfDays: true },
+      select: { id: true, name: true, status: true, periodTimes: true, numberOfDays: true },
       orderBy: { createdAt: 'desc' },
     });
 
-    if (timetables.length === 0) {
-      // Fallback: use the most recent timetable regardless of status
-      const latest = await this.prisma.timetable.findFirst({
-        orderBy: { createdAt: 'desc' },
-        select: { id: true, name: true, periodTimes: true, numberOfDays: true },
-      });
-      if (!latest) return [];
-      timetables.push(latest);
-    }
+    if (timetables.length === 0) return [];
 
     const results: any[] = [];
     for (const tt of timetables) {
@@ -465,6 +456,7 @@ export class TimetableService {
             className: (l.class as any)?.name ?? '',
             perWeek: l.perWeek,
           })),
+          timetableStatus: tt.status,
           todayPeriods: todayEntries.map(e => e.period),
           totalEntries: t.entries.length,
         });

@@ -11,6 +11,7 @@ interface ScheduledTeacher {
   id: string
   timetableId: string
   timetableName: string
+  timetableStatus: string
   name: string
   short: string
   sex: string | null
@@ -220,7 +221,7 @@ function ManageTeachersContent() {
     showMsg('Teacher updated!', 'success')
   }
 
-  const timetables = [...new Map(teachers.map(t => [t.timetableId, t.timetableName])).entries()]
+  const timetables = [...new Map(teachers.map(t => [t.timetableId, { name: t.timetableName, status: t.timetableStatus }])).entries()]
 
   const filtered = teachers.filter(t => {
     if (timetableFilter !== 'ALL' && t.timetableId !== timetableFilter) return false
@@ -289,13 +290,16 @@ function ManageTeachersContent() {
                 >
                   All Timetables ({teachers.length})
                 </button>
-                {timetables.map(([id, name]) => (
+                {timetables.map(([id, { name, status }]) => (
                   <button
                     key={id}
                     onClick={() => setTimetableFilter(id)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${timetableFilter === id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300'}`}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${timetableFilter === id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300'}`}
                   >
                     {name} ({teachers.filter(t => t.timetableId === id).length})
+                    <span className={`text-xs px-1 py-0.5 rounded ${timetableFilter === id ? 'bg-white/20 text-white' : status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                      {status}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -362,7 +366,14 @@ function ManageTeachersContent() {
                             <td>
                               <span className="badge-gray font-mono text-xs">{teacher.short}</span>
                             </td>
-                            <td className="text-slate-500">{teacher.timetableName}</td>
+                            <td className="text-slate-500">
+                              <div className="flex items-center gap-1.5">
+                                {teacher.timetableName}
+                                <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${teacher.timetableStatus === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                  {teacher.timetableStatus}
+                                </span>
+                              </div>
+                            </td>
                             <td className="text-slate-500">
                               {teacher.sex === 'MALE' ? 'Male' : teacher.sex === 'FEMALE' ? 'Female' : '—'}
                             </td>
