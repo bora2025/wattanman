@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import Link from 'next/link'
+import {
+  IconBarChart, IconIdCard, IconUsers, IconEdit, IconBook, IconCalendar,
+} from '../../../components/Icons'
 
 interface ScheduledTeacher {
   id: string
@@ -189,6 +192,17 @@ function ManageTeachersContent() {
   const [message, setMessage] = useState('')
   const [msgType, setMsgType] = useState<'success' | 'error'>('success')
   const [orgName, setOrgName] = useState<string>('School')
+  const [teacherMenuOpen, setTeacherMenuOpen] = useState(false)
+  const teacherMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (teacherMenuRef.current && !teacherMenuRef.current.contains(e.target as Node))
+        setTeacherMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   useEffect(() => {
     const saved = localStorage.getItem('wattaman-org-name')
@@ -262,15 +276,120 @@ function ManageTeachersContent() {
                   {filtered.length} teacher{filtered.length !== 1 ? 's' : ''} · {timetables.length} timetable{timetables.length !== 1 ? 's' : ''}
                 </p>
               </div>
-              <div className="flex gap-2">
+            </div>
+
+            {/* Toolbar */}
+            <div className="mx-4 mb-1 bg-white border border-slate-200 rounded-xl shadow-sm flex items-stretch overflow-visible">
+
+              {/* Report */}
+              <button
+                onClick={() => {
+                  const id = timetableFilter !== 'ALL' ? timetableFilter : (timetables[0]?.[0] ?? '')
+                  if (id) window.open(`/wattaman/teacher-reports?timetableId=${id}`, '_blank')
+                }}
+                disabled={timetables.length === 0}
+                title="View attendance report"
+                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors rounded-l-xl"
+              >
+                <IconBarChart size={20} />
+                <span className="text-[10px] font-semibold leading-none tracking-wide uppercase">Report</span>
+              </button>
+
+              <div className="w-px bg-slate-100 my-2" />
+
+              {/* ID Cards */}
+              <button
+                onClick={() => printCards(filtered.map(t => t.id))}
+                disabled={filtered.length === 0}
+                title="Print ID cards for visible teachers"
+                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <IconIdCard size={20} />
+                <span className="text-[10px] font-semibold leading-none tracking-wide uppercase">ID Cards</span>
+              </button>
+
+              <div className="w-px bg-slate-100 my-2" />
+
+              {/* Teacher dropdown */}
+              <div className="relative" ref={teacherMenuRef}>
                 <button
-                  onClick={() => printCards(filtered.map(t => t.id))}
-                  disabled={filtered.length === 0}
-                  className="btn-primary flex items-center gap-1"
+                  onClick={() => setTeacherMenuOpen(v => !v)}
+                  title="Teacher management options"
+                  className={`flex flex-col items-center justify-center gap-1.5 px-6 py-3 transition-colors ${
+                    teacherMenuOpen ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-700'
+                  }`}
                 >
-                  Print ID Cards
+                  <IconUsers size={20} />
+                  <span className="text-[10px] font-semibold leading-none tracking-wide uppercase flex items-center gap-0.5">
+                    Teacher
+                    <svg viewBox="0 0 10 6" width="8" height="8" fill="currentColor" className="mt-px">
+                      <path d="M0 0l5 6 5-6z" />
+                    </svg>
+                  </span>
                 </button>
+                {teacherMenuOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-200 z-30 py-1 overflow-hidden">
+                    <Link
+                      href="/admin/timetable/teachers"
+                      onClick={() => setTeacherMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <IconUsers size={15} />
+                      List
+                    </Link>
+                    <button
+                      onClick={() => {
+                        const first = filtered[0] ?? null
+                        if (first) { setEditTeacher(first) }
+                        setTeacherMenuOpen(false)
+                      }}
+                      disabled={filtered.length === 0}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <IconEdit size={15} />
+                      Edit
+                    </button>
+                    <div className="h-px bg-slate-100 my-1" />
+                    <Link
+                      href={`/admin/timetable/classes${timetableFilter !== 'ALL' ? '?timetableId=' + timetableFilter : ''}`}
+                      onClick={() => setTeacherMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <IconCalendar size={15} />
+                      Class
+                    </Link>
+                    <Link
+                      href={`/admin/timetable/lessons${timetableFilter !== 'ALL' ? '?timetableId=' + timetableFilter : ''}`}
+                      onClick={() => setTeacherMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <IconBook size={15} />
+                      Lesson
+                    </Link>
+                  </div>
+                )}
               </div>
+
+              <div className="w-px bg-slate-100 my-2" />
+
+              {/* Print attendance */}
+              <button
+                onClick={() => {
+                  const id = timetableFilter !== 'ALL' ? timetableFilter : (timetables[0]?.[0] ?? '')
+                  const url = id ? `/wattaman/teacher-reports?timetableId=${id}` : '/wattaman/teacher-reports'
+                  window.open(url, '_blank')
+                }}
+                title="Print attendance report"
+                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors rounded-r-xl"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+                <span className="text-[10px] font-semibold leading-none tracking-wide uppercase">Print</span>
+              </button>
+
             </div>
 
             {/* Messages */}
