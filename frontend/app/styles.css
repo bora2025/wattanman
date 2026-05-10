@@ -359,8 +359,8 @@
     background: linear-gradient(180deg, rgba(238, 255, 247, 0) 0%, rgba(238, 255, 247, 0.9) 30%, rgba(238, 255, 247, 1) 100%);
   }
   .mobile-bottomnav {
-    @apply flex items-end justify-around px-2 py-2 rounded-2xl;
-    min-height: 72px;
+    @apply flex items-center justify-around px-2 py-2 rounded-2xl;
+    min-height: 56px;
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(226, 232, 240, 0.9);
@@ -368,24 +368,18 @@
   }
   .mobile-tab-btn {
     @apply flex flex-col items-center justify-center flex-1 relative transition-all duration-200;
-    min-height: 52px;
-  }
-  .mobile-tab-label {
-    @apply text-[10px] mt-1 font-medium truncate max-w-[64px];
+    min-height: 44px;
   }
   .mobile-tab-indicator {
     @apply absolute -bottom-1 w-5 h-0.5 rounded-full;
   }
   .mobile-tab-camera {
-    margin-top: -16px;
-    height: 62px;
+    margin-top: -12px;
+    height: 54px;
     background: linear-gradient(180deg, #00C9A7 0%, #00A88A 100%);
     color: #ffffff !important;
     border-radius: 9999px;
     box-shadow: 0 10px 20px rgba(0, 168, 138, 0.36);
-  }
-  .mobile-tab-camera .mobile-tab-label {
-    color: rgba(255, 255, 255, 0.95);
   }
 
   @screen lg {
