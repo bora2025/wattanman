@@ -548,6 +548,7 @@ export default function StudentCardsPage() {
                               qrDataUrl={qrCodes[student.id]}
                               photo={student.photo}
                               design={liveDesign}
+                              fieldValues={buildFieldValues(student.name, `${cls.name}${cls.subject ? ' · ' + cls.subject : ''}`, displayId, extra)}
                               onDownload={() => downloadCard(student.name, `${cls.name}${cls.subject ? ' · ' + cls.subject : ''}`, qrCodes[student.id], displayId, student.photo, extra)}
                               onDownloadPDF={() => downloadCardPDF(student.name, `${cls.name}${cls.subject ? ' · ' + cls.subject : ''}`, qrCodes[student.id], displayId, student.photo, extra)}
                               onDownloadQR={() => downloadQROnly(student.name, student.id)}
@@ -584,16 +585,17 @@ export default function StudentCardsPage() {
 }
 
 function IDCardPreview({
-  name, subtitle, personId, qrDataUrl, photo, design, onDownload, onDownloadPDF, onDownloadQR,
+  name, subtitle, personId, qrDataUrl, photo, design, fieldValues: fieldValuesProp, onDownload, onDownloadPDF, onDownloadQR,
 }: {
   name: string; subtitle: string; personId: string; qrDataUrl?: string; photo?: string | null; design: CardDesign;
+  fieldValues?: Record<string, string>;
   onDownload: () => void; onDownloadPDF?: () => void; onDownloadQR?: () => void;
 }) {
   const [imgSrc, setImgSrc] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    const fieldValues: Record<string, string> = {
+    const fieldValues: Record<string, string> = fieldValuesProp ?? {
       'Student Name': name, 'Student ID': personId, 'Class Name': subtitle,
       'Study Year': '', 'Date of Birth': '', 'Address': '', 'Phone': '', 'Sex': '',
       'Emp ID': '', 'Position': '', 'Staff Name': '',
@@ -602,7 +604,7 @@ function IDCardPreview({
       if (!cancelled) setImgSrc(canvas.toDataURL());
     });
     return () => { cancelled = true; };
-  }, [design, name, subtitle, personId, qrDataUrl, photo]);
+  }, [design, name, subtitle, personId, qrDataUrl, photo, fieldValuesProp]);
 
   return (
     <div className="group relative">
