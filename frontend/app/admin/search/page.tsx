@@ -276,10 +276,19 @@ export default function SearchPage() {
                               src={normalizePhotoUrl(user.photo || user.studentProfile?.photo || '')}
                               alt={user.name}
                               className="w-9 h-9 rounded-full object-cover border-2 border-slate-200"
+                              onError={e => {
+                                e.currentTarget.style.display = 'none'
+                                const el = e.currentTarget.nextElementSibling as HTMLElement | null
+                                if (el) el.style.display = 'flex'
+                              }}
                             />
-                          ) : (
-                            <div className="avatar avatar-sm">{user.name.charAt(0).toUpperCase()}</div>
-                          )}
+                          ) : null}
+                          <div
+                            className="avatar avatar-sm"
+                            style={{ display: (user.photo || user.studentProfile?.photo) ? 'none' : 'flex' }}
+                          >
+                            {user.name.charAt(0).toUpperCase()}
+                          </div>
                           <div>
                             <span className="font-medium text-slate-800">{user.name}</span>
                             {user.studentProfile?.studentNumber && (
@@ -328,12 +337,19 @@ export default function SearchPage() {
                     src={normalizePhotoUrl(selected.photo || selected.studentProfile?.photo || '')}
                     alt={selected.name}
                     className="w-16 h-16 rounded-xl object-cover border-2 border-slate-200 flex-shrink-0"
+                    onError={e => {
+                      e.currentTarget.style.display = 'none'
+                      const el = e.currentTarget.nextElementSibling as HTMLElement | null
+                      if (el) el.style.display = 'flex'
+                    }}
                   />
-                ) : (
-                  <div className="w-16 h-16 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl font-bold flex-shrink-0">
-                    {selected.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                ) : null}
+                <div
+                  className="w-16 h-16 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl font-bold flex-shrink-0"
+                  style={{ display: (selected.photo || selected.studentProfile?.photo) ? 'none' : 'flex' }}
+                >
+                  {selected.name.charAt(0).toUpperCase()}
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
