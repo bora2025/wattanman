@@ -1860,14 +1860,14 @@ export default function TimetablePage() {
         .input-field { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 10px; font-size: 13px; outline: none; background: #fff; }
         .input-field:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
         @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-        @import url('https://fonts.googleapis.com/css2?family=Khmer&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap');
         @media print {
           .print\\:hidden { display: none !important; }
           .print\\:bg-white { background: white !important; }
           .print-page { page-break-after: always; }
           .print-page:last-child { page-break-after: avoid; }
-          body { margin: 0; font-family: 'Khmer', sans-serif; }
-          .print-page, .print-page * { font-family: 'Khmer', sans-serif !important; }
+          body { margin: 0; font-family: 'Battambang', sans-serif; }
+          .print-page, .print-page * { font-family: 'Battambang', sans-serif !important; }
         }
       `}</style>
     </AuthGuard>
@@ -1941,7 +1941,7 @@ function PrintLayout({ timetable, mode, classId }: {
   return (
     <>
       {classesToPrint.map((cls, clsIdx) => (
-        <div key={cls.id} className="print-page" style={{ padding: '20px 24px', fontFamily: "'Khmer', sans-serif" }}>
+        <div key={cls.id} className="print-page" style={{ padding: '20px 24px', fontFamily: "'Battambang', sans-serif" }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1b4b' }}>{timetable.name}</div>
