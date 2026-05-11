@@ -7,6 +7,7 @@ import Sidebar from '../../../components/Sidebar';
 import { adminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../lib/i18n';
+import { formatDOB } from '../../../lib/dateUtils';
 import { CardDesign, CardType, ShapeElement, STUDENT_TEMPLATE, STAFF_TEMPLATE, BLANK_TEMPLATE, DESIGN_STORAGE_KEY, loadSavedDesign, saveDesign, SavedTemplate, loadSavedTemplates, saveTemplate, deleteTemplate, apiGetActiveDesign } from '../../../components/card-designer/types';
 import { renderDesignToCanvas } from '../../../components/card-designer/renderDesignToCanvas';
 import CardCanvas from '../../../components/card-designer/CardCanvas';
@@ -60,7 +61,7 @@ function normalizePhotoUrl(url: string): string {
 }
 
 export default function GenerateQRCodes() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [classes, setClasses] = useState<ClassWithStudents[]>([]);
   const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
   const [qrCodes, setQrCodes] = useState<{ [key: string]: string }>({});
@@ -368,7 +369,7 @@ export default function GenerateQRCodes() {
         'Student ID': displayId,
         'Class Name': subtitle,
         'Study Year': extra?.studyYear || '',
-        'Date of Birth': extra?.dateOfBirth ? new Date(extra.dateOfBirth).toLocaleDateString() : '',
+        'Date of Birth': formatDOB(extra?.dateOfBirth, lang),
         'Address': extra?.address || '',
         'Phone': extra?.phone || '',
         'Sex': extra?.sex === 'MALE' ? 'ប្រុស' : extra?.sex === 'FEMALE' ? 'ស្រី' : '',
