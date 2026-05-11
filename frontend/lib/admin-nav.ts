@@ -1,43 +1,37 @@
 export const adminNav = [
-  // Overview
-  { label: 'nav.dashboard', href: '/admin', icon: 'dashboard' },
+  // ── Overview ──
+  { label: 'nav.dashboard', href: '/admin', icon: 'dashboard', section: 'nav.section.overview' },
   { label: 'nav.search', href: '/admin/search', icon: 'search' },
 
-  // People Management
-  { label: 'nav.manageUsers', href: '/admin/users', icon: 'users' },
-  { label: 'nav.manageHub', href: '/admin/manage-hub', icon: 'briefcase' },
-  { label: 'nav.manageOfficer', href: '/admin/employees', icon: 'briefcase' },
-  { label: 'nav.studyYears', href: '/admin/study-years', icon: 'calendar' },
-  { label: 'nav.manageClasses', href: '/admin/classes', icon: 'book' },
+  // ── Academics ──
+  { label: 'nav.manageClasses', href: '/admin/classes', icon: 'book', section: 'nav.section.academics' },
+  { label: 'nav.studyYears', href: '/admin/study-years', icon: 'layers' },
+  { label: 'nav.timetable', href: '/admin/timetable', icon: 'calendar' },
+  { label: 'nav.scoring', href: '/admin/scoring', icon: 'trophy' },
+  { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money' },
 
-  // Attendance
-  { label: 'nav.takeAttendance', href: '/admin/camera', icon: 'camera' },
+  // ── Attendance ──
+  { label: 'nav.takeAttendance', href: '/admin/camera', icon: 'camera', section: 'nav.section.attendance' },
   { label: 'nav.officerAttendance', href: '/admin/staff-attendance', icon: 'clipboard' },
   { label: 'nav.editAttendance', href: '/admin/attendance/edit', icon: 'edit' },
   { label: 'nav.editOfficerAttendance', href: '/admin/staff-attendance/edit', icon: 'edit' },
 
-  // Reports
-  { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart' },
-  { label: 'nav.officerReport', href: '/admin/staff-reports', icon: 'bar-chart' },
+  // ── People ──
+  { label: 'nav.manageUsers', href: '/admin/users', icon: 'users', section: 'nav.section.people' },
+  { label: 'nav.manageHub', href: '/admin/manage-hub', icon: 'briefcase' },
+  { label: 'nav.manageOfficer', href: '/admin/employees', icon: 'briefcase' },
+  { label: 'nav.manageTeachers', href: '/wattaman/scheduled-teacher', icon: 'graduation' },
 
-  // ID Cards
+  // ── Reports & Cards ──
+  { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', section: 'nav.section.reports' },
+  { label: 'nav.officerReport', href: '/admin/staff-reports', icon: 'bar-chart' },
+  { label: 'nav.teacherReports', href: '/wattaman/teacher-reports', icon: 'clipboard' },
   { label: 'nav.cardDesigner', href: '/admin/card-designer', icon: 'design' },
   { label: 'nav.studentCards', href: '/admin/student-cards', icon: 'id-card' },
   { label: 'nav.staffCards', href: '/admin/staff-cards', icon: 'id-card' },
 
-  // Settings
-  { label: 'nav.sessionSettings', href: '/admin/session-settings', icon: 'clock' },
+  // ── Settings ──
+  { label: 'nav.sessionSettings', href: '/admin/session-settings', icon: 'clock', section: 'nav.section.settings' },
   { label: 'nav.holidays', href: '/admin/holidays', icon: 'holiday' },
   { label: 'nav.settings', href: '/admin/settings', icon: 'settings' },
-
-  // Timetable
-  { label: 'nav.timetable', href: '/admin/timetable', icon: 'calendar' },
-  { label: 'nav.manageTeachers', href: '/wattaman/scheduled-teacher', icon: 'graduation' },
-  { label: 'nav.teacherReports', href: '/wattaman/teacher-reports', icon: 'clipboard' },
-
-  // Scoring
-  { label: 'nav.scoring', href: '/admin/scoring', icon: 'chart' },
-
-  // Finance
-  { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money' },
 ]

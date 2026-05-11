@@ -17,6 +17,8 @@ interface NavItem {
   label: string;
   href: string;
   icon: string;
+  /** If set, renders a section header above this item */
+  section?: string;
 }
 
 interface SidebarProps {
@@ -193,24 +195,31 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
                 style={{ background: 'var(--color-input-bg)' }}
               >✕</button>
             </div>
-            <nav className="px-3 py-3 space-y-0.5">
+            <nav className="px-3 py-3">
               {navItems.filter(item => !tabs.some(t => t.href === item.href)).map((item) => {
                 const isActive = pathname === item.href;
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => { setCollapsed(false); setShowMore(false); }}
-                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm transition-all"
-                    style={{
-                      background: isActive ? 'var(--color-primary-light)' : 'transparent',
-                      color: isActive ? 'var(--color-primary-dark)' : 'var(--color-text)',
-                      fontWeight: isActive ? 600 : 400,
-                    }}
-                  >
-                    <NavIcon icon={item.icon} size={22} />
-                    <span>{t(item.label)}</span>
-                  </Link>
+                  <div key={item.href}>
+                    {item.section && (
+                      <p className="px-4 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest"
+                        style={{ color: 'var(--color-text-secondary)', opacity: 0.6 }}>
+                        {t(item.section)}
+                      </p>
+                    )}
+                    <Link
+                      href={item.href}
+                      onClick={() => { setCollapsed(false); setShowMore(false); }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all"
+                      style={{
+                        background: isActive ? 'var(--color-primary-light)' : 'transparent',
+                        color: isActive ? 'var(--color-primary-dark)' : 'var(--color-text)',
+                        fontWeight: isActive ? 600 : 400,
+                      }}
+                    >
+                      <NavIcon icon={item.icon} size={22} />
+                      <span>{t(item.label)}</span>
+                    </Link>
+                  </div>
                 );
               })}
             </nav>
@@ -254,22 +263,28 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto overscroll-contain">
-          {navItems.map((item) => {
+        <nav className="flex-1 px-3 py-4 overflow-y-auto overscroll-contain">
+          {navItems.map((item, idx) => {
             const isActive = pathname === item.href;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 ${
-                  isActive
-                    ? colors.active
-                    : `${colors.text} ${colors.hover}`
-                }`}
-              >
-                <NavIcon icon={item.icon} size={18} />
-                <span>{t(item.label)}</span>
-              </Link>
+              <div key={item.href}>
+                {item.section && (
+                  <p className={`px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-white/40 ${idx === 0 ? 'pt-0' : 'pt-4'}`}>
+                    {t(item.section)}
+                  </p>
+                )}
+                <Link
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 ${
+                    isActive
+                      ? colors.active
+                      : `${colors.text} ${colors.hover}`
+                  }`}
+                >
+                  <NavIcon icon={item.icon} size={18} />
+                  <span>{t(item.label)}</span>
+                </Link>
+              </div>
             );
           })}
         </nav>

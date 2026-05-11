@@ -35,6 +35,16 @@ const en: Record<string, string> = {
   'nav.teacherReports': 'Teacher Reports',
   'nav.myReports': 'My Reports',
   'nav.myCard': 'My Card',
+  'nav.timetable': 'Timetable',
+  'nav.scoring': 'Scoring',
+  'nav.feeManagement': 'Fee Management',
+  // Section labels
+  'nav.section.overview': 'Overview',
+  'nav.section.academics': 'Academics',
+  'nav.section.attendance': 'Attendance',
+  'nav.section.people': 'People',
+  'nav.section.reports': 'Reports & Cards',
+  'nav.section.settings': 'Settings',
 
   // Common
   'common.backToHome': 'Back to Home',
@@ -873,6 +883,16 @@ const kh: Record<string, string> = {
   'nav.teacherReports': 'របាយការណ៍គ្រូ',
   'nav.myReports': 'របាយការណ៍របស់ខ្ញុំ',
   'nav.myCard': 'កាតរបស់ខ្ញុំ',
+  'nav.timetable': 'កាលវិភាគ',
+  'nav.scoring': 'ការវាយតម្លៃ',
+  'nav.feeManagement': 'គ្រប់គ្រងថ្លៃ',
+  // Section labels
+  'nav.section.overview': 'ទិដ្ឋភាពទូទៅ',
+  'nav.section.academics': 'អប់រំ',
+  'nav.section.attendance': 'វត្តមាន',
+  'nav.section.people': 'បុគ្គល',
+  'nav.section.reports': 'របាយការណ៍ & កាត',
+  'nav.section.settings': 'ការកំណត់',
 
   // Common
   'common.backToHome': 'ត្រឡប់ទៅទំព័រដើម',
