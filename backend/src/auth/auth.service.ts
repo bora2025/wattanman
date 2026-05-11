@@ -190,8 +190,8 @@ export class AuthService {
     }
     if (query) {
       where.OR = [
-        { name: { contains: query } },
-        { email: { contains: query } },
+        { name: { contains: query, mode: 'insensitive' } },
+        { email: { contains: query, mode: 'insensitive' } },
         { phone: { contains: query } },
       ];
     }
@@ -368,7 +368,8 @@ export class AuthService {
         .then(ss => ss.map(s => s.id));
 
       const uniqueTabIds = [...new Set(scoreEntries.map(e => e.examTab.id))];
-      for (const examTabId of uniqueTabIds) {
+      // Fetch all tab rankings in parallel instead of sequential loop
+      await Promise.all(uniqueTabIds.map(async (examTabId) => {
         const grouped = await this.prisma.scoreEntry.groupBy({
           by: ['studentId'],
           where: { examTabId, studentId: { in: classStudentIds } },
@@ -377,7 +378,7 @@ export class AuthService {
         });
         const myIdx = grouped.findIndex(g => g.studentId === user.studentProfile!.id);
         rankingMap[examTabId] = { rank: myIdx >= 0 ? myIdx + 1 : 0, total: grouped.length };
-      }
+      }));
     }
 
     return { ...user, scoreEntries, rankingMap };

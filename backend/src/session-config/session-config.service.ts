@@ -123,21 +123,18 @@ export class SessionConfigService {
       where: { classId: cid, scope: sc },
     });
 
-    // Create fresh rows
-    const results = [];
-    for (const cfg of configs) {
-      results.push(await this.prisma.sessionConfig.create({
-        data: {
-          classId: cid,
-          session: cfg.session,
-          type: cfg.type,
-          startTime: cfg.startTime,
-          endTime: cfg.endTime,
-          scope: sc,
-        },
-      }));
-    }
-    return results;
+    // Create fresh rows in a single batch
+    await this.prisma.sessionConfig.createMany({
+      data: configs.map(cfg => ({
+        classId: cid,
+        session: cfg.session,
+        type: cfg.type,
+        startTime: cfg.startTime,
+        endTime: cfg.endTime,
+        scope: sc,
+      })),
+    });
+    return this.prisma.sessionConfig.findMany({ where: { classId: cid, scope: sc }, orderBy: { session: 'asc' } });
   }
 
   /** Delete class-specific overrides (revert to global) */
