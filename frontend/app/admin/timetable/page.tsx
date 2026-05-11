@@ -1862,11 +1862,17 @@ export default function TimetablePage() {
         @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
         @import url('https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap');
         @media print {
+          @page { size: A4 portrait; margin: 15mm; }
+          body {
+            margin: 0;
+            font-family: 'Battambang', sans-serif;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           .print\\:hidden { display: none !important; }
           .print\\:bg-white { background: white !important; }
           .print-page { page-break-after: always; }
           .print-page:last-child { page-break-after: avoid; }
-          body { margin: 0; font-family: 'Battambang', sans-serif; }
           .print-page, .print-page * { font-family: 'Battambang', sans-serif !important; }
         }
       `}</style>
@@ -1942,12 +1948,17 @@ function PrintLayout({ timetable, mode, classId }: {
     <>
       {classesToPrint.map((cls, clsIdx) => (
         <div key={cls.id} className="print-page" style={{ padding: '20px 24px', fontFamily: "'Battambang', sans-serif" }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: 12 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#1e1b4b' }}>{timetable.name}</div>
-            <div style={{ fontSize: 13, color: '#4b5563', marginTop: 2 }}>{t('timetable.academicYearLabel')} {timetable.academicYear}</div>
-            <div style={{ marginTop: 6, display: 'inline-block', background: '#4f46e5', color: '#fff', borderRadius: 6, padding: '3px 16px', fontSize: 14, fontWeight: 700 }}>
-              {t('timetable.classLabel')} {cls.name}
+          {/* Header — letter-head style matching print report */}
+          <div style={{ marginBottom: 24, borderBottom: '2px solid #1e293b', paddingBottom: 16 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1e1b4b', textTransform: 'uppercase', letterSpacing: 1 }}>{timetable.name}</div>
+              <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>{t('timetable.academicYearLabel')} {timetable.academicYear}</div>
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 12 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#374151' }}>{t('timetable.printTitle') || 'Class Timetable'}</div>
+              <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center', gap: 32, flexWrap: 'wrap' as const, fontSize: 13, color: '#4b5563' }}>
+                <span><strong>{t('timetable.classLabel')}:</strong> {cls.name}</span>
+              </div>
             </div>
           </div>
 
@@ -2035,9 +2046,10 @@ function PrintLayout({ timetable, mode, classId }: {
             </tbody>
           </table>
 
-          {/* Footer */}
-          <div style={{ marginTop: 12, fontSize: 9, color: '#9ca3af', textAlign: 'right' }}>
-            Printed {new Date().toLocaleDateString()} · {timetable.name} · {cls.name}
+          {/* Footer — matching print report style */}
+          <div style={{ marginTop: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: 11, color: '#9ca3af' }}>
+            <div>Printed: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            <div>{timetable.name} — {cls.name}</div>
           </div>
         </div>
       ))}
