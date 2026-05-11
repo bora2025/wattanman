@@ -156,6 +156,11 @@ export default function TimetablePage() {
   const [showPrintModal, setShowPrintModal] = useState(false)
   const [printMode, setPrintMode] = useState<'all' | 'class'>('all')
   const [printClassId, setPrintClassId] = useState<string>('')
+  const [printOrgName, setPrintOrgName] = useState('Wattaman School')
+  const [printHeaderLines, setPrintHeaderLines] = useState<string[]>([])
+  const [printNewHeaderLine, setPrintNewHeaderLine] = useState('')
+  const [printSigners, setPrintSigners] = useState<string[]>(['Teacher', 'Admin'])
+  const [printNewSigner, setPrintNewSigner] = useState('')
 
   // Workload modal
   const [showWorkloadModal, setShowWorkloadModal] = useState(false)
@@ -1741,12 +1746,13 @@ export default function TimetablePage() {
       {/* ── Print Modal ── */}
       {showPrintModal && current && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
-            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
               <h2 className="font-bold text-gray-800">{t('timetable.printTitle')}</h2>
               <button onClick={() => setShowPrintModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
-            <div className="px-5 py-5 space-y-4">
+            <div className="px-5 py-5 space-y-5 overflow-y-auto">
+              {/* What to print */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-2">{t('timetable.whatToPrint')}</label>
                 <div className="space-y-2">
@@ -1782,8 +1788,85 @@ export default function TimetablePage() {
                   </select>
                 </div>
               )}
+
+              {/* Org Name */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Organization Name</label>
+                <input
+                  className="input-field"
+                  value={printOrgName}
+                  onChange={e => setPrintOrgName(e.target.value)}
+                  placeholder="e.g. Wattaman School"
+                />
+              </div>
+
+              {/* Header Lines */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Header Lines <span className="text-gray-400 font-normal">(appear above org name)</span></label>
+                <div className="space-y-1 mb-2">
+                  {printHeaderLines.map((line, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        className="input-field flex-1"
+                        value={line}
+                        onChange={e => setPrintHeaderLines(prev => prev.map((l, i) => i === idx ? e.target.value : l))}
+                      />
+                      <button
+                        onClick={() => setPrintHeaderLines(prev => prev.filter((_, i) => i !== idx))}
+                        className="text-red-400 hover:text-red-600 px-2 text-lg font-bold flex-shrink-0"
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    className="input-field flex-1"
+                    value={printNewHeaderLine}
+                    onChange={e => setPrintNewHeaderLine(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && printNewHeaderLine.trim()) { setPrintHeaderLines(prev => [...prev, printNewHeaderLine.trim()]); setPrintNewHeaderLine('') } }}
+                    placeholder="Add header line..."
+                  />
+                  <button
+                    onClick={() => { if (printNewHeaderLine.trim()) { setPrintHeaderLines(prev => [...prev, printNewHeaderLine.trim()]); setPrintNewHeaderLine('') } }}
+                    className="tt-btn bg-indigo-600 text-white text-xs flex-shrink-0"
+                  >+ Add</button>
+                </div>
+              </div>
+
+              {/* Signers */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Signers <span className="text-gray-400 font-normal">(signature blocks at bottom)</span></label>
+                <div className="space-y-1 mb-2">
+                  {printSigners.map((signer, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        className="input-field flex-1"
+                        value={signer}
+                        onChange={e => setPrintSigners(prev => prev.map((s, i) => i === idx ? e.target.value : s))}
+                      />
+                      <button
+                        onClick={() => setPrintSigners(prev => prev.filter((_, i) => i !== idx))}
+                        className="text-red-400 hover:text-red-600 px-2 text-lg font-bold flex-shrink-0"
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    className="input-field flex-1"
+                    value={printNewSigner}
+                    onChange={e => setPrintNewSigner(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && printNewSigner.trim()) { setPrintSigners(prev => [...prev, printNewSigner.trim()]); setPrintNewSigner('') } }}
+                    placeholder="Add signer name..."
+                  />
+                  <button
+                    onClick={() => { if (printNewSigner.trim()) { setPrintSigners(prev => [...prev, printNewSigner.trim()]); setPrintNewSigner('') } }}
+                    className="tt-btn bg-indigo-600 text-white text-xs flex-shrink-0"
+                  >+ Add</button>
+                </div>
+              </div>
             </div>
-            <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
+            <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2 flex-shrink-0">
               <button onClick={() => setShowPrintModal(false)}
                 className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">{t('common.cancel')}</button>
               <button
@@ -1810,6 +1893,9 @@ export default function TimetablePage() {
             timetable={current}
             mode={printMode}
             classId={printClassId}
+            orgName={printOrgName}
+            headerLines={printHeaderLines}
+            signers={printSigners}
           />
         </div>
       )}
@@ -1882,10 +1968,13 @@ export default function TimetablePage() {
 
 // ═══ Print Layout ═══════════════════════════════════════════════════════════
 
-function PrintLayout({ timetable, mode, classId }: {
+function PrintLayout({ timetable, mode, classId, orgName, headerLines, signers }: {
   timetable: Timetable
   mode: 'all' | 'class'
   classId: string
+  orgName: string
+  headerLines: string[]
+  signers: string[]
 }) {
   const { t } = useLanguage()
   const DAY_LABELS = [t('timetable.mon'), t('timetable.tue'), t('timetable.wed'), t('timetable.thu'), t('timetable.fri'), t('timetable.sat'), t('timetable.sun')]
@@ -1951,12 +2040,17 @@ function PrintLayout({ timetable, mode, classId }: {
           {/* Header — letter-head style matching print report */}
           <div style={{ marginBottom: 24, borderBottom: '2px solid #1e293b', paddingBottom: 16 }}>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#1e1b4b', textTransform: 'uppercase', letterSpacing: 1 }}>{timetable.name}</div>
-              <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>{t('timetable.academicYearLabel')} {timetable.academicYear}</div>
+              {headerLines.map((line, idx) => (
+                <div key={idx} style={{ fontSize: idx === 0 ? 14 : 13, fontWeight: idx === 0 ? 700 : 600, color: idx === 0 ? '#0f172a' : '#374151' }}>{line}</div>
+              ))}
+              {orgName && (
+                <div style={{ fontSize: 17, fontWeight: 800, color: '#1e1b4b', textTransform: 'uppercase' as const, letterSpacing: 1, marginTop: headerLines.length > 0 ? 4 : 0 }}>{orgName}</div>
+              )}
             </div>
-            <div style={{ textAlign: 'center', marginTop: 12 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#374151' }}>{t('timetable.printTitle') || 'Class Timetable'}</div>
-              <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center', gap: 32, flexWrap: 'wrap' as const, fontSize: 13, color: '#4b5563' }}>
+            <div style={{ textAlign: 'center', marginTop: 10 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>{t('timetable.printTitle') || 'Class Timetable'}</div>
+              <div style={{ marginTop: 4, display: 'flex', justifyContent: 'center', gap: 32, flexWrap: 'wrap' as const, fontSize: 13, color: '#4b5563' }}>
+                <span><strong>{t('timetable.academicYearLabel')}:</strong> {timetable.academicYear}</span>
                 <span><strong>{t('timetable.classLabel')}:</strong> {cls.name}</span>
               </div>
             </div>
@@ -2049,8 +2143,20 @@ function PrintLayout({ timetable, mode, classId }: {
           {/* Footer — matching print report style */}
           <div style={{ marginTop: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: 11, color: '#9ca3af' }}>
             <div>Printed: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            <div>{timetable.name} — {cls.name}</div>
+            <div>{orgName || timetable.name} — {cls.name}</div>
           </div>
+
+          {/* Signature area */}
+          {signers.length > 0 && (
+            <div style={{ marginTop: 48, display: 'flex', justifyContent: signers.length <= 3 ? 'space-between' : 'space-around', flexWrap: 'wrap' as const, gap: 32, padding: '0 16px' }}>
+              {signers.map((signer, idx) => (
+                <div key={idx} style={{ textAlign: 'center' }}>
+                  <div style={{ borderBottom: '1px solid #94a3b8', width: 140, marginBottom: 4 }}></div>
+                  <div style={{ fontSize: 11, color: '#6b7280' }}>{signer}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ))}
     </>
