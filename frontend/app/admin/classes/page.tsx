@@ -26,6 +26,9 @@ interface Class {
   schedule?: string;
 }
 
+interface TimetableListItem { id: string; name: string; academicYear: string }
+interface TTClass { id: string; name: string }
+
 interface Teacher {
   id: string;
   name: string;
@@ -215,7 +218,18 @@ function ManageClasses() {
   const [customConfigs, setCustomConfigs] = useState<SessionConfigItem[]>([]);
   const [weeklySchedule, setWeeklySchedule] = useState<Record<string, string>>({ ...DEFAULT_SCHEDULE });
   const [showWeekly, setShowWeekly] = useState(false);
-  useEffect(() => { fetchStudyYears(); fetchTeachers(); }, []);
+
+  // Add to Timetable modal
+  const [timetables, setTimetables] = useState<TimetableListItem[]>([]);
+  const [showAddToTT, setShowAddToTT] = useState(false);
+  const [addToTTClass, setAddToTTClass] = useState<Class | null>(null);
+  const [addToTTSelectedTT, setAddToTTSelectedTT] = useState('');
+  const [addToTTShort, setAddToTTShort] = useState('');
+  const [addToTTColor, setAddToTTColor] = useState('#3b82f6');
+  const [addToTTSaving, setAddToTTSaving] = useState(false);
+  const [addToTTExisting, setAddToTTExisting] = useState<TTClass[]>([]);
+
+  useEffect(() => { fetchStudyYears(); fetchTeachers(); fetchTimetableList(); }, []);
 
   // Load classes when study year changes
   useEffect(() => {
@@ -304,6 +318,45 @@ function ManageClasses() {
       if (res.ok) setStudyYears(await res.json());
     } catch (err) { console.error('Failed to fetch study years'); }
   };
+
+  const fetchTimetableList = async () => {
+    try {
+      const res = await apiFetch('/api/timetable');
+      if (res.ok) setTimetables(await res.json());
+    } catch { }
+  };
+
+  function autoShort(name: string) {
+    const words = name.trim().split(/\s+/);
+    if (words.length === 1) return name.slice(0, 5).toUpperCase();
+    return words.map(w => w[0]).join('').slice(0, 6).toUpperCase();
+  }
+
+  async function openAddToTT(cls: Class) {
+    setAddToTTClass(cls);
+    setAddToTTShort(autoShort(cls.name));
+    setAddToTTColor('#3b82f6');
+    setAddToTTExisting([]);
+    const ttId = timetables[0]?.id ?? '';
+    setAddToTTSelectedTT(ttId);
+    if (ttId) {
+      const res = await apiFetch(`/api/timetable/${ttId}`);
+      if (res.ok) { const tt = await res.json(); setAddToTTExisting(tt.classes ?? []); }
+    }
+    setShowAddToTT(true);
+  }
+
+  async function handleAddToTTSave() {
+    if (!addToTTClass || !addToTTSelectedTT || !addToTTShort) return;
+    setAddToTTSaving(true);
+    await apiFetch(`/api/timetable/${addToTTSelectedTT}/classes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: addToTTClass.name, short: addToTTShort, color: addToTTColor, printSubjectPicture: false }),
+    });
+    setAddToTTSaving(false);
+    setShowAddToTT(false);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1132,6 +1185,9 @@ function ManageClasses() {
                   <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-primary btn-sm flex-1 text-center">Attendance</Link>
                   <button onClick={() => handleEdit(cls)} className="btn-outline btn-sm flex-1">Edit</button>
                   <button onClick={() => handleManageStudents(cls)} className="btn-success btn-sm flex-1">Students</button>
+                  <button onClick={() => openAddToTT(cls)} title="Add to Timetable" className="btn-outline btn-sm px-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+                    🗓
+                  </button>
                   <button onClick={() => handleDelete(cls.id)} className="btn-danger btn-sm">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
@@ -1148,6 +1204,72 @@ function ManageClasses() {
           )}
         </div>
       </div>
+
+      {/* Add to Timetable Modal */}
+      {showAddToTT && addToTTClass && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h2 className="font-bold text-slate-800">Add to Timetable</h2>
+                <p className="text-xs text-slate-500 mt-0.5">{addToTTClass.name}</p>
+              </div>
+              <button onClick={() => setShowAddToTT(false)} className="text-slate-400 hover:text-slate-600 text-xl">×</button>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Timetable</label>
+                <select
+                  value={addToTTSelectedTT}
+                  onChange={async e => {
+                    setAddToTTSelectedTT(e.target.value);
+                    setAddToTTExisting([]);
+                    if (e.target.value) {
+                      const res = await apiFetch(`/api/timetable/${e.target.value}`);
+                      if (res.ok) { const tt = await res.json(); setAddToTTExisting(tt.classes ?? []); }
+                    }
+                  }}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Select timetable…</option>
+                  {timetables.map(tt => <option key={tt.id} value={tt.id}>{tt.name} · {tt.academicYear}</option>)}
+                </select>
+                {addToTTExisting.some(c => c.name.toLowerCase() === addToTTClass.name.toLowerCase()) && (
+                  <p className="text-xs text-amber-600 mt-1">⚠ This class already exists in the selected timetable.</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Short Name</label>
+                <input
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={addToTTShort} onChange={e => setAddToTTShort(e.target.value)} maxLength={8} placeholder="e.g. G1A"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-2">Color</label>
+                <div className="flex flex-wrap gap-2">
+                  {['#ef4444','#f97316','#f59e0b','#22c55e','#14b8a6','#06b6d4','#3b82f6','#6366f1','#8b5cf6','#ec4899','#64748b'].map(c => (
+                    <button key={c} type="button" onClick={() => setAddToTTColor(c)}
+                      className={`w-7 h-7 rounded-full border-2 transition-transform hover:scale-110 ${addToTTColor === c ? 'border-gray-800 scale-110' : 'border-transparent'}`}
+                      style={{ backgroundColor: c }} />
+                  ))}
+                  <input type="color" value={addToTTColor} onChange={e => setAddToTTColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer border-0" />
+                </div>
+              </div>
+            </div>
+            <div className="px-5 py-3 border-t border-slate-200 flex justify-end gap-2">
+              <button onClick={() => setShowAddToTT(false)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium">Cancel</button>
+              <button
+                onClick={handleAddToTTSave}
+                disabled={addToTTSaving || !addToTTSelectedTT || !addToTTShort}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40"
+              >
+                {addToTTSaving ? 'Adding…' : 'Add to Timetable'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
