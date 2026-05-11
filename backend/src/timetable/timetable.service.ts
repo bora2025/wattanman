@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import * as crypto from 'crypto';
 
@@ -67,6 +67,11 @@ export class TimetableService {
   }
 
   async deleteTimetable(id: string) {
+    const tt = await this.prisma.timetable.findUnique({ where: { id }, select: { status: true } });
+    if (!tt) throw new NotFoundException('Timetable not found');
+    if (tt.status === 'PUBLISHED') {
+      throw new BadRequestException('Cannot delete a published timetable. Unpublish it first.');
+    }
     return this.prisma.timetable.delete({ where: { id } });
   }
 
