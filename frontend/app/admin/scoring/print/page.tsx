@@ -203,10 +203,9 @@ function ScoringPrintContent() {
             {showClass && (
               <th className="border border-slate-600 px-1 py-2 text-center font-semibold">{t('scoring.classGroup')}</th>
             )}
-            {subjects.map((sub, subIdx) => (
+            {subjects.map((sub) => (
               <th key={sub.id} className="border border-slate-600 px-1 py-1 text-center font-semibold">
                 <div className="flex flex-col items-center leading-tight">
-                  <span className="text-[9px] text-slate-300 font-normal">{String.fromCharCode(65 + subIdx)}</span>
                   <span className="truncate w-full text-center" style={{ color: sub.color === '#000000' ? 'white' : sub.color }}>{sub.name}</span>
                   <span className="text-slate-400 font-normal text-[9px]">/{sub.maxScore}</span>
                 </div>
