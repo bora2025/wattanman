@@ -484,7 +484,11 @@ export default function TimetablePage() {
       showToast(`Timetable "${name}" deleted.`)
       if (current?.id === id) setCurrent(null)
       await fetchList()
-    } else { showToast(`Failed to delete "${name}".`, false) }
+    } else {
+      const body = await res.json().catch(() => ({}))
+      const reason = body?.message ?? `HTTP ${res.status}`
+      showToast(typeof reason === 'string' ? reason : reason[0] ?? `Failed to delete "${name}".`, false)
+    }
   }
 
   // Drag-and-drop state
