@@ -226,6 +226,39 @@ export class AuthService {
     return users;
   }
 
+  async getStudentSchedule(userId: string) {
+    const student = await this.prisma.student.findUnique({
+      where: { userId },
+      include: { class: { select: { name: true } } },
+    });
+    if (!student?.class) return null;
+
+    const className = student.class.name;
+    const ttClass = await this.prisma.timetableClass.findFirst({
+      where: { name: className, timetable: { status: 'PUBLISHED' } },
+      include: {
+        timetable: {
+          select: {
+            id: true, name: true, academicYear: true,
+            periodsPerDay: true, numberOfDays: true,
+            periodTimes: true, weekend: true,
+          },
+        },
+        entries: {
+          include: {
+            subject: { select: { name: true, short: true, color: true } },
+            teacher: { select: { firstName: true, lastName: true, short: true, color: true } },
+            classroom: { select: { name: true, short: true } },
+          },
+          orderBy: [{ day: 'asc' }, { period: 'asc' }],
+        },
+      },
+      orderBy: { timetable: { createdAt: 'desc' } },
+    });
+
+    return ttClass ?? null;
+  }
+
   async getFullProfile(userId: string) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

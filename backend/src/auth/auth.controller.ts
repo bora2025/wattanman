@@ -169,6 +169,14 @@ export class AuthController {
   @SkipThrottle()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @Get('users/:id/schedule')
+  getStudentSchedule(@Param('id') id: string) {
+    return this.authService.getStudentSchedule(id);
+  }
+
+  @SkipThrottle()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Get('users/:id/full-profile')
   getFullProfile(@Param('id') id: string) {
     return this.authService.getFullProfile(id);

@@ -60,6 +60,26 @@ interface ScoreEntryData {
   examTab: { id: string; label: string; type: string; order: number; scoreSheet: { id: string; name: string } }
 }
 
+interface ScheduleEntry {
+  day: number
+  period: number
+  subject: { name: string; short: string; color: string | null }
+  teacher: { firstName: string; lastName: string; short: string; color: string | null }
+  classroom: { name: string; short: string } | null
+}
+
+interface ScheduleData {
+  id: string
+  name: string
+  short: string
+  timetable: {
+    id: string; name: string; academicYear: string
+    periodsPerDay: number; numberOfDays: number
+    periodTimes: string | null; weekend: string[]
+  }
+  entries: ScheduleEntry[]
+}
+
 interface FullProfile {
   id: string
   email: string
@@ -138,7 +158,9 @@ export default function SearchPage() {
   const [selected, setSelected] = useState<SearchResult | null>(null)
   const [fullProfile, setFullProfile] = useState<FullProfile | null>(null)
   const [fullProfileLoading, setFullProfileLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'profile' | 'attendance' | 'fees' | 'scores'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'attendance' | 'fees' | 'scores' | 'schedule'>('profile')
+  const [scheduleData, setScheduleData] = useState<ScheduleData | null | undefined>(undefined)
+  const [scheduleLoading, setScheduleLoading] = useState(false)
 
   const doSearch = useCallback(async (q: string, role: string) => {
     setLoading(true)
@@ -170,6 +192,7 @@ export default function SearchPage() {
   const handleSelectUser = async (user: SearchResult) => {
     setSelected(user)
     setFullProfile(null)
+    setScheduleData(undefined)
     setActiveTab('profile')
     setFullProfileLoading(true)
     try {
@@ -179,6 +202,21 @@ export default function SearchPage() {
       // ignore
     } finally {
       setFullProfileLoading(false)
+    }
+  }
+
+  const handleTabChange = async (tab: typeof activeTab) => {
+    setActiveTab(tab)
+    if (tab === 'schedule' && selected && scheduleData === undefined) {
+      setScheduleLoading(true)
+      try {
+        const res = await apiFetch(`/api/auth/users/${selected.id}/schedule`)
+        setScheduleData(res.ok ? await res.json() : null)
+      } catch {
+        setScheduleData(null)
+      } finally {
+        setScheduleLoading(false)
+      }
     }
   }
 
@@ -298,7 +336,11 @@ export default function SearchPage() {
                         </div>
                       </td>
                       <td className="text-slate-500 text-sm">{user.email}</td>
-                      <td className="text-slate-500 text-sm">{user.phone || '—'}</td>
+                      <td className="text-slate-500 text-sm" onClick={e => e.stopPropagation()}>
+                        {user.phone
+                          ? <a href={`tel:${user.phone}`} className="text-indigo-600 hover:underline font-medium">{user.phone}</a>
+                          : '—'}
+                      </td>
                       <td><span className={roleBadge[user.role] || 'badge-gray'}>{t(roleKeyMap[user.role] || '')}</span></td>
                       <td className="text-slate-500 text-sm">{user.studentProfile?.class?.name || user.department?.name || '—'}</td>
                       <td>
@@ -375,9 +417,10 @@ export default function SearchPage() {
             {/* Tabs + Content */}
             {(() => {
               const isStudent = !!selected.studentProfile
-              const tabs: { id: 'profile' | 'attendance' | 'fees' | 'scores'; label: string }[] = [
+              const tabs: { id: 'profile' | 'attendance' | 'fees' | 'scores' | 'schedule'; label: string }[] = [
                 { id: 'profile', label: 'Profile' },
                 { id: 'attendance', label: 'Attendance (30d)' },
+                ...(isStudent ? [{ id: 'schedule' as const, label: 'Schedule' }] : []),
                 ...(isStudent ? [{ id: 'fees' as const, label: 'Fees' }] : []),
                 ...(isStudent ? [{ id: 'scores' as const, label: 'Scores' }] : []),
               ]
@@ -388,7 +431,7 @@ export default function SearchPage() {
                       {tabs.map(tab => (
                         <button
                           key={tab.id}
-                          onClick={() => setActiveTab(tab.id)}
+                          onClick={() => handleTabChange(tab.id)}
                           className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                         >
                           {tab.label}
@@ -409,7 +452,12 @@ export default function SearchPage() {
                         {activeTab === 'profile' && (
                           <div className="grid grid-cols-2 gap-3">
                             <InfoBox label={t('common.email')} value={fullProfile.email} />
-                            <InfoBox label={t('common.phone')} value={fullProfile.phone || '—'} />
+                            <div className="p-3 rounded-xl bg-slate-50">
+                              <p className="text-xs text-slate-400 mb-1">{t('common.phone')}</p>
+                              {fullProfile.phone
+                                ? <a href={`tel:${fullProfile.phone}`} className="text-sm font-medium text-indigo-600 hover:underline">📞 {fullProfile.phone}</a>
+                                : <p className="text-sm font-medium text-slate-700">—</p>}
+                            </div>
                             {fullProfile.studentProfile ? (
                               <>
                                 <InfoBox label={t('search.studentId')} value={`#${fullProfile.studentProfile.studentNumber || '—'}`} />
@@ -626,6 +674,70 @@ export default function SearchPage() {
                                   </div>
                                 </div>
                               ))}
+                            </div>
+                          )
+                        })()}
+                        {/* ── Schedule Tab ── */}
+                        {activeTab === 'schedule' && fullProfile.studentProfile && (() => {
+                          if (scheduleLoading) return (
+                            <div className="text-center py-10">
+                              <div className="inline-block w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                              <p className="text-sm text-slate-400 mt-2">Loading schedule…</p>
+                            </div>
+                          )
+                          if (!scheduleData) return (
+                            <p className="text-center text-sm text-slate-400 py-6">No published timetable found for this student's class.</p>
+                          )
+                          const tt = scheduleData.timetable
+                          const periodTimes: string[] = tt.periodTimes ? JSON.parse(tt.periodTimes) : []
+                          const allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                          const dayNums = Array.from({ length: tt.numberOfDays }, (_, i) => i + 1)
+                          const periods = Array.from({ length: tt.periodsPerDay }, (_, i) => i + 1)
+                          const entryMap: Record<string, ScheduleEntry> = {}
+                          scheduleData.entries.forEach(e => { entryMap[`${e.day}_${e.period}`] = e })
+                          return (
+                            <div>
+                              <div className="flex items-center justify-between mb-3">
+                                <p className="text-xs text-slate-500">{tt.name} · {tt.academicYear}</p>
+                                <span className="text-xs bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">Published</span>
+                              </div>
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-xs border-collapse">
+                                  <thead>
+                                    <tr>
+                                      <th className="px-2 py-1.5 bg-slate-50 border border-slate-200 text-slate-400 font-medium w-10 text-center">#</th>
+                                      {dayNums.map(d => (
+                                        <th key={d} className="px-2 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 font-semibold text-center">{allDays[d - 1]}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {periods.map(p => (
+                                      <tr key={p}>
+                                        <td className="px-2 py-1.5 border border-slate-200 text-center text-slate-400 font-medium bg-slate-50">
+                                          <div>{p}</div>
+                                          {periodTimes[p - 1] && <div className="text-[9px] text-slate-300">{periodTimes[p - 1]}</div>}
+                                        </td>
+                                        {dayNums.map(d => {
+                                          const entry = entryMap[`${d}_${p}`]
+                                          if (!entry) return (
+                                            <td key={d} className="px-1 py-1 border border-slate-100 bg-white" />
+                                          )
+                                          const bg = entry.subject.color ? `${entry.subject.color}22` : '#f1f5f9'
+                                          const fg = entry.subject.color || '#475569'
+                                          return (
+                                            <td key={d} className="px-1 py-1 border border-slate-100" style={{ backgroundColor: bg }}>
+                                              <div className="font-semibold truncate" style={{ color: fg }}>{entry.subject.short}</div>
+                                              <div className="text-slate-500 truncate">{[entry.teacher.firstName, entry.teacher.lastName].filter(Boolean).join(' ')}</div>
+                                              {entry.classroom && <div className="text-slate-400 truncate">{entry.classroom.short}</div>}
+                                            </td>
+                                          )
+                                        })}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
                             </div>
                           )
                         })()}
