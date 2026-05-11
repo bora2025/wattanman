@@ -436,7 +436,7 @@ export default function StudentCardsPage() {
                             classes.flatMap((cls) =>
                               cls.students.map((s, idx) => ({
                                 name: s.name,
-                                subtitle: `${cls.name}${cls.subject ? ' · ' + cls.subject : ''}`,
+                                subtitle: cls.name,
                                 id: s.id,
                                 displayId: s.studentNumber || String(idx + 1).padStart(4, '0'),
                                 photo: s.photo,
@@ -466,7 +466,6 @@ export default function StudentCardsPage() {
                             </span>
                           </div>
                           <h3 className="text-white font-bold text-lg mt-3 leading-tight">{cls.name}</h3>
-                          {cls.subject && <p className="text-white/70 text-sm mt-0.5">{cls.subject}</p>}
                         </div>
                         <div className="px-5 py-3 flex items-center justify-between bg-white">
                           <div className="text-xs text-slate-500 truncate">
@@ -502,7 +501,6 @@ export default function StudentCardsPage() {
                           <div>
                             <h3 className="font-bold text-slate-800 text-lg leading-tight">{cls.name}</h3>
                             <p className="text-xs text-slate-500">
-                              {cls.subject && <span>{cls.subject} · </span>}
                               {cls.teacher && <span>{cls.teacher.name} · </span>}
                               {studyYearLabel && <span>{studyYearLabel} · </span>}
                               {filtered.length} student{filtered.length !== 1 ? 's' : ''}
@@ -517,7 +515,7 @@ export default function StudentCardsPage() {
                           {cls.students.length > 0 && (
                             <div className="flex gap-1.5">
                               <button
-                                onClick={() => downloadAllCardsPDFA4(`${cls.name} - Student ID Cards`, cls.students.map((s, idx) => ({ name: s.name, subtitle: `${cls.name}${cls.subject ? ' · ' + cls.subject : ''}`, id: s.id, displayId: s.studentNumber || String(idx + 1).padStart(4, '0'), photo: s.photo, extra: { dateOfBirth: s.dateOfBirth, address: s.address, phone: s.phone, sex: s.sex, studyYear: studyYearLabel } })))}
+                                onClick={() => downloadAllCardsPDFA4(`${cls.name} - Student ID Cards`, cls.students.map((s, idx) => ({ name: s.name, subtitle: cls.name, id: s.id, displayId: s.studentNumber || String(idx + 1).padStart(4, '0'), photo: s.photo, extra: { dateOfBirth: s.dateOfBirth, address: s.address, phone: s.phone, sex: s.sex, studyYear: studyYearLabel } })))}
                                 className="btn-primary btn-sm text-xs"
                               >📄 Download Card</button>
                               <button
@@ -544,14 +542,14 @@ export default function StudentCardsPage() {
                             <IDCardPreview
                               key={student.id}
                               name={student.name}
-                              subtitle={`${cls.name}${cls.subject ? ' · ' + cls.subject : ''}`}
+                              subtitle={cls.name}
                               personId={displayId}
                               qrDataUrl={qrCodes[student.id]}
                               photo={student.photo}
                               design={liveDesign}
-                              fieldValues={buildFieldValues(student.name, `${cls.name}${cls.subject ? ' · ' + cls.subject : ''}`, displayId, extra)}
-                              onDownload={() => downloadCard(student.name, `${cls.name}${cls.subject ? ' · ' + cls.subject : ''}`, qrCodes[student.id], displayId, student.photo, extra)}
-                              onDownloadPDF={() => downloadCardPDF(student.name, `${cls.name}${cls.subject ? ' · ' + cls.subject : ''}`, qrCodes[student.id], displayId, student.photo, extra)}
+                              fieldValues={buildFieldValues(student.name, cls.name, displayId, extra)}
+                              onDownload={() => downloadCard(student.name, cls.name, qrCodes[student.id], displayId, student.photo, extra)}
+                              onDownloadPDF={() => downloadCardPDF(student.name, cls.name, qrCodes[student.id], displayId, student.photo, extra)}
                               onDownloadQR={() => downloadQROnly(student.name, student.id)}
                             />
                           );
