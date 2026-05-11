@@ -1854,15 +1854,15 @@ export default function TimetablePage() {
       </div>
 
       <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap');
         .tt-btn { padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: opacity .15s; }
         .tt-btn:hover { opacity: .85; }
         .label-sm { display: block; font-size: 11px; font-weight: 600; color: #4b5563; margin-bottom: 3px; }
         .input-field { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 10px; font-size: 13px; outline: none; background: #fff; }
         .input-field:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
         @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-        @import url('https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap');
+        @page { size: A4 portrait; margin: 15mm; }
         @media print {
-          @page { size: A4 portrait; margin: 15mm; }
           body {
             margin: 0;
             font-family: 'Battambang', sans-serif;
