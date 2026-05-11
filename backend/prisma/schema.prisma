@@ -73,6 +73,7 @@ model Student {
 
   // Relations
   attendances Attendance[]
+  feeRecords  FeeRecord[]
 }
 
 model Attendance {
@@ -216,6 +217,38 @@ model AttendanceFormatRule {
   updatedAt             DateTime @updatedAt
 
   @@unique([scope, organizationId])
+}
+
+// ─── Fee Management ───────────────────────────────────────────────────────────
+
+model FeeRecord {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  totalAmount Float
+  paidAmount  Float    @default(0)
+  dueDate     DateTime
+  term        String?
+  notes       String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  payments    FeePayment[]
+
+  @@index([studentId])
+}
+
+model FeePayment {
+  id          String     @id @default(cuid())
+  feeRecordId String
+  feeRecord   FeeRecord  @relation(fields: [feeRecordId], references: [id], onDelete: Cascade)
+  amount      Float
+  note        String?
+  createdById String
+  createdAt   DateTime   @default(now())
+
+  @@index([feeRecordId])
 }
 
 // ─── Timetable Module ────────────────────────────────────────────────────────

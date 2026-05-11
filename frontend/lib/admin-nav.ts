@@ -37,4 +37,7 @@ export const adminNav = [
 
   // Scoring
   { label: 'nav.scoring', href: '/admin/scoring', icon: 'chart' },
+
+  // Finance
+  { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money' },
 ]

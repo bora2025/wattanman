@@ -15,6 +15,7 @@ import { StudyYearsModule } from './study-years/study-years.module';
 import { CardTemplatesModule } from './card-templates/card-templates.module';
 import { TimetableModule } from './timetable/timetable.module';
 import { ScoringModule } from './scoring/scoring.module';
+import { FeesModule } from './fees/fees.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ScoringModule } from './scoring/scoring.module';
     CardTemplatesModule,
     TimetableModule,
     ScoringModule,
+    FeesModule,
   ],
   controllers: [AppController],
   providers: [
