@@ -238,11 +238,29 @@ interface AddFeeModalProps {
 }
 function AddFeeModal({ students, onClose, onSave, editRecord }: AddFeeModalProps) {
   const [studentId, setStudentId] = useState(editRecord?.studentId ?? '')
+  const [studentQuery, setStudentQuery] = useState(
+    editRecord ? `${editRecord.studentName} (${editRecord.class})` : ''
+  )
+  const [showDropdown, setShowDropdown] = useState(false)
   const [totalAmount, setTotalAmount] = useState(editRecord?.totalAmount.toString() ?? '')
   const [dueDate, setDueDate] = useState(editRecord?.dueDate ?? '')
   const [term, setTerm] = useState(editRecord?.term ?? '')
   const [notes, setNotes] = useState(editRecord?.notes ?? '')
   const [error, setError] = useState('')
+
+  const filteredStudents = useMemo(() => {
+    const q = studentQuery.toLowerCase()
+    return q ? students.filter(s =>
+      s.name.toLowerCase().includes(q) || s.class.toLowerCase().includes(q)
+    ) : students
+  }, [students, studentQuery])
+
+  function selectStudent(s: Student) {
+    setStudentId(s.id)
+    setStudentQuery(`${s.name} (${s.class})`)
+    setShowDropdown(false)
+    setError('')
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -272,19 +290,47 @@ function AddFeeModal({ students, onClose, onSave, editRecord }: AddFeeModalProps
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           {!editRecord && (
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">Student</label>
-              <select
-                value={studentId}
-                onChange={e => { setStudentId(e.target.value); setError('') }}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
-                required
-              >
-                <option value="">Select student...</option>
-                {students.map(s => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.class})</option>
-                ))}
-              </select>
+              <div className="relative">
+                <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={studentQuery}
+                  onChange={e => {
+                    setStudentQuery(e.target.value)
+                    setStudentId('')
+                    setShowDropdown(true)
+                    setError('')
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+                  placeholder="Search student by name or class..."
+                  autoComplete="off"
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+              </div>
+              {showDropdown && filteredStudents.length > 0 && (
+                <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                  {filteredStudents.map(s => (
+                    <li
+                      key={s.id}
+                      onMouseDown={() => selectStudent(s)}
+                      className="flex items-center justify-between px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
+                      <span className="font-medium text-gray-900">{s.name}</span>
+                      <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{s.class}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {showDropdown && studentQuery.length > 0 && filteredStudents.length === 0 && (
+                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg px-4 py-3 text-sm text-gray-400">
+                  No students found
+                </div>
+              )}
             </div>
           )}
 
