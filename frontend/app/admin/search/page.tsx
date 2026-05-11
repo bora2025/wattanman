@@ -73,11 +73,17 @@ interface ScheduleData {
   name: string
   short: string
   timetable: {
-    id: string; name: string; academicYear: string
+    id: string; name: string; academicYear: string; status: string
     periodsPerDay: number; numberOfDays: number
     periodTimes: string | null; weekend: string[]
   }
   entries: ScheduleEntry[]
+}
+
+interface ScheduleDebug {
+  studentClass: string | null
+  reason: string
+  allClasses?: { className: string; timetableName: string; status: string }[]
 }
 
 interface FullProfile {
@@ -161,6 +167,7 @@ export default function SearchPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'attendance' | 'fees' | 'scores' | 'schedule'>('profile')
   const [scheduleData, setScheduleData] = useState<ScheduleData | null | undefined>(undefined)
   const [scheduleLoading, setScheduleLoading] = useState(false)
+  const [scheduleDebug, setScheduleDebug] = useState<ScheduleDebug | null>(null)
 
   const doSearch = useCallback(async (q: string, role: string) => {
     setLoading(true)
@@ -193,6 +200,7 @@ export default function SearchPage() {
     setSelected(user)
     setFullProfile(null)
     setScheduleData(undefined)
+    setScheduleDebug(null)
     setActiveTab('profile')
     setFullProfileLoading(true)
     try {
@@ -211,7 +219,18 @@ export default function SearchPage() {
       setScheduleLoading(true)
       try {
         const res = await apiFetch(`/api/auth/users/${selected.id}/schedule`)
-        setScheduleData(res.ok ? await res.json() : null)
+        if (res.ok) {
+          const json = await res.json()
+          if (json && json._debug) {
+            setScheduleDebug(json._debug)
+            setScheduleData(null)
+          } else {
+            setScheduleData(json)
+            setScheduleDebug(null)
+          }
+        } else {
+          setScheduleData(null)
+        }
       } catch {
         setScheduleData(null)
       } finally {
@@ -686,10 +705,36 @@ export default function SearchPage() {
                             </div>
                           )
                           if (!scheduleData) return (
-                            <div className="text-center py-8">
-                              <p className="text-slate-400 text-sm">No published timetable found for this student.</p>
-                              {fullProfile.studentProfile.class && (
-                                <p className="text-xs text-slate-300 mt-1">Class: {fullProfile.studentProfile.class.name}</p>
+                            <div className="space-y-3">
+                              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                <p className="text-sm font-semibold text-amber-800 mb-1">No timetable schedule found</p>
+                                {scheduleDebug?.studentClass ? (
+                                  <p className="text-xs text-amber-700">Student class: <strong>{scheduleDebug.studentClass}</strong></p>
+                                ) : (
+                                  <p className="text-xs text-amber-700">Student has no class assigned.</p>
+                                )}
+                                <p className="text-xs text-amber-600 mt-1">{scheduleDebug?.reason}</p>
+                              </div>
+                              {scheduleDebug?.allClasses && scheduleDebug.allClasses.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Available timetable classes</p>
+                                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                                    {scheduleDebug.allClasses.map((c, i) => (
+                                      <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg text-xs">
+                                        <span className="font-medium text-slate-700">{c.className}</span>
+                                        <div className="flex items-center gap-2 text-slate-400">
+                                          <span>{c.timetableName}</span>
+                                          <span className={`px-1.5 py-0.5 rounded font-semibold ${
+                                            c.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
+                                          }`}>{c.status}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <p className="text-[11px] text-slate-400 mt-2">
+                                    To fix: rename the timetable class to match <strong>{scheduleDebug.studentClass}</strong>, or publish the timetable.
+                                  </p>
+                                </div>
                               )}
                             </div>
                           )
@@ -704,7 +749,11 @@ export default function SearchPage() {
                             <div>
                               <div className="flex items-center justify-between mb-3">
                                 <p className="text-xs text-slate-500">{tt.name} · {tt.academicYear}</p>
-                                <span className="text-xs bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">Published</span>
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                  scheduleData.timetable.status === 'PUBLISHED'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-amber-100 text-amber-700'
+                                }`}>{scheduleData.timetable.status === 'PUBLISHED' ? 'Published' : 'Draft'}</span>
                               </div>
                               <div className="overflow-x-auto">
                                 <table className="w-full text-xs border-collapse">

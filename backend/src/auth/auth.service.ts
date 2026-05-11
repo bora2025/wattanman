@@ -226,40 +226,72 @@ export class AuthService {
     return users;
   }
 
+  private _ttClassInclude() {
+    return {
+      timetable: {
+        select: {
+          id: true, name: true, academicYear: true, status: true,
+          periodsPerDay: true, numberOfDays: true,
+          periodTimes: true, weekend: true,
+        },
+      },
+      entries: {
+        include: {
+          subject: { select: { name: true, short: true, color: true } },
+          teacher: { select: { firstName: true, lastName: true, short: true, color: true } },
+          classroom: { select: { name: true, short: true } },
+        },
+        orderBy: [{ day: 'asc' }, { period: 'asc' }] as any,
+      },
+    };
+  }
+
   async getStudentSchedule(userId: string) {
     const student = await this.prisma.student.findUnique({
       where: { userId },
       include: { class: { select: { name: true } } },
     });
-    if (!student?.class) return null;
 
-    const className = student.class.name;
-    const ttClass = await this.prisma.timetableClass.findFirst({
-      where: {
-        name: { equals: className, mode: 'insensitive' },
-        timetable: { status: 'PUBLISHED' },
-      },
-      include: {
-        timetable: {
-          select: {
-            id: true, name: true, academicYear: true,
-            periodsPerDay: true, numberOfDays: true,
-            periodTimes: true, weekend: true,
-          },
-        },
-        entries: {
-          include: {
-            subject: { select: { name: true, short: true, color: true } },
-            teacher: { select: { firstName: true, lastName: true, short: true, color: true } },
-            classroom: { select: { name: true, short: true } },
-          },
-          orderBy: [{ day: 'asc' }, { period: 'asc' }],
-        },
-      },
+    const studentClass = student?.class?.name ?? null;
+
+    if (!studentClass) {
+      return { _debug: { studentClass: null, reason: 'Student has no class assigned', allPublishedClasses: [] } };
+    }
+
+    const include = this._ttClassInclude();
+
+    // 1️⃣ Try exact match in PUBLISHED timetable
+    let ttClass = await this.prisma.timetableClass.findFirst({
+      where: { name: { equals: studentClass, mode: 'insensitive' }, timetable: { status: 'PUBLISHED' } },
+      include,
       orderBy: { timetable: { createdAt: 'desc' } },
     });
 
-    return ttClass ?? null;
+    // 2️⃣ Fallback: DRAFT timetable (show with warning)
+    if (!ttClass) {
+      ttClass = await this.prisma.timetableClass.findFirst({
+        where: { name: { equals: studentClass, mode: 'insensitive' } },
+        include,
+        orderBy: { timetable: { createdAt: 'desc' } },
+      });
+    }
+
+    // 3️⃣ If still nothing, return debug info with available class names
+    if (!ttClass) {
+      const allClasses = await this.prisma.timetableClass.findMany({
+        select: { name: true, timetable: { select: { name: true, status: true } } },
+        orderBy: { timetable: { createdAt: 'desc' } },
+      });
+      return {
+        _debug: {
+          studentClass,
+          reason: 'No timetable class name matches the student class name',
+          allClasses: allClasses.map(c => ({ className: c.name, timetableName: c.timetable.name, status: c.timetable.status })),
+        },
+      };
+    }
+
+    return ttClass;
   }
 
   async getFullProfile(userId: string) {
