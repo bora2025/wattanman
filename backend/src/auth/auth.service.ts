@@ -235,7 +235,10 @@ export class AuthService {
 
     const className = student.class.name;
     const ttClass = await this.prisma.timetableClass.findFirst({
-      where: { name: className, timetable: { status: 'PUBLISHED' } },
+      where: {
+        name: { equals: className, mode: 'insensitive' },
+        timetable: { status: 'PUBLISHED' },
+      },
       include: {
         timetable: {
           select: {

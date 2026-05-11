@@ -679,14 +679,19 @@ export default function SearchPage() {
                         })()}
                         {/* ── Schedule Tab ── */}
                         {activeTab === 'schedule' && fullProfile.studentProfile && (() => {
-                          if (scheduleLoading) return (
+                          if (scheduleLoading || scheduleData === undefined) return (
                             <div className="text-center py-10">
                               <div className="inline-block w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
                               <p className="text-sm text-slate-400 mt-2">Loading schedule…</p>
                             </div>
                           )
                           if (!scheduleData) return (
-                            <p className="text-center text-sm text-slate-400 py-6">No published timetable found for this student's class.</p>
+                            <div className="text-center py-8">
+                              <p className="text-slate-400 text-sm">No published timetable found for this student.</p>
+                              {fullProfile.studentProfile.class && (
+                                <p className="text-xs text-slate-300 mt-1">Class: {fullProfile.studentProfile.class.name}</p>
+                              )}
+                            </div>
                           )
                           const tt = scheduleData.timetable
                           const periodTimes: string[] = tt.periodTimes ? JSON.parse(tt.periodTimes) : []
