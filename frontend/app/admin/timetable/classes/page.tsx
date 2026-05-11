@@ -8,6 +8,7 @@ import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
 
 interface TimetableListItem { id: string; name: string; academicYear: string }
+interface SystemClass { id: string; name: string; studyYear?: { label?: string | null; year: number } | null }
 interface TTeacher {
   id: string; lastName: string; firstName: string; short: string
   color: string | null; classTeacherId: string | null
@@ -39,6 +40,8 @@ export default function ClassesPage() {
   const [fPrint, setFPrint] = useState(false)
   const [saving, setSaving] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [systemClasses, setSystemClasses] = useState<SystemClass[]>([])
+  const [systemClassesLoading, setSystemClassesLoading] = useState(false)
 
   // Teacher management panel
   const [managingClass, setManagingClass] = useState<TClass | null>(null)
@@ -68,10 +71,22 @@ export default function ClassesPage() {
   useEffect(() => { fetchTimetables() }, [fetchTimetables])
   useEffect(() => { fetchData() }, [fetchData])
 
-  function openModal(item?: TClass) {
+  function autoShort(name: string) {
+    const words = name.trim().split(/\s+/)
+    if (words.length === 1) return name.slice(0, 5).toUpperCase()
+    return words.map(w => w[0]).join('').slice(0, 6).toUpperCase()
+  }
+
+  async function openModal(item?: TClass) {
     setEditing(item ?? null)
     setFName(item?.name ?? ''); setFShort(item?.short ?? '')
     setFColor(item?.color ?? '#3b82f6'); setFPrint(item?.printSubjectPicture ?? false)
+    if (!item) {
+      setSystemClassesLoading(true)
+      const res = await apiFetch('/api/classes')
+      if (res.ok) setSystemClasses(await res.json())
+      setSystemClassesLoading(false)
+    }
     setShowModal(true)
   }
 
@@ -332,6 +347,37 @@ export default function ClassesPage() {
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
             <div className="px-5 py-4 space-y-4">
+              {!editing && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">From existing classes</label>
+                  {systemClassesLoading ? (
+                    <p className="text-xs text-gray-400">Loading…</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+                      {systemClasses
+                        .filter(sc => !classes.some(tc => tc.name.toLowerCase() === sc.name.toLowerCase()))
+                        .map(sc => (
+                          <button
+                            key={sc.id}
+                            type="button"
+                            onClick={() => { setFName(sc.name); setFShort(autoShort(sc.name)) }}
+                            className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                              fName === sc.name
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-indigo-400 hover:text-indigo-700'
+                            }`}
+                          >
+                            {sc.name}{sc.studyYear ? ` · ${sc.studyYear.label ?? sc.studyYear.year}` : ''}
+                          </button>
+                        ))
+                      }
+                      {systemClasses.filter(sc => !classes.some(tc => tc.name.toLowerCase() === sc.name.toLowerCase())).length === 0 && (
+                        <p className="text-xs text-gray-400">All existing classes are already added.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Class Name</label>
                 <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
