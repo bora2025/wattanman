@@ -261,7 +261,7 @@ function TeacherScanContent() {
         subtitle="Teacher Scan"
         navItems={wattamanNav}
         accentColor="emerald"
-        bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/teacher-reports']}
+        bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/teacher-scan', '/wattaman/teacher-reports']}
       />
       <div className="page-content">
         <div className="h-14 lg:hidden" />

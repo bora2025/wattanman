@@ -103,7 +103,58 @@ function WattamanScanContent() {
       }
       if (parsed.studentId) resolvedQr = parsed.studentId
       else if (parsed.userId) resolvedQr = parsed.userId
-    } catch { /* raw string QR */ }
+    } catch {
+      // Raw non-JSON QR — likely a teacher QR code (32-char hex).
+      // Try the teacher attendance endpoint first before falling through.
+      const loc2 = locationRef.current
+      try {
+        const teacherRes = await apiFetch('/api/timetable/teacher-attendance/wattaman-scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            qrCode: resolvedQr,
+            ...(loc2 ? { latitude: loc2.latitude, longitude: loc2.longitude, location: `${loc2.latitude.toFixed(6)}, ${loc2.longitude.toFixed(6)}` } : {}),
+          }),
+        })
+        if (teacherRes.ok) {
+          setIsLoading(false)
+          const tr = await teacherRes.json()
+          const isAlready = tr.action === 'ALREADY_RECORDED'
+          const isLate = tr.status === 'LATE'
+          if (isAlready) playSound('already')
+          else playSound('success')
+          const fc: 'green' | 'blue' | 'amber' = isAlready ? 'blue' : isLate ? 'amber' : 'green'
+          setFlashColor(fc)
+          if (!isAlready) setScanCount(c => c + 1)
+          setTimeout(() => setFlashColor(null), 500)
+          // Map teacher result to ScanResult shape for display reuse
+          setLastResult({
+            action: tr.action,
+            studentId: tr.teacherId,
+            studentName: `🎓 ${tr.teacherName}`,
+            studentPhoto: null,
+            className: tr.subjectName ? `${tr.subjectName}${tr.className ? ` · ${tr.className}` : ''}` : tr.className,
+            status: tr.status,
+            session: tr.period,
+            checkInTime: tr.checkIn,
+          })
+          setScanHistory(prev => [{
+            action: tr.action,
+            studentId: tr.teacherId,
+            studentName: `🎓 ${tr.teacherName}`,
+            studentPhoto: null,
+            className: tr.subjectName ? `${tr.subjectName}${tr.className ? ` · ${tr.className}` : ''}` : tr.className,
+            status: tr.status,
+            session: tr.period,
+            checkInTime: tr.checkIn,
+          }, ...prev].slice(0, 20))
+          if ('vibrate' in navigator) navigator.vibrate(isAlready ? [80] : 200)
+          setTimeout(() => { setLastResult(null); setMessage(''); lockRef.current = false }, isAlready ? 2000 : 2500)
+          return
+        }
+        // Teacher QR not found — fall through to student endpoint
+      } catch { /* network error — fall through */ }
+    }
 
     const loc = locationRef.current
     try {
@@ -286,7 +337,7 @@ function WattamanScanContent() {
           to { transform: translateY(0); opacity: 1; }
         }
       `}</style>
-      <Sidebar title="Wattaman" subtitle="QR Attendance" navItems={wattamanNav} accentColor="emerald" bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/teacher-reports']} />
+      <Sidebar title="Wattaman" subtitle="QR Attendance" navItems={wattamanNav} accentColor="emerald" bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/teacher-scan', '/wattaman/teacher-reports']} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
 
@@ -412,7 +463,7 @@ function WattamanScanContent() {
                     : 'bg-black/50 text-white/90 backdrop-blur-sm'
                 }`}>{message}</div>
               )}
-              <p className="text-center text-white/60 text-xs">Aim at student ID card QR code</p>
+              <p className="text-center text-white/60 text-xs">Aim at student or teacher QR code</p>
             </div>
           </div>
         )}
@@ -420,7 +471,7 @@ function WattamanScanContent() {
         {/* Normal page */}
         <div className="page-header">
           <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Scan Student Attendance</h1>
-          <p className="text-sm text-slate-500 mt-1">Scan any student ID card QR code — no class selection needed</p>
+          <p className="text-sm text-slate-500 mt-1">Scan student or teacher QR codes — attendance recorded automatically</p>
         </div>
 
         <div className="page-body space-y-4">
