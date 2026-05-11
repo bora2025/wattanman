@@ -165,4 +165,12 @@ export class AuthController {
       throw new HttpException(error.message || 'Failed to delete user', HttpStatus.BAD_REQUEST);
     }
   }
+
+  @SkipThrottle()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get('users/:id/full-profile')
+  getFullProfile(@Param('id') id: string) {
+    return this.authService.getFullProfile(id);
+  }
 }

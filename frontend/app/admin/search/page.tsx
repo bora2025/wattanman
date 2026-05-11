@@ -28,17 +28,61 @@ interface SearchResult {
   studentProfile: StudentProfile | null
 }
 
-interface AttendanceSession {
+interface AttendanceRecord {
+  date: string
   session: number
-  status: string | null
+  status: string
   checkInTime: string | null
-  checkOutTime: string | null
+  permissionType: string | null
 }
 
-interface DailyAttendance {
-  type: 'student' | 'staff'
-  className: string | null
-  sessions: AttendanceSession[]
+interface FeePayment {
+  id: string
+  amount: number
+  note: string | null
+  createdAt: string
+}
+
+interface FeeRecord {
+  id: string
+  totalAmount: number
+  paidAmount: number
+  dueDate: string
+  term: string | null
+  notes: string | null
+  createdAt: string
+  payments: FeePayment[]
+}
+
+interface ScoreEntryData {
+  score: number | null
+  subject: { name: string; maxScore: number; color: string }
+  examTab: { id: string; label: string; type: string; order: number; scoreSheet: { id: string; name: string } }
+}
+
+interface FullProfile {
+  id: string
+  email: string
+  name: string
+  phone: string | null
+  photo: string | null
+  role: string
+  createdAt: string
+  department: { id: string; name: string; nameKh: string | null } | null
+  staffAttendances: AttendanceRecord[]
+  scoreEntries: ScoreEntryData[]
+  rankingMap: Record<string, { rank: number; total: number }>
+  studentProfile: {
+    id: string
+    studentNumber: string | null
+    sex: string | null
+    photo: string | null
+    dateOfBirth: string | null
+    address: string | null
+    class: { id: string; name: string } | null
+    feeRecords: FeeRecord[]
+    attendances: AttendanceRecord[]
+  } | null
 }
 
 const roleBadge: Record<string, string> = {
@@ -92,9 +136,9 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const [selected, setSelected] = useState<SearchResult | null>(null)
-  const [attendance, setAttendance] = useState<DailyAttendance | null>(null)
-  const [attendanceLoading, setAttendanceLoading] = useState(false)
-  const [attendanceDate, setAttendanceDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [fullProfile, setFullProfile] = useState<FullProfile | null>(null)
+  const [fullProfileLoading, setFullProfileLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState<'profile' | 'attendance' | 'fees' | 'scores'>('profile')
 
   const doSearch = useCallback(async (q: string, role: string) => {
     setLoading(true)
@@ -123,31 +167,27 @@ export default function SearchPage() {
     return () => clearTimeout(timeout)
   }, [query, roleFilter, doSearch])
 
-  const fetchAttendance = useCallback(async (userId: string, date: string) => {
-    setAttendanceLoading(true)
-    try {
-      const res = await apiFetch(`/api/attendance/user-daily?userId=${userId}&date=${date}`)
-      if (res.ok) {
-        setAttendance(await res.json())
-      }
-    } catch {
-      setAttendance(null)
-    } finally {
-      setAttendanceLoading(false)
-    }
-  }, [])
-
-  const handleSelectUser = (user: SearchResult) => {
+  const handleSelectUser = async (user: SearchResult) => {
     setSelected(user)
-    setAttendance(null)
-    setAttendanceDate(new Date().toISOString().slice(0, 10))
-    fetchAttendance(user.id, new Date().toISOString().slice(0, 10))
+    setFullProfile(null)
+    setActiveTab('profile')
+    setFullProfileLoading(true)
+    try {
+      const res = await apiFetch(`/api/auth/users/${user.id}/full-profile`)
+      if (res.ok) setFullProfile(await res.json())
+    } catch {
+      // ignore
+    } finally {
+      setFullProfileLoading(false)
+    }
   }
 
-  const handleDateChange = (date: string) => {
-    setAttendanceDate(date)
-    if (selected) fetchAttendance(selected.id, date)
-  }
+  const InfoBox = ({ label, value }: { label: string; value: string }) => (
+    <div className="p-3 rounded-xl bg-slate-50">
+      <p className="text-xs text-slate-400 mb-1">{label}</p>
+      <p className="text-sm font-medium text-slate-700 break-all">{value}</p>
+    </div>
+  )
 
   const roleFilters = ['ALL', 'STUDENT', 'TEACHER', 'ADMIN', 'PARENT'] as const
 
@@ -274,136 +314,313 @@ export default function SearchPage() {
 
       {/* Detail Modal */}
       {selected && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-start justify-center p-4 pt-12 overflow-y-auto" onClick={() => setSelected(null)}>
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full" onClick={e => e.stopPropagation()}>
-            {/* Header with photo */}
-            <div className="p-6 pb-4">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-slate-800">{t('search.profileDetails')}</h2>
-                <button onClick={() => setSelected(null)} className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-start justify-center p-3 pt-8 overflow-y-auto"
+          onClick={() => { setSelected(null); setFullProfile(null) }}
+        >
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl mb-8" onClick={e => e.stopPropagation()}>
 
-              <div className="flex items-center gap-4 mb-5">
-                {selected.photo || selected.studentProfile?.photo ? (
+            {/* Header */}
+            <div className="px-5 pt-5 pb-4 border-b border-slate-100">
+              <div className="flex items-start gap-4">
+                {(selected.photo || selected.studentProfile?.photo) ? (
                   <img
                     src={normalizePhotoUrl(selected.photo || selected.studentProfile?.photo || '')}
                     alt={selected.name}
-                    className="w-20 h-20 rounded-xl object-cover border-2 border-slate-200 shadow-sm"
+                    className="w-16 h-16 rounded-xl object-cover border-2 border-slate-200 flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-20 h-20 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-3xl font-bold">
+                  <div className="w-16 h-16 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl font-bold flex-shrink-0">
                     {selected.name.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div>
-                  <h3 className="font-semibold text-slate-800 text-xl">{selected.name}</h3>
-                  <span className={`${roleBadge[selected.role] || 'badge-gray'} text-xs mt-1 inline-block`}>{t(roleKeyMap[selected.role] || '')}</span>
-                  {selected.studentProfile?.class && (
-                    <p className="text-sm text-slate-500 mt-1">📖 {selected.studentProfile.class.name}</p>
-                  )}
-                  {!selected.studentProfile && selected.department && (
-                    <p className="text-sm text-slate-500 mt-1">🏢 {selected.department.name}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Info Grid */}
-            <div className="px-4 sm:px-6 pb-3 sm:pb-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-slate-50">
-                  <p className="text-xs text-slate-400 mb-1">{t('common.email')}</p>
-                  <p className="text-sm font-medium text-slate-700 break-all">{selected.email}</p>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50">
-                  <p className="text-xs text-slate-400 mb-1">{t('common.phone')}</p>
-                  <p className="text-sm font-medium text-slate-700">{selected.phone || '—'}</p>
-                </div>
-                {selected.studentProfile && (
-                  <>
-                    <div className="p-3 rounded-xl bg-slate-50">
-                      <p className="text-xs text-slate-400 mb-1">{t('search.studentId')}</p>
-                      <p className="text-sm font-medium text-slate-700">#{selected.studentProfile.studentNumber || '—'}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-50">
-                      <p className="text-xs text-slate-400 mb-1">{t('common.sex')}</p>
-                      <p className="text-sm font-medium text-slate-700">
-                        {selected.studentProfile.sex === 'MALE' ? `♂ ${t('common.male')}` : selected.studentProfile.sex === 'FEMALE' ? `♀ ${t('common.female')}` : '—'}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-50">
-                      <p className="text-xs text-slate-400 mb-1">{t('common.dateOfBirth')}</p>
-                      <p className="text-sm font-medium text-slate-700">
-                        {selected.studentProfile.dateOfBirth ? new Date(selected.studentProfile.dateOfBirth).toLocaleDateString() : '—'}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-50">
-                      <p className="text-xs text-slate-400 mb-1">{t('common.class')}</p>
-                      <p className="text-sm font-medium text-slate-700">{selected.studentProfile.class?.name || t('search.unassigned')}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-50 col-span-2">
-                      <p className="text-xs text-slate-400 mb-1">{t('common.address')}</p>
-                      <p className="text-sm font-medium text-slate-700">{selected.studentProfile.address || '—'}</p>
-                    </div>
-                  </>
-                )}
-                {!selected.studentProfile && (
-                  <>
-                    <div className="p-3 rounded-xl bg-slate-50">
-                      <p className="text-xs text-slate-400 mb-1">{t('common.position')}</p>
-                      <p className="text-sm font-medium text-slate-700">{t(roleKeyMap[selected.role] || '')}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-50">
-                      <p className="text-xs text-slate-400 mb-1">{t('common.department')}</p>
-                      <p className="text-sm font-medium text-slate-700">{selected.department?.name || '—'}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-50">
-                      <p className="text-xs text-slate-400 mb-1">{t('common.joined')}</p>
-                      <p className="text-sm font-medium text-slate-700">{new Date(selected.createdAt).toLocaleDateString()}</p>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Daily Attendance */}
-            <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-semibold text-slate-700">{t('search.dailyAttendance')}</h4>
-                <input
-                  type="date"
-                  value={attendanceDate}
-                  onChange={e => handleDateChange(e.target.value)}
-                  className="!w-auto text-xs px-2 py-1 rounded-lg border border-slate-200"
-                />
-              </div>
-
-              {attendanceLoading ? (
-                <div className="text-center py-4">
-                  <div className="inline-block w-5 h-5 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
-                </div>
-              ) : attendance ? (
-                <div className="grid grid-cols-4 gap-2">
-                  {attendance.sessions.map((s, i) => (
-                    <div key={s.session} className="text-center">
-                      <p className="text-[10px] text-slate-400 font-medium mb-1">{t(`session.${i + 1}`)}</p>
-                      <div className={`px-2 py-2 rounded-lg text-xs font-semibold ${s.status ? statusColors[s.status] || 'bg-slate-100 text-slate-500' : 'bg-slate-50 text-slate-300'}`}>
-                        {s.status ? t(statusKeys[s.status] || '') || s.status : '—'}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-xl leading-tight">{selected.name}</h3>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className={`${roleBadge[selected.role] || 'badge-gray'} text-xs`}>{t(roleKeyMap[selected.role] || '')}</span>
+                        {selected.studentProfile?.class && <span className="text-xs text-slate-500">📖 {selected.studentProfile.class.name}</span>}
+                        {!selected.studentProfile && selected.department && <span className="text-xs text-slate-500">🏢 {selected.department.name}</span>}
+                        {selected.studentProfile?.studentNumber && <span className="text-xs text-slate-400">#{selected.studentProfile.studentNumber}</span>}
                       </div>
-                      {s.checkInTime && (
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          {new Date(s.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      )}
                     </div>
-                  ))}
+                    <button
+                      onClick={() => { setSelected(null); setFullProfile(null) }}
+                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex-shrink-0"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-xs text-slate-400 text-center py-3">{t('search.noAttendanceData')}</p>
-              )}
+              </div>
             </div>
+
+            {/* Tabs + Content */}
+            {(() => {
+              const isStudent = !!selected.studentProfile
+              const tabs: { id: 'profile' | 'attendance' | 'fees' | 'scores'; label: string }[] = [
+                { id: 'profile', label: 'Profile' },
+                { id: 'attendance', label: 'Attendance (30d)' },
+                ...(isStudent ? [{ id: 'fees' as const, label: 'Fees' }] : []),
+                ...(isStudent ? [{ id: 'scores' as const, label: 'Scores' }] : []),
+              ]
+              return (
+                <>
+                  <div className="border-b border-slate-100 px-5">
+                    <div className="flex">
+                      {tabs.map(tab => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-5 max-h-[55vh] overflow-y-auto">
+                    {fullProfileLoading ? (
+                      <div className="text-center py-10">
+                        <div className="inline-block w-7 h-7 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                        <p className="text-sm text-slate-400 mt-2">Loading…</p>
+                      </div>
+                    ) : fullProfile ? (
+                      <>
+                        {/* ── Profile Tab ── */}
+                        {activeTab === 'profile' && (
+                          <div className="grid grid-cols-2 gap-3">
+                            <InfoBox label={t('common.email')} value={fullProfile.email} />
+                            <InfoBox label={t('common.phone')} value={fullProfile.phone || '—'} />
+                            {fullProfile.studentProfile ? (
+                              <>
+                                <InfoBox label={t('search.studentId')} value={`#${fullProfile.studentProfile.studentNumber || '—'}`} />
+                                <InfoBox label={t('common.sex')} value={
+                                  fullProfile.studentProfile.sex === 'MALE' ? `♂ ${t('common.male')}` :
+                                  fullProfile.studentProfile.sex === 'FEMALE' ? `♀ ${t('common.female')}` : '—'
+                                } />
+                                <InfoBox label={t('common.dateOfBirth')} value={
+                                  fullProfile.studentProfile.dateOfBirth
+                                    ? new Date(fullProfile.studentProfile.dateOfBirth).toLocaleDateString()
+                                    : '—'
+                                } />
+                                <InfoBox label={t('common.class')} value={fullProfile.studentProfile.class?.name || t('search.unassigned')} />
+                                <div className="col-span-2">
+                                  <InfoBox label={t('common.address')} value={fullProfile.studentProfile.address || '—'} />
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <InfoBox label={t('common.position')} value={t(roleKeyMap[fullProfile.role] || '')} />
+                                <InfoBox label={t('common.department')} value={fullProfile.department?.name || '—'} />
+                                <InfoBox label={t('common.joined')} value={new Date(fullProfile.createdAt).toLocaleDateString()} />
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ── Attendance Tab ── */}
+                        {activeTab === 'attendance' && (() => {
+                          const records = fullProfile.studentProfile
+                            ? fullProfile.studentProfile.attendances
+                            : fullProfile.staffAttendances
+                          const byDate: Record<string, typeof records> = {}
+                          records.forEach(r => {
+                            const day = (r.date as string).slice(0, 10)
+                            if (!byDate[day]) byDate[day] = []
+                            byDate[day].push(r)
+                          })
+                          const days = Object.keys(byDate).sort().reverse()
+                          const counts = {
+                            PRESENT: records.filter(r => r.status === 'PRESENT').length,
+                            LATE: records.filter(r => r.status === 'LATE').length,
+                            ABSENT: records.filter(r => r.status === 'ABSENT').length,
+                            PERMISSION: records.filter(r => r.status === 'PERMISSION').length,
+                          }
+                          return (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-4 gap-2">
+                                {(Object.entries(counts) as [string, number][]).map(([st, cnt]) => (
+                                  <div key={st} className={`rounded-xl p-3 text-center ${statusColors[st] || 'bg-slate-50 text-slate-500'}`}>
+                                    <p className="text-xl font-bold">{cnt}</p>
+                                    <p className="text-xs font-medium mt-0.5">{t(statusKeys[st] || '') || st}</p>
+                                  </div>
+                                ))}
+                              </div>
+                              {days.length === 0 ? (
+                                <p className="text-center text-sm text-slate-400 py-4">{t('search.noAttendanceData')}</p>
+                              ) : (
+                                <div className="space-y-1">
+                                  {days.map(day => (
+                                    <div key={day} className="flex items-center gap-3 py-1.5 border-b border-slate-50 last:border-0">
+                                      <span className="text-xs text-slate-500 w-28 flex-shrink-0">
+                                        {new Date(day + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' })}
+                                      </span>
+                                      <div className="flex gap-1 flex-wrap">
+                                        {[1, 2, 3, 4].map(s => {
+                                          const rec = byDate[day]?.find(r => r.session === s)
+                                          return rec ? (
+                                            <span key={s} className={`px-2 py-0.5 rounded text-[10px] font-semibold ${statusColors[rec.status] || 'bg-slate-100 text-slate-500'}`}>
+                                              S{s} {t(statusKeys[rec.status] || '') || rec.status}
+                                            </span>
+                                          ) : null
+                                        })}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })()}
+
+                        {/* ── Fees Tab ── */}
+                        {activeTab === 'fees' && fullProfile.studentProfile && (() => {
+                          const records = fullProfile.studentProfile.feeRecords
+                          const totalBilled = records.reduce((s, r) => s + r.totalAmount, 0)
+                          const totalPaid = records.reduce((s, r) => s + r.paidAmount, 0)
+                          const getFeeStatus = (r: FeeRecord) => {
+                            if (r.paidAmount >= r.totalAmount) return 'PAID'
+                            if (r.paidAmount > 0) return 'PARTIAL'
+                            if (new Date(r.dueDate) < new Date()) return 'OVERDUE'
+                            return 'UNPAID'
+                          }
+                          const feeStatusColor: Record<string, string> = {
+                            PAID: 'bg-emerald-100 text-emerald-700',
+                            PARTIAL: 'bg-amber-100 text-amber-700',
+                            OVERDUE: 'bg-red-100 text-red-700',
+                            UNPAID: 'bg-slate-100 text-slate-500',
+                          }
+                          return (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-3 gap-3">
+                                <div className="bg-slate-50 rounded-xl p-3 text-center">
+                                  <p className="text-xl font-bold text-slate-700">{records.length}</p>
+                                  <p className="text-xs text-slate-400">Records</p>
+                                </div>
+                                <div className="bg-blue-50 rounded-xl p-3 text-center">
+                                  <p className="text-xl font-bold text-blue-700">${totalBilled.toFixed(0)}</p>
+                                  <p className="text-xs text-blue-400">Billed</p>
+                                </div>
+                                <div className="bg-emerald-50 rounded-xl p-3 text-center">
+                                  <p className="text-xl font-bold text-emerald-700">${totalPaid.toFixed(0)}</p>
+                                  <p className="text-xs text-emerald-400">Paid</p>
+                                </div>
+                              </div>
+                              {records.length === 0 ? (
+                                <p className="text-center text-sm text-slate-400 py-4">No fee records</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {records.map(r => {
+                                    const st = getFeeStatus(r)
+                                    const pct = r.totalAmount > 0 ? Math.min(100, Math.round((r.paidAmount / r.totalAmount) * 100)) : 0
+                                    return (
+                                      <div key={r.id} className="border border-slate-200 rounded-xl p-3">
+                                        <div className="flex items-start justify-between gap-2 mb-2">
+                                          <div>
+                                            <p className="text-sm font-semibold text-slate-700">{r.term || 'General'}</p>
+                                            <p className="text-xs text-slate-400">Due: {new Date(r.dueDate).toLocaleDateString()}</p>
+                                          </div>
+                                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${feeStatusColor[st]}`}>{st}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                          <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
+                                          </div>
+                                          <span className="text-xs text-slate-500 flex-shrink-0">${r.paidAmount.toFixed(0)} / ${r.totalAmount.toFixed(0)}</span>
+                                        </div>
+                                        {r.payments.length > 0 && (
+                                          <div className="mt-2 space-y-1 border-t border-slate-100 pt-2">
+                                            {r.payments.map(p => (
+                                              <div key={p.id} className="flex items-center justify-between text-xs text-slate-500">
+                                                <span>{new Date(p.createdAt).toLocaleDateString()}{p.note ? ` — ${p.note}` : ''}</span>
+                                                <span className="text-emerald-600 font-medium">+${p.amount.toFixed(0)}</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })()}
+
+                        {/* ── Scores Tab ── */}
+                        {activeTab === 'scores' && fullProfile.studentProfile && (() => {
+                          const entries = fullProfile.scoreEntries
+                          if (entries.length === 0) {
+                            return <p className="text-center text-sm text-slate-400 py-4">No score data</p>
+                          }
+                          type SheetMap = Record<string, { sheetName: string; tabs: Record<string, { tabLabel: string; tabId: string; order: number; entries: ScoreEntryData[] }> }>
+                          const bySheet: SheetMap = {}
+                          entries.forEach(e => {
+                            const sid = e.examTab.scoreSheet.id
+                            if (!bySheet[sid]) bySheet[sid] = { sheetName: e.examTab.scoreSheet.name, tabs: {} }
+                            const tid = e.examTab.id
+                            if (!bySheet[sid].tabs[tid]) bySheet[sid].tabs[tid] = { tabLabel: e.examTab.label, tabId: tid, order: e.examTab.order, entries: [] }
+                            bySheet[sid].tabs[tid].entries.push(e)
+                          })
+                          return (
+                            <div className="space-y-5">
+                              {Object.values(bySheet).map(sheet => (
+                                <div key={sheet.sheetName}>
+                                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{sheet.sheetName}</p>
+                                  <div className="space-y-3">
+                                    {Object.values(sheet.tabs).sort((a, b) => a.order - b.order).map(tab => {
+                                      const ranking = fullProfile.rankingMap[tab.tabId]
+                                      const totalScore = tab.entries.reduce((s, e) => s + (e.score ?? 0), 0)
+                                      const maxTotal = tab.entries.reduce((s, e) => s + e.subject.maxScore, 0)
+                                      return (
+                                        <div key={tab.tabId} className="border border-slate-200 rounded-xl p-3">
+                                          <div className="flex items-center justify-between mb-3">
+                                            <p className="text-sm font-semibold text-slate-700">{tab.tabLabel}</p>
+                                            <div className="flex items-center gap-2">
+                                              {ranking && ranking.rank > 0 && (
+                                                <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded-full">
+                                                  🏆 #{ranking.rank}/{ranking.total}
+                                                </span>
+                                              )}
+                                              <span className="text-sm font-bold text-slate-700">{totalScore.toFixed(1)}/{maxTotal}</span>
+                                            </div>
+                                          </div>
+                                          <div className="space-y-1.5">
+                                            {tab.entries.map((e, i) => {
+                                              const pct = e.subject.maxScore > 0 ? Math.min(100, (e.score ?? 0) / e.subject.maxScore * 100) : 0
+                                              return (
+                                                <div key={i} className="flex items-center gap-2">
+                                                  <span className="text-xs text-slate-600 w-28 truncate flex-shrink-0">{e.subject.name}</span>
+                                                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: e.subject.color || '#6366f1' }} />
+                                                  </div>
+                                                  <span className="text-xs text-slate-700 font-medium w-14 text-right flex-shrink-0">
+                                                    {e.score !== null ? e.score : '—'}/{e.subject.maxScore}
+                                                  </span>
+                                                </div>
+                                              )
+                                            })}
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        })()}
+                      </>
+                    ) : (
+                      <p className="text-center text-sm text-slate-400 py-6">Could not load profile data.</p>
+                    )}
+                  </div>
+                </>
+              )
+            })()}
           </div>
         </div>
       )}

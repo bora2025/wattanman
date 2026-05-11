@@ -225,4 +225,93 @@ export class AuthService {
 
     return users;
   }
+
+  async getFullProfile(userId: string) {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true, email: true, name: true, phone: true, photo: true,
+        role: true, createdAt: true,
+        department: { select: { id: true, name: true, nameKh: true } },
+        studentProfile: {
+          select: {
+            id: true, studentNumber: true, sex: true, photo: true,
+            dateOfBirth: true, address: true,
+            class: { select: { id: true, name: true } },
+            feeRecords: {
+              select: {
+                id: true, totalAmount: true, paidAmount: true, dueDate: true,
+                term: true, notes: true, createdAt: true,
+                payments: {
+                  select: { id: true, amount: true, note: true, createdAt: true },
+                  orderBy: { createdAt: 'desc' },
+                },
+              },
+              orderBy: { createdAt: 'desc' },
+            },
+            attendances: {
+              where: { date: { gte: thirtyDaysAgo } },
+              select: { date: true, session: true, status: true, checkInTime: true, permissionType: true },
+              orderBy: [{ date: 'asc' }, { session: 'asc' }],
+            },
+          },
+        },
+        staffAttendances: {
+          where: { date: { gte: thirtyDaysAgo } },
+          select: { date: true, session: true, status: true, checkInTime: true, permissionType: true },
+          orderBy: [{ date: 'asc' }, { session: 'asc' }],
+        },
+      },
+    });
+
+    if (!user) return null;
+
+    const base = {
+      ...user,
+      scoreEntries: [] as any[],
+      rankingMap: {} as Record<string, { rank: number; total: number }>,
+    };
+    if (!user.studentProfile) return base;
+
+    const scoreEntries = await this.prisma.scoreEntry.findMany({
+      where: { studentId: user.studentProfile.id },
+      select: {
+        score: true,
+        subject: { select: { name: true, maxScore: true, color: true } },
+        examTab: {
+          select: {
+            id: true, label: true, type: true, order: true,
+            scoreSheet: { select: { id: true, name: true } },
+          },
+        },
+      },
+      orderBy: [{ examTab: { order: 'asc' } }, { subject: { order: 'asc' } }],
+    });
+
+    const classId = user.studentProfile.class?.id;
+    const rankingMap: Record<string, { rank: number; total: number }> = {};
+
+    if (classId && scoreEntries.length > 0) {
+      const classStudentIds = await this.prisma.student
+        .findMany({ where: { classId }, select: { id: true } })
+        .then(ss => ss.map(s => s.id));
+
+      const uniqueTabIds = [...new Set(scoreEntries.map(e => e.examTab.id))];
+      for (const examTabId of uniqueTabIds) {
+        const grouped = await this.prisma.scoreEntry.groupBy({
+          by: ['studentId'],
+          where: { examTabId, studentId: { in: classStudentIds } },
+          _sum: { score: true },
+          orderBy: { _sum: { score: 'desc' } },
+        });
+        const myIdx = grouped.findIndex(g => g.studentId === user.studentProfile!.id);
+        rankingMap[examTabId] = { rank: myIdx >= 0 ? myIdx + 1 : 0, total: grouped.length };
+      }
+    }
+
+    return { ...user, scoreEntries, rankingMap };
+  }
 }
