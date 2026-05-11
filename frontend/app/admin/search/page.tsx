@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
@@ -202,15 +202,13 @@ export default function SearchPage() {
     setScheduleData(undefined)
     setScheduleDebug(null)
     setActiveTab('profile')
+    // Start full-profile fetch in the background — modal opens immediately
     setFullProfileLoading(true)
-    try {
-      const res = await apiFetch(`/api/auth/users/${user.id}/full-profile`)
-      if (res.ok) setFullProfile(await res.json())
-    } catch {
-      // ignore
-    } finally {
-      setFullProfileLoading(false)
-    }
+    apiFetch(`/api/auth/users/${user.id}/full-profile`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data) setFullProfile(data) })
+      .catch(() => {})
+      .finally(() => setFullProfileLoading(false))
   }
 
   const handleTabChange = async (tab: typeof activeTab) => {
@@ -247,6 +245,15 @@ export default function SearchPage() {
   )
 
   const roleFilters = ['ALL', 'STUDENT', 'TEACHER', 'ADMIN', 'PARENT'] as const
+
+  // Memoize per-role counts so they don't recompute on every render
+  const roleCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: results.length }
+    for (const r of ['STUDENT', 'TEACHER', 'ADMIN', 'PARENT']) {
+      counts[r] = results.filter(u => u.role === r).length
+    }
+    return counts
+  }, [results])
 
   return (
     <div className="page-shell">
@@ -294,7 +301,7 @@ export default function SearchPage() {
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                {r === 'ALL' ? `${t('common.all')} (${results.length})` : `${t(roleKeyMap[r] || '')} (${results.filter(u => u.role === r).length})`}
+                {r === 'ALL' ? `${t('common.all')} (${roleCounts.ALL})` : `${t(roleKeyMap[r] || '')} (${roleCounts[r] ?? 0})`}
               </button>
             ))}
           </div>
@@ -325,6 +332,7 @@ export default function SearchPage() {
                         <img
                           src={normalizePhotoUrl(user.photo || user.studentProfile?.photo || '')}
                           alt={user.name}
+                          loading="lazy"
                           className="w-12 h-12 rounded-xl object-cover border border-slate-200"
                           onError={e => {
                             e.currentTarget.style.display = 'none';
@@ -385,6 +393,7 @@ export default function SearchPage() {
                               <img
                                 src={normalizePhotoUrl(user.photo || user.studentProfile?.photo || '')}
                                 alt={user.name}
+                                loading="lazy"
                                 className="w-9 h-9 rounded-full object-cover border-2 border-slate-200"
                                 onError={e => {
                                   e.currentTarget.style.display = 'none'
@@ -459,6 +468,7 @@ export default function SearchPage() {
                     <img
                       src={normalizePhotoUrl(selected.photo || selected.studentProfile?.photo || '')}
                       alt={selected.name}
+                      loading="lazy"
                       className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-slate-200"
                       onError={e => {
                         e.currentTarget.style.display = 'none'
