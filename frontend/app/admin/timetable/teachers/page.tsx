@@ -43,8 +43,7 @@ export default function TeachersPage() {
   // Teacher modal
   const [showTeacherModal, setShowTeacherModal] = useState(false)
   const [editingTeacher, setEditingTeacher] = useState<TTeacher | null>(null)
-  const [fLastName, setFLastName] = useState('')
-  const [fFirstName, setFFirstName] = useState('')
+  const [fFullName, setFFullName] = useState('')
   const [fShort, setFShort] = useState('')
   const [fSex, setFSex] = useState('')
   const [fEmail, setFEmail] = useState('')
@@ -95,7 +94,7 @@ export default function TeachersPage() {
 
   function openTeacherModal(item?: TTeacher) {
     setEditingTeacher(item ?? null)
-    setFLastName(item?.lastName ?? ''); setFFirstName(item?.firstName ?? '')
+    setFFullName(item ? `${item.firstName}${item.lastName ? ' ' + item.lastName : ''}` : '')
     setFShort(item?.short ?? ''); setFSex(item?.sex ?? '')
     setFEmail(item?.email ?? ''); setFPhone(item?.phone ?? '')
     setFColor(item?.color ?? '#22c55e'); setFClassTeacher(item?.classTeacherId ?? '')
@@ -104,15 +103,18 @@ export default function TeachersPage() {
   }
 
   async function saveTeacher() {
-    if (!selectedTT || !fLastName || !fFirstName || !fShort) return
+    if (!selectedTT || !fFullName || !fShort) return
     setSavingTeacher(true)
     setTeacherError('')
+    const nameParts = fFullName.trim().split(/\s+/)
+    const firstName = nameParts[0] ?? ''
+    const lastName = nameParts.slice(1).join(' ')
     const url = editingTeacher ? `/api/timetable/teachers/${editingTeacher.id}` : `/api/timetable/${selectedTT}/teachers`
     const res = await apiFetch(url, {
       method: editingTeacher ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        lastName: fLastName, firstName: fFirstName, short: fShort,
+        lastName, firstName, short: fShort,
         sex: fSex || null, email: fEmail || null, phone: fPhone || null,
         color: fColor, classTeacherId: fClassTeacher || null,
       }),
@@ -218,7 +220,7 @@ export default function TeachersPage() {
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-2">
                                     <span className="w-3 h-3 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: t.color ?? '#22c55e' }} />
-                                    <span className="font-medium text-gray-800">{t.lastName} {t.firstName}</span>
+                                    <span className="font-medium text-gray-800">{[t.firstName, t.lastName].filter(Boolean).join(' ')}</span>
                                   </div>
                                 </td>
                                 <td className="px-4 py-3">
@@ -260,7 +262,7 @@ export default function TeachersPage() {
                   <div className="bg-white rounded-xl border border-gray-200 flex flex-col">
                     <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                       <h3 className="font-semibold text-gray-700 text-sm">
-                        {selectedTeacher ? `${selectedTeacher.lastName} ${selectedTeacher.firstName} — Lessons` : 'Select a teacher'}
+                        {selectedTeacher ? `${[selectedTeacher.firstName, selectedTeacher.lastName].filter(Boolean).join(' ')} — Lessons` : 'Select a teacher'}
                       </h3>
                       {selectedTeacher && (
                         <button onClick={() => openLessonModal(undefined, selectedTeacher.id)}
@@ -335,17 +337,10 @@ export default function TeachersPage() {
               <button onClick={() => setShowTeacherModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Last Name</label>
-                  <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={fLastName} onChange={e => setFLastName(e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">First Name</label>
-                  <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={fFirstName} onChange={e => setFFirstName(e.target.value)} />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
+                <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={fFullName} onChange={e => setFFullName(e.target.value)} placeholder="e.g. John Smith" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Short Name</label>
@@ -403,7 +398,7 @@ export default function TeachersPage() {
               )}
               <div className="flex justify-end gap-2">
                 <button onClick={() => setShowTeacherModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Cancel</button>
-                <button onClick={saveTeacher} disabled={savingTeacher || !fLastName || !fFirstName || !fShort}
+                <button onClick={saveTeacher} disabled={savingTeacher || !fFullName || !fShort}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
                   {savingTeacher ? 'Saving…' : 'OK'}
                 </button>
@@ -423,7 +418,7 @@ export default function TeachersPage() {
             </div>
             <div className="px-5 py-4 space-y-4">
               {[
-                { label: 'Teacher', val: fLTeacher, set: setFLTeacher, opts: teachers.map(t => ({ id: t.id, name: `${t.lastName} ${t.firstName}` })) },
+                { label: 'Teacher', val: fLTeacher, set: setFLTeacher, opts: teachers.map(t => ({ id: t.id, name: [t.firstName, t.lastName].filter(Boolean).join(' ') })) },
                 { label: 'Subject', val: fLSubject, set: setFLSubject, opts: allSubjects.map(s => ({ id: s.id, name: s.name })) },
                 { label: 'Class', val: fLClass, set: setFLClass, opts: classes.map(c => ({ id: c.id, name: c.name })) },
               ].map(({ label, val, set, opts }) => (
