@@ -311,73 +311,127 @@ export default function SearchPage() {
               <p className="text-sm text-slate-400 mt-1">{t('search.noResultsHint')}</p>
             </div>
           ) : results.length > 0 ? (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t('search.user')}</th>
-                    <th>{t('common.email')}</th>
-                    <th>{t('common.phone')}</th>
-                    <th>{t('common.role')}</th>
-                    <th>{t('search.classDept')}</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.map(user => (
-                    <tr key={user.id} className="cursor-pointer hover:bg-indigo-50/50" onClick={() => handleSelectUser(user)}>
-                      <td>
-                        <div className="flex items-center gap-3">
-                          {user.photo || user.studentProfile?.photo ? (
-                            <img
-                              src={normalizePhotoUrl(user.photo || user.studentProfile?.photo || '')}
-                              alt={user.name}
-                              className="w-9 h-9 rounded-full object-cover border-2 border-slate-200"
-                              onError={e => {
-                                e.currentTarget.style.display = 'none'
-                                const el = e.currentTarget.nextElementSibling as HTMLElement | null
-                                if (el) el.style.display = 'flex'
-                              }}
-                            />
-                          ) : null}
-                          <div
-                            className="avatar avatar-sm"
-                            style={{ display: (user.photo || user.studentProfile?.photo) ? 'none' : 'flex' }}
-                          >
-                            {user.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <span className="font-medium text-slate-800">{user.name}</span>
-                            {user.studentProfile?.studentNumber && (
-                              <p className="text-xs text-slate-400">#{user.studentProfile.studentNumber}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="text-slate-500 text-sm">{user.email}</td>
-                      <td className="text-slate-500 text-sm" onClick={e => e.stopPropagation()}>
-                        {user.phone
-                          ? <a href={`tel:${user.phone}`} className="text-indigo-600 hover:underline font-medium">{user.phone}</a>
-                          : '—'}
-                      </td>
-                      <td><span className={roleBadge[user.role] || 'badge-gray'}>{t(roleKeyMap[user.role] || '')}</span></td>
-                      <td className="text-slate-500 text-sm">{user.studentProfile?.class?.name || user.department?.name || '—'}</td>
-                      <td>
-                        <button
-                          onClick={e => { e.stopPropagation(); handleSelectUser(user) }}
-                          className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                        >
-                          {t('common.view')}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="px-4 py-2 text-xs text-slate-400 border-t border-slate-100">
-                {t('common.showing')} {results.length} {results.length !== 1 ? t('common.results') : t('common.result')}
+            <>
+              {/* Mobile card list */}
+              <div className="flex flex-col gap-2 sm:hidden">
+                {results.map(user => (
+                  <button
+                    key={user.id}
+                    onClick={() => handleSelectUser(user)}
+                    className="w-full text-left bg-white rounded-2xl shadow-sm border border-slate-100 px-4 py-3 flex items-center gap-3 active:bg-indigo-50 transition-colors"
+                  >
+                    <div className="relative flex-shrink-0">
+                      {user.photo || user.studentProfile?.photo ? (
+                        <img
+                          src={normalizePhotoUrl(user.photo || user.studentProfile?.photo || '')}
+                          alt={user.name}
+                          className="w-12 h-12 rounded-xl object-cover border border-slate-200"
+                          onError={e => {
+                            e.currentTarget.style.display = 'none';
+                            const el = e.currentTarget.nextElementSibling as HTMLElement | null;
+                            if (el) el.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg font-bold"
+                        style={{ display: (user.photo || user.studentProfile?.photo) ? 'none' : 'flex' }}
+                      >
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-slate-800 text-sm truncate">{user.name}</span>
+                        <span className={`${roleBadge[user.role] || 'badge-gray'} text-[10px] flex-shrink-0`}>{t(roleKeyMap[user.role] || '')}</span>
+                      </div>
+                      <p className="text-xs text-slate-400 truncate mt-0.5">{user.email}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {(user.studentProfile?.class?.name || user.department?.name) && (
+                          <span className="text-[11px] text-slate-500">{user.studentProfile?.class?.name || user.department?.name}</span>
+                        )}
+                        {user.phone && (
+                          <a href={`tel:${user.phone}`} onClick={e => e.stopPropagation()} className="text-[11px] text-indigo-500 font-medium">
+                            📞 {user.phone}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <svg className="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                ))}
+                <p className="text-center text-xs text-slate-400 py-1">{t('common.showing')} {results.length} {results.length !== 1 ? t('common.results') : t('common.result')}</p>
               </div>
-            </div>
+
+              {/* Desktop table */}
+              <div className="hidden sm:block table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>{t('search.user')}</th>
+                      <th>{t('common.email')}</th>
+                      <th>{t('common.phone')}</th>
+                      <th>{t('common.role')}</th>
+                      <th>{t('search.classDept')}</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map(user => (
+                      <tr key={user.id} className="cursor-pointer hover:bg-indigo-50/50" onClick={() => handleSelectUser(user)}>
+                        <td>
+                          <div className="flex items-center gap-3">
+                            {user.photo || user.studentProfile?.photo ? (
+                              <img
+                                src={normalizePhotoUrl(user.photo || user.studentProfile?.photo || '')}
+                                alt={user.name}
+                                className="w-9 h-9 rounded-full object-cover border-2 border-slate-200"
+                                onError={e => {
+                                  e.currentTarget.style.display = 'none'
+                                  const el = e.currentTarget.nextElementSibling as HTMLElement | null
+                                  if (el) el.style.display = 'flex'
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              className="avatar avatar-sm"
+                              style={{ display: (user.photo || user.studentProfile?.photo) ? 'none' : 'flex' }}
+                            >
+                              {user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <span className="font-medium text-slate-800">{user.name}</span>
+                              {user.studentProfile?.studentNumber && (
+                                <p className="text-xs text-slate-400">#{user.studentProfile.studentNumber}</p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-slate-500 text-sm">{user.email}</td>
+                        <td className="text-slate-500 text-sm" onClick={e => e.stopPropagation()}>
+                          {user.phone
+                            ? <a href={`tel:${user.phone}`} className="text-indigo-600 hover:underline font-medium">{user.phone}</a>
+                            : '—'}
+                        </td>
+                        <td><span className={roleBadge[user.role] || 'badge-gray'}>{t(roleKeyMap[user.role] || '')}</span></td>
+                        <td className="text-slate-500 text-sm">{user.studentProfile?.class?.name || user.department?.name || '—'}</td>
+                        <td>
+                          <button
+                            onClick={e => { e.stopPropagation(); handleSelectUser(user) }}
+                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                          >
+                            {t('common.view')}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="px-4 py-2 text-xs text-slate-400 border-t border-slate-100">
+                  {t('common.showing')} {results.length} {results.length !== 1 ? t('common.results') : t('common.result')}
+                </div>
+              </div>
+            </>
           ) : null}
         </div>
       </div>
@@ -385,46 +439,55 @@ export default function SearchPage() {
       {/* Detail Modal */}
       {selected && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-start justify-center p-3 pt-8 overflow-y-auto"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex flex-col sm:items-start sm:justify-center sm:p-3 sm:pt-8 sm:overflow-y-auto"
           onClick={() => { setSelected(null); setFullProfile(null) }}
         >
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl mb-8" onClick={e => e.stopPropagation()}>
+          <div
+            className="bg-white w-full sm:rounded-2xl sm:shadow-xl sm:max-w-2xl sm:mb-8 flex flex-col mt-auto sm:mt-0 rounded-t-3xl max-h-[95dvh] sm:max-h-none"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Mobile drag handle */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
+            </div>
 
             {/* Header */}
-            <div className="px-5 pt-5 pb-4 border-b border-slate-100">
-              <div className="flex items-start gap-4">
-                {(selected.photo || selected.studentProfile?.photo) ? (
-                  <img
-                    src={normalizePhotoUrl(selected.photo || selected.studentProfile?.photo || '')}
-                    alt={selected.name}
-                    className="w-16 h-16 rounded-xl object-cover border-2 border-slate-200 flex-shrink-0"
-                    onError={e => {
-                      e.currentTarget.style.display = 'none'
-                      const el = e.currentTarget.nextElementSibling as HTMLElement | null
-                      if (el) el.style.display = 'flex'
-                    }}
-                  />
-                ) : null}
-                <div
-                  className="w-16 h-16 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl font-bold flex-shrink-0"
-                  style={{ display: (selected.photo || selected.studentProfile?.photo) ? 'none' : 'flex' }}
-                >
-                  {selected.name.charAt(0).toUpperCase()}
+            <div className="px-4 pt-2 pb-3 sm:px-5 sm:pt-5 sm:pb-4 border-b border-slate-100 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="relative flex-shrink-0">
+                  {(selected.photo || selected.studentProfile?.photo) ? (
+                    <img
+                      src={normalizePhotoUrl(selected.photo || selected.studentProfile?.photo || '')}
+                      alt={selected.name}
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-slate-200"
+                      onError={e => {
+                        e.currentTarget.style.display = 'none'
+                        const el = e.currentTarget.nextElementSibling as HTMLElement | null
+                        if (el) el.style.display = 'flex'
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl font-bold flex-shrink-0"
+                    style={{ display: (selected.photo || selected.studentProfile?.photo) ? 'none' : 'flex' }}
+                  >
+                    {selected.name.charAt(0).toUpperCase()}
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="font-bold text-slate-800 text-xl leading-tight">{selected.name}</h3>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className={`${roleBadge[selected.role] || 'badge-gray'} text-xs`}>{t(roleKeyMap[selected.role] || '')}</span>
-                        {selected.studentProfile?.class && <span className="text-xs text-slate-500">📖 {selected.studentProfile.class.name}</span>}
-                        {!selected.studentProfile && selected.department && <span className="text-xs text-slate-500">🏢 {selected.department.name}</span>}
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-slate-800 text-lg sm:text-xl leading-tight truncate">{selected.name}</h3>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <span className={`${roleBadge[selected.role] || 'badge-gray'} text-[10px]`}>{t(roleKeyMap[selected.role] || '')}</span>
+                        {selected.studentProfile?.class && <span className="text-xs text-slate-500 truncate">📖 {selected.studentProfile.class.name}</span>}
+                        {!selected.studentProfile && selected.department && <span className="text-xs text-slate-500 truncate">🏢 {selected.department.name}</span>}
                         {selected.studentProfile?.studentNumber && <span className="text-xs text-slate-400">#{selected.studentProfile.studentNumber}</span>}
                       </div>
                     </div>
                     <button
                       onClick={() => { setSelected(null); setFullProfile(null) }}
-                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex-shrink-0"
+                      className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex-shrink-0"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
@@ -445,13 +508,15 @@ export default function SearchPage() {
               ]
               return (
                 <>
-                  <div className="border-b border-slate-100 px-5">
-                    <div className="flex">
+                  <div className="border-b border-slate-100 px-4 sm:px-5 flex-shrink-0">
+                    <div className="flex overflow-x-auto scrollbar-none -mb-px">
                       {tabs.map(tab => (
                         <button
                           key={tab.id}
                           onClick={() => handleTabChange(tab.id)}
-                          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                          className={`px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
+                            activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+                          }`}
                         >
                           {tab.label}
                         </button>
@@ -459,7 +524,7 @@ export default function SearchPage() {
                     </div>
                   </div>
 
-                  <div className="p-5 max-h-[55vh] overflow-y-auto">
+                  <div className="p-4 sm:p-5 overflow-y-auto flex-1" style={{ maxHeight: 'calc(95dvh - 200px)' }}>
                     {fullProfileLoading ? (
                       <div className="text-center py-10">
                         <div className="inline-block w-7 h-7 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
