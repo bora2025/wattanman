@@ -39,6 +39,79 @@ interface ScoreEntryData {
   studentId: string; subjectId: string; score: number | null
 }
 
+type ScoreMode = 'numeric' | 'citation'
+
+interface FormulaColumn {
+  id: string; name: string; formula: string
+}
+
+// ─── Grade computation helpers ────────────────────────────────────────────────
+
+const GRADE_MAP = [
+  { min: 90, letter: 'A', point: 4 },
+  { min: 75, letter: 'B', point: 3 },
+  { min: 60, letter: 'C', point: 2 },
+  { min: 50, letter: 'D', point: 1 },
+  { min: 40, letter: 'E', point: 0.5 },
+  { min: 0,  letter: 'F', point: 0 },
+] as const
+
+const GRADE_COLORS: Record<string, string> = {
+  A: 'text-green-700 bg-green-50',
+  B: 'text-blue-700 bg-blue-50',
+  C: 'text-yellow-700 bg-yellow-50',
+  D: 'text-orange-700 bg-orange-50',
+  E: 'text-red-600 bg-red-50',
+  F: 'text-red-900 bg-red-100',
+}
+
+function scoreToGradeEntry(score: number | null, maxScore: number) {
+  if (score === null || score === undefined || maxScore <= 0) return GRADE_MAP[GRADE_MAP.length - 1]
+  const pct = (score / maxScore) * 100
+  return GRADE_MAP.find(g => pct >= g.min) ?? GRADE_MAP[GRADE_MAP.length - 1]
+}
+
+function gpaToLetter(gpa: number): string {
+  if (gpa >= 3.5) return 'A'
+  if (gpa >= 2.5) return 'B'
+  if (gpa >= 1.5) return 'C'
+  if (gpa >= 0.5) return 'D'
+  if (gpa > 0)    return 'E'
+  return 'F'
+}
+
+function evalFormulaExpr(formula: string, ctx: Record<string, number | string>): string {
+  try {
+    let expr = formula.replace(/^=\s*/, '')
+    // Expand IF(cond,then,else) up to 6 levels deep
+    for (let i = 0; i < 6; i++) {
+      expr = expr.replace(/IF\(([^()]+),([^()]+),([^()]+)\)/g, '(($1)?($2):($3))')
+    }
+    // Expand AVERAGE(a,b,...)
+    expr = expr.replace(/AVERAGE\(([^)]+)\)/g, (_, args: string) => {
+      const parts = args.split(',').map(s => s.trim()).filter(Boolean)
+      return parts.length ? `((${parts.join('+')})||0)/${parts.length}` : '0'
+    })
+    // Expand SUM(a,b,...)
+    expr = expr.replace(/SUM\(([^)]+)\)/g, (_, args: string) => {
+      const parts = args.split(',').map(s => s.trim()).filter(Boolean)
+      return parts.length ? `(${parts.join('+')})` : '0'
+    })
+    // Substitute variables
+    for (const [k, v] of Object.entries(ctx)) {
+      const rep = typeof v === 'string' ? `"${v}"` : String(v)
+      expr = expr.replace(new RegExp(`\\b${k}\\b`, 'g'), rep)
+    }
+    // Security: after substitution, no bare identifiers should remain
+    const stripped = expr.replace(/"[^"]*"/g, '""')
+    if (/[a-zA-Z_$]/.test(stripped)) return '#ERR'
+    // eslint-disable-next-line no-new-func
+    const result = new Function('"use strict"; return (' + expr + ')')()
+    if (typeof result === 'number') return isFinite(result) ? result.toFixed(2) : '#ERR'
+    return String(result ?? '')
+  } catch { return '#ERR' }
+}
+
 // ─── UI helpers ───────────────────────────────────────────────────────────────
 
 function ToolBtn({ icon, label, onClick, danger, disabled }: {
@@ -74,8 +147,8 @@ function Modal({ title, onClose, children, wide }: {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-type WizardStep = 'year' | 'classes' | 'subject' | 'month'
-const WIZARD_STEPS: WizardStep[] = ['year', 'classes', 'subject', 'month']
+type WizardStep = 'year' | 'classes' | 'subject' | 'option' | 'month'
+const WIZARD_STEPS: WizardStep[] = ['year', 'classes', 'subject', 'option', 'month']
 
 export default function ScoringPage() {
   const { t } = useLanguage()
@@ -111,7 +184,18 @@ export default function ScoringPage() {
   const [showAddMenu, setShowAddMenu] = useState(false)
   const [showPrintMenu, setShowPrintMenu] = useState(false)
   const [showPrintModal, setShowPrintModal] = useState(false)
+  const [showCalcModal, setShowCalcModal] = useState(false)
   const [subjectTab, setSubjectTab] = useState<'manual' | 'import'>('manual')
+
+  // ── Score mode & formula columns
+  const [scoreMode, setScoreMode] = useState<ScoreMode>('numeric')
+  const [formulaColumns, setFormulaColumns] = useState<FormulaColumn[]>([])
+  const [calcColName, setCalcColName] = useState('')
+  const [calcColFormula, setCalcColFormula] = useState('=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C","F")))')
+  const [editingFormulaCol, setEditingFormulaCol] = useState<FormulaColumn | null>(null)
+
+  // ── Wizard scoring option
+  const [wCalcOption, setWCalcOption] = useState<'citation' | 'formula' | ''>('')
 
   // ── Wizard state
   const [wizardStep, setWizardStep] = useState<WizardStep>('year')
@@ -247,6 +331,7 @@ export default function ScoringPage() {
   const startWizard = () => {
     setWizardStep('year'); setWStudyYearId(''); setWNewYearLabel(''); setWShowNewYear(false)
     setWClassIds(new Set()); setWLogoUrl(''); setCreatingSheet(null); setShowNewWizard(true)
+    setWCalcOption(''); setScoreMode('numeric'); setFormulaColumns([])
   }
 
   const wizardIndex = WIZARD_STEPS.indexOf(wizardStep)
@@ -286,6 +371,16 @@ export default function ScoringPage() {
       }
       setWizardStep('subject')
     } else if (wizardStep === 'subject') {
+      setWizardStep('option')
+    } else if (wizardStep === 'option') {
+      if (wCalcOption === 'citation') {
+        setScoreMode('citation')
+      } else if (wCalcOption === 'formula') {
+        setScoreMode('numeric')
+        if (formulaColumns.length === 0) {
+          setFormulaColumns([{ id: `fc-${Date.now()}`, name: 'Grade', formula: '=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C","F")))' }])
+        }
+      }
       setWizardStep('month')
     } else {
       if (creatingSheet) { const fresh = await refreshSheet(creatingSheet.id); if (fresh) openSheet(fresh) }
@@ -428,7 +523,13 @@ export default function ScoringPage() {
 
   const visibleStudents = filterClassId === 'ALL' ? students : students.filter(s => s.classId === filterClassId)
 
-  const getTotal = (sId: string) => (activeSheet?.subjects ?? []).reduce((sum, sub) => sum + (scores[sId]?.[sub.id] ?? 0), 0)
+  const getTotal = (sId: string) => {
+    const subjects = activeSheet?.subjects ?? []
+    if (scoreMode === 'citation') {
+      return subjects.reduce((sum, sub) => sum + scoreToGradeEntry(scores[sId]?.[sub.id] ?? null, sub.maxScore).point, 0)
+    }
+    return subjects.reduce((sum, sub) => sum + (scores[sId]?.[sub.id] ?? 0), 0)
+  }
   const getAverage = (sId: string) => { const n = activeSheet?.subjects.length ?? 0; return n ? getTotal(sId) / n : 0 }
 
   const rankings = (() => {
@@ -446,6 +547,30 @@ export default function ScoringPage() {
     })
     return map
   })()
+
+  const getFormulaContext = (sId: string): Record<string, number | string> => {
+    const subjects = activeSheet?.subjects ?? []
+    const total = getTotal(sId)
+    const avg = getAverage(sId)
+    const ctx: Record<string, number | string> = { total, avg, gpa: avg, rank: rankings[sId] ?? 0 }
+    subjects.forEach((sub, i) => {
+      const score = scores[sId]?.[sub.id] ?? null
+      const grade = scoreToGradeEntry(score, sub.maxScore)
+      ctx[`s${i + 1}`] = score ?? 0; ctx[`g${i + 1}`] = grade.letter; ctx[`gp${i + 1}`] = grade.point
+    })
+    return ctx
+  }
+
+  const addFormulaColumn = () => {
+    if (!calcColName.trim()) return
+    if (editingFormulaCol) {
+      setFormulaColumns(cols => cols.map(c => c.id === editingFormulaCol.id ? { ...c, name: calcColName, formula: calcColFormula } : c))
+      setEditingFormulaCol(null)
+    } else {
+      setFormulaColumns(cols => [...cols, { id: `fc-${Date.now()}`, name: calcColName, formula: calcColFormula }])
+    }
+    setCalcColName(''); setCalcColFormula('=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C","F")))')
+  }
 
   // ─── Sub panels ───────────────────────────────────────────────────────────
 
@@ -586,6 +711,7 @@ export default function ScoringPage() {
               <ToolBtn icon="📅" label={t('scoring.month')} onClick={() => setShowMonthModal(true)} disabled={!activeSheet} />
               <Divider />
               <ToolBtn icon="📊" label={t('scoring.scoring')} onClick={() => tableRef.current?.scrollIntoView({ behavior: 'smooth' })} disabled={!activeSheet} />
+              <ToolBtn icon="🧮" label="Calc Column" onClick={() => { setEditingFormulaCol(null); setCalcColName(''); setCalcColFormula('=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C","F")))'); setShowCalcModal(true) }} disabled={!activeSheet} />
               <Divider />
               <ToolBtn icon="🗑️" label={t('scoring.delete')} onClick={() => activeSheet && setShowDeleteSheetConfirm(true)} disabled={!activeSheet} danger />
             </div>
@@ -661,22 +787,60 @@ export default function ScoringPage() {
                               <th className="border border-indigo-600 px-2 py-2 text-center font-semibold">{t('scoring.classGroup')}</th>
                             )}
                             {activeSheet.subjects.map((sub, subIdx) => (
-                              <th key={sub.id} className="border border-indigo-600 px-2 py-1 text-center font-semibold min-w-[64px]">
+                              <React.Fragment key={sub.id}>
+                                <th className="border border-indigo-600 px-2 py-1 text-center font-semibold min-w-[64px]">
+                                  <div className="flex flex-col items-center leading-tight">
+                                    <span className="text-[10px] text-indigo-300 font-normal">{String.fromCharCode(65 + subIdx)}</span>
+                                    <span style={{ color: sub.color === '#000000' ? 'white' : sub.color }}>{sub.name}</span>
+                                    <span className="text-indigo-300 font-normal text-[10px]">/{sub.maxScore}</span>
+                                  </div>
+                                </th>
+                                {scoreMode === 'citation' && (
+                                  <th className="border border-indigo-600 px-2 py-1 text-center font-semibold w-12 bg-indigo-600">
+                                    <div className="flex flex-col items-center leading-tight">
+                                      <span className="text-[10px] text-indigo-200 font-normal">Grade</span>
+                                      <span className="text-indigo-100 text-[10px]">{sub.name}</span>
+                                    </div>
+                                  </th>
+                                )}
+                              </React.Fragment>
+                            ))}
+                            {scoreMode === 'citation' ? (
+                              <th className="border border-indigo-600 px-2 py-1 text-center font-semibold w-20 bg-indigo-800">
                                 <div className="flex flex-col items-center leading-tight">
-                                  <span className="text-[10px] text-indigo-300 font-normal">{String.fromCharCode(65 + subIdx)}</span>
-                                  <span style={{ color: sub.color === '#000000' ? 'white' : sub.color }}>{sub.name}</span>
-                                  <span className="text-indigo-300 font-normal text-[10px]">/{sub.maxScore}</span>
+                                  <span className="text-indigo-100 text-[10px] font-semibold">Total</span>
+                                  <span className="text-indigo-300 text-[9px] font-normal">Citation Score</span>
+                                </div>
+                              </th>
+                            ) : (
+                              <th className="border border-indigo-600 px-2 py-2 text-center font-semibold w-16 bg-indigo-800">{t('scoring.total')}</th>
+                            )}
+                            {scoreMode === 'citation' ? (
+                              <th className="border border-indigo-600 px-2 py-1 text-center font-semibold w-24 bg-indigo-800">
+                                <div className="flex flex-col items-center leading-tight">
+                                  <span className="text-indigo-100 text-[10px] font-semibold">Avg Citation</span>
+                                  <span className="text-indigo-300 text-[9px] font-normal">(≈ Grade)</span>
+                                </div>
+                              </th>
+                            ) : (
+                              <th className="border border-indigo-600 px-2 py-2 text-center font-semibold w-16 bg-indigo-800">{t('scoring.average')}</th>
+                            )}
+                            <th className="border border-indigo-600 px-2 py-2 text-center font-semibold w-12 bg-indigo-800">{t('scoring.ranking')}</th>
+                            {formulaColumns.map(col => (
+                              <th key={col.id} title={col.formula}
+                                className="border border-indigo-600 px-2 py-1 text-center font-semibold w-20 bg-purple-800 cursor-pointer hover:bg-purple-700 transition-colors"
+                                onClick={() => { setEditingFormulaCol(col); setCalcColName(col.name); setCalcColFormula(col.formula); setShowCalcModal(true) }}>
+                                <div className="flex flex-col items-center leading-tight">
+                                  <span className="text-purple-200 text-xs">{col.name}</span>
+                                  <span className="text-purple-400 text-[9px]">fx ✎</span>
                                 </div>
                               </th>
                             ))}
-                            <th className="border border-indigo-600 px-2 py-2 text-center font-semibold w-16 bg-indigo-800">{t('scoring.total')}</th>
-                            <th className="border border-indigo-600 px-2 py-2 text-center font-semibold w-16 bg-indigo-800">{t('scoring.average')}</th>
-                            <th className="border border-indigo-600 px-2 py-2 text-center font-semibold w-12 bg-indigo-800">{t('scoring.ranking')}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {visibleStudents.length === 0 ? (
-                            <tr><td colSpan={5 + activeSheet.subjects.length} className="text-center py-10 text-gray-400">{t('scoring.noStudents')}</td></tr>
+                            <tr><td colSpan={3 + (sheetClasses.length > 1 && filterClassId === 'ALL' ? 1 : 0) + activeSheet.subjects.length * (scoreMode === 'citation' ? 2 : 1) + 3 + formulaColumns.length} className="text-center py-10 text-gray-400">{t('scoring.noStudents')}</td></tr>
                           ) : (() => {
                             const rows: React.ReactNode[] = []
                             let lastClassName: string | null = null
@@ -688,7 +852,7 @@ export default function ScoringPage() {
                                 classRowIdx = 0
                                 rows.push(
                                   <tr key={`cls-${student.classId}`} className="print:break-before-page">
-                                    <td colSpan={5 + activeSheet.subjects.length}
+                                    <td colSpan={3 + 1 + activeSheet.subjects.length * (scoreMode === 'citation' ? 2 : 1) + 3 + formulaColumns.length}
                                       className="bg-indigo-50 border border-indigo-200 px-4 py-1.5 font-semibold text-indigo-700 text-xs">
                                       {t('scoring.classGroup')}: {student.className}
                                     </td>
@@ -713,21 +877,53 @@ export default function ScoringPage() {
                                   )}
                                   {activeSheet.subjects.map(sub => {
                                     const scoreVal = scores[student.id]?.[sub.id]
+                                    const gradeEntry = scoreToGradeEntry(scoreVal ?? null, sub.maxScore)
                                     return (
-                                      <td key={sub.id} className="border border-gray-200 p-0">
-                                        <input
-                                          type="number"
-                                          className="w-full px-2 py-1.5 text-center bg-transparent focus:outline-none focus:bg-yellow-50 focus:ring-1 focus:ring-inset focus:ring-indigo-400 text-xs"
-                                          value={scoreVal != null ? scoreVal : ''}
-                                          min={0}
-                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleScoreChange(student.id, sub.id, e.target.value)}
-                                        />
-                                      </td>
+                                      <React.Fragment key={sub.id}>
+                                        <td className="border border-gray-200 p-0">
+                                          <input
+                                            type="number"
+                                            className="w-full px-2 py-1.5 text-center bg-transparent focus:outline-none focus:bg-yellow-50 focus:ring-1 focus:ring-inset focus:ring-indigo-400 text-xs"
+                                            value={scoreVal != null ? scoreVal : ''}
+                                            min={0}
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleScoreChange(student.id, sub.id, e.target.value)}
+                                          />
+                                        </td>
+                                        {scoreMode === 'citation' && (
+                                          <td className={`border border-gray-200 px-2 py-1 text-center text-xs font-bold ${GRADE_COLORS[gradeEntry.letter] ?? ''}`}>
+                                            {scoreVal !== null && scoreVal !== undefined ? gradeEntry.letter : '—'}
+                                          </td>
+                                        )}
+                                      </React.Fragment>
                                     )
                                   })}
-                                  <td className="border border-gray-200 px-2 py-1 text-center font-semibold text-indigo-700 bg-indigo-50">{(total ?? 0).toFixed(1)}</td>
-                                  <td className="border border-gray-200 px-2 py-1 text-center text-gray-700 bg-indigo-50">{(avg ?? 0).toFixed(1)}</td>
+                                  {scoreMode === 'citation' ? (
+                                    <td className="border border-gray-200 px-2 py-1 text-center bg-indigo-50">
+                                      <span className="font-semibold text-indigo-700">{(total ?? 0).toFixed(1)}</span>
+                                      <span className="text-indigo-400 text-[10px] ml-0.5">pts</span>
+                                    </td>
+                                  ) : (
+                                    <td className="border border-gray-200 px-2 py-1 text-center font-semibold text-indigo-700 bg-indigo-50">{(total ?? 0).toFixed(1)}</td>
+                                  )}
+                                  {scoreMode === 'citation' ? (() => {
+                                    const gradeLetter = gpaToLetter(avg)
+                                    const gradeColor = GRADE_COLORS[gradeLetter] ?? ''
+                                    return (
+                                      <td className="border border-gray-200 px-2 py-1 text-center bg-indigo-50">
+                                        <span className="text-gray-700 text-xs">{(avg ?? 0).toFixed(2)}</span>
+                                        <span className="text-gray-400 text-[10px] mx-0.5">≈</span>
+                                        <span className={`font-bold text-sm px-1 rounded ${gradeColor}`}>{gradeLetter}</span>
+                                      </td>
+                                    )
+                                  })() : (
+                                    <td className="border border-gray-200 px-2 py-1 text-center text-gray-700 bg-indigo-50">{(avg ?? 0).toFixed(1)}</td>
+                                  )}
                                   <td className="border border-gray-200 px-2 py-1 text-center font-bold text-indigo-800 bg-indigo-50">{rank}</td>
+                                  {formulaColumns.map(col => (
+                                    <td key={col.id} className="border border-gray-200 px-2 py-1 text-center text-xs font-medium text-purple-700 bg-purple-50">
+                                      {evalFormulaExpr(col.formula, getFormulaContext(student.id))}
+                                    </td>
+                                  ))}
                                 </tr>
                               )
                             })
@@ -772,6 +968,11 @@ export default function ScoringPage() {
                       className="w-full text-left px-4 py-2.5 text-xs hover:bg-indigo-50 text-gray-700 flex items-center gap-2">
                       <span>📅</span> {t('scoring.addTabBtn')}
                     </button>
+                    <div className="border-t mx-2" />
+                    <button onClick={() => { setShowAddMenu(false); setEditingFormulaCol(null); setCalcColName(''); setCalcColFormula('=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C","F")))'); setShowCalcModal(true) }}
+                      className="w-full text-left px-4 py-2.5 text-xs hover:bg-purple-50 text-purple-700 flex items-center gap-2">
+                      <span>🧮</span> Calc Column
+                    </button>
                   </div>
                 )}
               </div>
@@ -797,7 +998,7 @@ export default function ScoringPage() {
               ))}
             </div>
             <div className="flex justify-between text-[10px] text-gray-400 mb-5 -mt-3">
-              {[t('scoring.academyYear'), t('scoring.multiClass'), t('scoring.addSubject'), t('scoring.addMonth')].map((lbl, i) => (
+              {[t('scoring.academyYear'), t('scoring.multiClass'), t('scoring.addSubject'), 'Score Option', t('scoring.addMonth')].map((lbl, i) => (
                 <span key={i} className={i === wizardIndex ? 'text-indigo-600 font-semibold' : ''}>{lbl}</span>
               ))}
             </div>
@@ -869,7 +1070,66 @@ export default function ScoringPage() {
               </div>
             )}
 
-            {/* Step 4: Months */}
+            {/* Step 4: Score Option */}
+            {wizardStep === 'option' && (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600 font-medium">How should student scores be calculated?</p>
+
+                {/* Option 1: Citation */}
+                <label className={`block border-2 rounded-xl p-4 cursor-pointer transition-colors ${
+                  wCalcOption === 'citation' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'
+                }`}>
+                  <input type="radio" className="sr-only" checked={wCalcOption === 'citation'} onChange={() => setWCalcOption('citation')} />
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">📊</span>
+                    <div>
+                      <p className="font-semibold text-gray-800 text-sm">Option 1: Citation per Subject</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Each subject shows a grade letter (A–F) alongside the score. Average and Total use grade points.</p>
+                      <div className="mt-2 text-[11px] font-mono bg-white rounded border px-2 py-1.5 text-gray-600">
+                        Dara: Math A(4pts) + Science B(3pts) → GPA 3.5 → Grade A
+                      </div>
+                      <div className="mt-2 flex gap-1 flex-wrap">
+                        {([['A','≥90%','4'], ['B','≥75%','3'], ['C','≥60%','2'], ['D','≥50%','1'], ['E','≥40%','0.5'], ['F','<40%','0(Fail)']] as const).map(([l, p, g]) => (
+                          <span key={l} className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${GRADE_COLORS[l] ?? 'bg-gray-100 text-gray-600'}`}>{l}: {p}={g}pt</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </label>
+
+                {/* Option 2: Formula Column */}
+                <label className={`block border-2 rounded-xl p-4 cursor-pointer transition-colors ${
+                  wCalcOption === 'formula' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'
+                }`}>
+                  <input type="radio" className="sr-only" checked={wCalcOption === 'formula'} onChange={() => setWCalcOption('formula')} />
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">📐</span>
+                    <div>
+                      <p className="font-semibold text-gray-800 text-sm">Option 2: Formula Column</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Add a custom computed column using a formula expression (like a spreadsheet).</p>
+                      <div className="mt-2 text-[10px] font-mono bg-white rounded border px-2 py-1.5 text-gray-600 break-all">
+                        =IF(avg&gt;=3.5,"A",IF(avg&gt;=2.5,"B",IF(avg&gt;=1.5,"C","F")))
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-1">Variables: avg, total, rank, s1/s2/… (scores), g1/g2/… (grades), gp1/gp2/… (grade pts)</p>
+                    </div>
+                  </div>
+                </label>
+
+                {/* Default: Numeric */}
+                <label className={`flex items-center gap-3 border-2 rounded-xl p-3.5 cursor-pointer transition-colors ${
+                  wCalcOption === '' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'
+                }`}>
+                  <input type="radio" className="sr-only" checked={wCalcOption === ''} onChange={() => setWCalcOption('')} />
+                  <span className="text-xl">🔢</span>
+                  <div>
+                    <p className="font-semibold text-gray-800 text-sm">Default: Numeric Only</p>
+                    <p className="text-xs text-gray-500">Use raw numeric scores. No grade letter conversion.</p>
+                  </div>
+                </label>
+              </div>
+            )}
+
+            {/* Step 5: Months */}
             {wizardStep === 'month' && (
               <div className="space-y-3">
                 <p className="text-sm text-gray-500">{t('scoring.addMonth')}</p>
@@ -983,6 +1243,110 @@ export default function ScoringPage() {
             sheetClasses={sheetClasses}
             onClose={() => setShowPrintModal(false)}
           />
+        )}
+
+        {/* ══ Calc Column Modal ══ */}
+        {showCalcModal && activeSheet && (
+          <Modal title={editingFormulaCol ? 'Edit Formula Column' : 'Add Calc Column'} onClose={() => { setShowCalcModal(false); setEditingFormulaCol(null) }} wide>
+            <div className="space-y-4">
+              {/* Option 1: Citation mode toggle */}
+              <div className={`border-2 rounded-xl p-4 transition-colors ${scoreMode === 'citation' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl">📊</span>
+                    <div>
+                      <p className="font-semibold text-sm text-gray-800">Option 1: Citation per Subject</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Toggle grade letter (A–F) columns alongside each subject score. The <strong>Total Citation Score</strong> shows grade points, and the <strong>Avg Citation (≈ Grade)</strong> column shows the GPA with its letter inline.</p>
+                      {scoreMode === 'citation' && (
+                        <div className="mt-2 flex gap-1 flex-wrap">
+                          {(['A', 'B', 'C', 'D', 'E', 'F'] as const).map(l => (
+                            <span key={l} className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${GRADE_COLORS[l] ?? ''}`}>{l}</span>
+                          ))}
+                          <span className="text-[10px] text-gray-500 self-center ml-1">A≥90% · B≥75% · C≥60% · D≥50% · E≥40% · F&lt;40%</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <button onClick={() => setScoreMode(m => m === 'citation' ? 'numeric' : 'citation')}
+                    className={`ml-4 flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${scoreMode === 'citation' ? 'bg-indigo-600 text-white' : 'border border-gray-300 text-gray-600 hover:bg-gray-50'}`}>
+                    {scoreMode === 'citation' ? 'On ✓' : 'Off'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Option 2: Formula column */}
+              <div className="border-2 rounded-xl p-4 border-gray-200">
+                <div className="flex items-start gap-3 mb-3">
+                  <span className="text-xl">📐</span>
+                  <div>
+                    <p className="font-semibold text-sm text-gray-800">Option 2: Formula Column</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Add a custom computed column. Write a formula expression evaluated per student row.</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Column Name</label>
+                    <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                      value={calcColName} onChange={e => setCalcColName(e.target.value)} placeholder="e.g. Grade, Citation, GPA" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Formula</label>
+                    <textarea className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-300 h-20 resize-none"
+                      value={calcColFormula} onChange={e => setCalcColFormula(e.target.value)}
+                      placeholder='=IF(avg>=3.5,"A",IF(avg>=2.5,"B","F"))' />
+                    <p className="text-[10px] text-gray-400 mt-1 leading-relaxed">
+                      Variables: <code>avg</code>, <code>total</code>, <code>rank</code>, <code>s1</code>/<code>s2</code>… (scores), <code>g1</code>/<code>g2</code>… (grade letters), <code>gp1</code>/<code>gp2</code>… (grade pts)
+                      · Functions: <code>IF(cond,then,else)</code>, <code>AVERAGE(a,b,…)</code>, <code>SUM(a,b,…)</code>
+                    </p>
+                    {/* Preview */}
+                    {calcColFormula && students.length > 0 && (() => {
+                      const preview = evalFormulaExpr(calcColFormula, getFormulaContext(students[0].id))
+                      return (
+                        <p className="text-[10px] mt-1">
+                          Preview (row 1): <span className={`font-mono font-semibold ${preview === '#ERR' ? 'text-red-500' : 'text-purple-700'}`}>{preview}</span>
+                        </p>
+                      )
+                    })()}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={addFormulaColumn} disabled={!calcColName.trim()}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50">
+                      {editingFormulaCol ? 'Save Changes' : 'Add Column'}
+                    </button>
+                    {editingFormulaCol && (
+                      <button onClick={() => { setFormulaColumns(cols => cols.filter(c => c.id !== editingFormulaCol.id)); setEditingFormulaCol(null); setShowCalcModal(false) }}
+                        className="px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm hover:bg-red-50">
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Existing formula columns */}
+              {formulaColumns.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-gray-700 mb-2">Active Formula Columns</p>
+                  <div className="space-y-1">
+                    {formulaColumns.map(col => (
+                      <div key={col.id} className="flex items-center justify-between bg-purple-50 rounded-lg px-3 py-2 border border-purple-100">
+                        <div className="min-w-0">
+                          <span className="text-sm font-medium text-purple-800">{col.name}</span>
+                          <p className="text-[10px] font-mono text-purple-500 mt-0.5 truncate max-w-[320px]">{col.formula}</p>
+                        </div>
+                        <button onClick={() => { setEditingFormulaCol(col); setCalcColName(col.name); setCalcColFormula(col.formula) }}
+                          className="ml-3 flex-shrink-0 text-purple-600 text-xs px-2 py-1 rounded hover:bg-purple-100">Edit</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-1">
+                <button onClick={() => { setShowCalcModal(false); setEditingFormulaCol(null) }} className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50">Close</button>
+              </div>
+            </div>
+          </Modal>
         )}
       </div>
     </AuthGuard>
