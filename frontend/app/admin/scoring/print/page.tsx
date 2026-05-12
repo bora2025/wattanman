@@ -44,14 +44,16 @@ type ScoreMode = 'numeric' | 'citation'
 
 // ─── Grade scale ──────────────────────────────────────────────────────────────
 
-const GRADE_MAP = [
+type GradeEntry = { min: number; letter: string; point: number }
+
+const GRADE_MAP: GradeEntry[] = [
   { min: 90, letter: 'A', point: 4 },
   { min: 75, letter: 'B', point: 3 },
   { min: 60, letter: 'C', point: 2 },
   { min: 50, letter: 'D', point: 1 },
   { min: 40, letter: 'E', point: 0.5 },
   { min: 0,  letter: 'F', point: 0 },
-] as const
+]
 
 const GRADE_COLORS: Record<string, string> = {
   A: 'bg-green-100 text-green-800',
@@ -62,10 +64,26 @@ const GRADE_COLORS: Record<string, string> = {
   F: 'bg-red-200 text-red-900',
 }
 
-function scoreToGradeEntry(score: number | null, maxScore: number) {
-  if (score === null) return { letter: '—', point: 0 }
+type SubjectGradeScale = { A: number; B: number; C: number; D: number; E: number }
+const DEFAULT_SUBJECT_SCALE: SubjectGradeScale = { A: 90, B: 75, C: 60, D: 50, E: 40 }
+
+function buildSubjectGradeScale(subjectId: string, scales: Record<string, SubjectGradeScale>): GradeEntry[] {
+  const s = scales[subjectId] ?? DEFAULT_SUBJECT_SCALE
+  return [
+    { min: s.A, letter: 'A', point: 4 },
+    { min: s.B, letter: 'B', point: 3 },
+    { min: s.C, letter: 'C', point: 2 },
+    { min: s.D, letter: 'D', point: 1 },
+    { min: s.E, letter: 'E', point: 0.5 },
+    { min: 0,   letter: 'F', point: 0 },
+  ]
+}
+
+function scoreToGradeEntry(score: number | null, maxScore: number, gradeScale?: GradeEntry[]): GradeEntry {
+  const scale = gradeScale ?? GRADE_MAP
+  if (score === null) return { min: 0, letter: '—', point: 0 }
   const pct = maxScore > 0 ? (score / maxScore) * 100 : 0
-  return GRADE_MAP.find(g => pct >= g.min) ?? GRADE_MAP[GRADE_MAP.length - 1]
+  return scale.find(g => pct >= g.min) ?? scale[scale.length - 1]
 }
 
 function gpaToLetter(gpa: number) {
