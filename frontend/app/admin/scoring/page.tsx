@@ -552,7 +552,7 @@ export default function ScoringPage() {
     const subjects = activeSheet?.subjects ?? []
     const total = getTotal(sId)
     const avg = getAverage(sId)
-    const ctx: Record<string, number | string> = { total, avg, gpa: avg, rank: rankings[sId] ?? 0 }
+    const ctx: Record<string, number | string> = { total, avg, average: avg, gpa: avg, rank: rankings[sId] ?? 0 }
     subjects.forEach((sub, i) => {
       const score = scores[sId]?.[sub.id] ?? null
       const grade = scoreToGradeEntry(score, sub.maxScore)
@@ -569,7 +569,7 @@ export default function ScoringPage() {
     } else {
       setFormulaColumns(cols => [...cols, { id: `fc-${Date.now()}`, name: calcColName, formula: calcColFormula }])
     }
-    setCalcColName(''); setCalcColFormula('=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C","F")))')
+    setCalcColName(''); setCalcColFormula('=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C",IF(avg>=0.5,"D","F"))))')
   }
 
   // ─── Sub panels ───────────────────────────────────────────────────────────
@@ -711,7 +711,7 @@ export default function ScoringPage() {
               <ToolBtn icon="📅" label={t('scoring.month')} onClick={() => setShowMonthModal(true)} disabled={!activeSheet} />
               <Divider />
               <ToolBtn icon="📊" label={t('scoring.scoring')} onClick={() => tableRef.current?.scrollIntoView({ behavior: 'smooth' })} disabled={!activeSheet} />
-              <ToolBtn icon="🧮" label="Calc Column" onClick={() => { setEditingFormulaCol(null); setCalcColName(''); setCalcColFormula('=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C","F")))'); setShowCalcModal(true) }} disabled={!activeSheet} />
+              <ToolBtn icon="🧮" label="Calc Column" onClick={() => { setEditingFormulaCol(null); setCalcColName(''); setCalcColFormula('=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C",IF(avg>=0.5,"D","F"))))'); setShowCalcModal(true) }} disabled={!activeSheet} />
               <Divider />
               <ToolBtn icon="🗑️" label={t('scoring.delete')} onClick={() => activeSheet && setShowDeleteSheetConfirm(true)} disabled={!activeSheet} danger />
             </div>
@@ -969,7 +969,7 @@ export default function ScoringPage() {
                       <span>📅</span> {t('scoring.addTabBtn')}
                     </button>
                     <div className="border-t mx-2" />
-                    <button onClick={() => { setShowAddMenu(false); setEditingFormulaCol(null); setCalcColName(''); setCalcColFormula('=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C","F")))'); setShowCalcModal(true) }}
+                    <button onClick={() => { setShowAddMenu(false); setEditingFormulaCol(null); setCalcColName(''); setCalcColFormula('=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C",IF(avg>=0.5,"D","F"))))'); setShowCalcModal(true) }}
                       className="w-full text-left px-4 py-2.5 text-xs hover:bg-purple-50 text-purple-700 flex items-center gap-2">
                       <span>🧮</span> Calc Column
                     </button>
@@ -1108,9 +1108,9 @@ export default function ScoringPage() {
                       <p className="font-semibold text-gray-800 text-sm">Option 2: Formula Column</p>
                       <p className="text-xs text-gray-500 mt-0.5">Add a custom computed column using a formula expression (like a spreadsheet).</p>
                       <div className="mt-2 text-[10px] font-mono bg-white rounded border px-2 py-1.5 text-gray-600 break-all">
-                        =IF(avg&gt;=3.5,"A",IF(avg&gt;=2.5,"B",IF(avg&gt;=1.5,"C","F")))
+                        =IF(avg&gt;=3.5,"A",IF(avg&gt;=2.5,"B",IF(avg&gt;=1.5,"C",IF(avg&gt;=0.5,"D","F"))))
                       </div>
-                      <p className="text-[10px] text-gray-400 mt-1">Variables: avg, total, rank, s1/s2/… (scores), g1/g2/… (grades), gp1/gp2/… (grade pts)</p>
+                      <p className="text-[10px] text-gray-400 mt-1">Variables: <strong>avg</strong> (average citation pts), <strong>total</strong>, <strong>rank</strong>, s1/s2/… (scores), g1/g2/… (grades)</p>
                     </div>
                   </div>
                 </label>
@@ -1287,17 +1287,26 @@ export default function ScoringPage() {
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Column Name</label>
                     <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
-                      value={calcColName} onChange={e => setCalcColName(e.target.value)} placeholder="e.g. Grade, Citation, GPA" />
+                      value={calcColName} onChange={e => setCalcColName(e.target.value)} placeholder="e.g. Grade, Citation" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Formula</label>
                     <textarea className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-300 h-20 resize-none"
                       value={calcColFormula} onChange={e => setCalcColFormula(e.target.value)}
-                      placeholder='=IF(avg>=3.5,"A",IF(avg>=2.5,"B","F"))' />
-                    <p className="text-[10px] text-gray-400 mt-1 leading-relaxed">
-                      Variables: <code>avg</code>, <code>total</code>, <code>rank</code>, <code>s1</code>/<code>s2</code>… (scores), <code>g1</code>/<code>g2</code>… (grade letters), <code>gp1</code>/<code>gp2</code>… (grade pts)
-                      · Functions: <code>IF(cond,then,else)</code>, <code>AVERAGE(a,b,…)</code>, <code>SUM(a,b,…)</code>
-                    </p>
+                      placeholder='=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C",IF(avg>=0.5,"D","F"))))' />
+                    <div className="mt-1.5 bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">
+                      <p className="text-[10px] font-semibold text-purple-700 mb-1">📌 Available variables</p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[10px] text-gray-600">
+                        <span><code className="text-purple-700">avg</code> — Average citation score</span>
+                        <span><code className="text-purple-700">average</code> — Same as avg</span>
+                        <span><code className="text-purple-700">total</code> — Total citation points</span>
+                        <span><code className="text-purple-700">rank</code> — Student rank</span>
+                        <span><code className="text-purple-700">s1, s2…</code> — Raw scores</span>
+                        <span><code className="text-purple-700">g1, g2…</code> — Grade letters (A/B…)</span>
+                        <span><code className="text-purple-700">gp1, gp2…</code> — Grade pts (4/3…)</span>
+                      </div>
+                      <p className="text-[10px] text-gray-500 mt-1">Functions: <code>IF(cond,then,else)</code> · <code>AVERAGE(a,b,…)</code> · <code>SUM(a,b,…)</code></p>
+                    </div>
                     {/* Preview */}
                     {calcColFormula && students.length > 0 && (() => {
                       const preview = evalFormulaExpr(calcColFormula, getFormulaContext(students[0].id))
