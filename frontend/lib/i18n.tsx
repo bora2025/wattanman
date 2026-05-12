@@ -888,6 +888,8 @@ const en: Record<string, string> = {
   'scoring.colGradeLetters': 'Grade Letters A–F (Citation)',
   'scoring.colClassGroup': 'Class Group',
   'scoring.noClasses': 'No classes',
+  'scoring.dualColumn': 'Dual-column layout',
+  'scoring.dualColumnHint': 'Splits students into 2 side-by-side panels to save paper',
 }
 
 /* ───────── Khmer translations ───────── */
@@ -1776,6 +1778,8 @@ const kh: Record<string, string> = {
   'scoring.colGradeLetters': 'អក្សរថ្នាក់ A–F (ប្រតិទិន)',
   'scoring.colClassGroup': 'ក្រុមថ្នាក់',
   'scoring.noClasses': 'គ្មានថ្នាក់',
+  'scoring.dualColumn': 'ប្លង់ពីរជួរ',
+  'scoring.dualColumnHint': 'បំបែកសិស្សជាពីរជួរ ដើម្បីប្រើប្រាស់ក្រដាសសន្សំ',
 }
 
 /* ───────── All translations ───────── */

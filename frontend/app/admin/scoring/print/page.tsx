@@ -244,6 +244,8 @@ function ScoringPrintContent() {
     try { return JSON.parse(searchParams.get('subjectGradeScales') || '{}') } catch { return {} }
   })()
 
+  const dualColumn = searchParams.get('dualColumn') === '1'
+
   // ─── Data ─────────────────────────────────────────────────────────────────
 
   const [students, setStudents] = useState<StudentRow[]>([])
@@ -339,7 +341,7 @@ function ScoringPrintContent() {
 
   // ─── Render table for a list of students ──────────────────────────────────
 
-  function ScoreTable({ rows, showClass }: { rows: StudentRow[]; showClass: boolean }) {
+  function ScoreTable({ rows, showClass, startIdx = 0 }: { rows: StudentRow[]; showClass: boolean; startIdx?: number }) {
     let classRowIdx = 0
     let lastClassName: string | null = null
 
@@ -429,7 +431,7 @@ function ScoringPrintContent() {
               classRowIdx = 0
             }
             classRowIdx++
-            const rowNum = isMultiClass ? classRowIdx : idx + 1
+            const rowNum = isMultiClass ? classRowIdx : startIdx + idx + 1
             const total = getTotal(subjects, scores, student.id, scoreMode, subjectGradeScales)
             const avg = getAverage(subjects, scores, student.id, scoreMode, subjectGradeScales)
             const rank = rankings[student.id] ?? '-'
@@ -609,9 +611,26 @@ function ScoringPrintContent() {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
-              {ScoreTable({ rows: group.rows, showClass: isMultiClass })}
-            </div>
+            {dualColumn ? (() => {
+              const half = Math.ceil(group.rows.length / 2)
+              const leftRows = group.rows.slice(0, half)
+              const rightRows = group.rows.slice(half)
+              return (
+                <div className="flex gap-2 items-start">
+                  <div className="flex-1 min-w-0 overflow-x-auto">
+                    {ScoreTable({ rows: leftRows, showClass: isMultiClass, startIdx: 0 })}
+                  </div>
+                  <div className="w-px bg-slate-300 self-stretch flex-shrink-0" />
+                  <div className="flex-1 min-w-0 overflow-x-auto">
+                    {ScoreTable({ rows: rightRows, showClass: isMultiClass, startIdx: half })}
+                  </div>
+                </div>
+              )
+            })() : (
+              <div className="overflow-x-auto">
+                {ScoreTable({ rows: group.rows, showClass: isMultiClass, startIdx: 0 })}
+              </div>
+            )}
 
             {/* Footer */}
             <div className="mt-6 flex justify-between items-end text-xs text-slate-400">

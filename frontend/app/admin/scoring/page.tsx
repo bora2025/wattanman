@@ -1572,6 +1572,7 @@ function ScoringPrintModal({
   const [headerLines, setHeaderLines] = useState<string[]>(['ព្រះរាជាណាចក្រកម្ពុជា', 'ជាតិ សាសនា ព្រះមហាក្សត្រ'])
   const [headerGap, setHeaderGap] = useState('6')
   const [signers, setSigners] = useState<string[]>(['Teacher', 'Admin'])
+  const [dualColumn, setDualColumn] = useState(false)
 
   const tab = sheet.examTabs.find(e => e.id === activeTabId)
 
@@ -1624,6 +1625,7 @@ function ScoringPrintModal({
       scoreMode,
       formulaColumns: JSON.stringify(formulaColumns),
       subjectGradeScales: JSON.stringify(subjectGradeScales),
+      dualColumn: dualColumn ? '1' : '0',
     })
     window.open(`/admin/scoring/print?${params.toString()}`, '_blank')
     onClose()
@@ -1684,6 +1686,20 @@ function ScoringPrintModal({
                 </label>
               ))}
             </div>
+            {/* Dual-column toggle */}
+            <label className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200 cursor-pointer">
+              <div
+                onClick={() => setDualColumn(v => !v)}
+                className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                  dualColumn ? 'bg-green-600 border-green-600' : 'border-slate-300 bg-white hover:border-green-400'
+                }`}>
+                {dualColumn && <span className="text-white text-[9px] font-bold leading-none">✓</span>}
+              </div>
+              <div onClick={() => setDualColumn(v => !v)} className="select-none">
+                <span className="text-xs font-semibold text-slate-700">📰 {t('scoring.dualColumn')}</span>
+                <span className="block text-[10px] text-slate-400">{t('scoring.dualColumnHint')}</span>
+              </div>
+            </label>
           </div>
 
           <div className="space-y-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200">
