@@ -83,30 +83,35 @@ function gpaToLetter(gpa: number): string {
 function evalFormulaExpr(formula: string, ctx: Record<string, number | string>): string {
   try {
     let expr = formula.replace(/^=\s*/, '')
-    // Expand IF(cond,then,else) up to 6 levels deep
-    for (let i = 0; i < 6; i++) {
-      expr = expr.replace(/IF\(([^()]+),([^()]+),([^()]+)\)/g, '(($1)?($2):($3))')
-    }
-    // Expand AVERAGE(a,b,...)
-    expr = expr.replace(/AVERAGE\(([^)]+)\)/g, (_, args: string) => {
-      const parts = args.split(',').map(s => s.trim()).filter(Boolean)
-      return parts.length ? `((${parts.join('+')})||0)/${parts.length}` : '0'
-    })
-    // Expand SUM(a,b,...)
-    expr = expr.replace(/SUM\(([^)]+)\)/g, (_, args: string) => {
-      const parts = args.split(',').map(s => s.trim()).filter(Boolean)
-      return parts.length ? `(${parts.join('+')})` : '0'
-    })
-    // Substitute variables
-    for (const [k, v] of Object.entries(ctx)) {
-      const rep = typeof v === 'string' ? `"${v}"` : String(v)
+
+    // Rename spreadsheet functions to $-prefixed JS helpers BEFORE variable substitution
+    // This avoids regex[^()]+ failing on nested parens
+    expr = expr.replace(/\bIF\s*\(/gi, '$IF(')
+    expr = expr.replace(/\bAVERAGE\s*\(/gi, '$AVG(')
+    expr = expr.replace(/\bSUM\s*\(/gi, '$SUM(')
+
+    // Substitute context variables (longest keys first to avoid partial matches)
+    const keys = Object.keys(ctx).sort((a, b) => b.length - a.length)
+    for (const k of keys) {
+      const v = ctx[k]
+      const rep = typeof v === 'string' ? JSON.stringify(v) : String(v)
       expr = expr.replace(new RegExp(`\\b${k}\\b`, 'g'), rep)
     }
-    // Security: after substitution, no bare identifiers should remain
-    const stripped = expr.replace(/"[^"]*"/g, '""')
-    if (/[a-zA-Z_$]/.test(stripped)) return '#ERR'
+
+    // Security: remove string literals and $helper names, then check for bare identifiers
+    const check = expr
+      .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+      .replace(/\$[A-Za-z_]\w*/g, '0')
+    if (/[a-zA-Z_]/.test(check)) return '#ERR'
+
+    // Helpers injected into sandbox
+    const $IF = (cond: unknown, then: unknown, els: unknown) => (cond ? then : els)
+    const $AVG = (...a: number[]) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0)
+    const $SUM = (...a: number[]) => a.reduce((s, x) => s + x, 0)
+
     // eslint-disable-next-line no-new-func
-    const result = new Function('"use strict"; return (' + expr + ')')()
+    const fn = new Function('$IF', '$AVG', '$SUM', `"use strict"; return (${expr});`)
+    const result = fn($IF, $AVG, $SUM)
     if (typeof result === 'number') return isFinite(result) ? result.toFixed(2) : '#ERR'
     return String(result ?? '')
   } catch { return '#ERR' }
