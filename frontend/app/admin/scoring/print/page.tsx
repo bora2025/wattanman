@@ -412,7 +412,7 @@ function ScoringPrintContent() {
             )}
             {printCols.has('average') && (
               <th className="border border-slate-600 px-1 py-2 text-center font-semibold bg-slate-900">
-                {scoreMode === 'citation' ? <span className="leading-tight"><div>{t('scoring.average')}</div><div className="text-[9px] font-normal text-slate-400">GPA ≈ Grade</div></span> : t('scoring.average')}
+                {scoreMode === 'citation' ? <span className="leading-tight"><div>{t('scoring.average')}</div><div className="text-[9px] font-normal text-slate-400">{t('scoring.gpaGrade')}</div></span> : t('scoring.average')}
               </th>
             )}
             {printCols.has('rank') && (

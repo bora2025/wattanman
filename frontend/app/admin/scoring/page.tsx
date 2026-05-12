@@ -445,7 +445,7 @@ export default function ScoringPage() {
       } else if (wCalcOption === 'formula') {
         setScoreMode('numeric')
         if (formulaColumns.length === 0) {
-          setFormulaColumns([{ id: `fc-${Date.now()}`, name: 'Grade', formula: '=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C","F")))' }])
+          setFormulaColumns([{ id: `fc-${Date.now()}`, name: t('scoring.grade'), formula: '=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C","F")))' }])
         }
       }
       setWizardStep('month')
@@ -1425,8 +1425,8 @@ export default function ScoringPage() {
                   <p className="text-[10px] font-semibold text-purple-700 uppercase tracking-wide mb-1.5">{t('scoring.quickTemplates')}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { label: 'Citation Grade (GPA)', icon: '🎓', desc: 'A–F from GPA · avg 0–4', name: 'Grade', formula: '=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C",IF(avg>=0.5,"D","F"))))' },
-                      { label: 'Numeric Grade (%)',    icon: '📈', desc: 'A–F from score · avg 0–100', name: 'Grade', formula: '=IF(avg>=90,"A",IF(avg>=75,"B",IF(avg>=60,"C",IF(avg>=50,"D","F"))))' },
+                      { label: 'Citation Grade (GPA)', icon: '🎓', desc: 'A–F from GPA · avg 0–4', name: t('scoring.grade'), formula: '=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C",IF(avg>=0.5,"D","F"))))' },
+                      { label: 'Numeric Grade (%)',    icon: '📈', desc: 'A–F from score · avg 0–100', name: t('scoring.grade'), formula: '=IF(avg>=90,"A",IF(avg>=75,"B",IF(avg>=60,"C",IF(avg>=50,"D","F"))))' },
                       { label: 'Pass / Fail',          icon: '✅', desc: 'Pass if avg ≥ 50', name: 'Result', formula: '=IF(avg>=50,"Pass","Fail")' },
                       { label: 'Points × Weight',      icon: '⚖️', desc: 'e.g. (s1*0.4)+(s2*0.6)', name: 'Weighted', formula: '=(s1*0.4)+(s2*0.6)' },
                     ].map(tpl => (
