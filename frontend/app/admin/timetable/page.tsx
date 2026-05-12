@@ -138,6 +138,10 @@ export default function TimetablePage() {
   const [showSubjectModal, setShowSubjectModal] = useState(false)
   const [showClassModal, setShowClassModal] = useState(false)
   const [showClassroomModal, setShowClassroomModal] = useState(false)
+
+  // System classes for class picker (wizard + toolbar modal)
+  const [wizardSystemClasses, setWizardSystemClasses] = useState<{id: string; name: string; studyYear?: {label?: string | null; year: number} | null}[]>([])
+  const [wizardSystemClassesLoading, setWizardSystemClassesLoading] = useState(false)
   const [showTeacherModal, setShowTeacherModal] = useState(false)
   const [showLessonModal, setShowLessonModal] = useState(false)
   const [showContractPanel, setShowContractPanel] = useState(false)
@@ -550,6 +554,13 @@ export default function TimetablePage() {
     }
   }
 
+  // Auto-generate a short name from a full class name
+  function autoShort(name: string) {
+    const words = name.trim().split(/\s+/)
+    if (words.length === 1) return name.slice(0, 5).toUpperCase()
+    return words.map(w => w[0]).join('').slice(0, 6).toUpperCase()
+  }
+
   // Open modals
   function openSubjectModal(item?: TSubject) {
     setEditingItem(item ?? null); setFSubName(item?.name ?? ''); setFSubShort(item?.short ?? '')
@@ -559,6 +570,14 @@ export default function TimetablePage() {
   function openClassModal(item?: TClass) {
     setEditingItem(item ?? null); setFClsName(item?.name ?? ''); setFClsShort(item?.short ?? '')
     setFClsColor(item?.color ?? '#3b82f6'); setFClsPrint(item?.printSubjectPicture ?? false); setFClsCustom(item?.customFields?.note ?? '')
+    if (!item) {
+      setWizardSystemClasses([])
+      setWizardSystemClassesLoading(true)
+      apiFetch('/api/classes').then(async res => {
+        if (res.ok) setWizardSystemClasses(await res.json())
+        setWizardSystemClassesLoading(false)
+      })
+    }
     setShowClassModal(true)
   }
   function openClassroomModal(item?: TClassroom) {
@@ -1466,6 +1485,36 @@ export default function TimetablePage() {
       {/* Class Modal */}
       {showClassModal && (
         <ItemModal title={editingItem ? 'Edit Class' : 'New Class'} onOk={saveClass} onCancel={() => setShowClassModal(false)}>
+          {!editingItem && (
+            <Field label="From existing classes">
+              {wizardSystemClassesLoading ? (
+                <p className="text-xs text-gray-400">Loading…</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+                  {wizardSystemClasses
+                    .filter(sc => !(current?.classes ?? []).some(tc => tc.name.toLowerCase() === sc.name.toLowerCase()))
+                    .map(sc => (
+                      <button
+                        key={sc.id}
+                        type="button"
+                        onClick={() => { setFClsName(sc.name); setFClsShort(autoShort(sc.name)) }}
+                        className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                          fClsName === sc.name
+                            ? 'bg-indigo-600 text-white border-indigo-600'
+                            : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-indigo-400 hover:text-indigo-700'
+                        }`}
+                      >
+                        {sc.name}{sc.studyYear ? ` · ${sc.studyYear.label ?? sc.studyYear.year}` : ''}
+                      </button>
+                    ))
+                  }
+                  {!wizardSystemClassesLoading && wizardSystemClasses.filter(sc => !(current?.classes ?? []).some(tc => tc.name.toLowerCase() === sc.name.toLowerCase())).length === 0 && (
+                    <p className="text-xs text-gray-400">All existing classes are already added.</p>
+                  )}
+                </div>
+              )}
+            </Field>
+          )}
           <Field label="Class Name"><input className="input-field" value={fClsName} onChange={e => setFClsName(e.target.value)} placeholder="e.g. Grade 10A" /></Field>
           <Field label="Short Name"><input className="input-field" value={fClsShort} onChange={e => setFClsShort(e.target.value)} maxLength={8} placeholder="e.g. G10A" /></Field>
           <Field label="Custom Fields"><input className="input-field" value={fClsCustom} onChange={e => setFClsCustom(e.target.value)} placeholder="Optional notes" /></Field>
