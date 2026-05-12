@@ -557,7 +557,14 @@ export default function ScoringPage() {
     const subjects = activeSheet?.subjects ?? []
     const total = getTotal(sId)
     const avg = getAverage(sId)
-    const ctx: Record<string, number | string> = { total, avg, average: avg, gpa: avg, rank: rankings[sId] ?? 0 }
+    // numavg = raw numeric average (unaffected by citation mode)
+    const numTotal = subjects.reduce((sum, sub) => sum + (scores[sId]?.[sub.id] ?? 0), 0)
+    const numavg = subjects.length ? numTotal / subjects.length : 0
+    const ctx: Record<string, number | string> = {
+      total, avg, average: avg, gpa: avg,
+      numavg, numtotal: numTotal,
+      rank: rankings[sId] ?? 0,
+    }
     subjects.forEach((sub, i) => {
       const score = scores[sId]?.[sub.id] ?? null
       const grade = scoreToGradeEntry(score, sub.maxScore)
@@ -1252,80 +1259,123 @@ export default function ScoringPage() {
 
         {/* ══ Calc Column Modal ══ */}
         {showCalcModal && activeSheet && (
-          <Modal title={editingFormulaCol ? 'Edit Formula Column' : 'Add Calc Column'} onClose={() => { setShowCalcModal(false); setEditingFormulaCol(null) }} wide>
-            <div className="space-y-4">
-              {/* Option 1: Citation mode toggle */}
-              <div className={`border-2 rounded-xl p-4 transition-colors ${scoreMode === 'citation' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>
-                <div className="flex items-center justify-between">
+          <Modal title={editingFormulaCol ? '✏️ Edit Formula Column' : '🧮 Add Calc Column'} onClose={() => { setShowCalcModal(false); setEditingFormulaCol(null) }} wide>
+            <div className="space-y-5">
+
+              {/* ── Option 1: Citation Mode ── */}
+              <div className={`rounded-xl border-2 p-4 transition-colors ${scoreMode === 'citation' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white'}`}>
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <span className="text-xl">📊</span>
+                    <span className="text-2xl">📊</span>
                     <div>
-                      <p className="font-semibold text-sm text-gray-800">Option 1: Citation per Subject</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Toggle grade letter (A–F) columns alongside each subject score. The <strong>Total Citation Score</strong> shows grade points, and the <strong>Avg Citation (≈ Grade)</strong> column shows the GPA with its letter inline.</p>
+                      <p className="font-semibold text-sm text-gray-800">Option 1 — Citation per Subject</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Shows a grade letter (A–F) next to each subject score. Total and Average use <strong>grade points</strong> (A=4, B=3, C=2, D=1, E=0.5, F=0).
+                      </p>
                       {scoreMode === 'citation' && (
                         <div className="mt-2 flex gap-1 flex-wrap">
-                          {(['A', 'B', 'C', 'D', 'E', 'F'] as const).map(l => (
-                            <span key={l} className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${GRADE_COLORS[l] ?? ''}`}>{l}</span>
+                          {(['A','B','C','D','E','F'] as const).map(l => (
+                            <span key={l} className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${GRADE_COLORS[l] ?? ''}`}>{l}</span>
                           ))}
-                          <span className="text-[10px] text-gray-500 self-center ml-1">A≥90% · B≥75% · C≥60% · D≥50% · E≥40% · F&lt;40%</span>
+                          <span className="text-[10px] text-gray-400 self-center ml-1">A≥90% · B≥75% · C≥60% · D≥50% · E≥40% · F&lt;40%</span>
                         </div>
                       )}
                     </div>
                   </div>
-                  <button onClick={() => setScoreMode(m => m === 'citation' ? 'numeric' : 'citation')}
-                    className={`ml-4 flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${scoreMode === 'citation' ? 'bg-indigo-600 text-white' : 'border border-gray-300 text-gray-600 hover:bg-gray-50'}`}>
-                    {scoreMode === 'citation' ? 'On ✓' : 'Off'}
+                  <button
+                    onClick={() => setScoreMode(m => m === 'citation' ? 'numeric' : 'citation')}
+                    className={`flex-shrink-0 px-5 py-2 rounded-full text-sm font-semibold transition-colors ${
+                      scoreMode === 'citation' ? 'bg-indigo-600 text-white shadow-sm' : 'border-2 border-gray-300 text-gray-600 hover:border-indigo-400 hover:text-indigo-600'
+                    }`}>
+                    {scoreMode === 'citation' ? '✓ On' : 'Off'}
                   </button>
                 </div>
               </div>
 
-              {/* Option 2: Formula column */}
-              <div className="border-2 rounded-xl p-4 border-gray-200">
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="text-xl">📐</span>
+              {/* ── Option 2: Formula Column ── */}
+              <div className="rounded-xl border-2 border-purple-200 bg-purple-50/40 p-4">
+                <div className="flex items-start gap-3 mb-4">
+                  <span className="text-2xl">📐</span>
                   <div>
-                    <p className="font-semibold text-sm text-gray-800">Option 2: Formula Column</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Add a custom computed column. Write a formula expression evaluated per student row.</p>
+                    <p className="font-semibold text-sm text-gray-800">Option 2 — Formula Column</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Add a custom computed column. Pick a template or write your own formula.</p>
                   </div>
                 </div>
+
+                {/* Template quick-picks */}
+                <div className="mb-3">
+                  <p className="text-[10px] font-semibold text-purple-700 uppercase tracking-wide mb-1.5">Quick Templates</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: 'Citation Grade (GPA)', icon: '🎓', desc: 'A–F from GPA · avg 0–4', name: 'Grade', formula: '=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C",IF(avg>=0.5,"D","F"))))' },
+                      { label: 'Numeric Grade (%)',    icon: '📈', desc: 'A–F from score · avg 0–100', name: 'Grade', formula: '=IF(avg>=90,"A",IF(avg>=75,"B",IF(avg>=60,"C",IF(avg>=50,"D","F"))))' },
+                      { label: 'Pass / Fail',          icon: '✅', desc: 'Pass if avg ≥ 50', name: 'Result', formula: '=IF(avg>=50,"Pass","Fail")' },
+                      { label: 'Points × Weight',      icon: '⚖️', desc: 'e.g. (s1*0.4)+(s2*0.6)', name: 'Weighted', formula: '=(s1*0.4)+(s2*0.6)' },
+                    ].map(tpl => (
+                      <button key={tpl.label} onClick={() => { setCalcColName(tpl.name); setCalcColFormula(tpl.formula) }}
+                        className="flex items-start gap-2 text-left px-3 py-2.5 rounded-lg border border-purple-200 bg-white hover:border-purple-500 hover:bg-purple-50 transition-colors">
+                        <span className="text-base mt-0.5 flex-shrink-0">{tpl.icon}</span>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-800 leading-tight">{tpl.label}</p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">{tpl.desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Column name + formula */}
                 <div className="space-y-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Column Name</label>
-                    <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
-                      value={calcColName} onChange={e => setCalcColName(e.target.value)} placeholder="e.g. Grade, Citation" />
+                    <input
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      value={calcColName} onChange={e => setCalcColName(e.target.value)}
+                      placeholder="e.g. Grade, Result, Weighted" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Formula</label>
-                    <textarea className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-300 h-20 resize-none"
+                    <textarea
+                      className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-400 h-16 resize-none"
                       value={calcColFormula} onChange={e => setCalcColFormula(e.target.value)}
-                      placeholder='=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C",IF(avg>=0.5,"D","F"))))' />
-                    <div className="mt-1.5 bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">
-                      <p className="text-[10px] font-semibold text-purple-700 mb-1">📌 Available variables</p>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[10px] text-gray-600">
-                        <span><code className="text-purple-700">avg</code> — Average citation score</span>
-                        <span><code className="text-purple-700">average</code> — Same as avg</span>
-                        <span><code className="text-purple-700">total</code> — Total citation points</span>
-                        <span><code className="text-purple-700">rank</code> — Student rank</span>
-                        <span><code className="text-purple-700">s1, s2…</code> — Raw scores</span>
-                        <span><code className="text-purple-700">g1, g2…</code> — Grade letters (A/B…)</span>
-                        <span><code className="text-purple-700">gp1, gp2…</code> — Grade pts (4/3…)</span>
-                      </div>
-                      <p className="text-[10px] text-gray-500 mt-1">Functions: <code>IF(cond,then,else)</code> · <code>AVERAGE(a,b,…)</code> · <code>SUM(a,b,…)</code></p>
-                    </div>
-                    {/* Preview */}
+                      placeholder='=IF(avg>=90,"A",IF(avg>=75,"B","F"))' />
+
+                    {/* Live preview */}
                     {calcColFormula && students.length > 0 && (() => {
-                      const preview = evalFormulaExpr(calcColFormula, getFormulaContext(students[0].id))
+                      const ctx0 = getFormulaContext(students[0].id)
+                      const preview = evalFormulaExpr(calcColFormula, ctx0)
+                      const isErr = preview === '#ERR'
                       return (
-                        <p className="text-[10px] mt-1">
-                          Preview (row 1): <span className={`font-mono font-semibold ${preview === '#ERR' ? 'text-red-500' : 'text-purple-700'}`}>{preview}</span>
-                        </p>
+                        <div className={`mt-1.5 flex items-center gap-2 text-[11px] px-2 py-1 rounded ${isErr ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
+                          <span>{isErr ? '⚠️' : '✓'}</span>
+                          <span>Preview (row 1 · avg={Number(ctx0.avg).toFixed(1)}): <strong className="font-mono">{preview}</strong></span>
+                        </div>
                       )
                     })()}
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={addFormulaColumn} disabled={!calcColName.trim()}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50">
-                      {editingFormulaCol ? 'Save Changes' : 'Add Column'}
+
+                  {/* Variable reference */}
+                  <details className="group">
+                    <summary className="text-[10px] font-semibold text-purple-700 cursor-pointer list-none flex items-center gap-1">
+                      <span className="group-open:rotate-90 transition-transform inline-block">▶</span> Variable reference
+                    </summary>
+                    <div className="mt-2 bg-white border border-purple-100 rounded-lg px-3 py-2 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[10px]">
+                      <span><code className="text-purple-700 font-mono">avg</code> — avg (citation GPA or numeric)</span>
+                      <span><code className="text-purple-700 font-mono">numavg</code> — raw numeric avg (0–100)</span>
+                      <span><code className="text-purple-700 font-mono">total</code> — total (citation pts or numeric)</span>
+                      <span><code className="text-purple-700 font-mono">numtotal</code> — raw numeric total</span>
+                      <span><code className="text-purple-700 font-mono">rank</code> — student rank</span>
+                      <span><code className="text-purple-700 font-mono">s1, s2…</code> — raw subject scores</span>
+                      <span><code className="text-purple-700 font-mono">g1, g2…</code> — grade letters (A/B…)</span>
+                      <span><code className="text-purple-700 font-mono">gp1, gp2…</code> — grade pts (4/3…)</span>
+                      <span className="col-span-2 text-gray-400 mt-1">Functions: <code>IF(cond,then,else)</code> · <code>AVERAGE(a,b,…)</code> · <code>SUM(a,b,…)</code></span>
+                    </div>
+                  </details>
+
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={addFormulaColumn} disabled={!calcColName.trim() || !calcColFormula.trim()}
+                      className="px-5 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-40">
+                      {editingFormulaCol ? '✓ Save Changes' : '+ Add Column'}
                     </button>
                     {editingFormulaCol && (
                       <button onClick={() => { setFormulaColumns(cols => cols.filter(c => c.id !== editingFormulaCol.id)); setEditingFormulaCol(null); setShowCalcModal(false) }}
@@ -1333,31 +1383,41 @@ export default function ScoringPage() {
                         Delete
                       </button>
                     )}
+                    {editingFormulaCol && (
+                      <button onClick={() => { setEditingFormulaCol(null); setCalcColName(''); setCalcColFormula('') }}
+                        className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+                        Cancel Edit
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Existing formula columns */}
+              {/* ── Active columns list ── */}
               {formulaColumns.length > 0 && (
                 <div>
-                  <p className="text-xs font-medium text-gray-700 mb-2">Active Formula Columns</p>
-                  <div className="space-y-1">
+                  <p className="text-xs font-semibold text-gray-700 mb-2">Active Formula Columns</p>
+                  <div className="space-y-1.5">
                     {formulaColumns.map(col => (
-                      <div key={col.id} className="flex items-center justify-between bg-purple-50 rounded-lg px-3 py-2 border border-purple-100">
+                      <div key={col.id} className="flex items-center justify-between bg-purple-50 rounded-lg px-3 py-2.5 border border-purple-100">
                         <div className="min-w-0">
-                          <span className="text-sm font-medium text-purple-800">{col.name}</span>
-                          <p className="text-[10px] font-mono text-purple-500 mt-0.5 truncate max-w-[320px]">{col.formula}</p>
+                          <p className="text-sm font-semibold text-purple-800">{col.name}</p>
+                          <p className="text-[10px] font-mono text-purple-400 mt-0.5 truncate max-w-xs">{col.formula}</p>
                         </div>
-                        <button onClick={() => { setEditingFormulaCol(col); setCalcColName(col.name); setCalcColFormula(col.formula) }}
-                          className="ml-3 flex-shrink-0 text-purple-600 text-xs px-2 py-1 rounded hover:bg-purple-100">Edit</button>
+                        <button
+                          onClick={() => { setEditingFormulaCol(col); setCalcColName(col.name); setCalcColFormula(col.formula) }}
+                          className="ml-3 flex-shrink-0 text-purple-600 text-xs px-2.5 py-1 rounded border border-purple-200 hover:bg-purple-100">
+                          Edit
+                        </button>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end pt-1">
-                <button onClick={() => { setShowCalcModal(false); setEditingFormulaCol(null) }} className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50">Close</button>
+              <div className="flex justify-end pt-1 border-t">
+                <button onClick={() => { setShowCalcModal(false); setEditingFormulaCol(null) }}
+                  className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50">Close</button>
               </div>
             </div>
           </Modal>
