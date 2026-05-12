@@ -203,13 +203,18 @@ export default function ScoringPage() {
   const [wCalcOption, setWCalcOption] = useState<'citation' | 'formula' | ''>('')
 
   // ── Persist scoreMode + formulaColumns per sheet in localStorage
-  const calcStorageKey = activeSheet ? `scoring_calc_${activeSheet.id}` : null
+  // Use a ref for the key so the save effect does NOT include calcStorageKey in its
+  // deps — otherwise both effects fire in the same flush when a sheet activates, and
+  // the save effect runs with stale-default values, overwriting what was just loaded.
+  const calcStorageKeyRef = useRef<string | null>(null)
 
-  // Load when sheet changes
+  // Load when sheet changes (also updates the ref so saves go to the right key)
   useEffect(() => {
-    if (!calcStorageKey) { setScoreMode('numeric'); setFormulaColumns([]); return }
+    const key = activeSheet ? `scoring_calc_${activeSheet.id}` : null
+    calcStorageKeyRef.current = key
+    if (!key) { setScoreMode('numeric'); setFormulaColumns([]); return }
     try {
-      const raw = localStorage.getItem(calcStorageKey)
+      const raw = localStorage.getItem(key)
       if (raw) {
         const saved = JSON.parse(raw) as { scoreMode?: ScoreMode; formulaColumns?: FormulaColumn[] }
         setScoreMode(saved.scoreMode ?? 'numeric')
@@ -219,13 +224,15 @@ export default function ScoringPage() {
       }
     } catch { setScoreMode('numeric'); setFormulaColumns([]) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [calcStorageKey])
+  }, [activeSheet?.id])
 
-  // Save whenever scoreMode or formulaColumns change
+  // Save when scoreMode or formulaColumns change — key via ref avoids firing on sheet load
   useEffect(() => {
-    if (!calcStorageKey) return
-    try { localStorage.setItem(calcStorageKey, JSON.stringify({ scoreMode, formulaColumns })) } catch { /* ignore */ }
-  }, [calcStorageKey, scoreMode, formulaColumns])
+    const key = calcStorageKeyRef.current
+    if (!key) return
+    try { localStorage.setItem(key, JSON.stringify({ scoreMode, formulaColumns })) } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scoreMode, formulaColumns])
 
   // ── Wizard state
   const [wizardStep, setWizardStep] = useState<WizardStep>('year')
