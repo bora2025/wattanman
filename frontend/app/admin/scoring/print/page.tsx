@@ -65,17 +65,18 @@ const GRADE_COLORS: Record<string, string> = {
 }
 
 type SubjectGradeScale = { A: number; B: number; C: number; D: number; E: number }
-const DEFAULT_SUBJECT_SCALE: SubjectGradeScale = { A: 90, B: 75, C: 60, D: 50, E: 40 }
 
-function buildSubjectGradeScale(subjectId: string, scales: Record<string, SubjectGradeScale>): GradeEntry[] {
-  const s = scales[subjectId] ?? DEFAULT_SUBJECT_SCALE
+function buildSubjectGradeScale(subjectId: string, scales: Record<string, SubjectGradeScale>, maxScore: number): GradeEntry[] {
+  const s = scales[subjectId]
+  if (!s) return GRADE_MAP  // no custom scale — use global percentage defaults
+  const toP = (v: number) => maxScore > 0 ? (v / maxScore) * 100 : 0
   return [
-    { min: s.A, letter: 'A', point: 4 },
-    { min: s.B, letter: 'B', point: 3 },
-    { min: s.C, letter: 'C', point: 2 },
-    { min: s.D, letter: 'D', point: 1 },
-    { min: s.E, letter: 'E', point: 0.5 },
-    { min: 0,   letter: 'F', point: 0 },
+    { min: toP(s.A), letter: 'A', point: 4 },
+    { min: toP(s.B), letter: 'B', point: 3 },
+    { min: toP(s.C), letter: 'C', point: 2 },
+    { min: toP(s.D), letter: 'D', point: 1 },
+    { min: toP(s.E), letter: 'E', point: 0.5 },
+    { min: 0,        letter: 'F', point: 0 },
   ]
 }
 
@@ -134,7 +135,7 @@ function getCitationTotal(
 ) {
   return subjects.reduce((sum, sub) => {
     const s = scores[studentId]?.[sub.id] ?? null
-    return sum + scoreToGradeEntry(s, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales)).point
+    return sum + scoreToGradeEntry(s, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales, sub.maxScore)).point
   }, 0)
 }
 
@@ -309,7 +310,7 @@ function ScoringPrintContent() {
     }
     subjects.forEach((sub, i) => {
       const score = scores[studentId]?.[sub.id] ?? null
-      const grade = scoreToGradeEntry(score, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales))
+      const grade = scoreToGradeEntry(score, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales, sub.maxScore))
       ctx[`s${i + 1}`] = score ?? 0
       ctx[`g${i + 1}`] = grade.letter
       ctx[`gp${i + 1}`] = grade.point
@@ -469,7 +470,7 @@ function ScoringPrintContent() {
                   })}
                   {printCols.has('subj_grades') && subjects.map(sub => {
                     const val = scores[student.id]?.[sub.id] ?? null
-                    const grade = scoreToGradeEntry(val, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales))
+                    const grade = scoreToGradeEntry(val, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales, sub.maxScore))
                     return (
                       <td key={`gc-${sub.id}`} className="border border-slate-300 px-1 py-1 text-center whitespace-nowrap">
                         <span className={`inline-block px-1 py-0.5 rounded text-[10px] font-bold ${GRADE_COLORS[grade.letter] ?? ''}`}>

@@ -67,18 +67,28 @@ const GRADE_COLORS: Record<string, string> = {
   F: 'text-red-900 bg-red-100',
 }
 
-// Per-subject editable grade thresholds (min % for each letter; F is always 0)
+// Per-subject editable grade thresholds (min ABSOLUTE score for each letter; F is always 0)
 type SubjectGradeScale = { A: number; B: number; C: number; D: number; E: number }
-const DEFAULT_SUBJECT_SCALE: SubjectGradeScale = { A: 90, B: 75, C: 60, D: 50, E: 40 }
-function buildSubjectGradeScale(subjectId: string, scales: Record<string, SubjectGradeScale>): GradeEntry[] {
-  const s = scales[subjectId] ?? DEFAULT_SUBJECT_SCALE
+function defaultSubjectScale(maxScore: number): SubjectGradeScale {
+  return {
+    A: Math.round(maxScore * 0.9),
+    B: Math.round(maxScore * 0.75),
+    C: Math.round(maxScore * 0.6),
+    D: Math.round(maxScore * 0.5),
+    E: Math.round(maxScore * 0.4),
+  }
+}
+function buildSubjectGradeScale(subjectId: string, scales: Record<string, SubjectGradeScale>, maxScore: number): GradeEntry[] {
+  const s = scales[subjectId]
+  if (!s) return GRADE_MAP  // no custom scale — use global percentage defaults
+  const toP = (v: number) => maxScore > 0 ? (v / maxScore) * 100 : 0
   return [
-    { min: s.A, letter: 'A', point: 4 },
-    { min: s.B, letter: 'B', point: 3 },
-    { min: s.C, letter: 'C', point: 2 },
-    { min: s.D, letter: 'D', point: 1 },
-    { min: s.E, letter: 'E', point: 0.5 },
-    { min: 0,   letter: 'F', point: 0 },
+    { min: toP(s.A), letter: 'A', point: 4 },
+    { min: toP(s.B), letter: 'B', point: 3 },
+    { min: toP(s.C), letter: 'C', point: 2 },
+    { min: toP(s.D), letter: 'D', point: 1 },
+    { min: toP(s.E), letter: 'E', point: 0.5 },
+    { min: 0,        letter: 'F', point: 0 },
   ]
 }
 
@@ -583,7 +593,7 @@ export default function ScoringPage() {
   const getTotal = (sId: string) => {
     const subjects = activeSheet?.subjects ?? []
     if (scoreMode === 'citation') {
-      return subjects.reduce((sum, sub) => sum + scoreToGradeEntry(scores[sId]?.[sub.id] ?? null, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales)).point, 0)
+      return subjects.reduce((sum, sub) => sum + scoreToGradeEntry(scores[sId]?.[sub.id] ?? null, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales, sub.maxScore)).point, 0)
     }
     return subjects.reduce((sum, sub) => sum + (scores[sId]?.[sub.id] ?? 0), 0)
   }
@@ -619,7 +629,7 @@ export default function ScoringPage() {
     }
     subjects.forEach((sub, i) => {
       const score = scores[sId]?.[sub.id] ?? null
-      const grade = scoreToGradeEntry(score, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales))
+      const grade = scoreToGradeEntry(score, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales, sub.maxScore))
       ctx[`s${i + 1}`] = score ?? 0; ctx[`g${i + 1}`] = grade.letter; ctx[`gp${i + 1}`] = grade.point
     })
     return ctx
@@ -941,7 +951,7 @@ export default function ScoringPage() {
                                   )}
                                   {activeSheet.subjects.map(sub => {
                                     const scoreVal = scores[student.id]?.[sub.id]
-                                    const gradeEntry = scoreToGradeEntry(scoreVal ?? null, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales))
+                                    const gradeEntry = scoreToGradeEntry(scoreVal ?? null, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales, sub.maxScore))
                                     return (
                                       <React.Fragment key={sub.id}>
                                         <td className="border border-gray-200 p-0">
@@ -1351,7 +1361,7 @@ export default function ScoringPage() {
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-xs font-semibold text-indigo-700">
                         📐 Grade Thresholds per Subject
-                        <span className="font-normal text-gray-400 ml-1">(min % of max score)</span>
+                        <span className="font-normal text-gray-400 ml-1">(min score to achieve each grade)</span>
                       </p>
                       <button
                         onClick={() => setSubjectGradeScales({})}
@@ -1363,25 +1373,28 @@ export default function ScoringPage() {
                     <div className="grid gap-1.5 mb-1.5 px-1" style={{ gridTemplateColumns: '1fr repeat(5, 46px)' }}>
                       <span className="text-[10px] text-gray-400">Subject</span>
                       {(['A','B','C','D','E'] as const).map(l => (
-                        <span key={l} className={`text-[10px] font-bold text-center px-1 py-0.5 rounded ${GRADE_COLORS[l] ?? ''}`}>{l} %</span>
+                        <span key={l} className={`text-[10px] font-bold text-center px-1 py-0.5 rounded ${GRADE_COLORS[l] ?? ''}`}>{l}</span>
                       ))}
                     </div>
                     {/* Per-subject rows */}
                     {activeSheet.subjects.map(sub => {
-                      const scale = subjectGradeScales[sub.id] ?? DEFAULT_SUBJECT_SCALE
+                      const scale = subjectGradeScales[sub.id] ?? defaultSubjectScale(sub.maxScore)
                       return (
                         <div key={sub.id} className="grid gap-1.5 items-center mb-1.5 px-1" style={{ gridTemplateColumns: '1fr repeat(5, 46px)' }}>
-                          <span className="text-xs font-medium text-gray-700 truncate" title={sub.name}>{sub.name}</span>
+                          <span className="text-xs font-medium text-gray-700 truncate" title={`${sub.name} (max ${sub.maxScore})`}>
+                            {sub.name}
+                            <span className="text-gray-400 text-[9px] ml-1">/{sub.maxScore}</span>
+                          </span>
                           {(['A','B','C','D','E'] as const).map(letter => (
                             <input
                               key={letter}
-                              type="number" min={0} max={100} step={1}
+                              type="number" min={0} max={sub.maxScore} step={0.5}
                               value={scale[letter]}
                               onChange={e => {
-                                const val = Math.min(100, Math.max(0, Number(e.target.value) || 0))
+                                const val = Math.min(sub.maxScore, Math.max(0, Number(e.target.value) || 0))
                                 setSubjectGradeScales(prev => ({
                                   ...prev,
-                                  [sub.id]: { ...(prev[sub.id] ?? DEFAULT_SUBJECT_SCALE), [letter]: val },
+                                  [sub.id]: { ...(prev[sub.id] ?? defaultSubjectScale(sub.maxScore)), [letter]: val },
                                 }))
                               }}
                               className="w-full text-center text-[11px] border border-gray-300 rounded py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white"
