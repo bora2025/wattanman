@@ -72,7 +72,35 @@ export class TimetableService {
     if (tt.status === 'PUBLISHED') {
       throw new BadRequestException('Cannot delete a published timetable. Unpublish it first.');
     }
-    return this.prisma.timetable.delete({ where: { id } });
+
+    // Delete all related records in dependency order to avoid FK constraint errors.
+    // Cross-references between child tables (lessons→teacher, entry→lesson, attendance→teacher etc.)
+    // are not cascade-configured, so we must remove them manually before deleting the timetable.
+    await this.prisma.$transaction([
+      // 1. Teacher attendances reference TimetableTeacher — delete first
+      this.prisma.timetableTeacherAttendance.deleteMany({
+        where: { teacher: { timetableId: id } },
+      }),
+      // 2. Entries reference TimetableLesson / TimetableClass / TimetableTeacher / TimetableSubject
+      this.prisma.timetableEntry.deleteMany({ where: { timetableId: id } }),
+      // 3. Lessons reference TimetableTeacher / TimetableSubject / TimetableClass
+      this.prisma.timetableLesson.deleteMany({ where: { timetableId: id } }),
+      // 4. Null-out classTeacherId on teachers (FK to TimetableClass) before deleting classes
+      this.prisma.timetableTeacher.updateMany({
+        where: { timetableId: id },
+        data: { classTeacherId: null },
+      }),
+      // 5. Delete teachers
+      this.prisma.timetableTeacher.deleteMany({ where: { timetableId: id } }),
+      // 6. Delete classes, classrooms, subjects
+      this.prisma.timetableClass.deleteMany({ where: { timetableId: id } }),
+      this.prisma.timetableClassroom.deleteMany({ where: { timetableId: id } }),
+      this.prisma.timetableSubject.deleteMany({ where: { timetableId: id } }),
+      // 7. Finally delete the timetable itself
+      this.prisma.timetable.delete({ where: { id } }),
+    ]);
+
+    return { deleted: true, id };
   }
 
   // ─── Subjects ──────────────────────────────────────────────────────
