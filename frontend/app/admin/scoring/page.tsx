@@ -1072,7 +1072,7 @@ export default function ScoringPage() {
               ))}
             </div>
             <div className="flex justify-between text-[10px] text-gray-400 mb-5 -mt-3">
-              {[t('scoring.academyYear'), t('scoring.multiClass'), t('scoring.addSubject'), 'Score Option', t('scoring.addMonth')].map((lbl, i) => (
+              {[t('scoring.academyYear'), t('scoring.multiClass'), t('scoring.addSubject'), t('scoring.scoreOption'), t('scoring.addMonth')].map((lbl, i) => (
                 <span key={i} className={i === wizardIndex ? 'text-indigo-600 font-semibold' : ''}>{lbl}</span>
               ))}
             </div>
@@ -1157,10 +1157,10 @@ export default function ScoringPage() {
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">📊</span>
                     <div>
-                      <p className="font-semibold text-gray-800 text-sm">Option 1: Citation per Subject</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Each subject shows a grade letter (A–F) alongside the score. Average and Total use grade points.</p>
+                      <p className="font-semibold text-gray-800 text-sm">{t('scoring.option1WizTitle')}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{t('scoring.option1WizDesc')}</p>
                       <div className="mt-2 text-[11px] font-mono bg-white rounded border px-2 py-1.5 text-gray-600">
-                        Dara: Math A(4pts) + Science B(3pts) → GPA 3.5 → Grade A
+                        {t('scoring.option1WizExample')}
                       </div>
                       <div className="mt-2 flex gap-1 flex-wrap">
                         {([['A','≥90%','4'], ['B','≥75%','3'], ['C','≥60%','2'], ['D','≥50%','1'], ['E','≥40%','0.5'], ['F','<40%','0(Fail)']] as const).map(([l, p, g]) => (
@@ -1179,8 +1179,8 @@ export default function ScoringPage() {
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">📐</span>
                     <div>
-                      <p className="font-semibold text-gray-800 text-sm">Option 2: Formula Column</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Add a custom computed column using a formula expression (like a spreadsheet).</p>
+                      <p className="font-semibold text-gray-800 text-sm">{t('scoring.option2WizTitle')}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{t('scoring.option2WizDesc')}</p>
                       <div className="mt-2 text-[10px] font-mono bg-white rounded border px-2 py-1.5 text-gray-600 break-all">
                         =IF(avg&gt;=3.5,"A",IF(avg&gt;=2.5,"B",IF(avg&gt;=1.5,"C",IF(avg&gt;=0.5,"D","F"))))
                       </div>
@@ -1196,8 +1196,8 @@ export default function ScoringPage() {
                   <input type="radio" className="sr-only" checked={wCalcOption === ''} onChange={() => setWCalcOption('')} />
                   <span className="text-xl">🔢</span>
                   <div>
-                    <p className="font-semibold text-gray-800 text-sm">Default: Numeric Only</p>
-                    <p className="text-xs text-gray-500">Use raw numeric scores. No grade letter conversion.</p>
+                    <p className="font-semibold text-gray-800 text-sm">{t('scoring.defaultNumTitle')}</p>
+                    <p className="text-xs text-gray-500">{t('scoring.defaultNumDesc')}</p>
                   </div>
                 </label>
               </div>
@@ -1239,7 +1239,7 @@ export default function ScoringPage() {
                         <p className="font-medium text-gray-800 text-sm">{sheet.name}</p>
                         {sy && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{yearLabel(sy)}</span>}
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">{sc.map(c => c.name).join(', ') || 'No classes'} · {sheet.subjects?.length ?? 0} subjects · {sheet.examTabs?.length ?? 0} tabs</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{sc.map(c => c.name).join(', ') || t('scoring.noClasses')} · {sheet.subjects?.length ?? 0} {t('scoring.subject')} · {sheet.examTabs?.length ?? 0} tabs</p>
                     </button>
                   )
                 })}
@@ -1324,7 +1324,7 @@ export default function ScoringPage() {
 
         {/* ══ Calc Column Modal ══ */}
         {showCalcModal && activeSheet && (
-          <Modal title={editingFormulaCol ? '✏️ Edit Formula Column' : '🧮 Add Calc Column'} onClose={() => { setShowCalcModal(false); setEditingFormulaCol(null) }} wide>
+          <Modal title={editingFormulaCol ? t('scoring.editCalcTitle') : t('scoring.addCalcTitle')} onClose={() => { setShowCalcModal(false); setEditingFormulaCol(null) }} wide>
             <div className="space-y-5">
 
               {/* ── Option 1: Citation Mode ── */}
@@ -1333,9 +1333,9 @@ export default function ScoringPage() {
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">📊</span>
                     <div>
-                      <p className="font-semibold text-sm text-gray-800">Option 1 — Citation per Subject</p>
+                      <p className="font-semibold text-sm text-gray-800">{t('scoring.option1ModalTitle')}</p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Shows a grade letter (A–F) next to each subject score. Total and Average use <strong>grade points</strong> (A=4, B=3, C=2, D=1, E=0.5, F=0).
+                        {t('scoring.option1ModalDesc')}
                       </p>
                       {scoreMode === 'citation' && (
                         <div className="mt-2 flex gap-1 flex-wrap">
@@ -1360,13 +1360,13 @@ export default function ScoringPage() {
                   <div className="mt-4 border-t border-indigo-200 pt-3">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-xs font-semibold text-indigo-700">
-                        📐 Grade Thresholds per Subject
-                        <span className="font-normal text-gray-400 ml-1">(min score to achieve each grade)</span>
+                        📐 {t('scoring.gradeThresholds')}
+                        <span className="font-normal text-gray-400 ml-1">{t('scoring.gradeThresholdsHint')}</span>
                       </p>
                       <button
                         onClick={() => setSubjectGradeScales({})}
                         className="text-[10px] text-gray-400 hover:text-red-500 transition-colors">
-                        Reset all to default
+                        {t('scoring.resetAllDefault')}
                       </button>
                     </div>
                     {/* Column headers */}
@@ -1404,7 +1404,7 @@ export default function ScoringPage() {
                       )
                     })}
                     <p className="text-[10px] text-gray-400 px-1 mt-0.5">
-                      Grade F is automatic — any score below the E threshold
+                      {t('scoring.gradeFAuto')}
                     </p>
                   </div>
                 )}
@@ -1415,14 +1415,14 @@ export default function ScoringPage() {
                 <div className="flex items-start gap-3 mb-4">
                   <span className="text-2xl">📐</span>
                   <div>
-                    <p className="font-semibold text-sm text-gray-800">Option 2 — Formula Column</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Add a custom computed column. Pick a template or write your own formula.</p>
+                    <p className="font-semibold text-sm text-gray-800">{t('scoring.option2ModalTitle')}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{t('scoring.option2ModalDesc')}</p>
                   </div>
                 </div>
 
                 {/* Template quick-picks */}
                 <div className="mb-3">
-                  <p className="text-[10px] font-semibold text-purple-700 uppercase tracking-wide mb-1.5">Quick Templates</p>
+                  <p className="text-[10px] font-semibold text-purple-700 uppercase tracking-wide mb-1.5">{t('scoring.quickTemplates')}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { label: 'Citation Grade (GPA)', icon: '🎓', desc: 'A–F from GPA · avg 0–4', name: 'Grade', formula: '=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C",IF(avg>=0.5,"D","F"))))' },
@@ -1445,14 +1445,14 @@ export default function ScoringPage() {
                 {/* Column name + formula */}
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Column Name</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">{t('scoring.colName')}</label>
                     <input
                       className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
                       value={calcColName} onChange={e => setCalcColName(e.target.value)}
-                      placeholder="e.g. Grade, Result, Weighted" />
+                      placeholder={t('scoring.colNamePlaceholder')} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Formula</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">{t('scoring.formula')}</label>
                     <textarea
                       className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-400 h-16 resize-none"
                       value={calcColFormula} onChange={e => setCalcColFormula(e.target.value)}
@@ -1493,18 +1493,18 @@ export default function ScoringPage() {
                   <div className="flex gap-2 pt-1">
                     <button onClick={addFormulaColumn} disabled={!calcColName.trim() || !calcColFormula.trim()}
                       className="px-5 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-40">
-                      {editingFormulaCol ? '✓ Save Changes' : '+ Add Column'}
+                      {editingFormulaCol ? t('scoring.saveChanges') : t('scoring.addColBtn')}
                     </button>
                     {editingFormulaCol && (
                       <button onClick={() => { setFormulaColumns(cols => cols.filter(c => c.id !== editingFormulaCol.id)); setEditingFormulaCol(null); setShowCalcModal(false) }}
                         className="px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm hover:bg-red-50">
-                        Delete
+                        {t('scoring.delete')}
                       </button>
                     )}
                     {editingFormulaCol && (
                       <button onClick={() => { setEditingFormulaCol(null); setCalcColName(''); setCalcColFormula('') }}
                         className="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-50">
-                        Cancel Edit
+                        {t('scoring.cancelEdit')}
                       </button>
                     )}
                   </div>
@@ -1514,7 +1514,7 @@ export default function ScoringPage() {
               {/* ── Active columns list ── */}
               {formulaColumns.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-700 mb-2">Active Formula Columns</p>
+                  <p className="text-xs font-semibold text-gray-700 mb-2">{t('scoring.activeFormulaCols')}</p>
                   <div className="space-y-1.5">
                     {formulaColumns.map(col => (
                       <div key={col.id} className="flex items-center justify-between bg-purple-50 rounded-lg px-3 py-2.5 border border-purple-100">
@@ -1525,7 +1525,7 @@ export default function ScoringPage() {
                         <button
                           onClick={() => { setEditingFormulaCol(col); setCalcColName(col.name); setCalcColFormula(col.formula) }}
                           className="ml-3 flex-shrink-0 text-purple-600 text-xs px-2.5 py-1 rounded border border-purple-200 hover:bg-purple-100">
-                          Edit
+                          {t('common.edit')}
                         </button>
                       </div>
                     ))}
@@ -1535,7 +1535,7 @@ export default function ScoringPage() {
 
               <div className="flex justify-end pt-1 border-t">
                 <button onClick={() => { setShowCalcModal(false); setEditingFormulaCol(null) }}
-                  className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50">Close</button>
+                  className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50">{t('common.close')}</button>
               </div>
             </div>
           </Modal>
@@ -1577,16 +1577,16 @@ function ScoringPrintModal({
 
   // ── Column definitions ──
   const allColDefs = [
-    { key: 'no',          label: 'No.' },
-    { key: 'name',        label: 'Student Name' },
-    { key: 'gender',      label: 'Gender' },
-    { key: 'class',       label: 'Class Group' },
-    { key: 'subjects',    label: `Subject Scores (${sheet.subjects.length})` },
-    { key: 'subj_grades', label: 'Grade Letters A–F (Citation)' },
-    { key: 'total',       label: 'Total' },
-    { key: 'average',     label: 'Average' },
-    { key: 'rank',        label: 'Rank' },
-    ...formulaColumns.map(fc => ({ key: `fcol_${fc.id}`, label: `${fc.name} (formula)` })),
+    { key: 'no',          label: t('scoring.no') },
+    { key: 'name',        label: t('scoring.studentName') },
+    { key: 'gender',      label: t('scoring.gender') },
+    { key: 'class',       label: t('scoring.colClassGroup') },
+    { key: 'subjects',    label: `${t('scoring.subject')} (${sheet.subjects.length})` },
+    { key: 'subj_grades', label: t('scoring.colGradeLetters') },
+    { key: 'total',       label: t('scoring.total') },
+    { key: 'average',     label: t('scoring.average') },
+    { key: 'rank',        label: t('scoring.ranking') },
+    ...formulaColumns.map(fc => ({ key: `fcol_${fc.id}`, label: `${fc.name} (${t('scoring.formula')})` })),
   ]
 
   const toggleCol = (key: string) => setPrintCols(prev => {
@@ -1657,7 +1657,7 @@ function ScoringPrintModal({
 
           {/* ── Column Selector ── */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-1.5">📋 Columns to Print</h3>
+            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-1.5">📋 {t('scoring.columnsToPrint')}</h3>
             {/* Presets */}
             <div className="flex flex-wrap gap-1.5 mb-3">
               {PRESETS.map(p => (
@@ -1687,17 +1687,17 @@ function ScoringPrintModal({
           </div>
 
           <div className="space-y-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200">
-            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">📜 Letter Header</h3>
+            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">📜 {t('scoring.letterHeader')}</h3>
 
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Logo URL</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('scoring.logoUrl')}</label>
               <input type="text" value={logoUrl} onChange={e => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo (px)</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('scoring.spacingBelowLogo')}</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={logoGap}
                   onChange={e => setLogoGap(e.target.value)} className="flex-1 accent-indigo-500" />
@@ -1706,7 +1706,7 @@ function ScoringPrintModal({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Text Below Logo</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('scoring.textBelowLogo')}</label>
               <div className="space-y-1.5">
                 {logoTextLines.map((line, idx) => (
                   <div key={idx} className="flex items-center gap-1.5">
@@ -1720,12 +1720,12 @@ function ScoringPrintModal({
                   </div>
                 ))}
                 <button onClick={() => setLogoTextLines([...logoTextLines, ''])}
-                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">+ Add line</button>
+                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">{t('scoring.addLine')}</button>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo Text (px)</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('scoring.spacingBelowLogoText')}</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={logoTextGap}
                   onChange={e => setLogoTextGap(e.target.value)} className="flex-1 accent-indigo-500" />
@@ -1734,7 +1734,7 @@ function ScoringPrintModal({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Header Lines (top → bottom)</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('scoring.headerLines')}</label>
               <div className="space-y-1.5">
                 {headerLines.map((line, idx) => (
                   <div key={idx} className="flex items-center gap-1.5">
@@ -1748,12 +1748,12 @@ function ScoringPrintModal({
                   </div>
                 ))}
                 <button onClick={() => setHeaderLines([...headerLines, ''])}
-                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">+ Add line</button>
+                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">{t('scoring.addLine')}</button>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Header Lines (px)</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('scoring.spacingBelowHeader')}</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={headerGap}
                   onChange={e => setHeaderGap(e.target.value)} className="flex-1 accent-indigo-500" />
@@ -1762,18 +1762,18 @@ function ScoringPrintModal({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Organization Name</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">{t('scoring.orgName')}</label>
               <input type="text" value={orgName} onChange={e => setOrgName(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">✍️ Signers</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">✍️ {t('scoring.signers')}</label>
             <div className="space-y-2">
               {signers.map((signer, idx) => (
                 <div key={idx} className="flex items-center gap-2">
-                  <input type="text" value={signer} placeholder={`Signer ${idx + 1}`}
+                  <input type="text" value={signer} placeholder={`${t('scoring.signers')} ${idx + 1}`}
                     onChange={e => { const s = [...signers]; s[idx] = e.target.value; setSigners(s) }}
                     className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
                   {signers.length > 1 && (
@@ -1784,7 +1784,7 @@ function ScoringPrintModal({
               ))}
               <button onClick={() => setSigners([...signers, ''])}
                 className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
-                + Add signer
+                {t('scoring.addSigner')}
               </button>
             </div>
           </div>
