@@ -1253,6 +1253,8 @@ export default function ScoringPage() {
             sheet={activeSheet}
             activeTabId={activeTabId}
             sheetClasses={sheetClasses}
+            scoreMode={scoreMode}
+            formulaColumns={formulaColumns}
             onClose={() => setShowPrintModal(false)}
           />
         )}
@@ -1430,16 +1432,21 @@ export default function ScoringPage() {
 // ─── Scoring Print Modal ──────────────────────────────────────────────────────
 
 function ScoringPrintModal({
-  sheet, activeTabId, sheetClasses, onClose,
+  sheet, activeTabId, sheetClasses, scoreMode, formulaColumns, onClose,
 }: {
   sheet: ScoreSheet
   activeTabId: string | null
   sheetClasses: ClassOption[]
+  scoreMode: ScoreMode
+  formulaColumns: FormulaColumn[]
   onClose: () => void
 }) {
   const { t } = useLanguage()
 
   const [printClassId, setPrintClassId] = useState<string>('ALL')
+  const [printCols, setPrintCols] = useState<Set<string>>(
+    () => new Set(['no', 'name', 'subjects', 'total', 'average', 'rank'])
+  )
   const [orgName, setOrgName] = useState('Wattaman School')
   const [logoUrl, setLogoUrl] = useState(sheet.logoUrl ?? '')
   const [logoTextLines, setLogoTextLines] = useState<string[]>([''])
@@ -1450,6 +1457,34 @@ function ScoringPrintModal({
   const [signers, setSigners] = useState<string[]>(['Teacher', 'Admin'])
 
   const tab = sheet.examTabs.find(e => e.id === activeTabId)
+
+  // ── Column definitions ──
+  const allColDefs = [
+    { key: 'no',          label: 'No.' },
+    { key: 'name',        label: 'Student Name' },
+    { key: 'gender',      label: 'Gender' },
+    { key: 'class',       label: 'Class Group' },
+    { key: 'subjects',    label: `Subject Scores (${sheet.subjects.length})` },
+    { key: 'subj_grades', label: 'Grade Letters A–F (Citation)' },
+    { key: 'total',       label: 'Total' },
+    { key: 'average',     label: 'Average' },
+    { key: 'rank',        label: 'Rank' },
+    ...formulaColumns.map(fc => ({ key: `fcol_${fc.id}`, label: `${fc.name} (formula)` })),
+  ]
+
+  const toggleCol = (key: string) => setPrintCols(prev => {
+    const next = new Set(prev)
+    if (next.has(key)) next.delete(key); else next.add(key)
+    return next
+  })
+
+  const applyPreset = (keys: string[]) => setPrintCols(new Set(keys))
+
+  const PRESETS = [
+    { label: '📋 Summary', keys: ['no', 'name', 'total', 'average', 'rank', ...formulaColumns.map(fc => `fcol_${fc.id}`)] },
+    { label: '📊 Full Detail', keys: ['no', 'name', 'gender', 'subjects', 'total', 'average', 'rank', ...formulaColumns.map(fc => `fcol_${fc.id}`)] },
+    { label: '🎓 Per Subject', keys: ['no', 'name', 'subjects', 'subj_grades', 'total', 'average', 'rank', ...formulaColumns.map(fc => `fcol_${fc.id}`)] },
+  ]
 
   const handlePrint = () => {
     if (!activeTabId) return
@@ -1468,6 +1503,9 @@ function ScoringPrintModal({
       subjects: JSON.stringify(sheet.subjects.map(s => ({ id: s.id, name: s.name, maxScore: s.maxScore, color: s.color }))),
       sheetClasses: JSON.stringify(sheetClasses.map(c => ({ id: c.id, name: c.name }))),
       signers: JSON.stringify(signers.filter(s => s.trim())),
+      printCols: JSON.stringify([...printCols]),
+      scoreMode,
+      formulaColumns: JSON.stringify(formulaColumns),
     })
     window.open(`/admin/scoring/print?${params.toString()}`, '_blank')
     onClose()
@@ -1498,6 +1536,37 @@ function ScoringPrintModal({
               </select>
             </div>
           )}
+
+          {/* ── Column Selector ── */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-1.5">📋 Columns to Print</h3>
+            {/* Presets */}
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {PRESETS.map(p => (
+                <button key={p.label} onClick={() => applyPreset(p.keys)}
+                  className="px-3 py-1 text-[11px] font-medium rounded-full border border-slate-300 bg-white hover:border-indigo-400 hover:text-indigo-700 transition-colors">
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            {/* Checkboxes grid */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              {allColDefs.map(col => (
+                <label key={col.key} className="flex items-center gap-2 cursor-pointer group">
+                  <div
+                    onClick={() => toggleCol(col.key)}
+                    className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                      printCols.has(col.key)
+                        ? 'bg-indigo-600 border-indigo-600'
+                        : 'border-slate-300 bg-white group-hover:border-indigo-400'
+                    }`}>
+                    {printCols.has(col.key) && <span className="text-white text-[9px] font-bold leading-none">✓</span>}
+                  </div>
+                  <span className="text-xs text-slate-700 select-none" onClick={() => toggleCol(col.key)}>{col.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
 
           <div className="space-y-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">📜 Letter Header</h3>

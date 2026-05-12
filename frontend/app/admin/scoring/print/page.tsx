@@ -34,18 +34,97 @@ interface ScoreEntryData {
   score: number | null
 }
 
+interface FormulaColumnInfo {
+  id: string
+  name: string
+  formula: string
+}
+
+type ScoreMode = 'numeric' | 'citation'
+
+// ─── Grade scale ──────────────────────────────────────────────────────────────
+
+const GRADE_MAP = [
+  { min: 90, letter: 'A', point: 4 },
+  { min: 75, letter: 'B', point: 3 },
+  { min: 60, letter: 'C', point: 2 },
+  { min: 50, letter: 'D', point: 1 },
+  { min: 40, letter: 'E', point: 0.5 },
+  { min: 0,  letter: 'F', point: 0 },
+] as const
+
+const GRADE_COLORS: Record<string, string> = {
+  A: 'bg-green-100 text-green-800',
+  B: 'bg-blue-100 text-blue-800',
+  C: 'bg-yellow-100 text-yellow-800',
+  D: 'bg-orange-100 text-orange-800',
+  E: 'bg-red-100 text-red-700',
+  F: 'bg-red-200 text-red-900',
+}
+
+function scoreToGradeEntry(score: number | null, maxScore: number) {
+  if (score === null) return { letter: '—', point: 0 }
+  const pct = maxScore > 0 ? (score / maxScore) * 100 : 0
+  return GRADE_MAP.find(g => pct >= g.min) ?? GRADE_MAP[GRADE_MAP.length - 1]
+}
+
+function gpaToLetter(gpa: number) {
+  if (gpa >= 3.5) return 'A'
+  if (gpa >= 2.5) return 'B'
+  if (gpa >= 1.5) return 'C'
+  if (gpa >= 0.5) return 'D'
+  return 'F'
+}
+
+// ─── Formula evaluator ────────────────────────────────────────────────────────
+
+function evalFormulaExpr(formula: string, ctx: Record<string, number | string>): string {
+  try {
+    let expr = formula.replace(/^=\s*/, '')
+    expr = expr.replace(/\bIF\s*\(/gi, '$IF(')
+    expr = expr.replace(/\bAVERAGE\s*\(/gi, '$AVG(')
+    expr = expr.replace(/\bSUM\s*\(/gi, '$SUM(')
+    const keys = Object.keys(ctx).sort((a, b) => b.length - a.length)
+    for (const k of keys) {
+      const v = ctx[k]
+      const rep = typeof v === 'string' ? JSON.stringify(v) : String(v)
+      expr = expr.replace(new RegExp(`\\b${k}\\b`, 'g'), rep)
+    }
+    const check = expr.replace(/"(?:[^"\\]|\\.)*"/g, '""').replace(/\$[A-Za-z_]\w*/g, '0')
+    if (/[a-zA-Z_]/.test(check)) return '#ERR'
+    const $IF = (cond: unknown, then: unknown, els: unknown) => (cond ? then : els)
+    const $AVG = (...a: number[]) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0)
+    const $SUM = (...a: number[]) => a.reduce((s, x) => s + x, 0)
+    const fn = new Function('$IF', '$AVG', '$SUM', `"use strict"; return (${expr});`)
+    const result = fn($IF, $AVG, $SUM)
+    if (typeof result === 'number') return isFinite(result) ? result.toFixed(2) : '#ERR'
+    return String(result ?? '')
+  } catch { return '#ERR' }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getTotal(subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>, studentId: string) {
+function getRawTotal(subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>, studentId: string) {
   return subjects.reduce((sum, sub) => sum + (scores[studentId]?.[sub.id] ?? 0), 0)
 }
 
-function getAverage(subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>, studentId: string) {
-  const n = subjects.length
-  return n ? getTotal(subjects, scores, studentId) / n : 0
+function getCitationTotal(subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>, studentId: string) {
+  return subjects.reduce((sum, sub) => {
+    const s = scores[studentId]?.[sub.id] ?? null
+    return sum + scoreToGradeEntry(s, sub.maxScore).point
+  }, 0)
 }
 
-function buildRankings(students: StudentRow[], subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>) {
+function getTotal(subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>, studentId: string, mode: ScoreMode) {
+  return mode === 'citation' ? getCitationTotal(subjects, scores, studentId) : getRawTotal(subjects, scores, studentId)
+}
+
+function getAverage(subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>, studentId: string, mode: ScoreMode) {
+  const n = subjects.length
+  return n ? getTotal(subjects, scores, studentId, mode) / n : 0
+}
+
+function buildRankings(students: StudentRow[], subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>, mode: ScoreMode) {
   const groups: Record<string, StudentRow[]> = {}
   students.forEach(s => {
     const key = s.classId ?? '__none__'
@@ -54,7 +133,7 @@ function buildRankings(students: StudentRow[], subjects: SubjectInfo[], scores: 
   })
   const map: Record<string, number> = {}
   Object.values(groups).forEach(group => {
-    const sorted = [...group].sort((a, b) => getTotal(subjects, scores, b.id) - getTotal(subjects, scores, a.id))
+    const sorted = [...group].sort((a, b) => getTotal(subjects, scores, b.id, mode) - getTotal(subjects, scores, a.id, mode))
     sorted.forEach((s, i) => { map[s.id] = i + 1 })
   })
   return map
@@ -108,6 +187,17 @@ function ScoringPrintContent() {
     try { return JSON.parse(searchParams.get('signers') || '["Teacher","Admin"]') } catch { return ['Teacher', 'Admin'] }
   })()
 
+  const scoreMode: ScoreMode = (searchParams.get('scoreMode') || 'numeric') as ScoreMode
+
+  const formulaColumns: FormulaColumnInfo[] = (() => {
+    try { return JSON.parse(searchParams.get('formulaColumns') || '[]') } catch { return [] }
+  })()
+
+  const printColsArr: string[] = (() => {
+    try { return JSON.parse(searchParams.get('printCols') || '[]') } catch { return [] }
+  })()
+  const printCols = new Set(printColsArr.length ? printColsArr : ['no', 'name', 'subjects', 'total', 'average', 'rank'])
+
   // ─── Data ─────────────────────────────────────────────────────────────────
 
   const [students, setStudents] = useState<StudentRow[]>([])
@@ -148,7 +238,7 @@ function ScoringPrintContent() {
 
   // ─── Derived ──────────────────────────────────────────────────────────────
 
-  const rankings = buildRankings(students, subjects, scores)
+  const rankings = buildRankings(students, subjects, scores, scoreMode)
 
   // When printing all classes with multiple classes, group them
   const isMultiClass = sheetClasses.length > 1 && classId === 'ALL'
@@ -157,6 +247,30 @@ function ScoringPrintContent() {
   const selectedClassName = classId === 'ALL'
     ? sheetClasses.map(c => c.name).join(', ')
     : sheetClasses.find(c => c.id === classId)?.name ?? classId
+
+  // ─── Formula context per student ──────────────────────────────────────────
+
+  const getFormulaContext = (studentId: string): Record<string, number | string> => {
+    const rawTotal = getRawTotal(subjects, scores, studentId)
+    const rawAvg = subjects.length ? rawTotal / subjects.length : 0
+    const citTotal = getCitationTotal(subjects, scores, studentId)
+    const citAvg = subjects.length ? citTotal / subjects.length : 0
+    const total = scoreMode === 'citation' ? citTotal : rawTotal
+    const avg = scoreMode === 'citation' ? citAvg : rawAvg
+    const ctx: Record<string, number | string> = {
+      total, avg, average: avg, gpa: citAvg,
+      numavg: rawAvg, numtotal: rawTotal,
+      rank: rankings[studentId] ?? 0,
+    }
+    subjects.forEach((sub, i) => {
+      const score = scores[studentId]?.[sub.id] ?? null
+      const grade = scoreToGradeEntry(score, sub.maxScore)
+      ctx[`s${i + 1}`] = score ?? 0
+      ctx[`g${i + 1}`] = grade.letter
+      ctx[`gp${i + 1}`] = grade.point
+    })
+    return ctx
+  }
 
   // ─── UI states ────────────────────────────────────────────────────────────
 
@@ -183,27 +297,51 @@ function ScoringPrintContent() {
     let classRowIdx = 0
     let lastClassName: string | null = null
 
+    // Which formula columns are selected for print
+    const activeFcols = formulaColumns.filter(fc => printCols.has(`fcol_${fc.id}`))
+
+    // Compute dynamic colspan for class-group header rows
+    const activeColCount =
+      (printCols.has('no') ? 1 : 0) +
+      (printCols.has('name') ? 1 : 0) +
+      (printCols.has('gender') ? 1 : 0) +
+      ((showClass && printCols.has('class')) ? 1 : 0) +
+      (printCols.has('subjects') ? subjects.length : 0) +
+      (printCols.has('subj_grades') ? subjects.length : 0) +
+      (printCols.has('total') ? 1 : 0) +
+      (printCols.has('average') ? 1 : 0) +
+      (printCols.has('rank') ? 1 : 0) +
+      activeFcols.length
+
     return (
       <table className="w-full border-collapse text-xs table-fixed">
         <colgroup>
-          <col style={{ width: '28px' }} />       {/* No. */}
-          <col />                                  {/* Name — takes remaining space */}
-          <col style={{ width: '36px' }} />        {/* Gender */}
-          {showClass && <col style={{ width: '80px' }} />}
-          {subjects.map(sub => <col key={sub.id} style={{ width: '60px' }} />)}
-          <col style={{ width: '52px' }} />        {/* Total */}
-          <col style={{ width: '52px' }} />        {/* Average */}
-          <col style={{ width: '36px' }} />        {/* Rank */}
+          {printCols.has('no') && <col style={{ width: '28px' }} />}
+          {printCols.has('name') && <col />}
+          {printCols.has('gender') && <col style={{ width: '36px' }} />}
+          {showClass && printCols.has('class') && <col style={{ width: '80px' }} />}
+          {printCols.has('subjects') && subjects.map(sub => <col key={sub.id} style={{ width: '58px' }} />)}
+          {printCols.has('subj_grades') && subjects.map(sub => <col key={`gr-${sub.id}`} style={{ width: '38px' }} />)}
+          {printCols.has('total') && <col style={{ width: '52px' }} />}
+          {printCols.has('average') && <col style={{ width: '52px' }} />}
+          {printCols.has('rank') && <col style={{ width: '36px' }} />}
+          {activeFcols.map(fc => <col key={fc.id} style={{ width: '60px' }} />)}
         </colgroup>
         <thead>
           <tr className="bg-slate-800 text-white">
-            <th className="border border-slate-600 px-1 py-2 text-center font-semibold">{t('scoring.no')}</th>
-            <th className="border border-slate-600 px-2 py-2 text-left font-semibold">{t('scoring.studentName')}</th>
-            <th className="border border-slate-600 px-1 py-2 text-center font-semibold">{t('scoring.gender')}</th>
-            {showClass && (
+            {printCols.has('no') && (
+              <th className="border border-slate-600 px-1 py-2 text-center font-semibold">{t('scoring.no')}</th>
+            )}
+            {printCols.has('name') && (
+              <th className="border border-slate-600 px-2 py-2 text-left font-semibold">{t('scoring.studentName')}</th>
+            )}
+            {printCols.has('gender') && (
+              <th className="border border-slate-600 px-1 py-2 text-center font-semibold">{t('scoring.gender')}</th>
+            )}
+            {showClass && printCols.has('class') && (
               <th className="border border-slate-600 px-1 py-2 text-center font-semibold">{t('scoring.classGroup')}</th>
             )}
-            {subjects.map((sub) => (
+            {printCols.has('subjects') && subjects.map(sub => (
               <th key={sub.id} className="border border-slate-600 px-1 py-1 text-center font-semibold">
                 <div className="flex flex-col items-center leading-tight">
                   <span className="truncate w-full text-center" style={{ color: sub.color === '#000000' ? 'white' : sub.color }}>{sub.name}</span>
@@ -211,9 +349,30 @@ function ScoringPrintContent() {
                 </div>
               </th>
             ))}
-            <th className="border border-slate-600 px-1 py-2 text-center font-semibold bg-slate-900">{t('scoring.total')}</th>
-            <th className="border border-slate-600 px-1 py-2 text-center font-semibold bg-slate-900">{t('scoring.average')}</th>
-            <th className="border border-slate-600 px-1 py-2 text-center font-semibold bg-slate-900">{t('scoring.ranking')}</th>
+            {printCols.has('subj_grades') && subjects.map(sub => (
+              <th key={`gh-${sub.id}`} className="border border-slate-600 px-1 py-1 text-center font-semibold text-[10px] bg-slate-700">
+                <div className="leading-tight">
+                  <div style={{ color: sub.color === '#000000' ? 'white' : sub.color }} className="truncate">{sub.name}</div>
+                  <div className="text-slate-300 font-normal">Grade</div>
+                </div>
+              </th>
+            ))}
+            {printCols.has('total') && (
+              <th className="border border-slate-600 px-1 py-2 text-center font-semibold bg-slate-900">
+                {scoreMode === 'citation' ? <span className="leading-tight"><div>{t('scoring.total')}</div><div className="text-[9px] font-normal text-slate-400">Citation pts</div></span> : t('scoring.total')}
+              </th>
+            )}
+            {printCols.has('average') && (
+              <th className="border border-slate-600 px-1 py-2 text-center font-semibold bg-slate-900">
+                {scoreMode === 'citation' ? <span className="leading-tight"><div>{t('scoring.average')}</div><div className="text-[9px] font-normal text-slate-400">GPA ≈ Grade</div></span> : t('scoring.average')}
+              </th>
+            )}
+            {printCols.has('rank') && (
+              <th className="border border-slate-600 px-1 py-2 text-center font-semibold bg-slate-900">{t('scoring.ranking')}</th>
+            )}
+            {activeFcols.map(fc => (
+              <th key={fc.id} className="border border-slate-600 px-1 py-2 text-center font-semibold bg-purple-900 text-purple-100">{fc.name}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -225,32 +384,37 @@ function ScoringPrintContent() {
             }
             classRowIdx++
             const rowNum = isMultiClass ? classRowIdx : idx + 1
-            const total = getTotal(subjects, scores, student.id)
-            const avg = getAverage(subjects, scores, student.id)
+            const total = getTotal(subjects, scores, student.id, scoreMode)
+            const avg = getAverage(subjects, scores, student.id, scoreMode)
             const rank = rankings[student.id] ?? '-'
+            const fCtx = activeFcols.length ? getFormulaContext(student.id) : {}
 
             return (
               <>
                 {showClassHeader && (
                   <tr key={`cls-${student.classId}`}>
-                    <td
-                      colSpan={4 + subjects.length + (showClass ? 1 : 0)}
-                      className="bg-slate-100 border border-slate-300 px-3 py-1 font-semibold text-slate-700 text-xs"
-                    >
+                    <td colSpan={activeColCount}
+                      className="bg-slate-100 border border-slate-300 px-3 py-1 font-semibold text-slate-700 text-xs">
                       {t('scoring.classGroup')}: {student.className}
                     </td>
                   </tr>
                 )}
                 <tr key={student.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                  <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-500 whitespace-nowrap">{rowNum}</td>
-                  <td className="border border-slate-300 px-2 py-1.5 text-slate-800 truncate">{student.name}</td>
-                  <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-500 whitespace-nowrap">
-                    {student.sex === 'FEMALE' ? '♀' : student.sex === 'MALE' ? '♂' : '—'}
-                  </td>
-                  {showClass && (
+                  {printCols.has('no') && (
+                    <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-500 whitespace-nowrap">{rowNum}</td>
+                  )}
+                  {printCols.has('name') && (
+                    <td className="border border-slate-300 px-2 py-1.5 text-slate-800 truncate">{student.name}</td>
+                  )}
+                  {printCols.has('gender') && (
+                    <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-500 whitespace-nowrap">
+                      {student.sex === 'FEMALE' ? '♀' : student.sex === 'MALE' ? '♂' : '—'}
+                    </td>
+                  )}
+                  {showClass && printCols.has('class') && (
                     <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-500 text-[10px] truncate">{student.className}</td>
                   )}
-                  {subjects.map(sub => {
+                  {printCols.has('subjects') && subjects.map(sub => {
                     const val = scores[student.id]?.[sub.id]
                     return (
                       <td key={sub.id} className="border border-slate-300 px-1 py-1.5 text-center text-slate-700 whitespace-nowrap">
@@ -258,9 +422,46 @@ function ScoringPrintContent() {
                       </td>
                     )
                   })}
-                  <td className="border border-slate-300 px-1 py-1.5 text-center font-semibold text-indigo-700 bg-indigo-50 whitespace-nowrap">{total.toFixed(1)}</td>
-                  <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-700 bg-indigo-50 whitespace-nowrap">{avg.toFixed(1)}</td>
-                  <td className="border border-slate-300 px-1 py-1.5 text-center font-bold text-indigo-800 bg-indigo-50 whitespace-nowrap">{rank}</td>
+                  {printCols.has('subj_grades') && subjects.map(sub => {
+                    const val = scores[student.id]?.[sub.id] ?? null
+                    const grade = scoreToGradeEntry(val, sub.maxScore)
+                    return (
+                      <td key={`gc-${sub.id}`} className="border border-slate-300 px-1 py-1 text-center whitespace-nowrap">
+                        <span className={`inline-block px-1 py-0.5 rounded text-[10px] font-bold ${GRADE_COLORS[grade.letter] ?? ''}`}>
+                          {grade.letter}
+                        </span>
+                      </td>
+                    )
+                  })}
+                  {printCols.has('total') && (
+                    <td className="border border-slate-300 px-1 py-1.5 text-center font-semibold text-indigo-700 bg-indigo-50 whitespace-nowrap">
+                      {total.toFixed(scoreMode === 'citation' ? 1 : 1)}
+                      {scoreMode === 'citation' && <span className="text-[9px] text-slate-400 ml-0.5">pts</span>}
+                    </td>
+                  )}
+                  {printCols.has('average') && (
+                    <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-700 bg-indigo-50 whitespace-nowrap">
+                      {scoreMode === 'citation' ? (
+                        <>
+                          {avg.toFixed(2)}
+                          <span className={`ml-1 text-[9px] font-bold px-0.5 rounded ${GRADE_COLORS[gpaToLetter(avg)] ?? ''}`}>
+                            {gpaToLetter(avg)}
+                          </span>
+                        </>
+                      ) : avg.toFixed(1)}
+                    </td>
+                  )}
+                  {printCols.has('rank') && (
+                    <td className="border border-slate-300 px-1 py-1.5 text-center font-bold text-indigo-800 bg-indigo-50 whitespace-nowrap">{rank}</td>
+                  )}
+                  {activeFcols.map(fc => {
+                    const result = evalFormulaExpr(fc.formula, fCtx)
+                    return (
+                      <td key={fc.id} className="border border-slate-300 px-1 py-1.5 text-center bg-purple-50 text-purple-800 font-medium whitespace-nowrap text-[10px]">
+                        {result === '#ERR' ? <span className="text-red-400">#ERR</span> : result}
+                      </td>
+                    )
+                  })}
                 </tr>
               </>
             )
