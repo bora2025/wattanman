@@ -401,7 +401,7 @@ function ScoringPrintContent() {
               <th key={`gh-${sub.id}`} className="border border-slate-600 px-1 py-1 text-center font-semibold text-[10px] bg-slate-700">
                 <div className="leading-tight">
                   <div style={{ color: sub.color === '#000000' ? 'white' : sub.color }} className="truncate">{sub.name}</div>
-                  <div className="text-slate-300 font-normal">Grade</div>
+                  <div className="text-slate-300 font-normal">{t('scoring.grade')}</div>
                 </div>
               </th>
             ))}
