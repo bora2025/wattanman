@@ -47,14 +47,16 @@ interface FormulaColumn {
 
 // ─── Grade computation helpers ────────────────────────────────────────────────
 
-const GRADE_MAP = [
+type GradeEntry = { min: number; letter: string; point: number }
+
+const GRADE_MAP: GradeEntry[] = [
   { min: 90, letter: 'A', point: 4 },
   { min: 75, letter: 'B', point: 3 },
   { min: 60, letter: 'C', point: 2 },
   { min: 50, letter: 'D', point: 1 },
   { min: 40, letter: 'E', point: 0.5 },
   { min: 0,  letter: 'F', point: 0 },
-] as const
+]
 
 const GRADE_COLORS: Record<string, string> = {
   A: 'text-green-700 bg-green-50',
@@ -65,10 +67,26 @@ const GRADE_COLORS: Record<string, string> = {
   F: 'text-red-900 bg-red-100',
 }
 
-function scoreToGradeEntry(score: number | null, maxScore: number) {
-  if (score === null || score === undefined || maxScore <= 0) return GRADE_MAP[GRADE_MAP.length - 1]
+// Per-subject editable grade thresholds (min % for each letter; F is always 0)
+type SubjectGradeScale = { A: number; B: number; C: number; D: number; E: number }
+const DEFAULT_SUBJECT_SCALE: SubjectGradeScale = { A: 90, B: 75, C: 60, D: 50, E: 40 }
+function buildSubjectGradeScale(subjectId: string, scales: Record<string, SubjectGradeScale>): GradeEntry[] {
+  const s = scales[subjectId] ?? DEFAULT_SUBJECT_SCALE
+  return [
+    { min: s.A, letter: 'A', point: 4 },
+    { min: s.B, letter: 'B', point: 3 },
+    { min: s.C, letter: 'C', point: 2 },
+    { min: s.D, letter: 'D', point: 1 },
+    { min: s.E, letter: 'E', point: 0.5 },
+    { min: 0,   letter: 'F', point: 0 },
+  ]
+}
+
+function scoreToGradeEntry(score: number | null, maxScore: number, gradeScale?: GradeEntry[]): GradeEntry {
+  const scale = gradeScale ?? GRADE_MAP
+  if (score === null || score === undefined || maxScore <= 0) return scale[scale.length - 1]
   const pct = (score / maxScore) * 100
-  return GRADE_MAP.find(g => pct >= g.min) ?? GRADE_MAP[GRADE_MAP.length - 1]
+  return scale.find(g => pct >= g.min) ?? scale[scale.length - 1]
 }
 
 function gpaToLetter(gpa: number): string {
@@ -195,6 +213,7 @@ export default function ScoringPage() {
   // ── Score mode & formula columns
   const [scoreMode, setScoreMode] = useState<ScoreMode>('numeric')
   const [formulaColumns, setFormulaColumns] = useState<FormulaColumn[]>([])
+  const [subjectGradeScales, setSubjectGradeScales] = useState<Record<string, SubjectGradeScale>>({})
   const [calcColName, setCalcColName] = useState('')
   const [calcColFormula, setCalcColFormula] = useState('=IF(avg>=3.5,"A",IF(avg>=2.5,"B",IF(avg>=1.5,"C","F")))')
   const [editingFormulaCol, setEditingFormulaCol] = useState<FormulaColumn | null>(null)
@@ -216,13 +235,14 @@ export default function ScoringPage() {
     try {
       const raw = localStorage.getItem(key)
       if (raw) {
-        const saved = JSON.parse(raw) as { scoreMode?: ScoreMode; formulaColumns?: FormulaColumn[] }
+        const saved = JSON.parse(raw) as { scoreMode?: ScoreMode; formulaColumns?: FormulaColumn[]; subjectGradeScales?: Record<string, SubjectGradeScale> }
         setScoreMode(saved.scoreMode ?? 'numeric')
         setFormulaColumns(saved.formulaColumns ?? [])
+        setSubjectGradeScales(saved.subjectGradeScales ?? {})
       } else {
-        setScoreMode('numeric'); setFormulaColumns([])
+        setScoreMode('numeric'); setFormulaColumns([]); setSubjectGradeScales({})
       }
-    } catch { setScoreMode('numeric'); setFormulaColumns([]) }
+    } catch { setScoreMode('numeric'); setFormulaColumns([]); setSubjectGradeScales({}) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSheet?.id])
 
@@ -230,9 +250,9 @@ export default function ScoringPage() {
   useEffect(() => {
     const key = calcStorageKeyRef.current
     if (!key) return
-    try { localStorage.setItem(key, JSON.stringify({ scoreMode, formulaColumns })) } catch { /* ignore */ }
+    try { localStorage.setItem(key, JSON.stringify({ scoreMode, formulaColumns, subjectGradeScales })) } catch { /* ignore */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scoreMode, formulaColumns])
+  }, [scoreMode, formulaColumns, subjectGradeScales])
 
   // ── Wizard state
   const [wizardStep, setWizardStep] = useState<WizardStep>('year')
@@ -368,7 +388,7 @@ export default function ScoringPage() {
   const startWizard = () => {
     setWizardStep('year'); setWStudyYearId(''); setWNewYearLabel(''); setWShowNewYear(false)
     setWClassIds(new Set()); setWLogoUrl(''); setCreatingSheet(null); setShowNewWizard(true)
-    setWCalcOption(''); setScoreMode('numeric'); setFormulaColumns([])
+    setWCalcOption(''); setScoreMode('numeric'); setFormulaColumns([]); setSubjectGradeScales({})
   }
 
   const wizardIndex = WIZARD_STEPS.indexOf(wizardStep)
@@ -563,7 +583,7 @@ export default function ScoringPage() {
   const getTotal = (sId: string) => {
     const subjects = activeSheet?.subjects ?? []
     if (scoreMode === 'citation') {
-      return subjects.reduce((sum, sub) => sum + scoreToGradeEntry(scores[sId]?.[sub.id] ?? null, sub.maxScore).point, 0)
+      return subjects.reduce((sum, sub) => sum + scoreToGradeEntry(scores[sId]?.[sub.id] ?? null, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales)).point, 0)
     }
     return subjects.reduce((sum, sub) => sum + (scores[sId]?.[sub.id] ?? 0), 0)
   }
@@ -599,7 +619,7 @@ export default function ScoringPage() {
     }
     subjects.forEach((sub, i) => {
       const score = scores[sId]?.[sub.id] ?? null
-      const grade = scoreToGradeEntry(score, sub.maxScore)
+      const grade = scoreToGradeEntry(score, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales))
       ctx[`s${i + 1}`] = score ?? 0; ctx[`g${i + 1}`] = grade.letter; ctx[`gp${i + 1}`] = grade.point
     })
     return ctx
@@ -921,7 +941,7 @@ export default function ScoringPage() {
                                   )}
                                   {activeSheet.subjects.map(sub => {
                                     const scoreVal = scores[student.id]?.[sub.id]
-                                    const gradeEntry = scoreToGradeEntry(scoreVal ?? null, sub.maxScore)
+                                    const gradeEntry = scoreToGradeEntry(scoreVal ?? null, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales))
                                     return (
                                       <React.Fragment key={sub.id}>
                                         <td className="border border-gray-200 p-0">
@@ -1287,6 +1307,7 @@ export default function ScoringPage() {
             sheetClasses={sheetClasses}
             scoreMode={scoreMode}
             formulaColumns={formulaColumns}
+            subjectGradeScales={subjectGradeScales}
             onClose={() => setShowPrintModal(false)}
           />
         )}
@@ -1311,7 +1332,6 @@ export default function ScoringPage() {
                           {(['A','B','C','D','E','F'] as const).map(l => (
                             <span key={l} className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${GRADE_COLORS[l] ?? ''}`}>{l}</span>
                           ))}
-                          <span className="text-[10px] text-gray-400 self-center ml-1">A≥90% · B≥75% · C≥60% · D≥50% · E≥40% · F&lt;40%</span>
                         </div>
                       )}
                     </div>
@@ -1324,6 +1344,57 @@ export default function ScoringPage() {
                     {scoreMode === 'citation' ? '✓ On' : 'Off'}
                   </button>
                 </div>
+
+                {/* ── Per-subject grade threshold editor ── */}
+                {scoreMode === 'citation' && (
+                  <div className="mt-4 border-t border-indigo-200 pt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-indigo-700">
+                        📐 Grade Thresholds per Subject
+                        <span className="font-normal text-gray-400 ml-1">(min % of max score)</span>
+                      </p>
+                      <button
+                        onClick={() => setSubjectGradeScales({})}
+                        className="text-[10px] text-gray-400 hover:text-red-500 transition-colors">
+                        Reset all to default
+                      </button>
+                    </div>
+                    {/* Column headers */}
+                    <div className="grid gap-1.5 mb-1.5 px-1" style={{ gridTemplateColumns: '1fr repeat(5, 46px)' }}>
+                      <span className="text-[10px] text-gray-400">Subject</span>
+                      {(['A','B','C','D','E'] as const).map(l => (
+                        <span key={l} className={`text-[10px] font-bold text-center px-1 py-0.5 rounded ${GRADE_COLORS[l] ?? ''}`}>{l} %</span>
+                      ))}
+                    </div>
+                    {/* Per-subject rows */}
+                    {activeSheet.subjects.map(sub => {
+                      const scale = subjectGradeScales[sub.id] ?? DEFAULT_SUBJECT_SCALE
+                      return (
+                        <div key={sub.id} className="grid gap-1.5 items-center mb-1.5 px-1" style={{ gridTemplateColumns: '1fr repeat(5, 46px)' }}>
+                          <span className="text-xs font-medium text-gray-700 truncate" title={sub.name}>{sub.name}</span>
+                          {(['A','B','C','D','E'] as const).map(letter => (
+                            <input
+                              key={letter}
+                              type="number" min={0} max={100} step={1}
+                              value={scale[letter]}
+                              onChange={e => {
+                                const val = Math.min(100, Math.max(0, Number(e.target.value) || 0))
+                                setSubjectGradeScales(prev => ({
+                                  ...prev,
+                                  [sub.id]: { ...(prev[sub.id] ?? DEFAULT_SUBJECT_SCALE), [letter]: val },
+                                }))
+                              }}
+                              className="w-full text-center text-[11px] border border-gray-300 rounded py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white"
+                            />
+                          ))}
+                        </div>
+                      )
+                    })}
+                    <p className="text-[10px] text-gray-400 px-1 mt-0.5">
+                      Grade F is automatic — any score below the E threshold
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* ── Option 2: Formula Column ── */}
@@ -1464,13 +1535,14 @@ export default function ScoringPage() {
 // ─── Scoring Print Modal ──────────────────────────────────────────────────────
 
 function ScoringPrintModal({
-  sheet, activeTabId, sheetClasses, scoreMode, formulaColumns, onClose,
+  sheet, activeTabId, sheetClasses, scoreMode, formulaColumns, subjectGradeScales, onClose,
 }: {
   sheet: ScoreSheet
   activeTabId: string | null
   sheetClasses: ClassOption[]
   scoreMode: ScoreMode
   formulaColumns: FormulaColumn[]
+  subjectGradeScales: Record<string, SubjectGradeScale>
   onClose: () => void
 }) {
   const { t } = useLanguage()
@@ -1538,6 +1610,7 @@ function ScoringPrintModal({
       printCols: JSON.stringify([...printCols]),
       scoreMode,
       formulaColumns: JSON.stringify(formulaColumns),
+      subjectGradeScales: JSON.stringify(subjectGradeScales),
     })
     window.open(`/admin/scoring/print?${params.toString()}`, '_blank')
     onClose()

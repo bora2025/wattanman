@@ -108,23 +108,46 @@ function getRawTotal(subjects: SubjectInfo[], scores: Record<string, Record<stri
   return subjects.reduce((sum, sub) => sum + (scores[studentId]?.[sub.id] ?? 0), 0)
 }
 
-function getCitationTotal(subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>, studentId: string) {
+function getCitationTotal(
+  subjects: SubjectInfo[],
+  scores: Record<string, Record<string, number | null>>,
+  studentId: string,
+  subjectGradeScales: Record<string, SubjectGradeScale> = {},
+) {
   return subjects.reduce((sum, sub) => {
     const s = scores[studentId]?.[sub.id] ?? null
-    return sum + scoreToGradeEntry(s, sub.maxScore).point
+    return sum + scoreToGradeEntry(s, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales)).point
   }, 0)
 }
 
-function getTotal(subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>, studentId: string, mode: ScoreMode) {
-  return mode === 'citation' ? getCitationTotal(subjects, scores, studentId) : getRawTotal(subjects, scores, studentId)
+function getTotal(
+  subjects: SubjectInfo[],
+  scores: Record<string, Record<string, number | null>>,
+  studentId: string,
+  mode: ScoreMode,
+  subjectGradeScales: Record<string, SubjectGradeScale> = {},
+) {
+  return mode === 'citation' ? getCitationTotal(subjects, scores, studentId, subjectGradeScales) : getRawTotal(subjects, scores, studentId)
 }
 
-function getAverage(subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>, studentId: string, mode: ScoreMode) {
+function getAverage(
+  subjects: SubjectInfo[],
+  scores: Record<string, Record<string, number | null>>,
+  studentId: string,
+  mode: ScoreMode,
+  subjectGradeScales: Record<string, SubjectGradeScale> = {},
+) {
   const n = subjects.length
-  return n ? getTotal(subjects, scores, studentId, mode) / n : 0
+  return n ? getTotal(subjects, scores, studentId, mode, subjectGradeScales) / n : 0
 }
 
-function buildRankings(students: StudentRow[], subjects: SubjectInfo[], scores: Record<string, Record<string, number | null>>, mode: ScoreMode) {
+function buildRankings(
+  students: StudentRow[],
+  subjects: SubjectInfo[],
+  scores: Record<string, Record<string, number | null>>,
+  mode: ScoreMode,
+  subjectGradeScales: Record<string, SubjectGradeScale> = {},
+) {
   const groups: Record<string, StudentRow[]> = {}
   students.forEach(s => {
     const key = s.classId ?? '__none__'
@@ -133,7 +156,7 @@ function buildRankings(students: StudentRow[], subjects: SubjectInfo[], scores: 
   })
   const map: Record<string, number> = {}
   Object.values(groups).forEach(group => {
-    const sorted = [...group].sort((a, b) => getTotal(subjects, scores, b.id, mode) - getTotal(subjects, scores, a.id, mode))
+    const sorted = [...group].sort((a, b) => getTotal(subjects, scores, b.id, mode, subjectGradeScales) - getTotal(subjects, scores, a.id, mode, subjectGradeScales))
     sorted.forEach((s, i) => { map[s.id] = i + 1 })
   })
   return map
@@ -198,6 +221,10 @@ function ScoringPrintContent() {
   })()
   const printCols = new Set(printColsArr.length ? printColsArr : ['no', 'name', 'subjects', 'total', 'average', 'rank'])
 
+  const subjectGradeScales: Record<string, SubjectGradeScale> = (() => {
+    try { return JSON.parse(searchParams.get('subjectGradeScales') || '{}') } catch { return {} }
+  })()
+
   // ─── Data ─────────────────────────────────────────────────────────────────
 
   const [students, setStudents] = useState<StudentRow[]>([])
@@ -238,7 +265,7 @@ function ScoringPrintContent() {
 
   // ─── Derived ──────────────────────────────────────────────────────────────
 
-  const rankings = buildRankings(students, subjects, scores, scoreMode)
+  const rankings = buildRankings(students, subjects, scores, scoreMode, subjectGradeScales)
 
   // When printing all classes with multiple classes, group them
   const isMultiClass = sheetClasses.length > 1 && classId === 'ALL'
@@ -253,7 +280,7 @@ function ScoringPrintContent() {
   const getFormulaContext = (studentId: string): Record<string, number | string> => {
     const rawTotal = getRawTotal(subjects, scores, studentId)
     const rawAvg = subjects.length ? rawTotal / subjects.length : 0
-    const citTotal = getCitationTotal(subjects, scores, studentId)
+    const citTotal = getCitationTotal(subjects, scores, studentId, subjectGradeScales)
     const citAvg = subjects.length ? citTotal / subjects.length : 0
     const total = scoreMode === 'citation' ? citTotal : rawTotal
     const avg = scoreMode === 'citation' ? citAvg : rawAvg
@@ -264,7 +291,7 @@ function ScoringPrintContent() {
     }
     subjects.forEach((sub, i) => {
       const score = scores[studentId]?.[sub.id] ?? null
-      const grade = scoreToGradeEntry(score, sub.maxScore)
+      const grade = scoreToGradeEntry(score, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales))
       ctx[`s${i + 1}`] = score ?? 0
       ctx[`g${i + 1}`] = grade.letter
       ctx[`gp${i + 1}`] = grade.point
@@ -384,8 +411,8 @@ function ScoringPrintContent() {
             }
             classRowIdx++
             const rowNum = isMultiClass ? classRowIdx : idx + 1
-            const total = getTotal(subjects, scores, student.id, scoreMode)
-            const avg = getAverage(subjects, scores, student.id, scoreMode)
+            const total = getTotal(subjects, scores, student.id, scoreMode, subjectGradeScales)
+            const avg = getAverage(subjects, scores, student.id, scoreMode, subjectGradeScales)
             const rank = rankings[student.id] ?? '-'
             const fCtx = activeFcols.length ? getFormulaContext(student.id) : {}
 
@@ -424,7 +451,7 @@ function ScoringPrintContent() {
                   })}
                   {printCols.has('subj_grades') && subjects.map(sub => {
                     const val = scores[student.id]?.[sub.id] ?? null
-                    const grade = scoreToGradeEntry(val, sub.maxScore)
+                    const grade = scoreToGradeEntry(val, sub.maxScore, buildSubjectGradeScale(sub.id, subjectGradeScales))
                     return (
                       <td key={`gc-${sub.id}`} className="border border-slate-300 px-1 py-1 text-center whitespace-nowrap">
                         <span className={`inline-block px-1 py-0.5 rounded text-[10px] font-bold ${GRADE_COLORS[grade.letter] ?? ''}`}>
