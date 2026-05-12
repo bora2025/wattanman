@@ -202,6 +202,31 @@ export default function ScoringPage() {
   // ── Wizard scoring option
   const [wCalcOption, setWCalcOption] = useState<'citation' | 'formula' | ''>('')
 
+  // ── Persist scoreMode + formulaColumns per sheet in localStorage
+  const calcStorageKey = activeSheet ? `scoring_calc_${activeSheet.id}` : null
+
+  // Load when sheet changes
+  useEffect(() => {
+    if (!calcStorageKey) { setScoreMode('numeric'); setFormulaColumns([]); return }
+    try {
+      const raw = localStorage.getItem(calcStorageKey)
+      if (raw) {
+        const saved = JSON.parse(raw) as { scoreMode?: ScoreMode; formulaColumns?: FormulaColumn[] }
+        setScoreMode(saved.scoreMode ?? 'numeric')
+        setFormulaColumns(saved.formulaColumns ?? [])
+      } else {
+        setScoreMode('numeric'); setFormulaColumns([])
+      }
+    } catch { setScoreMode('numeric'); setFormulaColumns([]) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calcStorageKey])
+
+  // Save whenever scoreMode or formulaColumns change
+  useEffect(() => {
+    if (!calcStorageKey) return
+    try { localStorage.setItem(calcStorageKey, JSON.stringify({ scoreMode, formulaColumns })) } catch { /* ignore */ }
+  }, [calcStorageKey, scoreMode, formulaColumns])
+
   // ── Wizard state
   const [wizardStep, setWizardStep] = useState<WizardStep>('year')
   const [wStudyYearId, setWStudyYearId] = useState('')
