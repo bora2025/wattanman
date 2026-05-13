@@ -17,7 +17,7 @@ import Toolbar from './Toolbar';
 import LayersPanel from './LayersPanel';
 import NewProjectDialog from './NewProjectDialog';
 
-const TEMPLATES: Record<CardType, CardDesign> = { student: STUDENT_TEMPLATE, staff: STAFF_TEMPLATE };
+const TEMPLATES: Partial<Record<CardType, CardDesign>> = { student: STUDENT_TEMPLATE, staff: STAFF_TEMPLATE };
 
 const PREVIEW_DATA: Record<string, string> = {
   'Student Name': 'Sophea Chann', 'Name': 'Sophea Chann', 'ID': 'STU-2024-001',
