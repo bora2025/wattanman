@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { ChangeEvent, useState, useRef, useCallback } from 'react';
+import CropModal from './CropModal';
 import {
   CardDesign, CardSize, CARD_SIZE_PRESETS,
   TextElement, LogoElement, ShapeElement, GradientStop,
@@ -138,6 +139,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [removingBg, setRemovingBg] = useState<Record<string, boolean>>({});
   const [bgError, setBgError] = useState<Record<string, string>>({});
+  const [cropLogoId, setCropLogoId] = useState<string | null>(null);
 
   const update = (partial: Partial<CardDesign>) => onDesignChange({ ...design, ...partial });
   const genId = () => Math.random().toString(36).slice(2, 10);
@@ -660,35 +662,21 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
 
                       {/* Crop */}
                       <div>
-                        <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center justify-between mb-2">
                           <p className="text-[9px] text-slate-500 uppercase tracking-widest">Crop</p>
                           {((logo.cropX ?? 0) > 0 || (logo.cropY ?? 0) > 0 || (logo.cropW ?? 1) < 1 || (logo.cropH ?? 1) < 1) && (
                             <button onClick={() => updateLogo(logo.id, { cropX: 0, cropY: 0, cropW: 1, cropH: 1 })} className="text-[9px] text-red-400 hover:text-red-300 transition-colors">Reset</button>
                           )}
                         </div>
-                        <p className="text-[9px] text-slate-600 mb-2 leading-relaxed">Offset (Left/Top) and visible area (W/H) as % of the original image.</p>
-                        <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
-                          {([['cropX','Left %'],['cropY','Top %'],['cropW','Width %'],['cropH','Height %']] as [keyof typeof logo, string][]).map(([key, label]) => {
-                            const isSize = key === 'cropW' || key === 'cropH';
-                            const rawVal = (logo[key] as number | undefined) ?? (isSize ? 1 : 0);
-                            return (
-                              <div key={key}>
-                                <p className="text-[9px] text-slate-600 mb-0.5">{label}</p>
-                                <div className="flex items-center border border-slate-700 rounded overflow-hidden">
-                                  <input type="number" min={0} max={100} step={1}
-                                    value={Math.round(rawVal * 100)}
-                                    onChange={(e) => {
-                                      const pct = Math.min(100, Math.max(0, Number(e.target.value)));
-                                      updateLogo(logo.id, { [key]: pct / 100 });
-                                    }}
-                                    className="flex-1 w-full text-xs text-center py-1 bg-slate-800 text-slate-200 border-0 outline-none [appearance:textfield]"
-                                  />
-                                  <span className="text-[9px] text-slate-600 pr-1.5">%</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                        <button
+                          onClick={() => setCropLogoId(logo.id)}
+                          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs transition-colors"
+                        >
+                          <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 3v4H3M3 3h4M15 17v-4h2m0 4h-4M5 17v-4H3m0 4h4M15 3v4h2M17 3h-4" />
+                          </svg>
+                          Crop Image
+                        </button>
                       </div>
 
                     </div>
@@ -816,6 +804,22 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
         )}
 
       </div>
+
+      {/* Crop modal — rendered as fixed overlay, logo id controls visibility */}
+      {cropLogoId && (() => {
+        const cropLogo = design.logos.find((l) => l.id === cropLogoId);
+        if (!cropLogo) return null;
+        return (
+          <CropModal
+            logo={cropLogo}
+            onConfirm={(cropX, cropY, cropW, cropH) => {
+              updateLogo(cropLogoId, { cropX, cropY, cropW, cropH });
+              setCropLogoId(null);
+            }}
+            onClose={() => setCropLogoId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
