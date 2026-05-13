@@ -643,7 +643,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       ) : (<>
 
       {/* ── TOP TOOLBAR ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center gap-0 bg-[#1e1e1e] border-b border-[#383838] px-2 py-1 h-[42px] z-10 overflow-x-auto">
+      <div className="shrink-0 flex items-center flex-wrap gap-0 bg-[#1e1e1e] border-b border-[#383838] px-2 py-1 min-h-[42px] z-10">
 
         {/* File group */}
         <TopBtn icon={<Icons.New />} label="New" onClick={() => setShowNewProject(true)} />
@@ -929,7 +929,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* LEFT — Design Tools (Toolbar) */}
-        <div className="shrink-0 bg-[#1a1a1a] border-r border-[#333] flex flex-col" style={{ width: 280 }}>
+        <div className="shrink-0 bg-[#1a1a1a] border-r border-[#333] flex flex-col" style={{ width: 320 }}>
           <div className="flex-1 min-h-0 overflow-hidden">
             <Toolbar
               design={isPreviewMode ? previewDesign : design}

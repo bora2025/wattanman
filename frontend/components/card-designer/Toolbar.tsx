@@ -219,13 +219,13 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
     <div className="flex h-full bg-[#1e1e1e] text-slate-200">
 
       {/* ── Icon rail (dark) ── */}
-      <div className="flex flex-col items-center gap-0.5 py-2 px-1 bg-[#141414] border-r border-[#2d2d2d] shrink-0 w-[52px]">
+      <div className="flex flex-col items-center gap-0 py-1.5 px-0.5 bg-[#141414] border-r border-[#2d2d2d] shrink-0 w-[48px] overflow-hidden">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             title={tab.label}
-            className={`flex flex-col items-center justify-center gap-[3px] w-10 h-[46px] rounded-xl transition-all text-[9px] font-semibold tracking-wide select-none
+            className={`flex flex-col items-center justify-center gap-0.5 w-10 h-[40px] rounded-lg transition-all text-[8px] font-semibold tracking-wide select-none flex-shrink-0
               ${activeTab === tab.id
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-900/50'
                 : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
