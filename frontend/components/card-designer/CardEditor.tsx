@@ -217,30 +217,17 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     };
 
     (async () => {
-      const templates = await apiLoadTemplates();
+      const setFn = (k: string, url: string) => { if (!cancelled) setStartPreviews((prev) => ({ ...prev, [k]: url })); };
+      // Render built-in thumbnails in parallel with the API call — no blocking
+      const [templates] = await Promise.all([
+        apiLoadTemplates(),
+        runConcurrent(BUILTIN_START_ITEMS.map((i) => ({ key: i.key, design: i.design })), setFn),
+      ]);
       if (cancelled) return;
       setStartTemplates(templates);
-
-      const builtinItems = [
-        { key: 'student', design: STUDENT_TEMPLATE },
-        { key: 'staff', design: STAFF_TEMPLATE },
-        { key: 'st1', design: STUDENT_CLASSIC_BLUE },
-        { key: 'st2', design: STUDENT_DARK_NAVY },
-        { key: 'st3', design: STUDENT_SKY_WAVE },
-        { key: 'st4', design: STUDENT_GEOMETRIC },
-        { key: 'st5', design: STUDENT_MINIMAL },
-        { key: 'sf1', design: STAFF_CORPORATE_TEAL },
-        { key: 'sf2', design: STAFF_DEEP_OCEAN },
-        { key: 'sf3', design: STAFF_ROSE },
-        { key: 'sf4', design: STAFF_FOREST },
-        { key: 'sf5', design: STAFF_SLATE_EXECUTIVE },
-        ...templates.map((t) => ({ key: t.id, design: t.design })),
-      ];
-
-      await runConcurrent(
-        builtinItems,
-        (k, url) => { if (!cancelled) setStartPreviews((prev) => ({ ...prev, [k]: url })); },
-      );
+      if (templates.length > 0) {
+        await runConcurrent(templates.map((t) => ({ key: t.id, design: t.design })), setFn);
+      }
     })();
     return () => { cancelled = true; };
   }, [isStartScreen]);
@@ -379,21 +366,16 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     };
 
     (async () => {
-      const templates = await apiLoadTemplates();
+      // Render built-in thumbnails in parallel with the API call — no blocking
+      const [templates] = await Promise.all([
+        apiLoadTemplates(),
+        runConcurrent(BUILTIN_START_ITEMS.map((i) => ({ key: i.key, design: i.design }))),
+      ]);
       if (cancelled) return;
       setSavedTemplates(templates);
-
-      await runConcurrent([
-        { key: '__builtin_blank', design: BLANK_TEMPLATE },
-        { key: '__builtin_student', design: STUDENT_TEMPLATE },
-        { key: '__builtin_staff', design: STAFF_TEMPLATE },
-        { key: '__preset_st1', design: STUDENT_CLASSIC_BLUE }, { key: '__preset_st2', design: STUDENT_DARK_NAVY },
-        { key: '__preset_st3', design: STUDENT_SKY_WAVE }, { key: '__preset_st4', design: STUDENT_GEOMETRIC },
-        { key: '__preset_st5', design: STUDENT_MINIMAL }, { key: '__preset_sf1', design: STAFF_CORPORATE_TEAL },
-        { key: '__preset_sf2', design: STAFF_DEEP_OCEAN }, { key: '__preset_sf3', design: STAFF_ROSE },
-        { key: '__preset_sf4', design: STAFF_FOREST }, { key: '__preset_sf5', design: STAFF_SLATE_EXECUTIVE },
-        ...templates.map((t) => ({ key: t.id, design: t.design })),
-      ]);
+      if (templates.length > 0) {
+        await runConcurrent(templates.map((t) => ({ key: t.id, design: t.design })));
+      }
     })();
     return () => { cancelled = true; };
   }, [showTemplatePicker]);
@@ -1199,18 +1181,19 @@ function TemplateCard({ preview, emoji, label, onClick, small }: { preview?: str
 
 // ── Start Screen (Photoshop-style home) ───────────────────────────────────────
 const BUILTIN_START_ITEMS: { key: string; design: CardDesign; label: string; emoji: string; type: string }[] = [
-  { key: 'student', design: STUDENT_TEMPLATE, label: 'Student ID', emoji: '🎓', type: 'student' },
-  { key: 'staff', design: STAFF_TEMPLATE, label: 'Staff ID', emoji: '👨‍🏫', type: 'staff' },
-  { key: 'st1', design: STUDENT_CLASSIC_BLUE, label: 'Classic Blue', emoji: '🔵', type: 'student' },
-  { key: 'st2', design: STUDENT_DARK_NAVY, label: 'Dark Navy', emoji: '🌌', type: 'student' },
-  { key: 'st3', design: STUDENT_SKY_WAVE, label: 'Sky Wave', emoji: '🌊', type: 'student' },
-  { key: 'st4', design: STUDENT_GEOMETRIC, label: 'Geometric', emoji: '🔷', type: 'student' },
-  { key: 'st5', design: STUDENT_MINIMAL, label: 'Minimal', emoji: '⬜', type: 'student' },
-  { key: 'sf1', design: STAFF_CORPORATE_TEAL, label: 'Corp Teal', emoji: '🟢', type: 'staff' },
-  { key: 'sf2', design: STAFF_DEEP_OCEAN, label: 'Deep Ocean', emoji: '🌑', type: 'staff' },
-  { key: 'sf3', design: STAFF_ROSE, label: 'Rose Pro', emoji: '🌸', type: 'staff' },
-  { key: 'sf4', design: STAFF_FOREST, label: 'Forest', emoji: '🌿', type: 'staff' },
-  { key: 'sf5', design: STAFF_SLATE_EXECUTIVE, label: 'Executive', emoji: '🏛️', type: 'staff' },
+  { key: '__builtin_blank', design: BLANK_TEMPLATE, label: 'Blank Card', emoji: '📄', type: 'student' },
+  { key: '__builtin_student', design: STUDENT_TEMPLATE, label: 'Student ID', emoji: '🎓', type: 'student' },
+  { key: '__builtin_staff', design: STAFF_TEMPLATE, label: 'Staff ID', emoji: '👨‍🏫', type: 'staff' },
+  { key: '__preset_st1', design: STUDENT_CLASSIC_BLUE, label: 'Classic Blue', emoji: '🔵', type: 'student' },
+  { key: '__preset_st2', design: STUDENT_DARK_NAVY, label: 'Dark Navy', emoji: '🌌', type: 'student' },
+  { key: '__preset_st3', design: STUDENT_SKY_WAVE, label: 'Sky Wave', emoji: '🌊', type: 'student' },
+  { key: '__preset_st4', design: STUDENT_GEOMETRIC, label: 'Geometric', emoji: '🔷', type: 'student' },
+  { key: '__preset_st5', design: STUDENT_MINIMAL, label: 'Minimal', emoji: '⬜', type: 'student' },
+  { key: '__preset_sf1', design: STAFF_CORPORATE_TEAL, label: 'Corp Teal', emoji: '🟢', type: 'staff' },
+  { key: '__preset_sf2', design: STAFF_DEEP_OCEAN, label: 'Deep Ocean', emoji: '🌑', type: 'staff' },
+  { key: '__preset_sf3', design: STAFF_ROSE, label: 'Rose Pro', emoji: '🌸', type: 'staff' },
+  { key: '__preset_sf4', design: STAFF_FOREST, label: 'Forest', emoji: '🌿', type: 'staff' },
+  { key: '__preset_sf5', design: STAFF_SLATE_EXECUTIVE, label: 'Executive', emoji: '🏛️', type: 'staff' },
 ];
 
 interface StartScreenProps {
