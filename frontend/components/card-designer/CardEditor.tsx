@@ -115,6 +115,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const [zoom, setZoom] = useState(100); // percent
   const [showGrid, setShowGrid] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [leftOpen, setLeftOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(true);
   const [showNewProject, setShowNewProject] = useState(openNewProject ?? false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [exporting, setExporting] = useState<'png' | 'pdf' | null>(null);
@@ -929,16 +931,31 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* LEFT — Design Tools (Toolbar) */}
-        <div className="shrink-0 bg-[#1a1a1a] border-r border-[#333] flex flex-col" style={{ width: 320 }}>
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <Toolbar
-              design={isPreviewMode ? previewDesign : design}
-              selectedId={isPreviewMode ? null : selectedId}
-              onDesignChange={isPreviewMode ? () => {} : setDesign}
-              onSelect={isPreviewMode ? () => {} : setSelectedId}
-            />
+        <div
+          className="shrink-0 bg-[#1a1a1a] border-r border-[#333] flex flex-col transition-all duration-200 overflow-hidden relative"
+          style={{ width: leftOpen ? 320 : 0 }}
+        >
+          <div className="w-[320px] flex flex-col h-full">
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <Toolbar
+                design={isPreviewMode ? previewDesign : design}
+                selectedId={isPreviewMode ? null : selectedId}
+                onDesignChange={isPreviewMode ? () => {} : setDesign}
+                onSelect={isPreviewMode ? () => {} : setSelectedId}
+              />
+            </div>
           </div>
         </div>
+        {/* Left toggle button */}
+        <button
+          onClick={() => setLeftOpen((v) => !v)}
+          title={leftOpen ? 'Collapse Properties' : 'Expand Properties'}
+          className="shrink-0 w-4 flex flex-col items-center justify-center bg-[#252525] border-r border-[#333] hover:bg-[#2f2f2f] text-[#555] hover:text-white transition-colors z-10 group"
+        >
+          <svg viewBox="0 0 8 16" className="w-2.5 h-5 transition-transform" style={{ transform: leftOpen ? 'none' : 'rotate(180deg)' }} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 2L2 8l4 6" />
+          </svg>
+        </button>
 
         {/* CENTER — Canvas + footer zoom bar */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -985,7 +1002,24 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         </div>
 
         {/* RIGHT — Layers Panel */}
-        <LayersPanel design={design} selectedId={selectedId} onSelect={setSelectedId} onDesignChange={setDesign} onArrange={handleArrange} />
+        {/* Right toggle button */}
+        <button
+          onClick={() => setRightOpen((v) => !v)}
+          title={rightOpen ? 'Collapse Layers' : 'Expand Layers'}
+          className="shrink-0 w-4 flex flex-col items-center justify-center bg-[#252525] border-l border-[#333] hover:bg-[#2f2f2f] text-[#555] hover:text-white transition-colors z-10 group"
+        >
+          <svg viewBox="0 0 8 16" className="w-2.5 h-5 transition-transform" style={{ transform: rightOpen ? 'none' : 'rotate(180deg)' }} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 2l4 6-4 6" />
+          </svg>
+        </button>
+        <div
+          className="shrink-0 transition-all duration-200 overflow-hidden"
+          style={{ width: rightOpen ? 220 : 0 }}
+        >
+          <div style={{ width: 220 }}>
+            <LayersPanel design={design} selectedId={selectedId} onSelect={setSelectedId} onDesignChange={setDesign} onArrange={handleArrange} />
+          </div>
+        </div>
       </div>
 
       </>)}

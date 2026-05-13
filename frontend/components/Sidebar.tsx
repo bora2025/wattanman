@@ -104,6 +104,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showMore, setShowMore] = useState(false);
   const colors = colorMap[accentColor] || colorMap.indigo;
   const { lang, setLang, t } = useLanguage();
@@ -246,43 +247,53 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
       {/* ── Desktop: Full sidebar ── */}
       <aside className={`
         hidden lg:flex lg:sticky top-0 left-0 z-50 lg:z-auto
-        h-screen w-64 bg-gradient-to-b ${colors.gradient} text-white
-        flex-col shadow-xl
+        h-screen bg-gradient-to-b ${colors.gradient} text-white
+        flex-col shadow-xl transition-all duration-200 overflow-hidden
+        ${sidebarOpen ? 'w-64' : 'w-14'}
       `}>
         {/* Logo area */}
-        <div className="px-5 py-6 border-b border-white/10">
+        <div className="px-3 py-4 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg font-bold backdrop-blur-sm">
-              {title.charAt(0)}
-            </div>
-            <div>
-              <h1 className="font-bold text-base leading-tight">{title}</h1>
-              {subtitle && <p className="text-xs text-white/60 mt-0.5">{subtitle}</p>}
-            </div>
+            <button
+              onClick={() => setSidebarOpen((v) => !v)}
+              title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg font-bold backdrop-blur-sm shrink-0 hover:bg-white/30 transition-colors"
+            >
+              {sidebarOpen
+                ? <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M5 7l-3 3 3 3M3 10h14M15 7l3 3-3 3" /></svg>
+                : <span>{title.charAt(0)}</span>}
+            </button>
+            {sidebarOpen && (
+              <div className="min-w-0">
+                <h1 className="font-bold text-base leading-tight truncate">{title}</h1>
+                {subtitle && <p className="text-xs text-white/60 mt-0.5 truncate">{subtitle}</p>}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 overflow-y-auto overscroll-contain">
+        <nav className="flex-1 px-2 py-3 overflow-y-auto overscroll-contain">
           {navItems.map((item, idx) => {
             const isActive = pathname === item.href;
             return (
               <div key={item.href}>
-                {item.section && (
+                {sidebarOpen && item.section && (
                   <p className={`px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-white/40 ${idx === 0 ? 'pt-0' : 'pt-4'}`}>
                     {t(item.section)}
                   </p>
                 )}
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 ${
+                  title={sidebarOpen ? undefined : t(item.label)}
+                  className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm transition-all duration-150 ${
                     isActive
                       ? colors.active
                       : `${colors.text} ${colors.hover}`
-                  }`}
+                  } ${sidebarOpen ? '' : 'justify-center'}`}
                 >
                   <NavIcon icon={item.icon} size={18} />
-                  <span>{t(item.label)}</span>
+                  {sidebarOpen && <span>{t(item.label)}</span>}
                 </Link>
               </div>
             );
@@ -290,27 +301,30 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
         </nav>
 
         {/* Bottom */}
-        <div className="px-3 py-4 border-t border-white/10 space-y-0.5">
+        <div className="px-2 py-3 border-t border-white/10 space-y-0.5">
           <button
             onClick={() => setLang(lang === 'en' ? 'kh' : 'en')}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full text-left ${colors.text} ${colors.hover} transition-colors`}
+            title={sidebarOpen ? undefined : (lang === 'en' ? 'ភាសាខ្មែរ' : 'English')}
+            className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm w-full text-left ${colors.text} ${colors.hover} transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
           >
             <IconGlobe size={18} />
-            <span>{lang === 'en' ? 'ភាសាខ្មែរ' : 'English'}</span>
+            {sidebarOpen && <span>{lang === 'en' ? 'ភាសាខ្មែរ' : 'English'}</span>}
           </button>
           <Link
             href="/"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${colors.text} ${colors.hover} transition-colors`}
+            title={sidebarOpen ? undefined : t('common.backToHome')}
+            className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm ${colors.text} ${colors.hover} transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
           >
             <IconDashboard size={18} />
-            <span>{t('common.backToHome')}</span>
+            {sidebarOpen && <span>{t('common.backToHome')}</span>}
           </Link>
           <button
             onClick={handleLogout}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full text-left ${colors.text} ${colors.hover} transition-colors`}
+            title={sidebarOpen ? undefined : t('common.logout')}
+            className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm w-full text-left ${colors.text} ${colors.hover} transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
           >
             <IconLogout size={18} />
-            <span>{t('common.logout')}</span>
+            {sidebarOpen && <span>{t('common.logout')}</span>}
           </button>
         </div>
       </aside>
