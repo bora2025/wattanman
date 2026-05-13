@@ -37,33 +37,55 @@ function applyPreviewData(text: string): string {
 }
 
 // ── Compact top-bar icon button ──────────────────────────────────────────────
+/* ── SVG icon library for the top bar ──────────────────────────────────── */
+const Icons = {
+  New: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="2" width="10" height="12" rx="1.5"/><path d="M6 8h4M8 6v4"/></svg>,
+  Save: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><path d="M13 13H3a1 1 0 0 1-1-1V4l3-3h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1z"/><rect x="5" y="9" width="6" height="4" rx="0.5"/><rect x="5.5" y="2" width="5" height="3" rx="0.5"/></svg>,
+  Undo: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V3M3 7l3-3M3 7l3 3"/><path d="M3 7a6 6 0 1 0 6-6"/></svg>,
+  Redo: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M13 7V3M13 7l-3-3M13 7l-3 3"/><path d="M13 7a6 6 0 1 1-6-6"/></svg>,
+  Templates: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>,
+  Export: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v8M5 7l3 3 3-3"/><path d="M3 11v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2"/></svg>,
+  Grid: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round"><path d="M2 5.5h12M2 10.5h12M5.5 2v12M10.5 2v12"/></svg>,
+  Preview: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round"><path d="M1.5 8C1.5 8 4 3.5 8 3.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>,
+  AsTemplate: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 6h6M5 9h4"/></svg>,
+  Reset: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round"><path d="M3 8a5 5 0 1 0 1.5-3.5L3 6V3"/><path d="M3 3v3h3"/></svg>,
+  Trash: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 4.5h11M6 4.5V3h4v1.5M5 4.5l.5 8h5l.5-8"/></svg>,
+  Student: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/><path d="M5 3l3-1.5L11 3"/></svg>,
+  Staff: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13.5c0-2.76 2.24-5 5-5s5 2.24 5 5"/><rect x="5.5" y="1.5" width="5" height="2" rx="0.5" fill="currentColor" stroke="none" opacity="0.5"/></svg>,
+  ExportPng: () => <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="12" height="10" rx="1.5"/><circle cx="6" cy="7" r="1.5"/><path d="M2 11l3-3 2.5 2.5 2-2 4.5 4.5"/></svg>,
+  ExportPdf: () => <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M5 9h2.5a1.5 1.5 0 0 1 0 3H5V9z" fill="currentColor" stroke="none" opacity="0.4"/></svg>,
+  Spinner: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><circle cx="8" cy="8" r="5" strokeOpacity={0.3}/><path d="M8 3a5 5 0 0 1 5 5"/></svg>,
+  Sync: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round"><path d="M3 5V2l-2 2M3 2a7 7 0 0 1 10 0M13 11v3l2-2M13 14a7 7 0 0 1-10 0"/></svg>,
+};
+
 interface TopBtnProps {
-  icon: string; label: string; title?: string;
+  icon: React.ReactNode; label: string; title?: string;
   onClick?: (e: React.MouseEvent) => void;
   disabled?: boolean;
   active?: boolean;
   variant?: 'default' | 'emerald' | 'indigo' | 'violet' | 'amber' | 'danger';
+  hideLabel?: boolean;
 }
-function TopBtn({ icon, label, title, onClick, disabled, active, variant = 'default' }: TopBtnProps) {
-  const base = 'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed select-none';
+function TopBtn({ icon, label, title, onClick, disabled, active, variant = 'default', hideLabel }: TopBtnProps) {
+  const base = 'flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[11px] font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed select-none whitespace-nowrap';
   const variants: Record<string, string> = {
-    default: active ? 'bg-slate-100 text-slate-800' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800',
-    emerald: active ? 'bg-emerald-600 text-white' : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100',
-    indigo: active ? 'bg-indigo-600 text-white' : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100',
-    violet: active ? 'bg-violet-600 text-white' : 'text-violet-700 bg-violet-50 hover:bg-violet-100',
-    amber: active ? 'bg-amber-500 text-white' : 'text-amber-700 bg-amber-50 hover:bg-amber-100',
-    danger: 'text-red-600 hover:bg-red-50',
+    default: active ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
+    emerald: active ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-700 hover:bg-emerald-50',
+    indigo: active ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-700 hover:bg-indigo-50',
+    violet: active ? 'bg-violet-600 text-white shadow-sm' : 'text-violet-700 hover:bg-violet-50',
+    amber: active ? 'bg-amber-500 text-white shadow-sm' : 'text-amber-700 hover:bg-amber-50',
+    danger: 'text-red-500 hover:bg-red-50 hover:text-red-600',
   };
   return (
     <button onClick={onClick} disabled={disabled} title={title ?? label} className={`${base} ${variants[variant]}`}>
-      <span className="text-sm leading-none">{icon}</span>
-      <span className="hidden sm:inline">{label}</span>
+      <span className="shrink-0">{icon}</span>
+      {!hideLabel && <span className="hidden sm:inline">{label}</span>}
     </button>
   );
 }
 
 function Divider() {
-  return <div className="w-px h-6 bg-slate-200 mx-0.5 shrink-0" />;
+  return <div className="w-px h-5 bg-slate-200 mx-1 shrink-0" />;
 }
 
 export default function CardEditor({ initialCardType, openNewProject, onSave }: { initialCardType?: CardType; openNewProject?: boolean; onSave?: () => void } = {}) {
@@ -504,67 +526,73 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     <div className="flex flex-col bg-[#f0f0f0]" style={{ height: 'calc(100vh - 9rem)' }}>
 
       {/* ── TOP TOOLBAR ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center gap-0.5 bg-white border-b border-slate-200 px-2 py-1.5 shadow-sm z-10 overflow-x-auto">
+      <div className="shrink-0 flex items-center gap-0 bg-white border-b border-slate-200 px-2 py-1 h-[42px] z-10 overflow-x-auto">
 
         {/* File group */}
-        <TopBtn icon="📄" label="New" onClick={() => setShowNewProject(true)} />
-        <TopBtn icon="💾" label="Save" onClick={handleSave} active={saved} variant={saved ? 'emerald' : 'default'} />
+        <TopBtn icon={<Icons.New />} label="New" onClick={() => setShowNewProject(true)} />
+        <TopBtn icon={<Icons.Save />} label="Save" title="Save (Ctrl+S)" onClick={handleSave} active={saved} variant={saved ? 'emerald' : 'default'} />
         <Divider />
 
         {/* History */}
-        <TopBtn icon="↩" label="Undo" title="Undo (Ctrl+Z)" onClick={undo} disabled={!canUndo} />
-        <TopBtn icon="↪" label="Redo" title="Redo (Ctrl+Y)" onClick={redo} disabled={!canRedo} />
+        <TopBtn icon={<Icons.Undo />} label="Undo" title="Undo (Ctrl+Z)" onClick={undo} disabled={!canUndo} />
+        <TopBtn icon={<Icons.Redo />} label="Redo" title="Redo (Ctrl+Y)" onClick={redo} disabled={!canRedo} />
         <Divider />
 
         {/* Card type switcher */}
-        <div className="flex rounded-lg border border-slate-200 overflow-hidden shrink-0">
-          <button onClick={() => handleCardTypeChange('student')} title="Student Card" className={`px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1 ${design.cardType === 'student' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>🎓 Student</button>
-          <button onClick={() => handleCardTypeChange('staff')} title="Staff Card" className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-slate-200 flex items-center gap-1 ${design.cardType === 'staff' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>👨‍🏫 Staff</button>
+        <div className="flex rounded-md border border-slate-200 overflow-hidden shrink-0 text-[11px] font-medium">
+          <button onClick={() => handleCardTypeChange('student')} title="Student Card"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'student' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+            <Icons.Student /> <span className="hidden sm:inline">Student</span>
+          </button>
+          <button onClick={() => handleCardTypeChange('staff')} title="Staff Card"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors border-l border-slate-200 ${design.cardType === 'staff' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+            <Icons.Staff /> <span className="hidden sm:inline">Staff</span>
+          </button>
         </div>
         <Divider />
 
         {/* Design */}
-        <TopBtn icon="🎨" label="Templates" onClick={() => setShowTemplatePicker(true)} variant="amber" />
+        <TopBtn icon={<Icons.Templates />} label="Templates" onClick={() => setShowTemplatePicker(true)} variant="amber" />
 
         {/* Export */}
         <div className="relative">
-          <TopBtn icon={exporting ? '⏳' : '⬇️'} label={exporting ? 'Exporting…' : 'Export'} onClick={(e) => { e.stopPropagation(); setShowExportMenu((v) => !v); }} disabled={!!exporting} variant="indigo" active={showExportMenu} />
+          <TopBtn icon={exporting ? <Icons.Spinner /> : <Icons.Export />} label={exporting ? 'Exporting…' : 'Export'} onClick={(e) => { e.stopPropagation(); setShowExportMenu((v) => !v); }} disabled={!!exporting} variant="indigo" active={showExportMenu} />
           {showExportMenu && (
             <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
-              <button onClick={handleExportPNG} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left">🖼️ Export PNG</button>
-              <button onClick={handleExportPDF} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-red-50 hover:text-red-700 transition-colors text-left">📄 Export PDF</button>
+              <button onClick={handleExportPNG} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left"><Icons.ExportPng /> Export PNG</button>
+              <button onClick={handleExportPDF} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-red-50 hover:text-red-700 transition-colors text-left"><Icons.ExportPdf /> Export PDF</button>
             </div>
           )}
         </div>
         <Divider />
 
         {/* View */}
-        <TopBtn icon="⊞" label={showGrid ? 'Grid On' : 'Grid'} title="Toggle Grid" onClick={() => setShowGrid((v) => !v)} active={showGrid} variant={showGrid ? 'indigo' : 'default'} />
-        <TopBtn icon="👁️" label={isPreviewMode ? 'Exit Preview' : 'Preview'} title="Toggle data preview (Ctrl+P)" onClick={() => { setIsPreviewMode((v) => !v); setSelectedId(null); }} active={isPreviewMode} variant={isPreviewMode ? 'violet' : 'default'} />
+        <TopBtn icon={<Icons.Grid />} label={showGrid ? 'Grid On' : 'Grid'} title="Toggle Grid" onClick={() => setShowGrid((v) => !v)} active={showGrid} variant={showGrid ? 'indigo' : 'default'} />
+        <TopBtn icon={<Icons.Preview />} label={isPreviewMode ? 'Exit Preview' : 'Preview'} title="Toggle preview mode" onClick={() => { setIsPreviewMode((v) => !v); setSelectedId(null); }} active={isPreviewMode} variant={isPreviewMode ? 'violet' : 'default'} />
         <Divider />
 
         {/* Status indicators */}
-        <div className="flex items-center gap-1.5 mx-1 shrink-0 min-w-[80px]">
-          {autoSaveStatus === 'saving' && <span className="flex items-center gap-1 text-xs text-slate-400"><span className="inline-block w-2.5 h-2.5 rounded-full border-2 border-slate-300 border-t-transparent animate-spin" />Saving…</span>}
-          {autoSaveStatus === 'saved' && <span className="text-xs text-emerald-600 font-medium">✓ Saved</span>}
-          {syncStatus === 'syncing' && <span className="text-xs text-indigo-400">⇄ Sharing…</span>}
-          {syncStatus === 'synced' && <span className="text-xs text-emerald-600">⇄ Shared</span>}
-          {syncStatus === 'error' && <span className="text-xs text-red-500">⚠ <button onClick={() => syncToServer(design)} className="underline">Retry</button></span>}
+        <div className="flex items-center gap-1.5 px-1 shrink-0 min-w-[72px]">
+          {autoSaveStatus === 'saving' && <span className="flex items-center gap-1 text-[10px] text-slate-400"><Icons.Spinner />Saving…</span>}
+          {autoSaveStatus === 'saved' && <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Saved</span>}
+          {syncStatus === 'syncing' && <span className="flex items-center gap-1 text-[10px] text-indigo-500"><Icons.Sync />Syncing</span>}
+          {syncStatus === 'synced' && <span className="flex items-center gap-1 text-[10px] text-emerald-600"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Synced</span>}
+          {syncStatus === 'error' && <span className="flex items-center gap-1 text-[10px] text-red-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" /><button onClick={() => syncToServer(design)} className="underline">Retry</button></span>}
         </div>
 
         {/* Spacer */}
         <div className="flex-1" />
 
         {/* Right-side utility */}
-        <TopBtn icon="📋" label="As Template" title="Save as template" onClick={() => setShowSaveTemplate(true)} />
-        <TopBtn icon="↺" label="Reset" title="Reset to default template" onClick={handleReset} />
-        <TopBtn icon="🧹" label="Clear All" title="Clear all saved designs" onClick={() => setShowClearCache(true)} variant="danger" />
+        <TopBtn icon={<Icons.AsTemplate />} label="As Template" title="Save as template" onClick={() => setShowSaveTemplate(true)} />
+        <TopBtn icon={<Icons.Reset />} label="Reset" title="Reset to default template" onClick={handleReset} />
+        <TopBtn icon={<Icons.Trash />} label="Clear All" title="Clear all saved designs" onClick={() => setShowClearCache(true)} variant="danger" />
       </div>
 
       {/* Preview mode banner */}
       {isPreviewMode && (
         <div className="shrink-0 flex items-center justify-between bg-violet-600 text-white px-4 py-1 text-sm z-10">
-          <span className="flex items-center gap-2 text-xs"><span>👁️</span><span className="font-semibold">Preview Mode</span><span className="text-violet-200">{'— {{placeholders}} replaced with sample data. Canvas is read-only.'}</span></span>
+          <span className="flex items-center gap-2 text-xs"><Icons.Preview /><span className="font-semibold">Preview Mode</span><span className="text-violet-200">{'— {{placeholders}} replaced with sample data. Canvas is read-only.'}</span></span>
           <button onClick={() => setIsPreviewMode(false)} className="px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-medium transition-colors">Exit</button>
         </div>
       )}
@@ -574,8 +602,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         <div className="shrink-0 flex items-center gap-1.5 bg-white border-b border-slate-200 px-3 py-1.5 z-10 overflow-x-auto shadow-sm">
 
           {/* Element badge */}
-          <span className="text-[10px] font-bold uppercase tracking-wide text-white bg-indigo-500 rounded px-1.5 py-0.5 shrink-0">
-            {selText ? 'T' : selShape ? selShape.type[0].toUpperCase() : selLogo ? '🖼' : selPhoto ? '📷' : selQr ? 'QR' : '?'}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-white bg-indigo-500 rounded px-1.5 py-0.5 shrink-0 font-mono">
+            {selText ? 'T' : selShape ? selShape.type[0].toUpperCase() : selLogo ? 'Img' : selPhoto ? 'Ph' : selQr ? 'QR' : '?'}
           </span>
 
           {/* ── TEXT PROPERTIES ── */}
