@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  CardDesign, CardType,
+  CardDesign, CardType, FONT_OPTIONS,
   LogoElement, PhotoPlaceholder, QrPlaceholder, ShapeElement, TextElement,
   STUDENT_TEMPLATE, STAFF_TEMPLATE, BLANK_TEMPLATE,
   STUDENT_CLASSIC_BLUE, STUDENT_DARK_NAVY, STUDENT_SKY_WAVE, STUDENT_GEOMETRIC, STUDENT_MINIMAL,
@@ -569,29 +569,203 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
         </div>
       )}
 
-      {/* ── FLOATING SELECTION BAR ────────────────────────────────────────── */}
+      {/* ── CONTEXTUAL PROPERTY BAR (Canva-style) ───────────────────────── */}
       {selectedId && !isPreviewMode && selLabel && (
-        <div className="shrink-0 flex items-center gap-2 bg-white border-b border-indigo-100 px-3 py-1 z-10 overflow-x-auto">
-          {/* Element name */}
-          <span className="text-xs font-semibold text-indigo-700 shrink-0">{selLabel}</span>
-          {selPos && <span className="text-xs text-slate-400 shrink-0 font-mono">({selPos})</span>}
+        <div className="shrink-0 flex items-center gap-1.5 bg-white border-b border-slate-200 px-3 py-1.5 z-10 overflow-x-auto shadow-sm">
+
+          {/* Element badge */}
+          <span className="text-[10px] font-bold uppercase tracking-wide text-white bg-indigo-500 rounded px-1.5 py-0.5 shrink-0">
+            {selText ? 'T' : selShape ? selShape.type[0].toUpperCase() : selLogo ? '🖼' : selPhoto ? '📷' : selQr ? 'QR' : '?'}
+          </span>
+
+          {/* ── TEXT PROPERTIES ── */}
+          {selText && (
+            <>
+              {/* Font family */}
+              <select
+                value={selText.fontFamily ?? 'Inter, sans-serif'}
+                onChange={(e) => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontFamily: e.target.value } : t) }))}
+                className="text-xs border border-slate-200 rounded px-1.5 py-1 bg-white text-slate-700 shrink-0 max-w-[110px] focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                title="Font Family"
+              >
+                {FONT_OPTIONS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+              </select>
+
+              {/* Font size */}
+              <div className="flex items-center border border-slate-200 rounded overflow-hidden shrink-0">
+                <button
+                  onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontSize: Math.max(6, t.fontSize - 1) } : t) }))}
+                  className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors"
+                  title="Decrease font size"
+                >−</button>
+                <input
+                  type="number"
+                  min={6} max={200}
+                  value={selText.fontSize}
+                  onChange={(e) => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 6) setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontSize: v } : t) })); }}
+                  className="w-9 text-center text-xs py-1 border-0 outline-none text-slate-700 bg-white"
+                  title="Font Size"
+                />
+                <button
+                  onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontSize: Math.min(200, t.fontSize + 1) } : t) }))}
+                  className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors"
+                  title="Increase font size"
+                >+</button>
+              </div>
+
+              {/* Bold */}
+              <button
+                onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontWeight: t.fontWeight === 'bold' ? 'normal' : 'bold' } : t) }))}
+                title="Bold (B)"
+                className={`text-xs font-bold w-7 h-7 rounded border transition-colors shrink-0 ${
+                  selText.fontWeight === 'bold' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                }`}
+              >B</button>
+
+              {/* Italic */}
+              <button
+                onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontStyle: t.fontStyle === 'italic' ? 'normal' : 'italic' } : t) }))}
+                title="Italic (I)"
+                className={`text-xs italic font-semibold w-7 h-7 rounded border transition-colors shrink-0 ${
+                  selText.fontStyle === 'italic' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                }`}
+              >I</button>
+
+              {/* Text Align */}
+              <div className="flex border border-slate-200 rounded overflow-hidden shrink-0">
+                {(['left', 'center', 'right'] as const).map((align) => (
+                  <button
+                    key={align}
+                    onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, textAlign: align } : t) }))}
+                    title={`Align ${align}`}
+                    className={`w-7 h-7 flex items-center justify-center transition-colors ${
+                      selText.textAlign === align ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-100'
+                    }`}
+                  >
+                    {align === 'left' && (
+                      <svg viewBox="0 0 12 10" className="w-3.5 h-3.5" fill="currentColor">
+                        <rect x="0" y="0" width="12" height="2"/><rect x="0" y="4" width="8" height="2"/><rect x="0" y="8" width="10" height="2"/>
+                      </svg>
+                    )}
+                    {align === 'center' && (
+                      <svg viewBox="0 0 12 10" className="w-3.5 h-3.5" fill="currentColor">
+                        <rect x="0" y="0" width="12" height="2"/><rect x="2" y="4" width="8" height="2"/><rect x="1" y="8" width="10" height="2"/>
+                      </svg>
+                    )}
+                    {align === 'right' && (
+                      <svg viewBox="0 0 12 10" className="w-3.5 h-3.5" fill="currentColor">
+                        <rect x="0" y="0" width="12" height="2"/><rect x="4" y="4" width="8" height="2"/><rect x="2" y="8" width="10" height="2"/>
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Text color */}
+              <label className="flex items-center gap-1 shrink-0 cursor-pointer" title="Text Color">
+                <span className="text-xs text-slate-500">A</span>
+                <div className="relative">
+                  <div className="w-6 h-6 rounded border border-slate-300 overflow-hidden" style={{ backgroundColor: selText.color }}>
+                    <input
+                      type="color"
+                      value={selText.color}
+                      onChange={(e) => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, color: e.target.value } : t) }))}
+                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </label>
+            </>
+          )}
+
+          {/* ── SHAPE PROPERTIES ── */}
+          {selShape && (
+            <>
+              {/* Fill color */}
+              <label className="flex items-center gap-1 shrink-0 cursor-pointer" title="Fill Color">
+                <span className="text-xs text-slate-500">Fill</span>
+                <div className="relative">
+                  <div className="w-6 h-6 rounded border border-slate-300 overflow-hidden" style={{ backgroundColor: selShape.color }}>
+                    <input
+                      type="color"
+                      value={selShape.color}
+                      onChange={(e) => setDesign((prev) => ({ ...prev, shapes: (prev.shapes ?? []).map((s) => s.id === selectedId ? { ...s, color: e.target.value } : s) }))}
+                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </label>
+
+              {/* Opacity */}
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="text-xs text-slate-500">Opacity</span>
+                <input
+                  type="range" min={0} max={1} step={0.05}
+                  value={selShape.opacity ?? 1}
+                  onChange={(e) => setDesign((prev) => ({ ...prev, shapes: (prev.shapes ?? []).map((s) => s.id === selectedId ? { ...s, opacity: parseFloat(e.target.value) } : s) }))}
+                  className="w-16 accent-indigo-500"
+                  title={`Opacity: ${Math.round((selShape.opacity ?? 1) * 100)}%`}
+                />
+                <span className="text-xs text-slate-400 w-7">{Math.round((selShape.opacity ?? 1) * 100)}%</span>
+              </div>
+
+              {/* Border color */}
+              <label className="flex items-center gap-1 shrink-0 cursor-pointer" title="Border Color">
+                <span className="text-xs text-slate-500">Border</span>
+                <div className="relative">
+                  <div className="w-6 h-6 rounded border border-slate-300 overflow-hidden" style={{ backgroundColor: selShape.borderColor ?? '#000' }}>
+                    <input
+                      type="color"
+                      value={selShape.borderColor ?? '#000000'}
+                      onChange={(e) => setDesign((prev) => ({ ...prev, shapes: (prev.shapes ?? []).map((s) => s.id === selectedId ? { ...s, borderColor: e.target.value } : s) }))}
+                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </label>
+
+              {/* Border width */}
+              <div className="flex items-center border border-slate-200 rounded overflow-hidden shrink-0">
+                <button onClick={() => setDesign((prev) => ({ ...prev, shapes: (prev.shapes ?? []).map((s) => s.id === selectedId ? { ...s, borderWidth: Math.max(0, (s.borderWidth ?? 0) - 1) } : s) }))} className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 text-xs font-bold">−</button>
+                <span className="w-6 text-center text-xs text-slate-700">{selShape.borderWidth ?? 0}</span>
+                <button onClick={() => setDesign((prev) => ({ ...prev, shapes: (prev.shapes ?? []).map((s) => s.id === selectedId ? { ...s, borderWidth: Math.min(20, (s.borderWidth ?? 0) + 1) } : s) }))} className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 text-xs font-bold">+</button>
+              </div>
+            </>
+          )}
+
+          {/* ── PHOTO PROPERTIES ── */}
+          {selPhoto && (
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-xs text-slate-500">Corner</span>
+              <input
+                type="range" min={0} max={50} step={1}
+                value={selPhoto.borderRadius ?? 0}
+                onChange={(e) => setDesign((prev) => prev.photo ? { ...prev, photo: { ...prev.photo, borderRadius: parseInt(e.target.value) } } : prev)}
+                className="w-14 accent-indigo-500"
+                title={`Border Radius: ${selPhoto.borderRadius ?? 0}px`}
+              />
+              <span className="text-xs text-slate-400 w-5">{selPhoto.borderRadius ?? 0}</span>
+            </div>
+          )}
+
           <Divider />
-          {/* Arrange shortcuts */}
+
+          {/* ── ARRANGE (always) ── */}
           <span className="text-[10px] text-slate-400 shrink-0">Arrange:</span>
           <button onClick={() => handleArrange(selectedId, 'front')} title="Bring to Front" className="text-[11px] px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors shrink-0">⤒ Front</button>
           <button onClick={() => handleArrange(selectedId, 'forward')} title="Move Forward" className="text-[11px] px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors shrink-0">↑ Fwd</button>
           <button onClick={() => handleArrange(selectedId, 'backward')} title="Move Backward" className="text-[11px] px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors shrink-0">↓ Bwd</button>
           <button onClick={() => handleArrange(selectedId, 'back')} title="Send to Back" className="text-[11px] px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors shrink-0">⤓ Back</button>
           <Divider />
-          {/* Duplicate */}
+
+          {/* Duplicate & Delete */}
           {selectedId !== '__photo__' && selectedId !== '__qr__' && (
-            <button onClick={() => handleDuplicate(selectedId)} title="Duplicate (Ctrl+D)" className="text-[11px] px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors shrink-0">📋 Duplicate</button>
+            <button onClick={() => handleDuplicate(selectedId)} title="Duplicate (Ctrl+D)" className="text-[11px] px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors shrink-0">📋 Dup</button>
           )}
-          {/* Delete */}
-          <button onClick={() => handleDeleteSelected(selectedId)} title="Delete (Del)" className="text-[11px] px-2 py-0.5 rounded border border-red-200 text-red-500 hover:bg-red-50 transition-colors shrink-0">🗑️ Delete</button>
+          <button onClick={() => handleDeleteSelected(selectedId)} title="Delete (Del)" className="text-[11px] px-2 py-0.5 rounded border border-red-200 text-red-500 hover:bg-red-50 transition-colors shrink-0">🗑️</button>
+
           <div className="flex-1" />
-          {/* Keyboard hint */}
-          <span className="text-[10px] text-slate-300 shrink-0 hidden lg:inline">↑↓←→ nudge · Shift+arrows ×10 · Del delete · Esc deselect</span>
+          <span className="text-[10px] text-slate-300 shrink-0 hidden xl:inline">↑↓←→ nudge · Del delete · Esc deselect</span>
         </div>
       )}
 
