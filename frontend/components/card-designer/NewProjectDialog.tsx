@@ -54,10 +54,19 @@ function unitToPx(val: number, unit: Unit, dpi: DPI): number {
   }
 }
 
+const PURPOSE_OPTIONS: { id: CardType; icon: string; label: string; description: string; color: string }[] = [
+  { id: 'student', icon: '🎓', label: 'Student ID Card', description: 'Photo card with student data', color: 'indigo' },
+  { id: 'staff', icon: '👨‍🏫', label: 'Staff ID Card', description: 'Photo card with staff data', color: 'emerald' },
+  { id: 'certificate-student', icon: '📜', label: 'Student Certificate', description: 'Certificate using student records', color: 'amber' },
+  { id: 'certificate-staff', icon: '🏅', label: 'Staff Certificate', description: 'Certificate using staff records', color: 'rose' },
+  { id: 'general', icon: '✏️', label: 'General / Custom', description: 'Free design, no linked data', color: 'slate' },
+];
+
 export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialogProps) {
   const [tab, setTab] = useState<'blank' | 'template'>('blank');
 
   // Blank project state
+  const [purpose, setPurpose] = useState<CardType>('general');
   const [selectedPreset, setSelectedPreset] = useState<string>('id');
   const [unit, setUnit] = useState<Unit>('px');
   const [dpi, setDpi] = useState<DPI>(96);
@@ -100,7 +109,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
       width: wPx,
       height: hPx,
       backgroundColor: bgColor,
-      cardType: 'student',
+      cardType: purpose,
     };
     onCreate(design);
   };
@@ -162,6 +171,33 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
         <div className="flex-1 overflow-y-auto p-6">
           {tab === 'blank' && (
             <div className="space-y-5">
+              {/* Purpose / Data Source */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Purpose / Data Source</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {PURPOSE_OPTIONS.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setPurpose(p.id)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                        purpose === p.id
+                          ? 'border-indigo-500 bg-indigo-50'
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="text-2xl mb-1">{p.icon}</div>
+                      <div className="text-xs font-semibold text-slate-800 leading-tight">{p.label}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">{p.description}</div>
+                    </button>
+                  ))}
+                </div>
+                {purpose !== 'general' && (
+                  <p className="mt-1.5 text-[11px] text-indigo-600 bg-indigo-50 rounded-lg px-3 py-1.5">
+                    Text placeholders like <code className="font-mono bg-white px-1 rounded">{'{{name}}'}</code>, <code className="font-mono bg-white px-1 rounded">{'{{class}}'}</code> will be replaced with real data when printing.
+                  </p>
+                )}
+              </div>
+
               {/* Preset Sizes */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Preset Size</label>
@@ -310,6 +346,8 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                   <span className="font-medium">RGB / sRGB</span>
                   <span className="text-slate-500">Bit depth:</span>
                   <span className="font-medium">{bitDepth}-bit</span>
+                  <span className="text-slate-500">Purpose:</span>
+                  <span className="font-medium">{PURPOSE_OPTIONS.find((p) => p.id === purpose)?.label ?? purpose}</span>
                 </div>
               </div>
             </div>

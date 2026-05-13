@@ -4,7 +4,7 @@ import { ChangeEvent, useState, useRef } from 'react';
 import {
   CardDesign, CardSize, CARD_SIZE_PRESETS,
   TextElement, LogoElement, ShapeElement, GradientStop,
-  PhotoPlaceholder, QrPlaceholder, FONT_OPTIONS,
+  PhotoPlaceholder, QrPlaceholder, FONT_OPTIONS, CARD_TYPE_FIELDS,
 } from './types';
 
 interface ToolbarProps {
@@ -15,7 +15,7 @@ interface ToolbarProps {
   width?: number;
 }
 
-type Tab = 'size' | 'colors' | 'text' | 'shapes' | 'images' | 'photo' | 'qr';
+type Tab = 'size' | 'colors' | 'text' | 'shapes' | 'images' | 'photo' | 'qr' | 'fields';
 
 const TABS: { id: Tab; icon: React.ReactNode; label: string }[] = [
   {
@@ -80,6 +80,16 @@ const TABS: { id: Tab; icon: React.ReactNode; label: string }[] = [
     icon: (
       <svg viewBox="0 0 20 20" className="w-5 h-5" fill="currentColor">
         <path d="M3 3h6v6H3V3zm2 2v2h2V5H5zM11 3h6v6h-6V3zm2 2v2h2V5h-2zM3 11h6v6H3v-6zm2 2v2h2v-2H5zM13 11h2v2h-2zM15 13h2v2h-2zM13 15h2v2h-2z" />
+      </svg>
+    ),
+  },
+  {
+    id: 'fields', label: 'Fields',
+    icon: (
+      <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.7}>
+        <path d="M4 6h12M4 10h8M4 14h5" strokeLinecap="round" />
+        <circle cx="16" cy="14" r="2.5" />
+        <path d="M16 11.5V9" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -552,6 +562,73 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
                 <div><div className="flex justify-between"><span className="text-[10px] text-slate-500">Border Width</span><span className="text-[10px] font-mono text-slate-500">{design.qr.borderWidth ?? 0}px</span></div><input type="range" min={0} max={10} value={design.qr.borderWidth ?? 0} onChange={(e) => updateQr({ borderWidth: Number(e.target.value) })} className="w-full accent-indigo-600 mt-1" /></div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* FIELDS */}
+        {activeTab === 'fields' && (
+          <div className="p-3 space-y-3">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Data Fields</p>
+            {(() => {
+              const fields = CARD_TYPE_FIELDS[design.cardType] ?? [];
+              if (fields.length === 0) {
+                return (
+                  <div className="py-6 text-center space-y-2">
+                    <div className="text-3xl">✏️</div>
+                    <p className="text-xs text-slate-500 font-medium">No data source linked</p>
+                    <p className="text-[10px] text-slate-400 leading-relaxed px-2">This project is set to <strong>General / Custom</strong>. To use student or staff data fields, create a new project and choose a purpose like <em>Student ID Card</em> or <em>Student Certificate</em>.</p>
+                  </div>
+                );
+              }
+              const purposeLabel: Record<string, string> = {
+                student: 'Student ID Card',
+                staff: 'Staff ID Card',
+                'certificate-student': 'Student Certificate',
+                'certificate-staff': 'Staff Certificate',
+              };
+              return (
+                <>
+                  <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100">
+                    <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="currentColor"><path d="M8 1a5 5 0 1 0 0 10A5 5 0 0 0 8 1zm0 1.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zM7.25 5v3.5h1.5V5h-1.5zm0 4v1.5h1.5V9h-1.5z"/></svg>
+                    <span className="text-[10px] text-indigo-700 font-medium">Source: {purposeLabel[design.cardType] ?? design.cardType}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-relaxed">Click a field to add it as a text element on the canvas. The placeholder will be replaced with real data when printing.</p>
+                  <div className="space-y-1.5">
+                    {fields.map((field) => (
+                      <button
+                        key={field.key}
+                        onClick={() => {
+                          const newText: TextElement = {
+                            id: Math.random().toString(36).slice(2, 10),
+                            content: field.key,
+                            x: 20,
+                            y: 20 + design.texts.length * 30,
+                            fontSize: 14,
+                            color: '#1e293b',
+                            fontWeight: 'normal',
+                            fontStyle: 'normal',
+                            textAlign: 'left',
+                            fontFamily: 'Inter, sans-serif',
+                            zIndex: getMaxZ() + 1,
+                          };
+                          update({ texts: [...design.texts, newText] });
+                          onSelect?.(newText.id);
+                          setActiveTab('text');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all group text-left"
+                      >
+                        <code className="text-[10px] font-mono bg-slate-100 group-hover:bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded shrink-0">{field.key}</code>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-slate-700 truncate">{field.label}</p>
+                          <p className="text-[10px] text-slate-400 truncate">e.g. {field.example}</p>
+                        </div>
+                        <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-400 shrink-0" fill="currentColor"><path d="M8 3v10M3 8h10" strokeLinecap="round" stroke="currentColor" strokeWidth={2} fill="none"/></svg>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 

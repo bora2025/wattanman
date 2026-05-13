@@ -96,7 +96,49 @@ export interface QrPlaceholder {
 }
 
 export type CardSize = 'credit' | 'id-1' | 'a7' | 'custom';
-export type CardType = 'student' | 'staff';
+export type CardType = 'student' | 'staff' | 'certificate-student' | 'certificate-staff' | 'general';
+
+// Placeholder fields available for each card type (from the App DB)
+export const CARD_TYPE_FIELDS: Record<CardType, { key: string; label: string; example: string }[]> = {
+  student: [
+    { key: '{{name}}', label: 'Full Name', example: 'Sokha Chan' },
+    { key: '{{studentNumber}}', label: 'Student ID', example: '0001' },
+    { key: '{{class}}', label: 'Class', example: 'Grade 10A' },
+    { key: '{{email}}', label: 'Email', example: 'sokha@school.edu' },
+    { key: '{{phone}}', label: 'Phone', example: '012 345 678' },
+    { key: '{{sex}}', label: 'Gender', example: 'MALE' },
+    { key: '{{dateOfBirth}}', label: 'Date of Birth', example: '01/01/2010' },
+    { key: '{{address}}', label: 'Address', example: 'Phnom Penh' },
+    { key: '{{qrCode}}', label: 'QR Code Data', example: 'STU-0001' },
+    { key: '{{studyYear}}', label: 'Study Year', example: '2025–2026' },
+  ],
+  staff: [
+    { key: '{{name}}', label: 'Full Name', example: 'Dara Sothea' },
+    { key: '{{email}}', label: 'Email', example: 'dara@school.edu' },
+    { key: '{{phone}}', label: 'Phone', example: '012 987 654' },
+    { key: '{{role}}', label: 'Role', example: 'Teacher' },
+    { key: '{{department}}', label: 'Department', example: 'Science' },
+  ],
+  'certificate-student': [
+    { key: '{{name}}', label: 'Full Name', example: 'Sokha Chan' },
+    { key: '{{studentNumber}}', label: 'Student ID', example: '0001' },
+    { key: '{{class}}', label: 'Class', example: 'Grade 10A' },
+    { key: '{{studyYear}}', label: 'Study Year', example: '2025–2026' },
+    { key: '{{dateOfBirth}}', label: 'Date of Birth', example: '01/01/2010' },
+    { key: '{{sex}}', label: 'Gender', example: 'MALE' },
+    { key: '{{certificateDate}}', label: 'Issue Date', example: '13/05/2026' },
+    { key: '{{schoolName}}', label: 'School Name', example: 'Wattaman School' },
+  ],
+  'certificate-staff': [
+    { key: '{{name}}', label: 'Full Name', example: 'Dara Sothea' },
+    { key: '{{role}}', label: 'Role', example: 'Teacher' },
+    { key: '{{department}}', label: 'Department', example: 'Science' },
+    { key: '{{email}}', label: 'Email', example: 'dara@school.edu' },
+    { key: '{{certificateDate}}', label: 'Issue Date', example: '13/05/2026' },
+    { key: '{{schoolName}}', label: 'School Name', example: 'Wattaman School' },
+  ],
+  general: [],
+};
 
 export interface CardDesign {
   cardType: CardType;
