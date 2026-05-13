@@ -426,7 +426,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
   const handleCardTypeChange = (type: CardType) => {
     isLoadingRef.current = true;
     const sd = loadSavedDesign(type);
-    setDesign(sd ?? TEMPLATES[type]); setSelectedId(null);
+    setDesign(sd ?? TEMPLATES[type] ?? BLANK_TEMPLATE); setSelectedId(null);
     apiGetActiveDesign(type).then((d) => { if (d) { saveDesign(d); setDesign(d); } })
       .finally(() => { setTimeout(() => { isLoadingRef.current = false; }, 2000); });
   };
