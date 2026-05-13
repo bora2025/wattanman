@@ -398,9 +398,9 @@ export const BLANK_CERTIFICATE_STUDENT: CardDesign = {
   ],
   logos: [],
   shapes: [
-    { id: 'cs-border', type: 'rectangle', x: 16, y: 16, width: 762, height: 530, color: 'transparent', borderColor: '#4f46e5', borderWidth: 3, borderRadius: 12, opacity: 1, rotation: 0, zIndex: 0 },
-    { id: 'cs-line', type: 'line', x: 130, y: 310, width: 534, height: 2, color: '#e2e8f0', borderColor: '#e2e8f0', borderWidth: 2, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0 },
-    { id: 'cs-sig-line', type: 'line', x: 230, y: 440, width: 334, height: 2, color: '#94a3b8', borderColor: '#94a3b8', borderWidth: 1, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0 },
+    { id: 'cs-border', type: 'rectangle', x: 16, y: 16, width: 762, height: 530, color: 'transparent', borderColor: '#4f46e5', borderWidth: 3, borderRadius: 12, opacity: 1, rotation: 0, zIndex: 0, gradient: { enabled: false, type: 'linear' as const, angle: 90, stops: [{ offset: 0, color: '#4f46e5' }, { offset: 1, color: '#818cf8' }] } },
+    { id: 'cs-line', type: 'line', x: 130, y: 310, width: 534, height: 2, color: '#e2e8f0', borderColor: '#e2e8f0', borderWidth: 2, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0, gradient: { enabled: false, type: 'linear' as const, angle: 90, stops: [{ offset: 0, color: '#e2e8f0' }, { offset: 1, color: '#e2e8f0' }] } },
+    { id: 'cs-sig-line', type: 'line', x: 230, y: 440, width: 334, height: 2, color: '#94a3b8', borderColor: '#94a3b8', borderWidth: 1, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0, gradient: { enabled: false, type: 'linear' as const, angle: 90, stops: [{ offset: 0, color: '#94a3b8' }, { offset: 1, color: '#94a3b8' }] } },
   ],
 };
 
@@ -424,9 +424,9 @@ export const BLANK_CERTIFICATE_STAFF: CardDesign = {
   ],
   logos: [],
   shapes: [
-    { id: 'cf-border', type: 'rectangle', x: 16, y: 16, width: 762, height: 530, color: 'transparent', borderColor: '#059669', borderWidth: 3, borderRadius: 12, opacity: 1, rotation: 0, zIndex: 0 },
-    { id: 'cf-line', type: 'line', x: 130, y: 310, width: 534, height: 2, color: '#e2e8f0', borderColor: '#e2e8f0', borderWidth: 2, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0 },
-    { id: 'cf-sig-line', type: 'line', x: 230, y: 440, width: 334, height: 2, color: '#94a3b8', borderColor: '#94a3b8', borderWidth: 1, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0 },
+    { id: 'cf-border', type: 'rectangle', x: 16, y: 16, width: 762, height: 530, color: 'transparent', borderColor: '#059669', borderWidth: 3, borderRadius: 12, opacity: 1, rotation: 0, zIndex: 0, gradient: { enabled: false, type: 'linear' as const, angle: 90, stops: [{ offset: 0, color: '#059669' }, { offset: 1, color: '#34d399' }] } },
+    { id: 'cf-line', type: 'line', x: 130, y: 310, width: 534, height: 2, color: '#e2e8f0', borderColor: '#e2e8f0', borderWidth: 2, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0, gradient: { enabled: false, type: 'linear' as const, angle: 90, stops: [{ offset: 0, color: '#e2e8f0' }, { offset: 1, color: '#e2e8f0' }] } },
+    { id: 'cf-sig-line', type: 'line', x: 230, y: 440, width: 334, height: 2, color: '#94a3b8', borderColor: '#94a3b8', borderWidth: 1, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0, gradient: { enabled: false, type: 'linear' as const, angle: 90, stops: [{ offset: 0, color: '#94a3b8' }, { offset: 1, color: '#94a3b8' }] } },
   ],
 };
 
