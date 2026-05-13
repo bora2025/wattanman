@@ -773,13 +773,8 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* LEFT — Design Tools (Toolbar) */}
-        <div className="shrink-0 bg-white border-r border-slate-200 flex flex-col" style={{ width: 280 }}>
-          <div className="px-3 py-2 border-b border-slate-200 bg-slate-50 flex items-center gap-2 shrink-0">
-            <span className="text-sm">🛠️</span>
-            <span className="text-sm font-semibold text-slate-700">Design Tools</span>
-            {isPreviewMode && <span className="ml-auto text-[10px] text-violet-500 font-medium">Preview</span>}
-          </div>
-          <div className="flex-1 overflow-y-auto">
+        <div className="shrink-0 bg-white border-r border-slate-200 flex flex-col" style={{ width: 300 }}>
+          <div className="flex-1 min-h-0 overflow-hidden">
             <Toolbar
               design={isPreviewMode ? previewDesign : design}
               selectedId={isPreviewMode ? null : selectedId}
