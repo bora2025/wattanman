@@ -611,6 +611,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     selPhoto ? `${Math.round(selPhoto.x)}, ${Math.round(selPhoto.y)}` :
     selQr ? `${Math.round(selQr.x)}, ${Math.round(selQr.y)}` : null;
 
+  const isCertMode = design.cardType === 'certificate-student' || design.cardType === 'certificate-staff';
+
   return (
     <div className="flex flex-col bg-[#1a1a1a] h-full">
 
@@ -639,27 +641,30 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         <TopBtn icon={<Icons.Redo />} label="Redo" title="Redo (Ctrl+Y)" onClick={redo} disabled={!canRedo} />
         <Divider />
 
-        {/* Card type switcher */}
-        <div className="flex rounded border border-[#444] overflow-hidden shrink-0 text-[11px] font-medium">
-          <button onClick={() => handleCardTypeChange('student')} title="Student ID Card"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'student' ? 'bg-indigo-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
-            <Icons.Student /> <span className="hidden sm:inline">Student</span>
-          </button>
-          <button onClick={() => handleCardTypeChange('staff')} title="Staff ID Card"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors border-l border-[#444] ${design.cardType === 'staff' ? 'bg-emerald-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
-            <Icons.Staff /> <span className="hidden sm:inline">Staff</span>
-          </button>
-        </div>
-        <div className="flex rounded border border-[#444] overflow-hidden shrink-0 text-[11px] font-medium ml-1">
-          <button onClick={() => handleCardTypeChange('certificate-student')} title="Student Certificate"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'certificate-student' ? 'bg-violet-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
-            <span className="text-[13px] leading-none">📜</span> <span className="hidden lg:inline">Stu.Cert</span>
-          </button>
-          <button onClick={() => handleCardTypeChange('certificate-staff')} title="Staff Certificate"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors border-l border-[#444] ${design.cardType === 'certificate-staff' ? 'bg-amber-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
-            <span className="text-[13px] leading-none">🏅</span> <span className="hidden lg:inline">Stf.Cert</span>
-          </button>
-        </div>
+        {/* Card type switcher (mode-aware) */}
+        {isCertMode ? (
+          <div className="flex rounded border border-[#444] overflow-hidden shrink-0 text-[11px] font-medium">
+            <button onClick={() => handleCardTypeChange('certificate-student')} title="Student Certificate"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'certificate-student' ? 'bg-violet-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
+              <span className="text-[13px] leading-none">📜</span> <span className="hidden sm:inline">Stu. Cert</span>
+            </button>
+            <button onClick={() => handleCardTypeChange('certificate-staff')} title="Staff Certificate"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors border-l border-[#444] ${design.cardType === 'certificate-staff' ? 'bg-amber-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
+              <span className="text-[13px] leading-none">🏅</span> <span className="hidden sm:inline">Stf. Cert</span>
+            </button>
+          </div>
+        ) : (
+          <div className="flex rounded border border-[#444] overflow-hidden shrink-0 text-[11px] font-medium">
+            <button onClick={() => handleCardTypeChange('student')} title="Student ID Card"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'student' ? 'bg-indigo-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
+              <Icons.Student /> <span className="hidden sm:inline">Student</span>
+            </button>
+            <button onClick={() => handleCardTypeChange('staff')} title="Staff ID Card"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors border-l border-[#444] ${design.cardType === 'staff' ? 'bg-emerald-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
+              <Icons.Staff /> <span className="hidden sm:inline">Staff</span>
+            </button>
+          </div>
+        )}
         <Divider />
 
         {/* Design */}
@@ -1053,69 +1058,112 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
               <button onClick={() => setShowTemplatePicker(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
             </div>
 
-            {/* Built-in */}
-            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Built-in</h4>
-            <div className="grid grid-cols-3 gap-3 mb-5">
-              {[{ key: '__builtin_blank', d: BLANK_TEMPLATE, emoji: '📄', label: 'Blank Card' },
-                { key: '__builtin_student', d: STUDENT_TEMPLATE, emoji: '🎓', label: 'Student' },
-                { key: '__builtin_staff', d: STAFF_TEMPLATE, emoji: '👨‍🏫', label: 'Staff' }
-              ].map(({ key, d: tpl, emoji, label }) => (
-                <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} />
-              ))}
-            </div>
+            {isCertMode ? (
+              <>
+                {/* Certificate built-in */}
+                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">📜 Certificate Templates</h4>
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  {[
+                    { key: '__cert_student', d: BLANK_CERTIFICATE_STUDENT, emoji: '📜', label: 'Student Certificate' },
+                    { key: '__cert_staff', d: BLANK_CERTIFICATE_STAFF, emoji: '🏅', label: 'Staff Certificate' },
+                  ].map(({ key, d: tpl, emoji, label }) => (
+                    <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} />
+                  ))}
+                </div>
 
-            {/* Student presets */}
-            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">🎓 Student Styles</h4>
-            <div className="grid grid-cols-5 gap-2 mb-5">
-              {([
-                { key: '__preset_st1', d: STUDENT_CLASSIC_BLUE, emoji: '🔵', label: 'Classic Blue' },
-                { key: '__preset_st2', d: STUDENT_DARK_NAVY, emoji: '🌌', label: 'Dark Navy' },
-                { key: '__preset_st3', d: STUDENT_SKY_WAVE, emoji: '🌊', label: 'Sky Wave' },
-                { key: '__preset_st4', d: STUDENT_GEOMETRIC, emoji: '🔷', label: 'Geometric' },
-                { key: '__preset_st5', d: STUDENT_MINIMAL, emoji: '⬜', label: 'Minimal' },
-              ] as const).map(({ key, d: tpl, emoji, label }) => (
-                <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} small />
-              ))}
-            </div>
-
-            {/* Staff presets */}
-            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">👨‍🏫 Staff Styles</h4>
-            <div className="grid grid-cols-5 gap-2 mb-5">
-              {([
-                { key: '__preset_sf1', d: STAFF_CORPORATE_TEAL, emoji: '🟢', label: 'Corp Teal' },
-                { key: '__preset_sf2', d: STAFF_DEEP_OCEAN, emoji: '🌑', label: 'Deep Ocean' },
-                { key: '__preset_sf3', d: STAFF_ROSE, emoji: '🌸', label: 'Rose Pro' },
-                { key: '__preset_sf4', d: STAFF_FOREST, emoji: '🌿', label: 'Forest' },
-                { key: '__preset_sf5', d: STAFF_SLATE_EXECUTIVE, emoji: '🏛️', label: 'Executive' },
-              ] as const).map(({ key, d: tpl, emoji, label }) => (
-                <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} small />
-              ))}
-            </div>
-
-            {/* Saved templates */}
-            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Your Saved Templates</h4>
-            {savedTemplates.length === 0 ? (
-              <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                <span className="text-3xl block mb-2">📭</span>
-                <p className="text-sm text-slate-400">No saved templates yet. Click &ldquo;As Template&rdquo; to save one.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {savedTemplates.map((tpl) => (
-                  <div key={tpl.id} className="rounded-xl border-2 border-slate-200 hover:border-slate-400 bg-white transition-all relative group overflow-hidden">
-                    <button onClick={() => handleLoadTemplate(tpl)} className="w-full text-left">
-                      <div className="bg-slate-50 flex items-center justify-center p-3 border-b border-slate-100 h-28">
-                        {templatePreviews[tpl.id] ? <img src={templatePreviews[tpl.id]} alt={tpl.name} className="rounded-lg shadow-sm max-h-24 object-contain" /> : <span className="text-slate-300 text-xs">Preview</span>}
-                      </div>
-                      <div className="p-3">
-                        <div className="flex items-center gap-2 mb-1"><span>{tpl.cardType === 'student' ? '🎓' : '👨‍🏫'}</span><span className="font-semibold text-slate-800 truncate text-sm">{tpl.name}</span></div>
-                        <span className="text-[10px] text-slate-400">{new Date(tpl.createdAt).toLocaleDateString()}</span>
-                      </div>
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(tpl.id); }} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                {/* Saved certificate templates */}
+                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Your Saved Certificate Templates</h4>
+                {savedTemplates.filter((t) => t.cardType === 'certificate-student' || t.cardType === 'certificate-staff').length === 0 ? (
+                  <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                    <span className="text-3xl block mb-2">📭</span>
+                    <p className="text-sm text-slate-400">No saved certificate templates yet. Click &ldquo;As Template&rdquo; to save one.</p>
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {savedTemplates.filter((t) => t.cardType === 'certificate-student' || t.cardType === 'certificate-staff').map((tpl) => (
+                      <div key={tpl.id} className="rounded-xl border-2 border-slate-200 hover:border-slate-400 bg-white transition-all relative group overflow-hidden">
+                        <button onClick={() => handleLoadTemplate(tpl)} className="w-full text-left">
+                          <div className="bg-slate-50 flex items-center justify-center p-3 border-b border-slate-100 h-28">
+                            {templatePreviews[tpl.id] ? <img src={templatePreviews[tpl.id]} alt={tpl.name} className="rounded-lg shadow-sm max-h-24 object-contain" /> : <span className="text-slate-300 text-xs">Preview</span>}
+                          </div>
+                          <div className="p-3">
+                            <div className="flex items-center gap-2 mb-1"><span>{tpl.cardType === 'certificate-student' ? '📜' : '🏅'}</span><span className="font-semibold text-slate-800 truncate text-sm">{tpl.name}</span></div>
+                            <span className="text-[10px] text-slate-400">{new Date(tpl.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(tpl.id); }} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {/* ID Card built-in */}
+                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Built-in</h4>
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  {[{ key: '__builtin_blank', d: BLANK_TEMPLATE, emoji: '📄', label: 'Blank Card' },
+                    { key: '__builtin_student', d: STUDENT_TEMPLATE, emoji: '🎓', label: 'Student' },
+                    { key: '__builtin_staff', d: STAFF_TEMPLATE, emoji: '👨‍🏫', label: 'Staff' }
+                  ].map(({ key, d: tpl, emoji, label }) => (
+                    <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} />
+                  ))}
+                </div>
+
+                {/* Student presets */}
+                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">🎓 Student Styles</h4>
+                <div className="grid grid-cols-5 gap-2 mb-5">
+                  {([
+                    { key: '__preset_st1', d: STUDENT_CLASSIC_BLUE, emoji: '🔵', label: 'Classic Blue' },
+                    { key: '__preset_st2', d: STUDENT_DARK_NAVY, emoji: '🌌', label: 'Dark Navy' },
+                    { key: '__preset_st3', d: STUDENT_SKY_WAVE, emoji: '🌊', label: 'Sky Wave' },
+                    { key: '__preset_st4', d: STUDENT_GEOMETRIC, emoji: '🔷', label: 'Geometric' },
+                    { key: '__preset_st5', d: STUDENT_MINIMAL, emoji: '⬜', label: 'Minimal' },
+                  ] as const).map(({ key, d: tpl, emoji, label }) => (
+                    <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} small />
+                  ))}
+                </div>
+
+                {/* Staff presets */}
+                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">👨‍🏫 Staff Styles</h4>
+                <div className="grid grid-cols-5 gap-2 mb-5">
+                  {([
+                    { key: '__preset_sf1', d: STAFF_CORPORATE_TEAL, emoji: '🟢', label: 'Corp Teal' },
+                    { key: '__preset_sf2', d: STAFF_DEEP_OCEAN, emoji: '🌑', label: 'Deep Ocean' },
+                    { key: '__preset_sf3', d: STAFF_ROSE, emoji: '🌸', label: 'Rose Pro' },
+                    { key: '__preset_sf4', d: STAFF_FOREST, emoji: '🌿', label: 'Forest' },
+                    { key: '__preset_sf5', d: STAFF_SLATE_EXECUTIVE, emoji: '🏛️', label: 'Executive' },
+                  ] as const).map(({ key, d: tpl, emoji, label }) => (
+                    <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} small />
+                  ))}
+                </div>
+
+                {/* Saved ID card templates */}
+                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Your Saved Templates</h4>
+                {savedTemplates.filter((t) => t.cardType === 'student' || t.cardType === 'staff').length === 0 ? (
+                  <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                    <span className="text-3xl block mb-2">📭</span>
+                    <p className="text-sm text-slate-400">No saved templates yet. Click &ldquo;As Template&rdquo; to save one.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {savedTemplates.filter((t) => t.cardType === 'student' || t.cardType === 'staff').map((tpl) => (
+                      <div key={tpl.id} className="rounded-xl border-2 border-slate-200 hover:border-slate-400 bg-white transition-all relative group overflow-hidden">
+                        <button onClick={() => handleLoadTemplate(tpl)} className="w-full text-left">
+                          <div className="bg-slate-50 flex items-center justify-center p-3 border-b border-slate-100 h-28">
+                            {templatePreviews[tpl.id] ? <img src={templatePreviews[tpl.id]} alt={tpl.name} className="rounded-lg shadow-sm max-h-24 object-contain" /> : <span className="text-slate-300 text-xs">Preview</span>}
+                          </div>
+                          <div className="p-3">
+                            <div className="flex items-center gap-2 mb-1"><span>{tpl.cardType === 'student' ? '🎓' : '👨‍🏫'}</span><span className="font-semibold text-slate-800 truncate text-sm">{tpl.name}</span></div>
+                            <span className="text-[10px] text-slate-400">{new Date(tpl.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(tpl.id); }} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -1194,6 +1242,8 @@ const BUILTIN_START_ITEMS: { key: string; design: CardDesign; label: string; emo
   { key: '__preset_sf3', design: STAFF_ROSE, label: 'Rose Pro', emoji: '🌸', type: 'staff' },
   { key: '__preset_sf4', design: STAFF_FOREST, label: 'Forest', emoji: '🌿', type: 'staff' },
   { key: '__preset_sf5', design: STAFF_SLATE_EXECUTIVE, label: 'Executive', emoji: '🏛️', type: 'staff' },
+  { key: '__cert_student', design: BLANK_CERTIFICATE_STUDENT, label: 'Blank Stu. Cert', emoji: '📜', type: 'certificate-student' },
+  { key: '__cert_staff', design: BLANK_CERTIFICATE_STAFF, label: 'Blank Stf. Cert', emoji: '🏅', type: 'certificate-staff' },
 ];
 
 interface StartScreenProps {
@@ -1330,11 +1380,33 @@ function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNew
           )}
         </div>
 
-        {/* Built-in grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mb-8">
-          {BUILTIN_START_ITEMS.map(({ key, design, label, emoji }) => (
+        {/* ID Card templates */}
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">🪪 ID Card Templates</h3>
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mb-6">
+          {BUILTIN_START_ITEMS.filter((i) => i.type === 'student' || i.type === 'staff').map(({ key, design, label, emoji }) => (
             <button key={key} onClick={() => onOpen(design)}
               className="group rounded-xl overflow-hidden border border-white/[0.07] hover:border-indigo-400/60 bg-[#13141a] hover:bg-[#1e2035] transition-all text-left shadow-sm hover:shadow-indigo-900/30 hover:shadow-lg"
+            >
+              <div className="bg-[#0d0e12] h-28 flex items-center justify-center p-2 relative">
+                {previews[key] ? (
+                  <img src={previews[key]} alt={label} className="max-h-24 max-w-full object-contain rounded shadow-md group-hover:scale-105 transition-transform duration-200" />
+                ) : (
+                  <div className="w-14 h-20 bg-white/[0.04] rounded-lg animate-pulse" />
+                )}
+              </div>
+              <div className="px-2.5 py-2 border-t border-white/[0.05]">
+                <div className="text-[11px] font-semibold text-slate-400 group-hover:text-slate-200 transition-colors truncate">{emoji} {label}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Certificate templates */}
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3 mt-2">📜 Certificate Templates</h3>
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mb-8">
+          {BUILTIN_START_ITEMS.filter((i) => i.type === 'certificate-student' || i.type === 'certificate-staff').map(({ key, design, label, emoji }) => (
+            <button key={key} onClick={() => onOpen(design)}
+              className="group rounded-xl overflow-hidden border border-white/[0.07] hover:border-amber-400/60 bg-[#13141a] hover:bg-[#1e1a10] transition-all text-left shadow-sm hover:shadow-amber-900/30 hover:shadow-lg"
             >
               <div className="bg-[#0d0e12] h-28 flex items-center justify-center p-2 relative">
                 {previews[key] ? (
