@@ -218,16 +218,17 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
     (async () => {
       const setFn = (k: string, url: string) => { if (!cancelled) setStartPreviews((prev) => ({ ...prev, [k]: url })); };
-      // Render built-in thumbnails in parallel with the API call — no blocking
-      const [templates] = await Promise.all([
-        apiLoadTemplates(),
-        runConcurrent(BUILTIN_START_ITEMS.map((i) => ({ key: i.key, design: i.design })), setFn),
-      ]);
+      // Start built-in renders immediately — don't wait for API call
+      const builtinRender = runConcurrent(BUILTIN_START_ITEMS.map((i) => ({ key: i.key, design: i.design })), setFn);
+      // Fetch saved templates in parallel with built-in renders
+      const templates = await apiLoadTemplates();
       if (cancelled) return;
       setStartTemplates(templates);
-      if (templates.length > 0) {
-        await runConcurrent(templates.map((t) => ({ key: t.id, design: t.design })), setFn);
-      }
+      // Render saved template previews concurrently with built-in — not after
+      await Promise.all([
+        builtinRender,
+        templates.length > 0 ? runConcurrent(templates.map((t) => ({ key: t.id, design: t.design })), setFn) : Promise.resolve(),
+      ]);
     })();
     return () => { cancelled = true; };
   }, [isStartScreen]);
@@ -342,6 +343,11 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     const CACHE_KEY = 'wattaman_thumb_v2';
     const thumbScale = (d: CardDesign) => d.width > 500 ? 0.28 : 0.5;
 
+    // Pre-populate from start screen previews so built-in + saved thumbs appear instantly
+    if (Object.keys(startPreviews).length > 0) {
+      setTemplatePreviews((prev) => ({ ...startPreviews, ...prev }));
+    }
+
     const runConcurrent = async (
       items: { key: string; design: CardDesign }[],
       limit = 3,
@@ -365,20 +371,25 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       await Promise.allSettled(Array.from({ length: Math.min(limit, items.length) }, worker));
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     (async () => {
-      // Render built-in thumbnails in parallel with the API call — no blocking
-      const [templates] = await Promise.all([
-        apiLoadTemplates(),
-        runConcurrent(BUILTIN_START_ITEMS.map((i) => ({ key: i.key, design: i.design }))),
-      ]);
+      // Reuse already-loaded template list to skip duplicate API call
+      const alreadyLoaded = savedTemplates.length > 0 ? savedTemplates : startTemplates.length > 0 ? startTemplates : null;
+      // Start built-in renders immediately — don't block on API or saved renders
+      const builtinRender = runConcurrent(BUILTIN_START_ITEMS.map((i) => ({ key: i.key, design: i.design })));
+      // Fetch template list only if not already available
+      const templates = alreadyLoaded ?? await apiLoadTemplates();
       if (cancelled) return;
-      setSavedTemplates(templates);
-      if (templates.length > 0) {
-        await runConcurrent(templates.map((t) => ({ key: t.id, design: t.design })));
-      }
+      // Populate savedTemplates if it was empty (first open or entering editor directly)
+      if (savedTemplates.length === 0 && templates.length > 0) setSavedTemplates(templates);
+      // Render saved template previews concurrently with built-in — not after
+      await Promise.all([
+        builtinRender,
+        templates.length > 0 ? runConcurrent(templates.map((t) => ({ key: t.id, design: t.design }))) : Promise.resolve(),
+      ]);
     })();
     return () => { cancelled = true; };
-  }, [showTemplatePicker]);
+  }, [showTemplatePicker]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Stable refs for use inside event listeners ────────────────────────────
   const handleSaveRef = useRef<() => void>(() => {});
