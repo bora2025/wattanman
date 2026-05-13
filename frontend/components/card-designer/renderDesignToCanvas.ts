@@ -208,9 +208,10 @@ export async function renderDesignToCanvas(
 /** Replace {{Placeholder}} tokens with real values */
 function substituteFields(template: string, values?: Record<string, string>): string {
   if (!values) return template;
-  return template.replace(/\{\{([^}]+)\}\}/g, (_, key) => {
+  return template.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
     const trimmed = key.trim();
-    return values[trimmed] ?? `{{${trimmed}}}`;
+    // fieldValues keys may include braces e.g. '{{name}}' or plain 'name'
+    return values[`{{${trimmed}}}`] ?? values[trimmed] ?? match;
   });
 }
 

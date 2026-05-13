@@ -77,6 +77,7 @@ export default function CertificatePrintPage() {
   const [mode, setMode] = useState<Mode>('certificate-student');
   const [design, setDesign] = useState<CardDesign | null>(null);
   const [designLoading, setDesignLoading] = useState(true);
+  const [schoolName, setSchoolName] = useState('Wattaman School');
 
   // Student data
   const [studyYears, setStudyYears] = useState<StudyYear[]>([]);
@@ -97,6 +98,14 @@ export default function CertificatePrintPage() {
   const [exporting, setExporting] = useState(false);
   const [studyYearLabel, setStudyYearLabel] = useState('');
   const cancelRef = useRef(false);
+
+  // Load design
+  useEffect(() => {
+    apiFetch('/api/auth/me').then((r) => r.ok ? r.json() : null).then((me) => {
+      if (me?.department?.name) setSchoolName(me.department.name);
+      else if (me?.name) setSchoolName(me.name);
+    }).catch(() => {});
+  }, []);
 
   // Load design
   useEffect(() => {
@@ -155,6 +164,8 @@ export default function CertificatePrintPage() {
   }, [mode, loadStaff]);
 
   // Build field values for a student
+  const todayFormatted = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
   const studentFieldValues = (s: Student, className: string): Record<string, string> => ({
     '{{name}}': s.name,
     '{{studentNumber}}': s.studentNumber ?? '',
@@ -166,6 +177,8 @@ export default function CertificatePrintPage() {
     '{{address}}': s.address ?? '',
     '{{qrCode}}': s.qrCode ?? s.id,
     '{{studyYear}}': studyYearLabel,
+    '{{schoolName}}': schoolName,
+    '{{certificateDate}}': todayFormatted,
   });
 
   const staffFieldValues = (u: StaffUser): Record<string, string> => ({
@@ -175,6 +188,8 @@ export default function CertificatePrintPage() {
     '{{role}}': u.role,
     '{{department}}': u.department ?? '',
     '{{qrCode}}': u.id,
+    '{{schoolName}}': schoolName,
+    '{{certificateDate}}': todayFormatted,
   });
 
   // Generate QR data URL
