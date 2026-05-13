@@ -1,6 +1,7 @@
 ﻿'use client';
 
-import { ChangeEvent, useState, useRef } from 'react';
+import { ChangeEvent, useState, useRef, useCallback } from 'react';
+import type { Config } from '@imgly/background-removal';
 import {
   CardDesign, CardSize, CARD_SIZE_PRESETS,
   TextElement, LogoElement, ShapeElement, GradientStop,
@@ -136,6 +137,7 @@ function TogglePill({ active, onToggle, label }: { active: boolean; onToggle: ()
 export default function Toolbar({ design, selectedId, onDesignChange, onSelect }: ToolbarProps) {
   const [activeTab, setActiveTab] = useState<Tab>('text');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [removingBg, setRemovingBg] = useState<Record<string, boolean>>({});
 
   const update = (partial: Partial<CardDesign>) => onDesignChange({ ...design, ...partial });
   const genId = () => Math.random().toString(36).slice(2, 10);
@@ -176,6 +178,26 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
   };
   const deleteLogo = (id: string) => { update({ logos: design.logos.filter((l) => l.id !== id) }); if (selectedId === id) onSelect?.(null); };
   const updateLogo = (id: string, changes: Partial<LogoElement>) => update({ logos: design.logos.map((l) => l.id === id ? { ...l, ...changes } : l) });
+
+  const handleRemoveBg = useCallback(async (logo: LogoElement) => {
+    setRemovingBg((p) => ({ ...p, [logo.id]: true }));
+    try {
+      const { removeBackground } = await import('@imgly/background-removal');
+      const cfg: Config = { publicPath: `https://unpkg.com/@imgly/background-removal@1.7.0/dist/` };
+      const blob = await removeBackground(logo.src, cfg);
+      const newSrc = await new Promise<string>((res) => {
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result as string);
+        fr.readAsDataURL(blob);
+      });
+      update({ logos: design.logos.map((l) => l.id === logo.id ? { ...l, src: newSrc, originalSrc: l.originalSrc ?? l.src, removeBg: false } : l) });
+    } catch (err) {
+      console.error('Background removal failed', err);
+    } finally {
+      setRemovingBg((p) => { const n = { ...p }; delete n[logo.id]; return n; });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [design.logos]);
 
   /* Shapes */
   const addShape = (type: 'rectangle' | 'circle' | 'line') => {
@@ -592,8 +614,36 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
                       {/* Border Radius */}
                       <SliderRow label="Radius" value={logo.borderRadius ?? 0} min={0} max={Math.floor(Math.min(logo.width, logo.height) / 2)} onChange={(v) => updateLogo(logo.id, { borderRadius: v })} unit="px" />
 
-                      {/* Remove White Background */}
-                      <TogglePill active={!!logo.removeBg} onToggle={() => updateLogo(logo.id, { removeBg: !logo.removeBg })} label="Remove White BG" />
+                      {/* Remove Background */}
+                      <div>
+                        <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Background Removal</p>
+                        {removingBg[logo.id] ? (
+                          <div className="flex items-center justify-center gap-2 py-2 rounded-lg bg-slate-800 border border-slate-700">
+                            <svg className="w-3.5 h-3.5 text-indigo-400 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                            <span className="text-[11px] text-indigo-300">Removing background…</span>
+                          </div>
+                        ) : logo.originalSrc ? (
+                          <div className="flex gap-1.5">
+                            <div className="flex-1 flex items-center gap-1.5 py-1.5 px-2 rounded-lg bg-emerald-900/30 border border-emerald-700/50">
+                              <svg viewBox="0 0 16 16" className="w-3 h-3 text-emerald-400 shrink-0" fill="currentColor"><path d="M6.5 11.5L3 8l1-1 2.5 2.5 6-6 1 1z"/></svg>
+                              <span className="text-[10px] text-emerald-400">BG removed</span>
+                            </div>
+                            <button
+                              onClick={() => updateLogo(logo.id, { src: logo.originalSrc!, originalSrc: undefined })}
+                              className="px-2 py-1.5 rounded-lg text-[10px] text-slate-400 hover:text-red-400 bg-slate-800 hover:bg-red-500/10 border border-slate-700 transition-colors"
+                              title="Restore original image"
+                            >Restore</button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleRemoveBg(logo)}
+                            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-violet-700 hover:bg-violet-600 text-white text-xs font-semibold transition-colors shadow-sm shadow-violet-900/40"
+                          >
+                            <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><path d="M3 17l4-4m0 0l3-3m-3 3l-3-3m6 0l4-4m0 0l3-3m-3 3l-3-3"/><circle cx="15" cy="5" r="2" fill="currentColor" stroke="none"/></svg>
+                            Remove Background (AI)
+                          </button>
+                        )}
+                      </div>
 
                       {/* Crop */}
                       <div>

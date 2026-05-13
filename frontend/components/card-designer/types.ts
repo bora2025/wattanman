@@ -49,6 +49,8 @@ export interface LogoElement {
   cropW?: number;
   cropH?: number;
   removeBg?: boolean;      // CSS mix-blend-mode trick for white bg removal
+  /** Original src saved before AI background removal — set when AI removal is applied */
+  originalSrc?: string;
 }
 
 export type ShapeType = 'rectangle' | 'circle' | 'line';
