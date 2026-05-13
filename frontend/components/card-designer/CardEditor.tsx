@@ -19,6 +19,15 @@ import Toolbar from './Toolbar';
 import LayersPanel from './LayersPanel';
 import NewProjectDialog from './NewProjectDialog';
 
+// Module-level cache: avoids duplicate API calls within the same page session
+let _templateListCache: SavedTemplate[] | null = null;
+function invalidateTemplateListCache() { _templateListCache = null; }
+async function loadTemplatesCached(): Promise<SavedTemplate[]> {
+  if (_templateListCache !== null) return _templateListCache;
+  _templateListCache = await apiLoadTemplates();
+  return _templateListCache;
+}
+
 const TEMPLATES: Partial<Record<CardType, CardDesign>> = {
   student: STUDENT_TEMPLATE,
   staff: STAFF_TEMPLATE,
@@ -200,11 +209,12 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       const worker = async () => {
         while (queue.length && !cancelled) {
           const item = queue.shift()!;
-          // Let browser paint any already-finished thumbnails
+          // Check cache first — no yield needed for instant hits
+          const cacheHit = sessionStorage.getItem(`${CACHE_KEY}:${item.key}`);
+          if (cacheHit) { if (!cancelled) setFn(item.key, cacheHit); continue; }
+          // Only yield before expensive canvas renders
           await new Promise<void>((r) => setTimeout(r, 0));
           if (cancelled) break;
-          const cacheHit = sessionStorage.getItem(`${CACHE_KEY}:${item.key}`);
-          if (cacheHit) { setFn(item.key, cacheHit); continue; }
           try {
             const c = await renderDesignToCanvas(item.design, { scale: thumbScale(item.design) });
             const url = c.toDataURL('image/jpeg', 0.5);
@@ -220,8 +230,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       const setFn = (k: string, url: string) => { if (!cancelled) setStartPreviews((prev) => ({ ...prev, [k]: url })); };
       // Start built-in renders immediately — don't wait for API call
       const builtinRender = runConcurrent(BUILTIN_START_ITEMS.map((i) => ({ key: i.key, design: i.design })), setFn);
-      // Fetch saved templates in parallel with built-in renders
-      const templates = await apiLoadTemplates();
+      // Fetch saved templates list (module-level cache: instant on second+ call)
+      const templates = await loadTemplatesCached();
       if (cancelled) return;
       setStartTemplates(templates);
       // Render saved template previews concurrently with built-in — not after
@@ -356,10 +366,12 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       const worker = async () => {
         while (queue.length && !cancelled) {
           const item = queue.shift()!;
-          await new Promise<void>((r) => setTimeout(r, 0));
-          if (cancelled) break;
+          // Check cache first — no yield needed for instant hits
           const cacheHit = sessionStorage.getItem(`${CACHE_KEY}:${item.key}`);
           if (cacheHit) { if (!cancelled) setTemplatePreviews((p) => ({ ...p, [item.key]: cacheHit })); continue; }
+          // Only yield before expensive canvas renders
+          await new Promise<void>((r) => setTimeout(r, 0));
+          if (cancelled) break;
           try {
             const c = await renderDesignToCanvas(item.design, { scale: thumbScale(item.design) });
             const url = c.toDataURL('image/jpeg', 0.5);
@@ -377,8 +389,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       const alreadyLoaded = savedTemplates.length > 0 ? savedTemplates : startTemplates.length > 0 ? startTemplates : null;
       // Start built-in renders immediately — don't block on API or saved renders
       const builtinRender = runConcurrent(BUILTIN_START_ITEMS.map((i) => ({ key: i.key, design: i.design })));
-      // Fetch template list only if not already available
-      const templates = alreadyLoaded ?? await apiLoadTemplates();
+      // Module-level cache makes this instant on second+ call; only hits API on first ever open
+      const templates = alreadyLoaded ?? await loadTemplatesCached();
       if (cancelled) return;
       // Populate savedTemplates if it was empty (first open or entering editor directly)
       if (savedTemplates.length === 0 && templates.length > 0) setSavedTemplates(templates);
@@ -524,7 +536,14 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const handleSaveAsTemplate = async () => {
     const name = templateName.trim();
     if (!name) return;
-    await apiSaveTemplate(name, design);
+    const newTemplate = await apiSaveTemplate(name, design);
+    // Invalidate module cache so next open fetches fresh list
+    invalidateTemplateListCache();
+    if (newTemplate) {
+      // Immediately append to both state lists so picker shows it without re-fetch
+      setSavedTemplates((prev) => [...prev, newTemplate]);
+      setStartTemplates((prev) => [...prev, newTemplate]);
+    }
     setTemplateName(''); setShowSaveTemplate(false);
   };
 
@@ -540,7 +559,9 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const handleLoadTemplate = (tpl: SavedTemplate) => handleApplyTemplate(tpl.design);
   const handleDeleteTemplate = async (id: string) => {
     await apiDeleteTemplate(id);
+    invalidateTemplateListCache();
     setSavedTemplates((prev) => prev.filter((t) => t.id !== id));
+    setStartTemplates((prev) => prev.filter((t) => t.id !== id));
   };
 
   // ── Card type switch ──────────────────────────────────────────────────────
