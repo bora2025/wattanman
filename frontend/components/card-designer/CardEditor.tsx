@@ -175,14 +175,27 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     }).finally(() => { setTimeout(() => { isLoadingRef.current = false; }, 2000); });
   }, [initialCardType, syncToServer]);
 
-  // ── Start screen: preload template previews ──────────────────────────────
+  // ── Start screen: preload template previews (parallel + sessionStorage cache) ──
   useEffect(() => {
     if (!isStartScreen) return;
     let cancelled = false;
+    const CACHE_KEY = 'wattaman_start_previews_v1';
+
+    const renderOne = async (key: string, design: CardDesign): Promise<[string, string]> => {
+      const cached = sessionStorage.getItem(`${CACHE_KEY}:${key}`);
+      if (cached) return [key, cached];
+      const c = await renderDesignToCanvas(design, { scale: 0.6 });
+      const dataUrl = c.toDataURL('image/jpeg', 0.55);
+      try { sessionStorage.setItem(`${CACHE_KEY}:${key}`, dataUrl); } catch {}
+      return [key, dataUrl];
+    };
+
     (async () => {
       const templates = await apiLoadTemplates();
-      if (!cancelled) setStartTemplates(templates);
-      const items = [
+      if (cancelled) return;
+      setStartTemplates(templates);
+
+      const builtinItems = [
         { key: 'student', design: STUDENT_TEMPLATE },
         { key: 'staff', design: STAFF_TEMPLATE },
         { key: 'st1', design: STUDENT_CLASSIC_BLUE },
@@ -196,16 +209,22 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         { key: 'sf4', design: STAFF_FOREST },
         { key: 'sf5', design: STAFF_SLATE_EXECUTIVE },
       ];
-      const previews: Record<string, string> = {};
-      for (const item of items) {
-        if (cancelled) break;
-        try { const c = await renderDesignToCanvas(item.design, { scale: 1 }); previews[item.key] = c.toDataURL('image/jpeg', 0.7); } catch {}
-      }
-      for (const tpl of templates) {
-        if (cancelled) break;
-        try { const c = await renderDesignToCanvas(tpl.design, { scale: 1 }); previews[tpl.id] = c.toDataURL('image/jpeg', 0.7); } catch {}
-      }
-      if (!cancelled) setStartPreviews(previews);
+
+      // Render ALL built-ins in parallel — each resolves independently and updates state immediately
+      const builtinPromises = builtinItems.map((item) =>
+        renderOne(item.key, item.design).then(([k, url]) => {
+          if (!cancelled) setStartPreviews((prev) => ({ ...prev, [k]: url }));
+        }).catch(() => {})
+      );
+
+      // Render saved templates in parallel too
+      const savedPromises = templates.map((tpl) =>
+        renderOne(tpl.id, tpl.design).then(([k, url]) => {
+          if (!cancelled) setStartPreviews((prev) => ({ ...prev, [k]: url }));
+        }).catch(() => {})
+      );
+
+      await Promise.allSettled([...builtinPromises, ...savedPromises]);
     })();
     return () => { cancelled = true; };
   }, [isStartScreen]);

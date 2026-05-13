@@ -225,7 +225,7 @@ function drawImg(
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    const timer = setTimeout(() => { resolve(); }, 10000);
+    const timer = setTimeout(() => { resolve(); }, 3000);
     img.onload = () => { clearTimeout(timer); ctx.drawImage(img, x, y, w, h); resolve(); };
     img.onerror = () => { clearTimeout(timer); resolve(); };
     img.src = getProxiedUrl(src);
@@ -263,7 +263,7 @@ function drawImageInRect(
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    const timer = setTimeout(() => { resolve(); }, 10000);
+    const timer = setTimeout(() => { resolve(); }, 3000);
     img.onload = () => {
       clearTimeout(timer);
       ctx.save();
