@@ -564,7 +564,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
       {/* Preview mode banner */}
       {isPreviewMode && (
         <div className="shrink-0 flex items-center justify-between bg-violet-600 text-white px-4 py-1 text-sm z-10">
-          <span className="flex items-center gap-2 text-xs"><span>👁️</span><span className="font-semibold">Preview Mode</span><span className="text-violet-200">— {{placeholders}} replaced with sample data. Canvas is read-only.</span></span>
+          <span className="flex items-center gap-2 text-xs"><span>👁️</span><span className="font-semibold">Preview Mode</span><span className="text-violet-200">{'— {{placeholders}} replaced with sample data. Canvas is read-only.'}</span></span>
           <button onClick={() => setIsPreviewMode(false)} className="px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-medium transition-colors">Exit</button>
         </div>
       )}
