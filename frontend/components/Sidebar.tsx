@@ -34,26 +34,26 @@ const colorMap: Record<string, { bg: string; text: string; hover: string; active
   indigo: {
     bg: 'bg-indigo-600',
     text: 'text-indigo-100',
-    hover: 'hover:bg-indigo-700/50',
-    active: 'bg-white/15 text-white font-semibold',
+    hover: 'hover:bg-white/10',
+    active: 'bg-white/18 text-white font-semibold',
     ring: 'ring-indigo-500',
-    gradient: 'from-indigo-700 to-indigo-900',
+    gradient: 'from-[#1e1b4b] to-[#312e81]',
   },
   emerald: {
     bg: 'bg-emerald-600',
     text: 'text-emerald-100',
-    hover: 'hover:bg-emerald-700/50',
-    active: 'bg-white/15 text-white font-semibold',
+    hover: 'hover:bg-white/10',
+    active: 'bg-white/18 text-white font-semibold',
     ring: 'ring-emerald-500',
-    gradient: 'from-emerald-700 to-emerald-900',
+    gradient: 'from-[#064e3b] to-[#065f46]',
   },
   sky: {
     bg: 'bg-sky-600',
     text: 'text-sky-100',
-    hover: 'hover:bg-sky-700/50',
-    active: 'bg-white/15 text-white font-semibold',
+    hover: 'hover:bg-white/10',
+    active: 'bg-white/18 text-white font-semibold',
     ring: 'ring-sky-500',
-    gradient: 'from-sky-700 to-sky-900',
+    gradient: 'from-[#0c4a6e] to-[#075985]',
   },
 };
 
@@ -248,7 +248,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
       <aside className={`
         hidden lg:flex lg:sticky top-0 left-0 z-50 lg:z-auto
         h-screen bg-gradient-to-b ${colors.gradient} text-white
-        flex-col shadow-xl transition-all duration-200 overflow-hidden
+        flex-col shadow-2xl transition-all duration-200 overflow-hidden
         ${sidebarOpen ? 'w-64' : 'w-14'}
       `}>
         {/* Logo area */}
@@ -257,7 +257,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
             <button
               onClick={() => setSidebarOpen((v) => !v)}
               title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-              className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg font-bold backdrop-blur-sm shrink-0 hover:bg-white/30 transition-colors"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 hover:bg-white/20 transition-all duration-150" style={{ background: 'rgba(255,255,255,0.13)' }}
             >
               {sidebarOpen
                 ? <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M5 7l-3 3 3 3M3 10h14M15 7l3 3-3 3" /></svg>
@@ -265,8 +265,8 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
             </button>
             {sidebarOpen && (
               <div className="min-w-0">
-                <h1 className="font-bold text-base leading-tight truncate">{title}</h1>
-                {subtitle && <p className="text-xs text-white/60 mt-0.5 truncate">{subtitle}</p>}
+                <h1 className="font-bold text-sm leading-tight truncate">{title}</h1>
+                {subtitle && <p className="text-[11px] text-white/50 mt-0.5 truncate">{subtitle}</p>}
               </div>
             )}
           </div>
@@ -286,14 +286,14 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
                 <Link
                   href={item.href}
                   title={sidebarOpen ? undefined : t(item.label)}
-                  className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm transition-all duration-150 ${
+                  className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm transition-all duration-150 ${
                     isActive
                       ? colors.active
                       : `${colors.text} ${colors.hover}`
                   } ${sidebarOpen ? '' : 'justify-center'}`}
                 >
-                  <NavIcon icon={item.icon} size={18} />
-                  {sidebarOpen && <span>{t(item.label)}</span>}
+                  <NavIcon icon={item.icon} size={17} />
+                  {sidebarOpen && <span className="truncate">{t(item.label)}</span>}
                 </Link>
               </div>
             );
@@ -305,26 +305,26 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
           <button
             onClick={() => setLang(lang === 'en' ? 'kh' : 'en')}
             title={sidebarOpen ? undefined : (lang === 'en' ? 'ភាសាខ្មែរ' : 'English')}
-            className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm w-full text-left ${colors.text} ${colors.hover} transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
+            className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm w-full text-left ${colors.text} hover:bg-white/10 transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
           >
-            <IconGlobe size={18} />
-            {sidebarOpen && <span>{lang === 'en' ? 'ភាសាខ្មែរ' : 'English'}</span>}
+            <IconGlobe size={17} />
+            {sidebarOpen && <span className="truncate">{lang === 'en' ? 'ភáso ខ្មែរ' : 'English'}</span>}
           </button>
           <Link
             href="/"
             title={sidebarOpen ? undefined : t('common.backToHome')}
-            className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm ${colors.text} ${colors.hover} transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
+            className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm ${colors.text} hover:bg-white/10 transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
           >
-            <IconDashboard size={18} />
-            {sidebarOpen && <span>{t('common.backToHome')}</span>}
+            <IconDashboard size={17} />
+            {sidebarOpen && <span className="truncate">{t('common.backToHome')}</span>}
           </Link>
           <button
             onClick={handleLogout}
             title={sidebarOpen ? undefined : t('common.logout')}
-            className={`flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm w-full text-left ${colors.text} ${colors.hover} transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
+            className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm w-full text-left text-red-300/90 hover:bg-white/10 transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
           >
-            <IconLogout size={18} />
-            {sidebarOpen && <span>{t('common.logout')}</span>}
+            <IconLogout size={17} />
+            {sidebarOpen && <span className="truncate">{t('common.logout')}</span>}
           </button>
         </div>
       </aside>
