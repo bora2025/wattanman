@@ -34,6 +34,15 @@ const DESIGNER_CARDS = [
     color: 'emerald',
     gradient: 'from-emerald-500 to-teal-500',
   },
+  {
+    href: '/admin/card-designer/print',
+    icon: '🖨️',
+    title: 'Print Certificates',
+    description: 'Preview, select and batch-export student or staff certificates as PDF.',
+    badge: 'Print',
+    color: 'amber',
+    gradient: 'from-amber-500 to-orange-500',
+  },
 ];
 
 export default function CardDesignerPage() {
@@ -84,7 +93,7 @@ export default function CardDesignerPage() {
                     <p className="text-sm text-slate-500 leading-relaxed flex-1">{card.description}</p>
 
                     <div className="mt-5 flex items-center gap-1.5 text-sm font-semibold text-indigo-600 group-hover:text-indigo-700">
-                      Open Designer
+                      {card.href.endsWith('/print') ? 'Open Print Page' : 'Open Designer'}
                       <svg viewBox="0 0 16 16" className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2}>
                         <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>

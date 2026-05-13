@@ -555,32 +555,15 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
               const isSel = selectedId === logo.id;
               return (
                 <div key={logo.id}
-                  className={`rounded-lg border overflow-hidden transition-all ${isSel ? 'border-indigo-500 bg-slate-800/80' : 'border-slate-800 hover:border-slate-700'}`}>
+                  className={`rounded-lg border transition-all ${isSel ? 'border-indigo-500 bg-slate-800/80' : 'border-slate-800 hover:border-slate-700'}`}>
                   <div className="flex items-center gap-2 px-2 py-1.5 cursor-pointer group" onClick={() => onSelect?.(isSel ? null : logo.id)}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={logo.src} alt={logo.name} className="w-8 h-8 object-contain rounded-md border border-slate-700 bg-slate-800" />
+                    <img src={logo.src} alt={logo.name} className="w-8 h-8 object-contain rounded-md border border-slate-700 bg-slate-800 shrink-0" />
                     <span className="flex-1 text-xs truncate text-slate-300">{logo.name}</span>
+                    {isSel && <span className="text-[9px] text-indigo-400 shrink-0">Selected</span>}
                     <button onClick={(e) => { e.stopPropagation(); deleteLogo(logo.id); }}
-                      className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded text-red-500 hover:bg-red-500/20 transition-all text-[10px]">×</button>
+                      className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded text-red-500 hover:bg-red-500/20 transition-all text-[10px] shrink-0">×</button>
                   </div>
-                  {isSel && selectedLogo && (
-                    <div className="px-2.5 pb-3 pt-2 border-t border-slate-700/60 space-y-3">
-                      <div>
-                        <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Size</p>
-                        <div className="flex gap-2">
-                          <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">W</p><NumInput value={selectedLogo.width} onChange={(v) => updateLogo(selectedLogo.id, { width: Math.max(10, v) })} min={10} /></div>
-                          <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">H</p><NumInput value={selectedLogo.height} onChange={(v) => updateLogo(selectedLogo.id, { height: Math.max(10, v) })} min={10} /></div>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Position</p>
-                        <div className="flex gap-2">
-                          <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">X</p><NumInput value={Math.round(selectedLogo.x)} onChange={(v) => updateLogo(selectedLogo.id, { x: v })} /></div>
-                          <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">Y</p><NumInput value={Math.round(selectedLogo.y)} onChange={(v) => updateLogo(selectedLogo.id, { y: v })} /></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               );
             })}
