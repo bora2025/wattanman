@@ -581,7 +581,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           savedTemplates={startTemplates}
           onNewStudent={() => handleCardTypeChange('student')}
           onNewStaff={() => handleCardTypeChange('staff')}
-          onNewCertificate={() => setShowNewProject(true)}
+          onNewStudentCert={() => handleCardTypeChange('certificate-student')}
+          onNewStaffCert={() => handleCardTypeChange('certificate-staff')}
           onOpen={(d) => handleApplyTemplate(d)}
         />
       ) : (<>
@@ -1118,11 +1119,12 @@ interface StartScreenProps {
   savedTemplates: SavedTemplate[];
   onNewStudent: () => void;
   onNewStaff: () => void;
-  onNewCertificate: () => void;
+  onNewStudentCert: () => void;
+  onNewStaffCert: () => void;
   onOpen: (design: CardDesign) => void;
 }
 
-function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNewCertificate, onOpen }: StartScreenProps) {
+function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNewStudentCert, onNewStaffCert, onOpen }: StartScreenProps) {
   const allLoaded = BUILTIN_START_ITEMS.every((i) => previews[i.key]);
   return (
     <div className="flex h-full bg-[#1a1b22] text-white overflow-hidden select-none">
@@ -1166,16 +1168,32 @@ function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNew
                 <div className="text-[10px] text-slate-500 mt-0.5">Photo card with staff data</div>
               </div>
             </button>
-            <button
-              onClick={onNewCertificate}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-amber-600/25 border border-white/[0.06] hover:border-amber-500/50 transition-all text-left group"
-            >
-              <span className="text-xl leading-none shrink-0">📜</span>
-              <div>
-                <div className="text-[12px] font-semibold text-white group-hover:text-amber-200 transition-colors">Certificate</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">Student or staff certificate</div>
+            {/* Certificate sub-section */}
+            <div className="mt-1 mb-0.5">
+              <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 px-1">Certificates</p>
+              <div className="space-y-1">
+                <button
+                  onClick={onNewStudentCert}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-amber-600/25 border border-white/[0.06] hover:border-amber-500/50 transition-all text-left group"
+                >
+                  <span className="text-base leading-none shrink-0">📜</span>
+                  <div>
+                    <div className="text-[11px] font-semibold text-white group-hover:text-amber-200 transition-colors">Student Certificate</div>
+                    <div className="text-[9px] text-slate-500 mt-0.5">Award for student records</div>
+                  </div>
+                </button>
+                <button
+                  onClick={onNewStaffCert}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-rose-600/25 border border-white/[0.06] hover:border-rose-500/50 transition-all text-left group"
+                >
+                  <span className="text-base leading-none shrink-0">🏅</span>
+                  <div>
+                    <div className="text-[11px] font-semibold text-white group-hover:text-rose-200 transition-colors">Staff Certificate</div>
+                    <div className="text-[9px] text-slate-500 mt-0.5">Award for staff records</div>
+                  </div>
+                </button>
               </div>
-            </button>
+            </div>
           </div>
         </div>
 
