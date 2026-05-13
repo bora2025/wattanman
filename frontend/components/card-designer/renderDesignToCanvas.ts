@@ -182,7 +182,22 @@ export async function renderDesignToCanvas(
       ctx.restore();
     } else if (item.kind === 'logo') {
       const logo = item.data;
-      await drawImg(ctx, logo.src, logo.x, logo.y, logo.width, logo.height);
+      ctx.save();
+      ctx.globalAlpha = logo.opacity ?? 1;
+      if (logo.blur && logo.blur > 0) {
+        ctx.filter = `blur(${logo.blur}px)`;
+      }
+      // Clip to border-radius if set
+      if (logo.borderRadius && logo.borderRadius > 0) {
+        ctx.beginPath();
+        ctx.roundRect(logo.x, logo.y, logo.width, logo.height, logo.borderRadius);
+        ctx.clip();
+      }
+      // Draw with optional crop
+      await drawLogoImg(ctx, logo.src, logo.x, logo.y, logo.width, logo.height, {
+        cropX: logo.cropX, cropY: logo.cropY, cropW: logo.cropW, cropH: logo.cropH,
+      });
+      ctx.restore();
     } else {
       const text = item.data;
       const content = substituteFields(text.content, ctx2.fieldValues);
@@ -228,6 +243,34 @@ function drawImg(
     img.crossOrigin = 'anonymous';
     const timer = setTimeout(() => { resolve(); }, 3000);
     img.onload = () => { clearTimeout(timer); ctx.drawImage(img, x, y, w, h); resolve(); };
+    img.onerror = () => { clearTimeout(timer); resolve(); };
+    img.src = getProxiedUrl(src);
+  });
+}
+
+/** Draw logo with optional crop fractions (0–1) */
+function drawLogoImg(
+  ctx: CanvasRenderingContext2D,
+  src: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  crop?: { cropX?: number; cropY?: number; cropW?: number; cropH?: number },
+): Promise<void> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const timer = setTimeout(() => { resolve(); }, 3000);
+    img.onload = () => {
+      clearTimeout(timer);
+      const cx = (crop?.cropX ?? 0) * img.naturalWidth;
+      const cy = (crop?.cropY ?? 0) * img.naturalHeight;
+      const cw = (crop?.cropW ?? 1) * img.naturalWidth;
+      const ch = (crop?.cropH ?? 1) * img.naturalHeight;
+      ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h);
+      resolve();
+    };
     img.onerror = () => { clearTimeout(timer); resolve(); };
     img.src = getProxiedUrl(src);
   });

@@ -541,7 +541,8 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
         )}
 
         {/* ━━ IMAGES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        {activeTab === 'images' && (
+        {activeTab === 'images' && (() => {
+          return (
           <div className="p-2.5 space-y-2">
             <PanelLabel>Logos & Images</PanelLabel>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
@@ -555,7 +556,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
               const isSel = selectedId === logo.id;
               return (
                 <div key={logo.id}
-                  className={`rounded-lg border transition-all ${isSel ? 'border-indigo-500 bg-slate-800/80' : 'border-slate-800 hover:border-slate-700'}`}>
+                  className={`rounded-lg border transition-all ${isSel ? 'border-indigo-500 bg-slate-800/80 shadow-md shadow-indigo-900/30' : 'border-slate-800 hover:border-slate-700 bg-slate-900'}`}>
                   <div className="flex items-center gap-2 px-2 py-1.5 cursor-pointer group" onClick={() => onSelect?.(isSel ? null : logo.id)}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={logo.src} alt={logo.name} className="w-8 h-8 object-contain rounded-md border border-slate-700 bg-slate-800 shrink-0" />
@@ -564,11 +565,77 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
                     <button onClick={(e) => { e.stopPropagation(); deleteLogo(logo.id); }}
                       className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded text-red-500 hover:bg-red-500/20 transition-all text-[10px] shrink-0">×</button>
                   </div>
+
+                  {/* ── Per-image properties (shown when selected) ── */}
+                  {isSel && (
+                    <div className="px-2.5 pb-3 space-y-3 border-t border-slate-700/60 pt-2.5">
+
+                      {/* Size & Position */}
+                      <div>
+                        <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Size & Position</p>
+                        <div className="grid grid-cols-4 gap-1">
+                          {([['width','W'],['height','H'],['x','X'],['y','Y']] as [keyof typeof logo, string][]).map(([k, label]) => (
+                            <div key={k}>
+                              <p className="text-[9px] text-slate-600 mb-0.5 text-center">{label}</p>
+                              <NumInput value={logo[k] as number} onChange={(v) => updateLogo(logo.id, { [k]: (k === 'width' || k === 'height') ? Math.max(4, v) : v })} min={(k === 'width' || k === 'height') ? 4 : undefined} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Opacity */}
+                      <SliderRow label="Opacity" value={Math.round((logo.opacity ?? 1) * 100)} min={0} max={100} onChange={(v) => updateLogo(logo.id, { opacity: v / 100 })} unit="%" />
+
+                      {/* Blur */}
+                      <SliderRow label="Blur" value={logo.blur ?? 0} min={0} max={20} onChange={(v) => updateLogo(logo.id, { blur: v })} unit="px" />
+
+                      {/* Border Radius */}
+                      <SliderRow label="Radius" value={logo.borderRadius ?? 0} min={0} max={Math.floor(Math.min(logo.width, logo.height) / 2)} onChange={(v) => updateLogo(logo.id, { borderRadius: v })} unit="px" />
+
+                      {/* Remove White Background */}
+                      <TogglePill active={!!logo.removeBg} onToggle={() => updateLogo(logo.id, { removeBg: !logo.removeBg })} label="Remove White BG" />
+
+                      {/* Crop */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="text-[9px] text-slate-500 uppercase tracking-widest">Crop</p>
+                          {((logo.cropX ?? 0) > 0 || (logo.cropY ?? 0) > 0 || (logo.cropW ?? 1) < 1 || (logo.cropH ?? 1) < 1) && (
+                            <button onClick={() => updateLogo(logo.id, { cropX: 0, cropY: 0, cropW: 1, cropH: 1 })} className="text-[9px] text-red-400 hover:text-red-300 transition-colors">Reset</button>
+                          )}
+                        </div>
+                        <p className="text-[9px] text-slate-600 mb-2 leading-relaxed">Offset (Left/Top) and visible area (W/H) as % of the original image.</p>
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
+                          {([['cropX','Left %'],['cropY','Top %'],['cropW','Width %'],['cropH','Height %']] as [keyof typeof logo, string][]).map(([key, label]) => {
+                            const isSize = key === 'cropW' || key === 'cropH';
+                            const rawVal = (logo[key] as number | undefined) ?? (isSize ? 1 : 0);
+                            return (
+                              <div key={key}>
+                                <p className="text-[9px] text-slate-600 mb-0.5">{label}</p>
+                                <div className="flex items-center border border-slate-700 rounded overflow-hidden">
+                                  <input type="number" min={0} max={100} step={1}
+                                    value={Math.round(rawVal * 100)}
+                                    onChange={(e) => {
+                                      const pct = Math.min(100, Math.max(0, Number(e.target.value)));
+                                      updateLogo(logo.id, { [key]: pct / 100 });
+                                    }}
+                                    className="flex-1 w-full text-xs text-center py-1 bg-slate-800 text-slate-200 border-0 outline-none [appearance:textfield]"
+                                  />
+                                  <span className="text-[9px] text-slate-600 pr-1.5">%</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
-        )}
+          );
+        })()}
 
         {/* ━━ PHOTO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         {activeTab === 'photo' && (

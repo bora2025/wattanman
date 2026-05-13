@@ -506,8 +506,13 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 return (
                   <div
                     key={logo.id}
-                    className={`absolute cursor-move select-none ${selectedId === logo.id ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
-                    style={{ left: logo.x, top: logo.y, width: logo.width, height: logo.height, zIndex: logo.zIndex ?? 0 }}
+                    className={`absolute cursor-move select-none overflow-hidden ${selectedId === logo.id ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
+                    style={{
+                      left: logo.x, top: logo.y, width: logo.width, height: logo.height,
+                      zIndex: logo.zIndex ?? 0,
+                      borderRadius: logo.borderRadius ?? 0,
+                      opacity: logo.opacity ?? 1,
+                    }}
                     onMouseDown={(e) => handleMouseDown(e, 'logo', logo.id, logo.x, logo.y)}
                     onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); onSelect(logo.id); onContextMenu?.(e, logo.id); }}
                   >
@@ -515,8 +520,16 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                     <img
                       src={logo.src}
                       alt={logo.name}
-                      className="w-full h-full object-contain pointer-events-none"
+                      className="pointer-events-none"
                       draggable={false}
+                      style={{
+                        width: `${100 / (logo.cropW ?? 1)}%`,
+                        height: `${100 / (logo.cropH ?? 1)}%`,
+                        marginLeft: `-${((logo.cropX ?? 0) / (logo.cropW ?? 1)) * 100}%`,
+                        marginTop: `-${((logo.cropY ?? 0) / (logo.cropH ?? 1)) * 100}%`,
+                        filter: logo.blur && logo.blur > 0 ? `blur(${logo.blur}px)` : undefined,
+                        mixBlendMode: logo.removeBg ? 'multiply' : undefined,
+                      }}
                     />
                   </div>
                 );

@@ -40,6 +40,15 @@ export interface LogoElement {
   width: number;
   height: number;
   zIndex?: number;
+  opacity?: number;        // 0–1, default 1
+  blur?: number;           // px, default 0
+  borderRadius?: number;   // px, default 0
+  /** Crop as fraction of original image: 0–1 */
+  cropX?: number;
+  cropY?: number;
+  cropW?: number;
+  cropH?: number;
+  removeBg?: boolean;      // CSS mix-blend-mode trick for white bg removal
 }
 
 export type ShapeType = 'rectangle' | 'circle' | 'line';
