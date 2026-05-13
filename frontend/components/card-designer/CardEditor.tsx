@@ -185,15 +185,33 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   useEffect(() => {
     if (!isStartScreen) return;
     let cancelled = false;
-    const CACHE_KEY = 'wattaman_start_previews_v1';
+    const CACHE_KEY = 'wattaman_thumb_v2';
+    const thumbScale = (d: CardDesign) => d.width > 500 ? 0.28 : 0.5; // certs smaller
 
-    const renderOne = async (key: string, design: CardDesign): Promise<[string, string]> => {
-      const cached = sessionStorage.getItem(`${CACHE_KEY}:${key}`);
-      if (cached) return [key, cached];
-      const c = await renderDesignToCanvas(design, { scale: 0.6 });
-      const dataUrl = c.toDataURL('image/jpeg', 0.55);
-      try { sessionStorage.setItem(`${CACHE_KEY}:${key}`, dataUrl); } catch {}
-      return [key, dataUrl];
+    // Render at most N canvases concurrently; yield to browser between each
+    const runConcurrent = async (
+      items: { key: string; design: CardDesign }[],
+      setFn: (k: string, url: string) => void,
+      limit = 3,
+    ) => {
+      const queue = [...items];
+      const worker = async () => {
+        while (queue.length && !cancelled) {
+          const item = queue.shift()!;
+          // Let browser paint any already-finished thumbnails
+          await new Promise<void>((r) => setTimeout(r, 0));
+          if (cancelled) break;
+          const cacheHit = sessionStorage.getItem(`${CACHE_KEY}:${item.key}`);
+          if (cacheHit) { setFn(item.key, cacheHit); continue; }
+          try {
+            const c = await renderDesignToCanvas(item.design, { scale: thumbScale(item.design) });
+            const url = c.toDataURL('image/jpeg', 0.5);
+            try { sessionStorage.setItem(`${CACHE_KEY}:${item.key}`, url); } catch {}
+            if (!cancelled) setFn(item.key, url);
+          } catch {}
+        }
+      };
+      await Promise.allSettled(Array.from({ length: Math.min(limit, items.length) }, worker));
     };
 
     (async () => {
@@ -214,23 +232,13 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         { key: 'sf3', design: STAFF_ROSE },
         { key: 'sf4', design: STAFF_FOREST },
         { key: 'sf5', design: STAFF_SLATE_EXECUTIVE },
+        ...templates.map((t) => ({ key: t.id, design: t.design })),
       ];
 
-      // Render ALL built-ins in parallel — each resolves independently and updates state immediately
-      const builtinPromises = builtinItems.map((item) =>
-        renderOne(item.key, item.design).then(([k, url]) => {
-          if (!cancelled) setStartPreviews((prev) => ({ ...prev, [k]: url }));
-        }).catch(() => {})
+      await runConcurrent(
+        builtinItems,
+        (k, url) => { if (!cancelled) setStartPreviews((prev) => ({ ...prev, [k]: url })); },
       );
-
-      // Render saved templates in parallel too
-      const savedPromises = templates.map((tpl) =>
-        renderOne(tpl.id, tpl.design).then(([k, url]) => {
-          if (!cancelled) setStartPreviews((prev) => ({ ...prev, [k]: url }));
-        }).catch(() => {})
-      );
-
-      await Promise.allSettled([...builtinPromises, ...savedPromises]);
     })();
     return () => { cancelled = true; };
   }, [isStartScreen]);
@@ -342,10 +350,38 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   useEffect(() => {
     if (!showTemplatePicker) return;
     let cancelled = false;
+    const CACHE_KEY = 'wattaman_thumb_v2';
+    const thumbScale = (d: CardDesign) => d.width > 500 ? 0.28 : 0.5;
+
+    const runConcurrent = async (
+      items: { key: string; design: CardDesign }[],
+      limit = 3,
+    ) => {
+      const queue = [...items];
+      const worker = async () => {
+        while (queue.length && !cancelled) {
+          const item = queue.shift()!;
+          await new Promise<void>((r) => setTimeout(r, 0));
+          if (cancelled) break;
+          const cacheHit = sessionStorage.getItem(`${CACHE_KEY}:${item.key}`);
+          if (cacheHit) { if (!cancelled) setTemplatePreviews((p) => ({ ...p, [item.key]: cacheHit })); continue; }
+          try {
+            const c = await renderDesignToCanvas(item.design, { scale: thumbScale(item.design) });
+            const url = c.toDataURL('image/jpeg', 0.5);
+            try { sessionStorage.setItem(`${CACHE_KEY}:${item.key}`, url); } catch {}
+            if (!cancelled) setTemplatePreviews((p) => ({ ...p, [item.key]: url }));
+          } catch {}
+        }
+      };
+      await Promise.allSettled(Array.from({ length: Math.min(limit, items.length) }, worker));
+    };
+
     (async () => {
       const templates = await apiLoadTemplates();
-      if (!cancelled) setSavedTemplates(templates);
-      const allDesigns = [
+      if (cancelled) return;
+      setSavedTemplates(templates);
+
+      await runConcurrent([
         { key: '__builtin_blank', design: BLANK_TEMPLATE },
         { key: '__builtin_student', design: STUDENT_TEMPLATE },
         { key: '__builtin_staff', design: STAFF_TEMPLATE },
@@ -355,13 +391,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         { key: '__preset_sf2', design: STAFF_DEEP_OCEAN }, { key: '__preset_sf3', design: STAFF_ROSE },
         { key: '__preset_sf4', design: STAFF_FOREST }, { key: '__preset_sf5', design: STAFF_SLATE_EXECUTIVE },
         ...templates.map((t) => ({ key: t.id, design: t.design })),
-      ];
-      const previews: Record<string, string> = {};
-      for (const item of allDesigns) {
-        if (cancelled) break;
-        try { const c = await renderDesignToCanvas(item.design, { scale: 1 }); previews[item.key] = c.toDataURL('image/png'); } catch { /* skip */ }
-      }
-      if (!cancelled) setTemplatePreviews(previews);
+      ]);
     })();
     return () => { cancelled = true; };
   }, [showTemplatePicker]);
