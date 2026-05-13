@@ -132,6 +132,10 @@
       @apply bg-indigo-600 hover:bg-indigo-700;
     }
   }
+  /* Card designer context menu item */
+  .ctx-item {
+    @apply w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors text-left;
+  }
   .btn-success {
     @apply btn bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500 shadow-sm;
   }

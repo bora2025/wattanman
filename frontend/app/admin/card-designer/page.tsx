@@ -22,10 +22,10 @@ export default function CardDesignerPage() {
           <div className="page-header">
             <h1 className="text-2xl font-bold text-slate-800">{t('cardDesigner.title')}</h1>
             <p className="text-sm text-slate-500 mt-1">
-              Design and customize ID cards for students and staff. Switch between card types, add logos, edit text fields, set colors, and export as PNG.
+              Design and customize ID cards for students and staff. New Project dialog, Live Preview, Layers panel, Undo/Redo and multi-format Export.
             </p>
           </div>
-          <div className="page-body">
+          <div className="overflow-hidden">
             <CardEditor />
           </div>
         </div>

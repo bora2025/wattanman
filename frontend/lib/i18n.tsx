@@ -17,7 +17,7 @@ const en: Record<string, string> = {
   'nav.editOfficerAttendance': 'Edit Officer Attendance',
   'nav.studentReport': 'Student Report',
   'nav.officerReport': 'Officer Report',
-  'nav.cardDesigner': 'Card Designer',
+  'nav.cardDesigner': 'Designer',
   'nav.studentCards': 'Student ID Cards',
   'nav.staffCards': 'Staff ID Cards',
   'nav.sessionSettings': 'Session Settings',
