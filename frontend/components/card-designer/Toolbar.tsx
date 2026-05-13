@@ -216,10 +216,10 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
 
   /* ── Render ── */
   return (
-    <div className="flex h-full bg-slate-900 text-slate-200">
+    <div className="flex h-full bg-[#1e1e1e] text-slate-200">
 
       {/* ── Icon rail (dark) ── */}
-      <div className="flex flex-col items-center gap-0.5 py-2 px-1 bg-slate-950 border-r border-slate-800 shrink-0 w-[52px]">
+      <div className="flex flex-col items-center gap-0.5 py-2 px-1 bg-[#141414] border-r border-[#2d2d2d] shrink-0 w-[52px]">
         {TABS.map((tab) => (
           <button
             key={tab.id}

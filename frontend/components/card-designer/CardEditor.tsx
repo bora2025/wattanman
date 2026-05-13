@@ -75,14 +75,14 @@ interface TopBtnProps {
   hideLabel?: boolean;
 }
 function TopBtn({ icon, label, title, onClick, disabled, active, variant = 'default', hideLabel }: TopBtnProps) {
-  const base = 'flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[11px] font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed select-none whitespace-nowrap';
+  const base = 'flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[11px] font-medium transition-all disabled:opacity-25 disabled:cursor-not-allowed select-none whitespace-nowrap';
   const variants: Record<string, string> = {
-    default: active ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
-    emerald: active ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-700 hover:bg-emerald-50',
-    indigo: active ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-700 hover:bg-indigo-50',
-    violet: active ? 'bg-violet-600 text-white shadow-sm' : 'text-violet-700 hover:bg-violet-50',
-    amber: active ? 'bg-amber-500 text-white shadow-sm' : 'text-amber-700 hover:bg-amber-50',
-    danger: 'text-red-500 hover:bg-red-50 hover:text-red-600',
+    default: active ? 'bg-[#3a3a3a] text-white' : 'text-[#aaa] hover:bg-[#333] hover:text-white',
+    emerald: active ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-400 hover:bg-emerald-950/60 hover:text-emerald-300',
+    indigo: active ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-400 hover:bg-indigo-950/60 hover:text-indigo-300',
+    violet: active ? 'bg-violet-600 text-white shadow-sm' : 'text-violet-400 hover:bg-violet-950/60 hover:text-violet-300',
+    amber: active ? 'bg-amber-500 text-white shadow-sm' : 'text-amber-400 hover:bg-amber-950/60 hover:text-amber-300',
+    danger: 'text-red-400 hover:bg-red-950/40 hover:text-red-300',
   };
   return (
     <button onClick={onClick} disabled={disabled} title={title ?? label} className={`${base} ${variants[variant]}`}>
@@ -93,7 +93,7 @@ function TopBtn({ icon, label, title, onClick, disabled, active, variant = 'defa
 }
 
 function Divider() {
-  return <div className="w-px h-5 bg-slate-200 mx-1 shrink-0" />;
+  return <div className="w-px h-4 bg-[#404040] mx-1 shrink-0" />;
 }
 
 export default function CardEditor({ initialCardType, openNewProject, onSave }: { initialCardType?: CardType; openNewProject?: boolean; onSave?: () => void } = {}) {
@@ -628,7 +628,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     selQr ? `${Math.round(selQr.x)}, ${Math.round(selQr.y)}` : null;
 
   return (
-    <div className="flex flex-col bg-[#f0f0f0] h-full">
+    <div className="flex flex-col bg-[#1a1a1a] h-full">
 
       {isStartScreen ? (
         <StartScreen
@@ -643,7 +643,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       ) : (<>
 
       {/* ── TOP TOOLBAR ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center gap-0 bg-white border-b border-slate-200 px-2 py-1 h-[42px] z-10 overflow-x-auto">
+      <div className="shrink-0 flex items-center gap-0 bg-[#1e1e1e] border-b border-[#383838] px-2 py-1 h-[42px] z-10 overflow-x-auto">
 
         {/* File group */}
         <TopBtn icon={<Icons.New />} label="New" onClick={() => setShowNewProject(true)} />
@@ -656,23 +656,23 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         <Divider />
 
         {/* Card type switcher */}
-        <div className="flex rounded-md border border-slate-200 overflow-hidden shrink-0 text-[11px] font-medium">
+        <div className="flex rounded border border-[#444] overflow-hidden shrink-0 text-[11px] font-medium">
           <button onClick={() => handleCardTypeChange('student')} title="Student ID Card"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'student' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'student' ? 'bg-indigo-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
             <Icons.Student /> <span className="hidden sm:inline">Student</span>
           </button>
           <button onClick={() => handleCardTypeChange('staff')} title="Staff ID Card"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors border-l border-slate-200 ${design.cardType === 'staff' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors border-l border-[#444] ${design.cardType === 'staff' ? 'bg-emerald-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
             <Icons.Staff /> <span className="hidden sm:inline">Staff</span>
           </button>
         </div>
-        <div className="flex rounded-md border border-slate-200 overflow-hidden shrink-0 text-[11px] font-medium ml-1">
+        <div className="flex rounded border border-[#444] overflow-hidden shrink-0 text-[11px] font-medium ml-1">
           <button onClick={() => handleCardTypeChange('certificate-student')} title="Student Certificate"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'certificate-student' ? 'bg-violet-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'certificate-student' ? 'bg-violet-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
             <span className="text-[13px] leading-none">📜</span> <span className="hidden lg:inline">Stu.Cert</span>
           </button>
           <button onClick={() => handleCardTypeChange('certificate-staff')} title="Staff Certificate"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors border-l border-slate-200 ${design.cardType === 'certificate-staff' ? 'bg-amber-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors border-l border-[#444] ${design.cardType === 'certificate-staff' ? 'bg-amber-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
             <span className="text-[13px] leading-none">🏅</span> <span className="hidden lg:inline">Stf.Cert</span>
           </button>
         </div>
@@ -685,9 +685,9 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         <div className="relative">
           <TopBtn icon={exporting ? <Icons.Spinner /> : <Icons.Export />} label={exporting ? 'Exporting…' : 'Export'} onClick={(e) => { e.stopPropagation(); setShowExportMenu((v) => !v); }} disabled={!!exporting} variant="indigo" active={showExportMenu} />
           {showExportMenu && (
-            <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
-              <button onClick={handleExportPNG} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left"><Icons.ExportPng /> Export PNG</button>
-              <button onClick={handleExportPDF} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-red-50 hover:text-red-700 transition-colors text-left"><Icons.ExportPdf /> Export PDF</button>
+            <div className="absolute top-full left-0 mt-1 bg-[#2a2a2a] rounded-lg shadow-2xl border border-[#444] py-1 z-50 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+              <button onClick={handleExportPNG} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[#ccc] hover:bg-indigo-600/20 hover:text-indigo-300 transition-colors text-left"><Icons.ExportPng /> Export PNG</button>
+              <button onClick={handleExportPDF} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[#ccc] hover:bg-red-600/20 hover:text-red-300 transition-colors text-left"><Icons.ExportPdf /> Export PDF</button>
             </div>
           )}
         </div>
@@ -701,11 +701,11 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
         {/* Status indicators */}
         <div className="flex items-center gap-1.5 px-1 shrink-0 min-w-[72px]">
-          {autoSaveStatus === 'saving' && <span className="flex items-center gap-1 text-[10px] text-slate-400"><Icons.Spinner />Saving…</span>}
-          {autoSaveStatus === 'saved' && <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Saved</span>}
-          {syncStatus === 'syncing' && <span className="flex items-center gap-1 text-[10px] text-indigo-500"><Icons.Sync />Syncing</span>}
-          {syncStatus === 'synced' && <span className="flex items-center gap-1 text-[10px] text-emerald-600"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Synced</span>}
-          {syncStatus === 'error' && <span className="flex items-center gap-1 text-[10px] text-red-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" /><button onClick={() => syncToServer(design)} className="underline">Retry</button></span>}
+          {autoSaveStatus === 'saving' && <span className="flex items-center gap-1 text-[10px] text-[#777]"><Icons.Spinner />Saving…</span>}
+          {autoSaveStatus === 'saved' && <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Saved</span>}
+          {syncStatus === 'syncing' && <span className="flex items-center gap-1 text-[10px] text-indigo-400"><Icons.Sync />Syncing</span>}
+          {syncStatus === 'synced' && <span className="flex items-center gap-1 text-[10px] text-emerald-400"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Synced</span>}
+          {syncStatus === 'error' && <span className="flex items-center gap-1 text-[10px] text-red-400"><span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" /><button onClick={() => syncToServer(design)} className="underline">Retry</button></span>}
         </div>
 
         {/* Spacer */}
@@ -727,10 +727,10 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
       {/* ── CONTEXTUAL PROPERTY BAR (Canva-style) ───────────────────────── */}
       {selectedId && !isPreviewMode && selLabel && (
-        <div className="shrink-0 flex items-center gap-1.5 bg-white border-b border-slate-200 px-3 py-1.5 z-10 overflow-x-auto shadow-sm">
+        <div className="shrink-0 flex items-center gap-1.5 bg-[#252525] border-b border-[#383838] px-3 py-1.5 z-10 overflow-x-auto">
 
           {/* Element badge */}
-          <span className="text-[10px] font-bold uppercase tracking-wide text-white bg-indigo-500 rounded px-1.5 py-0.5 shrink-0 font-mono">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-white bg-indigo-600 rounded px-1.5 py-0.5 shrink-0 font-mono">
             {selText ? 'T' : selShape ? selShape.type[0].toUpperCase() : selLogo ? 'Img' : selPhoto ? 'Ph' : selQr ? 'QR' : '?'}
           </span>
 
@@ -741,17 +741,17 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
               <select
                 value={selText.fontFamily ?? 'Inter, sans-serif'}
                 onChange={(e) => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontFamily: e.target.value } : t) }))}
-                className="text-xs border border-slate-200 rounded px-1.5 py-1 bg-white text-slate-700 shrink-0 max-w-[110px] focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                className="text-xs border border-[#444] rounded px-1.5 py-1 bg-[#333] text-[#ddd] shrink-0 max-w-[110px] focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 title="Font Family"
               >
                 {FONT_OPTIONS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
               </select>
 
               {/* Font size */}
-              <div className="flex items-center border border-slate-200 rounded overflow-hidden shrink-0">
+              <div className="flex items-center border border-[#444] rounded overflow-hidden shrink-0">
                 <button
                   onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontSize: Math.max(6, t.fontSize - 1) } : t) }))}
-                  className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors"
+                  className="px-1.5 py-1 text-[#888] hover:bg-[#3a3a3a] hover:text-white text-xs font-bold transition-colors"
                   title="Decrease font size"
                 >−</button>
                 <input
@@ -759,12 +759,12 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                   min={6} max={200}
                   value={selText.fontSize}
                   onChange={(e) => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 6) setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontSize: v } : t) })); }}
-                  className="w-9 text-center text-xs py-1 border-0 outline-none text-slate-700 bg-white"
+                  className="w-9 text-center text-xs py-1 border-0 outline-none text-[#ddd] bg-[#333]"
                   title="Font Size"
                 />
                 <button
                   onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontSize: Math.min(200, t.fontSize + 1) } : t) }))}
-                  className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 text-xs font-bold transition-colors"
+                  className="px-1.5 py-1 text-[#888] hover:bg-[#3a3a3a] hover:text-white text-xs font-bold transition-colors"
                   title="Increase font size"
                 >+</button>
               </div>
@@ -774,7 +774,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                 onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontWeight: t.fontWeight === 'bold' ? 'normal' : 'bold' } : t) }))}
                 title="Bold (B)"
                 className={`text-xs font-bold w-7 h-7 rounded border transition-colors shrink-0 ${
-                  selText.fontWeight === 'bold' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                  selText.fontWeight === 'bold' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[#444] text-[#999] hover:bg-[#3a3a3a] hover:text-white'
                 }`}
               >B</button>
 
@@ -783,19 +783,19 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                 onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontStyle: t.fontStyle === 'italic' ? 'normal' : 'italic' } : t) }))}
                 title="Italic (I)"
                 className={`text-xs italic font-semibold w-7 h-7 rounded border transition-colors shrink-0 ${
-                  selText.fontStyle === 'italic' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                  selText.fontStyle === 'italic' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[#444] text-[#999] hover:bg-[#3a3a3a] hover:text-white'
                 }`}
               >I</button>
 
               {/* Text Align */}
-              <div className="flex border border-slate-200 rounded overflow-hidden shrink-0">
+              <div className="flex border border-[#444] rounded overflow-hidden shrink-0">
                 {(['left', 'center', 'right'] as const).map((align) => (
                   <button
                     key={align}
                     onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, textAlign: align } : t) }))}
                     title={`Align ${align}`}
                     className={`w-7 h-7 flex items-center justify-center transition-colors ${
-                      selText.textAlign === align ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-100'
+                      selText.textAlign === align ? 'bg-indigo-600 text-white' : 'text-[#888] hover:bg-[#3a3a3a] hover:text-white'
                     }`}
                   >
                     {align === 'left' && (
@@ -819,9 +819,9 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
               {/* Text color */}
               <label className="flex items-center gap-1 shrink-0 cursor-pointer" title="Text Color">
-                <span className="text-xs text-slate-500">A</span>
+                <span className="text-xs text-[#888]">A</span>
                 <div className="relative">
-                  <div className="w-6 h-6 rounded border border-slate-300 overflow-hidden" style={{ backgroundColor: selText.color }}>
+                  <div className="w-6 h-6 rounded border border-[#555] overflow-hidden" style={{ backgroundColor: selText.color }}>
                     <input
                       type="color"
                       value={selText.color}
@@ -839,9 +839,9 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
             <>
               {/* Fill color */}
               <label className="flex items-center gap-1 shrink-0 cursor-pointer" title="Fill Color">
-                <span className="text-xs text-slate-500">Fill</span>
+                <span className="text-xs text-[#888]">Fill</span>
                 <div className="relative">
-                  <div className="w-6 h-6 rounded border border-slate-300 overflow-hidden" style={{ backgroundColor: selShape.color }}>
+                  <div className="w-6 h-6 rounded border border-[#555] overflow-hidden" style={{ backgroundColor: selShape.color }}>
                     <input
                       type="color"
                       value={selShape.color}
@@ -854,7 +854,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
               {/* Opacity */}
               <div className="flex items-center gap-1 shrink-0">
-                <span className="text-xs text-slate-500">Opacity</span>
+                <span className="text-xs text-[#888]">Opacity</span>
                 <input
                   type="range" min={0} max={1} step={0.05}
                   value={selShape.opacity ?? 1}
@@ -862,14 +862,14 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                   className="w-16 accent-indigo-500"
                   title={`Opacity: ${Math.round((selShape.opacity ?? 1) * 100)}%`}
                 />
-                <span className="text-xs text-slate-400 w-7">{Math.round((selShape.opacity ?? 1) * 100)}%</span>
+                <span className="text-xs text-[#666] w-7">{Math.round((selShape.opacity ?? 1) * 100)}%</span>
               </div>
 
               {/* Border color */}
               <label className="flex items-center gap-1 shrink-0 cursor-pointer" title="Border Color">
-                <span className="text-xs text-slate-500">Border</span>
+                <span className="text-xs text-[#888]">Border</span>
                 <div className="relative">
-                  <div className="w-6 h-6 rounded border border-slate-300 overflow-hidden" style={{ backgroundColor: selShape.borderColor ?? '#000' }}>
+                  <div className="w-6 h-6 rounded border border-[#555] overflow-hidden" style={{ backgroundColor: selShape.borderColor ?? '#000' }}>
                     <input
                       type="color"
                       value={selShape.borderColor ?? '#000000'}
@@ -881,10 +881,10 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
               </label>
 
               {/* Border width */}
-              <div className="flex items-center border border-slate-200 rounded overflow-hidden shrink-0">
-                <button onClick={() => setDesign((prev) => ({ ...prev, shapes: (prev.shapes ?? []).map((s) => s.id === selectedId ? { ...s, borderWidth: Math.max(0, (s.borderWidth ?? 0) - 1) } : s) }))} className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 text-xs font-bold">−</button>
-                <span className="w-6 text-center text-xs text-slate-700">{selShape.borderWidth ?? 0}</span>
-                <button onClick={() => setDesign((prev) => ({ ...prev, shapes: (prev.shapes ?? []).map((s) => s.id === selectedId ? { ...s, borderWidth: Math.min(20, (s.borderWidth ?? 0) + 1) } : s) }))} className="px-1.5 py-1 text-slate-500 hover:bg-slate-100 text-xs font-bold">+</button>
+              <div className="flex items-center border border-[#444] rounded overflow-hidden shrink-0">
+                <button onClick={() => setDesign((prev) => ({ ...prev, shapes: (prev.shapes ?? []).map((s) => s.id === selectedId ? { ...s, borderWidth: Math.max(0, (s.borderWidth ?? 0) - 1) } : s) }))} className="px-1.5 py-1 text-[#888] hover:bg-[#3a3a3a] hover:text-white text-xs font-bold">−</button>
+                <span className="w-6 text-center text-xs text-[#ddd]">{selShape.borderWidth ?? 0}</span>
+                <button onClick={() => setDesign((prev) => ({ ...prev, shapes: (prev.shapes ?? []).map((s) => s.id === selectedId ? { ...s, borderWidth: Math.min(20, (s.borderWidth ?? 0) + 1) } : s) }))} className="px-1.5 py-1 text-[#888] hover:bg-[#3a3a3a] hover:text-white text-xs font-bold">+</button>
               </div>
             </>
           )}
@@ -892,7 +892,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           {/* ── PHOTO PROPERTIES ── */}
           {selPhoto && (
             <div className="flex items-center gap-1 shrink-0">
-              <span className="text-xs text-slate-500">Corner</span>
+              <span className="text-xs text-[#888]">Corner</span>
               <input
                 type="range" min={0} max={50} step={1}
                 value={selPhoto.borderRadius ?? 0}
@@ -900,28 +900,28 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                 className="w-14 accent-indigo-500"
                 title={`Border Radius: ${selPhoto.borderRadius ?? 0}px`}
               />
-              <span className="text-xs text-slate-400 w-5">{selPhoto.borderRadius ?? 0}</span>
+              <span className="text-xs text-[#666] w-5">{selPhoto.borderRadius ?? 0}</span>
             </div>
           )}
 
           <Divider />
 
           {/* ── ARRANGE (always) ── */}
-          <span className="text-[10px] text-slate-400 shrink-0">Arrange:</span>
-          <button onClick={() => handleArrange(selectedId, 'front')} title="Bring to Front" className="text-[11px] px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors shrink-0">⤒ Front</button>
-          <button onClick={() => handleArrange(selectedId, 'forward')} title="Move Forward" className="text-[11px] px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors shrink-0">↑ Fwd</button>
-          <button onClick={() => handleArrange(selectedId, 'backward')} title="Move Backward" className="text-[11px] px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors shrink-0">↓ Bwd</button>
-          <button onClick={() => handleArrange(selectedId, 'back')} title="Send to Back" className="text-[11px] px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors shrink-0">⤓ Back</button>
+          <span className="text-[10px] text-[#666] shrink-0 uppercase tracking-wider">Arrange</span>
+          <button onClick={() => handleArrange(selectedId, 'front')} title="Bring to Front" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-indigo-600/20 hover:text-indigo-300 hover:border-indigo-600/40 transition-colors shrink-0">⤒ Front</button>
+          <button onClick={() => handleArrange(selectedId, 'forward')} title="Move Forward" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-indigo-600/20 hover:text-indigo-300 hover:border-indigo-600/40 transition-colors shrink-0">↑ Fwd</button>
+          <button onClick={() => handleArrange(selectedId, 'backward')} title="Move Backward" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-indigo-600/20 hover:text-indigo-300 hover:border-indigo-600/40 transition-colors shrink-0">↓ Bwd</button>
+          <button onClick={() => handleArrange(selectedId, 'back')} title="Send to Back" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-indigo-600/20 hover:text-indigo-300 hover:border-indigo-600/40 transition-colors shrink-0">⤓ Back</button>
           <Divider />
 
           {/* Duplicate & Delete */}
           {selectedId !== '__photo__' && selectedId !== '__qr__' && (
-            <button onClick={() => handleDuplicate(selectedId)} title="Duplicate (Ctrl+D)" className="text-[11px] px-2 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors shrink-0">📋 Dup</button>
+            <button onClick={() => handleDuplicate(selectedId)} title="Duplicate (Ctrl+D)" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-[#3a3a3a] hover:text-white transition-colors shrink-0">Dup</button>
           )}
-          <button onClick={() => handleDeleteSelected(selectedId)} title="Delete (Del)" className="text-[11px] px-2 py-0.5 rounded border border-red-200 text-red-500 hover:bg-red-50 transition-colors shrink-0">🗑️</button>
+          <button onClick={() => handleDeleteSelected(selectedId)} title="Delete (Del)" className="text-[11px] px-2 py-0.5 rounded border border-red-900/50 text-red-400 hover:bg-red-600/20 transition-colors shrink-0">Del</button>
 
           <div className="flex-1" />
-          <span className="text-[10px] text-slate-300 shrink-0 hidden xl:inline">↑↓←→ nudge · Del delete · Esc deselect</span>
+          <span className="text-[9px] text-[#555] shrink-0 hidden xl:inline tracking-wide">↑↓←→ nudge · Del · Esc deselect</span>
         </div>
       )}
 
@@ -929,7 +929,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* LEFT — Design Tools (Toolbar) */}
-        <div className="shrink-0 bg-white border-r border-slate-200 flex flex-col" style={{ width: 300 }}>
+        <div className="shrink-0 bg-[#1a1a1a] border-r border-[#333] flex flex-col" style={{ width: 280 }}>
           <div className="flex-1 min-h-0 overflow-hidden">
             <Toolbar
               design={isPreviewMode ? previewDesign : design}
@@ -946,15 +946,15 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           <div
             className="flex-1 overflow-auto flex items-start justify-center"
             style={{
-              padding: 40,
+              padding: 48,
               background: showGrid
-                ? `linear-gradient(rgba(99,102,241,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,.1) 1px, transparent 1px), #e2e8f0`
-                : '#e2e8f0',
+                ? `linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px), #2a2a2a`
+                : '#2a2a2a',
               backgroundSize: showGrid ? '20px 20px, 20px 20px, auto' : 'auto',
             }}
             onClick={(e) => { if (e.target === e.currentTarget) setSelectedId(null); }}
           >
-            <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center', transition: 'transform 0.15s' }}>
+            <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center', transition: 'transform 0.15s', filter: 'drop-shadow(0 8px 32px rgba(0,0,0,0.6))' }}>
               {isPreviewMode ? (
                 <div className="pointer-events-none">
                   <CardCanvas design={previewDesign} selectedId={null} onSelect={() => {}} onMoveText={() => {}} onMoveLogo={() => {}} />
@@ -972,15 +972,15 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
             </div>
           </div>
 
-          {/* Zoom footer bar (Canva-style) */}
-          <div className="shrink-0 flex items-center gap-2 px-4 py-1.5 bg-white border-t border-slate-200 select-none">
-            <button onClick={() => setZoom((z) => Math.max(25, z - 10))} title="Zoom Out" className="w-6 h-6 flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 text-sm font-bold transition-colors">−</button>
+          {/* Zoom footer bar */}
+          <div className="shrink-0 flex items-center gap-2 px-4 py-1.5 bg-[#1a1a1a] border-t border-[#333] select-none">
+            <button onClick={() => setZoom((z) => Math.max(25, z - 10))} title="Zoom Out" className="w-6 h-6 flex items-center justify-center rounded text-[#777] hover:bg-[#333] hover:text-white text-sm font-bold transition-colors">−</button>
             <input type="range" min={25} max={200} step={5} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="w-28 accent-indigo-500" title={`Zoom: ${zoom}%`} />
-            <button onClick={() => setZoom((z) => Math.min(200, z + 10))} title="Zoom In" className="w-6 h-6 flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 text-sm font-bold transition-colors">+</button>
-            <button onClick={() => setZoom(100)} className="text-xs text-slate-500 hover:text-slate-800 font-mono min-w-[3rem] transition-colors" title="Reset Zoom">{zoom}%</button>
+            <button onClick={() => setZoom((z) => Math.min(200, z + 10))} title="Zoom In" className="w-6 h-6 flex items-center justify-center rounded text-[#777] hover:bg-[#333] hover:text-white text-sm font-bold transition-colors">+</button>
+            <button onClick={() => setZoom(100)} className="text-xs text-[#666] hover:text-white font-mono min-w-[3rem] transition-colors" title="Reset Zoom">{zoom}%</button>
             <div className="flex-1" />
-            <span className="text-xs text-slate-400 hidden md:inline">{design.width} × {design.height}px · {design.cardType}</span>
-            {showGrid && <span className="text-xs text-indigo-400">Grid on</span>}
+            <span className="text-[10px] text-[#555] hidden md:inline tracking-wide">{design.width}×{design.height}px · {design.cardType}</span>
+            {showGrid && <span className="text-[10px] text-indigo-400">Grid on</span>}
           </div>
         </div>
 
