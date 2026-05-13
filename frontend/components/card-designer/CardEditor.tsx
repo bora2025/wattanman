@@ -432,7 +432,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
   };
 
   // ── Reset / Clear ─────────────────────────────────────────────────────────
-  const handleReset = () => { setDesign(TEMPLATES[design.cardType]); setSelectedId(null); };
+  const handleReset = () => { setDesign(TEMPLATES[design.cardType] ?? BLANK_TEMPLATE); setSelectedId(null); };
   const handleClearCache = () => {
     clearAllCache();
     setDesign(STUDENT_TEMPLATE); setSelectedId(null); setSavedTemplates([]);
