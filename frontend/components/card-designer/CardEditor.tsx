@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   CardDesign, CardType, FONT_OPTIONS,
   LogoElement, PhotoPlaceholder, QrPlaceholder, ShapeElement, TextElement,
@@ -56,6 +57,7 @@ const Icons = {
   ExportPdf: () => <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6L9 2z"/><path d="M9 2v4h4"/><path d="M5 9h2.5a1.5 1.5 0 0 1 0 3H5V9z" fill="currentColor" stroke="none" opacity="0.4"/></svg>,
   Spinner: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><circle cx="8" cy="8" r="5" strokeOpacity={0.3}/><path d="M8 3a5 5 0 0 1 5 5"/></svg>,
   Sync: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round"><path d="M3 5V2l-2 2M3 2a7 7 0 0 1 10 0M13 11v3l2-2M13 14a7 7 0 0 1-10 0"/></svg>,
+  Print: () => <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><path d="M4 6V2h8v4"/><path d="M4 11H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-2"/><path d="M4 9h8v5H4z"/></svg>,
 };
 
 interface TopBtnProps {
@@ -89,7 +91,12 @@ function Divider() {
 }
 
 export default function CardEditor({ initialCardType, openNewProject, onSave }: { initialCardType?: CardType; openNewProject?: boolean; onSave?: () => void } = {}) {
-  const [design, setDesign] = useState<CardDesign>(initialCardType === 'staff' ? STAFF_TEMPLATE : STUDENT_TEMPLATE);
+  const router = useRouter();
+  const [design, setDesign] = useState<CardDesign>(
+    initialCardType === 'staff' ? STAFF_TEMPLATE :
+    initialCardType === 'student' ? STUDENT_TEMPLATE :
+    BLANK_TEMPLATE
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -152,8 +159,9 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
   // ── Load on mount ────────────────────────────────────────────────────────
   useEffect(() => {
+    if (!initialCardType) { isLoadingRef.current = false; return; }
     isLoadingRef.current = true;
-    const cardType = initialCardType ?? 'student';
+    const cardType = initialCardType;
     const localDesign = loadSavedDesign(cardType);
     if (localDesign) setDesign(localDesign);
     apiGetActiveDesign(cardType).then((apiDesign) => {
@@ -564,6 +572,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
             </div>
           )}
         </div>
+        <TopBtn icon={<Icons.Print />} label="Print" title="Print Certificates" onClick={() => router.push('/admin/card-designer/print')} variant="violet" />
         <Divider />
 
         {/* View */}
