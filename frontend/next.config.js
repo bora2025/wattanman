@@ -20,6 +20,16 @@ const nextConfig = {
     unoptimized: true,
   },
 
+  // Allow @imgly/background-removal (WASM/ONNX) to build correctly
+  webpack(config) {
+    // The library ships WASM files — don't parse them as JS
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'asset/resource',
+    });
+    return config;
+  },
+
   // Security headers
   async headers() {
     return [

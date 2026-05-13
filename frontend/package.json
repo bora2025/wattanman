@@ -13,6 +13,7 @@
     "@zxing/library": "^0.21.3",
     "jspdf": "^4.2.1",
     "next": "^14.2.35",
+    "onnxruntime-web": "^1.21.0",
     "qrcode": "^1.5.4",
     "react": "^18",
     "react-dom": "^18",
