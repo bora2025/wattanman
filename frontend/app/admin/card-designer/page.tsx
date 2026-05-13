@@ -8,16 +8,16 @@ import { adminNav } from '../../../lib/admin-nav';
 export default function CardDesignerPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
-      <div className="page-shell">
+      <div className="flex h-screen overflow-hidden">
         <Sidebar
           title="Admin Panel"
           subtitle="Wattanman"
           navItems={adminNav}
           accentColor="indigo"
         />
-        <div className="page-content lg:ml-0 flex flex-col">
-          <div className="h-14 lg:hidden" />
-          <div className="flex-1 overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <div className="h-14 lg:hidden shrink-0" />
+          <div className="flex-1 overflow-hidden min-h-0">
             <CardEditor />
           </div>
         </div>

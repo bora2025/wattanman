@@ -735,7 +735,12 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
       {/* Card info label */}
       <div className="mt-3 text-center">
         <span className="inline-flex items-center gap-2 text-xs text-slate-500 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-sm border border-slate-200">
-          <span className="font-medium text-slate-600">{design.cardType === 'student' ? '🎓 Student' : '👨‍🏫 Staff'}</span>
+          <span className="font-medium text-slate-600">
+            {design.cardType === 'student' ? '🎓 Student' :
+             design.cardType === 'staff' ? '👨‍🏫 Staff' :
+             design.cardType === 'certificate-student' ? '📜 Student Cert.' :
+             design.cardType === 'certificate-staff' ? '🏅 Staff Cert.' : '📄 General'}
+          </span>
           <span className="w-px h-3 bg-slate-300" />
           <span className="font-mono">{design.width} × {design.height}</span>
         </span>

@@ -378,6 +378,58 @@ export const BLANK_TEMPLATE: CardDesign = {
   shapes: [],
 };
 
+export const BLANK_CERTIFICATE_STUDENT: CardDesign = {
+  cardType: 'certificate-student',
+  size: 'certificate' as CardSize,
+  width: 794,
+  height: 562,
+  backgroundColor: '#ffffff',
+  frameColor: '#4f46e5',
+  frameWidth: 0,
+  photo: null,
+  qr: null,
+  texts: [
+    { id: 'cs-school', content: 'Wattanman Academy', x: 397, y: 60, fontSize: 22, color: '#1e293b', fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center' },
+    { id: 'cs-title', content: 'CERTIFICATE OF ACHIEVEMENT', x: 397, y: 120, fontSize: 28, color: '#4f46e5', fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center' },
+    { id: 'cs-presented', content: 'This is proudly presented to', x: 397, y: 200, fontSize: 14, color: '#64748b', fontWeight: 'normal', fontStyle: 'italic', textAlign: 'center' },
+    { id: 'cs-name', content: '{{name}}', x: 397, y: 260, fontSize: 32, color: '#1e293b', fontWeight: 'bold', fontStyle: 'italic', textAlign: 'center' },
+    { id: 'cs-class', content: '{{class}}  ·  {{studyYear}}', x: 397, y: 305, fontSize: 13, color: '#475569', fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center' },
+    { id: 'cs-date', content: 'Issued: {{certificateDate}}', x: 397, y: 460, fontSize: 12, color: '#94a3b8', fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center' },
+  ],
+  logos: [],
+  shapes: [
+    { id: 'cs-border', type: 'rectangle', x: 16, y: 16, width: 762, height: 530, color: 'transparent', borderColor: '#4f46e5', borderWidth: 3, borderRadius: 12, opacity: 1, rotation: 0, zIndex: 0 },
+    { id: 'cs-line', type: 'line', x: 130, y: 310, width: 534, height: 2, color: '#e2e8f0', borderColor: '#e2e8f0', borderWidth: 2, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0 },
+    { id: 'cs-sig-line', type: 'line', x: 230, y: 440, width: 334, height: 2, color: '#94a3b8', borderColor: '#94a3b8', borderWidth: 1, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0 },
+  ],
+};
+
+export const BLANK_CERTIFICATE_STAFF: CardDesign = {
+  cardType: 'certificate-staff',
+  size: 'certificate' as CardSize,
+  width: 794,
+  height: 562,
+  backgroundColor: '#ffffff',
+  frameColor: '#059669',
+  frameWidth: 0,
+  photo: null,
+  qr: null,
+  texts: [
+    { id: 'cf-school', content: 'Wattanman Academy', x: 397, y: 60, fontSize: 22, color: '#1e293b', fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center' },
+    { id: 'cf-title', content: 'CERTIFICATE OF RECOGNITION', x: 397, y: 120, fontSize: 28, color: '#059669', fontWeight: 'bold', fontStyle: 'normal', textAlign: 'center' },
+    { id: 'cf-presented', content: 'This is proudly presented to', x: 397, y: 200, fontSize: 14, color: '#64748b', fontWeight: 'normal', fontStyle: 'italic', textAlign: 'center' },
+    { id: 'cf-name', content: '{{name}}', x: 397, y: 260, fontSize: 32, color: '#1e293b', fontWeight: 'bold', fontStyle: 'italic', textAlign: 'center' },
+    { id: 'cf-role', content: '{{role}}  ·  {{department}}', x: 397, y: 305, fontSize: 13, color: '#475569', fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center' },
+    { id: 'cf-date', content: 'Issued: {{certificateDate}}', x: 397, y: 460, fontSize: 12, color: '#94a3b8', fontWeight: 'normal', fontStyle: 'normal', textAlign: 'center' },
+  ],
+  logos: [],
+  shapes: [
+    { id: 'cf-border', type: 'rectangle', x: 16, y: 16, width: 762, height: 530, color: 'transparent', borderColor: '#059669', borderWidth: 3, borderRadius: 12, opacity: 1, rotation: 0, zIndex: 0 },
+    { id: 'cf-line', type: 'line', x: 130, y: 310, width: 534, height: 2, color: '#e2e8f0', borderColor: '#e2e8f0', borderWidth: 2, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0 },
+    { id: 'cf-sig-line', type: 'line', x: 230, y: 440, width: 334, height: 2, color: '#94a3b8', borderColor: '#94a3b8', borderWidth: 1, borderRadius: 0, opacity: 1, rotation: 0, zIndex: 0 },
+  ],
+};
+
 export const STUDENT_TEMPLATE: CardDesign = {
   cardType: 'student',
   size: 'credit',

@@ -6,6 +6,7 @@ import {
   CardDesign, CardType, FONT_OPTIONS,
   LogoElement, PhotoPlaceholder, QrPlaceholder, ShapeElement, TextElement,
   STUDENT_TEMPLATE, STAFF_TEMPLATE, BLANK_TEMPLATE,
+  BLANK_CERTIFICATE_STUDENT, BLANK_CERTIFICATE_STAFF,
   STUDENT_CLASSIC_BLUE, STUDENT_DARK_NAVY, STUDENT_SKY_WAVE, STUDENT_GEOMETRIC, STUDENT_MINIMAL,
   STAFF_CORPORATE_TEAL, STAFF_DEEP_OCEAN, STAFF_ROSE, STAFF_FOREST, STAFF_SLATE_EXECUTIVE,
   loadSavedDesign, saveDesign, clearAllCache, SavedTemplate,
@@ -18,7 +19,12 @@ import Toolbar from './Toolbar';
 import LayersPanel from './LayersPanel';
 import NewProjectDialog from './NewProjectDialog';
 
-const TEMPLATES: Partial<Record<CardType, CardDesign>> = { student: STUDENT_TEMPLATE, staff: STAFF_TEMPLATE };
+const TEMPLATES: Partial<Record<CardType, CardDesign>> = {
+  student: STUDENT_TEMPLATE,
+  staff: STAFF_TEMPLATE,
+  'certificate-student': BLANK_CERTIFICATE_STUDENT,
+  'certificate-staff': BLANK_CERTIFICATE_STAFF,
+};
 
 const PREVIEW_DATA: Record<string, string> = {
   'Student Name': 'Sophea Chann', 'Name': 'Sophea Chann', 'ID': 'STU-2024-001',
@@ -592,7 +598,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     selQr ? `${Math.round(selQr.x)}, ${Math.round(selQr.y)}` : null;
 
   return (
-    <div className="flex flex-col bg-[#f0f0f0]" style={{ height: 'calc(100vh - 9rem)' }}>
+    <div className="flex flex-col bg-[#f0f0f0] h-full">
 
       {isStartScreen ? (
         <StartScreen
@@ -621,13 +627,23 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
         {/* Card type switcher */}
         <div className="flex rounded-md border border-slate-200 overflow-hidden shrink-0 text-[11px] font-medium">
-          <button onClick={() => handleCardTypeChange('student')} title="Student Card"
+          <button onClick={() => handleCardTypeChange('student')} title="Student ID Card"
             className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'student' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
             <Icons.Student /> <span className="hidden sm:inline">Student</span>
           </button>
-          <button onClick={() => handleCardTypeChange('staff')} title="Staff Card"
+          <button onClick={() => handleCardTypeChange('staff')} title="Staff ID Card"
             className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors border-l border-slate-200 ${design.cardType === 'staff' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
             <Icons.Staff /> <span className="hidden sm:inline">Staff</span>
+          </button>
+        </div>
+        <div className="flex rounded-md border border-slate-200 overflow-hidden shrink-0 text-[11px] font-medium ml-1">
+          <button onClick={() => handleCardTypeChange('certificate-student')} title="Student Certificate"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'certificate-student' ? 'bg-violet-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+            <span className="text-[13px] leading-none">📜</span> <span className="hidden lg:inline">Stu.Cert</span>
+          </button>
+          <button onClick={() => handleCardTypeChange('certificate-staff')} title="Staff Certificate"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors border-l border-slate-200 ${design.cardType === 'certificate-staff' ? 'bg-amber-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+            <span className="text-[13px] leading-none">🏅</span> <span className="hidden lg:inline">Stf.Cert</span>
           </button>
         </div>
         <Divider />
