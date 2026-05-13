@@ -21,12 +21,42 @@ const nextConfig = {
   },
 
   // Allow @imgly/background-removal (WASM/ONNX) to build correctly
-  webpack(config) {
+  webpack(config, { dev }) {
     // The library ships WASM files — don't parse them as JS
     config.module.rules.push({
       test: /\.wasm$/,
       type: 'asset/resource',
     });
+
+    if (!dev) {
+      // onnxruntime-web ships pre-minified ESM chunks (ort.node.min.mjs,
+      // ort.webgpu.bundle.min.mjs …) that use top-level import/export and
+      // import.meta.  Next.js's SWC minifier runs without module:true and
+      // therefore fails to parse them.  Since these files are already minified,
+      // we flag them as "minimized" before the TerserPlugin runs (stage 400) so
+      // it skips them entirely.
+      config.plugins.push({
+        apply(compiler) {
+          compiler.hooks.compilation.tap('SkipOrtMjsMinify', (compilation) => {
+            compilation.hooks.processAssets.tap(
+              { name: 'SkipOrtMjsMinify', stage: 399 },
+              (assets) => {
+                for (const name of Object.keys(assets)) {
+                  if (/ort\..+\.mjs$/.test(name)) {
+                    compilation.updateAsset(
+                      name,
+                      (src) => src,
+                      { minimized: true }
+                    );
+                  }
+                }
+              }
+            );
+          });
+        },
+      });
+    }
+
     return config;
   },
 
