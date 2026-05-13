@@ -66,7 +66,7 @@ function Divider() {
   return <div className="w-px h-6 bg-slate-200 mx-0.5 shrink-0" />;
 }
 
-export default function CardEditor({ initialCardType, onSave }: { initialCardType?: CardType; onSave?: () => void } = {}) {
+export default function CardEditor({ initialCardType, openNewProject, onSave }: { initialCardType?: CardType; openNewProject?: boolean; onSave?: () => void } = {}) {
   const [design, setDesign] = useState<CardDesign>(initialCardType === 'staff' ? STAFF_TEMPLATE : STUDENT_TEMPLATE);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -80,7 +80,7 @@ export default function CardEditor({ initialCardType, onSave }: { initialCardTyp
   const [zoom, setZoom] = useState(100); // percent
   const [showGrid, setShowGrid] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [showNewProject, setShowNewProject] = useState(false);
+  const [showNewProject, setShowNewProject] = useState(openNewProject ?? false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [exporting, setExporting] = useState<'png' | 'pdf' | null>(null);
 
