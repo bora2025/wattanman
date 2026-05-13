@@ -149,6 +149,11 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>({});
   const [showClearCache, setShowClearCache] = useState(false);
 
+  // ── Start screen ─────────────────────────────────────────────────────────
+  const [isStartScreen, setIsStartScreen] = useState(!initialCardType && !openNewProject);
+  const [startPreviews, setStartPreviews] = useState<Record<string, string>>({});
+  const [startTemplates, setStartTemplates] = useState<SavedTemplate[]>([]);
+
   // ── Server sync ──────────────────────────────────────────────────────────
   const syncToServer = useCallback(async (d: CardDesign) => {
     setSyncStatus('syncing');
@@ -169,6 +174,41 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       else if (localDesign) { saveDesign(localDesign); syncToServer(localDesign); }
     }).finally(() => { setTimeout(() => { isLoadingRef.current = false; }, 2000); });
   }, [initialCardType, syncToServer]);
+
+  // ── Start screen: preload template previews ──────────────────────────────
+  useEffect(() => {
+    if (!isStartScreen) return;
+    let cancelled = false;
+    (async () => {
+      const templates = await apiLoadTemplates();
+      if (!cancelled) setStartTemplates(templates);
+      const items = [
+        { key: 'student', design: STUDENT_TEMPLATE },
+        { key: 'staff', design: STAFF_TEMPLATE },
+        { key: 'st1', design: STUDENT_CLASSIC_BLUE },
+        { key: 'st2', design: STUDENT_DARK_NAVY },
+        { key: 'st3', design: STUDENT_SKY_WAVE },
+        { key: 'st4', design: STUDENT_GEOMETRIC },
+        { key: 'st5', design: STUDENT_MINIMAL },
+        { key: 'sf1', design: STAFF_CORPORATE_TEAL },
+        { key: 'sf2', design: STAFF_DEEP_OCEAN },
+        { key: 'sf3', design: STAFF_ROSE },
+        { key: 'sf4', design: STAFF_FOREST },
+        { key: 'sf5', design: STAFF_SLATE_EXECUTIVE },
+      ];
+      const previews: Record<string, string> = {};
+      for (const item of items) {
+        if (cancelled) break;
+        try { const c = await renderDesignToCanvas(item.design, { scale: 1 }); previews[item.key] = c.toDataURL('image/jpeg', 0.7); } catch {}
+      }
+      for (const tpl of templates) {
+        if (cancelled) break;
+        try { const c = await renderDesignToCanvas(tpl.design, { scale: 1 }); previews[tpl.id] = c.toDataURL('image/jpeg', 0.7); } catch {}
+      }
+      if (!cancelled) setStartPreviews(previews);
+    })();
+    return () => { cancelled = true; };
+  }, [isStartScreen]);
 
   // ── History tracking ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -443,6 +483,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     const copy = JSON.parse(JSON.stringify(d)) as CardDesign;
     isLoadingRef.current = false;
     setDesign(copy); setSelectedId(null); setShowTemplatePicker(false);
+    setIsStartScreen(false);
     saveDesign(copy); syncToServer(copy);
   }, [syncToServer]);
 
@@ -455,6 +496,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   // ── Card type switch ──────────────────────────────────────────────────────
   const handleCardTypeChange = (type: CardType) => {
     isLoadingRef.current = true;
+    setIsStartScreen(false);
     const sd = loadSavedDesign(type);
     setDesign(sd ?? TEMPLATES[type] ?? BLANK_TEMPLATE); setSelectedId(null);
     apiGetActiveDesign(type).then((d) => { if (d) { saveDesign(d); setDesign(d); } })
@@ -532,6 +574,17 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
   return (
     <div className="flex flex-col bg-[#f0f0f0]" style={{ height: 'calc(100vh - 9rem)' }}>
+
+      {isStartScreen ? (
+        <StartScreen
+          previews={startPreviews}
+          savedTemplates={startTemplates}
+          onNewStudent={() => handleCardTypeChange('student')}
+          onNewStaff={() => handleCardTypeChange('staff')}
+          onNewCertificate={() => setShowNewProject(true)}
+          onOpen={(d) => handleApplyTemplate(d)}
+        />
+      ) : (<>
 
       {/* ── TOP TOOLBAR ──────────────────────────────────────────────────── */}
       <div className="shrink-0 flex items-center gap-0 bg-white border-b border-slate-200 px-2 py-1 h-[42px] z-10 overflow-x-auto">
@@ -869,6 +922,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         <LayersPanel design={design} selectedId={selectedId} onSelect={setSelectedId} onDesignChange={setDesign} onArrange={handleArrange} />
       </div>
 
+      </>)}
+
       {/* ── MODALS ─────────────────────────────────────────────────────────── */}
 
       {/* New Project */}
@@ -1039,5 +1094,188 @@ function TemplateCard({ preview, emoji, label, onClick, small }: { preview?: str
         <div className={`flex items-center gap-1.5 ${small ? 'text-[11px]' : 'text-sm'} font-semibold text-slate-700 truncate`}><span>{emoji}</span>{label}</div>
       </div>
     </button>
+  );
+}
+
+// ── Start Screen (Photoshop-style home) ───────────────────────────────────────
+const BUILTIN_START_ITEMS: { key: string; design: CardDesign; label: string; emoji: string; type: string }[] = [
+  { key: 'student', design: STUDENT_TEMPLATE, label: 'Student ID', emoji: '🎓', type: 'student' },
+  { key: 'staff', design: STAFF_TEMPLATE, label: 'Staff ID', emoji: '👨‍🏫', type: 'staff' },
+  { key: 'st1', design: STUDENT_CLASSIC_BLUE, label: 'Classic Blue', emoji: '🔵', type: 'student' },
+  { key: 'st2', design: STUDENT_DARK_NAVY, label: 'Dark Navy', emoji: '🌌', type: 'student' },
+  { key: 'st3', design: STUDENT_SKY_WAVE, label: 'Sky Wave', emoji: '🌊', type: 'student' },
+  { key: 'st4', design: STUDENT_GEOMETRIC, label: 'Geometric', emoji: '🔷', type: 'student' },
+  { key: 'st5', design: STUDENT_MINIMAL, label: 'Minimal', emoji: '⬜', type: 'student' },
+  { key: 'sf1', design: STAFF_CORPORATE_TEAL, label: 'Corp Teal', emoji: '🟢', type: 'staff' },
+  { key: 'sf2', design: STAFF_DEEP_OCEAN, label: 'Deep Ocean', emoji: '🌑', type: 'staff' },
+  { key: 'sf3', design: STAFF_ROSE, label: 'Rose Pro', emoji: '🌸', type: 'staff' },
+  { key: 'sf4', design: STAFF_FOREST, label: 'Forest', emoji: '🌿', type: 'staff' },
+  { key: 'sf5', design: STAFF_SLATE_EXECUTIVE, label: 'Executive', emoji: '🏛️', type: 'staff' },
+];
+
+interface StartScreenProps {
+  previews: Record<string, string>;
+  savedTemplates: SavedTemplate[];
+  onNewStudent: () => void;
+  onNewStaff: () => void;
+  onNewCertificate: () => void;
+  onOpen: (design: CardDesign) => void;
+}
+
+function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNewCertificate, onOpen }: StartScreenProps) {
+  const allLoaded = BUILTIN_START_ITEMS.every((i) => previews[i.key]);
+  return (
+    <div className="flex h-full bg-[#1a1b22] text-white overflow-hidden select-none">
+
+      {/* ── Left sidebar ── */}
+      <div className="w-64 shrink-0 flex flex-col bg-[#13141a] border-r border-white/[0.06] p-6 overflow-y-auto">
+
+        {/* Branding */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-lg font-black shadow-lg shadow-indigo-900/50 shrink-0">W</div>
+            <div>
+              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.15em] leading-none mb-0.5">System</p>
+              <p className="text-lg font-black text-white leading-none tracking-tight">Wattaman</p>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500 pl-0.5">Card Designer</p>
+        </div>
+
+        {/* New section */}
+        <div className="mb-6">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-3">New</p>
+          <div className="space-y-1.5">
+            <button
+              onClick={onNewStudent}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-indigo-600/25 border border-white/[0.06] hover:border-indigo-500/50 transition-all text-left group"
+            >
+              <span className="text-xl leading-none shrink-0">🎓</span>
+              <div>
+                <div className="text-[12px] font-semibold text-white group-hover:text-indigo-200 transition-colors">Student ID Card</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">Photo card with student data</div>
+              </div>
+            </button>
+            <button
+              onClick={onNewStaff}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-emerald-600/25 border border-white/[0.06] hover:border-emerald-500/50 transition-all text-left group"
+            >
+              <span className="text-xl leading-none shrink-0">👨‍🏫</span>
+              <div>
+                <div className="text-[12px] font-semibold text-white group-hover:text-emerald-200 transition-colors">Staff ID Card</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">Photo card with staff data</div>
+              </div>
+            </button>
+            <button
+              onClick={onNewCertificate}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-amber-600/25 border border-white/[0.06] hover:border-amber-500/50 transition-all text-left group"
+            >
+              <span className="text-xl leading-none shrink-0">📜</span>
+              <div>
+                <div className="text-[12px] font-semibold text-white group-hover:text-amber-200 transition-colors">Certificate</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">Student or staff certificate</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-white/[0.06] mb-5" />
+
+        {/* Open / Recent */}
+        <div className="flex-1">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-3">Open Recent</p>
+          {savedTemplates.length > 0 ? (
+            <div className="space-y-0.5">
+              {savedTemplates.map((tpl) => (
+                <button key={tpl.id} onClick={() => onOpen(tpl.design)}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/[0.06] transition-colors text-left group"
+                >
+                  <div className="w-9 h-6 rounded bg-white/[0.07] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.05]">
+                    {previews[tpl.id]
+                      ? <img src={previews[tpl.id]} alt={tpl.name} className="w-full h-full object-contain" />
+                      : <span className="text-[8px] text-slate-600">…</span>}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[11px] font-medium text-slate-300 group-hover:text-white transition-colors truncate">{tpl.name}</div>
+                    <div className="text-[9px] text-slate-600 capitalize">{tpl.cardType?.replace('-', ' ')}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] px-3 py-4 text-center">
+              <p className="text-[11px] text-slate-600 leading-relaxed">No saved templates yet.<br />Use &ldquo;As Template&rdquo; in the editor to save one.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Right: template gallery ── */}
+      <div className="flex-1 overflow-y-auto p-6">
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-base font-bold text-white">Templates</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Click a template to open it in the editor</p>
+          </div>
+          {!allLoaded && (
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                <circle cx="8" cy="8" r="5" strokeOpacity={0.3}/><path d="M8 3a5 5 0 0 1 5 5"/>
+              </svg>
+              Generating previews…
+            </div>
+          )}
+        </div>
+
+        {/* Built-in grid */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mb-8">
+          {BUILTIN_START_ITEMS.map(({ key, design, label, emoji }) => (
+            <button key={key} onClick={() => onOpen(design)}
+              className="group rounded-xl overflow-hidden border border-white/[0.07] hover:border-indigo-400/60 bg-[#13141a] hover:bg-[#1e2035] transition-all text-left shadow-sm hover:shadow-indigo-900/30 hover:shadow-lg"
+            >
+              <div className="bg-[#0d0e12] h-28 flex items-center justify-center p-2 relative">
+                {previews[key] ? (
+                  <img src={previews[key]} alt={label} className="max-h-24 max-w-full object-contain rounded shadow-md group-hover:scale-105 transition-transform duration-200" />
+                ) : (
+                  <div className="w-14 h-20 bg-white/[0.04] rounded-lg animate-pulse" />
+                )}
+              </div>
+              <div className="px-2.5 py-2 border-t border-white/[0.05]">
+                <div className="text-[11px] font-semibold text-slate-400 group-hover:text-slate-200 transition-colors truncate">{emoji} {label}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Saved templates */}
+        {savedTemplates.length > 0 && (
+          <>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Your Saved Templates</h3>
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              {savedTemplates.map((tpl) => (
+                <button key={tpl.id} onClick={() => onOpen(tpl.design)}
+                  className="group rounded-xl overflow-hidden border border-white/[0.07] hover:border-violet-400/60 bg-[#13141a] hover:bg-[#1e1a35] transition-all text-left"
+                >
+                  <div className="bg-[#0d0e12] h-28 flex items-center justify-center p-2">
+                    {previews[tpl.id] ? (
+                      <img src={previews[tpl.id]} alt={tpl.name} className="max-h-24 max-w-full object-contain rounded shadow-md group-hover:scale-105 transition-transform duration-200" />
+                    ) : (
+                      <div className="w-14 h-20 bg-white/[0.04] rounded-lg animate-pulse" />
+                    )}
+                  </div>
+                  <div className="px-2.5 py-2 border-t border-white/[0.05]">
+                    <div className="text-[11px] font-semibold text-slate-400 group-hover:text-slate-200 truncate">{tpl.name}</div>
+                    <div className="text-[9px] text-slate-600 capitalize mt-0.5">{tpl.cardType?.replace('-', ' ')}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
