@@ -1,7 +1,6 @@
 ﻿'use client';
 
 import { ChangeEvent, useState, useRef, useCallback } from 'react';
-import type { Config } from '@imgly/background-removal';
 import {
   CardDesign, CardSize, CARD_SIZE_PRESETS,
   TextElement, LogoElement, ShapeElement, GradientStop,
@@ -138,6 +137,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
   const [activeTab, setActiveTab] = useState<Tab>('text');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [removingBg, setRemovingBg] = useState<Record<string, boolean>>({});
+  const [bgError, setBgError] = useState<Record<string, string>>({});
 
   const update = (partial: Partial<CardDesign>) => onDesignChange({ ...design, ...partial });
   const genId = () => Math.random().toString(36).slice(2, 10);
@@ -180,24 +180,32 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
   const updateLogo = (id: string, changes: Partial<LogoElement>) => update({ logos: design.logos.map((l) => l.id === id ? { ...l, ...changes } : l) });
 
   const handleRemoveBg = useCallback(async (logo: LogoElement) => {
-    setRemovingBg((p) => ({ ...p, [logo.id]: true }));
+    const logoId = logo.id;
+    const existingOriginalSrc = logo.originalSrc;
+    setBgError((p) => { const n = { ...p }; delete n[logoId]; return n; });
+    setRemovingBg((p) => ({ ...p, [logoId]: true }));
     try {
       const { removeBackground } = await import('@imgly/background-removal');
-      const cfg: Config = { publicPath: `https://unpkg.com/@imgly/background-removal@1.7.0/dist/` };
-      const blob = await removeBackground(logo.src, cfg);
+      // Use the library's default CDN (staticimgly.com) which hosts the ONNX model data
+      const blob = await removeBackground(logo.src);
       const newSrc = await new Promise<string>((res) => {
         const fr = new FileReader();
         fr.onload = () => res(fr.result as string);
         fr.readAsDataURL(blob);
       });
-      update({ logos: design.logos.map((l) => l.id === logo.id ? { ...l, src: newSrc, originalSrc: l.originalSrc ?? l.src, removeBg: false } : l) });
+      onDesignChange({
+        ...design,
+        logos: design.logos.map((l) =>
+          l.id === logoId ? { ...l, src: newSrc, originalSrc: existingOriginalSrc ?? logo.src, removeBg: false } : l
+        ),
+      });
     } catch (err) {
       console.error('Background removal failed', err);
+      setBgError((p) => ({ ...p, [logoId]: 'Failed to remove background. Check your connection and try again.' }));
     } finally {
-      setRemovingBg((p) => { const n = { ...p }; delete n[logo.id]; return n; });
+      setRemovingBg((p) => { const n = { ...p }; delete n[logoId]; return n; });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [design.logos]);
+  }, [design, onDesignChange]);
 
   /* Shapes */
   const addShape = (type: 'rectangle' | 'circle' | 'line') => {
@@ -635,13 +643,18 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
                             >Restore</button>
                           </div>
                         ) : (
-                          <button
-                            onClick={() => handleRemoveBg(logo)}
-                            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-violet-700 hover:bg-violet-600 text-white text-xs font-semibold transition-colors shadow-sm shadow-violet-900/40"
-                          >
-                            <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><path d="M3 17l4-4m0 0l3-3m-3 3l-3-3m6 0l4-4m0 0l3-3m-3 3l-3-3"/><circle cx="15" cy="5" r="2" fill="currentColor" stroke="none"/></svg>
-                            Remove Background (AI)
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleRemoveBg(logo)}
+                              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-violet-700 hover:bg-violet-600 text-white text-xs font-semibold transition-colors shadow-sm shadow-violet-900/40"
+                            >
+                              <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><path d="M3 17l4-4m0 0l3-3m-3 3l-3-3m6 0l4-4m0 0l3-3m-3 3l-3-3"/><circle cx="15" cy="5" r="2" fill="currentColor" stroke="none"/></svg>
+                              Remove Background (AI)
+                            </button>
+                            {bgError[logo.id] && (
+                              <p className="text-[10px] text-red-400 mt-1 leading-relaxed">{bgError[logo.id]}</p>
+                            )}
+                          </>
                         )}
                       </div>
 
