@@ -177,9 +177,22 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
-  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
-  const savedTemplatesLoadedRef = useRef(false);
-  const [savedTemplatesLoaded, setSavedTemplatesLoaded] = useState(false);
+  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(() => {
+    // Read synchronously from sessionStorage on first render — no async boundary, no delay
+    try {
+      const raw = sessionStorage.getItem(TEMPLATE_LIST_SS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as SavedTemplate[];
+        _templateListCache = parsed; // warm module-level cache so eager preload skips API call
+        return parsed;
+      }
+    } catch {}
+    return [];
+  });
+  const [savedTemplatesLoaded, setSavedTemplatesLoaded] = useState<boolean>(() => {
+    try { return !!sessionStorage.getItem(TEMPLATE_LIST_SS_KEY); } catch { return false; }
+  });
+  const savedTemplatesLoadedRef = useRef(savedTemplatesLoaded); // mirrors initial state (from sessionStorage)
   // Initialize from module-level memory cache so second+ mounts have previews instantly
   const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>(() => ({ ..._previewUrlMemCache }));
   const [showClearCache, setShowClearCache] = useState(false);
