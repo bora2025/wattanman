@@ -216,8 +216,31 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     return readLSTemplateCache() !== null; // true only if cache is valid & non-empty
   });
   const savedTemplatesLoadedRef = useRef(savedTemplatesLoaded); // mirrors initial state (from localStorage)
-  // Initialize from module-level memory cache so second+ mounts have previews instantly
-  const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>(() => ({ ..._previewUrlMemCache }));
+  // Pre-populate previews synchronously on first render:
+  // — memory cache (survives hot-reload / same-session remounts)
+  // — sessionStorage (survives browser refresh within the same tab)
+  // This ensures thumbnails appear on the FIRST PAINT, not after effects run.
+  const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = { ..._previewUrlMemCache };
+    const CACHE_KEY = 'wattaman_thumb_v2';
+    // All known keys: saved templates (from LS cache) + built-in preset keys
+    const knownKeys: string[] = [
+      '__builtin_blank', '__builtin_student', '__builtin_staff',
+      '__preset_st1', '__preset_st2', '__preset_st3', '__preset_st4', '__preset_st5',
+      '__preset_sf1', '__preset_sf2', '__preset_sf3', '__preset_sf4', '__preset_sf5',
+      '__cert_student', '__cert_staff',
+      ...(_templateListCache ?? []).map((t) => t.id),
+    ];
+    for (const key of knownKeys) {
+      if (!initial[key]) {
+        try {
+          const hit = sessionStorage.getItem(`${CACHE_KEY}:${key}`);
+          if (hit) { initial[key] = hit; _previewUrlMemCache[key] = hit; }
+        } catch {}
+      }
+    }
+    return initial;
+  });
   const [showClearCache, setShowClearCache] = useState(false);
 
   // ── Start screen ─────────────────────────────────────────────────────────
