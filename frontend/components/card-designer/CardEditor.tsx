@@ -21,23 +21,31 @@ import NewProjectDialog from './NewProjectDialog';
 
 // Module-level cache: avoids duplicate API calls within the same page session
 let _templateListCache: SavedTemplate[] | null = null;
-const TEMPLATE_LIST_SS_KEY = 'wattaman_tpl_list_v1';
+let _templateListInflight: Promise<SavedTemplate[]> | null = null; // deduplicates concurrent callers
+const TEMPLATE_LIST_LS_KEY = 'wattaman_tpl_list_v1'; // localStorage — persists across tabs & restarts
 function invalidateTemplateListCache() {
   _templateListCache = null;
-  try { sessionStorage.removeItem(TEMPLATE_LIST_SS_KEY); } catch {}
+  _templateListInflight = null;
+  try { localStorage.removeItem(TEMPLATE_LIST_LS_KEY); } catch {}
 }
 async function loadTemplatesCached(): Promise<SavedTemplate[]> {
   // 1. Memory cache — instant within same JS session
   if (_templateListCache !== null) return _templateListCache;
-  // 2. sessionStorage cache — instant within same browser tab (survives hot-reload / navigate-back)
+  // 2. Deduplicate concurrent calls — return the same in-flight promise instead of hitting API twice
+  if (_templateListInflight !== null) return _templateListInflight;
+  // 3. localStorage cache — persists across tabs and browser restarts (unlike sessionStorage)
   try {
-    const raw = sessionStorage.getItem(TEMPLATE_LIST_SS_KEY);
+    const raw = localStorage.getItem(TEMPLATE_LIST_LS_KEY);
     if (raw) { _templateListCache = JSON.parse(raw) as SavedTemplate[]; return _templateListCache; }
   } catch {}
-  // 3. API call — only on first ever load per tab
-  _templateListCache = await apiLoadTemplates();
-  try { sessionStorage.setItem(TEMPLATE_LIST_SS_KEY, JSON.stringify(_templateListCache)); } catch {}
-  return _templateListCache;
+  // 4. API call — only on very first ever load (empty localStorage)
+  _templateListInflight = apiLoadTemplates().then((templates) => {
+    _templateListCache = templates;
+    _templateListInflight = null;
+    try { localStorage.setItem(TEMPLATE_LIST_LS_KEY, JSON.stringify(templates)); } catch {}
+    return templates;
+  });
+  return _templateListInflight;
 }
 
 // Module-level in-memory preview URL cache — survives picker open/close & component remounts
@@ -178,9 +186,10 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(() => {
-    // Read synchronously from sessionStorage on first render — no async boundary, no delay
+    // Read synchronously from localStorage on first render — no async boundary, no delay
+    // Works across tabs and browser restarts (unlike sessionStorage which dies with the tab)
     try {
-      const raw = sessionStorage.getItem(TEMPLATE_LIST_SS_KEY);
+      const raw = localStorage.getItem(TEMPLATE_LIST_LS_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as SavedTemplate[];
         _templateListCache = parsed; // warm module-level cache so eager preload skips API call
@@ -190,9 +199,9 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     return [];
   });
   const [savedTemplatesLoaded, setSavedTemplatesLoaded] = useState<boolean>(() => {
-    try { return !!sessionStorage.getItem(TEMPLATE_LIST_SS_KEY); } catch { return false; }
+    try { return !!localStorage.getItem(TEMPLATE_LIST_LS_KEY); } catch { return false; }
   });
-  const savedTemplatesLoadedRef = useRef(savedTemplatesLoaded); // mirrors initial state (from sessionStorage)
+  const savedTemplatesLoadedRef = useRef(savedTemplatesLoaded); // mirrors initial state (from localStorage)
   // Initialize from module-level memory cache so second+ mounts have previews instantly
   const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>(() => ({ ..._previewUrlMemCache }));
   const [showClearCache, setShowClearCache] = useState(false);

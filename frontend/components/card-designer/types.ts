@@ -299,7 +299,7 @@ export function clearAllCache(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(DESIGN_STORAGE_KEY);
   localStorage.removeItem(TEMPLATES_STORAGE_KEY);
-  try { sessionStorage.removeItem('wattaman_tpl_list_v1'); } catch {}
+  localStorage.removeItem('wattaman_tpl_list_v1');
 }
 
 // --- API-backed template functions (server-side, shared across all admins) ---
