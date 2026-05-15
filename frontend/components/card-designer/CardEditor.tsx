@@ -23,6 +23,26 @@ import NewProjectDialog from './NewProjectDialog';
 let _templateListCache: SavedTemplate[] | null = null;
 let _templateListInflight: Promise<SavedTemplate[]> | null = null; // deduplicates concurrent callers
 const TEMPLATE_LIST_LS_KEY = 'wattaman_tpl_list_v1'; // localStorage — persists across tabs & restarts
+const TEMPLATE_LIST_TTL_MS = 30 * 60 * 1000; // 30-minute expiry — prevents stale data
+
+/** Read from localStorage. Returns null if: key missing, expired, empty array, or corrupt format.
+ *  An empty result is NEVER trusted — it could be a transient API error artifact. */
+function readLSTemplateCache(): SavedTemplate[] | null {
+  try {
+    const raw = localStorage.getItem(TEMPLATE_LIST_LS_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw) as Record<string, unknown>;
+    const data = obj.d;
+    const ts = obj.t;
+    if (!Array.isArray(data) || data.length === 0) return null;           // reject empty / bad format
+    if (typeof ts !== 'number' || Date.now() - ts > TEMPLATE_LIST_TTL_MS) { // reject expired
+      localStorage.removeItem(TEMPLATE_LIST_LS_KEY);
+      return null;
+    }
+    return data as SavedTemplate[];
+  } catch { return null; }
+}
+
 function invalidateTemplateListCache() {
   _templateListCache = null;
   _templateListInflight = null;
@@ -33,16 +53,17 @@ async function loadTemplatesCached(): Promise<SavedTemplate[]> {
   if (_templateListCache !== null) return _templateListCache;
   // 2. Deduplicate concurrent calls — return the same in-flight promise instead of hitting API twice
   if (_templateListInflight !== null) return _templateListInflight;
-  // 3. localStorage cache — persists across tabs and browser restarts (unlike sessionStorage)
-  try {
-    const raw = localStorage.getItem(TEMPLATE_LIST_LS_KEY);
-    if (raw) { _templateListCache = JSON.parse(raw) as SavedTemplate[]; return _templateListCache; }
-  } catch {}
-  // 4. API call — only on very first ever load (empty localStorage)
+  // 3. localStorage cache — non-empty, non-expired only (empty result could be a transient error)
+  const lsHit = readLSTemplateCache();
+  if (lsHit) { _templateListCache = lsHit; return lsHit; }
+  // 4. API call — only when cache is genuinely absent or expired
   _templateListInflight = apiLoadTemplates().then((templates) => {
     _templateListCache = templates;
     _templateListInflight = null;
-    try { localStorage.setItem(TEMPLATE_LIST_LS_KEY, JSON.stringify(templates)); } catch {}
+    // CRITICAL: never persist an empty array — could be a cold-start / auth error artifact
+    if (templates.length > 0) {
+      try { localStorage.setItem(TEMPLATE_LIST_LS_KEY, JSON.stringify({ d: templates, t: Date.now() })); } catch {}
+    }
     return templates;
   });
   return _templateListInflight;
@@ -186,20 +207,13 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(() => {
-    // Read synchronously from localStorage on first render — no async boundary, no delay
-    // Works across tabs and browser restarts (unlike sessionStorage which dies with the tab)
-    try {
-      const raw = localStorage.getItem(TEMPLATE_LIST_LS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as SavedTemplate[];
-        _templateListCache = parsed; // warm module-level cache so eager preload skips API call
-        return parsed;
-      }
-    } catch {}
+    // Read synchronously from localStorage — valid, non-empty, non-expired only
+    const hit = readLSTemplateCache();
+    if (hit) { _templateListCache = hit; return hit; } // warms module-level cache too
     return [];
   });
   const [savedTemplatesLoaded, setSavedTemplatesLoaded] = useState<boolean>(() => {
-    try { return !!localStorage.getItem(TEMPLATE_LIST_LS_KEY); } catch { return false; }
+    return readLSTemplateCache() !== null; // true only if cache is valid & non-empty
   });
   const savedTemplatesLoadedRef = useRef(savedTemplatesLoaded); // mirrors initial state (from localStorage)
   // Initialize from module-level memory cache so second+ mounts have previews instantly
