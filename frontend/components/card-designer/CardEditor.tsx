@@ -21,12 +21,27 @@ import NewProjectDialog from './NewProjectDialog';
 
 // Module-level cache: avoids duplicate API calls within the same page session
 let _templateListCache: SavedTemplate[] | null = null;
-function invalidateTemplateListCache() { _templateListCache = null; }
+const TEMPLATE_LIST_SS_KEY = 'wattaman_tpl_list_v1';
+function invalidateTemplateListCache() {
+  _templateListCache = null;
+  try { sessionStorage.removeItem(TEMPLATE_LIST_SS_KEY); } catch {}
+}
 async function loadTemplatesCached(): Promise<SavedTemplate[]> {
+  // 1. Memory cache — instant within same JS session
   if (_templateListCache !== null) return _templateListCache;
+  // 2. sessionStorage cache — instant within same browser tab (survives hot-reload / navigate-back)
+  try {
+    const raw = sessionStorage.getItem(TEMPLATE_LIST_SS_KEY);
+    if (raw) { _templateListCache = JSON.parse(raw) as SavedTemplate[]; return _templateListCache; }
+  } catch {}
+  // 3. API call — only on first ever load per tab
   _templateListCache = await apiLoadTemplates();
+  try { sessionStorage.setItem(TEMPLATE_LIST_SS_KEY, JSON.stringify(_templateListCache)); } catch {}
   return _templateListCache;
 }
+
+// Module-level in-memory preview URL cache — survives picker open/close & component remounts
+const _previewUrlMemCache: Record<string, string> = {};
 
 const TEMPLATES: Partial<Record<CardType, CardDesign>> = {
   student: STUDENT_TEMPLATE,
@@ -165,7 +180,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
   const savedTemplatesLoadedRef = useRef(false);
   const [savedTemplatesLoaded, setSavedTemplatesLoaded] = useState(false);
-  const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>({});
+  // Initialize from module-level memory cache so second+ mounts have previews instantly
+  const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>(() => ({ ..._previewUrlMemCache }));
   const [showClearCache, setShowClearCache] = useState(false);
 
   // ── Start screen ─────────────────────────────────────────────────────────
@@ -204,17 +220,21 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       setSavedTemplates(templates);
       setSavedTemplatesLoaded(true);
       savedTemplatesLoadedRef.current = true;
-      // Pre-render saved template thumbnails into sessionStorage so the picker is instant
+      // Pre-render saved template thumbnails into memory + sessionStorage so the picker is instant
       if (templates.length === 0) return;
       (async () => {
         for (const tpl of templates) {
           if (cancelled) break;
-          if (sessionStorage.getItem(`${CACHE_KEY}:${tpl.id}`)) continue;
+          if (_previewUrlMemCache[tpl.id]) continue; // already in memory cache
+          const ssHit = sessionStorage.getItem(`${CACHE_KEY}:${tpl.id}`);
+          if (ssHit) { _previewUrlMemCache[tpl.id] = ssHit; continue; } // warm from sessionStorage
           await new Promise<void>((r) => setTimeout(r, 0));
           if (cancelled) break;
           try {
             const c = await renderDesignToCanvas(tpl.design, { scale: thumbScale(tpl.design) });
-            try { sessionStorage.setItem(`${CACHE_KEY}:${tpl.id}`, c.toDataURL('image/jpeg', 0.5)); } catch {}
+            const url = c.toDataURL('image/jpeg', 0.5);
+            _previewUrlMemCache[tpl.id] = url;
+            try { sessionStorage.setItem(`${CACHE_KEY}:${tpl.id}`, url); } catch {}
           } catch {}
         }
       })();
@@ -239,15 +259,18 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       const worker = async () => {
         while (queue.length && !cancelled) {
           const item = queue.shift()!;
-          // Check cache first — no yield needed for instant hits
-          const cacheHit = sessionStorage.getItem(`${CACHE_KEY}:${item.key}`);
-          if (cacheHit) { if (!cancelled) setFn(item.key, cacheHit); continue; }
+          // Memory cache first, then sessionStorage, then render
+          const memHit = _previewUrlMemCache[item.key];
+          if (memHit) { if (!cancelled) setFn(item.key, memHit); continue; }
+          const ssHit = sessionStorage.getItem(`${CACHE_KEY}:${item.key}`);
+          if (ssHit) { _previewUrlMemCache[item.key] = ssHit; if (!cancelled) setFn(item.key, ssHit); continue; }
           // Only yield before expensive canvas renders
           await new Promise<void>((r) => setTimeout(r, 0));
           if (cancelled) break;
           try {
             const c = await renderDesignToCanvas(item.design, { scale: thumbScale(item.design) });
             const url = c.toDataURL('image/jpeg', 0.5);
+            _previewUrlMemCache[item.key] = url;
             try { sessionStorage.setItem(`${CACHE_KEY}:${item.key}`, url); } catch {}
             if (!cancelled) setFn(item.key, url);
           } catch {}
@@ -388,17 +411,17 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       setTemplatePreviews((prev) => ({ ...startPreviews, ...prev }));
     }
 
-    // Batch-populate ALL known sessionStorage hits in one synchronous pass (instant)
+    // Batch-populate ALL known preview hits in one synchronous pass (memory cache first, then sessionStorage)
     {
       const batchHits: Record<string, string> = {};
       for (const i of BUILTIN_START_ITEMS) {
-        const hit = sessionStorage.getItem(`${CACHE_KEY}:${i.key}`);
-        if (hit) batchHits[i.key] = hit;
+        const url = _previewUrlMemCache[i.key] ?? sessionStorage.getItem(`${CACHE_KEY}:${i.key}`);
+        if (url) { batchHits[i.key] = url; _previewUrlMemCache[i.key] = url; }
       }
       const knownSaved = savedTemplates.length > 0 ? savedTemplates : startTemplates;
       for (const t of knownSaved) {
-        const hit = sessionStorage.getItem(`${CACHE_KEY}:${t.id}`);
-        if (hit) batchHits[t.id] = hit;
+        const url = _previewUrlMemCache[t.id] ?? sessionStorage.getItem(`${CACHE_KEY}:${t.id}`);
+        if (url) { batchHits[t.id] = url; _previewUrlMemCache[t.id] = url; }
       }
       if (Object.keys(batchHits).length > 0) {
         setTemplatePreviews((prev) => ({ ...batchHits, ...prev }));
@@ -413,15 +436,18 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       const worker = async () => {
         while (queue.length && !cancelled) {
           const item = queue.shift()!;
-          // Check cache first — no yield needed for instant hits
-          const cacheHit = sessionStorage.getItem(`${CACHE_KEY}:${item.key}`);
-          if (cacheHit) { if (!cancelled) setTemplatePreviews((p) => ({ ...p, [item.key]: cacheHit })); continue; }
+          // Check memory cache first (fastest), then sessionStorage, then render
+          const memHit = _previewUrlMemCache[item.key];
+          if (memHit) { if (!cancelled) setTemplatePreviews((p) => ({ ...p, [item.key]: memHit })); continue; }
+          const ssHit = sessionStorage.getItem(`${CACHE_KEY}:${item.key}`);
+          if (ssHit) { _previewUrlMemCache[item.key] = ssHit; if (!cancelled) setTemplatePreviews((p) => ({ ...p, [item.key]: ssHit })); continue; }
           // Only yield before expensive canvas renders
           await new Promise<void>((r) => setTimeout(r, 0));
           if (cancelled) break;
           try {
             const c = await renderDesignToCanvas(item.design, { scale: thumbScale(item.design) });
             const url = c.toDataURL('image/jpeg', 0.5);
+            _previewUrlMemCache[item.key] = url;
             try { sessionStorage.setItem(`${CACHE_KEY}:${item.key}`, url); } catch {}
             if (!cancelled) setTemplatePreviews((p) => ({ ...p, [item.key]: url }));
           } catch {}
