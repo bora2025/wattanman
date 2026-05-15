@@ -163,6 +163,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
+  const savedTemplatesLoadedRef = useRef(false);
+  const [savedTemplatesLoaded, setSavedTemplatesLoaded] = useState(false);
   const [templatePreviews, setTemplatePreviews] = useState<Record<string, string>>({});
   const [showClearCache, setShowClearCache] = useState(false);
 
@@ -191,6 +193,34 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       else if (localDesign) { saveDesign(localDesign); syncToServer(localDesign); }
     }).finally(() => { setTimeout(() => { isLoadingRef.current = false; }, 2000); });
   }, [initialCardType, syncToServer]);
+
+  // ── Eager-preload saved template list on mount (warm cache before picker opens) ──
+  useEffect(() => {
+    const CACHE_KEY = 'wattaman_thumb_v2';
+    const thumbScale = (d: CardDesign) => d.width > 500 ? 0.28 : 0.5;
+    let cancelled = false;
+    loadTemplatesCached().then((templates) => {
+      if (cancelled) return;
+      setSavedTemplates(templates);
+      setSavedTemplatesLoaded(true);
+      savedTemplatesLoadedRef.current = true;
+      // Pre-render saved template thumbnails into sessionStorage so the picker is instant
+      if (templates.length === 0) return;
+      (async () => {
+        for (const tpl of templates) {
+          if (cancelled) break;
+          if (sessionStorage.getItem(`${CACHE_KEY}:${tpl.id}`)) continue;
+          await new Promise<void>((r) => setTimeout(r, 0));
+          if (cancelled) break;
+          try {
+            const c = await renderDesignToCanvas(tpl.design, { scale: thumbScale(tpl.design) });
+            try { sessionStorage.setItem(`${CACHE_KEY}:${tpl.id}`, c.toDataURL('image/jpeg', 0.5)); } catch {}
+          } catch {}
+        }
+      })();
+    });
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Start screen: preload template previews (parallel + sessionStorage cache) ──
   useEffect(() => {
@@ -358,6 +388,23 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       setTemplatePreviews((prev) => ({ ...startPreviews, ...prev }));
     }
 
+    // Batch-populate ALL known sessionStorage hits in one synchronous pass (instant)
+    {
+      const batchHits: Record<string, string> = {};
+      for (const i of BUILTIN_START_ITEMS) {
+        const hit = sessionStorage.getItem(`${CACHE_KEY}:${i.key}`);
+        if (hit) batchHits[i.key] = hit;
+      }
+      const knownSaved = savedTemplates.length > 0 ? savedTemplates : startTemplates;
+      for (const t of knownSaved) {
+        const hit = sessionStorage.getItem(`${CACHE_KEY}:${t.id}`);
+        if (hit) batchHits[t.id] = hit;
+      }
+      if (Object.keys(batchHits).length > 0) {
+        setTemplatePreviews((prev) => ({ ...batchHits, ...prev }));
+      }
+    }
+
     const runConcurrent = async (
       items: { key: string; design: CardDesign }[],
       limit = 3,
@@ -392,8 +439,12 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       // Module-level cache makes this instant on second+ call; only hits API on first ever open
       const templates = alreadyLoaded ?? await loadTemplatesCached();
       if (cancelled) return;
-      // Populate savedTemplates if it was empty (first open or entering editor directly)
-      if (savedTemplates.length === 0 && templates.length > 0) setSavedTemplates(templates);
+      // Ensure loaded flag is set (fallback if eager preload hasn't resolved yet)
+      if (!savedTemplatesLoadedRef.current) {
+        if (templates.length > 0) setSavedTemplates(templates);
+        setSavedTemplatesLoaded(true);
+        savedTemplatesLoadedRef.current = true;
+      }
       // Render saved template previews concurrently with built-in — not after
       await Promise.all([
         builtinRender,
@@ -1105,7 +1156,16 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
                 {/* Saved certificate templates */}
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Your Saved Certificate Templates</h4>
-                {savedTemplates.filter((t) => t.cardType === 'certificate-student' || t.cardType === 'certificate-staff').length === 0 ? (
+                {!savedTemplatesLoaded ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="rounded-xl border-2 border-slate-100 bg-white animate-pulse overflow-hidden">
+                        <div className="h-28 bg-slate-100" />
+                        <div className="p-3 space-y-2"><div className="h-3 bg-slate-100 rounded w-3/4" /><div className="h-2 bg-slate-100 rounded w-1/2" /></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : savedTemplates.filter((t) => t.cardType === 'certificate-student' || t.cardType === 'certificate-staff').length === 0 ? (
                   <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                     <span className="text-3xl block mb-2">📭</span>
                     <p className="text-sm text-slate-400">No saved certificate templates yet. Click &ldquo;As Template&rdquo; to save one.</p>
@@ -1172,7 +1232,16 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
                 {/* Saved ID card templates */}
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Your Saved Templates</h4>
-                {savedTemplates.filter((t) => t.cardType === 'student' || t.cardType === 'staff').length === 0 ? (
+                {!savedTemplatesLoaded ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="rounded-xl border-2 border-slate-100 bg-white animate-pulse overflow-hidden">
+                        <div className="h-28 bg-slate-100" />
+                        <div className="p-3 space-y-2"><div className="h-3 bg-slate-100 rounded w-3/4" /><div className="h-2 bg-slate-100 rounded w-1/2" /></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : savedTemplates.filter((t) => t.cardType === 'student' || t.cardType === 'staff').length === 0 ? (
                   <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                     <span className="text-3xl block mb-2">📭</span>
                     <p className="text-sm text-slate-400">No saved templates yet. Click &ldquo;As Template&rdquo; to save one.</p>
