@@ -195,9 +195,10 @@ function WattamanScanContent() {
       if (parsed.staffId) {
         setIsLoading(false)
         playSound('error')
-        setMessage('⚠️ Staff card detected — please scan a student ID card')
+        setPendingPhoto(null)
+        setMessage('⚠️ Staff card — please scan a student ID card')
         if ('vibrate' in navigator) navigator.vibrate([100, 100, 100])
-        setTimeout(() => { setMessage(''); lockRef.current = false }, 2000)
+        setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
         return
       }
       if (parsed.studentId) resolvedQr = parsed.studentId
@@ -294,16 +295,24 @@ function WattamanScanContent() {
         }, displayTime)
       } else {
         playSound('error')
-        const err = await res.json().catch(() => ({}))
-        setMessage(err.message || 'Student not found')
+        const errBody = await res.json().catch(() => ({}))
+        const msg = res.status === 404
+          ? '❌ Student not recognised — check ID card'
+          : res.status >= 500
+            ? '⚠️ Server error — try again'
+            : errBody.message || '❌ Scan failed — try again'
+        setPendingPhoto(null)
+        setMessage(msg)
         if ('vibrate' in navigator) navigator.vibrate([100, 100, 100])
-        setTimeout(() => { setMessage(''); lockRef.current = false }, 2200)
+        setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
       }
-    } catch {
+    } catch (err) {
       setIsLoading(false)
       playSound('error')
-      setMessage('Network error — check connection')
-      setTimeout(() => { setMessage(''); lockRef.current = false }, 2200)
+      setPendingPhoto(null)
+      const isOffline = !navigator.onLine || (err instanceof TypeError && err.message.includes('fetch'))
+      setMessage(isOffline ? '📡 No internet — check connection' : '⚠️ Network error — try again')
+      setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
     }
   }, [playSound])
 
@@ -486,7 +495,7 @@ function WattamanScanContent() {
                 )}
                 {message && !lastResult && (
                   <div className={`w-full max-w-sm px-4 py-3 rounded-2xl text-sm font-medium text-center backdrop-blur-sm ${
-                    message.startsWith('⚠️') || message.includes('not found') || message.includes('error') || message.includes('denied') || message.includes('fail')
+                    message.startsWith('❌') || message.startsWith('⚠️') || message.startsWith('📡')
                       ? 'bg-red-500/90 text-white'
                       : 'bg-black/60 text-white'
                   }`}>{message}</div>
