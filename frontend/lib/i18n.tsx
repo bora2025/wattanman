@@ -346,6 +346,7 @@ const en: Record<string, string> = {
   'classes.noAvailableStudents': 'No available students',
   'classes.addStudent': 'Add Student',
   'classes.editStudent': 'Edit Student',
+  'student.generation': 'Generation',
 
   // Take Attendance page
   'attendance.title': 'Take Attendance',
@@ -1266,6 +1267,7 @@ const kh: Record<string, string> = {
   'classes.noAvailableStudents': 'គ្មានសិស្សដែលអាចបន្ថែម',
   'classes.addStudent': 'បន្ថែមសិស្ស',
   'classes.editStudent': 'កែសិស្ស',
+  'student.generation': 'ជំនាន់',
 
   // Take Attendance page
   'attendance.title': 'ចុះវត្តមាន',

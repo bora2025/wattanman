@@ -83,6 +83,7 @@ model Student {
   sex           String?  // MALE or FEMALE
   dateOfBirth   DateTime? // Date of birth
   address       String?  // Home address
+  generation    String?  // Nth generation (ជំនាន់)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

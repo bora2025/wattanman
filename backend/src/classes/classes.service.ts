@@ -60,6 +60,7 @@ export class ClassesService {
       sex: s.sex,
       dateOfBirth: s.dateOfBirth,
       address: s.address || '',
+      generation: s.generation || '',
       className: s.class?.name || null,
     }));
   }
@@ -242,6 +243,7 @@ export class ClassesService {
     const passwordIdx = header.findIndex(h => h === 'password');
     const dobIdx = header.findIndex(h => h.includes('birth') || h.includes('dob') || h === 'date of birth');
     const addressIdx = header.findIndex(h => h === 'address');
+    const generationIdx = header.findIndex(h => h === 'generation' || h.includes('generation'));
 
     if (nameIdx === -1) {
       throw new BadRequestException('CSV must have a "Name" column');
@@ -266,6 +268,7 @@ export class ClassesService {
       const password = passwordIdx !== -1 ? cols[passwordIdx]?.trim() : '';
       const dateOfBirth = dobIdx !== -1 ? cols[dobIdx]?.trim() : '';
       const address = addressIdx !== -1 ? cols[addressIdx]?.trim() : '';
+      const generation = generationIdx !== -1 ? cols[generationIdx]?.trim() : '';
 
       if (!name) {
         results.push({ row: i + 1, id: studentId, name: '', email: '', status: 'skipped', error: 'Missing name' });
@@ -325,6 +328,7 @@ export class ClassesService {
           ...(photo ? { photo } : {}),
           ...(dateOfBirth ? { dateOfBirth: new Date(dateOfBirth) } : {}),
           ...(address ? { address } : {}),
+          ...(generation ? { generation } : {}),
         };
 
         if (!student) {
@@ -391,13 +395,14 @@ export class ClassesService {
     return url;
   }
 
-  async updateStudent(studentId: string, data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string }) {
-    // Update student fields (sex, photo, dateOfBirth, address)
+  async updateStudent(studentId: string, data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string }) {
+    // Update student fields (sex, photo, dateOfBirth, address, generation)
     const studentData: any = {};
     if (data.sex !== undefined) studentData.sex = data.sex;
     if (data.photo !== undefined) studentData.photo = data.photo;
     if (data.dateOfBirth !== undefined) studentData.dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
     if (data.address !== undefined) studentData.address = data.address;
+    if (data.generation !== undefined) studentData.generation = data.generation;
 
     const student = await this.prisma.student.update({
       where: { id: studentId },
@@ -432,6 +437,7 @@ export class ClassesService {
       sex: student.sex,
       dateOfBirth: student.dateOfBirth,
       address: student.address || '',
+      generation: student.generation || '',
       className: student.class?.name || null,
     };
   }

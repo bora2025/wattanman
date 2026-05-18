@@ -45,6 +45,7 @@ interface Student {
   sex: string | null;
   dateOfBirth: string | null;
   address: string;
+  generation?: string;
 }
 
 interface SessionConfigItem {
@@ -207,10 +208,10 @@ function ManageClasses() {
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [classStudents, setClassStudents] = useState<Student[]>([]);
   const [availableStudents, setAvailableStudents] = useState<Student[]>([]);
-  const [newStudentForm, setNewStudentForm] = useState({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '' });
+  const [newStudentForm, setNewStudentForm] = useState({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '' });
   const [showAddStudentForm, setShowAddStudentForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
-  const [editStudentData, setEditStudentData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '' });
+  const [editStudentData, setEditStudentData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '' });
   const [csvUploading, setCsvUploading] = useState(false);
   const [csvResult, setCsvResult] = useState<{ total: number; success: number; errors: number; skipped: number; details: { row: number; id: string; name: string; email: string; status: string; error?: string }[] } | null>(null);
   const [selectedPreset, setSelectedPreset] = useState('global-default');
@@ -461,7 +462,7 @@ function ManageClasses() {
 
   const handleManageStudents = async (cls: Class) => {
     setSelectedClass(cls);
-    setNewStudentForm({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '' });
+    setNewStudentForm({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '' });
     setShowAddStudentForm(false);
     await fetchClassStudents(cls.id);
     await fetchAvailableStudents(cls.id);
@@ -510,7 +511,7 @@ function ManageClasses() {
 
   const handleEditStudent = (student: Student) => {
     setEditingStudent(student.id);
-    setEditStudentData({ name: student.name || '', sex: student.sex || '', phone: student.phone || '', photo: student.photo || '', dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '', address: student.address || '' });
+    setEditStudentData({ name: student.name || '', sex: student.sex || '', phone: student.phone || '', photo: student.photo || '', dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '', address: student.address || '', generation: student.generation || '' });
   };
 
   const handleSaveStudent = async (studentId: string) => {
@@ -549,7 +550,7 @@ function ManageClasses() {
         });
         if (addRes.ok) {
           const addedStudent = await addRes.json();
-          if (newStudentForm.sex || newStudentForm.photo || newStudentForm.dateOfBirth || newStudentForm.address) {
+          if (newStudentForm.sex || newStudentForm.photo || newStudentForm.dateOfBirth || newStudentForm.address || newStudentForm.generation) {
             const studentId = addedStudent.id || addedStudent.student?.id;
             if (studentId) {
               await apiFetch(`/api/classes/${selectedClass.id}/students/${studentId}`, {
@@ -560,11 +561,12 @@ function ManageClasses() {
                   ...(newStudentForm.photo ? { photo: newStudentForm.photo } : {}),
                   ...(newStudentForm.dateOfBirth ? { dateOfBirth: newStudentForm.dateOfBirth } : {}),
                   ...(newStudentForm.address ? { address: newStudentForm.address } : {}),
+                  ...(newStudentForm.generation ? { generation: newStudentForm.generation } : {}),
                 }),
               });
             }
           }
-          setNewStudentForm({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '' });
+          setNewStudentForm({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '' });
           setShowAddStudentForm(false);
           await fetchClassStudents(selectedClass.id);
           await fetchAvailableStudents(selectedClass.id);
@@ -913,7 +915,7 @@ function ManageClasses() {
                       <button
                         type="button"
                         onClick={() => {
-                          const csv = 'ID,Name,Sex,Date of Birth,Phone,Address,Photo\n1,John Doe,Male,2010-05-15,012345678,Phnom Penh,\n2,Jane Smith,Female,2011-03-22,098765432,,\n3,សុខ សាន,ប្រុស,2010-12-01,,ក្រុងភ្នំពេញ,https://drive.google.com/file/d/FILE_ID/view\n';
+                          const csv = 'ID,Name,Sex,Date of Birth,Phone,Address,Photo,Generation\n1,John Doe,Male,2010-05-15,012345678,Phnom Penh,,1\n2,Jane Smith,Female,2011-03-22,098765432,,,2\n3,សុខ សាន,ប្រុស,2010-12-01,,ក្រុងភ្នំពេញ,https://drive.google.com/file/d/FILE_ID/view,1\n';
                           const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
                           const link = document.createElement('a');
                           link.href = URL.createObjectURL(blob);
@@ -948,7 +950,7 @@ function ManageClasses() {
                             ))}
                           </div>
                         )}
-                        <p className="text-xs text-slate-500">CSV format: ID, Name, Sex, Date of Birth, Phone, Address, Photo (Google Drive links supported)</p>
+                        <p className="text-xs text-slate-500">CSV format: ID, Name, Sex, Date of Birth, Phone, Address, Photo, Generation (Google Drive links supported)</p>
                       </div>
                     )}
                     {showAddStudentForm && (
@@ -986,6 +988,10 @@ function ManageClasses() {
                         <div>
                           <label className="form-label">Address</label>
                           <input type="text" value={newStudentForm.address} onChange={(e) => setNewStudentForm({ ...newStudentForm, address: e.target.value })} placeholder="Street, City, Province" />
+                        </div>
+                        <div>
+                          <label className="form-label">{t('student.generation') || 'Generation'} <span className="text-slate-400 text-xs">(ជំនាន់ទី)</span></label>
+                          <input type="number" min="1" value={newStudentForm.generation} onChange={(e) => setNewStudentForm({ ...newStudentForm, generation: e.target.value })} placeholder="1" />
                         </div>
                         <p className="text-xs text-slate-400">Password will be auto-generated as: student + email prefix (e.g. studentjohn)</p>
                         <button type="submit" className="btn-success">Add Student</button>
@@ -1109,6 +1115,10 @@ function ManageClasses() {
                         <div className="sm:col-span-2">
                           <label className="form-label text-xs">Address</label>
                           <input type="text" value={editStudentData.address} onChange={(e) => setEditStudentData({ ...editStudentData, address: e.target.value })} placeholder="Street, City, Province" />
+                        </div>
+                        <div>
+                          <label className="form-label text-xs">{t('student.generation') || 'Generation'} <span className="text-slate-400">(ជំនាន់ទី)</span></label>
+                          <input type="number" min="1" value={editStudentData.generation} onChange={(e) => setEditStudentData({ ...editStudentData, generation: e.target.value })} placeholder="1" />
                         </div>
                         <div className="sm:col-span-2 lg:col-span-3">
                           <label className="form-label text-xs">Photo URL</label>
