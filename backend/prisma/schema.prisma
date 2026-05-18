@@ -24,16 +24,29 @@ model User {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  classesAsTeacher Class[] @relation("TeacherClasses")
-  attendancesMarked Attendance[] @relation("MarkedBy")
+  classesAsTeacher  Class[]          @relation("TeacherClasses")
+  attendancesMarked Attendance[]     @relation("MarkedBy")
   notifications     Notification[]
   staffAttendances  StaffAttendance[] @relation("StaffAttendances")
   staffMarkedBy     StaffAttendance[] @relation("StaffMarkedBy")
 
   // For students and parents
   studentProfile Student?
-  parentStudents Student[] @relation("ParentStudents")
+  parentStudents Student[]  @relation("ParentStudents")
   refreshTokens  RefreshToken[]
+
+  // Module 1: Salary
+  salaries       Salary[]   @relation("UserSalaries")
+
+  // Module 3: Exams
+  examsCreated   Exam[]     @relation("ExamCreator")
+
+  // Modules 5 & 6: Assignments
+  assignmentsCreated Assignment[] @relation("AssignmentCreator")
+
+  // Module 4: Messages
+  messagesSent     Message[] @relation("MessageSender")
+  messagesReceived Message[] @relation("MessageReceiver")
 }
 
 model Class {
@@ -52,6 +65,8 @@ model Class {
   students    Student[]
   attendances Attendance[]
   sessionConfigs SessionConfig[]
+  exams       Exam[]       @relation("ClassExams")
+  assignments Assignment[] @relation("ClassAssignments")
 }
 
 model Student {
@@ -74,6 +89,8 @@ model Student {
   // Relations
   attendances Attendance[]
   feeRecords  FeeRecord[]
+  examAttempts     ExamAttempt[]       @relation("StudentExamAttempts")
+  assignmentSubmissions AssignmentSubmission[] @relation("StudentSubmissions")
 }
 
 model Attendance {
@@ -472,5 +489,180 @@ model ScoreEntry {
   updatedAt DateTime     @updatedAt
 
   @@unique([examTabId, subjectId, studentId])
+}
+
+// ─── Module 1: Salary Management ─────────────────────────────────────────────
+
+model Salary {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation("UserSalaries", fields: [userId], references: [id])
+  month       Int       // 1-12
+  year        Int
+  baseSalary  Float
+  allowances  Float     @default(0)
+  deductions  Float     @default(0)
+  netSalary   Float
+  isPaid      Boolean   @default(false)
+  paidAt      DateTime?
+  notes       String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, month, year])
+}
+
+// ─── Module 2: School Bus Tracking ───────────────────────────────────────────
+
+model Bus {
+  id          String     @id @default(cuid())
+  name        String
+  plateNumber String     @unique
+  capacity    Int        @default(40)
+  status      String     @default("ACTIVE") // ACTIVE, INACTIVE, MAINTENANCE
+  driverId    String?
+  routeId     String?
+  route       BusRoute?  @relation(fields: [routeId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  locations   BusLocation[]
+}
+
+model BusRoute {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  buses       Bus[]
+  stops       BusStop[]
+}
+
+model BusStop {
+  id        String   @id @default(cuid())
+  name      String
+  latitude  Float
+  longitude Float
+  order     Int      @default(0)
+  routeId   String
+  route     BusRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model BusLocation {
+  id        String   @id @default(cuid())
+  busId     String
+  bus       Bus      @relation(fields: [busId], references: [id], onDelete: Cascade)
+  latitude  Float
+  longitude Float
+  speed     Float?
+  heading   Float?
+  timestamp DateTime @default(now())
+}
+
+// ─── Module 3: Examination ───────────────────────────────────────────────────
+
+model Exam {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  classId     String?
+  class       Class?        @relation("ClassExams", fields: [classId], references: [id])
+  createdById String
+  createdBy   User          @relation("ExamCreator", fields: [createdById], references: [id])
+  startTime   DateTime?
+  endTime     DateTime?
+  duration    Int           @default(60) // minutes
+  totalMarks  Float         @default(100)
+  passMark    Float         @default(50)
+  status      String        @default("DRAFT") // DRAFT, PUBLISHED, ACTIVE, COMPLETED
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  questions   ExamQuestion[]
+  attempts    ExamAttempt[]
+}
+
+model ExamQuestion {
+  id        String   @id @default(cuid())
+  examId    String
+  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  text      String
+  type      String   @default("MCQ") // MCQ, SHORT_ANSWER, ESSAY
+  options   Json?    // string[] for MCQ choices
+  answer    String?  // correct answer key
+  marks     Float    @default(1)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model ExamAttempt {
+  id          String    @id @default(cuid())
+  examId      String
+  exam        Exam      @relation(fields: [examId], references: [id])
+  studentId   String
+  student     Student   @relation("StudentExamAttempts", fields: [studentId], references: [id])
+  answers     Json?     // { questionId: answerText }
+  score       Float?
+  grade       String?
+  status      String    @default("IN_PROGRESS") // IN_PROGRESS, SUBMITTED, GRADED
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+  gradedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([examId, studentId])
+}
+
+// ─── Modules 5 & 6: Assignments (Student + Teacher shared) ───────────────────
+
+model Assignment {
+  id            String                 @id @default(cuid())
+  title         String
+  description   String?
+  classId       String
+  class         Class                  @relation("ClassAssignments", fields: [classId], references: [id])
+  createdById   String
+  createdBy     User                   @relation("AssignmentCreator", fields: [createdById], references: [id])
+  dueDate       DateTime?
+  totalMarks    Float                  @default(100)
+  status        String                 @default("PUBLISHED") // DRAFT, PUBLISHED, CLOSED
+  attachmentUrl String?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  submissions   AssignmentSubmission[]
+}
+
+model AssignmentSubmission {
+  id            String     @id @default(cuid())
+  assignmentId  String
+  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       Student    @relation("StudentSubmissions", fields: [studentId], references: [id])
+  content       String?
+  attachmentUrl String?
+  marks         Float?
+  feedback      String?
+  status        String     @default("SUBMITTED") // SUBMITTED, LATE, GRADED
+  submittedAt   DateTime   @default(now())
+  gradedAt      DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@unique([assignmentId, studentId])
+}
+
+// ─── Module 4: Parents Portal — Messaging ────────────────────────────────────
+
+model Message {
+  id         String    @id @default(cuid())
+  senderId   String
+  sender     User      @relation("MessageSender", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User      @relation("MessageReceiver", fields: [receiverId], references: [id])
+  content    String
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
 }
 

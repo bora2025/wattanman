@@ -16,6 +16,11 @@ import { CardTemplatesModule } from './card-templates/card-templates.module';
 import { TimetableModule } from './timetable/timetable.module';
 import { ScoringModule } from './scoring/scoring.module';
 import { FeesModule } from './fees/fees.module';
+import { SalaryModule } from './salary/salary.module';
+import { BusModule } from './bus/bus.module';
+import { ExamModule } from './exam/exam.module';
+import { AssignmentsModule } from './assignments/assignments.module';
+import { ParentModule } from './parent/parent.module';
 
 @Module({
   imports: [
@@ -34,6 +39,11 @@ import { FeesModule } from './fees/fees.module';
     TimetableModule,
     ScoringModule,
     FeesModule,
+    SalaryModule,
+    BusModule,
+    ExamModule,
+    AssignmentsModule,
+    ParentModule,
   ],
   controllers: [AppController],
   providers: [
