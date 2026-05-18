@@ -30,6 +30,11 @@ export const adminNav = [
   { label: 'nav.studentCards', href: '/admin/student-cards', icon: 'id-card' },
   { label: 'nav.staffCards', href: '/admin/staff-cards', icon: 'id-card' },
 
+  // ── New Modules ──
+  { label: 'Salary Management', href: '/admin/salary', icon: 'money', section: 'Modules' },
+  { label: 'School Bus', href: '/admin/bus', icon: 'calendar' },
+  { label: 'Examinations', href: '/admin/exams', icon: 'book' },
+
   // ── Settings ──
   { label: 'nav.sessionSettings', href: '/admin/session-settings', icon: 'clock', section: 'nav.section.settings' },
   { label: 'nav.holidays', href: '/admin/holidays', icon: 'holiday' },

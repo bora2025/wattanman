@@ -1,7 +1,20 @@
 'use client'
 
+import { useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LanguageProvider } from '../lib/i18n'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  return <LanguageProvider>{children}</LanguageProvider>
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: { staleTime: 30_000, retry: 1 },
+    },
+  }))
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>{children}</LanguageProvider>
+    </QueryClientProvider>
+  )
 }
+

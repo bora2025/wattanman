@@ -5,4 +5,7 @@ export const teacherNav = [
   { label: 'nav.staffAttendance', href: '/teacher/staff-attendance', icon: 'clipboard' },
   { label: 'nav.reports', href: '/teacher/reports', icon: 'chart' },
   { label: 'nav.sessionSettings', href: '/teacher/session-settings', icon: 'settings' },
+  { label: 'Assignments', href: '/teacher/assignments', icon: 'book' },
+  { label: 'Examinations', href: '/teacher/exams', icon: 'clipboard' },
+  { label: 'Gradebook', href: '/teacher/gradebook', icon: 'chart' },
 ]
