@@ -1641,6 +1641,8 @@ export class ReportsService {
     const attendances = await this.prisma.attendance.findMany({
       where: { classId: cls.id, date: { gte: monday, lt: weekEnd } },
     });
+    // Pre-build set of dates when any class attendance was recorded (skip days before tracking started)
+    const activeDates = new Set<string>(attendances.map((a: any) => toUTCMidnight(new Date(a.date)).toISOString().split('T')[0]));
 
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -1705,6 +1707,12 @@ export class ReportsService {
           continue;
         }
         hasPastDays = true;
+
+        // Skip days when no attendance was taken for the class (before tracking started)
+        if (!activeDates.has(dayStart.toISOString().split('T')[0])) {
+          rowVals.push('', '', '', '');
+          continue;
+        }
 
         const dayRecs = attendances.filter((a: any) =>
           a.studentId === student.id && a.date >= dayStart && a.date < dayDateEnd
@@ -1805,6 +1813,8 @@ export class ReportsService {
     const attendances = await this.prisma.attendance.findMany({
       where: { classId: cls.id, date: { gte: monthStart, lt: monthEnd } },
     });
+    // Pre-build set of dates when any class attendance was recorded (skip days before tracking started)
+    const activeDates = new Set<string>(attendances.map((a: any) => toUTCMidnight(new Date(a.date)).toISOString().split('T')[0]));
 
     // Row 1 header
     const headerValues: any[] = ['Month', 'ID', 'Student Name'];
@@ -1864,6 +1874,12 @@ export class ReportsService {
           }
           weekHasPast = true;
           hasPastDays = true;
+
+          // Skip days when no attendance was taken for the class (before tracking started)
+          if (!activeDates.has(dayStart.toISOString().split('T')[0])) {
+            cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000);
+            continue;
+          }
 
           const isHoliday = holidayDateSet.has(dayStart.toISOString().split('T')[0]);
 
@@ -1940,6 +1956,8 @@ export class ReportsService {
     const attendances = await this.prisma.attendance.findMany({
       where: { classId: cls.id, date: { gte: yearStart, lt: yearEnd } },
     });
+    // Pre-build set of dates when any class attendance was recorded (skip days before tracking started)
+    const activeDates = new Set<string>(attendances.map((a: any) => toUTCMidnight(new Date(a.date)).toISOString().split('T')[0]));
 
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -2002,6 +2020,12 @@ export class ReportsService {
           }
           monthHasPast = true;
           hasPastDays = true;
+
+          // Skip days when no attendance was taken for the class (before tracking started)
+          if (!activeDates.has(dayStart.toISOString().split('T')[0])) {
+            cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000);
+            continue;
+          }
 
           const isHoliday = holidayDateSet.has(dayStart.toISOString().split('T')[0]);
 
@@ -2243,6 +2267,8 @@ export class ReportsService {
     const records = await this.prisma.staffAttendance.findMany({
       where: { date: { gte: monday, lt: weekEnd } },
     });
+    // Pre-build set of dates when any staff attendance was recorded (skip days before tracking started)
+    const activeDates = new Set<string>(records.map((r: any) => toUTCMidnight(new Date(r.date)).toISOString().split('T')[0]));
 
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const dayHeaders: string[] = [];
@@ -2288,6 +2314,9 @@ export class ReportsService {
 
         if (dayStart > todayCambodia) { rowVals.push('', '', '', ''); continue; }
         hasPastDays = true;
+
+        // Skip days when no attendance was taken for the staff (before tracking started)
+        if (!activeDates.has(dayStart.toISOString().split('T')[0])) { rowVals.push('', '', '', ''); continue; }
 
         if (holidayDateSet.has(dayStart.toISOString().split('T')[0])) { rowVals.push(0, 0, 0, 0); continue; }
 
@@ -2351,6 +2380,8 @@ export class ReportsService {
     const records = await this.prisma.staffAttendance.findMany({
       where: { date: { gte: monthStart, lt: monthEnd } },
     });
+    // Pre-build set of dates when any staff attendance was recorded (skip days before tracking started)
+    const activeDates = new Set<string>(records.map((r: any) => toUTCMidnight(new Date(r.date)).toISOString().split('T')[0]));
 
     // Divide month into Sun-Sat weeks
     const weeks: { start: Date; end: Date; label: string }[] = [];
@@ -2401,6 +2432,8 @@ export class ReportsService {
         while (curDay < wkEndNext && curDay < monthEnd) {
           const dayStart = toUTCMidnight(curDay);
           if (dayStart > todayCambodia) { curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000); continue; }
+          // Skip days when no attendance was taken for the staff (before tracking started)
+          if (!activeDates.has(dayStart.toISOString().split('T')[0])) { curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000); continue; }
           if (holidayDateSet.has(dayStart.toISOString().split('T')[0])) { curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000); continue; }
           daysCounted++;
           const dayDateEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
@@ -2461,6 +2494,8 @@ export class ReportsService {
     const records = await this.prisma.staffAttendance.findMany({
       where: { date: { gte: yearStart, lt: yearEnd } },
     });
+    // Pre-build set of dates when any staff attendance was recorded (skip days before tracking started)
+    const activeDates = new Set<string>(records.map((r: any) => toUTCMidnight(new Date(r.date)).toISOString().split('T')[0]));
 
     const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -2504,6 +2539,8 @@ export class ReportsService {
         while (curDay < mEnd) {
           const dayStart = toUTCMidnight(curDay);
           if (dayStart > todayCambodia) { curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000); continue; }
+          // Skip days when no attendance was taken for the staff (before tracking started)
+          if (!activeDates.has(dayStart.toISOString().split('T')[0])) { curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000); continue; }
           if (holidayDateSet.has(dayStart.toISOString().split('T')[0])) { curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000); continue; }
 
           const dayDateEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
