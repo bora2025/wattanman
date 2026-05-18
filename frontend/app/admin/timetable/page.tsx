@@ -189,6 +189,8 @@ export default function TimetablePage() {
   const [printNewHeaderLine, setPrintNewHeaderLine] = useState('')
   const [printSigners, setPrintSigners] = useState<string[]>(['Teacher', 'Admin'])
   const [printNewSigner, setPrintNewSigner] = useState('')
+  const [printLeftFooter, setPrintLeftFooter] = useState('')
+  const [printRightFooter, setPrintRightFooter] = useState('')
 
   // Workload modal
   const [showWorkloadModal, setShowWorkloadModal] = useState(false)
@@ -1960,6 +1962,25 @@ export default function TimetablePage() {
                   >+ Add</button>
                 </div>
               </div>
+
+              {/* Footer Texts */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Footer <span className="text-gray-400 font-normal">(left and right info above signature lines)</span></label>
+                <div className="flex gap-2">
+                  <input
+                    className="input-field flex-1"
+                    value={printLeftFooter}
+                    onChange={e => setPrintLeftFooter(e.target.value)}
+                    placeholder={`Printed: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`}
+                  />
+                  <input
+                    className="input-field flex-1"
+                    value={printRightFooter}
+                    onChange={e => setPrintRightFooter(e.target.value)}
+                    placeholder="School — Class (auto)"
+                  />
+                </div>
+              </div>
             </div>
             <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2 flex-shrink-0">
               <button onClick={() => setShowPrintModal(false)}
@@ -1991,6 +2012,8 @@ export default function TimetablePage() {
             orgName={printOrgName}
             headerLines={printHeaderLines}
             signers={printSigners}
+            leftFooter={printLeftFooter}
+            rightFooter={printRightFooter}
           />
         </div>
       )}
@@ -2063,13 +2086,15 @@ export default function TimetablePage() {
 
 // ═══ Print Layout ═══════════════════════════════════════════════════════════
 
-function PrintLayout({ timetable, mode, classId, orgName, headerLines, signers }: {
+function PrintLayout({ timetable, mode, classId, orgName, headerLines, signers, leftFooter, rightFooter }: {
   timetable: Timetable
   mode: 'all' | 'class'
   classId: string
   orgName: string
   headerLines: string[]
   signers: string[]
+  leftFooter?: string
+  rightFooter?: string
 }) {
   const { t } = useLanguage()
   const DAY_LABELS = [t('timetable.mon'), t('timetable.tue'), t('timetable.wed'), t('timetable.thu'), t('timetable.fri'), t('timetable.sat'), t('timetable.sun')]
@@ -2237,8 +2262,8 @@ function PrintLayout({ timetable, mode, classId, orgName, headerLines, signers }
 
           {/* Footer — matching print report style */}
           <div style={{ marginTop: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: 11, color: '#9ca3af' }}>
-            <div>Printed: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            <div>{orgName || timetable.name} — {cls.name}</div>
+            <div>{leftFooter || `Printed: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`}</div>
+            <div>{rightFooter || `${orgName || timetable.name} — ${cls.name}`}</div>
           </div>
 
           {/* Signature area */}
