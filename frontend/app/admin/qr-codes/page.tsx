@@ -363,33 +363,29 @@ export default function GenerateQRCodes() {
     role: 'student' | 'staff',
     extra?: { dateOfBirth?: string | null; address?: string; phone?: string; sex?: string | null; studyYear?: string },
   ): Record<string, string> => {
+    const sexLabel = extra?.sex === 'MALE' ? 'ប្រុស' : extra?.sex === 'FEMALE' ? 'ស្រី' : '';
     if (role === 'student') {
       return {
-        'Student Name': name,
-        'Student ID': displayId,
-        'Class Name': subtitle,
-        'Study Year': extra?.studyYear || '',
-        'Date of Birth': formatDOB(extra?.dateOfBirth, lang),
-        'Address': extra?.address || '',
-        'Phone': extra?.phone || '',
-        'Sex': extra?.sex === 'MALE' ? 'ប្រុស' : extra?.sex === 'FEMALE' ? 'ស្រី' : '',
-        'Emp ID': '',
-        'Position': '',
-        'Staff Name': '',
+        // New-style keys (match CARD_TYPE_FIELDS)
+        '{{name}}': name, '{{studentNumber}}': displayId, '{{class}}': subtitle,
+        '{{studyYear}}': extra?.studyYear || '', '{{dateOfBirth}}': formatDOB(extra?.dateOfBirth, lang),
+        '{{address}}': extra?.address || '', '{{phone}}': extra?.phone || '',
+        '{{sex}}': sexLabel, '{{email}}': '', '{{qrCode}}': displayId,
+        // Old-style keys (backward compat with saved templates)
+        'Student Name': name, 'Student ID': displayId, 'Class Name': subtitle,
+        'Study Year': extra?.studyYear || '', 'Date of Birth': formatDOB(extra?.dateOfBirth, lang),
+        'Address': extra?.address || '', 'Phone': extra?.phone || '', 'Sex': sexLabel,
+        'Emp ID': '', 'Position': '', 'Staff Name': '',
       };
     }
     return {
-      'Staff Name': name,
-      'Emp ID': displayId,
-      'Position': subtitle,
-      'Student Name': '',
-      'Student ID': '',
-      'Class Name': '',
-      'Study Year': '',
-      'Date of Birth': '',
-      'Address': '',
-      'Phone': '',
-      'Sex': '',
+      // New-style keys (match CARD_TYPE_FIELDS)
+      '{{name}}': name, '{{role}}': subtitle, '{{department}}': '',
+      '{{email}}': '', '{{phone}}': '', '{{qrCode}}': displayId,
+      // Old-style keys (backward compat with saved templates)
+      'Staff Name': name, 'Emp ID': displayId, 'Position': subtitle,
+      'Student Name': '', 'Student ID': '', 'Class Name': '',
+      'Study Year': '', 'Date of Birth': '', 'Address': '', 'Phone': '', 'Sex': '',
     };
   };
 

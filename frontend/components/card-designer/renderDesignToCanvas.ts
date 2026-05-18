@@ -220,13 +220,19 @@ export async function renderDesignToCanvas(
   return canvas;
 }
 
-/** Replace {{Placeholder}} tokens with real values */
+/** Replace {{Placeholder}} tokens with real values (case-insensitive key matching) */
 function substituteFields(template: string, values?: Record<string, string>): string {
   if (!values) return template;
+  // Build a lowercase lookup so {{Phone}} matches 'phone', '{{phone}}', 'Phone', '{{Phone}}', etc.
+  const lowerMap: Record<string, string> = {};
+  for (const [k, v] of Object.entries(values)) {
+    lowerMap[k.toLowerCase()] = v;
+  }
   return template.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
     const trimmed = key.trim();
-    // fieldValues keys may include braces e.g. '{{name}}' or plain 'name'
-    return values[`{{${trimmed}}}`] ?? values[trimmed] ?? match;
+    const lk = trimmed.toLowerCase();
+    // Priority: exact with braces → exact plain → case-insensitive with braces → case-insensitive plain
+    return values[`{{${trimmed}}}`] ?? values[trimmed] ?? lowerMap[`{{${lk}}}`] ?? lowerMap[lk] ?? match;
   });
 }
 

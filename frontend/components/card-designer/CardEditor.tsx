@@ -80,19 +80,30 @@ const TEMPLATES: Partial<Record<CardType, CardDesign>> = {
 };
 
 const PREVIEW_DATA: Record<string, string> = {
+  // New-style keys (match CARD_TYPE_FIELDS — lowercase camelCase)
+  'name': 'Sophea Chann', 'studentNumber': '0001', 'class': 'Grade 10A',
+  'email': 'sophea@school.edu', 'phone': '012 345 678', 'sex': 'Female',
+  'dateOfBirth': '12 Mar 2008', 'address': '123 Norodom Blvd, Phnom Penh',
+  'qrCode': 'STU-2024-001', 'studyYear': '2025–2026',
+  'role': 'Senior Teacher', 'department': 'Mathematics',
+  'schoolName': 'Wattaman School', 'certificateDate': '18/05/2026',
+  // Old-style keys (backward compat with saved templates using capitalized placeholder names)
   'Student Name': 'Sophea Chann', 'Name': 'Sophea Chann', 'ID': 'STU-2024-001',
   'Student ID': 'STU-2024-001', 'Class': 'Grade 10A', 'Class Name': 'Grade 10A',
   'Gender': 'Female', 'Date of Birth': '12 Mar 2008', 'DOB': '12 Mar 2008',
-  'Address': '123 Norodom Blvd, Phnom Penh', 'Ranking': '#3 / Monthly',
-  'Monthly Rank': '#3', 'Yearly Rank': '#5', 'Department': 'Mathematics',
-  'Role': 'Senior Teacher', 'Staff Name': 'Dara Sok', 'Staff ID': 'STAFF-2024-042',
-  'School': 'Wattanman School', 'Year': '2024-2025',
+  'Address': '123 Norodom Blvd, Phnom Penh', 'Phone': '012 345 678',
+  'Ranking': '#3 / Monthly', 'Monthly Rank': '#3', 'Yearly Rank': '#5',
+  'Department': 'Mathematics', 'Role': 'Senior Teacher',
+  'Staff Name': 'Dara Sok', 'Staff ID': 'STAFF-2024-042',
+  'School': 'Wattaman School', 'Year': '2024-2025',
 };
 
 function applyPreviewData(text: string): string {
+  const lowerMap: Record<string, string> = {};
+  for (const [k, v] of Object.entries(PREVIEW_DATA)) lowerMap[k.toLowerCase()] = v;
   return text.replace(/\{\{([^}]+)\}\}/g, (_, key) => {
     const trimmed = key.trim();
-    return PREVIEW_DATA[trimmed] ?? `[${trimmed}]`;
+    return PREVIEW_DATA[trimmed] ?? lowerMap[trimmed.toLowerCase()] ?? `[${trimmed}]`;
   });
 }
 
