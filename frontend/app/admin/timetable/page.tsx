@@ -80,10 +80,34 @@ function getPeriodTimes(tt: { periodsPerDay: number; periodTimes?: string | null
       // Always return exactly periodsPerDay entries, extending with defaults if saved has fewer
       const result = [...saved]
       while (result.length < tt.periodsPerDay) result.push(defaults[result.length] ?? '00:00')
-      return result.slice(0, tt.periodsPerDay)
+      return result.slice(0, tt.periodsPerDay).map(to24h)
     } catch {}
   }
   return defaults
+}
+
+/** Normalise any time string to HH:MM 24-hour format. */
+function to24h(raw: string): string {
+  if (!raw) return '00:00'
+  // Already HH:MM or H:MM — return as-is (24h values never contain letters)
+  const match24 = raw.match(/^(\d{1,2}):(\d{2})$/)
+  if (match24) {
+    const h = parseInt(match24[1], 10)
+    const m = parseInt(match24[2], 10)
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59)
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  }
+  // Handle 12h strings like "1:00 PM", "07:00 AM"
+  const match12 = raw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i)
+  if (match12) {
+    let h = parseInt(match12[1], 10)
+    const m = parseInt(match12[2], 10)
+    const ampm = match12[3].toUpperCase()
+    if (ampm === 'AM' && h === 12) h = 0
+    if (ampm === 'PM' && h !== 12) h += 12
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  }
+  return '00:00'
 }
 
 function colorBadge(color: string | null, text: string) {
@@ -601,10 +625,11 @@ export default function TimetablePage() {
   async function savePeriodTimes() {
     if (!current) return
     setSavingPeriods(true)
+    const normalised = periodInputs.map(to24h)
     const res = await apiFetch(`/api/timetable/${current.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ periodTimes: JSON.stringify(periodInputs) }),
+      body: JSON.stringify({ periodTimes: JSON.stringify(normalised) }),
     })
     if (res.ok) {
       const updated = await res.json()
@@ -1176,12 +1201,20 @@ export default function TimetablePage() {
                 <div key={idx} className="flex items-center gap-3">
                   <span className="text-xs font-semibold text-indigo-600 w-16 flex-shrink-0">{t('timetable.period')} {idx + 1}</span>
                   <input
-                    type="time"
-                    className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    type="text"
+                    placeholder="HH:MM"
+                    pattern="[0-2][0-9]:[0-5][0-9]"
+                    maxLength={5}
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
                     value={time}
                     onChange={e => {
                       const next = [...periodInputs]
                       next[idx] = e.target.value
+                      setPeriodInputs(next)
+                    }}
+                    onBlur={e => {
+                      const next = [...periodInputs]
+                      next[idx] = to24h(e.target.value)
                       setPeriodInputs(next)
                     }}
                   />
