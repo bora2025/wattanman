@@ -350,7 +350,6 @@ function WattamanScanContent() {
         // empty-string deviceIds for privacy. Re-enumerate every init so switching
         // cameras always gets valid deviceIds (populated once permission is granted).
         const cameras = await reader.listVideoInputDevices()
-        cameras.sort((a, b) => (/back|rear|environment|後/i.test(a.label) ? 0 : 1) - (/back|rear|environment|後/i.test(b.label) ? 0 : 1))
         allCamerasRef.current = cameras
         if (!cancelled) setAllCameras([...cameras])
         if (cancelled) return

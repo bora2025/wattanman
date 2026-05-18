@@ -263,7 +263,7 @@ function TeacherScanContent() {
         let cameras = allCamerasRef.current
         if (cameras.length === 0) {
           cameras = await reader.listVideoInputDevices()
-          cameras.sort((a, b) => (/back|rear|environment|後/i.test(a.label) ? 0 : 1) - (/back|rear|environment|後/i.test(b.label) ? 0 : 1))
+
           allCamerasRef.current = cameras
           if (!cancelled) setAllCameras([...cameras])
         }
