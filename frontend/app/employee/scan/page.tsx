@@ -24,37 +24,6 @@ interface ScanResult {
   userDepartment?: { id: string; name: string; nameKh?: string } | null
 }
 
-const positionLabels: Record<string, string> = {
-  ADMIN: '🛡️ Admin',
-  TEACHER: '👨‍🏫 Teacher',
-  PRIMARY_SCHOOL_PRINCIPAL: 'នាយកសាលាបឋម',
-  SECONDARY_SCHOOL_PRINCIPAL: 'នាយកសាលាអនុវិទ្យាល័យ',
-  HIGH_SCHOOL_PRINCIPAL: 'នាយកសាលាវិទ្យាល័យ',
-  UNIVERSITY_RECTOR: 'នាយកសាលាសាកលវិទ្យាល័យ',
-  OFFICER: 'មន្ត្រី',
-  STAFF: 'បុគ្គិល',
-  OFFICE_HEAD: 'ប្រធានការិយាល័យ',
-  DEPUTY_OFFICE_HEAD: 'អនុប្រធានការិយាល័យ',
-  DEPARTMENT_HEAD: 'ប្រធាននាយកដ្ឋាន',
-  DEPUTY_DEPARTMENT_HEAD: 'អនុប្រធាននាយកដ្ឋាន',
-  GENERAL_DEPARTMENT_DIRECTOR: 'អគ្គនាយកដ្ឋាន',
-  DEPUTY_GENERAL_DEPARTMENT_DIRECTOR: 'អគ្គរងនាយកដ្ឋាន',
-  COMPANY_CEO: 'អគ្គនាយកក្រុមហ៊ុន',
-  CREDIT_OFFICER: 'មន្ត្រីឥណទាន',
-  SECURITY_GUARD: 'សន្តិសុខ',
-  JANITOR: 'បុគ្គិលអនាម័យ',
-  PROJECT_MANAGER: 'ប្រធានគម្រោង',
-  BRANCH_MANAGER: 'ប្រធានសាខា',
-  EXECUTIVE_DIRECTOR: 'នាយកប្រតិបត្តិ',
-  HR_MANAGER: 'ប្រធានធនធានមនុស្ស',
-  ATHLETE_MALE: 'កីឡាករ',
-  ATHLETE_FEMALE: 'កីឡាការិនី',
-  TRAINER: 'គ្រូបង្វិក',
-  BARISTA: 'Barista',
-  CASHIER: 'អ្នកគិតលុយ',
-  RECEPTIONIST: 'អ្នកទទួលភ្ញៀវ',
-  GENERAL_MANAGER: 'អ្នកគ្រប់គ្រងទូទៅ',
-}
 
 export default function EmployeeScanPage() {
   const { t } = useLanguage()
@@ -309,7 +278,7 @@ export default function EmployeeScanPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-slate-800 truncate">{userName || 'Loading...'}</p>
-                        <p className="text-xs text-slate-500">💼 {positionLabels[userRole] || userRole}</p>
+                        <p className="text-xs text-slate-500">💼 {t('role.' + (userRole || '').toLowerCase()) || userRole}</p>
                         {userDepartment && <p className="text-xs text-slate-400">🏢 {userDepartment}</p>}
                       </div>
                       <div className="ml-auto flex items-center gap-1.5 shrink-0">
@@ -334,7 +303,7 @@ export default function EmployeeScanPage() {
                         {(result.userDepartment || userDepartment) && (
                           <p className="text-sm text-slate-600">🏢 {result.userDepartment?.name || userDepartment}</p>
                         )}
-                        <p className="text-sm text-slate-500">💼 {positionLabels[result.userRole || userRole] || result.userRole || userRole}</p>
+                        <p className="text-sm text-slate-500">💼 {t('role.' + ((result.userRole || userRole) || '').toLowerCase()) || result.userRole || userRole}</p>
                       </div>
                       <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
                         ✅ {result.action === 'CHECK_IN' ? 'Check In' : 'Check Out'} — {result.sessionName}

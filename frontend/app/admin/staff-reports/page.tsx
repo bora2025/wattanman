@@ -6,37 +6,6 @@ import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
 
-const positionLabels: Record<string, string> = {
-  ADMIN: '🛡️ Admin',
-  TEACHER: '👨‍🏫 Teacher',
-  PRIMARY_SCHOOL_PRINCIPAL: 'នាយកសាលាបឋម',
-  SECONDARY_SCHOOL_PRINCIPAL: 'នាយកសាលាអនុវិទ្យាល័យ',
-  HIGH_SCHOOL_PRINCIPAL: 'នាយកសាលាវិទ្យាល័យ',
-  UNIVERSITY_RECTOR: 'នាយកសាលាសាកលវិទ្យាល័យ',
-  OFFICER: 'មន្ត្រី',
-  STAFF: 'បុគ្គិល',
-  OFFICE_HEAD: 'ប្រធានការិយាល័យ',
-  DEPUTY_OFFICE_HEAD: 'អនុប្រធានការិយាល័យ',
-  DEPARTMENT_HEAD: 'ប្រធាននាយកដ្ឋាន',
-  DEPUTY_DEPARTMENT_HEAD: 'អនុប្រធាននាយកដ្ឋាន',
-  GENERAL_DEPARTMENT_DIRECTOR: 'អគ្គនាយកដ្ឋាន',
-  DEPUTY_GENERAL_DEPARTMENT_DIRECTOR: 'អគ្គរងនាយកដ្ឋាន',
-  COMPANY_CEO: 'អគ្គនាយកក្រុមហ៊ុន',
-  CREDIT_OFFICER: 'មន្ត្រីឥណទាន',
-  SECURITY_GUARD: 'សន្តិសុខ',
-  JANITOR: 'បុគ្គិលអនាម័យ',
-  PROJECT_MANAGER: 'ប្រធានគម្រោង',
-  BRANCH_MANAGER: 'ប្រធានសាខា',
-  EXECUTIVE_DIRECTOR: 'នាយកប្រតិបត្តិ',
-  HR_MANAGER: 'ប្រធានធនធានមនុស្ស',
-  ATHLETE_MALE: 'កីឡាករ',
-  ATHLETE_FEMALE: 'កីឡាការិនី',
-  TRAINER: 'គ្រូបង្វិក',
-  BARISTA: 'Barista',
-  CASHIER: 'អ្នកគិតលុយ',
-  RECEPTIONIST: 'អ្នកទទួលភ្ញៀវ',
-  GENERAL_MANAGER: 'អ្នកគ្រប់គ្រងទូទៅ',
-}
 
 interface StaffGridRow {
   userId: string
@@ -320,7 +289,7 @@ export default function AdminStaffReports() {
                             <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 font-medium text-xs sm:text-sm">{row.staffName}</td>
                             <td className="px-2 sm:px-3 py-2 sm:py-2.5 hidden sm:table-cell">
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700">
-                                {positionLabels[row.role] || row.role}
+                                {t('role.' + (row.role || '').toLowerCase()) || row.role}
                               </span>
                             </td>
                             <SessionCell time={row.checkInMorning} status={row.session1Status} />
@@ -405,7 +374,7 @@ export default function AdminStaffReports() {
                             <tr key={row.userId} className="border-t border-slate-100 hover:bg-slate-50">
                               <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 font-mono text-[10px] sm:text-xs">{row.staffNumber}</td>
                               <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 font-medium text-xs sm:text-sm">{row.staffName}</td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 hidden sm:table-cell"><span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700">{positionLabels[row.role] || row.role}</span></td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 hidden sm:table-cell"><span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700">{t('role.' + (row.role || '').toLowerCase()) || row.role}</span></td>
                               <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 font-semibold">{row[periodKey].present}</td>
                               <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 font-semibold">{row[periodKey].late}</td>
                               <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 font-semibold">{row[periodKey].absent}</td>
