@@ -255,6 +255,7 @@ function TeacherScanContent() {
           (videoEl.srcObject as MediaStream).getTracks().forEach(t => t.stop())
           videoEl.srcObject = null
         }
+        videoEl.load() // Reset video element state — Edge needs this so onloadedmetadata fires for the next stream
         await new Promise(r => setTimeout(r, 300))
         if (cancelled) return
 
