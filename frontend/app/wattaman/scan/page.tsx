@@ -136,6 +136,7 @@ function WattamanScanContent() {
   const audioCtxRef = useRef<AudioContext | null>(null)
   const torchTrackRef = useRef<MediaStreamTrack | null>(null)
   const photoCacheRef = useRef<Map<string, string>>(new Map())
+  const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   /* ── orientation detection ── */
   useEffect(() => {
@@ -182,6 +183,14 @@ function WattamanScanContent() {
     } catch { /* audio not supported */ }
   }, [])
 
+  const dismissLock = useCallback(() => {
+    if (lockTimerRef.current) { clearTimeout(lockTimerRef.current); lockTimerRef.current = null }
+    lockRef.current = false
+    setMessage('')
+    setPendingPhoto(null)
+    setIsLoading(false)
+  }, [])
+
   /* ── QR handler ── */
   const handleQrScanned = useCallback(async (qrData: string) => {
     if (lockRef.current) return
@@ -198,7 +207,7 @@ function WattamanScanContent() {
         setPendingPhoto(null)
         setMessage('⚠️ Staff card — please scan a student ID card')
         if ('vibrate' in navigator) navigator.vibrate([100, 100, 100])
-        setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
+        lockTimerRef.current = setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
         return
       }
       if (parsed.studentId) resolvedQr = parsed.studentId
@@ -304,7 +313,7 @@ function WattamanScanContent() {
         setPendingPhoto(null)
         setMessage(msg)
         if ('vibrate' in navigator) navigator.vibrate([100, 100, 100])
-        setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
+        lockTimerRef.current = setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
       }
     } catch (err) {
       setIsLoading(false)
@@ -312,7 +321,7 @@ function WattamanScanContent() {
       setPendingPhoto(null)
       const isOffline = !navigator.onLine || (err instanceof TypeError && err.message.includes('fetch'))
       setMessage(isOffline ? '📡 No internet — check connection' : '⚠️ Network error — try again')
-      setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
+      lockTimerRef.current = setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
     }
   }, [playSound])
 
@@ -387,6 +396,7 @@ function WattamanScanContent() {
       (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop())
       videoRef.current.srcObject = null
     }
+    if (lockTimerRef.current) { clearTimeout(lockTimerRef.current); lockTimerRef.current = null }
     setScanning(false); setLastResult(null); setMessage('')
     lockRef.current = false; setHasTorch(false); setTorchOn(false)
     torchTrackRef.current = null; setProfileVisible(false)
@@ -494,11 +504,19 @@ function WattamanScanContent() {
                   </div>
                 )}
                 {message && !lastResult && (
-                  <div className={`w-full max-w-sm px-4 py-3 rounded-2xl text-sm font-medium text-center backdrop-blur-sm ${
-                    message.startsWith('❌') || message.startsWith('⚠️') || message.startsWith('📡')
-                      ? 'bg-red-500/90 text-white'
-                      : 'bg-black/60 text-white'
-                  }`}>{message}</div>
+                  message.startsWith('❌') || message.startsWith('⚠️') || message.startsWith('📡') ? (
+                    <button
+                      className="w-full max-w-sm px-4 py-3 rounded-2xl text-sm font-medium text-center backdrop-blur-sm bg-red-500/90 text-white pointer-events-auto active:scale-95 transition-transform"
+                      onClick={dismissLock}
+                    >
+                      <div>{message}</div>
+                      <div className="text-xs mt-1 opacity-75">Tap to scan again</div>
+                    </button>
+                  ) : (
+                    <div className="w-full max-w-sm px-4 py-3 rounded-2xl text-sm font-medium text-center backdrop-blur-sm bg-black/60 text-white">
+                      {message}
+                    </div>
+                  )
                 )}
               </div>
 
