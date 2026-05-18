@@ -1,7 +1,7 @@
 ﻿"use client"
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { BrowserMultiFormatReader } from '@zxing/library'
+import { BrowserQRCodeReader } from '@zxing/library'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { wattamanNav } from '../../../lib/wattaman-nav'
@@ -128,7 +128,7 @@ function WattamanScanContent() {
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
-  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null)
+  const codeReaderRef = useRef<BrowserQRCodeReader | null>(null)
   const allCamerasRef = useRef<MediaDeviceInfo[]>([])
   const currentCamIdxRef = useRef(0)
   const lockRef = useRef(false)
@@ -343,7 +343,7 @@ function WattamanScanContent() {
         }
         await new Promise(r => setTimeout(r, 300))
         if (cancelled) return
-        const reader = new BrowserMultiFormatReader()
+        const reader = new BrowserQRCodeReader()
         reader.timeBetweenDecodingAttempts = 30
         codeReaderRef.current = reader
         // Always re-enumerate: before any getUserMedia call, browsers may return
