@@ -358,7 +358,10 @@ function WattamanScanContent() {
         if (idx >= cameras.length) { idx = 0; currentCamIdxRef.current = 0; setCurrentCamIdx(0) }
         const deviceId = cameras[idx]?.deviceId || null   // "" → null (use default)
         if (!cancelled) setCameraLabel(cameras[idx]?.label || `Camera ${idx + 1}`)
-        await reader.decodeFromVideoDevice(deviceId, videoEl, (result) => {
+        const vidConstraints: MediaTrackConstraints = { width: { ideal: 1920 }, height: { ideal: 1080 } }
+        if (deviceId) vidConstraints.deviceId = deviceId
+        else vidConstraints.facingMode = 'environment'
+        await reader.decodeFromConstraints({ video: vidConstraints }, videoEl, (result) => {
           if (cancelled || !result) return
           handleQrScanned(result.getText())
         })

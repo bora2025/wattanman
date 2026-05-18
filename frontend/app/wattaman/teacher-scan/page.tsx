@@ -269,9 +269,12 @@ function TeacherScanContent() {
         }
         if (cancelled) return
         const idx = currentCamIdxRef.current
-        const deviceId = cameras[idx]?.deviceId ?? undefined
+        const deviceId = cameras[idx]?.deviceId || null
         if (!cancelled) setCameraLabel(cameras[idx]?.label || `Camera ${idx + 1}`)
-        await reader.decodeFromVideoDevice(deviceId || null, videoEl, (result) => {
+        const vidConstraints: MediaTrackConstraints = { width: { ideal: 1920 }, height: { ideal: 1080 } }
+        if (deviceId) vidConstraints.deviceId = deviceId
+        else vidConstraints.facingMode = 'environment'
+        await reader.decodeFromConstraints({ video: vidConstraints }, videoEl, (result) => {
           if (cancelled || !result) return
           handleQrScanned(result.getText())
         })
