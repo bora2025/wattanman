@@ -1706,13 +1706,13 @@ export class ReportsService {
           rowVals.push('', '', '', '');
           continue;
         }
-        hasPastDays = true;
 
         // Skip days when no attendance was taken for the class (before tracking started)
         if (!activeDates.has(dayStart.toISOString().split('T')[0])) {
           rowVals.push('', '', '', '');
           continue;
         }
+        hasPastDays = true;
 
         const dayRecs = attendances.filter((a: any) =>
           a.studentId === student.id && a.date >= dayStart && a.date < dayDateEnd
@@ -1872,14 +1872,14 @@ export class ReportsService {
             cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000);
             continue;
           }
-          weekHasPast = true;
-          hasPastDays = true;
 
           // Skip days when no attendance was taken for the class (before tracking started)
           if (!activeDates.has(dayStart.toISOString().split('T')[0])) {
             cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000);
             continue;
           }
+          weekHasPast = true;
+          hasPastDays = true;
 
           const isHoliday = holidayDateSet.has(dayStart.toISOString().split('T')[0]);
 
@@ -2018,14 +2018,14 @@ export class ReportsService {
             cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000);
             continue;
           }
-          monthHasPast = true;
-          hasPastDays = true;
 
           // Skip days when no attendance was taken for the class (before tracking started)
           if (!activeDates.has(dayStart.toISOString().split('T')[0])) {
             cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000);
             continue;
           }
+          monthHasPast = true;
+          hasPastDays = true;
 
           const isHoliday = holidayDateSet.has(dayStart.toISOString().split('T')[0]);
 
@@ -2313,10 +2313,10 @@ export class ReportsService {
         const dayDateEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
         if (dayStart > todayCambodia) { rowVals.push('', '', '', ''); continue; }
-        hasPastDays = true;
 
         // Skip days when no attendance was taken for the staff (before tracking started)
         if (!activeDates.has(dayStart.toISOString().split('T')[0])) { rowVals.push('', '', '', ''); continue; }
+        hasPastDays = true;
 
         if (holidayDateSet.has(dayStart.toISOString().split('T')[0])) { rowVals.push(0, 0, 0, 0); continue; }
 
