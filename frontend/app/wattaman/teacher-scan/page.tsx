@@ -257,23 +257,58 @@ function TeacherScanContent() {
         }
         await new Promise(r => setTimeout(r, 300))
         if (cancelled) return
-        const reader = new BrowserQRCodeReader()
-        reader.timeBetweenDecodingAttempts = 30
-        codeReaderRef.current = reader
-        let cameras = allCamerasRef.current
-        if (cameras.length === 0) {
-          cameras = await reader.listVideoInputDevices()
 
-          allCamerasRef.current = cameras
-          if (!cancelled) setAllCameras([...cameras])
-        }
+        // Always re-enumerate so camera switching gets valid deviceIds after permission
+        const allDevices = await navigator.mediaDevices.enumerateDevices()
+        const cameras = allDevices.filter(d => d.kind === 'videoinput')
+        allCamerasRef.current = cameras
+        if (!cancelled) setAllCameras([...cameras])
         if (cancelled) return
+
         const idx = currentCamIdxRef.current
         const deviceId = cameras[idx]?.deviceId || null
         if (!cancelled) setCameraLabel(cameras[idx]?.label || `Camera ${idx + 1}`)
         const vidConstraints: MediaTrackConstraints = { width: { ideal: 1920 }, height: { ideal: 1080 } }
         if (deviceId) vidConstraints.deviceId = deviceId
         else vidConstraints.facingMode = 'environment'
+
+        // ── Native BarcodeDetector (Chrome Android / Safari 17+ — GPU-accelerated) ──
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const NativeBD = typeof window !== 'undefined' ? (window as any).BarcodeDetector : null
+        if (NativeBD) {
+          let nativeDetector: { detect(v: HTMLVideoElement): Promise<Array<{ rawValue: string }>> } | null = null
+          try { nativeDetector = new NativeBD({ formats: ['qr_code'] }) } catch { /* not usable */ }
+          if (nativeDetector) {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: vidConstraints })
+            if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
+            videoEl.srcObject = stream
+            videoEl.setAttribute('playsinline', 'true')
+            await videoEl.play()
+            const track = stream.getVideoTracks()[0]
+            if (track && !cancelled) {
+              const cap = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean }
+              if (cap.torch) { setHasTorch(true); torchTrackRef.current = track }
+            }
+            if (!cancelled) setMessage('')
+            // Continuous native decode loop — exits automatically when cancelled
+            const det = nativeDetector
+            while (!cancelled) {
+              if (videoEl.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+                try {
+                  const codes = await det.detect(videoEl)
+                  if (codes.length > 0 && !cancelled) handleQrScanned(codes[0].rawValue)
+                } catch { /* no QR in this frame */ }
+              }
+              if (!cancelled) await new Promise<void>(r => setTimeout(r, 50))
+            }
+            return
+          }
+        }
+
+        // ── ZXing fallback (all other browsers) ──────────────────────────────
+        const reader = new BrowserQRCodeReader()
+        reader.timeBetweenDecodingAttempts = 30
+        codeReaderRef.current = reader
         await reader.decodeFromConstraints({ video: vidConstraints }, videoEl, (result) => {
           if (cancelled || !result) return
           handleQrScanned(result.getText())
