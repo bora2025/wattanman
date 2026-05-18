@@ -2423,6 +2423,7 @@ export class ReportsService {
     for (const [idx, user] of staff.entries()) {
       const rowVals: any[] = [monthName, String(idx + 1).padStart(4, '0'), user.name];
       let totalP = 0, totalA = 0, totalL = 0, totalPerm = 0;
+      let hasPastDays = false;
 
       for (const week of weeks) {
         let wP = 0, wA = 0, wL = 0, wPerm = 0;
@@ -2436,6 +2437,7 @@ export class ReportsService {
           if (!activeDates.has(dayStart.toISOString().split('T')[0])) { curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000); continue; }
           if (holidayDateSet.has(dayStart.toISOString().split('T')[0])) { curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000); continue; }
           daysCounted++;
+          hasPastDays = true;
           const dayDateEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
           const dayRecs = records.filter((r: any) => r.userId === user.id && r.date >= dayStart && r.date < dayDateEnd);
           const s1 = dayRecs.find((r: any) => r.session === 1);
@@ -2464,11 +2466,13 @@ export class ReportsService {
         totalP += wP; totalA += wA; totalL += wL; totalPerm += wPerm;
       }
 
-      rowVals.push(totalP, totalA, totalL, totalPerm);
-      if (formatRule?.enabled) {
+      rowVals.push(hasPastDays ? totalP : '', hasPastDays ? totalA : '', hasPastDays ? totalL : '', hasPastDays ? totalPerm : '');
+      if (formatRule?.enabled && hasPastDays) {
         const convAbsent = formatRule.permissionsPerAbsent > 0 ? Math.floor(totalPerm / formatRule.permissionsPerAbsent) : 0;
         const convHalf = formatRule.latesPerAbsentHalf > 0 ? Math.floor(totalL / formatRule.latesPerAbsentHalf) : 0;
         rowVals.push(convAbsent, convHalf);
+      } else if (formatRule?.enabled) {
+        rowVals.push('', '');
       }
       const row = ws.addRow(rowVals);
       this.styleDataRow(row);
@@ -2527,6 +2531,7 @@ export class ReportsService {
     for (const [idx, user] of staff.entries()) {
       const rowVals: any[] = [String(y), String(idx + 1).padStart(4, '0'), user.name];
       let totalP = 0, totalA = 0, totalL = 0, totalPerm = 0;
+      let hasPastDays = false;
 
       for (let mi = 0; mi < 12; mi++) {
         const mStart = new Date(Date.UTC(y, mi, 1));
@@ -2535,12 +2540,15 @@ export class ReportsService {
         if (mStart > todayCambodia) { rowVals.push('', '', '', ''); continue; }
 
         let mP = 0, mA = 0, mL = 0, mPerm = 0;
+        let monthHasPast = false;
         let curDay = new Date(mStart);
         while (curDay < mEnd) {
           const dayStart = toUTCMidnight(curDay);
           if (dayStart > todayCambodia) { curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000); continue; }
           // Skip days when no attendance was taken for the staff (before tracking started)
           if (!activeDates.has(dayStart.toISOString().split('T')[0])) { curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000); continue; }
+          monthHasPast = true;
+          hasPastDays = true;
           if (holidayDateSet.has(dayStart.toISOString().split('T')[0])) { curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000); continue; }
 
           const dayDateEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
@@ -2567,15 +2575,17 @@ export class ReportsService {
 
           curDay = new Date(curDay.getTime() + 24 * 60 * 60 * 1000);
         }
-        rowVals.push(mP, mA, mL, mPerm);
-        totalP += mP; totalA += mA; totalL += mL; totalPerm += mPerm;
+        rowVals.push(monthHasPast ? mP : '', monthHasPast ? mA : '', monthHasPast ? mL : '', monthHasPast ? mPerm : '');
+        if (monthHasPast) { totalP += mP; totalA += mA; totalL += mL; totalPerm += mPerm; }
       }
 
-      rowVals.push(totalP, totalA, totalL, totalPerm);
-      if (formatRule?.enabled) {
+      rowVals.push(hasPastDays ? totalP : '', hasPastDays ? totalA : '', hasPastDays ? totalL : '', hasPastDays ? totalPerm : '');
+      if (formatRule?.enabled && hasPastDays) {
         const convAbsent = formatRule.permissionsPerAbsent > 0 ? Math.floor(totalPerm / formatRule.permissionsPerAbsent) : 0;
         const convHalf = formatRule.latesPerAbsentHalf > 0 ? Math.floor(totalL / formatRule.latesPerAbsentHalf) : 0;
         rowVals.push(convAbsent, convHalf);
+      } else if (formatRule?.enabled) {
+        rowVals.push('', '');
       }
       const row = ws.addRow(rowVals);
       this.styleDataRow(row);
