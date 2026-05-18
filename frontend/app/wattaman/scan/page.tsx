@@ -360,40 +360,6 @@ function WattamanScanContent() {
         if (deviceId) vidConstraints.deviceId = deviceId
         else vidConstraints.facingMode = 'environment'
 
-        // ── Native BarcodeDetector (Chrome Android / Safari 17+ — GPU-accelerated) ──
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const NativeBD = typeof window !== 'undefined' ? (window as any).BarcodeDetector : null
-        if (NativeBD) {
-          let nativeDetector: { detect(v: HTMLVideoElement): Promise<Array<{ rawValue: string }>> } | null = null
-          try { nativeDetector = new NativeBD({ formats: ['qr_code'] }) } catch { /* not usable */ }
-          if (nativeDetector) {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: vidConstraints })
-            if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
-            videoEl.srcObject = stream
-            videoEl.setAttribute('playsinline', 'true')
-            await videoEl.play()
-            const track = stream.getVideoTracks()[0]
-            if (track && !cancelled) {
-              const cap = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean }
-              if (cap.torch) { setHasTorch(true); torchTrackRef.current = track }
-            }
-            if (!cancelled) setMessage('')
-            // Continuous native decode loop — exits automatically when cancelled
-            const det = nativeDetector
-            while (!cancelled) {
-              if (videoEl.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
-                try {
-                  const codes = await det.detect(videoEl)
-                  if (codes.length > 0 && !cancelled) handleQrScanned(codes[0].rawValue)
-                } catch { /* no QR in this frame */ }
-              }
-              if (!cancelled) await new Promise<void>(r => setTimeout(r, 50))
-            }
-            return
-          }
-        }
-
-        // ── ZXing fallback (all other browsers) ──────────────────────────────
         const reader = new BrowserQRCodeReader()
         reader.timeBetweenDecodingAttempts = 30
         codeReaderRef.current = reader
