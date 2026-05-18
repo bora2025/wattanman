@@ -39,40 +39,24 @@ const STAFF_ROLES = [
   'HIGH_SCHOOL_PRINCIPAL','UNIVERSITY_RECTOR',
 ];
 
-const roleLabels: Record<string, { icon: string; label: string }> = {
-  ADMIN: { icon: '🛡️', label: 'Administrators' },
-  TEACHER: { icon: '📚', label: 'គ្រូ-Teachers' },
-  PRIMARY_SCHOOL_PRINCIPAL: { icon: '🏫', label: 'នាយកសាលាបឋម' },
-  SECONDARY_SCHOOL_PRINCIPAL: { icon: '🏫', label: 'នាយកសាលាអនុវិទ្យាល័យ' },
-  HIGH_SCHOOL_PRINCIPAL: { icon: '🏫', label: 'នាយកសាលាវិទ្យាល័យ' },
-  UNIVERSITY_RECTOR: { icon: '🎓', label: 'នាយកសាលាសាកលវិទ្យាល័យ' },
-  OFFICER: { icon: '👔', label: 'មន្ត្រី' },
-  STAFF: { icon: '👤', label: 'បុគ្គិល' },
-  OFFICE_HEAD: { icon: '🏢', label: 'ប្រធានការិយាល័យ' },
-  DEPUTY_OFFICE_HEAD: { icon: '🏢', label: 'អនុប្រធានការិយាល័យ' },
-  DEPARTMENT_HEAD: { icon: '📋', label: 'ប្រធាននាយកដ្ឋាន' },
-  DEPUTY_DEPARTMENT_HEAD: { icon: '📋', label: 'អនុប្រធាននាយកដ្ឋាន' },
-  GENERAL_DEPARTMENT_DIRECTOR: { icon: '🏛️', label: 'អគ្គនាយកដ្ឋាន' },
-  DEPUTY_GENERAL_DEPARTMENT_DIRECTOR: { icon: '🏛️', label: 'អគ្គរងនាយកដ្ឋាន' },
-  COMPANY_CEO: { icon: '💼', label: 'អគ្គនាយកក្រុមហ៊ុន' },
-  CREDIT_OFFICER: { icon: '💳', label: 'មន្ត្រីឥណទាន' },
-  SECURITY_GUARD: { icon: '🔒', label: 'សន្តិសុខ' },
-  JANITOR: { icon: '🧹', label: 'បុគ្គិលអនាម័យ' },
-  PROJECT_MANAGER: { icon: '📊', label: 'ប្រធានគម្រោង' },
-  BRANCH_MANAGER: { icon: '🏬', label: 'ប្រធានសាខា' },
-  EXECUTIVE_DIRECTOR: { icon: '👨‍💼', label: 'នាយកប្រតិបត្តិ' },
-  HR_MANAGER: { icon: '🤝', label: 'ប្រធានធនធានមនុស្ស' },
-  ATHLETE_MALE: { icon: '🏃', label: 'កីឡាករ' },
-  ATHLETE_FEMALE: { icon: '🏃‍♀️', label: 'កីឡាការិនី' },
-  TRAINER: { icon: '🏋️', label: 'គ្រូបង្វិក' },
-  BARISTA: { icon: '☕', label: 'Barista' },
-  CASHIER: { icon: '💰', label: 'អ្នកគិតលុយ' },
-  RECEPTIONIST: { icon: '🛎️', label: 'អ្នកទទួលភ្ញៀវ' },
-  GENERAL_MANAGER: { icon: '📈', label: 'អ្នកគ្រប់គ្រងទូទៅ' },
+const ROLE_ICONS: Record<string, string> = {
+  ADMIN: '🛡️', TEACHER: '📚', PRIMARY_SCHOOL_PRINCIPAL: '🏫',
+  SECONDARY_SCHOOL_PRINCIPAL: '🏫', HIGH_SCHOOL_PRINCIPAL: '🏫',
+  UNIVERSITY_RECTOR: '🎓', OFFICER: '👔', STAFF: '👤',
+  OFFICE_HEAD: '🏢', DEPUTY_OFFICE_HEAD: '🏢', DEPARTMENT_HEAD: '📋',
+  DEPUTY_DEPARTMENT_HEAD: '📋', GENERAL_DEPARTMENT_DIRECTOR: '🏛️',
+  DEPUTY_GENERAL_DEPARTMENT_DIRECTOR: '🏛️', COMPANY_CEO: '💼',
+  CREDIT_OFFICER: '💳', SECURITY_GUARD: '🔒', JANITOR: '🧹',
+  PROJECT_MANAGER: '📊', BRANCH_MANAGER: '🏬', EXECUTIVE_DIRECTOR: '👨‍💼',
+  HR_MANAGER: '🤝', ATHLETE_MALE: '🏃', ATHLETE_FEMALE: '🏃‍♀️',
+  TRAINER: '🏋️', BARISTA: '☕', CASHIER: '💰', RECEPTIONIST: '🛎️',
+  GENERAL_MANAGER: '📈',
 };
 
 export default function StaffCardsPage() {
   const { t } = useLanguage();
+  const getRoleLabel = (role: string) => t('role.' + role.toLowerCase()) || role;
+  const getRoleIcon = (role: string) => ROLE_ICONS[role] ?? '👤';
   const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
   const [qrCodes, setQrCodes] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(true);
@@ -331,7 +315,7 @@ export default function StaffCardsPage() {
               <option value="ALL">All Roles</option>
               {Object.keys(staffByRole).map((role) => (
                 <option key={role} value={role}>
-                  {roleLabels[role]?.label || role} ({staffByRole[role].length})
+                  {getRoleLabel(role)} ({staffByRole[role].length})
                 </option>
               ))}
             </select>
@@ -407,7 +391,7 @@ export default function StaffCardsPage() {
                 <button onClick={() => setStaffDownloadMenuOpen(staffDownloadMenuOpen === 'bulk' ? null : 'bulk')} className="btn-primary btn-sm whitespace-nowrap">📥 Download All ▾</button>
                 {staffDownloadMenuOpen === 'bulk' && (
                   <div className="absolute right-0 top-full mt-1 z-20 bg-white rounded-xl shadow-lg border border-slate-200 py-1 w-56 animate-[fadeIn_0.15s_ease-out]">
-                    <button onClick={() => { downloadAllCardsPDFA4('All Staff - ID Cards', cardFilteredStaff.map((m) => ({ name: m.name, subtitle: roleLabels[m.role]?.label || m.role, id: m.id, displayId: m.id, photo: m.photo, phone: m.phone }))); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">📄 Download Card ({cardFilteredStaff.length})</button>
+                    <button onClick={() => { downloadAllCardsPDFA4('All Staff - ID Cards', cardFilteredStaff.map((m) => ({ name: m.name, subtitle: getRoleLabel(m.role), id: m.id, displayId: m.id, photo: m.photo, phone: m.phone }))); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">📄 Download Card ({cardFilteredStaff.length})</button>
                     <button onClick={() => { downloadAllQRCodes('All Staff - QR Codes', cardFilteredStaff.map((m) => ({ name: m.name, id: m.id }))); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">📱 All QR Codes ({cardFilteredStaff.length})</button>
                     <div className="border-t border-slate-100 my-1" />
                     <button onClick={() => { downloadOfficerAttendanceQR(); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors font-medium">🎫 Officer Attendance QR</button>
@@ -439,14 +423,14 @@ export default function StaffCardsPage() {
                     <IDCardPreview
                       key={staff.id}
                       name={staff.name}
-                      subtitle={roleLabels[staff.role]?.label || staff.role}
+                      subtitle={getRoleLabel(staff.role)}
                       personId={staff.id}
                       qrDataUrl={qrCodes[staff.id]}
                       photo={staff.photo}
                       design={liveDesign}
-                      fieldValues={buildFieldValues(staff.name, staff.id, roleLabels[staff.role]?.label || staff.role, staff.phone)}
-                      onDownload={() => downloadCard(staff.name, roleLabels[staff.role]?.label || staff.role, qrCodes[staff.id], staff.id, staff.photo, staff.phone)}
-                      onDownloadPDF={() => downloadCardPDF(staff.name, roleLabels[staff.role]?.label || staff.role, qrCodes[staff.id], staff.id, staff.photo, staff.phone)}
+                      fieldValues={buildFieldValues(staff.name, staff.id, getRoleLabel(staff.role), staff.phone)}
+                      onDownload={() => downloadCard(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone)}
+                      onDownloadPDF={() => downloadCardPDF(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone)}
                       onDownloadQR={() => downloadQROnly(staff.name, staff.id)}
                     />
                   ))}
@@ -480,7 +464,7 @@ export default function StaffCardsPage() {
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${staff.role === 'ADMIN' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
-                          {roleLabels[staff.role]?.icon ?? '👤'} {roleLabels[staff.role]?.label ?? staff.role}
+                          {getRoleIcon(staff.role)} {getRoleLabel(staff.role)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-500 truncate hidden md:table-cell max-w-[180px]">{staff.email}</td>
@@ -489,8 +473,8 @@ export default function StaffCardsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => downloadCard(staff.name, roleLabels[staff.role]?.label || staff.role, qrCodes[staff.id], staff.id, staff.photo, staff.phone)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40" title="Download ID Card PNG">📥 PNG</button>
-                          <button onClick={() => downloadCardPDF(staff.name, roleLabels[staff.role]?.label || staff.role, qrCodes[staff.id], staff.id, staff.photo, staff.phone)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40" title="Download ID Card PDF">📄 PDF</button>
+                          <button onClick={() => downloadCard(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40" title="Download ID Card PNG">📥 PNG</button>
+                          <button onClick={() => downloadCardPDF(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40" title="Download ID Card PDF">📄 PDF</button>
                           <button onClick={() => downloadQROnly(staff.name, staff.id)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40" title="Download QR only">📱</button>
                         </div>
                       </td>

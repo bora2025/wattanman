@@ -29,43 +29,16 @@ interface User {
 
 const ADMIN_ROLES = ['ADMIN', 'STUDENT', 'PARENT']
 
-const roleLabels: Record<string, string> = {
-  TEACHER: 'គ្រូ-Teacher',
-  PRIMARY_SCHOOL_PRINCIPAL: 'នាយកសាលាបឋម',
-  SECONDARY_SCHOOL_PRINCIPAL: 'នាយកសាលាអនុវិទ្យាល័យ',
-  HIGH_SCHOOL_PRINCIPAL: 'នាយកសាលាវិទ្យាល័យ',
-  UNIVERSITY_RECTOR: 'នាយកសាលាសាកលវិទ្យាល័យ',
-  OFFICER: 'មន្ត្រី',
-  STAFF: 'បុគ្គិល',
-  OFFICE_HEAD: 'ប្រធានការិយាល័យ',
-  DEPUTY_OFFICE_HEAD: 'អនុប្រធានការិយាល័យ',
-  DEPARTMENT_HEAD: 'ប្រធាននាយកដ្ឋាន',
-  DEPUTY_DEPARTMENT_HEAD: 'អនុប្រធាននាយកដ្ឋាន',
-  GENERAL_DEPARTMENT_DIRECTOR: 'អគ្គនាយកដ្ឋាន',
-  DEPUTY_GENERAL_DEPARTMENT_DIRECTOR: 'អគ្គរងនាយកដ្ឋាន',
-  COMPANY_CEO: 'អគ្គនាយកក្រុមហ៊ុន',
-  CREDIT_OFFICER: 'មន្ត្រីឥណទាន',
-  SECURITY_GUARD: 'សន្តិសុខ',
-  JANITOR: 'បុគ្គិលអនាម័យ',
-  PROJECT_MANAGER: 'ប្រធានគម្រោង',
-  BRANCH_MANAGER: 'ប្រធានសាខា',
-  EXECUTIVE_DIRECTOR: 'នាយកប្រតិបត្តិ',
-  HR_MANAGER: 'ប្រធានធនធានមនុស្ស',
-  ATHLETE_MALE: 'កីឡាករ',
-  ATHLETE_FEMALE: 'កីឡាការិនី',
-  TRAINER: 'គ្រូបង្វិក',
-  BARISTA: 'Barista',
-  CASHIER: 'អ្នកគិតលុយ',
-  RECEPTIONIST: 'អ្នកទទួលភ្ញៀវ',
-  GENERAL_MANAGER: 'អ្នកគ្រប់គ្រងទូទៅ',
-  WATTAMAN: 'Wattaman',
-}
+const EMPLOYEE_ROLES = [
+  'TEACHER','PRIMARY_SCHOOL_PRINCIPAL','SECONDARY_SCHOOL_PRINCIPAL','HIGH_SCHOOL_PRINCIPAL',
+  'UNIVERSITY_RECTOR','OFFICER','STAFF','OFFICE_HEAD','DEPUTY_OFFICE_HEAD','DEPARTMENT_HEAD',
+  'DEPUTY_DEPARTMENT_HEAD','GENERAL_DEPARTMENT_DIRECTOR','DEPUTY_GENERAL_DEPARTMENT_DIRECTOR',
+  'COMPANY_CEO','CREDIT_OFFICER','SECURITY_GUARD','JANITOR','PROJECT_MANAGER','BRANCH_MANAGER',
+  'EXECUTIVE_DIRECTOR','HR_MANAGER','ATHLETE_MALE','ATHLETE_FEMALE','TRAINER','BARISTA',
+  'CASHIER','RECEPTIONIST','GENERAL_MANAGER','WATTAMAN',
+]
 
-const employeeRoles = Object.keys(roleLabels)
-
-function getRoleLabel(role: string) {
-  return roleLabels[role] || role
-}
+const employeeRoles = EMPLOYEE_ROLES
 
 function normalizePhotoUrl(url: string): string {
   if (!url) return url
@@ -80,6 +53,7 @@ function normalizePhotoUrl(url: string): string {
 
 export default function ManageEmployees() {
   const { t } = useLanguage()
+  const getRoleLabel = (role: string) => t('role.' + role.toLowerCase()) || role
   const [users, setUsers] = useState<User[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [filter, setFilter] = useState('ALL')
