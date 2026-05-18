@@ -68,12 +68,16 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
   )
 }
 
-function ScanSkeletonCard() {
+function ScanSkeletonCard({ photo }: { photo?: string | null }) {
   return (
     <div className="rounded-2xl overflow-hidden shadow-xl bg-white ring-2 ring-slate-200">
       <div className="bg-slate-200 px-4 py-2.5 h-10 animate-pulse" />
       <div className="flex items-center gap-4 p-4">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-200 animate-pulse flex-shrink-0" />
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex-shrink-0 overflow-hidden bg-slate-200">
+          {photo
+            ? <img src={photo} alt="" className="w-full h-full object-cover" />
+            : <div className="w-full h-full animate-pulse" />}
+        </div>
         <div className="flex-1 space-y-2.5">
           <div className="h-5 bg-slate-200 rounded-lg animate-pulse w-3/4" />
           <div className="h-3 bg-slate-100 rounded-lg animate-pulse w-1/2" />
@@ -121,6 +125,7 @@ function WattamanScanContent() {
   const [scanCount, setScanCount] = useState(0)
   const [isLandscape, setIsLandscape] = useState(false)
   const [profileVisible, setProfileVisible] = useState(false)
+  const [pendingPhoto, setPendingPhoto] = useState<string | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null)
@@ -130,6 +135,7 @@ function WattamanScanContent() {
   const locationRef = useRef<{ latitude: number; longitude: number } | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const torchTrackRef = useRef<MediaStreamTrack | null>(null)
+  const photoCacheRef = useRef<Map<string, string>>(new Map())
 
   /* ── orientation detection ── */
   useEffect(() => {
@@ -196,6 +202,9 @@ function WattamanScanContent() {
       }
       if (parsed.studentId) resolvedQr = parsed.studentId
       else if (parsed.userId) resolvedQr = parsed.userId
+      // Pre-fill skeleton with cached photo if we've seen this student before
+      const cachedId = parsed.studentId || parsed.userId
+      if (cachedId) setPendingPhoto(photoCacheRef.current.get(cachedId) ?? null)
     } catch {
       /* Raw QR — try teacher endpoint first */
       const loc2 = locationRef.current
@@ -274,11 +283,14 @@ function WattamanScanContent() {
         setLastResult(result)
         setProfileVisible(true)
         setScanHistory(prev => [result, ...prev].slice(0, 30))
+        if (result.studentId && result.studentPhoto) {
+          photoCacheRef.current.set(result.studentId, result.studentPhoto)
+        }
         if ('vibrate' in navigator) navigator.vibrate(isAlready ? [80] : 200)
         const displayTime = isAlready ? 2200 : 2800
         setTimeout(() => {
           setProfileVisible(false)
-          setTimeout(() => { setLastResult(null); setMessage(''); lockRef.current = false }, 300)
+          setTimeout(() => { setLastResult(null); setMessage(''); setPendingPhoto(null); lockRef.current = false }, 300)
         }, displayTime)
       } else {
         playSound('error')
@@ -302,6 +314,9 @@ function WattamanScanContent() {
     const videoEl = videoRef.current
     const init = async () => {
       try {
+        // Reset per-camera state before switching so stale torch/refs don't linger
+        setHasTorch(false); setTorchOn(false); torchTrackRef.current = null
+
         if (codeReaderRef.current) { codeReaderRef.current.reset(); codeReaderRef.current = null }
         videoEl.pause()
         if (videoEl.srcObject) {
@@ -313,18 +328,20 @@ function WattamanScanContent() {
         const reader = new BrowserMultiFormatReader()
         reader.timeBetweenDecodingAttempts = 30
         codeReaderRef.current = reader
-        let cameras = allCamerasRef.current
-        if (cameras.length === 0) {
-          cameras = await reader.listVideoInputDevices()
-          cameras.sort((a, b) => (/back|rear|environment|後/i.test(a.label) ? 0 : 1) - (/back|rear|environment|後/i.test(b.label) ? 0 : 1))
-          allCamerasRef.current = cameras
-          if (!cancelled) setAllCameras([...cameras])
-        }
+        // Always re-enumerate: before any getUserMedia call, browsers may return
+        // empty-string deviceIds for privacy. Re-enumerate every init so switching
+        // cameras always gets valid deviceIds (populated once permission is granted).
+        const cameras = await reader.listVideoInputDevices()
+        cameras.sort((a, b) => (/back|rear|environment|後/i.test(a.label) ? 0 : 1) - (/back|rear|environment|後/i.test(b.label) ? 0 : 1))
+        allCamerasRef.current = cameras
+        if (!cancelled) setAllCameras([...cameras])
         if (cancelled) return
-        const idx = currentCamIdxRef.current
-        const deviceId = cameras[idx]?.deviceId ?? undefined
+        // Guard against index going out-of-range if enumeration result changed
+        let idx = currentCamIdxRef.current
+        if (idx >= cameras.length) { idx = 0; currentCamIdxRef.current = 0; setCurrentCamIdx(0) }
+        const deviceId = cameras[idx]?.deviceId || null   // "" → null (use default)
         if (!cancelled) setCameraLabel(cameras[idx]?.label || `Camera ${idx + 1}`)
-        await reader.decodeFromVideoDevice(deviceId || null, videoEl, (result) => {
+        await reader.decodeFromVideoDevice(deviceId, videoEl, (result) => {
           if (cancelled || !result) return
           handleQrScanned(result.getText())
         })
@@ -496,7 +513,7 @@ function WattamanScanContent() {
               {/* ── Phone: loading skeleton (bottom of video pane) ── */}
               {!isLandscape && isLoading && (
                 <div className="absolute bottom-0 left-0 right-0 z-40 px-3 pb-4 profile-enter">
-                  <ScanSkeletonCard />
+                  <ScanSkeletonCard photo={pendingPhoto} />
                 </div>
               )}
 
@@ -528,7 +545,11 @@ function WattamanScanContent() {
                     <div className="rounded-2xl overflow-hidden bg-slate-800 ring-1 ring-white/10">
                       <div className="h-9 bg-slate-700 animate-pulse" />
                       <div className="flex gap-3 p-3">
-                        <div className="w-16 h-16 rounded-xl bg-slate-700 animate-pulse flex-shrink-0" />
+                        <div className="w-16 h-16 rounded-xl flex-shrink-0 overflow-hidden bg-slate-700">
+                          {pendingPhoto
+                            ? <img src={pendingPhoto} alt="" className="w-full h-full object-cover" />
+                            : <div className="w-full h-full animate-pulse" />}
+                        </div>
                         <div className="flex-1 space-y-2 pt-1">
                           <div className="h-4 bg-slate-700 rounded animate-pulse w-3/4" />
                           <div className="h-3 bg-slate-600 rounded animate-pulse w-1/2" />
