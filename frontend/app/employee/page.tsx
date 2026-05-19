@@ -7,6 +7,7 @@ import AuthGuard from '../../components/AuthGuard'
 import { employeeNav } from '../../lib/employee-nav'
 import { apiFetch } from '../../lib/api'
 import { useLanguage } from '../../lib/i18n'
+import { formatCambodiaTime } from '../../lib/dateUtils'
 import { IconCamera, IconChart, IconIdCard, IconSettings } from '../../components/Icons'
 
 interface AttendanceRecord {
@@ -86,10 +87,7 @@ export default function EmployeeDashboard() {
     setLoading(false)
   }
 
-  const formatTime = (iso: string | null) => {
-    if (!iso) return '—'
-    return new Date(iso).toLocaleTimeString('km-KH', { hour: '2-digit', minute: '2-digit' })
-  }
+  const formatTime = (iso: string | null) => formatCambodiaTime(iso)
 
   const formatDate = (iso: string) => {
     return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })

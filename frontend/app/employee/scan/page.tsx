@@ -8,6 +8,7 @@ import { employeeNav } from '../../../lib/employee-nav'
 import { adminNav } from '../../../lib/admin-nav'
 import { teacherNav } from '../../../lib/teacher-nav'
 import { apiFetch } from '../../../lib/api'
+import { formatCambodiaTime } from '../../../lib/dateUtils'
 import { useLanguage } from '../../../lib/i18n'
 
 type ScanStatus = 'idle' | 'scanning' | 'success' | 'error'
@@ -236,10 +237,7 @@ export default function EmployeeScanPage() {
     return () => { stopCamera() }
   }, [stopCamera])
 
-  const formatTime = (iso?: string) => {
-    if (!iso) return '—'
-    return new Date(iso).toLocaleTimeString('km-KH', { hour: '2-digit', minute: '2-digit' })
-  }
+  const formatTime = (iso?: string) => formatCambodiaTime(iso)
 
   return (
     <AuthGuard allowedRoles={['EMPLOYEE', 'ADMIN', 'TEACHER']}>

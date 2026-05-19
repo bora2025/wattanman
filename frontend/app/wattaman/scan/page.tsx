@@ -6,6 +6,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { wattamanNav } from '../../../lib/wattaman-nav'
 import { apiFetch } from '../../../lib/api'
+import { formatCambodiaTime } from '../../../lib/dateUtils'
 
 interface ScanResult {
   action: string
@@ -38,7 +39,7 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
   const meta = statusMeta(result.action, result.status)
   const isAlready = result.action === 'ALREADY_RECORDED'
   const timeDisplay = result.checkInTime
-    ? new Date(result.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+    ? formatCambodiaTime(result.checkInTime, true)
     : null
   return (
     <div className={`rounded-2xl overflow-hidden shadow-2xl ${meta.cardBg} ring-2 ${meta.ring}`}>
@@ -624,7 +625,7 @@ function WattamanScanContent() {
                     {scanHistory.slice(0, 6).map((r, i) => {
                       const m = statusMeta(r.action, r.status)
                       const t = r.checkInTime
-                        ? new Date(r.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+                        ? formatCambodiaTime(r.checkInTime)
                         : null
                       return (
                         <div key={i}
@@ -746,7 +747,7 @@ function WattamanScanContent() {
                         </div>
                         {r.checkInTime && (
                           <span className="text-xs text-white/30 flex-shrink-0">
-                            {new Date(r.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            {formatCambodiaTime(r.checkInTime)}
                           </span>
                         )}
                       </div>
@@ -831,7 +832,7 @@ function WattamanScanContent() {
                 {scanHistory.map((r, i) => {
                   const meta = statusMeta(r.action, r.status)
                   const timeStr = r.checkInTime
-                    ? new Date(r.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                    ? formatCambodiaTime(r.checkInTime)
                     : ''
                   return (
                     <div key={i} className="flex items-center gap-3 px-4 py-3">

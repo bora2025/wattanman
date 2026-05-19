@@ -7,6 +7,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { wattamanNav } from '../../../lib/wattaman-nav'
 import { apiFetch } from '../../../lib/api'
+import { formatCambodiaTime } from '../../../lib/dateUtils'
 import Link from 'next/link'
 
 interface TeacherAttendanceRecord {
@@ -294,7 +295,7 @@ function TeacherReportsContent() {
                                       </p>
                                       {statusBadge(a.status)}
                                       {a.checkIn && (
-                                        <p className="text-slate-400 mt-1">{new Date(a.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+                                        <p className="text-slate-400 mt-1">{formatCambodiaTime(a.checkIn)}</p>
                                       )}
                                     </div>
                                   ))}
@@ -354,7 +355,7 @@ function TeacherReportsContent() {
                               </p>
                               {statusBadge(a.status)}
                               {a.checkIn && (
-                                <p className="text-slate-400 mt-1">{new Date(a.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+                                <p className="text-slate-400 mt-1">{formatCambodiaTime(a.checkIn)}</p>
                               )}
                             </div>
                           ))}

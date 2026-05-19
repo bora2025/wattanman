@@ -6,6 +6,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { wattamanNav } from '../../../lib/wattaman-nav'
 import { apiFetch } from '../../../lib/api'
+import { formatCambodiaTime } from '../../../lib/dateUtils'
 import Link from 'next/link'
 
 interface TeacherScanResult {
@@ -35,7 +36,7 @@ function TeacherProfileCard({ result }: { result: TeacherScanResult }) {
   const meta = statusMeta(result.action, result.status)
   const isAlready = result.action === 'ALREADY_RECORDED'
   const timeDisplay = result.checkIn
-    ? new Date(result.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+    ? formatCambodiaTime(result.checkIn, true)
     : null
   return (
     <div className={`rounded-2xl overflow-hidden shadow-2xl ${meta.cardBg} ring-2 ${meta.ring}`}>
@@ -528,7 +529,7 @@ function TeacherScanContent() {
                         </div>
                         {r.checkIn && (
                           <span className="text-xs text-white/30 flex-shrink-0">
-                            {new Date(r.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            {formatCambodiaTime(r.checkIn)}
                           </span>
                         )}
                       </div>
@@ -631,7 +632,7 @@ function TeacherScanContent() {
                         </div>
                         {r.checkIn && (
                           <span className="text-xs text-slate-400 flex-shrink-0">
-                            {new Date(r.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            {formatCambodiaTime(r.checkIn)}
                           </span>
                         )}
                       </div>

@@ -7,6 +7,7 @@ import Link from 'next/link'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { apiFetch } from '../../../lib/api'
+import { formatCambodiaTime } from '../../../lib/dateUtils'
 
 const parentNav = [
   { label: 'Dashboard', href: '/parent', icon: 'dashboard' },
@@ -102,7 +103,7 @@ export default function ParentMessagesPage() {
                     <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${msg.sender.id === selectedPartnerId ? 'bg-white border border-slate-200 text-slate-800' : 'bg-sky-600 text-white'}`}>
                       <p>{msg.content}</p>
                       <p className={`text-xs mt-1 ${msg.sender.id === selectedPartnerId ? 'text-slate-400' : 'text-sky-200'}`}>
-                        {new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        {formatCambodiaTime(msg.createdAt)}
                       </p>
                     </div>
                   </div>

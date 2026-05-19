@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
+import { formatCambodiaTime } from '../../../lib/dateUtils'
 
 interface StaffMember {
   id: string
@@ -656,9 +657,9 @@ function TeacherStaffAttendance() {
                         <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Time</p>
                         <p className="font-bold text-slate-800 text-sm">
                           {scanResult.action === 'CHECK_OUT' && scanResult.checkOutTime
-                            ? new Date(scanResult.checkOutTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                            ? formatCambodiaTime(scanResult.checkOutTime)
                             : scanResult.checkInTime
-                              ? new Date(scanResult.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                              ? formatCambodiaTime(scanResult.checkInTime)
                               : 'Just now'}
                         </p>
                       </div>
@@ -853,8 +854,8 @@ function TeacherStaffAttendance() {
                   </div>
                   {record && (
                     <div className="mt-2 flex gap-2 text-[11px] text-slate-500">
-                      {record.checkInTime && <span>📥 {new Date(record.checkInTime).toLocaleTimeString()}</span>}
-                      {record.checkOutTime && <span>📤 {new Date(record.checkOutTime).toLocaleTimeString()}</span>}
+                      {record.checkInTime && <span>📥 {formatCambodiaTime(record.checkInTime)}</span>}
+                      {record.checkOutTime && <span>📤 {formatCambodiaTime(record.checkOutTime)}</span>}
                     </div>
                   )}
                 </div>

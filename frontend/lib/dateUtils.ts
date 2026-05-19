@@ -5,6 +5,29 @@
 const CAMBODIA_TZ = 'Asia/Phnom_Penh';
 
 /**
+ * Format a UTC timestamp as Cambodia time in 24-hour HH:mm format.
+ *
+ * Use this everywhere an attendance check-in/check-out time must be displayed.
+ * It is locale-independent and timezone-correct, always producing e.g. "13:05"
+ * instead of the browser-locale-dependent "1:05 PM" or "01:05 PM".
+ *
+ * @param input  UTC ISO string, Date object, or null/undefined.
+ * @param withSeconds  When true, returns HH:mm:ss instead of HH:mm.
+ * @returns  e.g. "13:05" or "—" when input is missing/invalid.
+ */
+export function formatCambodiaTime(
+  input: string | Date | null | undefined,
+  withSeconds = false,
+): string {
+  if (!input) return '—';
+  const d = typeof input === 'string' ? new Date(input) : input;
+  if (isNaN(d.getTime())) return '—';
+  // Shift UTC → Cambodia (UTC+7) then read the ISO HH:mm[:ss] slice
+  const cambodia = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+  return cambodia.toISOString().slice(11, withSeconds ? 19 : 16);
+}
+
+/**
  * Format a date-of-birth string for display on ID cards.
  *
  * @param dateStr  ISO date string (e.g. "2000-02-01T00:00:00.000Z") or null/undefined.

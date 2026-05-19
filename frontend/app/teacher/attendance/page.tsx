@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { BrowserMultiFormatReader } from '@zxing/library'
 import Link from 'next/link'
 import { apiFetch, getCurrentUser } from '../../../lib/api'
+import { formatCambodiaTime } from '../../../lib/dateUtils'
 import { useLanguage } from '../../../lib/i18n'
 
 interface Student {
@@ -1074,9 +1075,9 @@ function TakeAttendance() {
                     <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Time</p>
                     <p className="font-bold text-slate-800 text-sm">
                       {staffScanResult.action === 'CHECK_OUT' && staffScanResult.checkOutTime
-                        ? new Date(staffScanResult.checkOutTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                        ? formatCambodiaTime(staffScanResult.checkOutTime)
                         : staffScanResult.checkInTime
-                          ? new Date(staffScanResult.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                          ? formatCambodiaTime(staffScanResult.checkInTime)
                           : 'Just now'}
                     </p>
                   </div>

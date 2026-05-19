@@ -7,6 +7,7 @@ import Link from 'next/link'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { apiFetch } from '../../../lib/api'
+import { formatCambodiaTime } from '../../../lib/dateUtils'
 
 const parentNav = [
   { label: 'Dashboard', href: '/parent', icon: 'dashboard' },
@@ -103,7 +104,7 @@ export default function ParentBusPage() {
                   <p className="font-bold text-slate-800">Bus {selectedBus?.licensePlate}</p>
                   <p className="text-xs text-slate-400">
                     {location
-                      ? `Last updated: ${new Date(location.timestamp).toLocaleTimeString()}`
+                      ? `Last updated: ${formatCambodiaTime(location.timestamp)}`
                       : locationLoading ? 'Fetching location...' : 'No location data'}
                   </p>
                 </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch } from '../../../../lib/api'
+import { formatCambodiaTime } from '../../../../lib/dateUtils'
 
 interface TeacherAttendanceRecord {
   id: string
@@ -246,7 +247,7 @@ function PrintContent() {
                     </td>
                     <td>
                       {a.checkIn
-                        ? new Date(a.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                        ? formatCambodiaTime(a.checkIn, true)
                         : '—'}
                     </td>
                   </tr>
