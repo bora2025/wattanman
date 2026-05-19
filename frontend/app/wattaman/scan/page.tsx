@@ -142,6 +142,8 @@ function WattamanScanContent() {
   const [isLandscape, setIsLandscape] = useState(false)
   const [profileVisible, setProfileVisible] = useState(false)
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null)
+  const [clockStr, setClockStr] = useState('')
+  const [activeSession, setActiveSession] = useState<{ session: number; type: string; startTime: string; endTime: string; isActive: boolean } | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const codeReaderRef = useRef<BrowserQRCodeReader | null>(null)
@@ -153,6 +155,7 @@ function WattamanScanContent() {
   const torchTrackRef = useRef<MediaStreamTrack | null>(null)
   const photoCacheRef = useRef<Map<string, string>>(new Map())
   const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sessionConfigsRef = useRef<Array<{ session: number; type: string; startTime: string; endTime: string }>>([])
 
   /* ── orientation detection ── */
   useEffect(() => {
@@ -172,6 +175,34 @@ function WattamanScanContent() {
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
     )
     return () => navigator.geolocation.clearWatch(watchId)
+  }, [])
+
+  /* ── session config + live Cambodia clock ── */
+  useEffect(() => {
+    apiFetch('/api/session-config/global')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (Array.isArray(data)) sessionConfigsRef.current = data.filter((c: any) => c.startTime !== c.endTime) })
+      .catch(() => {})
+    const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
+    const tick = () => {
+      const cam = new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
+      const hh = String(cam.getUTCHours()).padStart(2, '0')
+      const mm = String(cam.getUTCMinutes()).padStart(2, '0')
+      const ss = String(cam.getUTCSeconds()).padStart(2, '0')
+      setClockStr(`${hh}:${mm}:${ss}`)
+      const configs = sessionConfigsRef.current
+      if (configs.length === 0) return
+      const nowMin = parseInt(hh) * 60 + parseInt(mm)
+      const sorted = [...configs].sort((a, b) => a.session - b.session)
+      let matched: typeof sorted[0] | undefined = sorted.find(c => nowMin >= toMin(c.startTime) && nowMin <= toMin(c.endTime))
+      const isActive = !!matched
+      if (!matched) matched = sorted.find(c => { const s = toMin(c.startTime); return nowMin >= s - 30 && nowMin < s })
+      if (!matched) { const past = sorted.filter(c => toMin(c.startTime) <= nowMin); matched = past.length > 0 ? past[past.length - 1] : sorted[0] }
+      setActiveSession(matched ? { ...matched, isActive } : null)
+    }
+    tick()
+    const iv = setInterval(tick, 1000)
+    return () => clearInterval(iv)
   }, [])
 
   /* ── auto-start ── */
@@ -481,6 +512,24 @@ function WattamanScanContent() {
               {/* Scan zone brackets + sweep line */}
               <StudentScanZone isLandscape={isLandscape} />
 
+              {/* ── Session + clock overlay (portrait only) ── */}
+              {!isLandscape && clockStr && (
+                <div className="absolute top-16 left-0 right-0 z-20 flex items-center justify-between gap-2 px-3 pointer-events-none">
+                  {activeSession && (
+                    <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5">
+                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeSession.isActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
+                      <span className="text-white text-xs font-semibold">
+                        S{activeSession.session} · {activeSession.type === 'CHECK_IN' ? 'Check-In' : 'Check-Out'}
+                      </span>
+                      <span className="text-white/50 text-xs">{activeSession.startTime}–{activeSession.endTime}</span>
+                    </div>
+                  )}
+                  <div className="ml-auto bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5">
+                    <span className="text-white/90 text-xs font-mono font-bold tabular-nums">{clockStr}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Processing spinner (inside zone area) */}
               {isLoading && (
                 <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
@@ -585,7 +634,34 @@ function WattamanScanContent() {
             ═══════════════════════════════════════════════ */}
             {isLandscape && (
               <div className="w-72 md:w-80 xl:w-96 bg-black/85 backdrop-blur-sm flex flex-col p-4 gap-3 overflow-y-auto">
-                {/* Panel header */}
+                {/* Session + clock card */}
+                {clockStr && (
+                  <div className="flex-shrink-0 rounded-xl p-3 mb-0" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-white/40 text-xs uppercase tracking-wide font-semibold">Cambodia Time</span>
+                      <span className="text-white font-mono text-sm font-bold tabular-nums">{clockStr}</span>
+                    </div>
+                    {activeSession ? (
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${activeSession.isActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-xs font-bold leading-tight">
+                            Session {activeSession.session} · {activeSession.type === 'CHECK_IN' ? '↓ Check-In' : '↑ Check-Out'}
+                          </p>
+                          <p className="text-white/40 text-xs mt-0.5">{activeSession.startTime} – {activeSession.endTime}</p>
+                        </div>
+                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0"
+                          style={{ background: activeSession.isActive ? 'rgba(52,211,153,0.2)' : 'rgba(255,255,255,0.07)', color: activeSession.isActive ? '#6ee7b7' : 'rgba(255,255,255,0.35)' }}>
+                          {activeSession.isActive ? 'Active' : 'Near'}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-white/30 text-xs">Loading session…</p>
+                    )}
+                  </div>
+                )}
+
+              {/* Panel header */}
                 <div className="flex items-center gap-2 mb-1 flex-shrink-0">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <p className="text-white/80 text-sm font-semibold">Attendance Log</p>
