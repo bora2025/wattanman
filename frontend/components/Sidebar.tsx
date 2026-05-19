@@ -308,7 +308,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
             className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm w-full text-left ${colors.text} hover:bg-white/10 transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
           >
             <IconGlobe size={17} />
-            {sidebarOpen && <span className="truncate">{lang === 'en' ? 'ភáso ខ្មែរ' : 'English'}</span>}
+            {sidebarOpen && <span className="truncate">{lang === 'en' ? 'ភាសាខ្មែរ' : 'English'}</span>}
           </button>
           <Link
             href="/"
