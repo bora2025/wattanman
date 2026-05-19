@@ -146,7 +146,7 @@ function WattamanScanContent() {
   const [profileVisible, setProfileVisible] = useState(false)
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null)
   const [clockStr, setClockStr] = useState('')
-  const [activeSession, setActiveSession] = useState<{ session: number; type: string; startTime: string; endTime: string; isActive: boolean } | null>(null)
+  const [activeSession, setActiveSession] = useState<{ session: number; type: string; startTime: string; endTime: string; isActive: boolean; badge: 'Active' | 'Near' | 'Upcoming' } | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const codeReaderRef = useRef<BrowserQRCodeReader | null>(null)
@@ -203,9 +203,26 @@ function WattamanScanContent() {
       const sorted = [...configs].sort((a, b) => a.session - b.session)
       let matched: typeof sorted[0] | undefined = sorted.find(c => nowMin >= toMin(c.startTime) && nowMin <= toMin(c.endTime))
       const isActive = !!matched
-      if (!matched) matched = sorted.find(c => { const s = toMin(c.startTime); return nowMin >= s - 30 && nowMin < s })
-      if (!matched) { const past = sorted.filter(c => toMin(c.startTime) <= nowMin); matched = past.length > 0 ? past[past.length - 1] : sorted[0] }
-      setActiveSession(matched ? { ...matched, isActive } : null)
+      let badge: 'Active' | 'Near' | 'Upcoming' = 'Upcoming'
+      if (isActive) {
+        badge = 'Active'
+      } else {
+        matched = sorted.find(c => { const s = toMin(c.startTime); return nowMin >= s - 30 && nowMin < s })
+        if (matched) {
+          badge = 'Near'
+        } else {
+          // Prefer nearest upcoming; fall back to most-recently-started
+          const upcoming = sorted.filter(c => toMin(c.startTime) > nowMin)
+          if (upcoming.length > 0) {
+            matched = upcoming[0]
+          } else {
+            const past = sorted.filter(c => toMin(c.startTime) <= nowMin)
+            matched = past.length > 0 ? past[past.length - 1] : sorted[0]
+          }
+          badge = 'Upcoming'
+        }
+      }
+      setActiveSession(matched ? { ...matched, isActive, badge } : null)
     }
     tick()
     const iv = setInterval(tick, 1000)
@@ -650,7 +667,11 @@ function WattamanScanContent() {
                     </div>
                     {activeSession ? (
                       <div className="flex items-center gap-2.5">
-                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${activeSession.isActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                            activeSession.badge === 'Active' ? 'bg-emerald-400 animate-pulse'
+                            : activeSession.badge === 'Near' ? 'bg-amber-400'
+                            : 'bg-slate-500'
+                          }`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-white text-xs font-bold leading-tight">
                             Session {activeSession.session} · {activeSession.type === 'CHECK_IN' ? '↓ Check-In' : '↑ Check-Out'}
@@ -658,8 +679,11 @@ function WattamanScanContent() {
                           <p className="text-white/40 text-xs mt-0.5">{activeSession.startTime} – {activeSession.endTime}</p>
                         </div>
                         <span className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0"
-                          style={{ background: activeSession.isActive ? 'rgba(52,211,153,0.2)' : 'rgba(255,255,255,0.07)', color: activeSession.isActive ? '#6ee7b7' : 'rgba(255,255,255,0.35)' }}>
-                          {activeSession.isActive ? 'Active' : 'Near'}
+                          style={{
+                            background: activeSession.badge === 'Active' ? 'rgba(52,211,153,0.2)' : activeSession.badge === 'Near' ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.07)',
+                            color: activeSession.badge === 'Active' ? '#6ee7b7' : activeSession.badge === 'Near' ? '#fbbf24' : 'rgba(255,255,255,0.35)'
+                          }}>
+                          {activeSession.badge}
                         </span>
                       </div>
                     ) : (

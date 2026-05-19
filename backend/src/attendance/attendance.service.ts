@@ -1124,13 +1124,13 @@ export class AttendanceService {
         });
       }
       if (!matched) {
-        // Pick the most recently started session (latest startTime <= now)
-        const past = sorted.filter(c => c.startTime <= hhmm);
-        if (past.length > 0) {
-          matched = past[past.length - 1];
+        // Nearest upcoming first; if all past, most recently started
+        const upcoming = sorted.filter(c => toMinutes(c.startTime) > nowMinutes);
+        if (upcoming.length > 0) {
+          matched = upcoming[0];
         } else {
-          // Before any session today → pick first upcoming
-          matched = sorted[0] || configs[configs.length - 1];
+          const past = sorted.filter(c => c.startTime <= hhmm);
+          matched = past.length > 0 ? past[past.length - 1] : (sorted[0] || configs[configs.length - 1]);
         }
       }
 
@@ -1423,9 +1423,14 @@ export class AttendanceService {
       });
     }
     if (!matched) {
-      // Priority 3: most recently started; fallback to first
-      const past = allConfigs.filter(c => toMinutes(c.startTime) <= nowMinutes);
-      matched = past.length > 0 ? past[past.length - 1] : allConfigs[0];
+      // Priority 3: nearest upcoming session preferred over most-recently-past
+      const upcoming = allConfigs.filter(c => toMinutes(c.startTime) > nowMinutes);
+      if (upcoming.length > 0) {
+        matched = upcoming[0]; // already sorted chronologically
+      } else {
+        const past = allConfigs.filter(c => toMinutes(c.startTime) <= nowMinutes);
+        matched = past.length > 0 ? past[past.length - 1] : allConfigs[0];
+      }
     }
 
     const session = matched ? matched.session : 1;
