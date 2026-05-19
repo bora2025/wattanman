@@ -379,11 +379,18 @@ function AdminTakeAttendance() {
   }
 
   const updateAttendance = useCallback((studentId: string, status: 'PRESENT' | 'ABSENT' | 'LATE' | 'PERMISSION') => {
-    const now = (status === 'PRESENT' || status === 'LATE') ? new Date().toISOString() : undefined
-    setAttendance(prev => prev.map(a => a.studentId === studentId ? {
-      ...a, status, checkInTime: now,
-      permissionType: status === 'PERMISSION' ? (a.permissionType || 'FULL_DAY') : a.permissionType,
-    } : a))
+    const isAttending = status === 'PRESENT' || status === 'LATE'
+    setAttendance(prev => prev.map(a => {
+      if (a.studentId !== studentId) return a
+      const wasAttending = a.status === 'PRESENT' || a.status === 'LATE'
+      return {
+        ...a,
+        status,
+        // Preserve first check-in time — only assign a new time if the student wasn't already marked
+        checkInTime: isAttending ? (wasAttending && a.checkInTime ? a.checkInTime : new Date().toISOString()) : undefined,
+        permissionType: status === 'PERMISSION' ? (a.permissionType || 'FULL_DAY') : a.permissionType,
+      }
+    }))
   }, [])
 
   const updatePermissionType = useCallback((studentId: string, permType: string) => {

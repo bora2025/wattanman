@@ -248,7 +248,7 @@ export class AttendanceService {
     const existingRecord = await this.prisma.attendance.findUnique({
       where: { studentId_classId_date_session: { studentId, classId, date: attendanceDate, session } },
     });
-    const keepOriginal = existingRecord?.checkInTime && isAttending;
+    const keepOriginal = !!(existingRecord?.checkInTime) && isAttending;
 
     // Use upsert to handle re-submissions
     const attendance = await this.prisma.attendance.upsert({
@@ -292,7 +292,7 @@ export class AttendanceService {
     const attendanceData = {
       studentId,
       studentName: student.user?.name ?? student.id,
-      status: finalStatus,
+      status: keepOriginal ? existingRecord!.status : finalStatus,
       session,
       timestamp: attendance.timestamp,
     };
@@ -436,7 +436,7 @@ export class AttendanceService {
         const existingBulk = await tx.attendance.findUnique({
           where: { studentId_classId_date_session: { studentId: record.studentId, classId, date: attendanceDate, session } },
         });
-        const keepOriginalBulk = existingBulk?.checkInTime && isAttending;
+        const keepOriginalBulk = !!(existingBulk?.checkInTime) && isAttending;
 
         await tx.attendance.upsert({
           where: {
@@ -477,7 +477,7 @@ export class AttendanceService {
         this.attendanceGateway.notifyAttendanceUpdate(classId, {
           studentId: record.studentId,
           studentName: student.user?.name ?? student.id,
-          status: finalStatus,
+          status: keepOriginalBulk ? existingBulk!.status : finalStatus,
           session,
           timestamp: new Date(),
         });
