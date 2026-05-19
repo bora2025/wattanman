@@ -1408,25 +1408,28 @@ export class AttendanceService {
       try { configs = await this.sessionConfigService.getGlobalDefaults(); } catch { /* ignore */ }
     }
 
-    const checkInConfigs = configs
-      .filter(c => c.type === 'CHECK_IN' && c.startTime !== c.endTime)
+    // Resolve current session across ALL session types (CHECK_IN and CHECK_OUT)
+    const allConfigs = configs
+      .filter(c => c.startTime !== c.endTime)
       .sort((a, b) => a.session - b.session);
 
-    // Find the active or most-recently-started CHECK_IN session
-    let matched = checkInConfigs.find(c => nowMinutes >= toMinutes(c.startTime) && nowMinutes <= toMinutes(c.endTime));
+    // Priority 1: active window
+    let matched = allConfigs.find(c => nowMinutes >= toMinutes(c.startTime) && nowMinutes <= toMinutes(c.endTime));
     if (!matched) {
-      // Within 30 min before start
-      matched = checkInConfigs.find(c => {
+      // Priority 2: within 30 min before start
+      matched = allConfigs.find(c => {
         const startMin = toMinutes(c.startTime);
         return nowMinutes >= startMin - 30 && nowMinutes < startMin;
       });
     }
     if (!matched) {
-      const past = checkInConfigs.filter(c => toMinutes(c.startTime) <= nowMinutes);
-      matched = past.length > 0 ? past[past.length - 1] : checkInConfigs[0];
+      // Priority 3: most recently started; fallback to first
+      const past = allConfigs.filter(c => toMinutes(c.startTime) <= nowMinutes);
+      matched = past.length > 0 ? past[past.length - 1] : allConfigs[0];
     }
 
     const session = matched ? matched.session : 1;
+    const sessionType: 'CHECK_IN' | 'CHECK_OUT' = (matched?.type as 'CHECK_IN' | 'CHECK_OUT') ?? 'CHECK_IN';
     const checkInTime = now;
 
     // Determine PRESENT or LATE
@@ -1487,7 +1490,8 @@ export class AttendanceService {
     });
 
     return {
-      action: keepOriginal ? 'ALREADY_RECORDED' : 'CHECK_IN',
+      action: keepOriginal ? 'ALREADY_RECORDED' : sessionType,
+      sessionType,
       studentId: student.id,
       studentName: student.user?.name ?? student.id,
       studentPhoto: student.photo ?? student.user?.photo ?? null,

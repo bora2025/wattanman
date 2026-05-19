@@ -9,6 +9,7 @@ import { apiFetch } from '../../../lib/api'
 
 interface ScanResult {
   action: string
+  sessionType?: string
   studentId: string
   studentName: string
   studentPhoto: string | null
@@ -22,12 +23,14 @@ interface ScanResult {
 /* ─── helpers ─────────────────────────────────────────────── */
 const statusMeta = (action: string, status: string) => {
   if (action === 'ALREADY_RECORDED')
-    return { label: '↩ Already Checked In', bg: 'bg-indigo-500', cardBg: 'bg-indigo-50', ring: 'ring-indigo-300', text: 'text-indigo-600', flash: 'rgba(99,102,241,0.4)', bgLight: 'rgba(99,102,241,0.1)', textHex: '#4338ca' }
+    return { label: '↩ Already Recorded', bg: 'bg-indigo-500', cardBg: 'bg-indigo-50', ring: 'ring-indigo-300', text: 'text-indigo-600', flash: 'rgba(99,102,241,0.4)', bgLight: 'rgba(99,102,241,0.1)', textHex: '#4338ca' }
+  if (action === 'CHECK_OUT')
+    return { label: '↑ Checked Out', bg: 'bg-blue-500', cardBg: 'bg-blue-50', ring: 'ring-blue-300', text: 'text-blue-600', flash: 'rgba(59,130,246,0.4)', bgLight: 'rgba(59,130,246,0.1)', textHex: '#1d4ed8' }
   if (status === 'LATE')
     return { label: '⚠️ Late', bg: 'bg-amber-500', cardBg: 'bg-amber-50', ring: 'ring-amber-300', text: 'text-amber-600', flash: 'rgba(251,191,36,0.35)', bgLight: 'rgba(245,158,11,0.12)', textHex: '#b45309' }
   if (status === 'DAY_OFF')
     return { label: '🌙 Day Off', bg: 'bg-slate-400', cardBg: 'bg-slate-100', ring: 'ring-slate-300', text: 'text-slate-500', flash: 'rgba(148,163,184,0.35)', bgLight: 'rgba(148,163,184,0.12)', textHex: '#64748b' }
-  return { label: '✓ Present', bg: 'bg-emerald-500', cardBg: 'bg-emerald-50', ring: 'ring-emerald-300', text: 'text-emerald-600', flash: 'rgba(52,211,153,0.4)', bgLight: 'rgba(16,185,129,0.12)', textHex: '#047857' }
+  return { label: '✓ Checked In', bg: 'bg-emerald-500', cardBg: 'bg-emerald-50', ring: 'ring-emerald-300', text: 'text-emerald-600', flash: 'rgba(52,211,153,0.4)', bgLight: 'rgba(16,185,129,0.12)', textHex: '#047857' }
 }
 
 // Defined at module level so React never treats these as new types on re-render
@@ -71,7 +74,7 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
           <div className="flex items-center gap-2">
             <span className="text-base">🕐</span>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-              {isAlready ? 'First check-in' : 'Check-in time'}
+              {isAlready ? 'First scan time' : result.action === 'CHECK_OUT' ? 'Check-out time' : 'Check-in time'}
             </span>
           </div>
           <span className="text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight"
