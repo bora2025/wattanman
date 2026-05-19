@@ -242,7 +242,11 @@ function AdminTakeAttendance() {
       return { ...c, startMin: sh * 60 + sm, endMin: eh * 60 + em }
     }).sort((a, b) => a.startMin - b.startMin)
 
-    let best = withMinutes.find(s => nowMin >= s.startMin && nowMin <= s.endMin)
+    // Pick the session with the latest startMin that still contains the current time.
+    // Using the last match (highest startMin) prevents a wide-window session (e.g. 00:45–13:15)
+    // from overshadowing a narrower, more recently started session (e.g. 08:45–09:15).
+    const matching = withMinutes.filter(s => nowMin >= s.startMin && nowMin <= s.endMin)
+    let best = matching.length > 0 ? matching[matching.length - 1] : undefined
     if (!best) {
       best = withMinutes.find(s => nowMin >= s.startMin - 30 && nowMin < s.startMin)
     }

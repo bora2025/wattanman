@@ -183,6 +183,10 @@ export default function TeacherReports() {
     const cfg = sessionConfigs.find(c => c.session === sessionNum)
     if (!cfg) return sessionNum <= 2 ? 'Morning' : 'Afternoon'
     const h = parseInt(cfg.startTime.split(':')[0])
+    const eh = parseInt(cfg.endTime.split(':')[0])
+    // If startTime is early-midnight (00:00–05:59) but endTime extends past noon,
+    // the session is misconfigured — use the session-number default instead of calling it "Morning".
+    if (h < 6 && eh >= 12) return sessionNum <= 2 ? 'Morning' : 'Afternoon'
     return h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : h < 21 ? 'Evening' : 'Night'
   }
 
