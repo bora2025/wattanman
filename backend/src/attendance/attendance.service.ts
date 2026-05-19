@@ -1368,11 +1368,11 @@ export class AttendanceService {
     });
 
     if (!student) {
-      throw new NotFoundException(`No student found for QR data: "${qrData}"`);
+      throw new NotFoundException(`Student not recognised — card ID not found in system`);
     }
 
     if (!student.classId || !student.class) {
-      throw new NotFoundException(`Student "${student.user?.name}" is not assigned to any class`);
+      throw new NotFoundException(`Student "${student.user?.name}" is not assigned to any class — contact admin`);
     }
 
     const classId = student.classId;

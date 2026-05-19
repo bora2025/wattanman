@@ -305,15 +305,18 @@ function WattamanScanContent() {
       } else {
         playSound('error')
         const errBody = await res.json().catch(() => ({}))
+        const serverMsg = errBody.message || ''
         const msg = res.status === 404
-          ? '❌ Student not recognised — check ID card'
+          ? serverMsg
+            ? `❌ ${serverMsg}`
+            : '❌ Student not recognised — check ID card'
           : res.status >= 500
             ? '⚠️ Server error — try again'
-            : errBody.message || '❌ Scan failed — try again'
+            : serverMsg || '❌ Scan failed — try again'
         setPendingPhoto(null)
         setMessage(msg)
         if ('vibrate' in navigator) navigator.vibrate([100, 100, 100])
-        lockTimerRef.current = setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
+        lockTimerRef.current = setTimeout(() => { setMessage(''); lockRef.current = false }, res.status === 404 ? 5000 : 3000)
       }
     } catch (err) {
       setIsLoading(false)
