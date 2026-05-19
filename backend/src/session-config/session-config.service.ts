@@ -26,27 +26,41 @@ export class SessionConfigService {
     return Array.from(map.values()).sort((a, b) => a.session - b.session);
   }
 
-  /** Get session configs for a class (falls back to global defaults) */
+  /** Get session configs for a class.
+   *  Class-specific configs override global per session; missing sessions are filled from global.
+   *  This guarantees all 4 session slots are always present so CHECK_OUT sessions
+   *  are never silently dropped when a class only has partial overrides.
+   */
   async getConfigs(classId?: string): Promise<any[]> {
-    // Try class-specific first
-    if (classId) {
-      const classConfigs = await this.prisma.sessionConfig.findMany({
-        where: { classId, scope: 'CLASS' },
-        orderBy: { session: 'asc' },
-      });
-      if (classConfigs.length > 0) return this.dedup(classConfigs);
-    }
-
-    // Fall back to global (classId = null)
+    // Resolve global base (DB globals → hardcoded defaults)
     const globalConfigs = await this.prisma.sessionConfig.findMany({
       where: { classId: null, scope: 'CLASS' },
       orderBy: { session: 'asc' },
     });
+    const globalBase: any[] = globalConfigs.length > 0
+      ? this.dedup(globalConfigs)
+      : DEFAULT_CONFIGS.map((d, i) => ({ id: `default-${i}`, classId: null, scope: 'CLASS', ...d }));
 
-    if (globalConfigs.length > 0) return this.dedup(globalConfigs);
+    // If no classId, just return global
+    if (!classId) return globalBase;
 
-    // If nothing in DB, return hardcoded defaults
-    return DEFAULT_CONFIGS.map((d, i) => ({ id: `default-${i}`, classId: null, scope: 'CLASS', ...d }));
+    // Fetch class-specific overrides
+    const classConfigs = await this.prisma.sessionConfig.findMany({
+      where: { classId, scope: 'CLASS' },
+      orderBy: { session: 'asc' },
+    });
+
+    // No class-specific overrides → use global as-is
+    if (classConfigs.length === 0) return globalBase;
+
+    // Merge: class-specific overrides global per session; global fills any gaps
+    const classMap = new Map<number, any>(classConfigs.map(c => [c.session, c]));
+    const merged = globalBase.map(g => classMap.has(g.session) ? classMap.get(g.session) : g);
+    // Also include any class-specific sessions not in globalBase (unusual but safe)
+    for (const cc of classConfigs) {
+      if (!merged.find((m: any) => m.session === cc.session)) merged.push(cc);
+    }
+    return merged.sort((a: any, b: any) => a.session - b.session);
   }
 
   /** Get global defaults only */
