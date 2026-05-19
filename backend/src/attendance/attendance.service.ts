@@ -221,15 +221,15 @@ export class AttendanceService {
       status = 'DAY_OFF';
     }
 
-    // Determine final status — auto-detect LATE if check-in >20 min after session start time
+    // Determine final status — auto-detect LATE if check-in is after the session endTime
     let finalStatus = status;
     if (status === 'PRESENT') {
       try {
         const configs = await this.sessionConfigService.getConfigs(classId);
         const cfg = configs.find((c: any) => c.session === session);
         if (cfg) {
-          const [h, m] = cfg.startTime.split(':').map(Number);
-          const lateAfterMinutes = h * 60 + m + 20;
+          const [eh, em] = cfg.endTime.split(':').map(Number);
+          const lateAfterMinutes = eh * 60 + em;
           const cambodiaCheckIn = new Date(checkInTime.getTime() + 7 * 60 * 60 * 1000);
           const checkInMinutes = cambodiaCheckIn.getUTCHours() * 60 + cambodiaCheckIn.getUTCMinutes();
           if (checkInMinutes > lateAfterMinutes) {
@@ -341,14 +341,14 @@ export class AttendanceService {
     const classSchedule = students.length > 0 ? (students[0] as any).class?.schedule : null;
     const isDayOff = isScheduledDayOff(classSchedule, attendanceDate);
 
-    // Look up session config for late detection
+    // Look up session config for late detection — student is LATE if check-in is after session endTime
     let lateAfterMinutes: number | null = null;
     try {
       const configs = await this.sessionConfigService.getConfigs(classId);
       const cfg = configs.find((c: any) => c.session === session);
       if (cfg) {
-        const [h, m] = cfg.startTime.split(':').map(Number);
-        lateAfterMinutes = h * 60 + m + 20;
+        const [eh, em] = cfg.endTime.split(':').map(Number);
+        lateAfterMinutes = eh * 60 + em;
       }
     } catch (err) {
       console.error('Failed to load session config for late detection:', err?.message || err);
@@ -579,15 +579,15 @@ export class AttendanceService {
         );
       }
 
-      // Auto-detect LATE if check-in >20 min after session start time
+      // Auto-detect LATE if check-in is after the session endTime
       let finalStatus = status;
       if (status === 'PRESENT') {
         try {
           const configs = await this.sessionConfigService.getStaffDefaults();
           const cfg = configs.find((c: any) => c.session === session);
           if (cfg && cfg.type === 'CHECK_IN') {
-            const [h, m] = cfg.startTime.split(':').map(Number);
-            const lateAfterMinutes = h * 60 + m + 20;
+            const [eh, em] = cfg.endTime.split(':').map(Number);
+            const lateAfterMinutes = eh * 60 + em;
             const cambodiaCheckIn = new Date(checkInTime.getTime() + 7 * 60 * 60 * 1000);
             const checkInMinutes = cambodiaCheckIn.getUTCHours() * 60 + cambodiaCheckIn.getUTCMinutes();
             if (checkInMinutes > lateAfterMinutes) {
