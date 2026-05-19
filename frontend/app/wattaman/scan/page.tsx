@@ -22,19 +22,18 @@ interface ScanResult {
 /* ─── helpers ─────────────────────────────────────────────── */
 const statusMeta = (action: string, status: string) => {
   if (action === 'ALREADY_RECORDED')
-    return { label: '↩ Already Checked In', bg: 'bg-indigo-500', cardBg: 'bg-indigo-50', ring: 'ring-indigo-300', text: 'text-indigo-600', flash: 'rgba(99,102,241,0.4)' }
+    return { label: '↩ Already Checked In', bg: 'bg-indigo-500', cardBg: 'bg-indigo-50', ring: 'ring-indigo-300', text: 'text-indigo-600', flash: 'rgba(99,102,241,0.4)', bgLight: 'rgba(99,102,241,0.1)', textHex: '#4338ca' }
   if (status === 'LATE')
-    return { label: '⚠️ Late', bg: 'bg-amber-500', cardBg: 'bg-amber-50', ring: 'ring-amber-300', text: 'text-amber-600', flash: 'rgba(251,191,36,0.35)' }
+    return { label: '⚠️ Late', bg: 'bg-amber-500', cardBg: 'bg-amber-50', ring: 'ring-amber-300', text: 'text-amber-600', flash: 'rgba(251,191,36,0.35)', bgLight: 'rgba(245,158,11,0.12)', textHex: '#b45309' }
   if (status === 'DAY_OFF')
-    return { label: '🌙 Day Off', bg: 'bg-slate-400', cardBg: 'bg-slate-100', ring: 'ring-slate-300', text: 'text-slate-500', flash: 'rgba(148,163,184,0.35)' }
-  return { label: '✓ Present', bg: 'bg-emerald-500', cardBg: 'bg-emerald-50', ring: 'ring-emerald-300', text: 'text-emerald-600', flash: 'rgba(52,211,153,0.4)' }
+    return { label: '🌙 Day Off', bg: 'bg-slate-400', cardBg: 'bg-slate-100', ring: 'ring-slate-300', text: 'text-slate-500', flash: 'rgba(148,163,184,0.35)', bgLight: 'rgba(148,163,184,0.12)', textHex: '#64748b' }
+  return { label: '✓ Present', bg: 'bg-emerald-500', cardBg: 'bg-emerald-50', ring: 'ring-emerald-300', text: 'text-emerald-600', flash: 'rgba(52,211,153,0.4)', bgLight: 'rgba(16,185,129,0.12)', textHex: '#047857' }
 }
 
 // Defined at module level so React never treats these as new types on re-render
 function StudentProfileCard({ result }: { result: ScanResult }) {
   const meta = statusMeta(result.action, result.status)
   const isAlready = result.action === 'ALREADY_RECORDED'
-  const isDayOff = result.action === 'DAY_OFF'
   const timeDisplay = result.checkInTime
     ? new Date(result.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
     : null
@@ -66,16 +65,17 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
       </div>
 
       {/* Prominent time badge */}
-      {!isDayOff && timeDisplay && (
-        <div className={`mx-4 mb-4 rounded-xl px-4 py-2.5 flex items-center justify-between ${meta.bg} bg-opacity-10`}
-          style={{ background: isAlready ? 'rgba(99,102,241,0.08)' : undefined }}>
+      {timeDisplay && (
+        <div className="mx-4 mb-4 rounded-xl px-4 py-3 flex items-center justify-between"
+          style={{ background: meta.bgLight }}>
           <div className="flex items-center gap-2">
             <span className="text-base">🕐</span>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
               {isAlready ? 'First check-in' : 'Check-in time'}
             </span>
           </div>
-          <span className={`text-xl sm:text-2xl font-extrabold tabular-nums tracking-tight ${meta.text}`}>
+          <span className="text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight"
+            style={{ color: meta.textHex }}>
             {timeDisplay}
           </span>
         </div>

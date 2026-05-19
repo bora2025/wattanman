@@ -24,28 +24,31 @@ interface TeacherScanResult {
 
 const statusMeta = (action: string, status: string) => {
   if (action === 'ALREADY_RECORDED')
-    return { label: '↩ Already Recorded', bg: 'bg-indigo-500', cardBg: 'bg-indigo-50', ring: 'ring-indigo-300', text: 'text-indigo-600', flash: 'rgba(99,102,241,0.4)' }
+    return { label: '↩ Already Recorded', bg: 'bg-indigo-500', cardBg: 'bg-indigo-50', ring: 'ring-indigo-300', text: 'text-indigo-600', flash: 'rgba(99,102,241,0.4)', bgLight: 'rgba(99,102,241,0.1)', textHex: '#4338ca' }
   if (status === 'LATE')
-    return { label: '⚠️ Late', bg: 'bg-amber-500', cardBg: 'bg-amber-50', ring: 'ring-amber-300', text: 'text-amber-600', flash: 'rgba(251,191,36,0.35)' }
-  return { label: '✓ Present', bg: 'bg-emerald-500', cardBg: 'bg-emerald-50', ring: 'ring-emerald-300', text: 'text-emerald-600', flash: 'rgba(52,211,153,0.4)' }
+    return { label: '⚠️ Late', bg: 'bg-amber-500', cardBg: 'bg-amber-50', ring: 'ring-amber-300', text: 'text-amber-600', flash: 'rgba(251,191,36,0.35)', bgLight: 'rgba(245,158,11,0.12)', textHex: '#b45309' }
+  return { label: '✓ Present', bg: 'bg-emerald-500', cardBg: 'bg-emerald-50', ring: 'ring-emerald-300', text: 'text-emerald-600', flash: 'rgba(52,211,153,0.4)', bgLight: 'rgba(16,185,129,0.12)', textHex: '#047857' }
 }
 
 // Defined at module level so React never treats these as new types on re-render
 function TeacherProfileCard({ result }: { result: TeacherScanResult }) {
   const meta = statusMeta(result.action, result.status)
   const isAlready = result.action === 'ALREADY_RECORDED'
-  const checkInDisplay = result.checkIn
-    ? new Date(result.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  const timeDisplay = result.checkIn
+    ? new Date(result.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
     : null
   return (
     <div className={`rounded-2xl overflow-hidden shadow-2xl ${meta.cardBg} ring-2 ${meta.ring}`}>
+      {/* Status header */}
       <div className={`${meta.bg} px-4 py-2.5 flex items-center justify-between`}>
         <span className="text-white text-sm font-bold tracking-wide">{meta.label}</span>
-        {isAlready && checkInDisplay && (
-          <span className="text-white/90 text-xs">First in at {checkInDisplay}</span>
+        {result.period > 0 && (
+          <span className="text-white/80 text-xs font-medium">Period {result.period}</span>
         )}
       </div>
-      <div className="flex items-center gap-4 p-4">
+
+      {/* Teacher info row */}
+      <div className="flex items-center gap-4 px-4 pt-4 pb-3">
         <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white flex items-center justify-center text-5xl flex-shrink-0 ring-2 ${meta.ring} shadow-md`}>
           👨‍🏫
         </div>
@@ -54,11 +57,8 @@ function TeacherProfileCard({ result }: { result: TeacherScanResult }) {
           {result.subjectName && (
             <p className="text-sm text-slate-600 truncate mt-0.5">{result.subjectName}{result.className ? ` · ${result.className}` : ''}</p>
           )}
-          <p className="text-xs text-slate-400 mt-0.5">Period {result.period} · {result.timetableName}</p>
-          {!isAlready && checkInDisplay && (
-            <p className={`text-sm font-bold mt-1.5 ${meta.text}`}>Checked in at {checkInDisplay}</p>
-          )}
-          {isAlready && <p className="text-xs text-indigo-600 font-medium mt-1">Already recorded — no duplicate</p>}
+          <p className="text-xs text-slate-400 mt-0.5">{result.timetableName}</p>
+          {isAlready && <p className="text-xs text-indigo-500 font-medium mt-1">Already recorded — no duplicate</p>}
           {result.scheduledPeriods?.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
               {result.scheduledPeriods.map(p => (
@@ -71,6 +71,23 @@ function TeacherProfileCard({ result }: { result: TeacherScanResult }) {
           )}
         </div>
       </div>
+
+      {/* Prominent time badge */}
+      {timeDisplay && (
+        <div className="mx-4 mb-4 rounded-xl px-4 py-3 flex items-center justify-between"
+          style={{ background: meta.bgLight }}>
+          <div className="flex items-center gap-2">
+            <span className="text-base">🕐</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              {isAlready ? 'First check-in' : 'Check-in time'}
+            </span>
+          </div>
+          <span className="text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight"
+            style={{ color: meta.textHex }}>
+            {timeDisplay}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
