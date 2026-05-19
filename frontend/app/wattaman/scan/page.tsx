@@ -182,10 +182,14 @@ function WattamanScanContent() {
 
   /* ── session config + live Cambodia clock ── */
   useEffect(() => {
-    apiFetch('/api/session-config/global')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (Array.isArray(data)) sessionConfigsRef.current = data.filter((c: any) => c.startTime !== c.endTime) })
-      .catch(() => {})
+    const fetchConfigs = () =>
+      apiFetch('/api/session-config/global')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (Array.isArray(data)) sessionConfigsRef.current = data.filter((c: any) => c.startTime !== c.endTime) })
+        .catch(() => {})
+    fetchConfigs()
+    // Re-fetch every 60 s so the indicator stays current if admin changes session settings
+    const configInterval = setInterval(fetchConfigs, 60_000)
     const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
     const tick = () => {
       const cam = new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
@@ -205,7 +209,7 @@ function WattamanScanContent() {
     }
     tick()
     const iv = setInterval(tick, 1000)
-    return () => clearInterval(iv)
+    return () => { clearInterval(iv); clearInterval(configInterval) }
   }, [])
 
   /* ── auto-start ── */
