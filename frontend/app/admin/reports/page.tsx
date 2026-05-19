@@ -941,6 +941,12 @@ function PrintReportModal({
   const [logoTextGap, setLogoTextGap] = useState('4')
   const [headerGap, setHeaderGap] = useState('6')
   const [signers, setSigners] = useState<string[]>(['Teacher', 'Admin'])
+  const [studyYears, setStudyYears] = useState<Array<{ year: number; startDate?: string; endDate?: string }>>([])
+
+  // Fetch study years once so yearly period uses the correct startDate/endDate
+  useEffect(() => {
+    apiFetch('/api/study-years').then(r => r.ok ? r.json() : []).then(setStudyYears).catch(() => {})
+  }, [])
 
   // Sync defaults when modal opens
   useEffect(() => {
@@ -972,8 +978,12 @@ function PrintReportModal({
         const last = new Date(Date.UTC(y, m + 1, 0))
         return { start: first.toISOString().split('T')[0], end: last.toISOString().split('T')[0] }
       }
-      case 'yearly':
-        return { start: `${y}-01-01`, end: `${y}-12-31` }
+      case 'yearly': {
+        const sy = studyYears.find(s => s.year === y)
+        const start = sy?.startDate ? sy.startDate.split('T')[0] : `${y}-01-01`
+        const end = sy?.endDate ? sy.endDate.split('T')[0] : `${y}-12-31`
+        return { start, end }
+      }
       default:
         return { start: printDate, end: printDate }
     }
@@ -1098,6 +1108,18 @@ function PrintReportModal({
                 onChange={e => setPrintDate(e.target.value)}
                 className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
               />
+              {printPeriod === 'yearly' && (() => {
+                const base = new Date(printDate + 'T00:00:00Z')
+                const y = base.getUTCFullYear()
+                const sy = studyYears.find(s => s.year === y)
+                const start = sy?.startDate ? new Date(sy.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : `Jan 1, ${y}`
+                const end = sy?.endDate ? new Date(sy.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : `Dec 31, ${y}`
+                return (
+                  <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5 mt-2">
+                    📅 Study Year {y}{sy?.endDate ? `–${new Date(sy.endDate).getUTCFullYear()}` : ''}: {start} – {end}
+                  </p>
+                )
+              })()}
             </div>
           )}
 

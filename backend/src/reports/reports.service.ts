@@ -925,6 +925,23 @@ export class ReportsService {
     });
   }
 
+  /** Return study year date bounds for a calendar year, falling back to Jan 1 – Dec 31. */
+  private async getStudyYearBounds(calendarYear: number): Promise<{ yearStart: Date; yearEnd: Date }> {
+    try {
+      const sy = await this.prisma.studyYear.findFirst({ where: { year: calendarYear } });
+      if (sy?.startDate && sy?.endDate) {
+        return {
+          yearStart: toUTCMidnight(sy.startDate),
+          yearEnd: new Date(toUTCMidnight(sy.endDate).getTime() + 24 * 60 * 60 * 1000),
+        };
+      }
+    } catch { /* ignore, fall back */ }
+    return {
+      yearStart: new Date(Date.UTC(calendarYear, 0, 1)),
+      yearEnd: new Date(Date.UTC(calendarYear + 1, 0, 1)),
+    };
+  }
+
   /** Get attendance totals per student for week, month, year */
   async getAttendanceTotals(classId: string, date: Date) {
     const d = toUTCMidnight(date);
@@ -941,9 +958,8 @@ export class ReportsService {
     const monthStart = new Date(Date.UTC(y, m, 1));
     const monthEnd = new Date(Date.UTC(y, m + 1, 1));
 
-    // Year
-    const yearStart = new Date(Date.UTC(y, 0, 1));
-    const yearEnd = new Date(Date.UTC(y + 1, 0, 1));
+    // Year — scoped to the study year's startDate/endDate if configured
+    const { yearStart, yearEnd } = await this.getStudyYearBounds(y);
 
     const cls = await this.prisma.class.findUnique({
       where: { id: classId },
@@ -1943,8 +1959,7 @@ export class ReportsService {
     const ws = workbook.addWorksheet('Yearly');
     const d = toUTCMidnight(date);
     const y = d.getUTCFullYear();
-    const yearStart = new Date(Date.UTC(y, 0, 1));
-    const yearEnd = new Date(Date.UTC(y + 1, 0, 1));
+    const { yearStart, yearEnd } = await this.getStudyYearBounds(y);
 
     const configs = await this.sessionConfigService.getConfigs(cls.id);
     const s2Cfg = configs.find((c: any) => c.session === 2);
@@ -2492,9 +2507,8 @@ export class ReportsService {
     const ws = workbook.addWorksheet('Yearly');
     const d = toUTCMidnight(date);
     const y = d.getUTCFullYear();
+    const { yearStart, yearEnd } = await this.getStudyYearBounds(y);
 
-    const yearStart = new Date(Date.UTC(y, 0, 1));
-    const yearEnd = new Date(Date.UTC(y + 1, 0, 1));
     const records = await this.prisma.staffAttendance.findMany({
       where: { date: { gte: yearStart, lt: yearEnd } },
     });
