@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { AttendanceGateway } from './attendance.gateway';
 import { NotificationService } from '../notification/notification.service';
@@ -1423,26 +1423,34 @@ export class AttendanceService {
       });
     }
     if (!matched) {
-      // Priority 3: nearest upcoming session preferred over most-recently-past
-      const upcoming = allConfigs.filter(c => toMinutes(c.startTime) > nowMinutes);
-      if (upcoming.length > 0) {
-        matched = upcoming[0]; // already sorted chronologically
-      } else {
-        const past = allConfigs.filter(c => toMinutes(c.startTime) <= nowMinutes);
-        matched = past.length > 0 ? past[past.length - 1] : allConfigs[0];
+      // Priority 3: within 90 min after endTime (late check-in/check-out grace period)
+      const gracePeriod = 90;
+      const recentlyEnded = allConfigs.filter(c => {
+        const endMin = toMinutes(c.endTime);
+        return nowMinutes > endMin && nowMinutes <= endMin + gracePeriod;
+      });
+      if (recentlyEnded.length > 0) {
+        matched = recentlyEnded[recentlyEnded.length - 1]; // most recently ended
       }
     }
 
-    const session = matched ? matched.session : 1;
-    const sessionType: 'CHECK_IN' | 'CHECK_OUT' = (matched?.type as 'CHECK_IN' | 'CHECK_OUT') ?? 'CHECK_IN';
+    if (!matched) {
+      // No active session — reject the scan with a helpful message
+      const upcoming = allConfigs.filter(c => toMinutes(c.startTime) > nowMinutes);
+      const nextSession = upcoming[0];
+      const nextMsg = nextSession ? ` Next session opens at ${nextSession.startTime}.` : '';
+      throw new BadRequestException(`No active session at ${hhmm}.${nextMsg}`);
+    }
+
+    const session = matched.session;
+    const sessionType: 'CHECK_IN' | 'CHECK_OUT' = matched.type as 'CHECK_IN' | 'CHECK_OUT';
     const checkInTime = now;
 
-    // Determine PRESENT or LATE
+    // Determine PRESENT or LATE — only applies to CHECK_IN sessions
     let status: 'PRESENT' | 'LATE' = 'PRESENT';
-    if (matched) {
-      const [sh, sm] = matched.startTime.split(':').map(Number);
-      const lateAfterMinutes = sh * 60 + sm + 20;
-      if (nowMinutes > lateAfterMinutes) {
+    if (matched.type === 'CHECK_IN') {
+      const [eh, em] = matched.endTime.split(':').map(Number);
+      if (nowMinutes > eh * 60 + em) {
         status = 'LATE';
       }
     }
