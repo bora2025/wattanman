@@ -1084,7 +1084,7 @@ export class AttendanceService {
     try {
       const now = nowCambodia();
       const hhmm = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}`;
-      const attendanceDate = toUTCMidnight(new Date());
+      const attendanceDate = toUTCMidnight(now);
 
       const locData = {
         ...(latitude != null ? { scanLatitude: latitude } : {}),
@@ -1348,8 +1348,8 @@ export class AttendanceService {
     location?: string,
   ) {
     const now = new Date();
-    const attendanceDate = toUTCMidnight(now);
     const cambodiaNow = nowCambodia();
+    const attendanceDate = toUTCMidnight(cambodiaNow);
     const hhmm = `${String(cambodiaNow.getUTCHours()).padStart(2, '0')}:${String(cambodiaNow.getUTCMinutes()).padStart(2, '0')}`;
 
     // Resolve the student – accept userId, student.id, or student.qrCode
@@ -1404,8 +1404,8 @@ export class AttendanceService {
     try {
       configs = await this.sessionConfigService.getConfigs(classId);
     } catch {
-      // fallback: use defaults
-      try { configs = await this.sessionConfigService.getStaffDefaults(); } catch { /* ignore */ }
+      // fallback: use student defaults (getConfigs already handles its own fallback, so this is a safety net)
+      try { configs = await this.sessionConfigService.getGlobalDefaults(); } catch { /* ignore */ }
     }
 
     const checkInConfigs = configs

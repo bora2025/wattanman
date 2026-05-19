@@ -34,18 +34,22 @@ const statusMeta = (action: string, status: string) => {
 function StudentProfileCard({ result }: { result: ScanResult }) {
   const meta = statusMeta(result.action, result.status)
   const isAlready = result.action === 'ALREADY_RECORDED'
-  const checkInDisplay = result.checkInTime
-    ? new Date(result.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  const isDayOff = result.action === 'DAY_OFF'
+  const timeDisplay = result.checkInTime
+    ? new Date(result.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
     : null
   return (
     <div className={`rounded-2xl overflow-hidden shadow-2xl ${meta.cardBg} ring-2 ${meta.ring}`}>
+      {/* Status header */}
       <div className={`${meta.bg} px-4 py-2.5 flex items-center justify-between`}>
         <span className="text-white text-sm font-bold tracking-wide">{meta.label}</span>
-        {isAlready && checkInDisplay && (
-          <span className="text-white/90 text-xs">First in at {checkInDisplay}</span>
+        {result.session > 0 && (
+          <span className="text-white/80 text-xs font-medium">Session {result.session}</span>
         )}
       </div>
-      <div className="flex items-center gap-4 p-4">
+
+      {/* Student info row */}
+      <div className="flex items-center gap-4 px-4 pt-4 pb-3">
         <div className={`flex-shrink-0 ring-2 ${meta.ring} rounded-2xl shadow-md overflow-hidden`}>
           {result.studentPhoto ? (
             <img src={result.studentPhoto} alt={result.studentName}
@@ -57,13 +61,25 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
         <div className="flex-1 min-w-0">
           <p className="font-extrabold text-slate-800 text-lg sm:text-xl leading-tight truncate">{result.studentName}</p>
           <p className="text-sm text-slate-500 truncate mt-0.5">{result.className}</p>
-          {result.session > 0 && <p className="text-xs text-slate-400 mt-0.5">Session {result.session}</p>}
-          {!isAlready && checkInDisplay && (
-            <p className={`text-sm font-bold mt-1.5 ${meta.text}`}>Checked in at {checkInDisplay}</p>
-          )}
-          {isAlready && <p className="text-xs text-indigo-600 font-medium mt-1">Already recorded — no duplicate</p>}
+          {isAlready && <p className="text-xs text-indigo-500 font-medium mt-1">Already recorded — no duplicate</p>}
         </div>
       </div>
+
+      {/* Prominent time badge */}
+      {!isDayOff && timeDisplay && (
+        <div className={`mx-4 mb-4 rounded-xl px-4 py-2.5 flex items-center justify-between ${meta.bg} bg-opacity-10`}
+          style={{ background: isAlready ? 'rgba(99,102,241,0.08)' : undefined }}>
+          <div className="flex items-center gap-2">
+            <span className="text-base">🕐</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              {isAlready ? 'First check-in' : 'Check-in time'}
+            </span>
+          </div>
+          <span className={`text-xl sm:text-2xl font-extrabold tabular-nums tracking-tight ${meta.text}`}>
+            {timeDisplay}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
@@ -534,10 +550,14 @@ function WattamanScanContent() {
                   <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                     {scanHistory.slice(0, 6).map((r, i) => {
                       const m = statusMeta(r.action, r.status)
+                      const t = r.checkInTime
+                        ? new Date(r.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+                        : null
                       return (
                         <div key={i}
-                          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold text-white ${m.bg} shadow`}>
-                          {r.studentName.split(' ').slice(0, 2).join(' ')}
+                          className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white ${m.bg} shadow`}>
+                          <span>{r.studentName.split(' ').slice(0, 2).join(' ')}</span>
+                          {t && <span className="text-white/70 font-normal">{t}</span>}
                         </div>
                       )
                     })}
