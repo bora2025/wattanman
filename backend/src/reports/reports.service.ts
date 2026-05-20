@@ -351,8 +351,14 @@ export class ReportsService {
     const convertedAbsentHalfFromLate = rule.latesPerAbsentHalf > 0
       ? Math.floor(counts.late / rule.latesPerAbsentHalf)
       : 0;
+    // School policy: every N permissions = 1 full absent, every M lates = 1 half absent.
+    // The converted absences are ADDED to the displayed absent total so admins see the
+    // real penalty count. Original permission/late counts stay visible so it's clear
+    // WHERE the extra absents came from. Metadata fields below remain for any UI that
+    // wants to break the contribution down.
     return {
       ...counts,
+      absent: counts.absent + convertedAbsentFromPermission + convertedAbsentHalfFromLate * 0.5,
       convertedAbsentFromPermission,
       convertedAbsentHalfFromLate,
     };
