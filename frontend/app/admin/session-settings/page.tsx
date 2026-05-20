@@ -159,8 +159,8 @@ export default function SessionSettingsPage() {
   const [organizationName, setOrganizationName] = useState<string>('Global')
 
   // Attendance format rules state
-  const [classFormatRule, setClassFormatRule] = useState({ permissionsPerAbsent: 3, latesPerAbsentHalf: 3, caseStudyABEnabled: true, enabled: false })
-  const [staffFormatRule, setStaffFormatRule] = useState({ permissionsPerAbsent: 3, latesPerAbsentHalf: 3, caseStudyABEnabled: true, enabled: false })
+  const [classFormatRule, setClassFormatRule] = useState({ permissionsPerAbsent: 3, latesPerAbsentHalf: 3, absentSessionsForDayAbsent: 3, caseStudyABEnabled: true, enabled: false })
+  const [staffFormatRule, setStaffFormatRule] = useState({ permissionsPerAbsent: 3, latesPerAbsentHalf: 3, absentSessionsForDayAbsent: 3, caseStudyABEnabled: true, enabled: false })
 
   const detectPreset = (cfgs: SessionConfigItem[]): string => {
     for (const preset of ATTENDANCE_PRESETS) {
@@ -218,12 +218,14 @@ export default function SessionSettingsPage() {
         if (rules.CLASS) setClassFormatRule({
           permissionsPerAbsent: rules.CLASS.permissionsPerAbsent,
           latesPerAbsentHalf: rules.CLASS.latesPerAbsentHalf,
+          absentSessionsForDayAbsent: rules.CLASS.absentSessionsForDayAbsent ?? 3,
           caseStudyABEnabled: rules.CLASS.caseStudyABEnabled ?? true,
           enabled: rules.CLASS.enabled,
         })
         if (rules.STAFF) setStaffFormatRule({
           permissionsPerAbsent: rules.STAFF.permissionsPerAbsent,
           latesPerAbsentHalf: rules.STAFF.latesPerAbsentHalf,
+          absentSessionsForDayAbsent: rules.STAFF.absentSessionsForDayAbsent ?? 3,
           caseStudyABEnabled: rules.STAFF.caseStudyABEnabled ?? true,
           enabled: rules.STAFF.enabled,
         })
@@ -258,6 +260,7 @@ export default function SessionSettingsPage() {
             scope: isStaff ? 'STAFF' : 'CLASS',
             permissionsPerAbsent: currentRule.permissionsPerAbsent,
             latesPerAbsentHalf: currentRule.latesPerAbsentHalf,
+            absentSessionsForDayAbsent: currentRule.absentSessionsForDayAbsent,
             caseStudyABEnabled: currentRule.caseStudyABEnabled,
             enabled: currentRule.enabled,
           }),
@@ -562,6 +565,35 @@ export default function SessionSettingsPage() {
                       </div>
                       <p className="text-xs text-slate-500 mt-2">
                         Every {activeTab === 'STAFF' ? staffFormatRule.latesPerAbsentHalf : classFormatRule.latesPerAbsentHalf} accumulated lates will be converted to 1 half-day absence in reports
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 sm:col-span-2">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-lg">🚫</span>
+                        <h4 className="font-medium text-sm text-slate-800">Mostly Absent → Day Absent</h4>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-600">If a {activeTab === 'STAFF' ? 'staff member' : 'student'} is absent in</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={4}
+                          value={activeTab === 'STAFF' ? staffFormatRule.absentSessionsForDayAbsent : classFormatRule.absentSessionsForDayAbsent}
+                          onChange={(e) => {
+                            const val = Math.max(0, Math.min(4, parseInt(e.target.value) || 0))
+                            if (activeTab === 'STAFF') {
+                              setStaffFormatRule(prev => ({ ...prev, absentSessionsForDayAbsent: val }))
+                            } else {
+                              setClassFormatRule(prev => ({ ...prev, absentSessionsForDayAbsent: val }))
+                            }
+                          }}
+                          className="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        />
+                        <span className="text-sm text-slate-600">or more sessions in a day → count whole day as <strong>Absent</strong></span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">
+                        Example: Absent 3 sessions + Present/Late 1 session = whole day counted as Absent. Set to <strong>0</strong> to disable this rule.
                       </p>
                     </div>
 

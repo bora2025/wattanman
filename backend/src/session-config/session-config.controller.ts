@@ -65,6 +65,7 @@ export class SessionConfigController {
       scope: string;
       permissionsPerAbsent: number;
       latesPerAbsentHalf: number;
+      absentSessionsForDayAbsent?: number;
       caseStudyABEnabled?: boolean;
       enabled: boolean;
     },

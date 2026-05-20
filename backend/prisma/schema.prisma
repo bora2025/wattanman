@@ -224,15 +224,19 @@ model CardTemplate {
 }
 
 model AttendanceFormatRule {
-  id                    String   @id @default(cuid())
-  scope                 String   // CLASS or STAFF
-  organizationId        String?
-  permissionsPerAbsent  Int      @default(3)  // X permissions = 1 absent full day
-  latesPerAbsentHalf    Int      @default(3)  // X lates = 1 absent half day
-  caseStudyABEnabled    Boolean  @default(true)
-  enabled               Boolean  @default(false)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                          String   @id @default(cuid())
+  scope                       String   // CLASS or STAFF
+  organizationId              String?
+  permissionsPerAbsent        Int      @default(3)  // X permissions = 1 absent full day
+  latesPerAbsentHalf          Int      @default(3)  // X lates = 1 absent half day
+  // Daily "Mostly Absent" rule: if a person is ABSENT in >= N sessions of the day,
+  // the whole day is counted as ABSENT even if some sessions are PRESENT/LATE.
+  // 0 = disabled. Default 3 (out of 4 sessions).
+  absentSessionsForDayAbsent  Int      @default(3)
+  caseStudyABEnabled          Boolean  @default(true)
+  enabled                     Boolean  @default(false)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
 
   @@unique([scope, organizationId])
 }

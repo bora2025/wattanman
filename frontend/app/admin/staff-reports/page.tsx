@@ -53,6 +53,7 @@ export default function AdminStaffReports() {
   const [exportUseCustomRange, setExportUseCustomRange] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportMessage, setExportMessage] = useState('')
+  const [absentThreshold, setAbsentThreshold] = useState(0)  // 0 = disabled (Mostly Absent rule)
 
   // Print report state
   const [showPrintForm, setShowPrintForm] = useState(false)
@@ -66,13 +67,18 @@ export default function AdminStaffReports() {
     setLoading(true)
     setError('')
     try {
-      const [gridRes, totalsRes] = await Promise.all([
+      const [gridRes, totalsRes, ruleRes] = await Promise.all([
         apiFetch(`/api/reports/staff-attendance-daily-grid?date=${selectedDate}`),
         apiFetch(`/api/reports/staff-attendance-totals?date=${selectedDate}`),
+        apiFetch('/api/session-config/format-rules?scope=STAFF'),
       ])
       if (gridRes.ok) setGrid(await gridRes.json())
       else setError('Failed to load staff attendance data.')
       if (totalsRes.ok) setTotals(await totalsRes.json())
+      if (ruleRes.ok) {
+        const rule = await ruleRes.json()
+        setAbsentThreshold(rule.enabled ? (rule.absentSessionsForDayAbsent ?? 0) : 0)
+      }
     } catch (err) {
       console.error('Error fetching staff report data:', err)
       setError('Failed to connect to server.')
@@ -159,8 +165,13 @@ export default function AdminStaffReports() {
     const hasLate       = statuses.some(s => s === 'LATE')
     const hasPermission = statuses.some(s => s === 'PERMISSION' || s === 'DAY_OFF')
     const hasAbsent     = statuses.some(s => s === 'ABSENT')
+    const absentCount   = statuses.filter(s => s === 'ABSENT').length
 
-    if (hasPresent) acc.present += 1
+    // "Mostly Absent" override — if absent sessions >= threshold, whole day counts as Absent
+    if (absentThreshold > 0 && absentCount >= absentThreshold) {
+      if (!isHolidayDate) acc.absent += 1
+    }
+    else if (hasPresent) acc.present += 1
     else if (hasLate) acc.late += 1
     else if (hasPermission) acc.permission += 1
     else if (hasAbsent) acc.absent += 1

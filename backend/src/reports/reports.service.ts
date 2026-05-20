@@ -275,11 +275,16 @@ function countWholeDayRangeTotals<T extends { status: string; date: Date; sessio
  * Returns whole numbers (1 per person) — intended for the daily dashboard summary.
  * AM block + PM block are evaluated with blockContribution, then priority wins:
  * PRESENT > LATE > PERMISSION > ABSENT
+ *
+ * "Mostly Absent" override: if absentThreshold > 0 and a person has >= absentThreshold
+ * raw ABSENT-status records in the day, they are counted as ABSENT regardless of any
+ * PRESENT/LATE/PERMISSION sessions (e.g. absent 3 of 4 sessions → day = Absent).
  */
 function countDailyHeadcount<T extends { status: string; date: Date; session: number }>(
   records: T[],
   entityKey: (r: T) => string,
   preferPermissionOverAbsent: boolean,
+  absentThreshold: number = 0,
 ): { present: number; late: number; absent: number; permission: number } {
   const grouped = new Map<string, T[]>();
   for (const rec of records) {
@@ -290,6 +295,15 @@ function countDailyHeadcount<T extends { status: string; date: Date; session: nu
 
   const total = { present: 0, late: 0, absent: 0, permission: 0 };
   for (const personRecords of grouped.values()) {
+    // "Mostly Absent" override — applied before the priority cascade
+    if (absentThreshold > 0) {
+      const rawAbsent = personRecords.filter(r => r.status === 'ABSENT').length;
+      if (rawAbsent >= absentThreshold) {
+        total.absent += 1;
+        continue;
+      }
+    }
+
     const am = blockContribution(
       personRecords.filter(r => r.session === 1 || r.session === 2).map(r => r.status),
       preferPermissionOverAbsent,
@@ -457,10 +471,12 @@ export class ReportsService {
 
     // Student summary — headcount: each student counted once by dominant status for the day
     const classRule = await this.sessionConfigService.getFormatRules('CLASS', organizationId);
+    const classAbsentThreshold = (classRule as any).enabled ? ((classRule as any).absentSessionsForDayAbsent ?? 0) : 0;
     const studentTotals = countDailyHeadcount(
       studentAttendances as any,
       (a: any) => a.studentId,
       classRule.caseStudyABEnabled ?? true,
+      classAbsentThreshold,
     );
     const studentPresent = studentTotals.present;
     const studentLate = studentTotals.late;
@@ -472,10 +488,12 @@ export class ReportsService {
 
     // Staff summary — headcount from actual records
     const staffRule = await this.sessionConfigService.getFormatRules('STAFF', organizationId);
+    const staffAbsentThreshold = (staffRule as any).enabled ? ((staffRule as any).absentSessionsForDayAbsent ?? 0) : 0;
     const staffTotals = countDailyHeadcount(
       staffAttendances as any,
       (a: any) => a.userId,
       staffRule.caseStudyABEnabled ?? true,
+      staffAbsentThreshold,
     );
     const staffPresent = staffTotals.present;
     const staffRecordedAbsent = staffTotals.absent;
@@ -559,7 +577,7 @@ export class ReportsService {
     }
     for (const [studentId, row] of studentMap.entries()) {
       const recs = studentAttByPerson.get(studentId) || [];
-      const totals = countDailyHeadcount(recs as any, (a: any) => a.studentId, classRule.caseStudyABEnabled ?? true);
+      const totals = countDailyHeadcount(recs as any, (a: any) => a.studentId, classRule.caseStudyABEnabled ?? true, classAbsentThreshold);
       row.present = totals.present;
       row.absent = totals.absent;
       row.late = totals.late;
@@ -573,7 +591,7 @@ export class ReportsService {
     }
     for (const [userId, row] of staffMap.entries()) {
       const recs = staffAttByPerson.get(userId) || [];
-      const totals = countDailyHeadcount(recs as any, (a: any) => a.userId, staffRule.caseStudyABEnabled ?? true);
+      const totals = countDailyHeadcount(recs as any, (a: any) => a.userId, staffRule.caseStudyABEnabled ?? true, staffAbsentThreshold);
       row.present = totals.present;
       row.absent = totals.absent;
       row.late = totals.late;
@@ -700,10 +718,12 @@ export class ReportsService {
 
       const totalStudents = cls.students.length;
       const rule = await this.sessionConfigService.getFormatRules('CLASS', null);
+      const threshold = (rule as any).enabled ? ((rule as any).absentSessionsForDayAbsent ?? 0) : 0;
       const headcount = countDailyHeadcount(
         attendances as any,
         (a: any) => a.studentId,
         rule.caseStudyABEnabled ?? true,
+        threshold,
       );
       const present = headcount.present;
       const absent = headcount.absent;

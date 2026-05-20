@@ -157,6 +157,7 @@ export default function AdminReports() {
   const [exporting, setExporting] = useState(false)
   const [exportMessage, setExportMessage] = useState('')
   const [caseStudyABEnabled, setCaseStudyABEnabled] = useState(true)
+  const [absentThreshold, setAbsentThreshold] = useState(0)  // 0 = disabled
 
   // Print report state
   const [showPrintForm, setShowPrintForm] = useState(false)
@@ -245,6 +246,7 @@ export default function AdminReports() {
       if (classRuleRes.ok) {
         const rule = await classRuleRes.json()
         setCaseStudyABEnabled(rule.caseStudyABEnabled ?? true)
+        setAbsentThreshold(rule.enabled ? (rule.absentSessionsForDayAbsent ?? 0) : 0)
       }
     } catch (err) {
       console.error('Error fetching report data:', err)
@@ -393,8 +395,13 @@ export default function AdminReports() {
     const hasLate       = statuses.some(s => s === 'LATE')
     const hasPermission = statuses.some(s => s === 'PERMISSION' || s === 'DAY_OFF')
     const hasAbsent     = statuses.some(s => s === 'ABSENT')
+    const absentCount   = statuses.filter(s => s === 'ABSENT').length
 
-    if (hasPresent) acc.present += 1
+    // "Mostly Absent" override — if absent sessions >= threshold, whole day counts as Absent
+    if (absentThreshold > 0 && absentCount >= absentThreshold) {
+      if (!isHolidayDate) acc.absent += 1
+    }
+    else if (hasPresent) acc.present += 1
     else if (hasLate) acc.late += 1
     else if (caseStudyABEnabled) {
       if (hasPermission) acc.permission += 1

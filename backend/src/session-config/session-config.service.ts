@@ -191,6 +191,7 @@ export class SessionConfigService {
       organizationId: orgId,
       permissionsPerAbsent: 3,
       latesPerAbsentHalf: 3,
+      absentSessionsForDayAbsent: 3,
       caseStudyABEnabled: true,
       enabled: false,
     };
@@ -211,6 +212,7 @@ export class SessionConfigService {
     organizationId?: string | null;
     permissionsPerAbsent: number;
     latesPerAbsentHalf: number;
+    absentSessionsForDayAbsent?: number;
     caseStudyABEnabled: boolean;
     enabled: boolean;
   }) {
@@ -222,6 +224,7 @@ export class SessionConfigService {
     const payload = {
       permissionsPerAbsent: data.permissionsPerAbsent,
       latesPerAbsentHalf: data.latesPerAbsentHalf,
+      absentSessionsForDayAbsent: data.absentSessionsForDayAbsent ?? 3,
       caseStudyABEnabled: data.caseStudyABEnabled,
       enabled: data.enabled,
     };
