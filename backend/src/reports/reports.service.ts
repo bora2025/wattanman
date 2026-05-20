@@ -926,20 +926,31 @@ export class ReportsService {
   }
 
   /** Return study year date bounds for a calendar year, falling back to Jan 1 – Dec 31. */
+  /**
+   * Compute study year bounds using each date independently — no longer requires BOTH to be set.
+   * yearStart = sy.startDate if available, else Jan 1 of calendarYear.
+   * yearEnd   = sy.endDate + 1 day if available, else Jan 1 of calendarYear + 1.
+   */
+  private computeSyBounds(
+    sy: { startDate?: Date | null; endDate?: Date | null } | null | undefined,
+    calendarYear: number,
+  ): { yearStart: Date; yearEnd: Date } {
+    return {
+      yearStart: sy?.startDate
+        ? toUTCMidnight(sy.startDate)
+        : new Date(Date.UTC(calendarYear, 0, 1)),
+      yearEnd: sy?.endDate
+        ? new Date(toUTCMidnight(sy.endDate).getTime() + 24 * 60 * 60 * 1000)
+        : new Date(Date.UTC(calendarYear + 1, 0, 1)),
+    };
+  }
+
   private async getStudyYearBounds(calendarYear: number): Promise<{ yearStart: Date; yearEnd: Date }> {
     try {
       const sy = await this.prisma.studyYear.findFirst({ where: { year: calendarYear } });
-      if (sy?.startDate && sy?.endDate) {
-        return {
-          yearStart: toUTCMidnight(sy.startDate),
-          yearEnd: new Date(toUTCMidnight(sy.endDate).getTime() + 24 * 60 * 60 * 1000),
-        };
-      }
+      if (sy) return this.computeSyBounds(sy, calendarYear);
     } catch { /* ignore, fall back */ }
-    return {
-      yearStart: new Date(Date.UTC(calendarYear, 0, 1)),
-      yearEnd: new Date(Date.UTC(calendarYear + 1, 0, 1)),
-    };
+    return this.computeSyBounds(null, calendarYear);
   }
 
   /**
@@ -1003,13 +1014,8 @@ export class ReportsService {
     });
     if (!cls) return [];
 
-    // Year — use the class's own study year bounds if available, else fall back by calendar year
-    const { yearStart, yearEnd } = cls.studyYear?.startDate && cls.studyYear?.endDate
-      ? {
-          yearStart: toUTCMidnight(cls.studyYear.startDate),
-          yearEnd: new Date(toUTCMidnight(cls.studyYear.endDate).getTime() + 24 * 60 * 60 * 1000),
-        }
-      : await this.getStudyYearBounds(y);
+    // Year — use the class's linked study year bounds (startDate and endDate used independently)
+    const { yearStart, yearEnd } = this.computeSyBounds(cls.studyYear, cls.studyYear?.year ?? y);
 
     const [weekRecs, monthRecs, yearRecs] = await Promise.all([
       this.prisma.attendance.findMany({ where: { classId, date: { gte: weekStart, lt: weekEnd } } }),
@@ -1087,13 +1093,8 @@ export class ReportsService {
     // Fetch holidays in the range so we can identify true school days
     const rangeHolidays = await this.holidaysService.getHolidaysInRange(start, end);
     const rangeHolidaySet = new Set(rangeHolidays.map(h => h.date.toISOString().split('T')[0]));
-    // Study year bounds from the class's linked study year (with fallback)
-    const printSyBounds = cls.studyYear?.startDate && cls.studyYear?.endDate
-      ? {
-          yearStart: toUTCMidnight(cls.studyYear.startDate),
-          yearEnd: new Date(toUTCMidnight(cls.studyYear.endDate).getTime() + 24 * 60 * 60 * 1000),
-        }
-      : await this.getStudyYearBounds(start.getUTCFullYear());
+    // Study year bounds from the class's linked study year (startDate and endDate used independently)
+    const printSyBounds = this.computeSyBounds(cls.studyYear, cls.studyYear?.year ?? start.getUTCFullYear());
     // School days = weekdays (Mon–Fri) in the range constrained to study year, not holidays, not future
     const schoolDays = this.computeSchoolDays(start, end, printSyBounds.yearStart, printSyBounds.yearEnd, rangeHolidaySet);
 
