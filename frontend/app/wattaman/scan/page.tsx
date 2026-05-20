@@ -447,13 +447,22 @@ function WattamanScanContent() {
         if (idx >= cameras.length) { idx = 0; currentCamIdxRef.current = 0; setCurrentCamIdx(0) }
         const deviceId = cameras[idx]?.deviceId || null   // "" → null (use default)
         if (!cancelled) setCameraLabel(cameras[idx]?.label || `Camera ${idx + 1}`)
-        const vidConstraints: MediaTrackConstraints = { width: { ideal: 1920 }, height: { ideal: 1080 } }
+        // 1280x720 decodes ~4x faster than 1920x1080 and is still plenty for QR.
+        // 30fps + continuous focus give the decoder sharp frames as fast as possible.
+        const vidConstraints: MediaTrackConstraints = {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30 },
+          // focusMode is non-standard but widely supported on mobile browsers
+          advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet],
+        }
         if (deviceId) vidConstraints.deviceId = deviceId
         else vidConstraints.facingMode = 'environment'
 
         const onQr = (result: any) => { if (cancelled || !result) return; handleQrScanned(result.getText()) }
         const reader = new BrowserQRCodeReader()
-        reader.timeBetweenDecodingAttempts = 200
+        // Decode every animation frame instead of waiting 200ms between attempts.
+        reader.timeBetweenDecodingAttempts = 0
         codeReaderRef.current = reader
         await reader.decodeFromConstraints({ video: vidConstraints }, videoEl, onQr)
         if (!cancelled && videoEl.srcObject) {
@@ -485,7 +494,7 @@ function WattamanScanContent() {
           }
           oldStream.getTracks().forEach(t => t.stop()) // < 1 frame gap before new stream renders
           const fresh = new BrowserQRCodeReader()
-          fresh.timeBetweenDecodingAttempts = 200
+          fresh.timeBetweenDecodingAttempts = 0
           codeReaderRef.current = fresh
           fresh.decodeFromStream(newStream, videoEl, onQr).catch(() => {})
         }, 90_000)
@@ -626,10 +635,6 @@ function WattamanScanContent() {
                       🔄
                     </button>
                   )}
-                  <button onClick={handleLogout} title="Sign out"
-                    className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center text-white active:scale-90 transition-all text-lg">
-                    ⏻
-                  </button>
                   <button onClick={stopScanning}
                     className="w-11 h-11 rounded-full bg-red-500 flex items-center justify-center text-white font-bold text-lg active:scale-90 transition-all shadow-lg">
                     ✕
