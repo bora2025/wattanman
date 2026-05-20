@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
 import { formatCambodiaTime } from '../../../lib/dateUtils'
+import { todayCambodia } from '../../../lib/dateUtils'
 
 interface StaffMember {
   id: string
@@ -270,7 +271,7 @@ function AdminStaffAttendance() {
 
   const fetchTodayRecords = async () => {
     try {
-      const today = new Date().toISOString().split('T')[0]
+      const today = todayCambodia()
       const res = await apiFetch(`/api/reports/staff-attendance-grid?date=${today}`)
       if (res.ok) setTodayRecords(await res.json())
     } catch (e) { console.error('Error fetching today records:', e) }

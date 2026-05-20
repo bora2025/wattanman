@@ -5,6 +5,7 @@ import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
+import { todayCambodia } from '../../../lib/dateUtils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -463,7 +464,7 @@ function FeeManagementContent() {
           const newPayment: FeePayment = {
             id: Date.now().toString(),
             amount,
-            date: new Date().toISOString().split('T')[0],
+            date: todayCambodia(),
             note: note || undefined,
             createdBy: 'Admin',
           }
@@ -476,7 +477,7 @@ function FeeManagementContent() {
         const newPayment: FeePayment = {
           id: Date.now().toString(),
           amount,
-          date: new Date().toISOString().split('T')[0],
+          date: todayCambodia(),
           note: note || undefined,
           createdBy: 'Admin',
         }
@@ -582,7 +583,7 @@ function FeeManagementContent() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `fee-report-${new Date().toISOString().split('T')[0]}.csv`
+    a.download = `fee-report-${todayCambodia()}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }

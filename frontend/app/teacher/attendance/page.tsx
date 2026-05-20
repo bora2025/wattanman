@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { apiFetch, getCurrentUser } from '../../../lib/api'
 import { formatCambodiaTime } from '../../../lib/dateUtils'
 import { useLanguage } from '../../../lib/i18n'
+import { todayCambodia } from '../../../lib/dateUtils'
 
 interface Student {
   id: string
@@ -734,7 +735,7 @@ function TakeAttendance() {
   }
 
   const submitAttendance = async () => {
-    const date = new Date().toISOString().split('T')[0]
+    const date = todayCambodia()
     if (!classId) { setMessage('No class selected.'); return }
     setMessage(`Submitting attendance for ${attendance.length} students...`)
     try {

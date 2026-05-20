@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
@@ -8,6 +8,7 @@ import AuthGuard from '../../components/AuthGuard'
 import { adminNav } from '../../lib/admin-nav'
 import { apiFetch } from '../../lib/api'
 import { useLanguage } from '../../lib/i18n'
+import { todayCambodia } from '../../lib/dateUtils'
 
 interface PermissionBreakdown { halfDayMorning: number; halfDayAfternoon: number; fullDay: number; multiDay: number; unknown: number }
 interface GroupSummary {
@@ -72,12 +73,6 @@ function CardIcon({ color }: { color: string }) {
     blue:<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>,
   }
   return (<svg className={`w-5 h-5 ${cls[color]}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">{paths[color]}</svg>)
-}
-
-// Returns YYYY-MM-DD for the current date in Cambodia (ICT, UTC+7).
-function todayCambodia(): string {
-  const cam = new Date(Date.now() + 7 * 60 * 60 * 1000)
-  return cam.toISOString().split('T')[0]
 }
 
 function DashboardContent() {
@@ -330,7 +325,7 @@ function DashboardContent() {
   const greetingEmoji = greetingHour < 12 ? '☀️' : greetingHour < 18 ? '🌤️' : '🌙'
 
   const selectedDateObj = selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date()
-  const isToday = selectedDate === new Date().toISOString().split('T')[0]
+  const isToday = selectedDate === todayCambodia()
 
   // Quick Action shortcuts — most common admin tasks
   const quickActions: { label: string; href: string; emoji: string; color: string }[] = [
@@ -360,7 +355,7 @@ function DashboardContent() {
           </span>
           <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
             className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none"/>
-          <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+          <button onClick={() => setSelectedDate(todayCambodia())}
             className="px-2.5 py-1.5 text-[11px] font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
             {t('common.today') || 'Today'}
           </button>
@@ -387,7 +382,7 @@ function DashboardContent() {
                   <span className="text-white/40">·</span>
                   <span className="text-xs">Cambodia · ICT</span>
                   {!isToday && (
-                    <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                    <button onClick={() => setSelectedDate(todayCambodia())}
                       className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold bg-white/15 hover:bg-white/25 backdrop-blur-sm px-2.5 py-1 rounded-full transition-colors">
                       ⏎ Jump to today
                     </button>
@@ -398,7 +393,7 @@ function DashboardContent() {
                 <div className="mt-4 hidden lg:flex items-center gap-2">
                   <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
                     className="appearance-none bg-white/15 backdrop-blur-sm border border-white/25 text-white rounded-xl px-3.5 py-2 text-sm font-medium placeholder:text-white/50 focus:ring-2 focus:ring-white/40 focus:border-white/50 outline-none transition-all cursor-pointer [color-scheme:dark]"/>
-                  <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                  <button onClick={() => setSelectedDate(todayCambodia())}
                     className="px-3 py-2 text-xs font-semibold text-white bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-xl transition-colors">
                     {t('common.today') || 'Today'}
                   </button>

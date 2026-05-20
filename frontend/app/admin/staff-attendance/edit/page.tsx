@@ -5,6 +5,7 @@ import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
 import { useLanguage } from '../../../../lib/i18n'
+import { todayCambodia } from '../../../../lib/dateUtils'
 
 const STATUSES = ['PRESENT', 'LATE', 'ABSENT', 'PERMISSION']
 
@@ -35,7 +36,7 @@ const permissionScopeLabel = (type: string) => {
 
 export default function EditStaffAttendance() {
   const { t } = useLanguage()
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(() => todayCambodia())
   const [rows, setRows] = useState<StaffRow[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState<string | null>(null)
@@ -326,7 +327,7 @@ export default function EditStaffAttendance() {
                   <button onClick={() => goDay(1)} className="px-2 py-2 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm">▶</button>
                 </div>
               </div>
-              <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])} className="btn-ghost btn-sm">
+              <button onClick={() => setSelectedDate(todayCambodia())} className="btn-ghost btn-sm">
                 📅 Today
               </button>
               <div className="flex-1 min-w-[200px]">

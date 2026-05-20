@@ -8,6 +8,7 @@ import Sidebar from '../../components/Sidebar'
 import { teacherNav } from '../../lib/teacher-nav'
 import { apiFetch, getCurrentUser } from '../../lib/api'
 import { useLanguage } from '../../lib/i18n'
+import { todayCambodia } from '../../lib/dateUtils'
 
 interface Class {
   id: string
@@ -35,7 +36,7 @@ export default function TeacherDashboard() {
   const [classes, setClasses] = useState<Class[]>([])
   const [teacherId, setTeacherId] = useState<string | null>(null)
   const [summaries, setSummaries] = useState<ClassSummary[]>([])
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(() => todayCambodia())
   const [loadingSummary, setLoadingSummary] = useState(false)
   const { t } = useLanguage()
 

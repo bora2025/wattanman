@@ -5,6 +5,17 @@
 const CAMBODIA_TZ = 'Asia/Phnom_Penh';
 
 /**
+ * Returns the current date in Cambodia (UTC+7) as a YYYY-MM-DD string.
+ *
+ * Use this instead of `new Date().toISOString().split('T')[0]`, which returns
+ * the UTC date — between 00:00 and 07:00 ICT that yields the previous day.
+ */
+export function todayCambodia(): string {
+  const cam = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  return cam.toISOString().split('T')[0];
+}
+
+/**
  * Format a UTC timestamp as Cambodia time in 24-hour HH:mm format.
  *
  * Use this everywhere an attendance check-in/check-out time must be displayed.

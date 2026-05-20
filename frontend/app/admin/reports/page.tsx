@@ -5,6 +5,7 @@ import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
+import { todayCambodia } from '../../../lib/dateUtils'
 
 interface GridRow {
   studentId: string
@@ -137,7 +138,7 @@ export default function AdminReports() {
   const { t } = useLanguage()
   const [classes, setClasses] = useState<ClassItem[]>([])
   const [selectedClassId, setSelectedClassId] = useState('')
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(() => todayCambodia())
   const [grid, setGrid] = useState<GridRow[]>([])
   const [totals, setTotals] = useState<TotalsRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -151,8 +152,8 @@ export default function AdminReports() {
   const [showExportForm, setShowExportForm] = useState(false)
   const [exportClassId, setExportClassId] = useState('')
   const [exportPeriod, setExportPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily')
-  const [exportDate, setExportDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [exportDateEnd, setExportDateEnd] = useState(() => new Date().toISOString().split('T')[0])
+  const [exportDate, setExportDate] = useState(() => todayCambodia())
+  const [exportDateEnd, setExportDateEnd] = useState(() => todayCambodia())
   const [exportUseCustomRange, setExportUseCustomRange] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportMessage, setExportMessage] = useState('')
@@ -456,7 +457,7 @@ export default function AdminReports() {
                     className="flex-1 lg:flex-none rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                   />
                   <button onClick={() => goDay(1)} className="px-3 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm flex-shrink-0">▶</button>
-                  <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])} className="px-3 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm flex-shrink-0 whitespace-nowrap">
+                  <button onClick={() => setSelectedDate(todayCambodia())} className="px-3 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm flex-shrink-0 whitespace-nowrap">
                     📅 {t('common.today')}
                   </button>
                 </div>

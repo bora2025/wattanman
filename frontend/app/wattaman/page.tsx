@@ -6,6 +6,7 @@ import Sidebar from '../../components/Sidebar'
 import { wattamanNav } from '../../lib/wattaman-nav'
 import Link from 'next/link'
 import { getCurrentUser } from '../../lib/api'
+import { todayCambodia } from '../../lib/dateUtils'
 
 interface TodayStat { total: number; present: number; late: number; already: number }
 
@@ -21,7 +22,7 @@ function WattamanDashboardContent() {
 
   const loadStats = useCallback(() => {
     try {
-      const today = new Date().toISOString().split('T')[0]
+      const today = todayCambodia()
       const saved: Array<{ action: string; status: string }> = JSON.parse(
         localStorage.getItem(`wattaman_scans_${today}`) || '[]'
       )

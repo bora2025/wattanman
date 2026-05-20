@@ -5,6 +5,7 @@ import Sidebar from '../../../components/Sidebar'
 import { teacherNav } from '../../../lib/teacher-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
+import { todayCambodia } from '../../../lib/dateUtils'
 
 interface StaffGridRow {
   userId: string
@@ -37,7 +38,7 @@ interface StaffTotalsRow {
 
 export default function TeacherStaffReports() {
   const { t } = useLanguage()
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(() => todayCambodia())
   const [grid, setGrid] = useState<StaffGridRow[]>([])
   const [totals, setTotals] = useState<StaffTotalsRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -121,7 +122,7 @@ export default function TeacherStaffReports() {
                     className="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                   />
                   <button onClick={() => goDay(1)} className="flex-shrink-0 px-2 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm">▶</button>
-                  <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])} className="flex-shrink-0 btn-ghost btn-sm py-2.5">
+                  <button onClick={() => setSelectedDate(todayCambodia())} className="flex-shrink-0 btn-ghost btn-sm py-2.5">
                     📅 Today
                   </button>
                 </div>

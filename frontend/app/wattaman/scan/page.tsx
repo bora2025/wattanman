@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -8,6 +8,7 @@ import Sidebar from '../../../components/Sidebar'
 import { wattamanNav } from '../../../lib/wattaman-nav'
 import { apiFetch } from '../../../lib/api'
 import { formatCambodiaTime } from '../../../lib/dateUtils'
+import { todayCambodia } from '../../../lib/dateUtils'
 
 interface ScanResult {
   action: string
@@ -425,7 +426,7 @@ function WattamanScanContent() {
           if (!isAlready) setScanCount(c => c + 1)
         }
         try {
-          const key = `wattaman_scans_${new Date().toISOString().split('T')[0]}`
+          const key = `wattaman_scans_${todayCambodia()}`
           const saved = JSON.parse(localStorage.getItem(key) || '[]')
           saved.unshift({ action: result.action, status: result.status, studentName: result.studentName, className: result.className, time: new Date().toISOString() })
           localStorage.setItem(key, JSON.stringify(saved.slice(0, 200)))
