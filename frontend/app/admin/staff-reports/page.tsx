@@ -563,6 +563,12 @@ function StaffPrintReportModal({
   const [logoTextGap, setLogoTextGap] = useState('4')
   const [headerGap, setHeaderGap] = useState('6')
   const [signers, setSigners] = useState<string[]>(['Admin', 'Director'])
+  const [studyYears, setStudyYears] = useState<Array<{ year: number; startDate?: string; endDate?: string }>>([])
+
+  // Fetch study years once so yearly period uses the correct startDate/endDate
+  useEffect(() => {
+    apiFetch('/api/study-years').then(r => r.ok ? r.json() : []).then(setStudyYears).catch(() => {})
+  }, [])
 
   const getDateRange = () => {
     if (printPeriod === 'custom') {
@@ -582,8 +588,12 @@ function StaffPrintReportModal({
         const last = new Date(Date.UTC(y, m + 1, 0))
         return { start: first.toISOString().split('T')[0], end: last.toISOString().split('T')[0] }
       }
-      case 'yearly':
-        return { start: `${y}-01-01`, end: `${y}-12-31` }
+      case 'yearly': {
+        const sy = studyYears.find(s => s.year === y)
+        const start = sy?.startDate ? sy.startDate.split('T')[0] : `${y}-01-01`
+        const end = sy?.endDate ? sy.endDate.split('T')[0] : `${y}-12-31`
+        return { start, end }
+      }
       default:
         return { start: printDate, end: printDate }
     }

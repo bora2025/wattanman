@@ -942,6 +942,41 @@ export class ReportsService {
     };
   }
 
+  /**
+   * Compute the set of actual school/work days in a given period range.
+   * A school day is a weekday (Mon–Fri) that:
+   *  - Falls within [periodStart, periodEnd)
+   *  - Falls within [studyYearStart, studyYearEnd)
+   *  - Is not a holiday
+   *  - Is not in the future (relative to today UTC)
+   *
+   * This is used to count absences for students/staff who have no scan records.
+   */
+  private computeSchoolDays(
+    periodStart: Date,
+    periodEnd: Date,
+    studyYearStart: Date,
+    studyYearEnd: Date,
+    holidayDateSet: Set<string>,
+  ): Set<string> {
+    const todayUTC = toUTCMidnight(new Date());
+    // cutoff = beginning of tomorrow UTC so today is included
+    const cutoff = new Date(todayUTC.getTime() + 24 * 60 * 60 * 1000);
+    const effectiveStart = new Date(Math.max(periodStart.getTime(), studyYearStart.getTime()));
+    const effectiveEnd = new Date(Math.min(periodEnd.getTime(), studyYearEnd.getTime(), cutoff.getTime()));
+    const days = new Set<string>();
+    let cur = new Date(effectiveStart);
+    while (cur < effectiveEnd) {
+      const dow = cur.getUTCDay();
+      if (dow >= 1 && dow <= 5) { // Mon–Fri
+        const d = cur.toISOString().split('T')[0];
+        if (!holidayDateSet.has(d)) days.add(d);
+      }
+      cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000);
+    }
+    return days;
+  }
+
   /** Get attendance totals per student for week, month, year */
   async getAttendanceTotals(classId: string, date: Date) {
     const d = toUTCMidnight(date);
@@ -958,14 +993,23 @@ export class ReportsService {
     const monthStart = new Date(Date.UTC(y, m, 1));
     const monthEnd = new Date(Date.UTC(y, m + 1, 1));
 
-    // Year — scoped to the study year's startDate/endDate if configured
-    const { yearStart, yearEnd } = await this.getStudyYearBounds(y);
-
+    // Fetch the class and its linked study year to determine the academic year bounds
     const cls = await this.prisma.class.findUnique({
       where: { id: classId },
-      include: { students: { include: { user: { select: { name: true } } } } },
+      include: {
+        studyYear: true,
+        students: { include: { user: { select: { name: true } } } },
+      },
     });
     if (!cls) return [];
+
+    // Year — use the class's own study year bounds if available, else fall back by calendar year
+    const { yearStart, yearEnd } = cls.studyYear?.startDate && cls.studyYear?.endDate
+      ? {
+          yearStart: toUTCMidnight(cls.studyYear.startDate),
+          yearEnd: new Date(toUTCMidnight(cls.studyYear.endDate).getTime() + 24 * 60 * 60 * 1000),
+        }
+      : await this.getStudyYearBounds(y);
 
     const [weekRecs, monthRecs, yearRecs] = await Promise.all([
       this.prisma.attendance.findMany({ where: { classId, date: { gte: weekStart, lt: weekEnd } } }),
@@ -980,15 +1024,26 @@ export class ReportsService {
     // Fetch format rules for CLASS scope
     const formatRule = await this.sessionConfigService.getFormatRules('CLASS');
 
-    const countFor = (recs: any[], studentId: string) => {
+    // School days = weekdays (Mon–Fri) within the study year date range, not holidays, not future.
+    // Students with NO record on a school day are treated as absent (unrecorded = not present).
+    // Using study year bounds means editing the study year's start/end date directly changes what counts.
+    const weekSchoolDays = this.computeSchoolDays(weekStart, weekEnd, yearStart, yearEnd, holidayDateSet);
+    const monthSchoolDays = this.computeSchoolDays(monthStart, monthEnd, yearStart, yearEnd, holidayDateSet);
+    const yearSchoolDays = this.computeSchoolDays(yearStart, yearEnd, yearStart, yearEnd, holidayDateSet);
+
+    const countFor = (recs: any[], studentId: string, schoolDays: Set<string>) => {
       const studentRecs = recs.filter(r => r.studentId === studentId);
+      // Dates when this student has any record (any status)
+      const studentDays = new Set(studentRecs.map((r: any) => r.date.toISOString().split('T')[0]));
+      // School days with no record at all → count as absent
+      const noRecordAbsent = [...schoolDays].filter(d => !studentDays.has(d)).length;
       const raw = countPrintReportTotals(
         studentRecs as any,
         (r: any) => r.studentId,
         formatRule.caseStudyABEnabled ?? true,
       );
       return this.applyFormatRules(
-        { present: raw.present, late: raw.late, absent: raw.absent, dayOff: raw.permission },
+        { present: raw.present, late: raw.late, absent: raw.absent + noRecordAbsent, dayOff: raw.permission },
         formatRule as any,
       );
     };
@@ -997,9 +1052,9 @@ export class ReportsService {
       studentId: s.id,
       studentNumber: s.studentNumber || String(idx + 1).padStart(4, '0'),
       studentName: s.user.name,
-      week: countFor(weekRecs, s.id),
-      month: countFor(monthRecs, s.id),
-      year: countFor(yearRecs, s.id),
+      week: countFor(weekRecs, s.id, weekSchoolDays),
+      month: countFor(monthRecs, s.id, monthSchoolDays),
+      year: countFor(yearRecs, s.id, yearSchoolDays),
     }));
   }
 
@@ -1011,6 +1066,7 @@ export class ReportsService {
     const cls = await this.prisma.class.findUnique({
       where: { id: classId },
       include: {
+        studyYear: true,
         teacher: { select: { name: true } },
         students: { include: { user: { select: { name: true } } } },
       },
@@ -1028,8 +1084,23 @@ export class ReportsService {
       console.warn('[reports/print-report-data] format-rules fallback:', e?.message || e);
     }
 
+    // Fetch holidays in the range so we can identify true school days
+    const rangeHolidays = await this.holidaysService.getHolidaysInRange(start, end);
+    const rangeHolidaySet = new Set(rangeHolidays.map(h => h.date.toISOString().split('T')[0]));
+    // Study year bounds from the class's linked study year (with fallback)
+    const printSyBounds = cls.studyYear?.startDate && cls.studyYear?.endDate
+      ? {
+          yearStart: toUTCMidnight(cls.studyYear.startDate),
+          yearEnd: new Date(toUTCMidnight(cls.studyYear.endDate).getTime() + 24 * 60 * 60 * 1000),
+        }
+      : await this.getStudyYearBounds(start.getUTCFullYear());
+    // School days = weekdays (Mon–Fri) in the range constrained to study year, not holidays, not future
+    const schoolDays = this.computeSchoolDays(start, end, printSyBounds.yearStart, printSyBounds.yearEnd, rangeHolidaySet);
+
     const students = cls.students.map((s, idx) => {
       const studentRecs = records.filter(r => r.studentId === s.id);
+      const studentDays = new Set(studentRecs.map((r: any) => r.date.toISOString().split('T')[0]));
+      const noRecordAbsent = [...schoolDays].filter(d => !studentDays.has(d)).length;
       const halfDayTotals = countPrintReportTotals(
         studentRecs as any,
         (r: any) => r.studentId,
@@ -1042,7 +1113,7 @@ export class ReportsService {
         studentName: s.user.name,
         present: halfDayTotals.present,
         late: halfDayTotals.late,
-        absent: halfDayTotals.absent,
+        absent: halfDayTotals.absent + noRecordAbsent,
         dayOff: halfDayTotals.permission,
         permissionBreakdown,
       };
@@ -1079,8 +1150,18 @@ export class ReportsService {
       console.warn('[reports/staff-print-report-data] format-rules fallback:', e?.message || e);
     }
 
+    // Fetch holidays in the range to identify true work days
+    const rangeHolidays = await this.holidaysService.getHolidaysInRange(start, end);
+    const rangeHolidaySet = new Set(rangeHolidays.map(h => h.date.toISOString().split('T')[0]));
+    // Study year bounds to constrain work days to the academic calendar
+    const { yearStart: staffPrintSyStart, yearEnd: staffPrintSyEnd } = await this.getStudyYearBounds(start.getUTCFullYear());
+    // Work days = weekdays (Mon–Fri) in the range constrained to study year, not holidays, not future
+    const workDays = this.computeSchoolDays(start, end, staffPrintSyStart, staffPrintSyEnd, rangeHolidaySet);
+
     const staffData = staff.map((u, idx) => {
       const userRecs = records.filter(r => r.userId === u.id);
+      const staffDays = new Set(userRecs.map((r: any) => r.date.toISOString().split('T')[0]));
+      const noRecordAbsent = [...workDays].filter(d => !staffDays.has(d)).length;
       const halfDayTotals = countPrintReportTotals(
         userRecs as any,
         (r: any) => r.userId,
@@ -1094,7 +1175,7 @@ export class ReportsService {
         role: u.role,
         present: halfDayTotals.present,
         late: halfDayTotals.late,
-        absent: halfDayTotals.absent,
+        absent: halfDayTotals.absent + noRecordAbsent,
         dayOff: halfDayTotals.permission,
         permissionBreakdown,
       };
@@ -1307,8 +1388,8 @@ export class ReportsService {
     const weekEnd = new Date(Date.UTC(y, m, day - ((dow + 6) % 7) + 7));
     const monthStart = new Date(Date.UTC(y, m, 1));
     const monthEnd = new Date(Date.UTC(y, m + 1, 1));
-    const yearStart = new Date(Date.UTC(y, 0, 1));
-    const yearEnd = new Date(Date.UTC(y + 1, 0, 1));
+    // Year — scoped to the study year's startDate/endDate if configured
+    const { yearStart, yearEnd } = await this.getStudyYearBounds(y);
 
     const staff = await this.prisma.user.findMany({
       where: { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } },
@@ -1328,12 +1409,23 @@ export class ReportsService {
     // Fetch format rules for STAFF scope
     const formatRule = await this.sessionConfigService.getFormatRules('STAFF');
 
-    const countFor = (recs: any[], userId: string) => {
+    // Work days = weekdays (Mon–Fri) within the study year date range, not holidays, not future.
+    // Staff with NO record on a work day are treated as absent (unrecorded = not present).
+    // Using study year bounds means editing the study year's start/end date directly changes what counts.
+    const weekWorkDays = this.computeSchoolDays(weekStart, weekEnd, yearStart, yearEnd, holidayDateSet);
+    const monthWorkDays = this.computeSchoolDays(monthStart, monthEnd, yearStart, yearEnd, holidayDateSet);
+    const yearWorkDays = this.computeSchoolDays(yearStart, yearEnd, yearStart, yearEnd, holidayDateSet);
+
+    const countFor = (recs: any[], userId: string, workDays: Set<string>) => {
       const userRecs = recs.filter(r => r.userId === userId);
+      // Dates when this staff has any record
+      const staffDays = new Set(userRecs.map((r: any) => r.date.toISOString().split('T')[0]));
+      // Work days with no record at all → count as absent
+      const noRecordAbsent = [...workDays].filter(d => !staffDays.has(d)).length;
       const raw = {
         present: userRecs.filter(r => r.status === 'PRESENT').length,
         late: userRecs.filter(r => r.status === 'LATE').length,
-        absent: userRecs.filter(r => r.status === 'ABSENT' && !holidayDateSet.has(r.date.toISOString().split('T')[0])).length,
+        absent: userRecs.filter(r => r.status === 'ABSENT' && !holidayDateSet.has(r.date.toISOString().split('T')[0])).length + noRecordAbsent,
         dayOff: countPermissionDayEquivalents(userRecs as any, (r: any) => r.userId),
       };
       return this.applyFormatRules(raw, formatRule as any);
@@ -1344,9 +1436,9 @@ export class ReportsService {
       staffNumber: String(idx + 1).padStart(4, '0'),
       staffName: u.name,
       role: u.role,
-      week: countFor(weekRecs, u.id),
-      month: countFor(monthRecs, u.id),
-      year: countFor(yearRecs, u.id),
+      week: countFor(weekRecs, u.id, weekWorkDays),
+      month: countFor(monthRecs, u.id, monthWorkDays),
+      year: countFor(yearRecs, u.id, yearWorkDays),
     }));
   }
 
@@ -1485,9 +1577,8 @@ export class ReportsService {
 
     const configs = await this.sessionConfigService.getConfigs(classId);
 
-    // Fetch holidays for the year
-    const yearStart = new Date(Date.UTC(y, 0, 1));
-    const yearEnd = new Date(Date.UTC(y + 1, 0, 1));
+    // Fetch holidays using study year bounds so the yearly sheet and holiday set are consistent
+    const { yearStart, yearEnd } = await this.getStudyYearBounds(y);
     const yearHolidays = await this.holidaysService.getHolidaysInRange(yearStart, yearEnd);
     const holidayDateSet = new Set(yearHolidays.map(h => h.date.toISOString().split('T')[0]));
 
@@ -2147,8 +2238,8 @@ export class ReportsService {
       orderBy: { name: 'asc' },
     });
 
-    const yearStart = new Date(Date.UTC(y, 0, 1));
-    const yearEnd = new Date(Date.UTC(y + 1, 0, 1));
+    // Use study year bounds so the holiday set covers the actual academic year range
+    const { yearStart, yearEnd } = await this.getStudyYearBounds(y);
     const yearHolidays = await this.holidaysService.getHolidaysInRange(yearStart, yearEnd);
     const holidayDateSet = new Set(yearHolidays.map(h => h.date.toISOString().split('T')[0]));
 

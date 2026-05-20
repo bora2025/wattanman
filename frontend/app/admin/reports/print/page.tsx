@@ -1,11 +1,11 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch } from '../../../../lib/api'
 import { useLanguage } from '../../../../lib/i18n'
 
-// â”€â”€ Summary-mode row (weekly / monthly / yearly / custom) â”€â”€
+// ── Summary-mode row (weekly / monthly / yearly / custom) ──
 interface PrintStudent {
   studentId: string
   studentNumber: string
@@ -25,7 +25,7 @@ interface PrintData {
   students: PrintStudent[]
 }
 
-// â”€â”€ Daily-mode row (actual check-in/out times) â”€â”€
+// ── Daily-mode row (actual check-in/out times) ──
 interface StudentDailyRow {
   studentId: string
   studentNumber: string
@@ -79,7 +79,7 @@ function studentPermissionLabel(row: StudentDailyRow): string | null {
   if (t === 'HALF_DAY_AFTERNOON') return 'P Half PM'
   if (t === 'FULL_DAY') return 'P Full Day'
   if (t === 'MULTI_DAY') {
-    if (startDate && endDate) return `P ${fmtD(startDate)} – ${fmtD(endDate)}`
+    if (startDate && endDate) return `P ${fmtD(startDate)} � ${fmtD(endDate)}`
     return 'P Multi Day'
   }
   if (statuses.some(s => s === 'DAY_OFF') || row.dayOff) return 'P Day Off'
@@ -93,11 +93,11 @@ function TimeCell({ time, status }: { time: string | null; status: string | null
     <span className={`font-semibold text-xs tabular-nums ${isLate ? 'text-amber-600' : 'text-emerald-700'}`}>
       {isLate
         ? <><span className="font-bold">L</span> ({time})</>
-        : <><span>{'✓'}</span> ({time})</>}
+        : <><span>{'?'}</span> ({time})</>}
     </span>
   )
   if (isLate) return <span className="text-amber-600 font-bold text-xs">L</span>
-  if (status === 'PRESENT') return <span className="text-emerald-600 text-xs">{'✓'}</span>
+  if (status === 'PRESENT') return <span className="text-emerald-600 text-xs">{'?'}</span>
   return <span className="text-red-500 text-xs">{'\u2717'}</span>
 }
 
@@ -236,14 +236,14 @@ function PrintReportContent() {
     )
   }
 
-  // Summary totals (non-daily)
+  // Summary totals (non-daily) � sum of each student's individual day counts
   const summaryTotals = { present: 0, late: 0, absent: 0, dayOff: 0 }
   if (!isDaily && data) {
     for (const s of data.students) {
-      if (s.dayOff > 0) summaryTotals.dayOff += 1
-      else if (s.present > 0) summaryTotals.present += 1
-      else if (s.late > 0) summaryTotals.late += 1
-      else if (s.absent > 0) summaryTotals.absent += 1
+      summaryTotals.present += s.present
+      summaryTotals.late += s.late
+      summaryTotals.absent += s.absent
+      summaryTotals.dayOff += s.dayOff ?? 0
     }
   }
 
@@ -255,7 +255,7 @@ function PrintReportContent() {
   const showMorning = activeSessions.some(s => s === 1 || s === 2)
   const showAfternoon = activeSessions.some(s => s === 3 || s === 4)
 
-  // Daily totals — only count statuses for active session columns
+  // Daily totals � only count statuses for active session columns
   const dailyTotals = { present: 0, late: 0, absent: 0, permission: 0 }
   if (isDaily) {
     for (const r of dailyRows) {
@@ -351,7 +351,7 @@ function PrintReportContent() {
           marginTop: '60px',
         }}
       >
-        {/* Header Section â€” Khmer letter-head style */}
+        {/* Header Section — Khmer letter-head style */}
         <div className="mb-6 border-b-2 border-slate-800 pb-4">
           <div className="flex items-start gap-4">
             {logoUrl && (
@@ -410,12 +410,12 @@ function PrintReportContent() {
           </div>
         </div>
 
-        {/* Body Section — Report Table */}
+        {/* Body Section � Report Table */}
         <div className="table-scroll-wrapper">
         <table className="w-full border-collapse text-xs">
           <thead>
             {isDaily ? (
-              /* â”€â”€ Daily header: two-row span for morning/afternoon â”€â”€ */
+              /* ── Daily header: two-row span for morning/afternoon ── */
               <>
                 <tr className="bg-slate-800 text-white">
                   <th className="border border-slate-600 px-2 py-1.5 text-center font-semibold" rowSpan={2}>
@@ -441,7 +441,7 @@ function PrintReportContent() {
                 </tr>
               </>
             ) : (
-              /* â”€â”€ Summary header (weekly/monthly/etc.) â”€â”€ */
+              /* ── Summary header (weekly/monthly/etc.) ── */
               <tr className="bg-slate-100">
                 <th className="border border-slate-400 px-2 py-2 text-center font-semibold text-slate-700 w-12">
                   {t('common.id')}

@@ -220,14 +220,14 @@ function StaffPrintReportContent() {
     )
   }
 
-  // Summary totals (non-daily)
+  // Summary totals (non-daily) — sum of each staff member's individual day counts
   const summaryTotals = { present: 0, late: 0, absent: 0, dayOff: 0 }
   if (!isDaily && data) {
     for (const s of data.staff) {
-      if (s.dayOff > 0) summaryTotals.dayOff += 1
-      else if (s.present > 0) summaryTotals.present += 1
-      else if (s.late > 0) summaryTotals.late += 1
-      else if (s.absent > 0) summaryTotals.absent += 1
+      summaryTotals.present += s.present
+      summaryTotals.late += s.late
+      summaryTotals.absent += s.absent
+      summaryTotals.dayOff += s.dayOff ?? 0
     }
   }
 
