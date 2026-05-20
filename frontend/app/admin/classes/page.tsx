@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Sidebar from '../../../components/Sidebar';
@@ -217,6 +217,12 @@ function ManageClasses() {
   const [photoPreviewError, setPhotoPreviewError] = useState(false);
   const [csvUploading, setCsvUploading] = useState(false);
   const [csvResult, setCsvResult] = useState<{ total: number; success: number; errors: number; skipped: number; details: { row: number; id: string; name: string; email: string; status: string; error?: string }[] } | null>(null);
+  // UI/UX upgrades
+  const [loadingClasses, setLoadingClasses] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'subject' | 'teacher' | 'students'>('name');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [classStudentCounts, setClassStudentCounts] = useState<Record<string, number>>({});
   const [selectedPreset, setSelectedPreset] = useState('global-default');
   const [classFormats, setClassFormats] = useState<Record<string, { preset: string; name: string; icon: string }>>({}); 
   const [customConfigs, setCustomConfigs] = useState<SessionConfigItem[]>([]);
@@ -257,6 +263,64 @@ function ManageClasses() {
       setFormData({ name: '', subject: '', teacherId: '', studyYearId: '' });
     }
   }, [formData]);
+
+  // Restore view mode preference
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('admin.classes.viewMode');
+      if (saved === 'grid' || saved === 'list') setViewMode(saved);
+      const savedSort = localStorage.getItem('admin.classes.sortBy');
+      if (savedSort === 'name' || savedSort === 'subject' || savedSort === 'teacher' || savedSort === 'students') setSortBy(savedSort);
+    } catch {}
+  }, []);
+  useEffect(() => { try { localStorage.setItem('admin.classes.viewMode', viewMode); } catch {} }, [viewMode]);
+  useEffect(() => { try { localStorage.setItem('admin.classes.sortBy', sortBy); } catch {} }, [sortBy]);
+
+  // Derived: filtered & sorted classes
+  const filteredClasses = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    let list = classes;
+    if (q) {
+      list = list.filter(c =>
+        c.name?.toLowerCase().includes(q) ||
+        c.subject?.toLowerCase().includes(q) ||
+        c.teacher?.name?.toLowerCase().includes(q)
+      );
+    }
+    const sorted = [...list].sort((a, b) => {
+      if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
+      if (sortBy === 'subject') return (a.subject || '').localeCompare(b.subject || '');
+      if (sortBy === 'teacher') return (a.teacher?.name || '').localeCompare(b.teacher?.name || '');
+      if (sortBy === 'students') return (classStudentCounts[b.id] || 0) - (classStudentCounts[a.id] || 0);
+      return 0;
+    });
+    return sorted;
+  }, [classes, searchQuery, sortBy, classStudentCounts]);
+
+  // Stats summary
+  const totalStudents = useMemo(() => Object.values(classStudentCounts).reduce((a, b) => a + b, 0), [classStudentCounts]);
+  const uniqueTeachers = useMemo(() => {
+    const set = new Set<string>();
+    classes.forEach(c => { if (c.teacherId) set.add(c.teacherId); });
+    return set.size;
+  }, [classes]);
+  const avgStudentsPerClass = classes.length > 0 ? Math.round(totalStudents / classes.length) : 0;
+
+  // Subject-based gradient palette
+  const SUBJECT_THEMES: { from: string; to: string; ring: string; chip: string; emoji: string }[] = [
+    { from: 'from-indigo-500', to: 'to-violet-600', ring: 'ring-indigo-200', chip: 'bg-indigo-100 text-indigo-700', emoji: '📘' },
+    { from: 'from-emerald-500', to: 'to-teal-600', ring: 'ring-emerald-200', chip: 'bg-emerald-100 text-emerald-700', emoji: '📗' },
+    { from: 'from-rose-500', to: 'to-pink-600', ring: 'ring-rose-200', chip: 'bg-rose-100 text-rose-700', emoji: '📕' },
+    { from: 'from-amber-500', to: 'to-orange-600', ring: 'ring-amber-200', chip: 'bg-amber-100 text-amber-700', emoji: '📙' },
+    { from: 'from-sky-500', to: 'to-cyan-600', ring: 'ring-sky-200', chip: 'bg-sky-100 text-sky-700', emoji: '📓' },
+    { from: 'from-fuchsia-500', to: 'to-purple-600', ring: 'ring-fuchsia-200', chip: 'bg-fuchsia-100 text-fuchsia-700', emoji: '📔' },
+  ];
+  const themeFor = (cls: Class) => {
+    const key = (cls.subject || cls.name || '').toLowerCase();
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+    return SUBJECT_THEMES[hash % SUBJECT_THEMES.length];
+  };
 
   const detectPreset = (configs: any[]): string => {
     for (const preset of ATTENDANCE_PRESETS) {
@@ -299,14 +363,31 @@ function ManageClasses() {
 
   const fetchClasses = async () => {
     try {
+      setLoadingClasses(true);
       const params = selectedStudyYearId ? `?studyYearId=${selectedStudyYearId}` : '';
       const res = await apiFetch(`/api/classes${params}`);
       if (res.ok) {
         const data = await res.json();
         setClasses(data);
         fetchClassFormats(data);
+        fetchClassCounts(data);
       }
     } catch (err) { console.error('Failed to fetch classes'); }
+    finally { setLoadingClasses(false); }
+  };
+
+  const fetchClassCounts = async (classList: Class[]) => {
+    const counts: Record<string, number> = {};
+    await Promise.all(classList.map(async (cls) => {
+      try {
+        const res = await apiFetch(`/api/classes/${cls.id}/students`);
+        if (res.ok) {
+          const list = await res.json();
+          counts[cls.id] = Array.isArray(list) ? list.length : 0;
+        }
+      } catch { counts[cls.id] = 0; }
+    }));
+    setClassStudentCounts(counts);
   };
 
   const fetchTeachers = async () => {
@@ -638,28 +719,111 @@ function ManageClasses() {
       <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
-        <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">{t('classes.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">{classes.length} class{classes.length !== 1 ? 'es' : ''} total</p>
+        {/* Hero stats banner */}
+        <div className="page-header">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-xl">
+            <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.4) 0%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.3) 0%, transparent 40%)' }} />
+            <div className="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🏫</span>
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-bold">{t('classes.title')}</h1>
+                    <p className="text-xs sm:text-sm text-white/80 mt-0.5">Organize classes, assign teachers, and manage student rosters</p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 border border-white/20">
+                  <div className="text-[10px] uppercase tracking-wider text-white/70 font-semibold">Classes</div>
+                  <div className="text-xl sm:text-2xl font-bold leading-tight">{classes.length}</div>
+                </div>
+                <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 border border-white/20">
+                  <div className="text-[10px] uppercase tracking-wider text-white/70 font-semibold">Students</div>
+                  <div className="text-xl sm:text-2xl font-bold leading-tight">{totalStudents}</div>
+                </div>
+                <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 border border-white/20">
+                  <div className="text-[10px] uppercase tracking-wider text-white/70 font-semibold">Teachers</div>
+                  <div className="text-xl sm:text-2xl font-bold leading-tight">{uniqueTeachers}</div>
+                </div>
+                <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 border border-white/20">
+                  <div className="text-[10px] uppercase tracking-wider text-white/70 font-semibold">Avg / Class</div>
+                  <div className="text-xl sm:text-2xl font-bold leading-tight">{avgStudentsPerClass}</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <select
-              value={selectedStudyYearId}
-              onChange={(e) => setSelectedStudyYearId(e.target.value)}
-              className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white"
-            >
-              <option value="">All Study Years</option>
-              {studyYears.map(sy => (
-                <option key={sy.id} value={sy.id}>
-                  {sy.label || sy.year}{sy.isCurrent ? ' (Current)' : ''}
-                </option>
-              ))}
-            </select>
-            <button onClick={() => { setShowForm(true); setEditingClass(null); setFormData({ name: '', subject: '', teacherId: '', studyYearId: selectedStudyYearId }); setSelectedPreset('global-default'); setCustomConfigs([]); setWeeklySchedule({ ...DEFAULT_SCHEDULE }); setShowWeekly(false); }} className="btn-primary">
-              + {t('classes.addClass')}
-            </button>
+
+          {/* Toolbar */}
+          <div className="mt-4 flex flex-col lg:flex-row lg:items-center gap-3">
+            <div className="relative flex-1 min-w-0">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by class name, subject, or teacher…"
+                className="w-full pl-9 pr-9 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-lg leading-none">×</button>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={selectedStudyYearId}
+                onChange={(e) => setSelectedStudyYearId(e.target.value)}
+                className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white"
+                title="Filter by study year"
+              >
+                <option value="">All Study Years</option>
+                {studyYears.map(sy => (
+                  <option key={sy.id} value={sy.id}>
+                    {sy.label || sy.year}{sy.isCurrent ? ' (Current)' : ''}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white"
+                title="Sort classes"
+              >
+                <option value="name">Sort: Name</option>
+                <option value="subject">Sort: Subject</option>
+                <option value="teacher">Sort: Teacher</option>
+                <option value="students">Sort: Most Students</option>
+              </select>
+              <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'grid' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  title="Grid view"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h6v6H4V6zm10 0h6v6h-6V6zM4 16h6v4H4v-4zm10 0h6v4h-6v-4z" /></svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'list' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  title="List view"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+              </div>
+              <button onClick={() => { setShowForm(true); setEditingClass(null); setFormData({ name: '', subject: '', teacherId: '', studyYearId: selectedStudyYearId }); setSelectedPreset('global-default'); setCustomConfigs([]); setWeeklySchedule({ ...DEFAULT_SCHEDULE }); setShowWeekly(false); }} className="btn-primary inline-flex items-center gap-1.5 shadow-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                {t('classes.addClass')}
+              </button>
+            </div>
           </div>
+
+          {searchQuery && (
+            <div className="mt-2 text-xs text-slate-500">
+              Showing <span className="font-semibold text-slate-700">{filteredClasses.length}</span> of {classes.length} classes matching <span className="font-mono text-indigo-600">&quot;{searchQuery}&quot;</span>
+            </div>
+          )}
         </div>
 
         <div className="page-body space-y-6">
@@ -1214,73 +1378,178 @@ function ManageClasses() {
           )}
 
           {/* Classes Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {classes.map((cls) => (
-              <div key={cls.id} className="card-hover p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white text-lg shadow-sm">
-                    📖
+          {loadingClasses && classes.length === 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="card p-5 animate-pulse">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-slate-200" />
+                    <div className="w-10 h-6 rounded-full bg-slate-200" />
+                  </div>
+                  <div className="h-5 w-3/4 bg-slate-200 rounded mb-2" />
+                  <div className="h-3 w-1/2 bg-slate-200 rounded mb-3" />
+                  <div className="h-3 w-2/3 bg-slate-100 rounded mb-2" />
+                  <div className="h-3 w-1/3 bg-slate-100 rounded" />
+                  <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
+                    <div className="h-8 flex-1 bg-slate-200 rounded" />
+                    <div className="h-8 flex-1 bg-slate-200 rounded" />
+                    <div className="h-8 flex-1 bg-slate-200 rounded" />
                   </div>
                 </div>
-                <h3 className="font-semibold text-slate-800 text-lg">{cls.name}</h3>
-                <p className="text-sm text-slate-500 mt-0.5">{cls.subject}</p>
-                {cls.studyYear && (
-                  <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                    📅 {cls.studyYear.label || cls.studyYear.year}
-                  </span>
-                )}
-                {cls.teacher && (
-                  <p className="text-xs text-slate-400 mt-2">👤 {cls.teacher.name}</p>
-                )}
-                {classFormats[cls.id] ? (
-                  <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-                    {classFormats[cls.id].icon} {classFormats[cls.id].name}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
-                    🌐 Global Default
-                  </span>
-                )}
-                {cls.schedule && (() => {
-                  try {
-                    const sched = JSON.parse(cls.schedule);
-                    const hasDiff = Object.values(sched).some((v: any) => v !== 'same');
-                    if (!hasDiff) return null;
-                    return (
-                      <div className="flex gap-0.5 mt-1.5">
-                        {DAYS_OF_WEEK.map(day => {
-                          const val = sched[day.key] || 'same';
-                          const opt = DAY_PRESETS.find(p => p.value === val);
-                          return (
-                            <span key={day.key} title={`${day.full}: ${opt?.label || 'Same'}`}
-                              className={`w-7 h-7 rounded-md flex items-center justify-center text-[10px] border ${DAY_COLORS[val] || 'bg-slate-100 border-slate-200'}`}>
-                              {opt?.icon || '📋'}
-                            </span>
-                          );
-                        })}
+              ))}
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredClasses.map((cls) => {
+                const theme = themeFor(cls);
+                const count = classStudentCounts[cls.id];
+                return (
+                  <div key={cls.id} className={`group relative overflow-hidden card-hover p-5 hover:ring-2 ${theme.ring} transition-all`}>
+                    <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${theme.from} ${theme.to}`} />
+                    <div className="flex items-start justify-between mb-3">
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${theme.from} ${theme.to} flex items-center justify-center text-white text-2xl shadow-md group-hover:scale-110 transition-transform`}>
+                        {theme.emoji}
                       </div>
-                    );
-                  } catch { return null; }
-                })()}
-                <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
-                  <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-primary btn-sm flex-1 text-center">Attendance</Link>
-                  <button onClick={() => handleEdit(cls)} className="btn-outline btn-sm flex-1">Edit</button>
-                  <button onClick={() => handleManageStudents(cls)} className="btn-success btn-sm flex-1">Students</button>
-                  <button onClick={() => openAddToTT(cls)} title="Add to Timetable" className="btn-outline btn-sm px-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50">
-                    🗓
-                  </button>
-                  <button onClick={() => handleDelete(cls.id)} className="btn-danger btn-sm">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
-                </div>
+                      {count !== undefined && (
+                        <div className="flex flex-col items-end">
+                          <div className="text-2xl font-bold text-slate-800 leading-none">{count}</div>
+                          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">student{count !== 1 ? 's' : ''}</div>
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="font-semibold text-slate-800 text-lg leading-tight">{cls.name}</h3>
+                    <p className={`inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${theme.chip}`}>{cls.subject}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {cls.studyYear && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-700">
+                          📅 {cls.studyYear.label || cls.studyYear.year}
+                        </span>
+                      )}
+                      {classFormats[cls.id] ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-100 text-indigo-700">
+                          {classFormats[cls.id].icon} {classFormats[cls.id].name}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500">
+                          🌐 Global
+                        </span>
+                      )}
+                    </div>
+                    {cls.teacher && (
+                      <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                          {cls.teacher.name?.charAt(0).toUpperCase() || '?'}
+                        </div>
+                        <span className="truncate">{cls.teacher.name}</span>
+                      </div>
+                    )}
+                    {cls.schedule && (() => {
+                      try {
+                        const sched = JSON.parse(cls.schedule);
+                        const hasDiff = Object.values(sched).some((v: any) => v !== 'same');
+                        if (!hasDiff) return null;
+                        return (
+                          <div className="flex gap-0.5 mt-2.5">
+                            {DAYS_OF_WEEK.map(day => {
+                              const val = sched[day.key] || 'same';
+                              const opt = DAY_PRESETS.find(p => p.value === val);
+                              return (
+                                <span key={day.key} title={`${day.full}: ${opt?.label || 'Same'}`}
+                                  className={`w-7 h-7 rounded-md flex items-center justify-center text-[10px] border ${DAY_COLORS[val] || 'bg-slate-100 border-slate-200'}`}>
+                                  {opt?.icon || '📋'}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        );
+                      } catch { return null; }
+                    })()}
+                    <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
+                      <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-primary btn-sm flex-1 text-center">Attendance</Link>
+                      <button onClick={() => handleEdit(cls)} className="btn-outline btn-sm flex-1">Edit</button>
+                      <button onClick={() => handleManageStudents(cls)} className="btn-success btn-sm flex-1">Students</button>
+                      <button onClick={() => openAddToTT(cls)} title="Add to Timetable" className="btn-outline btn-sm px-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+                        🗓
+                      </button>
+                      <button onClick={() => handleDelete(cls.id)} title="Delete class" className="btn-danger btn-sm">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Class</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Subject</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Teacher</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Year</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Format</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Students</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredClasses.map((cls) => {
+                      const theme = themeFor(cls);
+                      const count = classStudentCounts[cls.id];
+                      return (
+                        <tr key={cls.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-4 py-2.5">
+                            <div className="flex items-center gap-2.5">
+                              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${theme.from} ${theme.to} flex items-center justify-center text-white text-base shadow-sm flex-shrink-0`}>{theme.emoji}</div>
+                              <span className="font-medium text-slate-800 truncate">{cls.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2.5"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${theme.chip}`}>{cls.subject}</span></td>
+                          <td className="px-4 py-2.5 text-slate-600">{cls.teacher?.name || <span className="text-slate-300">—</span>}</td>
+                          <td className="px-4 py-2.5 text-slate-500 text-xs">{cls.studyYear ? (cls.studyYear.label || cls.studyYear.year) : <span className="text-slate-300">—</span>}</td>
+                          <td className="px-4 py-2.5">
+                            {classFormats[cls.id] ? (
+                              <span className="inline-flex items-center gap-1 text-xs text-slate-600">{classFormats[cls.id].icon} {classFormats[cls.id].name}</span>
+                            ) : <span className="text-slate-400 text-xs">🌐 Global</span>}
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-semibold text-slate-700">{count !== undefined ? count : '…'}</td>
+                          <td className="px-4 py-2.5 text-right">
+                            <div className="inline-flex gap-1">
+                              <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-primary btn-sm">Attendance</Link>
+                              <button onClick={() => handleManageStudents(cls)} className="btn-success btn-sm">Students</button>
+                              <button onClick={() => handleEdit(cls)} className="btn-outline btn-sm">Edit</button>
+                              <button onClick={() => handleDelete(cls.id)} className="btn-danger btn-sm" title="Delete">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </div>
-          {classes.length === 0 && (
-            <div className="empty-state">
-              <p className="text-lg mb-1">📖</p>
-              <p className="font-medium">{t('classes.noClasses')}</p>
-              <p className="text-sm mt-1">Click &quot;Add Class&quot; to create your first class.</p>
+            </div>
+          )}
+          {!loadingClasses && classes.length === 0 && (
+            <div className="card p-12 text-center">
+              <div className="text-6xl mb-3">📖</div>
+              <p className="text-lg font-semibold text-slate-700">{t('classes.noClasses')}</p>
+              <p className="text-sm text-slate-500 mt-1 mb-4">Get started by creating your first class.</p>
+              <button onClick={() => { setShowForm(true); setEditingClass(null); setFormData({ name: '', subject: '', teacherId: '', studyYearId: selectedStudyYearId }); setSelectedPreset('global-default'); setCustomConfigs([]); setWeeklySchedule({ ...DEFAULT_SCHEDULE }); setShowWeekly(false); }} className="btn-primary inline-flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                Create First Class
+              </button>
+            </div>
+          )}
+          {!loadingClasses && classes.length > 0 && filteredClasses.length === 0 && (
+            <div className="card p-10 text-center">
+              <div className="text-5xl mb-2">🔍</div>
+              <p className="text-base font-semibold text-slate-700">No classes match your search</p>
+              <p className="text-sm text-slate-500 mt-1">Try a different keyword or clear the filters.</p>
+              <button onClick={() => setSearchQuery('')} className="btn-outline btn-sm mt-3">Clear search</button>
             </div>
           )}
         </div>
