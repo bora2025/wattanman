@@ -395,14 +395,15 @@ export class ClassesService {
     return url;
   }
 
-  async updateStudent(studentId: string, data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string }) {
-    // Update student fields (sex, photo, dateOfBirth, address, generation)
+  async updateStudent(studentId: string, data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string; studentNumber?: string }) {
+    // Update student fields (sex, photo, dateOfBirth, address, generation, studentNumber)
     const studentData: any = {};
     if (data.sex !== undefined) studentData.sex = data.sex;
     if (data.photo !== undefined) studentData.photo = data.photo;
     if (data.dateOfBirth !== undefined) studentData.dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
     if (data.address !== undefined) studentData.address = data.address;
     if (data.generation !== undefined) studentData.generation = data.generation;
+    if (data.studentNumber !== undefined) studentData.studentNumber = data.studentNumber.trim() || null;
 
     const student = await this.prisma.student.update({
       where: { id: studentId },

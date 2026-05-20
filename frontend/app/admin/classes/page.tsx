@@ -208,10 +208,10 @@ function ManageClasses() {
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [classStudents, setClassStudents] = useState<Student[]>([]);
   const [availableStudents, setAvailableStudents] = useState<Student[]>([]);
-  const [newStudentForm, setNewStudentForm] = useState({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '' });
+  const [newStudentForm, setNewStudentForm] = useState({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
   const [showAddStudentForm, setShowAddStudentForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
-  const [editStudentData, setEditStudentData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '' });
+  const [editStudentData, setEditStudentData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
   const [csvUploading, setCsvUploading] = useState(false);
   const [csvResult, setCsvResult] = useState<{ total: number; success: number; errors: number; skipped: number; details: { row: number; id: string; name: string; email: string; status: string; error?: string }[] } | null>(null);
   const [selectedPreset, setSelectedPreset] = useState('global-default');
@@ -462,7 +462,7 @@ function ManageClasses() {
 
   const handleManageStudents = async (cls: Class) => {
     setSelectedClass(cls);
-    setNewStudentForm({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '' });
+    setNewStudentForm({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
     setShowAddStudentForm(false);
     await fetchClassStudents(cls.id);
     await fetchAvailableStudents(cls.id);
@@ -511,7 +511,7 @@ function ManageClasses() {
 
   const handleEditStudent = (student: Student) => {
     setEditingStudent(student.id);
-    setEditStudentData({ name: student.name || '', sex: student.sex || '', phone: student.phone || '', photo: student.photo || '', dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '', address: student.address || '', generation: student.generation || '' });
+    setEditStudentData({ name: student.name || '', sex: student.sex || '', phone: student.phone || '', photo: student.photo || '', dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '', address: student.address || '', generation: student.generation || '', studentNumber: student.studentNumber || '' });
   };
 
   const handleSaveStudent = async (studentId: string) => {
@@ -534,12 +534,13 @@ function ManageClasses() {
     if (!selectedClass) return;
     try {
       const autoPassword = 'student' + (newStudentForm.email.split('@')[0] || 'default');
+      const finalPassword = newStudentForm.password.trim() || autoPassword;
       const registerRes = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
                   },
-        body: JSON.stringify({ ...newStudentForm, password: autoPassword, role: 'STUDENT' }),
+        body: JSON.stringify({ ...newStudentForm, password: finalPassword, role: 'STUDENT' }),
       });
       if (registerRes.ok) {
         const newStudent = await registerRes.json();
@@ -550,7 +551,7 @@ function ManageClasses() {
         });
         if (addRes.ok) {
           const addedStudent = await addRes.json();
-          if (newStudentForm.sex || newStudentForm.photo || newStudentForm.dateOfBirth || newStudentForm.address || newStudentForm.generation) {
+          if (newStudentForm.sex || newStudentForm.photo || newStudentForm.dateOfBirth || newStudentForm.address || newStudentForm.generation || newStudentForm.studentNumber) {
             const studentId = addedStudent.id || addedStudent.student?.id;
             if (studentId) {
               await apiFetch(`/api/classes/${selectedClass.id}/students/${studentId}`, {
@@ -562,11 +563,12 @@ function ManageClasses() {
                   ...(newStudentForm.dateOfBirth ? { dateOfBirth: newStudentForm.dateOfBirth } : {}),
                   ...(newStudentForm.address ? { address: newStudentForm.address } : {}),
                   ...(newStudentForm.generation ? { generation: newStudentForm.generation } : {}),
+                  ...(newStudentForm.studentNumber ? { studentNumber: newStudentForm.studentNumber.trim() } : {}),
                 }),
               });
             }
           }
-          setNewStudentForm({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '' });
+          setNewStudentForm({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
           setShowAddStudentForm(false);
           await fetchClassStudents(selectedClass.id);
           await fetchAvailableStudents(selectedClass.id);
@@ -957,12 +959,20 @@ function ManageClasses() {
                       <form onSubmit={handleAddNewStudent} className="mt-4 card p-4 border-emerald-200 bg-emerald-50/50 space-y-3">
                         <div className="grid sm:grid-cols-2 gap-3">
                           <div>
+                            <label className="form-label">Student ID <span className="text-slate-400 text-xs">(optional — auto-generated if blank)</span></label>
+                            <input type="text" value={newStudentForm.studentNumber} onChange={(e) => setNewStudentForm({ ...newStudentForm, studentNumber: e.target.value })} placeholder="e.g. 0001" className="font-mono" />
+                          </div>
+                          <div>
                             <label className="form-label">Name</label>
                             <input type="text" value={newStudentForm.name} onChange={(e) => setNewStudentForm({ ...newStudentForm, name: e.target.value })} required />
                           </div>
                           <div>
                             <label className="form-label">Email</label>
                             <input type="email" value={newStudentForm.email} onChange={(e) => setNewStudentForm({ ...newStudentForm, email: e.target.value })} required />
+                          </div>
+                          <div>
+                            <label className="form-label">Password <span className="text-slate-400 text-xs">(optional — auto-generated if blank)</span></label>
+                            <input type="text" value={newStudentForm.password} onChange={(e) => setNewStudentForm({ ...newStudentForm, password: e.target.value })} placeholder="Leave blank to auto-generate" />
                           </div>
                           <div>
                             <label className="form-label">Sex</label>
@@ -993,7 +1003,7 @@ function ManageClasses() {
                           <label className="form-label">{t('student.generation') || 'Generation'} <span className="text-slate-400 text-xs">(ជំនាន់ទី)</span></label>
                           <input type="number" min="1" value={newStudentForm.generation} onChange={(e) => setNewStudentForm({ ...newStudentForm, generation: e.target.value })} placeholder="1" />
                         </div>
-                        <p className="text-xs text-slate-400">Password will be auto-generated as: student + email prefix (e.g. studentjohn)</p>
+                        <p className="text-xs text-slate-400">If password is left blank, it will be auto-generated as: <span className="font-mono">student + email prefix</span> (e.g. <span className="font-mono">studentjohn</span>). Student ID auto-generates from class roster order if blank.</p>
                         <button type="submit" className="btn-success">Add Student</button>
                       </form>
                     )}
@@ -1092,6 +1102,10 @@ function ManageClasses() {
                         <button onClick={() => setEditingStudent(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
                       </div>
                       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div>
+                          <label className="form-label text-xs">Student ID <span className="text-slate-400">(លេខសម្គាល់)</span></label>
+                          <input type="text" value={editStudentData.studentNumber} onChange={(e) => setEditStudentData({ ...editStudentData, studentNumber: e.target.value })} placeholder="e.g. 0001" className="font-mono" />
+                        </div>
                         <div>
                           <label className="form-label text-xs">Name</label>
                           <input type="text" value={editStudentData.name} onChange={(e) => setEditStudentData({ ...editStudentData, name: e.target.value })} placeholder="Student name" />

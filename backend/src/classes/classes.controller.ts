@@ -36,7 +36,7 @@ export class ClassesController {
   async updateStudent(
     @Param('classId') classId: string,
     @Param('studentId') studentId: string,
-    @Body() data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string },
+    @Body() data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string; studentNumber?: string },
   ) {
     return this.classesService.updateStudent(studentId, data);
   }
