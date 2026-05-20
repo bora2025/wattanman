@@ -91,6 +91,8 @@ function DashboardContent() {
   const [visibleCount, setVisibleCount] = useState(100)
   const [clockStr, setClockStr] = useState('')
   const [density, setDensity] = useState<'comfortable'|'compact'>('comfortable')
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [agoStr, setAgoStr] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Monthly trend
@@ -117,9 +119,35 @@ function DashboardContent() {
       const mm = String(cam.getUTCMinutes()).padStart(2, '0')
       const ss = String(cam.getUTCSeconds()).padStart(2, '0')
       setClockStr(`${hh}:${mm}:${ss}`)
+      // Update "x seconds ago" label
+      if (lastUpdated) {
+        const diff = Math.max(0, Math.floor((Date.now() - lastUpdated.getTime()) / 1000))
+        if (diff < 5) setAgoStr('just now')
+        else if (diff < 60) setAgoStr(`${diff}s ago`)
+        else if (diff < 3600) setAgoStr(`${Math.floor(diff / 60)}m ago`)
+        else setAgoStr(`${Math.floor(diff / 3600)}h ago`)
+      } else {
+        setAgoStr('')
+      }
     }
     tick(); const iv = setInterval(tick, 1000); return () => clearInterval(iv)
-  }, [])
+  }, [lastUpdated])
+
+  /* Real-time polling: refresh dashboard every 30s while viewing today and tab is visible */
+  useEffect(() => {
+    if (!selectedDate) return
+    if (selectedDate !== todayCambodia()) return
+    const POLL_MS = 30_000
+    const poll = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+      fetchDashboard({ silent: true })
+    }
+    const iv = setInterval(poll, POLL_MS)
+    const onVis = () => { if (document.visibilityState === 'visible') poll() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVis) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate])
 
   /* Keyboard shortcuts: T=today, R=refresh, /=focus search, ESC=clear drill */
   useEffect(() => {
@@ -149,8 +177,8 @@ function DashboardContent() {
     try { localStorage.setItem('admin-dashboard-density', next) } catch {}
   }
 
-  const fetchDashboard = async () => {
-    setLoading(true)
+  const fetchDashboard = async (opts: { silent?: boolean } = {}) => {
+    if (!opts.silent) setLoading(true)
     try {
       // Fetch today + previous day in parallel for delta indicator
       const prevDate = new Date(selectedDate)
@@ -164,8 +192,9 @@ function DashboardContent() {
       else console.error('Dashboard API error:', res.status)
       if (prevRes.ok) setPrevData(await prevRes.json())
       else setPrevData(null)
+      setLastUpdated(new Date())
     } catch (err) { console.error('Failed to fetch dashboard data', err) }
-    finally { setLoading(false) }
+    finally { if (!opts.silent) setLoading(false) }
   }
 
   const fetchTrend = async () => {
@@ -381,6 +410,15 @@ function DashboardContent() {
                   <span className="font-mono font-semibold tabular-nums text-base">{clockStr || '00:00:00'}</span>
                   <span className="text-white/40">·</span>
                   <span className="text-xs">Cambodia · ICT</span>
+                  {isToday && (
+                    <span className="ml-1 inline-flex items-center gap-1.5 text-[11px] font-semibold bg-emerald-400/20 border border-emerald-300/40 px-2 py-0.5 rounded-full" title={agoStr ? `Updated ${agoStr}` : 'Live updates every 30s'}>
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                      </span>
+                      Live{agoStr ? ` · ${agoStr}` : ''}
+                    </span>
+                  )}
                   {!isToday && (
                     <button onClick={() => setSelectedDate(todayCambodia())}
                       className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold bg-white/15 hover:bg-white/25 backdrop-blur-sm px-2.5 py-1 rounded-full transition-colors">
