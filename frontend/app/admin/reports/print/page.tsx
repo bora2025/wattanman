@@ -79,7 +79,7 @@ function studentPermissionLabel(row: StudentDailyRow): string | null {
   if (t === 'HALF_DAY_AFTERNOON') return 'P Half PM'
   if (t === 'FULL_DAY') return 'P Full Day'
   if (t === 'MULTI_DAY') {
-    if (startDate && endDate) return `P ${fmtD(startDate)} – ${fmtD(endDate)}`
+    if (startDate && endDate) return `P ${fmtD(startDate)} â€“ ${fmtD(endDate)}`
     return 'P Multi Day'
   }
   if (statuses.some(s => s === 'DAY_OFF') || row.dayOff) return 'P Day Off'
@@ -236,7 +236,7 @@ function PrintReportContent() {
     )
   }
 
-  // Summary totals (non-daily) — sum of each student's individual day counts
+  // Summary totals (non-daily) â€” sum of each student's individual day counts
   const summaryTotals = { present: 0, late: 0, absent: 0, dayOff: 0 }
   if (!isDaily && data) {
     for (const s of data.students) {
@@ -255,7 +255,7 @@ function PrintReportContent() {
   const showMorning = activeSessions.some(s => s === 1 || s === 2)
   const showAfternoon = activeSessions.some(s => s === 3 || s === 4)
 
-  // Daily totals — only count statuses for active session columns
+  // Daily totals â€” only count statuses for active session columns
   const dailyTotals = { present: 0, late: 0, absent: 0, permission: 0 }
   if (isDaily) {
     for (const r of dailyRows) {
@@ -410,7 +410,7 @@ function PrintReportContent() {
           </div>
         </div>
 
-        {/* Body Section — Report Table */}
+        {/* Body Section â€” Report Table */}
         <div className="table-scroll-wrapper">
         <table className="w-full border-collapse text-xs">
           <thead>
