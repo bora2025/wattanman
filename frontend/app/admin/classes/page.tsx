@@ -1111,7 +1111,25 @@ function ManageClasses() {
 
                   {/* Edit Student Inline Panel */}
                   {editingStudent && (
-                    <div className="mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200 space-y-3">
+                    <div className="relative mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200 space-y-3">
+                      {/* Loading overlay card */}
+                      {savingStudent && (
+                        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-white/75 backdrop-blur-sm">
+                          <div className="flex flex-col items-center gap-3 px-6 py-5 rounded-2xl bg-white border border-amber-200 shadow-xl">
+                            <svg className="w-10 h-10 text-amber-500 animate-spin" viewBox="0 0 24 24" fill="none">
+                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25"/>
+                              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+                            </svg>
+                            <div className="text-center">
+                              <div className="text-sm font-semibold text-amber-800">Saving student…</div>
+                              <div className="text-xs text-slate-500 mt-0.5">Please wait, applying your changes</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Form content (dimmed/disabled while saving) */}
+                      <fieldset disabled={savingStudent} className={`space-y-3 transition-opacity ${savingStudent ? 'opacity-50 pointer-events-none' : ''}`}>
                       <div className="flex items-center justify-between">
                         <h5 className="text-sm font-semibold text-amber-800">Edit Student</h5>
                         <button onClick={() => setEditingStudent(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
@@ -1168,7 +1186,7 @@ function ManageClasses() {
                         <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{saveError}</div>
                       )}
                       <div className="flex gap-2">
-                        <button onClick={() => handleSaveStudent(editingStudent)} disabled={savingStudent} className="btn-success btn-sm inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                        <button type="button" onClick={() => handleSaveStudent(editingStudent)} disabled={savingStudent} className="btn-success btn-sm inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
                           {savingStudent && (
                             <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
                               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25"/>
@@ -1177,8 +1195,9 @@ function ManageClasses() {
                           )}
                           {savingStudent ? 'Saving…' : 'Save Changes'}
                         </button>
-                        <button onClick={() => setEditingStudent(null)} disabled={savingStudent} className="btn-ghost btn-sm disabled:opacity-60">Cancel</button>
+                        <button type="button" onClick={() => setEditingStudent(null)} disabled={savingStudent} className="btn-ghost btn-sm disabled:opacity-60">Cancel</button>
                       </div>
+                      </fieldset>
                     </div>
                   )}
                 </div>
