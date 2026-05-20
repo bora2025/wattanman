@@ -314,7 +314,7 @@ function TeacherScanContent() {
           const fresh = new BrowserQRCodeReader()
           fresh.timeBetweenDecodingAttempts = 200
           codeReaderRef.current = fresh
-          fresh.decodeFromVideoElement(videoEl, onQr).catch(() => {})
+          fresh.decodeFromConstraints({ video: vidConstraints }, videoEl, onQr).catch(() => {})
         }, 90_000)
       } catch (err: unknown) {
         if (cancelled) return
