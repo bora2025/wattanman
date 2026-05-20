@@ -93,11 +93,11 @@ function TimeCell({ time, status }: { time: string | null; status: string | null
     <span className={`font-semibold text-xs tabular-nums ${isLate ? 'text-amber-600' : 'text-emerald-700'}`}>
       {isLate
         ? <><span className="font-bold">L</span> ({time})</>
-        : <><span>{'?'}</span> ({time})</>}
+        : <><span>{'\u2713'}</span> ({time})</>}
     </span>
   )
   if (isLate) return <span className="text-amber-600 font-bold text-xs">L</span>
-  if (status === 'PRESENT') return <span className="text-emerald-600 text-xs">{'?'}</span>
+  if (status === 'PRESENT') return <span className="text-emerald-600 text-xs">{'\u2713'}</span>
   return <span className="text-red-500 text-xs">{'\u2717'}</span>
 }
 
