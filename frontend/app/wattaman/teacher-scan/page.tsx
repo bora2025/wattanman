@@ -307,16 +307,25 @@ function TeacherScanContent() {
           }
         }
         if (!cancelled) setMessage('')
-        // Silently recycle only the ZXing decode loop every 90 s to prevent internal
-        // buffer accumulation that causes slowdown after 2–3 minutes of scanning.
-        // The camera stream stays alive — only the decoder object is replaced.
-        autoResetRef.current = setInterval(() => {
+        // Every 90 s, pre-fetch a new camera stream while the current feed runs, then
+        // swap atomically — no visible black-screen gap during decoder recycling.
+        autoResetRef.current = setInterval(async () => {
           if (cancelled || !videoEl.srcObject) return
-          if (codeReaderRef.current) { codeReaderRef.current.reset(); codeReaderRef.current = null }
+          let newStream: MediaStream
+          try { newStream = await navigator.mediaDevices.getUserMedia({ video: vidConstraints }) }
+          catch { return }
+          if (cancelled || !videoEl.srcObject) { newStream.getTracks().forEach(t => t.stop()); return }
+          const oldStream = videoEl.srcObject as MediaStream
+          if (codeReaderRef.current) {
+            ;(codeReaderRef.current as any).stream = undefined
+            codeReaderRef.current.reset()
+            codeReaderRef.current = null
+          }
+          oldStream.getTracks().forEach(t => t.stop())
           const fresh = new BrowserQRCodeReader()
           fresh.timeBetweenDecodingAttempts = 200
           codeReaderRef.current = fresh
-          fresh.decodeFromConstraints({ video: vidConstraints }, videoEl, onQr).catch(() => {})
+          fresh.decodeFromStream(newStream, videoEl, onQr).catch(() => {})
         }, 90_000)
       } catch (err: unknown) {
         if (cancelled) return
