@@ -1,6 +1,7 @@
 ﻿"use client"
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import Link from 'next/link'
 import { Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import Sidebar from '../../components/Sidebar'
 import AuthGuard from '../../components/AuthGuard'
@@ -76,6 +77,7 @@ function CardIcon({ color }: { color: string }) {
 function DashboardContent() {
   const { t } = useLanguage()
   const [data, setData] = useState<DashboardData | null>(null)
+  const [prevData, setPrevData] = useState<DashboardData | null>(null) // previous day for delta
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState('')
   const [mounted, setMounted] = useState(false)
@@ -86,22 +88,81 @@ function DashboardContent() {
   const [drillRole, setDrillRole] = useState<'Student'|'Staff'|null>(null)
   const [tableExpanded, setTableExpanded] = useState(false)
   const [visibleCount, setVisibleCount] = useState(100)
+  const [clockStr, setClockStr] = useState('')
+  const [density, setDensity] = useState<'comfortable'|'compact'>('comfortable')
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Monthly trend
   const [trendData, setTrendData] = useState<{ day: number; studentPresent: number; studentAbsent: number; staffPresent: number; staffAbsent: number }[]>([])
   const [trendYear, setTrendYear] = useState(new Date().getFullYear())
   const [trendMonth, setTrendMonth] = useState(new Date().getMonth() + 1)
 
-  useEffect(() => { setSelectedDate(new Date().toISOString().split('T')[0]); setMounted(true) }, [])
+  useEffect(() => {
+    setSelectedDate(new Date().toISOString().split('T')[0])
+    setMounted(true)
+    try {
+      const saved = localStorage.getItem('admin-dashboard-density')
+      if (saved === 'compact' || saved === 'comfortable') setDensity(saved)
+    } catch {}
+  }, [])
   useEffect(() => { if (selectedDate) fetchDashboard() }, [selectedDate])
   useEffect(() => { fetchTrend() }, [trendYear, trendMonth])
+
+  /* Live Cambodia clock for hero */
+  useEffect(() => {
+    const tick = () => {
+      const cam = new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
+      const hh = String(cam.getUTCHours()).padStart(2, '0')
+      const mm = String(cam.getUTCMinutes()).padStart(2, '0')
+      const ss = String(cam.getUTCSeconds()).padStart(2, '0')
+      setClockStr(`${hh}:${mm}:${ss}`)
+    }
+    tick(); const iv = setInterval(tick, 1000); return () => clearInterval(iv)
+  }, [])
+
+  /* Keyboard shortcuts: T=today, R=refresh, /=focus search, ESC=clear drill */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      const inField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+      if (e.key === '/' && !inField) {
+        e.preventDefault()
+        setTableExpanded(true)
+        setTimeout(() => searchInputRef.current?.focus(), 50)
+      } else if ((e.key === 't' || e.key === 'T') && !inField) {
+        setSelectedDate(new Date().toISOString().split('T')[0])
+      } else if ((e.key === 'r' || e.key === 'R') && !inField) {
+        fetchDashboard()
+      } else if (e.key === 'Escape' && drillRole) {
+        clearDrill()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drillRole, selectedDate])
+
+  const toggleDensity = () => {
+    const next = density === 'compact' ? 'comfortable' : 'compact'
+    setDensity(next)
+    try { localStorage.setItem('admin-dashboard-density', next) } catch {}
+  }
 
   const fetchDashboard = async () => {
     setLoading(true)
     try {
-      const res = await apiFetch(`/api/reports/dashboard-summary?date=${selectedDate}`)
+      // Fetch today + previous day in parallel for delta indicator
+      const prevDate = new Date(selectedDate)
+      prevDate.setDate(prevDate.getDate() - 1)
+      const prevStr = prevDate.toISOString().split('T')[0]
+      const [res, prevRes] = await Promise.all([
+        apiFetch(`/api/reports/dashboard-summary?date=${selectedDate}`),
+        apiFetch(`/api/reports/dashboard-summary?date=${prevStr}`),
+      ])
       if (res.ok) setData(await res.json())
       else console.error('Dashboard API error:', res.status)
+      if (prevRes.ok) setPrevData(await prevRes.json())
+      else setPrevData(null)
     } catch (err) { console.error('Failed to fetch dashboard data', err) }
     finally { setLoading(false) }
   }
@@ -156,6 +217,53 @@ function DashboardContent() {
     ].filter(d => d.value > 0)
   }, [data, t])
 
+  /* ── Hero KPIs: combined attendance rate + delta vs yesterday ── */
+  const heroStats = useMemo(() => {
+    const stu = data?.students || { total: 0, present: 0, late: 0, absent: 0, permission: 0 }
+    const stf = data?.staff || { total: 0, present: 0, late: 0, absent: 0, permission: 0 }
+    const total = stu.total + stf.total
+    const presentTotal = stu.present + stf.present + stu.late + stf.late // counted as attending
+    const rate = total > 0 ? Math.round((presentTotal / total) * 1000) / 10 : 0
+    let delta: number | null = null
+    if (prevData) {
+      const pStu = prevData.students || { total: 0, present: 0, late: 0 }
+      const pStf = prevData.staff || { total: 0, present: 0, late: 0 }
+      const pTot = pStu.total + pStf.total
+      const pPresent = pStu.present + pStf.present + pStu.late + pStf.late
+      const pRate = pTot > 0 ? (pPresent / pTot) * 100 : 0
+      if (pTot > 0) delta = Math.round((rate - pRate) * 10) / 10
+    }
+    return { total, presentTotal, rate, delta, absentTotal: stu.absent + stf.absent, lateTotal: stu.late + stf.late, permissionTotal: stu.permission + stf.permission }
+  }, [data, prevData])
+
+  /* ── Today's Insights: computed from details ── */
+  const insights = useMemo(() => {
+    if (!data || !data.details.length) return null
+    // Group by row.group
+    const groupMap = new Map<string, { present: number; absent: number; late: number; permission: number; total: number; name: string }>()
+    for (const r of data.details) {
+      if (!r.group) continue
+      const g = groupMap.get(r.group) || { present: 0, absent: 0, late: 0, permission: 0, total: 0, name: r.group }
+      g.present += r.present; g.absent += r.absent; g.late += r.late; g.permission += r.permission
+      g.total += (r.present > 0 || r.late > 0 || r.absent > 0 || r.permission > 0) ? 1 : 0
+      groupMap.set(r.group, g)
+    }
+    const groups = Array.from(groupMap.values()).filter(g => g.total > 0)
+    const perfect = groups.filter(g => g.absent === 0 && g.late === 0 && g.present > 0).length
+    const worst = groups.length
+      ? groups.reduce((best, cur) => (cur.absent > best.absent ? cur : best), groups[0])
+      : null
+    const perfectAttendees = data.details.filter(r => r.present > 0 && r.absent === 0 && r.late === 0 && r.permission === 0).length
+    const pendingPermissions = data.details.filter(r => r.permission > 0).length
+    return {
+      perfectGroups: perfect,
+      worstGroup: worst && worst.absent > 0 ? worst : null,
+      perfectAttendees,
+      pendingPermissions,
+      totalGroups: groups.length,
+    }
+  }, [data])
+
   const exportCSV = () => {
     if (!filteredDetails.length) return
     const headers = [t('common.id'),t('common.name'),t('common.role'),t('dashboard.classOrDept'),t('common.present'),t('common.absent'),t('common.late'),t('common.permission')]
@@ -205,41 +313,212 @@ function DashboardContent() {
   const stu = data?.students || { total:0,present:0,absent:0,late:0,permission:0 }
   const stf = data?.staff || { total:0,present:0,absent:0,late:0,permission:0 }
 
+  // Greeting based on Cambodia time hour
+  const greetingHour = (() => {
+    if (!clockStr) return 12
+    return parseInt(clockStr.split(':')[0] || '12', 10)
+  })()
+  const greeting = greetingHour < 12 ? (t('dashboard.goodMorning') || 'Good morning')
+    : greetingHour < 18 ? (t('dashboard.goodAfternoon') || 'Good afternoon')
+    : (t('dashboard.goodEvening') || 'Good evening')
+  const greetingEmoji = greetingHour < 12 ? '☀️' : greetingHour < 18 ? '🌤️' : '🌙'
+
+  const selectedDateObj = selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date()
+  const isToday = selectedDate === new Date().toISOString().split('T')[0]
+
+  // Quick Action shortcuts — most common admin tasks
+  const quickActions: { label: string; href: string; emoji: string; color: string }[] = [
+    { label: 'Take Attendance', href: '/admin/camera',                emoji: '📷', color: 'from-purple-500 to-fuchsia-500' },
+    { label: 'Edit Attendance', href: '/admin/attendance/edit',       emoji: '✏️', color: 'from-indigo-500 to-blue-500' },
+    { label: 'Reports',         href: '/admin/reports',               emoji: '📊', color: 'from-emerald-500 to-teal-500' },
+    { label: 'Staff Reports',   href: '/admin/staff-reports',         emoji: '👥', color: 'from-cyan-500 to-sky-500' },
+    { label: 'Classes',         href: '/admin/classes',               emoji: '🏫', color: 'from-amber-500 to-orange-500' },
+    { label: 'Holidays',        href: '/admin/holidays',              emoji: '🎉', color: 'from-rose-500 to-pink-500' },
+    { label: 'Sessions',        href: '/admin/session-settings',      emoji: '⏰', color: 'from-violet-500 to-purple-500' },
+    { label: 'Notifications',   href: '/admin/notifications',         emoji: '🔔', color: 'from-yellow-500 to-amber-500' },
+  ]
+
+  // Spacing scale per density
+  const sp = density === 'compact' ? 'space-y-3' : 'space-y-5'
+
   return (
     <div className="page-shell">
       <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo"/>
       <div className="page-content">
         <div className="h-14 lg:hidden"/>
-        <div className="page-header">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">{t('dashboard.title')}</h1>
-              <p className="text-sm text-gray-400 mt-0.5">{t('dashboard.subtitle')}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
-                className="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:border-gray-300 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all cursor-pointer"/>
-              <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-                className="px-3 py-2 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors">{t('common.today') || 'Today'}</button>
+
+        {/* ── Sticky compact header (mobile) ── */}
+        <div className="sticky top-14 lg:top-0 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2.5 bg-white/85 backdrop-blur-md border-b border-slate-200/70 flex items-center gap-2 lg:hidden">
+          <span className="text-xs font-semibold text-slate-500 mr-auto truncate">
+            {selectedDateObj.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </span>
+          <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
+            className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none"/>
+          <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+            className="px-2.5 py-1.5 text-[11px] font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
+            {t('common.today') || 'Today'}
+          </button>
+        </div>
+
+        {/* ── Modern Hero Panel ── */}
+        <div className="page-body">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-xl">
+            {/* decorative blobs */}
+            <div aria-hidden className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+            <div aria-hidden className="absolute -bottom-20 -left-10 w-72 h-72 rounded-full bg-fuchsia-300/20 blur-3xl" />
+
+            <div className="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col lg:flex-row lg:items-center gap-5">
+              {/* Left: greeting + date + clock */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 text-xs text-white/80 font-medium uppercase tracking-wider">
+                  <span>{greetingEmoji}</span><span>{greeting} · Admin</span>
+                </div>
+                <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
+                  {selectedDateObj.toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                </h1>
+                <div className="mt-1.5 flex items-center gap-3 text-white/80 text-sm">
+                  <span className="font-mono font-semibold tabular-nums text-base">{clockStr || '00:00:00'}</span>
+                  <span className="text-white/40">·</span>
+                  <span className="text-xs">Cambodia · ICT</span>
+                  {!isToday && (
+                    <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                      className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold bg-white/15 hover:bg-white/25 backdrop-blur-sm px-2.5 py-1 rounded-full transition-colors">
+                      ⏎ Jump to today
+                    </button>
+                  )}
+                </div>
+
+                {/* Hero desktop date picker */}
+                <div className="mt-4 hidden lg:flex items-center gap-2">
+                  <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
+                    className="appearance-none bg-white/15 backdrop-blur-sm border border-white/25 text-white rounded-xl px-3.5 py-2 text-sm font-medium placeholder:text-white/50 focus:ring-2 focus:ring-white/40 focus:border-white/50 outline-none transition-all cursor-pointer [color-scheme:dark]"/>
+                  <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                    className="px-3 py-2 text-xs font-semibold text-white bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-xl transition-colors">
+                    {t('common.today') || 'Today'}
+                  </button>
+                  <button onClick={fetchDashboard} title="Refresh (R)"
+                    className="px-3 py-2 text-xs font-semibold text-white bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-xl transition-colors flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Refresh
+                  </button>
+                  <button onClick={toggleDensity} title="Density"
+                    className="px-3 py-2 text-xs font-semibold text-white bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-xl transition-colors flex items-center gap-1.5">
+                    {density === 'compact' ? '☰ Comfortable' : '≡ Compact'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Right: attendance rate ring + KPI chips */}
+              <div className="flex items-center gap-5 flex-shrink-0">
+                {/* Gauge */}
+                <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0">
+                  {(() => {
+                    const pct = heroStats.rate
+                    const r = 52, c = 2 * Math.PI * r
+                    const off = c - (Math.min(100, pct) / 100) * c
+                    return (
+                      <svg width="100%" height="100%" viewBox="0 0 128 128">
+                        <circle cx="64" cy="64" r={r} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="10" />
+                        <circle cx="64" cy="64" r={r} fill="none" stroke="white" strokeWidth="10" strokeLinecap="round"
+                          strokeDasharray={c} strokeDashoffset={off}
+                          transform="rotate(-90 64 64)"
+                          className="transition-all duration-700 ease-out" />
+                      </svg>
+                    )
+                  })()}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl sm:text-3xl font-extrabold tabular-nums leading-none">{heroStats.rate}%</span>
+                    <span className="text-[10px] uppercase tracking-wider text-white/70 mt-0.5">Attendance</span>
+                    {heroStats.delta !== null && (
+                      <span className={`text-[10px] font-semibold mt-1 px-1.5 py-0.5 rounded-full ${heroStats.delta >= 0 ? 'bg-emerald-400/25 text-emerald-100' : 'bg-rose-400/25 text-rose-100'}`}>
+                        {heroStats.delta >= 0 ? '↑' : '↓'} {Math.abs(heroStats.delta).toFixed(1)}% vs yesterday
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {/* mini KPIs */}
+                <div className="hidden sm:grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-white/12 backdrop-blur-sm rounded-xl px-3 py-2">
+                    <div className="text-white/70 uppercase tracking-wider text-[10px] font-semibold">Total</div>
+                    <div className="text-lg font-bold tabular-nums">{heroStats.total}</div>
+                  </div>
+                  <div className="bg-white/12 backdrop-blur-sm rounded-xl px-3 py-2">
+                    <div className="text-white/70 uppercase tracking-wider text-[10px] font-semibold">Present</div>
+                    <div className="text-lg font-bold tabular-nums">{heroStats.presentTotal}</div>
+                  </div>
+                  <div className="bg-white/12 backdrop-blur-sm rounded-xl px-3 py-2">
+                    <div className="text-white/70 uppercase tracking-wider text-[10px] font-semibold">Absent</div>
+                    <div className="text-lg font-bold tabular-nums">{heroStats.absentTotal}</div>
+                  </div>
+                  <div className="bg-white/12 backdrop-blur-sm rounded-xl px-3 py-2">
+                    <div className="text-white/70 uppercase tracking-wider text-[10px] font-semibold">Late</div>
+                    <div className="text-lg font-bold tabular-nums">{heroStats.lateTotal}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="page-body space-y-6">
-          {data && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { label: t('common.students'), value: stu.total, sub: `${stu.present} ${t('common.present').toLowerCase()}`, dot: 'bg-emerald-400' },
-                { label: t('dashboard.staff'), value: stf.total, sub: `${stf.present} ${t('common.present').toLowerCase()}`, dot: 'bg-emerald-400' },
-                { label: t('common.absent'), value: stu.absent + stf.absent, sub: `${stu.absent} stu \u00b7 ${stf.absent} staff`, dot: 'bg-red-400' },
-                { label: t('common.late'), value: stu.late + stf.late, sub: `${stu.late} stu \u00b7 ${stf.late} staff`, dot: 'bg-amber-400' },
-              ].map((item, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{item.label}</div>
-                  <div className="text-2xl font-bold text-gray-900 mt-1">{item.value}</div>
-                  <div className="flex items-center gap-1.5 mt-1.5"><div className={`w-1.5 h-1.5 rounded-full ${item.dot}`}/><span className="text-[11px] text-gray-500">{item.sub}</span></div>
+        <div className={`page-body ${sp}`}>
+          {/* ── Quick Actions ── */}
+          <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
+            {quickActions.map(a => (
+              <Link key={a.href} href={a.href}
+                className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200/70 hover:border-transparent hover:shadow-lg active:scale-[0.97] transition-all p-3 sm:p-4 flex flex-col items-center justify-center gap-1.5 text-center">
+                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br ${a.color}`} aria-hidden />
+                <span className="relative text-2xl sm:text-3xl transition-transform group-hover:scale-110">{a.emoji}</span>
+                <span className="relative text-[10px] sm:text-xs font-semibold text-slate-700 group-hover:text-white transition-colors leading-tight">{a.label}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* ── Today's Insights (auto-computed) ── */}
+          {insights && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50 to-emerald-100/40 p-3.5">
+                <div className="flex items-center gap-2 text-emerald-700">
+                  <span className="text-xl">🏆</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">Perfect Groups</span>
                 </div>
-              ))}
+                <div className="text-2xl font-extrabold text-emerald-800 mt-1">{insights.perfectGroups}<span className="text-sm font-medium text-emerald-600">/{insights.totalGroups}</span></div>
+                <div className="text-[11px] text-emerald-600/80 mt-0.5">No absent or late today</div>
+              </div>
+              <div className="rounded-2xl border border-blue-200/70 bg-gradient-to-br from-blue-50 to-blue-100/40 p-3.5">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <span className="text-xl">✨</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">Perfect Attendees</span>
+                </div>
+                <div className="text-2xl font-extrabold text-blue-800 mt-1">{insights.perfectAttendees}</div>
+                <div className="text-[11px] text-blue-600/80 mt-0.5">Present all sessions, no late</div>
+              </div>
+              <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50 to-amber-100/40 p-3.5">
+                <div className="flex items-center gap-2 text-amber-700">
+                  <span className="text-xl">📨</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">Permissions</span>
+                </div>
+                <div className="text-2xl font-extrabold text-amber-800 mt-1">{insights.pendingPermissions}</div>
+                <div className="text-[11px] text-amber-600/80 mt-0.5">People with permission today</div>
+              </div>
+              <button onClick={() => insights.worstGroup && handleCardClick(insights.worstGroup.name.toLowerCase().includes('class') || insights.worstGroup.name.match(/^\d/) ? 'Student' : 'Staff', 'absent')}
+                disabled={!insights.worstGroup}
+                className="text-left rounded-2xl border border-rose-200/70 bg-gradient-to-br from-rose-50 to-rose-100/40 p-3.5 hover:shadow-md hover:border-rose-300 transition-all disabled:cursor-default disabled:hover:shadow-none">
+                <div className="flex items-center gap-2 text-rose-700">
+                  <span className="text-xl">⚠️</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">Needs Attention</span>
+                </div>
+                {insights.worstGroup ? (
+                  <>
+                    <div className="text-base font-extrabold text-rose-800 mt-1 truncate">{insights.worstGroup.name}</div>
+                    <div className="text-[11px] text-rose-600/80 mt-0.5">{insights.worstGroup.absent} absent · tap to view</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-base font-extrabold text-emerald-700 mt-1">All Good</div>
+                    <div className="text-[11px] text-rose-600/80 mt-0.5">No groups flagged today</div>
+                  </>
+                )}
+              </button>
             </div>
           )}
 
@@ -419,7 +698,7 @@ function DashboardContent() {
               <div className="flex flex-wrap gap-2 mt-3">
                 <div className="relative flex-1 min-w-[120px] sm:flex-none sm:w-52">
                   <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                  <input type="text" placeholder={`${t('common.search')}...`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  <input ref={searchInputRef} type="text" placeholder={`${t('common.search')}... (press /)`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"/>
                 </div>
                 <select value={roleFilter} onChange={e => { setRoleFilter(e.target.value as any); setDrillRole(null) }}
@@ -434,14 +713,21 @@ function DashboardContent() {
                   {data?.filters.classes.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                   {data?.filters.departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
                 </select>
-                <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 cursor-pointer transition-all">
-                  <option value="all">{t('common.all')} {t('common.status')}</option>
-                  <option value="present">{t('common.present')}</option>
-                  <option value="absent">{t('common.absent')}</option>
-                  <option value="late">{t('common.late')}</option>
-                  <option value="permission">{t('common.permission')}</option>
-                </select>
+              </div>
+              {/* Status filter pills — more touchable & visible */}
+              <div className="flex flex-wrap gap-1.5 mt-2.5">
+                {([
+                  { v:'all',        label: t('common.all') || 'All',           cls:'bg-slate-100 text-slate-700 ring-slate-200',     active:'bg-slate-900 text-white ring-slate-900' },
+                  { v:'present',    label: t('common.present'),                cls:'bg-emerald-50 text-emerald-700 ring-emerald-200', active:'bg-emerald-600 text-white ring-emerald-600' },
+                  { v:'absent',     label: t('common.absent'),                 cls:'bg-rose-50 text-rose-700 ring-rose-200',          active:'bg-rose-600 text-white ring-rose-600' },
+                  { v:'late',       label: t('common.late'),                   cls:'bg-amber-50 text-amber-700 ring-amber-200',       active:'bg-amber-600 text-white ring-amber-600' },
+                  { v:'permission', label: t('common.permission'),             cls:'bg-blue-50 text-blue-700 ring-blue-200',          active:'bg-blue-600 text-white ring-blue-600' },
+                ] as { v: StatusFilter; label: string; cls: string; active: string }[]).map(pill => (
+                  <button key={pill.v} onClick={() => setStatusFilter(pill.v)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold ring-1 transition-all ${statusFilter === pill.v ? pill.active + ' shadow-sm' : pill.cls + ' hover:ring-2'}`}>
+                    {pill.label}
+                  </button>
+                ))}
               </div>
             </div>
 
