@@ -155,6 +155,7 @@ function TeacherScanContent() {
   const locationRef = useRef<{ latitude: number; longitude: number } | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const torchTrackRef = useRef<MediaStreamTrack | null>(null)
+  const autoResetRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   /* ── orientation ── */
   useEffect(() => {
@@ -291,13 +292,11 @@ function TeacherScanContent() {
         if (deviceId) vidConstraints.deviceId = deviceId
         else vidConstraints.facingMode = 'environment'
 
+        const onQr = (result: any) => { if (cancelled || !result) return; handleQrScanned(result.getText()) }
         const reader = new BrowserQRCodeReader()
-        reader.timeBetweenDecodingAttempts = 30
+        reader.timeBetweenDecodingAttempts = 200
         codeReaderRef.current = reader
-        await reader.decodeFromConstraints({ video: vidConstraints }, videoEl, (result) => {
-          if (cancelled || !result) return
-          handleQrScanned(result.getText())
-        })
+        await reader.decodeFromConstraints({ video: vidConstraints }, videoEl, onQr)
         if (!cancelled && videoEl.srcObject) {
           const track = (videoEl.srcObject as MediaStream).getVideoTracks()[0]
           if (track) {
@@ -306,6 +305,17 @@ function TeacherScanContent() {
           }
         }
         if (!cancelled) setMessage('')
+        // Silently recycle only the ZXing decode loop every 90 s to prevent internal
+        // buffer accumulation that causes slowdown after 2–3 minutes of scanning.
+        // The camera stream stays alive — only the decoder object is replaced.
+        autoResetRef.current = setInterval(() => {
+          if (cancelled || !videoEl.srcObject) return
+          if (codeReaderRef.current) { codeReaderRef.current.reset(); codeReaderRef.current = null }
+          const fresh = new BrowserQRCodeReader()
+          fresh.timeBetweenDecodingAttempts = 200
+          codeReaderRef.current = fresh
+          fresh.decodeFromVideoElement(videoEl, onQr).catch(() => {})
+        }, 90_000)
       } catch (err: unknown) {
         if (cancelled) return
         const e = err as { name?: string }
@@ -317,6 +327,7 @@ function TeacherScanContent() {
     init()
     return () => {
       cancelled = true
+      if (autoResetRef.current) { clearInterval(autoResetRef.current); autoResetRef.current = null }
       if (codeReaderRef.current) { codeReaderRef.current.reset(); codeReaderRef.current = null }
       if (videoEl.srcObject) {
         (videoEl.srcObject as MediaStream).getTracks().forEach(t => t.stop())
