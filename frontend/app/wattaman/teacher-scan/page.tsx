@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { BrowserQRCodeReader } from '@zxing/library'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
@@ -132,6 +133,7 @@ function TeacherScanZone({ isLandscape }: { isLandscape: boolean }) {
 }
 
 function TeacherScanContent() {
+  const router = useRouter()
   const [scanning, setScanning] = useState(false)
   const [message, setMessage] = useState('')
   const [lastResult, setLastResult] = useState<TeacherScanResult | null>(null)
@@ -347,6 +349,18 @@ function TeacherScanContent() {
     torchTrackRef.current = null; setProfileVisible(false)
   }
 
+  const handleLogout = useCallback(async () => {
+    if (autoResetRef.current) { clearInterval(autoResetRef.current); autoResetRef.current = null }
+    if (codeReaderRef.current) { codeReaderRef.current.reset(); codeReaderRef.current = null }
+    if (videoRef.current?.srcObject) {
+      (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop())
+      videoRef.current.srcObject = null
+    }
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }) } catch { /* ignore */ }
+    localStorage.removeItem('role')
+    router.push('/login')
+  }, [router])
+
   const switchCamera = useCallback(() => {
     const cameras = allCamerasRef.current
     if (cameras.length <= 1) return
@@ -434,6 +448,10 @@ function TeacherScanContent() {
                       🔄
                     </button>
                   )}
+                  <button onClick={handleLogout} title="Sign out"
+                    className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center text-white active:scale-90 transition-all text-lg">
+                    ⏻
+                  </button>
                   <button onClick={stopScanning}
                     className="w-11 h-11 rounded-full bg-red-500 flex items-center justify-center text-white font-bold text-lg active:scale-90 transition-all shadow-lg">
                     ✕
@@ -570,6 +588,11 @@ function TeacherScanContent() {
                   <h1 className="text-xl font-bold text-slate-800">Scan Teacher QR</h1>
                   <p className="text-xs text-slate-500 mt-0.5">Record teacher attendance from timetable</p>
                 </div>
+                <button onClick={handleLogout} title="Sign out"
+                  className="ml-auto flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-500 transition-colors py-2 px-3 rounded-xl hover:bg-red-50 flex-shrink-0">
+                  <span className="text-base">⏻</span>
+                  <span className="hidden sm:inline">Sign out</span>
+                </button>
               </div>
             </div>
 

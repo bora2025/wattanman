@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { BrowserQRCodeReader } from '@zxing/library'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
@@ -131,6 +132,7 @@ function StudentScanZone({ isLandscape }: { isLandscape: boolean }) {
 }
 
 function WattamanScanContent() {
+  const router = useRouter()
   const [scanning, setScanning] = useState(false)
   const [message, setMessage] = useState('')
   const [lastResult, setLastResult] = useState<ScanResult | null>(null)
@@ -263,6 +265,19 @@ function WattamanScanContent() {
     setPendingPhoto(null)
     setIsLoading(false)
   }, [])
+
+  const handleLogout = useCallback(async () => {
+    // Stop camera before logging out
+    if (autoResetRef.current) { clearInterval(autoResetRef.current); autoResetRef.current = null }
+    if (codeReaderRef.current) { codeReaderRef.current.reset(); codeReaderRef.current = null }
+    if (videoRef.current?.srcObject) {
+      (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop())
+      videoRef.current.srcObject = null
+    }
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }) } catch { /* ignore */ }
+    localStorage.removeItem('role')
+    router.push('/login')
+  }, [router])
 
   /* ── QR handler ── */
   const handleQrScanned = useCallback(async (qrData: string) => {
@@ -599,6 +614,10 @@ function WattamanScanContent() {
                       🔄
                     </button>
                   )}
+                  <button onClick={handleLogout} title="Sign out"
+                    className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center text-white active:scale-90 transition-all text-lg">
+                    ⏻
+                  </button>
                   <button onClick={stopScanning}
                     className="w-11 h-11 rounded-full bg-red-500 flex items-center justify-center text-white font-bold text-lg active:scale-90 transition-all shadow-lg">
                     ✕
@@ -774,9 +793,16 @@ function WattamanScanContent() {
         {/* ═══════════════════════════════════════════════
             NON-SCANNING PAGE
         ═══════════════════════════════════════════════ */}
-        <div className="page-header">
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Scan Student Attendance</h1>
-          <p className="text-sm text-slate-500 mt-1">Scan student or teacher QR codes — recorded instantly</p>
+        <div className="page-header flex items-center justify-between">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Scan Student Attendance</h1>
+            <p className="text-sm text-slate-500 mt-1">Scan student or teacher QR codes — recorded instantly</p>
+          </div>
+          <button onClick={handleLogout}
+            className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-500 transition-colors py-2 px-3 rounded-xl hover:bg-red-50 flex-shrink-0">
+            <span className="text-base">⏻</span>
+            <span className="hidden sm:inline">Sign out</span>
+          </button>
         </div>
 
         <div className="page-body space-y-4">
