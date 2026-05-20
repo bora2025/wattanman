@@ -192,6 +192,7 @@ export class SessionConfigService {
       permissionsPerAbsent: 3,
       latesPerAbsentHalf: 3,
       absentSessionsForDayAbsent: 3,
+      teacherLateGraceMinutes: 20,
       caseStudyABEnabled: true,
       enabled: false,
     };
@@ -213,6 +214,7 @@ export class SessionConfigService {
     permissionsPerAbsent: number;
     latesPerAbsentHalf: number;
     absentSessionsForDayAbsent?: number;
+    teacherLateGraceMinutes?: number;
     caseStudyABEnabled: boolean;
     enabled: boolean;
   }) {
@@ -225,6 +227,7 @@ export class SessionConfigService {
       permissionsPerAbsent: data.permissionsPerAbsent,
       latesPerAbsentHalf: data.latesPerAbsentHalf,
       absentSessionsForDayAbsent: data.absentSessionsForDayAbsent ?? 3,
+      teacherLateGraceMinutes: data.teacherLateGraceMinutes ?? 20,
       caseStudyABEnabled: data.caseStudyABEnabled,
       enabled: data.enabled,
     };

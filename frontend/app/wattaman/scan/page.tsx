@@ -148,6 +148,12 @@ function WattamanScanContent() {
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null)
   const [clockStr, setClockStr] = useState('')
   const [activeSession, setActiveSession] = useState<{ session: number; type: string; startTime: string; endTime: string; isActive: boolean; badge: 'Active' | 'Near' | 'Upcoming' } | null>(null)
+  const [editSessionOpen, setEditSessionOpen] = useState(false)
+  const [editStart, setEditStart] = useState('')
+  const [editEnd, setEditEnd] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+  const [editError, setEditError] = useState('')
+  const [configRefreshTick, setConfigRefreshTick] = useState(0)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const codeReaderRef = useRef<BrowserQRCodeReader | null>(null)
@@ -229,7 +235,56 @@ function WattamanScanContent() {
     tick()
     const iv = setInterval(tick, 1000)
     return () => { clearInterval(iv); clearInterval(configInterval) }
-  }, [])
+  }, [configRefreshTick])
+
+  /* ── Edit session times (inline from scan UI) ── */
+  const openEditSession = useCallback(() => {
+    if (!activeSession) return
+    setEditStart(activeSession.startTime)
+    setEditEnd(activeSession.endTime)
+    setEditError('')
+    setEditSessionOpen(true)
+  }, [activeSession])
+
+  const saveEditSession = useCallback(async () => {
+    if (!activeSession) return
+    const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
+    if (!/^\d{2}:\d{2}$/.test(editStart) || !/^\d{2}:\d{2}$/.test(editEnd)) {
+      setEditError('Time must be in HH:MM format'); return
+    }
+    if (toMin(editEnd) <= toMin(editStart)) {
+      setEditError('End time must be after start time'); return
+    }
+    setEditSaving(true)
+    setEditError('')
+    try {
+      // Build full 4-session payload from current cache, replacing the target session.
+      const current = sessionConfigsRef.current.length > 0
+        ? sessionConfigsRef.current
+        : await apiFetch('/api/session-config/global').then(r => r.ok ? r.json() : [])
+      const merged = [1, 2, 3, 4].map(s => {
+        if (s === activeSession.session) {
+          return { session: s, type: activeSession.type, startTime: editStart, endTime: editEnd }
+        }
+        const existing = current.find((c: any) => c.session === s)
+        return existing
+          ? { session: existing.session, type: existing.type, startTime: existing.startTime, endTime: existing.endTime }
+          : { session: s, type: s % 2 === 1 ? 'CHECK_IN' : 'CHECK_OUT', startTime: '00:00', endTime: '00:00' }
+      })
+      const res = await apiFetch('/api/session-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classId: null, scope: 'CLASS', configs: merged }),
+      })
+      if (!res.ok) { setEditError('Save failed. You may not have permission.'); return }
+      setEditSessionOpen(false)
+      setConfigRefreshTick(t => t + 1)
+    } catch (e: any) {
+      setEditError(e?.message || 'Save failed')
+    } finally {
+      setEditSaving(false)
+    }
+  }, [activeSession, editStart, editEnd])
 
   /* ── auto-start ── */
   useEffect(() => {
@@ -589,12 +644,19 @@ function WattamanScanContent() {
               {!isLandscape && clockStr && (
                 <div className="absolute top-16 left-0 right-0 z-20 flex items-center justify-between gap-2 px-3 pointer-events-none">
                   {activeSession && (
-                    <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5">
+                    <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5 pointer-events-auto">
                       <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeSession.isActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
                       <span className="text-white text-xs font-semibold">
                         S{activeSession.session} · {activeSession.type === 'CHECK_IN' ? 'Check-In' : 'Check-Out'}
                       </span>
-                      <span className="text-white/50 text-xs">{activeSession.startTime}–{activeSession.endTime}</span>
+                      <button
+                        type="button"
+                        onClick={openEditSession}
+                        title="Edit session times"
+                        className="text-white/70 hover:text-white text-xs underline decoration-dotted underline-offset-2 transition-colors"
+                      >
+                        {activeSession.startTime}–{activeSession.endTime} ✏️
+                      </button>
                     </div>
                   )}
                   <div className="ml-auto bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5">
@@ -725,7 +787,14 @@ function WattamanScanContent() {
                           <p className="text-white text-xs font-bold leading-tight">
                             Session {activeSession.session} · {activeSession.type === 'CHECK_IN' ? '↓ Check-In' : '↑ Check-Out'}
                           </p>
-                          <p className="text-white/40 text-xs mt-0.5">{activeSession.startTime} – {activeSession.endTime}</p>
+                          <button
+                            type="button"
+                            onClick={openEditSession}
+                            title="Edit session times"
+                            className="text-white/60 hover:text-white text-xs mt-0.5 underline decoration-dotted underline-offset-2 transition-colors"
+                          >
+                            {activeSession.startTime} – {activeSession.endTime} ✏️
+                          </button>
                         </div>
                         <span className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0"
                           style={{
@@ -935,6 +1004,68 @@ function WattamanScanContent() {
           )}
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════
+          EDIT SESSION TIMES MODAL (admin / wattaman)
+      ═══════════════════════════════════════════════ */}
+      {editSessionOpen && activeSession && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-slate-800">Edit Session {activeSession.session} Time</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {activeSession.type === 'CHECK_IN' ? '↓ Check-In' : '↑ Check-Out'} window. Saves globally for all classes.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditSessionOpen(false)}
+                className="text-slate-400 hover:text-slate-700 text-2xl leading-none px-2"
+                aria-label="Close"
+              >×</button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Start Time (on time from)</label>
+                <input
+                  type="time"
+                  value={editStart}
+                  onChange={(e) => setEditStart(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">End Time (late after)</label>
+                <input
+                  type="time"
+                  value={editEnd}
+                  onChange={(e) => setEditEnd(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                />
+                <p className="text-xs text-slate-400 mt-1.5">Scans after this time are recorded as <strong>Late</strong>.</p>
+              </div>
+              {editError && (
+                <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs px-3 py-2">{editError}</div>
+              )}
+            </div>
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditSessionOpen(false)}
+                disabled={editSaving}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-200 transition-colors disabled:opacity-50"
+              >Cancel</button>
+              <button
+                type="button"
+                onClick={saveEditSession}
+                disabled={editSaving}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              >{editSaving ? 'Saving…' : 'Save'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -233,6 +233,9 @@ model AttendanceFormatRule {
   // the whole day is counted as ABSENT even if some sessions are PRESENT/LATE.
   // 0 = disabled. Default 3 (out of 4 sessions).
   absentSessionsForDayAbsent  Int      @default(3)
+  // Grace minutes after a teacher's period start before their wattaman scan
+  // is marked LATE instead of PRESENT. Default 20 minutes.
+  teacherLateGraceMinutes     Int      @default(20)
   caseStudyABEnabled          Boolean  @default(true)
   enabled                     Boolean  @default(false)
   createdAt                   DateTime @default(now())

@@ -412,11 +412,21 @@ export class TimetableService {
       };
     }
 
-    // Auto-detect LATE (>20 min after period start)
+    // Auto-detect LATE (> graceMinutes after period start). Grace is admin-configurable
+    // via AttendanceFormatRule.teacherLateGraceMinutes (STAFF scope). Defaults to 20.
     let status = 'PRESENT';
     if (periodTimes.length >= period) {
+      let graceMinutes = 20;
+      try {
+        const rule = await this.prisma.attendanceFormatRule.findFirst({
+          where: { scope: 'STAFF', organizationId: null },
+        });
+        if (rule && typeof (rule as any).teacherLateGraceMinutes === 'number') {
+          graceMinutes = (rule as any).teacherLateGraceMinutes;
+        }
+      } catch { /* fall back to default 20 */ }
       const [ph, pm] = periodTimes[period - 1].split(':').map(Number);
-      const lateAfterMin = ph * 60 + pm + 20;
+      const lateAfterMin = ph * 60 + pm + graceMinutes;
       const cambodiaNow = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
       const nowMin = cambodiaNow.getUTCHours() * 60 + cambodiaNow.getUTCMinutes();
       if (nowMin > lateAfterMin) status = 'LATE';

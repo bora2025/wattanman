@@ -66,6 +66,7 @@ export class SessionConfigController {
       permissionsPerAbsent: number;
       latesPerAbsentHalf: number;
       absentSessionsForDayAbsent?: number;
+      teacherLateGraceMinutes?: number;
       caseStudyABEnabled?: boolean;
       enabled: boolean;
     },

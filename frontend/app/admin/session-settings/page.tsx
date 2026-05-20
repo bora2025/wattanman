@@ -159,8 +159,8 @@ export default function SessionSettingsPage() {
   const [organizationName, setOrganizationName] = useState<string>('Global')
 
   // Attendance format rules state
-  const [classFormatRule, setClassFormatRule] = useState({ permissionsPerAbsent: 3, latesPerAbsentHalf: 3, absentSessionsForDayAbsent: 3, caseStudyABEnabled: true, enabled: false })
-  const [staffFormatRule, setStaffFormatRule] = useState({ permissionsPerAbsent: 3, latesPerAbsentHalf: 3, absentSessionsForDayAbsent: 3, caseStudyABEnabled: true, enabled: false })
+  const [classFormatRule, setClassFormatRule] = useState({ permissionsPerAbsent: 3, latesPerAbsentHalf: 3, absentSessionsForDayAbsent: 3, teacherLateGraceMinutes: 20, caseStudyABEnabled: true, enabled: false })
+  const [staffFormatRule, setStaffFormatRule] = useState({ permissionsPerAbsent: 3, latesPerAbsentHalf: 3, absentSessionsForDayAbsent: 3, teacherLateGraceMinutes: 20, caseStudyABEnabled: true, enabled: false })
 
   const detectPreset = (cfgs: SessionConfigItem[]): string => {
     for (const preset of ATTENDANCE_PRESETS) {
@@ -219,6 +219,7 @@ export default function SessionSettingsPage() {
           permissionsPerAbsent: rules.CLASS.permissionsPerAbsent,
           latesPerAbsentHalf: rules.CLASS.latesPerAbsentHalf,
           absentSessionsForDayAbsent: rules.CLASS.absentSessionsForDayAbsent ?? 3,
+          teacherLateGraceMinutes: rules.CLASS.teacherLateGraceMinutes ?? 20,
           caseStudyABEnabled: rules.CLASS.caseStudyABEnabled ?? true,
           enabled: rules.CLASS.enabled,
         })
@@ -226,6 +227,7 @@ export default function SessionSettingsPage() {
           permissionsPerAbsent: rules.STAFF.permissionsPerAbsent,
           latesPerAbsentHalf: rules.STAFF.latesPerAbsentHalf,
           absentSessionsForDayAbsent: rules.STAFF.absentSessionsForDayAbsent ?? 3,
+          teacherLateGraceMinutes: rules.STAFF.teacherLateGraceMinutes ?? 20,
           caseStudyABEnabled: rules.STAFF.caseStudyABEnabled ?? true,
           enabled: rules.STAFF.enabled,
         })
@@ -261,6 +263,7 @@ export default function SessionSettingsPage() {
             permissionsPerAbsent: currentRule.permissionsPerAbsent,
             latesPerAbsentHalf: currentRule.latesPerAbsentHalf,
             absentSessionsForDayAbsent: currentRule.absentSessionsForDayAbsent,
+            teacherLateGraceMinutes: currentRule.teacherLateGraceMinutes,
             caseStudyABEnabled: currentRule.caseStudyABEnabled,
             enabled: currentRule.enabled,
           }),
@@ -596,6 +599,33 @@ export default function SessionSettingsPage() {
                         Example: Absent 3 sessions + Present/Late 1 session = whole day counted as Absent. Set to <strong>0</strong> to disable this rule.
                       </p>
                     </div>
+
+                    {activeTab === 'STAFF' && (
+                      <div className="p-4 rounded-xl border border-orange-200 bg-orange-50 sm:col-span-2">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-lg">⏱️</span>
+                          <h4 className="font-medium text-sm text-slate-800">Teacher Scan — Late Grace Period</h4>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm text-slate-600">A teacher scanning more than</span>
+                          <input
+                            type="number"
+                            min={0}
+                            max={120}
+                            value={staffFormatRule.teacherLateGraceMinutes}
+                            onChange={(e) => {
+                              const val = Math.max(0, Math.min(120, parseInt(e.target.value) || 0))
+                              setStaffFormatRule(prev => ({ ...prev, teacherLateGraceMinutes: val }))
+                            }}
+                            className="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          />
+                          <span className="text-sm text-slate-600">minutes after their period start time will be marked <strong>Late</strong>.</span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Applies to the Wattaman Teacher Scan page only. Within the grace window the scan is recorded as <strong>Present</strong>.
+                        </p>
+                      </div>
+                    )}
 
                     <div className="p-4 rounded-xl border border-blue-200 bg-blue-50 sm:col-span-2">
                       <div className="flex items-center justify-between gap-3">
