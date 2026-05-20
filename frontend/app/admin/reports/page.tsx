@@ -380,31 +380,30 @@ export default function AdminReports() {
   const isHolidayDate = grid.length > 0 && grid[0].isHoliday === true
   const totalStudents = grid.length
   const getStatus = (r: GridRow, field: typeof activeSessions[number]['statusField']) => (r as any)[field] as string | null
-  const permissionBlocks = [{ sessions: [1, 2] }, { sessions: [3, 4] }]
+
+  // Daily headcount — each student counted exactly once based on dominant status for the day.
+  // Precedence: PRESENT > LATE > PERMISSION > ABSENT.
+  // Students with no recorded statuses count as ABSENT on a normal day, 0 on a holiday.
+  // Result: dailyPresent + dailyLate + dailyPermission + dailyAbsent === totalStudents (whole numbers).
   const dailyTotals = grid.reduce((acc, row) => {
-    for (const block of permissionBlocks) {
-      const blockDefs = activeSessions.filter(sd => block.sessions.includes(sd.session))
-      if (blockDefs.length === 0) continue
-      const statuses = blockDefs.map(sd => getStatus(row, sd.statusField)).filter(Boolean) as string[]
-      if (statuses.length === 0) continue
+    const statuses = activeSessions
+      .map(sd => getStatus(row, sd.statusField))
+      .filter(Boolean) as string[]
+    const hasPresent    = statuses.some(s => s === 'PRESENT')
+    const hasLate       = statuses.some(s => s === 'LATE')
+    const hasPermission = statuses.some(s => s === 'PERMISSION' || s === 'DAY_OFF')
+    const hasAbsent     = statuses.some(s => s === 'ABSENT')
 
-      const hasPresent = statuses.some(s => s === 'PRESENT')
-      const hasLate = statuses.some(s => s === 'LATE')
-      const hasPermission = statuses.some(s => s === 'PERMISSION' || s === 'DAY_OFF')
-      const hasAbsent = statuses.some(s => s === 'ABSENT')
-
-      // Mixed block precedence is configurable from Session Settings:
-      // Case A/B enabled: PRESENT > LATE > PERMISSION > ABSENT
-      // Disabled: PRESENT > LATE > ABSENT > PERMISSION
-      if (hasPresent) acc.present += 0.5
-      else if (hasLate) acc.late += 0.5
-      else if (caseStudyABEnabled) {
-        if (hasPermission) acc.permission += 0.5
-        else if (hasAbsent) acc.absent += 0.5
-      } else {
-        if (hasAbsent) acc.absent += 0.5
-        else if (hasPermission) acc.permission += 0.5
-      }
+    if (hasPresent) acc.present += 1
+    else if (hasLate) acc.late += 1
+    else if (caseStudyABEnabled) {
+      if (hasPermission) acc.permission += 1
+      else if (hasAbsent) acc.absent += 1
+      else if (!isHolidayDate) acc.absent += 1   // no records on a school day → absent
+    } else {
+      if (hasAbsent) acc.absent += 1
+      else if (hasPermission) acc.permission += 1
+      else if (!isHolidayDate) acc.absent += 1
     }
     return acc
   }, { present: 0, late: 0, absent: 0, permission: 0 })

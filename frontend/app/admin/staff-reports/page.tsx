@@ -147,19 +147,31 @@ export default function AdminStaffReports() {
 
   const isHolidayDate = grid.length > 0 && grid[0].isHoliday === true
   const totalStaff = grid.length
-  const hasAttendance = (r: StaffGridRow) => {
-    const ss = [r.session1Status, r.session2Status, r.session3Status, r.session4Status]
-    const hasPresent = ss.some(s => s === 'PRESENT')
-    const hasLate = ss.some(s => s === 'LATE')
-    const absentCount = ss.filter(s => s === 'ABSENT').length
-    // LATE + 3 ABSENT = absent: only count as attended if has PRESENT, or LATE with < 3 absent
-    return hasPresent || (hasLate && absentCount < 3)
-  }
-  const isLateStaff = (r: StaffGridRow) => [r.session1Status, r.session2Status, r.session3Status, r.session4Status].some(s => s === 'LATE')
-  const dailyLate = grid.filter(r => hasAttendance(r) && isLateStaff(r)).length
-  const dailyPresent = grid.filter(r => hasAttendance(r) && !isLateStaff(r)).length
-  const dailyPermission = grid.filter(r => !hasAttendance(r) && [r.session1Status, r.session2Status, r.session3Status, r.session4Status].some(s => s === 'DAY_OFF' || s === 'PERMISSION')).length
-  const dailyAbsent = isHolidayDate ? 0 : totalStaff - dailyPresent - dailyLate - dailyPermission
+
+  // Daily headcount — each staff counted exactly once based on dominant status for the day.
+  // Precedence: PRESENT > LATE > PERMISSION > ABSENT.
+  // Staff with no recorded statuses count as ABSENT on a normal day, 0 on a holiday.
+  // Result: dailyPresent + dailyLate + dailyPermission + dailyAbsent === totalStaff (whole numbers).
+  const dailyTotals = grid.reduce((acc, r) => {
+    const statuses = [r.session1Status, r.session2Status, r.session3Status, r.session4Status]
+      .filter(Boolean) as string[]
+    const hasPresent    = statuses.some(s => s === 'PRESENT')
+    const hasLate       = statuses.some(s => s === 'LATE')
+    const hasPermission = statuses.some(s => s === 'PERMISSION' || s === 'DAY_OFF')
+    const hasAbsent     = statuses.some(s => s === 'ABSENT')
+
+    if (hasPresent) acc.present += 1
+    else if (hasLate) acc.late += 1
+    else if (hasPermission) acc.permission += 1
+    else if (hasAbsent) acc.absent += 1
+    else if (!isHolidayDate) acc.absent += 1   // no records on a school day → absent
+    return acc
+  }, { present: 0, late: 0, absent: 0, permission: 0 })
+
+  const dailyPresent = dailyTotals.present
+  const dailyLate = dailyTotals.late
+  const dailyPermission = dailyTotals.permission
+  const dailyAbsent = isHolidayDate ? 0 : dailyTotals.absent
 
   return (
     <div className="page-shell">
