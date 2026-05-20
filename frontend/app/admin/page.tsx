@@ -74,6 +74,12 @@ function CardIcon({ color }: { color: string }) {
   return (<svg className={`w-5 h-5 ${cls[color]}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">{paths[color]}</svg>)
 }
 
+// Returns YYYY-MM-DD for the current date in Cambodia (ICT, UTC+7).
+function todayCambodia(): string {
+  const cam = new Date(Date.now() + 7 * 60 * 60 * 1000)
+  return cam.toISOString().split('T')[0]
+}
+
 function DashboardContent() {
   const { t } = useLanguage()
   const [data, setData] = useState<DashboardData | null>(null)
@@ -98,7 +104,7 @@ function DashboardContent() {
   const [trendMonth, setTrendMonth] = useState(new Date().getMonth() + 1)
 
   useEffect(() => {
-    setSelectedDate(new Date().toISOString().split('T')[0])
+    setSelectedDate(todayCambodia())
     setMounted(true)
     try {
       const saved = localStorage.getItem('admin-dashboard-density')
@@ -130,7 +136,7 @@ function DashboardContent() {
         setTableExpanded(true)
         setTimeout(() => searchInputRef.current?.focus(), 50)
       } else if ((e.key === 't' || e.key === 'T') && !inField) {
-        setSelectedDate(new Date().toISOString().split('T')[0])
+        setSelectedDate(todayCambodia())
       } else if ((e.key === 'r' || e.key === 'R') && !inField) {
         fetchDashboard()
       } else if (e.key === 'Escape' && drillRole) {
