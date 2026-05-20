@@ -212,6 +212,9 @@ function ManageClasses() {
   const [showAddStudentForm, setShowAddStudentForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
   const [editStudentData, setEditStudentData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
+  const [savingStudent, setSavingStudent] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [photoPreviewError, setPhotoPreviewError] = useState(false);
   const [csvUploading, setCsvUploading] = useState(false);
   const [csvResult, setCsvResult] = useState<{ total: number; success: number; errors: number; skipped: number; details: { row: number; id: string; name: string; email: string; status: string; error?: string }[] } | null>(null);
   const [selectedPreset, setSelectedPreset] = useState('global-default');
@@ -511,11 +514,15 @@ function ManageClasses() {
 
   const handleEditStudent = (student: Student) => {
     setEditingStudent(student.id);
+    setSaveError(null);
+    setPhotoPreviewError(false);
     setEditStudentData({ name: student.name || '', sex: student.sex || '', phone: student.phone || '', photo: student.photo || '', dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '', address: student.address || '', generation: student.generation || '', studentNumber: student.studentNumber || '' });
   };
 
   const handleSaveStudent = async (studentId: string) => {
     if (!selectedClass) return;
+    setSavingStudent(true);
+    setSaveError(null);
     try {
       const res = await apiFetch(`/api/classes/${selectedClass.id}/students/${studentId}`, {
         method: 'PATCH',
@@ -523,10 +530,18 @@ function ManageClasses() {
         body: JSON.stringify(editStudentData),
       });
       if (res.ok) {
-        setEditingStudent(null);
         await fetchClassStudents(selectedClass.id);
+        setEditingStudent(null);
+      } else {
+        let msg = `Save failed (${res.status})`;
+        try { const j = await res.json(); if (j?.message) msg = Array.isArray(j.message) ? j.message.join(', ') : j.message; } catch {}
+        setSaveError(msg);
       }
-    } catch (err) { console.error('Failed to update student'); }
+    } catch (err: any) {
+      setSaveError(err?.message || 'Failed to update student');
+    } finally {
+      setSavingStudent(false);
+    }
   };
 
   const handleAddNewStudent = async (e: React.FormEvent) => {
@@ -1135,19 +1150,34 @@ function ManageClasses() {
                           <input type="number" min="1" value={editStudentData.generation} onChange={(e) => setEditStudentData({ ...editStudentData, generation: e.target.value })} placeholder="1" />
                         </div>
                         <div className="sm:col-span-2 lg:col-span-3">
-                          <label className="form-label text-xs">Photo URL</label>
-                          <input type="text" value={editStudentData.photo} onChange={(e) => setEditStudentData({ ...editStudentData, photo: e.target.value })} placeholder="https://..." />
+                          <label className="form-label text-xs">Photo URL <span className="text-slate-400">(Google Drive share links auto-converted)</span></label>
+                          <input type="text" value={editStudentData.photo} onChange={(e) => { setEditStudentData({ ...editStudentData, photo: e.target.value }); setPhotoPreviewError(false); }} placeholder="https://... or Google Drive share link" />
                         </div>
                       </div>
                       {editStudentData.photo && (
                         <div className="flex items-center gap-3">
                           <span className="text-xs text-slate-500">Preview:</span>
-                          <img src={editStudentData.photo} alt="Preview" className="w-12 h-12 rounded-lg object-cover border border-slate-200" />
+                          {!photoPreviewError ? (
+                            <img src={editStudentData.photo} alt="Preview" className="w-12 h-12 rounded-lg object-cover border border-slate-200" onError={() => setPhotoPreviewError(true)} onLoad={() => setPhotoPreviewError(false)} />
+                          ) : (
+                            <span className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-md px-2 py-1">⚠ Image failed to load. The URL may be invalid or restricted. Use a direct image link (.jpg/.png) or a public Google Drive share link.</span>
+                          )}
                         </div>
                       )}
+                      {saveError && (
+                        <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{saveError}</div>
+                      )}
                       <div className="flex gap-2">
-                        <button onClick={() => handleSaveStudent(editingStudent)} className="btn-success btn-sm">Save Changes</button>
-                        <button onClick={() => setEditingStudent(null)} className="btn-ghost btn-sm">Cancel</button>
+                        <button onClick={() => handleSaveStudent(editingStudent)} disabled={savingStudent} className="btn-success btn-sm inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                          {savingStudent && (
+                            <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25"/>
+                              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+                            </svg>
+                          )}
+                          {savingStudent ? 'Saving…' : 'Save Changes'}
+                        </button>
+                        <button onClick={() => setEditingStudent(null)} disabled={savingStudent} className="btn-ghost btn-sm disabled:opacity-60">Cancel</button>
                       </div>
                     </div>
                   )}

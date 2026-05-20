@@ -399,7 +399,7 @@ export class ClassesService {
     // Update student fields (sex, photo, dateOfBirth, address, generation, studentNumber)
     const studentData: any = {};
     if (data.sex !== undefined) studentData.sex = data.sex;
-    if (data.photo !== undefined) studentData.photo = data.photo;
+    if (data.photo !== undefined) studentData.photo = this.convertGoogleDriveUrl(data.photo || '');
     if (data.dateOfBirth !== undefined) studentData.dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
     if (data.address !== undefined) studentData.address = data.address;
     if (data.generation !== undefined) studentData.generation = data.generation;
