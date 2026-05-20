@@ -10,7 +10,7 @@ import {
   STUDENT_CLASSIC_BLUE, STUDENT_DARK_NAVY, STUDENT_SKY_WAVE, STUDENT_GEOMETRIC, STUDENT_MINIMAL,
   STAFF_CORPORATE_TEAL, STAFF_DEEP_OCEAN, STAFF_ROSE, STAFF_FOREST, STAFF_SLATE_EXECUTIVE,
   loadSavedDesign, saveDesign, clearAllCache, SavedTemplate,
-  apiLoadTemplates, apiSaveTemplate, apiDeleteTemplate, apiGetActiveDesign, apiSetActiveDesign,
+  apiLoadTemplates, apiLoadTemplate, apiSaveTemplate, apiDeleteTemplate, apiGetActiveDesign, apiSetActiveDesign,
 } from './types';
 import { renderDesignToCanvas } from './renderDesignToCanvas';
 import { downloadSingleCardPDF } from './generateCardPDF';
@@ -71,6 +71,27 @@ async function loadTemplatesCached(): Promise<SavedTemplate[]> {
 
 // Module-level in-memory preview URL cache — survives picker open/close & component remounts
 const _previewUrlMemCache: Record<string, string> = {};
+
+// Per-template design cache (id → CardDesign). Designs are fetched on demand because
+// the list API call returns only metadata for speed. Concurrent calls for the same id
+// are deduplicated via _designInflight.
+const _designMemCache: Record<string, CardDesign> = {};
+const _designInflight: Record<string, Promise<CardDesign | null>> = {};
+
+async function loadTemplateDesignCached(tpl: SavedTemplate): Promise<CardDesign | null> {
+  if (tpl.design) { _designMemCache[tpl.id] = tpl.design; return tpl.design; }
+  const cached = _designMemCache[tpl.id];
+  if (cached) return cached;
+  const inflight = _designInflight[tpl.id];
+  if (inflight) return inflight;
+  const promise = apiLoadTemplate(tpl.id).then((full) => {
+    delete _designInflight[tpl.id];
+    if (full?.design) { _designMemCache[tpl.id] = full.design; return full.design; }
+    return null;
+  });
+  _designInflight[tpl.id] = promise;
+  return promise;
+}
 
 const TEMPLATES: Partial<Record<CardType, CardDesign>> = {
   student: STUDENT_TEMPLATE,
@@ -301,7 +322,9 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           await new Promise<void>((r) => setTimeout(r, 0));
           if (cancelled) break;
           try {
-            const c = await renderDesignToCanvas(tpl.design, { scale: thumbScale(tpl.design) });
+            const design = await loadTemplateDesignCached(tpl);
+            if (!design || cancelled) continue;
+            const c = await renderDesignToCanvas(design, { scale: thumbScale(design) });
             const url = c.toDataURL('image/jpeg', 0.5);
             _previewUrlMemCache[tpl.id] = url;
             try { sessionStorage.setItem(`${CACHE_KEY}:${tpl.id}`, url); } catch {}
@@ -319,9 +342,11 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     const CACHE_KEY = 'wattaman_thumb_v2';
     const thumbScale = (d: CardDesign) => d.width > 500 ? 0.28 : 0.5; // certs smaller
 
-    // Render at most N canvases concurrently; yield to browser between each
+    // Render at most N canvases concurrently; yield to browser between each.
+    // Items may carry an inline `design` (built-ins) OR a `tpl` reference that
+    // gets its design lazy-fetched from the API on first use.
     const runConcurrent = async (
-      items: { key: string; design: CardDesign }[],
+      items: { key: string; design?: CardDesign; tpl?: SavedTemplate }[],
       setFn: (k: string, url: string) => void,
       limit = 3,
     ) => {
@@ -338,7 +363,9 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           await new Promise<void>((r) => setTimeout(r, 0));
           if (cancelled) break;
           try {
-            const c = await renderDesignToCanvas(item.design, { scale: thumbScale(item.design) });
+            const design = item.design ?? (item.tpl ? await loadTemplateDesignCached(item.tpl) : null);
+            if (!design || cancelled) continue;
+            const c = await renderDesignToCanvas(design, { scale: thumbScale(design) });
             const url = c.toDataURL('image/jpeg', 0.5);
             _previewUrlMemCache[item.key] = url;
             try { sessionStorage.setItem(`${CACHE_KEY}:${item.key}`, url); } catch {}
@@ -360,7 +387,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       // Render saved template previews concurrently with built-in — not after
       await Promise.all([
         builtinRender,
-        templates.length > 0 ? runConcurrent(templates.map((t) => ({ key: t.id, design: t.design })), setFn) : Promise.resolve(),
+        templates.length > 0 ? runConcurrent(templates.map((t) => ({ key: t.id, tpl: t })), setFn) : Promise.resolve(),
       ]);
     })();
     return () => { cancelled = true; };
@@ -499,7 +526,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     }
 
     const runConcurrent = async (
-      items: { key: string; design: CardDesign }[],
+      items: { key: string; design?: CardDesign; tpl?: SavedTemplate }[],
       limit = 3,
     ) => {
       const queue = [...items];
@@ -515,7 +542,9 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           await new Promise<void>((r) => setTimeout(r, 0));
           if (cancelled) break;
           try {
-            const c = await renderDesignToCanvas(item.design, { scale: thumbScale(item.design) });
+            const design = item.design ?? (item.tpl ? await loadTemplateDesignCached(item.tpl) : null);
+            if (!design || cancelled) continue;
+            const c = await renderDesignToCanvas(design, { scale: thumbScale(design) });
             const url = c.toDataURL('image/jpeg', 0.5);
             _previewUrlMemCache[item.key] = url;
             try { sessionStorage.setItem(`${CACHE_KEY}:${item.key}`, url); } catch {}
@@ -544,7 +573,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       // Render saved template previews concurrently with built-in — not after
       await Promise.all([
         builtinRender,
-        templates.length > 0 ? runConcurrent(templates.map((t) => ({ key: t.id, design: t.design }))) : Promise.resolve(),
+        templates.length > 0 ? runConcurrent(templates.map((t) => ({ key: t.id, tpl: t }))) : Promise.resolve(),
       ]);
     })();
     return () => { cancelled = true; };
@@ -687,6 +716,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     // Invalidate module cache so next open fetches fresh list
     invalidateTemplateListCache();
     if (newTemplate) {
+      // Prime the design cache so opening the new template is instant
+      if (newTemplate.design) _designMemCache[newTemplate.id] = newTemplate.design;
       // Immediately append to both state lists so picker shows it without re-fetch
       setSavedTemplates((prev) => [...prev, newTemplate]);
       setStartTemplates((prev) => [...prev, newTemplate]);
@@ -703,7 +734,12 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     saveDesign(copy); syncToServer(copy);
   }, [syncToServer]);
 
-  const handleLoadTemplate = (tpl: SavedTemplate) => handleApplyTemplate(tpl.design);
+  const handleLoadTemplate = async (tpl: SavedTemplate) => {
+    // Design is fetched on demand because the list API call omits it for speed.
+    const design = await loadTemplateDesignCached(tpl);
+    if (!design) return;
+    handleApplyTemplate(design);
+  };
   const handleDeleteTemplate = async (id: string) => {
     await apiDeleteTemplate(id);
     invalidateTemplateListCache();
@@ -804,6 +840,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           onNewStudentCert={() => handleCardTypeChange('certificate-student')}
           onNewStaffCert={() => handleCardTypeChange('certificate-staff')}
           onOpen={(d) => handleApplyTemplate(d)}
+          onOpenTemplate={handleLoadTemplate}
         />
       ) : (<>
 
@@ -1451,9 +1488,11 @@ interface StartScreenProps {
   onNewStudentCert: () => void;
   onNewStaffCert: () => void;
   onOpen: (design: CardDesign) => void;
+  /** Saved templates ship without `design` for speed — lazy-fetched on click. */
+  onOpenTemplate: (tpl: SavedTemplate) => void;
 }
 
-function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNewStudentCert, onNewStaffCert, onOpen }: StartScreenProps) {
+function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNewStudentCert, onNewStaffCert, onOpen, onOpenTemplate }: StartScreenProps) {
   const allLoaded = BUILTIN_START_ITEMS.every((i) => previews[i.key]);
   return (
     <div className="flex h-full bg-[#1a1b22] text-white overflow-hidden select-none">
@@ -1535,7 +1574,7 @@ function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNew
           {savedTemplates.length > 0 ? (
             <div className="space-y-0.5">
               {savedTemplates.map((tpl) => (
-                <button key={tpl.id} onClick={() => onOpen(tpl.design)}
+                <button key={tpl.id} onClick={() => onOpenTemplate(tpl)}
                   className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/[0.06] transition-colors text-left group"
                 >
                   <div className="w-9 h-6 rounded bg-white/[0.07] flex items-center justify-center overflow-hidden shrink-0 border border-white/[0.05]">
@@ -1625,7 +1664,7 @@ function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNew
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Your Saved Templates</h3>
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               {savedTemplates.map((tpl) => (
-                <button key={tpl.id} onClick={() => onOpen(tpl.design)}
+                <button key={tpl.id} onClick={() => onOpenTemplate(tpl)}
                   className="group rounded-xl overflow-hidden border border-white/[0.07] hover:border-violet-400/60 bg-[#13141a] hover:bg-[#1e1a35] transition-all text-left"
                 >
                   <div className="bg-[#0d0e12] h-28 flex items-center justify-center p-2">

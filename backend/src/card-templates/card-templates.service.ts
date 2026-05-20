@@ -7,11 +7,19 @@ const ACTIVE_DESIGN_NAME = '__active__';
 export class CardTemplatesService {
   constructor(private prisma: PrismaService) {}
 
+  /** Lightweight list — omits the heavy `design` JSON for fast picker loads.
+   *  The full design is fetched on demand via `findOne(id)`. */
   async findAll() {
     return this.prisma.cardTemplate.findMany({
       where: { NOT: { name: ACTIVE_DESIGN_NAME } },
       orderBy: { createdAt: 'desc' },
+      select: { id: true, name: true, cardType: true, createdAt: true },
     });
+  }
+
+  /** Full template (with `design`) — for thumbnail render & loading into editor. */
+  async findOne(id: string) {
+    return this.prisma.cardTemplate.findUnique({ where: { id } });
   }
 
   async create(data: { name: string; cardType: string; design: object }) {

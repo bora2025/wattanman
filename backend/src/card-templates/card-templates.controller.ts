@@ -25,6 +25,18 @@ export class CardTemplatesController {
   }
 
   /**
+   * GET :id — returns the full template (including design). ADMIN only.
+   * Used by the picker to lazy-load designs on demand instead of bundling
+   * them all into the list call.
+   * NOTE: declared AFTER `active/:cardType` so the more specific route wins.
+   */
+  @Get(':id')
+  @Roles('ADMIN')
+  findOne(@Param('id') id: string) {
+    return this.cardTemplatesService.findOne(id);
+  }
+
+  /**
    * PUT active/:cardType — saves the shared active design. ADMIN only.
    */
   @Put('active/:cardType')

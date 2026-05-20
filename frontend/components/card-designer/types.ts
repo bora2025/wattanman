@@ -179,7 +179,9 @@ export interface SavedTemplate {
   id: string;
   name: string;
   cardType: CardType;
-  design: CardDesign;
+  /** Full design payload. Optional because the API list endpoint omits it for speed —
+   *  fetch on demand via apiLoadTemplate(id). Local-storage helpers still set it. */
+  design?: CardDesign;
   createdAt: string;
 }
 
@@ -314,6 +316,23 @@ export async function apiLoadTemplates(): Promise<SavedTemplate[]> {
     return data as SavedTemplate[];
   } catch {
     return [];
+  }
+}
+
+/** Fetch a single template (including the heavy `design` JSON) on demand. */
+export async function apiLoadTemplate(id: string): Promise<SavedTemplate | null> {
+  try {
+    const res = await apiFetch(`/api/card-templates/${id}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !data.design) return data ?? null;
+    // Prisma Json field may occasionally come back as a string with some drivers
+    if (typeof data.design === 'string') {
+      try { data.design = JSON.parse(data.design); } catch {}
+    }
+    return data as SavedTemplate;
+  } catch {
+    return null;
   }
 }
 

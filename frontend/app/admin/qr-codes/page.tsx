@@ -287,7 +287,7 @@ export default function GenerateQRCodes() {
       { key: '__builtin_blank', design: BLANK_TEMPLATE },
       { key: '__builtin_student', design: STUDENT_TEMPLATE },
       { key: '__builtin_staff', design: STAFF_TEMPLATE },
-      ...templates.map((t) => ({ key: t.id, design: t.design })),
+      ...templates.flatMap((t) => t.design ? [{ key: t.id, design: t.design }] : []),
     ];
     let cancelled = false;
     (async () => {
