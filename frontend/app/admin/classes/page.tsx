@@ -1112,17 +1112,25 @@ function ManageClasses() {
                   {/* Edit Student Inline Panel */}
                   {editingStudent && (
                     <div className="relative mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200 space-y-3">
-                      {/* Loading overlay card */}
+                      {/* Full-viewport loading overlay (guaranteed visible) */}
                       {savingStudent && (
-                        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-white/75 backdrop-blur-sm">
-                          <div className="flex flex-col items-center gap-3 px-6 py-5 rounded-2xl bg-white border border-amber-200 shadow-xl">
-                            <svg className="w-10 h-10 text-amber-500 animate-spin" viewBox="0 0 24 24" fill="none">
-                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25"/>
-                              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                            </svg>
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-in fade-in" role="status" aria-live="polite">
+                          <div className="flex flex-col items-center gap-4 px-8 py-7 rounded-2xl bg-white border border-amber-200 shadow-2xl min-w-[280px]">
+                            <div className="relative">
+                              <svg className="w-14 h-14 text-amber-500 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/>
+                                <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-amber-600 text-lg">💾</span>
+                              </div>
+                            </div>
                             <div className="text-center">
-                              <div className="text-sm font-semibold text-amber-800">Saving student…</div>
-                              <div className="text-xs text-slate-500 mt-0.5">Please wait, applying your changes</div>
+                              <div className="text-base font-semibold text-slate-800">Saving student…</div>
+                              <div className="text-xs text-slate-500 mt-1">Please wait, applying your changes</div>
+                            </div>
+                            <div className="w-full h-1 bg-amber-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 animate-pulse" style={{ width: '70%' }} />
                             </div>
                           </div>
                         </div>
