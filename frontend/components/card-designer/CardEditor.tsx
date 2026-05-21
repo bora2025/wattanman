@@ -296,10 +296,44 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     const localDesign = loadSavedDesign(cardType);
     if (localDesign) setDesign(localDesign);
     apiGetActiveDesign(cardType).then((apiDesign) => {
-      if (apiDesign) { saveDesign(apiDesign); setDesign(apiDesign); lastDesignRef.current = apiDesign; }
-      else if (localDesign) { saveDesign(localDesign); syncToServer(localDesign); }
+      if (apiDesign) {
+        // Server design always wins so every admin sees the same active template
+        saveDesign(apiDesign);
+        setDesign(apiDesign);
+        lastDesignRef.current = apiDesign;
+      }
+      // Note: we deliberately do NOT auto-push localDesign when the server has no active design.
+      // That used to clobber peer admins' state — only an explicit Apply or user edit may push.
     }).finally(() => { setTimeout(() => { isLoadingRef.current = false; }, 2000); });
   }, [initialCardType, syncToServer]);
+
+  // ── Refresh active design when the tab regains focus ─────────────────────
+  // Ensures admins see template changes applied by other admins without a full page reload.
+  useEffect(() => {
+    if (!initialCardType) return;
+    const cardType = initialCardType;
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      apiGetActiveDesign(cardType).then((apiDesign) => {
+        if (!apiDesign) return;
+        // Skip if identical to what we already have to avoid churn
+        try {
+          if (JSON.stringify(apiDesign) === JSON.stringify(lastDesignRef.current)) return;
+        } catch { /* fall through */ }
+        isLoadingRef.current = true;
+        saveDesign(apiDesign);
+        setDesign(apiDesign);
+        lastDesignRef.current = apiDesign;
+        setTimeout(() => { isLoadingRef.current = false; }, 1500);
+      }).catch(() => { /* keep current state on failure */ });
+    };
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [initialCardType]);
 
   // ── Eager-preload saved template list on mount (warm cache before picker opens) ──
   useEffect(() => {
@@ -726,8 +760,12 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   };
 
   // ── Apply template ────────────────────────────────────────────────────────
-  const handleApplyTemplate = useCallback((d: CardDesign) => {
+  const handleApplyTemplate = useCallback((d: CardDesign, source?: { id?: string; name: string }) => {
     const copy = JSON.parse(JSON.stringify(d)) as CardDesign;
+    // Stamp provenance so every admin sees which template is currently in use
+    copy._appliedFrom = source
+      ? { id: source.id, name: source.name, appliedAt: new Date().toISOString() }
+      : null;
     isLoadingRef.current = false;
     setDesign(copy); setSelectedId(null); setShowTemplatePicker(false);
     setIsStartScreen(false);
@@ -738,7 +776,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     // Design is fetched on demand because the list API call omits it for speed.
     const design = await loadTemplateDesignCached(tpl);
     if (!design) return;
-    handleApplyTemplate(design);
+    handleApplyTemplate(design, { id: tpl.id, name: tpl.name });
   };
   const handleDeleteTemplate = async (id: string) => {
     await apiDeleteTemplate(id);
@@ -746,6 +784,16 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     setSavedTemplates((prev) => prev.filter((t) => t.id !== id));
     setStartTemplates((prev) => prev.filter((t) => t.id !== id));
   };
+
+  // Open the picker but first refresh the template list so admins always see templates saved by their peers.
+  const openTemplatePicker = useCallback(() => {
+    invalidateTemplateListCache();
+    setShowTemplatePicker(true);
+    apiLoadTemplates().then((templates) => {
+      setSavedTemplates(templates);
+      setSavedTemplatesLoaded(true);
+    }).catch(() => { /* picker still renders cached results */ });
+  }, []);
 
   // ── Card type switch ──────────────────────────────────────────────────────
   const handleCardTypeChange = (type: CardType) => {
@@ -928,7 +976,16 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         <Divider />
 
         {/* Design */}
-        <TopBtn icon={<Icons.Templates />} label="Templates" onClick={() => setShowTemplatePicker(true)} variant="amber" />
+        <TopBtn icon={<Icons.Templates />} label="Templates" onClick={openTemplatePicker} variant="amber" />
+        {design._appliedFrom?.name && (
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-emerald-700/60 bg-emerald-600/15 text-[11px] font-medium text-emerald-300 shrink-0 max-w-[180px]"
+            title={`Currently applied template: ${design._appliedFrom.name}${design._appliedFrom.appliedAt ? ` (applied ${new Date(design._appliedFrom.appliedAt).toLocaleString()})` : ''}`}
+          >
+            <span className="text-[10px] leading-none">✓</span>
+            <span className="hidden sm:inline truncate">{design._appliedFrom.name}</span>
+          </div>
+        )}
 
         {/* Export */}
         <div className="relative">
@@ -1350,8 +1407,13 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
-                    {savedTemplates.filter((t) => t.cardType === 'certificate-student' || t.cardType === 'certificate-staff').map((tpl) => (
-                      <div key={tpl.id} className="rounded-xl border-2 border-slate-200 hover:border-slate-400 bg-white transition-all relative group overflow-hidden">
+                    {savedTemplates.filter((t) => t.cardType === 'certificate-student' || t.cardType === 'certificate-staff').map((tpl) => {
+                      const isActive = design._appliedFrom?.id === tpl.id;
+                      return (
+                      <div key={tpl.id} className={`rounded-xl border-2 bg-white transition-all relative group overflow-hidden ${isActive ? 'border-emerald-500 ring-2 ring-emerald-300 shadow-md' : 'border-slate-200 hover:border-slate-400'}`}>
+                        {isActive && (
+                          <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold shadow flex items-center gap-1">✓ Active</span>
+                        )}
                         <button onClick={() => handleLoadTemplate(tpl)} className="w-full text-left">
                           <div className="bg-slate-50 flex items-center justify-center p-3 border-b border-slate-100 h-28">
                             {templatePreviews[tpl.id] ? <img src={templatePreviews[tpl.id]} alt={tpl.name} className="rounded-lg shadow-sm max-h-24 object-contain" /> : <span className="text-slate-300 text-xs">Preview</span>}
@@ -1363,7 +1425,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(tpl.id); }} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </>
@@ -1437,8 +1500,13 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
-                    {savedTemplates.filter((t) => lockedType ? t.cardType === lockedType : (t.cardType === 'student' || t.cardType === 'staff')).map((tpl) => (
-                      <div key={tpl.id} className="rounded-xl border-2 border-slate-200 hover:border-slate-400 bg-white transition-all relative group overflow-hidden">
+                    {savedTemplates.filter((t) => lockedType ? t.cardType === lockedType : (t.cardType === 'student' || t.cardType === 'staff')).map((tpl) => {
+                      const isActive = design._appliedFrom?.id === tpl.id;
+                      return (
+                      <div key={tpl.id} className={`rounded-xl border-2 bg-white transition-all relative group overflow-hidden ${isActive ? 'border-emerald-500 ring-2 ring-emerald-300 shadow-md' : 'border-slate-200 hover:border-slate-400'}`}>
+                        {isActive && (
+                          <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold shadow flex items-center gap-1">✓ Active</span>
+                        )}
                         <button onClick={() => handleLoadTemplate(tpl)} className="w-full text-left">
                           <div className="bg-slate-50 flex items-center justify-center p-3 border-b border-slate-100 h-28">
                             {templatePreviews[tpl.id] ? <img src={templatePreviews[tpl.id]} alt={tpl.name} className="rounded-lg shadow-sm max-h-24 object-contain" /> : <span className="text-slate-300 text-xs">Preview</span>}
@@ -1450,7 +1518,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(tpl.id); }} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </>

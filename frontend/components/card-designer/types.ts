@@ -174,6 +174,8 @@ export interface CardDesign {
   shapes: ShapeElement[];
   photo: PhotoPlaceholder | null;
   qr: QrPlaceholder | null;
+  /** Provenance for the currently-applied template — visible to every admin so they all see the same source. */
+  _appliedFrom?: { id?: string; name: string; appliedAt: string } | null;
 }
 
 export const CARD_SIZE_PRESETS: Record<Exclude<CardSize, 'custom'>, { width: number; height: number; label: string }> = {
