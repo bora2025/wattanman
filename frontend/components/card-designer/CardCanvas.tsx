@@ -34,12 +34,22 @@ interface CardCanvasProps {
 
 export default function CardCanvas({ design, selectedId, onSelect, onMoveText, onMoveLogo, onResizeLogo, onMoveShape, onResizeShape, onMovePhoto, onResizePhoto, onMoveQr, onResizeQr, onContextMenu, onDropField }: CardCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
-  // Build {{name}} → "Sokha Chan" preview lookup based on current cardType
+  // Build {{name}} → "Sokha Chan" preview lookup based on current cardType,
+  // with a global fallback so common placeholders still substitute even when
+  // cardType is 'general' or doesn't define the key (e.g. user typed
+  // {{name}} on a blank/general card).
   const previewExamples = useMemo(() => {
     const map: Record<string, string> = {};
-    const fields = CARD_TYPE_FIELDS[design.cardType] ?? [];
-    for (const f of fields) {
-      // key is stored as "{{name}}" — strip braces and lowercase for lookup
+    // Global fallback: merge examples from every cardType. Earlier entries lose
+    // to later ones; that's fine because examples for the same key are similar.
+    for (const ct of Object.keys(CARD_TYPE_FIELDS) as (keyof typeof CARD_TYPE_FIELDS)[]) {
+      for (const f of CARD_TYPE_FIELDS[ct] ?? []) {
+        const k = f.key.replace(/[{}]/g, '').trim().toLowerCase();
+        if (!(k in map)) map[k] = f.example;
+      }
+    }
+    // Current cardType wins (override) so e.g. staff {{name}} shows the staff example.
+    for (const f of CARD_TYPE_FIELDS[design.cardType] ?? []) {
       const k = f.key.replace(/[{}]/g, '').trim().toLowerCase();
       map[k] = f.example;
     }
