@@ -10,6 +10,8 @@ export interface TextElement {
   textAlign: 'left' | 'center' | 'right';
   fontFamily?: string;
   zIndex?: number;
+  visible?: boolean;
+  locked?: boolean;
 }
 
 export const FONT_OPTIONS = [
@@ -51,6 +53,8 @@ export interface LogoElement {
   removeBg?: boolean;      // CSS mix-blend-mode trick for white bg removal
   /** Original src saved before AI background removal — set when AI removal is applied */
   originalSrc?: string;
+  visible?: boolean;
+  locked?: boolean;
 }
 
 export type ShapeType = 'rectangle' | 'circle' | 'line';
@@ -81,6 +85,8 @@ export interface ShapeElement {
     angle: number;
     stops: GradientStop[];
   };
+  visible?: boolean;
+  locked?: boolean;
 }
 
 export interface PhotoPlaceholder {
@@ -92,6 +98,8 @@ export interface PhotoPlaceholder {
   borderColor: string;
   borderWidth: number;
   zIndex?: number;
+  visible?: boolean;
+  locked?: boolean;
 }
 
 export interface QrPlaceholder {
@@ -104,6 +112,8 @@ export interface QrPlaceholder {
   borderColor: string;
   borderWidth: number;
   zIndex?: number;
+  visible?: boolean;
+  locked?: boolean;
 }
 
 export type CardSize = 'credit' | 'id-1' | 'a7' | 'custom';

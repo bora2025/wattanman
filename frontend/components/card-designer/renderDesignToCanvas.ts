@@ -58,11 +58,11 @@ export async function renderDesignToCanvas(
     | { kind: 'text'; z: number; data: TextElement };
 
   const items: RenderItem[] = [
-    ...(design.photo ? [{ kind: 'photo' as const, z: design.photo.zIndex ?? 0, data: design.photo }] : []),
-    ...(design.qr ? [{ kind: 'qr' as const, z: design.qr.zIndex ?? 0, data: design.qr }] : []),
-    ...(design.shapes ?? []).map((s) => ({ kind: 'shape' as const, z: s.zIndex ?? 0, data: s })),
-    ...design.logos.map((l) => ({ kind: 'logo' as const, z: l.zIndex ?? 0, data: l })),
-    ...design.texts.map((t) => ({ kind: 'text' as const, z: t.zIndex ?? 0, data: t })),
+    ...(design.photo && design.photo.visible !== false ? [{ kind: 'photo' as const, z: design.photo.zIndex ?? 0, data: design.photo }] : []),
+    ...(design.qr && design.qr.visible !== false ? [{ kind: 'qr' as const, z: design.qr.zIndex ?? 0, data: design.qr }] : []),
+    ...(design.shapes ?? []).filter((s) => s.visible !== false).map((s) => ({ kind: 'shape' as const, z: s.zIndex ?? 0, data: s })),
+    ...design.logos.filter((l) => l.visible !== false).map((l) => ({ kind: 'logo' as const, z: l.zIndex ?? 0, data: l })),
+    ...design.texts.filter((t) => t.visible !== false).map((t) => ({ kind: 'text' as const, z: t.zIndex ?? 0, data: t })),
   ].sort((a, b) => a.z - b.z);
 
   for (const item of items) {

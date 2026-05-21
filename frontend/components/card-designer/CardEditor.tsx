@@ -1180,7 +1180,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         {/* LEFT — Design Tools (Toolbar) */}
         <div
           className="shrink-0 bg-[#1a1a1a] border-r border-[#333] flex flex-col transition-all duration-200 overflow-hidden relative"
-          style={{ width: leftOpen ? 320 : 0 }}
+          style={{ width: isPreviewMode ? 0 : (leftOpen ? 320 : 0) }}
         >
           <div className="w-[320px] flex flex-col h-full">
             <div className="flex-1 min-h-0 overflow-hidden">
@@ -1194,7 +1194,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           </div>
         </div>
         {/* Left toggle button */}
-        <button
+        {!isPreviewMode && <button
           onClick={() => setLeftOpen((v) => !v)}
           title={leftOpen ? 'Collapse Properties' : 'Expand Properties'}
           className="shrink-0 w-4 flex flex-col items-center justify-center bg-[#252525] border-r border-[#333] hover:bg-[#2f2f2f] text-[#555] hover:text-white transition-colors z-10 group"
@@ -1202,7 +1202,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           <svg viewBox="0 0 8 16" className="w-2.5 h-5 transition-transform" style={{ transform: leftOpen ? 'none' : 'rotate(180deg)' }} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M6 2L2 8l4 6" />
           </svg>
-        </button>
+        </button>}
 
         {/* CENTER — Canvas + footer zoom bar */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -1211,10 +1211,10 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
             className="flex-1 overflow-auto flex items-start justify-center"
             style={{
               padding: 48,
-              background: showGrid
+              background: showGrid && !isPreviewMode
                 ? `linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px), #2a2a2a`
                 : '#2a2a2a',
-              backgroundSize: showGrid ? '20px 20px, 20px 20px, auto' : 'auto',
+              backgroundSize: showGrid && !isPreviewMode ? '20px 20px, 20px 20px, auto' : 'auto',
             }}
             onClick={(e) => { if (e.target === e.currentTarget) setSelectedId(null); }}
           >
@@ -1251,7 +1251,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
         {/* RIGHT — Layers Panel */}
         {/* Right toggle button */}
-        <button
+        {!isPreviewMode && <button
           onClick={() => setRightOpen((v) => !v)}
           title={rightOpen ? 'Collapse Layers' : 'Expand Layers'}
           className="shrink-0 w-4 flex flex-col items-center justify-center bg-[#252525] border-l border-[#333] hover:bg-[#2f2f2f] text-[#555] hover:text-white transition-colors z-10 group"
@@ -1259,10 +1259,10 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           <svg viewBox="0 0 8 16" className="w-2.5 h-5 transition-transform" style={{ transform: rightOpen ? 'none' : 'rotate(180deg)' }} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M2 2l4 6-4 6" />
           </svg>
-        </button>
+        </button>}
         <div
           className="shrink-0 transition-all duration-200 overflow-hidden"
-          style={{ width: rightOpen ? 220 : 0 }}
+          style={{ width: isPreviewMode ? 0 : (rightOpen ? 220 : 0) }}
         >
           <div style={{ width: 220 }}>
             <LayersPanel design={design} selectedId={selectedId} onSelect={setSelectedId} onDesignChange={setDesign} onArrange={handleArrange} />

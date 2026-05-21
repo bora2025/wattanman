@@ -71,6 +71,12 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
 
   const handleMouseDown = (e: React.MouseEvent, type: 'text' | 'logo' | 'shape', id: string, elemX: number, elemY: number) => {
     e.stopPropagation();
+    // Respect lock: locked elements cannot be selected or moved
+    const isLocked =
+      (type === 'text' && design.texts.find((t) => t.id === id)?.locked) ||
+      (type === 'logo' && design.logos.find((l) => l.id === id)?.locked) ||
+      (type === 'shape' && (design.shapes ?? []).find((s) => s.id === id)?.locked);
+    if (isLocked) return;
     onSelect(id);
     dragRef.current = { type, id, startX: e.clientX, startY: e.clientY, elemX, elemY };
 
@@ -107,6 +113,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
   const handleResizeMouseDown = (e: React.MouseEvent, shape: ShapeElement, handle: HandlePosition) => {
     e.stopPropagation();
     e.preventDefault();
+    if (shape.locked) return;
     onSelect(shape.id);
     dragRef.current = {
       type: 'resize',
@@ -195,6 +202,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
   const handlePhotoResizeMouseDown = (e: React.MouseEvent, photo: PhotoPlaceholder, handle: HandlePosition) => {
     e.stopPropagation();
     e.preventDefault();
+    if (photo.locked) return;
     onSelect('__photo__');
     dragRef.current = {
       type: 'photo-resize',
@@ -238,6 +246,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
   const handleQrResizeMouseDown = (e: React.MouseEvent, qr: QrPlaceholder, handle: HandlePosition) => {
     e.stopPropagation();
     e.preventDefault();
+    if (qr.locked) return;
     onSelect('__qr__');
     dragRef.current = {
       type: 'qr-resize',
@@ -281,6 +290,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
   const handleLogoResizeMouseDown = (e: React.MouseEvent, logo: LogoElement, handle: HandlePosition) => {
     e.stopPropagation();
     e.preventDefault();
+    if (logo.locked) return;
     onSelect(logo.id);
     dragRef.current = {
       type: 'logo-resize',
@@ -415,11 +425,11 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
 
           {/* All elements sorted by zIndex (including photo and qr) */}
           {[
-            ...(design.photo ? [{ kind: 'photo' as const, id: '__photo__', z: design.photo.zIndex ?? 0, data: design.photo }] : []),
-            ...(design.qr ? [{ kind: 'qr' as const, id: '__qr__', z: design.qr.zIndex ?? 0, data: design.qr }] : []),
-            ...(design.shapes ?? []).map((shape) => ({ kind: 'shape' as const, id: shape.id, z: shape.zIndex ?? 0, data: shape })),
-            ...design.logos.map((logo) => ({ kind: 'logo' as const, id: logo.id, z: logo.zIndex ?? 0, data: logo })),
-            ...design.texts.map((text) => ({ kind: 'text' as const, id: text.id, z: text.zIndex ?? 0, data: text })),
+            ...(design.photo && design.photo.visible !== false ? [{ kind: 'photo' as const, id: '__photo__', z: design.photo.zIndex ?? 0, data: design.photo }] : []),
+            ...(design.qr && design.qr.visible !== false ? [{ kind: 'qr' as const, id: '__qr__', z: design.qr.zIndex ?? 0, data: design.qr }] : []),
+            ...(design.shapes ?? []).filter((s) => s.visible !== false).map((shape) => ({ kind: 'shape' as const, id: shape.id, z: shape.zIndex ?? 0, data: shape })),
+            ...design.logos.filter((l) => l.visible !== false).map((logo) => ({ kind: 'logo' as const, id: logo.id, z: logo.zIndex ?? 0, data: logo })),
+            ...design.texts.filter((t) => t.visible !== false).map((text) => ({ kind: 'text' as const, id: text.id, z: text.zIndex ?? 0, data: text })),
           ]
             .sort((a, b) => a.z - b.z)
             .map((item) => {
@@ -441,6 +451,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                     }}
                     onMouseDown={(e) => {
                       e.stopPropagation();
+                      if (photo.locked) return;
                       onSelect('__photo__');
                       dragRef.current = { type: 'photo', id: '__photo__', startX: e.clientX, startY: e.clientY, elemX: photo.x, elemY: photo.y };
                       const handleMouseMove = (ev: MouseEvent) => {
@@ -486,6 +497,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                     }}
                     onMouseDown={(e) => {
                       e.stopPropagation();
+                      if (qr.locked) return;
                       onSelect('__qr__');
                       dragRef.current = { type: 'qr', id: '__qr__', startX: e.clientX, startY: e.clientY, elemX: qr.x, elemY: qr.y };
                       const handleMouseMove = (ev: MouseEvent) => {
