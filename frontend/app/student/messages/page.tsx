@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import Link from 'next/link'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
-import { apiFetch } from '../../../lib/api'
+import { apiFetch, getCurrentUser } from '../../../lib/api'
 import { formatCambodiaTime } from '../../../lib/dateUtils'
+import { useMessageSocket } from '../../../lib/messageSocket'
 
 const studentNav = [
   { label: 'nav.dashboard', href: '/student', icon: 'dashboard' },
@@ -24,7 +25,16 @@ interface Teacher { id: string; name: string; role: string }
 export default function StudentMessagesPage() {
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null)
   const [showTeacherList, setShowTeacherList] = useState(false)
+  const [myId, setMyId] = useState<string>('')
   const qc = useQueryClient()
+
+  useEffect(() => { getCurrentUser().then(u => u && setMyId(u.userId)) }, [])
+  useMessageSocket(myId || undefined, {
+    onMessage: () => {
+      qc.invalidateQueries({ queryKey: ['conversation', selectedPartnerId] })
+      qc.invalidateQueries({ queryKey: ['student-inbox'] })
+    },
+  })
 
   const { data: inbox = [] as Inbox[], isLoading } = useQuery<Inbox[]>({
     queryKey: ['student-inbox'],

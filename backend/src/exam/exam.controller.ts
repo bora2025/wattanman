@@ -74,4 +74,19 @@ export class ExamController {
   getResult(@Param('attemptId') attemptId: string) {
     return this.examService.getAttemptResult(attemptId);
   }
+
+  @Roles('ADMIN', 'TEACHER')
+  @Patch('attempts/:attemptId/grade')
+  gradeAttempt(
+    @Param('attemptId') attemptId: string,
+    @Body() body: { perQuestionMarks: Record<string, number>; feedback?: string },
+  ) {
+    return this.examService.gradeAttempt(attemptId, body.perQuestionMarks ?? {}, body.feedback);
+  }
+
+  @Roles('STUDENT', 'ADMIN')
+  @Get('student/results')
+  getMyResults(@Request() req: any) {
+    return this.examService.getStudentResults(req.user.userId);
+  }
 }

@@ -22,6 +22,8 @@ import { ExamModule } from './exam/exam.module';
 import { AssignmentsModule } from './assignments/assignments.module';
 import { ParentModule } from './parent/parent.module';
 import { BackupModule } from './backup/backup.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
+import { NotificationPreferenceModule } from './notification-preference/notification-preference.module';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { BackupModule } from './backup/backup.module';
     AssignmentsModule,
     ParentModule,
     BackupModule,
+    AnnouncementsModule,
+    NotificationPreferenceModule,
   ],
   controllers: [AppController],
   providers: [

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AuthGuard from '../../components/AuthGuard';
 import Sidebar from '../../components/Sidebar';
+import AnnouncementFeed from '../../components/AnnouncementFeed';
 import { apiFetch, getCurrentUser } from '../../lib/api';
 import { useLanguage } from '../../lib/i18n';
 import { IconClipboard, IconDownload } from '../../components/Icons';
@@ -43,7 +44,7 @@ const studentNav = [
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
   { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
-  { label: 'Messages', href: '/student/messages', icon: 'clipboard' },
+  { label: 'Messages', href: '/student/messages', icon: 'clipboard', badgeKey: 'messages' as const },
 ];
 
 export default function StudentPortal() {
@@ -143,6 +144,11 @@ export default function StudentPortal() {
           <div className="page-content">
             <div className="h-14" />
             <div className="page-body space-y-4">
+              {/* Announcements */}
+              <div className="card p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">📣 Announcements</h3>
+                <AnnouncementFeed accent="emerald" limit={5} />
+              </div>
               {/* Mobile Action Grid */}
               <div className="grid grid-cols-4 gap-3">
                 <Link href="/student" className="action-card-mobile">

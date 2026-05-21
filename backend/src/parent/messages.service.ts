@@ -1,9 +1,41 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { MessagesGateway } from './messages.gateway';
 
 @Injectable()
 export class MessagesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private gateway: MessagesGateway) {}
+
+  /**
+   * Safeguarding policy:
+   *   - PARENT ↔ PARENT  blocked
+   *   - STUDENT ↔ STUDENT blocked
+   *   - PARENT ↔ STUDENT allowed only when student is the parent's own child
+   *   - TEACHER/ADMIN can message anyone
+   */
+  private async assertCanMessage(senderId: string, receiverId: string) {
+    if (senderId === receiverId) throw new BadRequestException('Cannot message yourself');
+    const [sender, receiver] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: senderId }, select: { id: true, role: true } }),
+      this.prisma.user.findUnique({ where: { id: receiverId }, select: { id: true, role: true } }),
+    ]);
+    if (!sender || !receiver) throw new BadRequestException('User not found');
+
+    const a = sender.role;
+    const b = receiver.role;
+    if (a === 'ADMIN' || a === 'TEACHER' || b === 'ADMIN' || b === 'TEACHER') return;
+    if (a === 'PARENT' && b === 'PARENT') throw new ForbiddenException('Parents cannot message other parents');
+    if (a === 'STUDENT' && b === 'STUDENT') throw new ForbiddenException('Students cannot message other students');
+    if ((a === 'PARENT' && b === 'STUDENT') || (a === 'STUDENT' && b === 'PARENT')) {
+      const parentId = a === 'PARENT' ? sender.id : receiver.id;
+      const studentUserId = a === 'STUDENT' ? sender.id : receiver.id;
+      const child = await this.prisma.student.findFirst({
+        where: { userId: studentUserId, parentId },
+        select: { id: true },
+      });
+      if (!child) throw new ForbiddenException('You may only message your own child / parent');
+    }
+  }
 
   async getConversation(userA: string, userB: string) {
     return this.prisma.message.findMany({
@@ -46,13 +78,17 @@ export class MessagesService {
   }
 
   async send(senderId: string, receiverId: string, content: string) {
-    return this.prisma.message.create({
-      data: { senderId, receiverId, content },
+    if (!content?.trim()) throw new BadRequestException('Message cannot be empty');
+    await this.assertCanMessage(senderId, receiverId);
+    const created = await this.prisma.message.create({
+      data: { senderId, receiverId, content: content.trim() },
       include: {
         sender: { select: { id: true, name: true, photo: true } },
         receiver: { select: { id: true, name: true, photo: true } },
       },
     });
+    try { this.gateway.notifyNewMessage(receiverId, senderId, created); } catch {}
+    return created;
   }
 
   async markRead(userId: string, partnerId: string) {
@@ -60,6 +96,14 @@ export class MessagesService {
       where: { senderId: partnerId, receiverId: userId, readAt: null },
       data: { readAt: new Date() },
     });
+    try { this.gateway.notifyRead(partnerId, userId); } catch {}
+  }
+
+  async unreadCount(userId: string) {
+    const count = await this.prisma.message.count({
+      where: { receiverId: userId, readAt: null },
+    });
+    return { count };
   }
 
   async getTeachers() {

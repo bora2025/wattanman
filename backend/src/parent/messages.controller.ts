@@ -31,6 +31,12 @@ export class MessagesController {
     return this.svc.markRead(req.user.userId, partnerId);
   }
 
+  @Roles('PARENT', 'TEACHER', 'ADMIN', 'STUDENT')
+  @Get('unread-count')
+  unreadCount(@Request() req: any) {
+    return this.svc.unreadCount(req.user.userId);
+  }
+
   @Roles('PARENT', 'STUDENT', 'ADMIN')
   @Get('teachers')
   getTeachers() { return this.svc.getTeachers(); }

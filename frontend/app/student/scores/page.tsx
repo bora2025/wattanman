@@ -13,27 +13,77 @@ const studentNav = [
   { label: 'Messages', href: '/student/messages', icon: 'clipboard' },
 ]
 
-interface Grade { id: string; marks: number; assignment: { title: string; totalMarks: number; class: { name: string; subject: string } } }
+interface UnifiedScore {
+  id: string
+  kind: 'assignment' | 'exam'
+  title: string
+  subject: string
+  className: string | null
+  marks: number
+  totalMarks: number
+  date: string | null
+  status?: string
+}
 
 export default function StudentScoresPage() {
-  const { data: grades = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ['student-grades'],
+  const assignmentsQuery = useQuery({
+    queryKey: ['student-assignments-scores'],
     queryFn: async () => {
       const r = await apiFetch('/api/assignments/student/my-assignments')
-      if (!r.ok) throw new Error()
-      const data = await r.json() as any[]
-      return data.filter(a => a.submission?.marks !== null).map(a => ({
-        id: a.id, marks: a.submission.marks, assignment: { title: a.title, totalMarks: a.totalMarks, class: a.class }
-      })) as Grade[]
+      if (!r.ok) throw new Error('Failed to load assignments')
+      return r.json() as Promise<any[]>
     },
   })
 
-  const avg = grades.length
-    ? Math.round(grades.reduce((s, g) => s + (g.marks / g.assignment.totalMarks) * 100, 0) / grades.length)
+  const examsQuery = useQuery({
+    queryKey: ['student-exam-results'],
+    queryFn: async () => {
+      const r = await apiFetch('/api/exams/student/results')
+      if (!r.ok) throw new Error('Failed to load exam results')
+      return r.json() as Promise<any[]>
+    },
+  })
+
+  const isLoading = assignmentsQuery.isLoading || examsQuery.isLoading
+  const isError = assignmentsQuery.isError || examsQuery.isError
+  const refetch = () => { assignmentsQuery.refetch(); examsQuery.refetch() }
+
+  const assignmentScores: UnifiedScore[] = (assignmentsQuery.data ?? [])
+    .filter((a: any) => a?.submission?.marks !== null && a?.submission?.marks !== undefined)
+    .map((a: any) => ({
+      id: `a-${a.id}`,
+      kind: 'assignment',
+      title: a.title,
+      subject: a.class?.subject ?? 'Other',
+      className: a.class?.name ?? null,
+      marks: a.submission.marks,
+      totalMarks: a.totalMarks,
+      date: a.submission.submittedAt ?? null,
+    }))
+
+  const examScores: UnifiedScore[] = (examsQuery.data ?? [])
+    .filter((e: any) => e?.status === 'GRADED' && e?.score !== null && e?.score !== undefined)
+    .map((e: any) => ({
+      id: `e-${e.id}`,
+      kind: 'exam',
+      title: e.examTitle,
+      subject: e.subject ?? 'Other',
+      className: e.className ?? null,
+      marks: e.score,
+      totalMarks: e.totalMarks,
+      date: e.gradedAt ?? e.submittedAt ?? null,
+      status: e.grade ?? undefined,
+    }))
+
+  const pendingExams = (examsQuery.data ?? []).filter((e: any) => e?.status === 'SUBMITTED').length
+  const scores = [...assignmentScores, ...examScores]
+
+  const avg = scores.length
+    ? Math.round(scores.reduce((s, g) => s + (g.marks / g.totalMarks) * 100, 0) / scores.length)
     : null
 
-  const bySubject = grades.reduce<Record<string, Grade[]>>((acc, g) => {
-    const key = g.assignment.class.subject
+  const bySubject = scores.reduce<Record<string, UnifiedScore[]>>((acc, g) => {
+    const key = g.subject
     if (!acc[key]) acc[key] = []
     acc[key].push(g)
     return acc
@@ -54,14 +104,16 @@ export default function StudentScoresPage() {
               <p className="text-red-600 mb-2">Failed to load scores</p>
               <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
             </div>
-          ) : grades.length === 0 ? (
+          ) : scores.length === 0 ? (
             <div className="bg-white rounded-xl p-12 text-center shadow-sm">
               <p className="text-4xl mb-3">📊</p>
-              <p className="text-slate-400">No graded assignments yet</p>
+              <p className="text-slate-400">No graded assignments or exams yet</p>
+              {pendingExams > 0 && (
+                <p className="text-xs text-amber-600 mt-2">{pendingExams} exam(s) submitted — awaiting teacher grading.</p>
+              )}
             </div>
           ) : (
             <>
-              {/* Average card */}
               {avg !== null && (
                 <div className="bg-white rounded-xl shadow-sm p-5 mb-6 flex items-center gap-4 border border-slate-100">
                   <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white ${avg >= 70 ? 'bg-emerald-500' : avg >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}>
@@ -69,14 +121,21 @@ export default function StudentScoresPage() {
                   </div>
                   <div>
                     <p className="font-bold text-slate-800 text-lg">Overall: {avg}%</p>
-                    <p className="text-sm text-slate-400">{grades.length} graded assignment(s) across {Object.keys(bySubject).length} subject(s)</p>
+                    <p className="text-sm text-slate-400">
+                      {assignmentScores.length} assignment(s) · {examScores.length} exam(s) · {Object.keys(bySubject).length} subject(s)
+                    </p>
                   </div>
                 </div>
               )}
 
-              {/* By subject */}
-              {Object.entries(bySubject).map(([subject, subjectGrades]) => {
-                const subAvg = Math.round(subjectGrades.reduce((s, g) => s + (g.marks / g.assignment.totalMarks) * 100, 0) / subjectGrades.length)
+              {pendingExams > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-sm text-amber-800">
+                  ⏳ {pendingExams} exam(s) submitted — awaiting teacher grading.
+                </div>
+              )}
+
+              {Object.entries(bySubject).map(([subject, subjectScores]) => {
+                const subAvg = Math.round(subjectScores.reduce((s, g) => s + (g.marks / g.totalMarks) * 100, 0) / subjectScores.length)
                 return (
                   <div key={subject} className="bg-white rounded-xl shadow-sm p-4 mb-4 border border-slate-100">
                     <div className="flex items-center justify-between mb-3">
@@ -84,15 +143,21 @@ export default function StudentScoresPage() {
                       <span className={`text-sm font-bold ${subAvg >= 70 ? 'text-emerald-600' : subAvg >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{subAvg}%</span>
                     </div>
                     <div className="space-y-2">
-                      {subjectGrades.map(g => {
-                        const pct = Math.round((g.marks / g.assignment.totalMarks) * 100)
+                      {subjectScores.map(g => {
+                        const pct = Math.round((g.marks / g.totalMarks) * 100)
                         return (
                           <div key={g.id} className="flex items-center gap-3">
-                            <p className="text-xs text-slate-600 w-40 truncate">{g.assignment.title}</p>
+                            <div className="w-40 truncate">
+                              <p className="text-xs text-slate-600 truncate">{g.title}</p>
+                              <p className="text-[10px] text-slate-400 uppercase tracking-wide">
+                                {g.kind === 'exam' ? '📝 Exam' : '📚 Assignment'}
+                                {g.status && <span className="ml-1">· {g.status}</span>}
+                              </p>
+                            </div>
                             <div className="flex-1 bg-slate-100 rounded-full h-1.5">
                               <div className={`h-1.5 rounded-full ${pct >= 70 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-400' : 'bg-red-500'}`} style={{ width: `${pct}%` }} />
                             </div>
-                            <p className="text-xs font-semibold text-slate-700 w-14 text-right">{g.marks}/{g.assignment.totalMarks}</p>
+                            <p className="text-xs font-semibold text-slate-700 w-14 text-right">{g.marks}/{g.totalMarks}</p>
                           </div>
                         )
                       })}

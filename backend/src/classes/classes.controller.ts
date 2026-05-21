@@ -21,6 +21,11 @@ export class ClassesController {
     return this.classesService.getClasses(teacherId, studyYearId);
   }
 
+  @Get('parents')
+  async listParents() {
+    return this.classesService.listParents();
+  }
+
   @Roles('ADMIN')
   @Put(':id')
   async updateClass(@Param('id') id: string, @Body() data: { name?: string; subject?: string; teacherId?: string; schedule?: string; studyYearId?: string }) {
@@ -36,7 +41,7 @@ export class ClassesController {
   async updateStudent(
     @Param('classId') classId: string,
     @Param('studentId') studentId: string,
-    @Body() data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string; studentNumber?: string },
+    @Body() data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string; studentNumber?: string; parentId?: string | null },
   ) {
     return this.classesService.updateStudent(studentId, data);
   }

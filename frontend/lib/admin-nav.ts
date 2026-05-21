@@ -25,6 +25,9 @@ export const adminNav = [
   { label: 'nav.manageOfficer', href: '/admin/employees', icon: 'briefcase' },
   { label: 'nav.manageTeachers', href: '/wattaman/scheduled-teacher', icon: 'graduation' },
 
+  // ── Communication ──
+  { label: 'Communication Hub', href: '/admin/communication', icon: 'clipboard', section: 'Communication', badgeKey: 'messages' as const },
+
   // ── Reports & Cards ──
   { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', section: 'nav.section.reports' },
   { label: 'nav.officerReport', href: '/admin/staff-reports', icon: 'bar-chart' },

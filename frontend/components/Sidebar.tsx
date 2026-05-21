@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '../lib/i18n';
 import { iconMap, IconDashboard, IconGlobe, IconLogout } from './Icons';
 
@@ -19,6 +19,8 @@ interface NavItem {
   icon: string;
   /** If set, renders a section header above this item */
   section?: string;
+  /** If set, displays an unread badge driven by /api/<key>/unread-count. */
+  badgeKey?: 'messages' | 'announcements';
 }
 
 interface SidebarProps {
@@ -111,6 +113,39 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
 
   const tabs = pickBottomTabs(navItems, bottomTabs);
   const hasMore = tabs.some(t => t.href === '__more__');
+
+  // Unread counts for badge-bearing nav items. Lightweight, polls every 30s.
+  const needMessages = navItems.some(n => n.badgeKey === 'messages');
+  const needAnnouncements = navItems.some(n => n.badgeKey === 'announcements');
+  const [unread, setUnread] = useState<{ messages: number; announcements: number }>({ messages: 0, announcements: 0 });
+  useEffect(() => {
+    let active = true;
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
+    const tick = async () => {
+      try {
+        const reqs: Promise<Response>[] = [];
+        if (needMessages) reqs.push(fetch(`${apiBase}/api/messages/unread-count`, { credentials: 'include' }));
+        if (needAnnouncements) reqs.push(fetch(`${apiBase}/api/announcements/unread-count`, { credentials: 'include' }));
+        const results = await Promise.all(reqs);
+        let i = 0;
+        let next = { ...unread };
+        if (needMessages) {
+          const r = results[i++]; if (r.ok) next.messages = (await r.json()).count ?? 0;
+        }
+        if (needAnnouncements) {
+          const r = results[i++]; if (r.ok) next.announcements = (await r.json()).count ?? 0;
+        }
+        if (active) setUnread(next);
+      } catch { /* silent */ }
+    };
+    if (needMessages || needAnnouncements) {
+      tick();
+      const id = setInterval(tick, 30_000);
+      return () => { active = false; clearInterval(id); };
+    }
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needMessages, needAnnouncements]);
 
   const handleLogout = async () => {
     try {
@@ -276,6 +311,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
         <nav className="flex-1 px-2 py-3 overflow-y-auto overscroll-contain">
           {navItems.map((item, idx) => {
             const isActive = pathname === item.href;
+            const badgeCount = item.badgeKey ? unread[item.badgeKey] : 0;
             return (
               <div key={item.href}>
                 {sidebarOpen && item.section && (
@@ -292,8 +328,20 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
                       : `${colors.text} ${colors.hover}`
                   } ${sidebarOpen ? '' : 'justify-center'}`}
                 >
-                  <NavIcon icon={item.icon} size={17} />
-                  {sidebarOpen && <span className="truncate">{t(item.label)}</span>}
+                  <span className="relative inline-flex">
+                    <NavIcon icon={item.icon} size={17} />
+                    {badgeCount > 0 && !sidebarOpen && (
+                      <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                        {badgeCount > 9 ? '9+' : badgeCount}
+                      </span>
+                    )}
+                  </span>
+                  {sidebarOpen && <span className="truncate flex-1">{t(item.label)}</span>}
+                  {sidebarOpen && badgeCount > 0 && (
+                    <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                      {badgeCount > 99 ? '99+' : badgeCount}
+                    </span>
+                  )}
                 </Link>
               </div>
             );
@@ -317,6 +365,14 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
           >
             <IconDashboard size={17} />
             {sidebarOpen && <span className="truncate">{t('common.backToHome')}</span>}
+          </Link>
+          <Link
+            href="/settings/notifications"
+            title={sidebarOpen ? undefined : 'Notification settings'}
+            className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm ${colors.text} hover:bg-white/10 transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
+          >
+            <NavIcon icon="settings" size={17} />
+            {sidebarOpen && <span className="truncate">Notifications</span>}
           </Link>
           <button
             onClick={handleLogout}

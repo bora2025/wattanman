@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import Link from 'next/link'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
-import { apiFetch } from '../../../lib/api'
+import { apiFetch, getCurrentUser } from '../../../lib/api'
 import { formatCambodiaTime } from '../../../lib/dateUtils'
+import { useMessageSocket, emitTyping } from '../../../lib/messageSocket'
 
 const parentNav = [
   { label: 'Dashboard', href: '/parent', icon: 'dashboard' },
@@ -25,7 +26,21 @@ interface Teacher { id: string; name: string; role: string }
 export default function ParentMessagesPage() {
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null)
   const [showTeacherList, setShowTeacherList] = useState(false)
+  const [myId, setMyId] = useState<string>('')
+  const [partnerTyping, setPartnerTyping] = useState(false)
   const qc = useQueryClient()
+
+  useEffect(() => { getCurrentUser().then(u => u && setMyId(u.userId)) }, [])
+
+  useMessageSocket(myId || undefined, {
+    onMessage: () => {
+      qc.invalidateQueries({ queryKey: ['conversation', selectedPartnerId] })
+      qc.invalidateQueries({ queryKey: ['parent-inbox'] })
+    },
+    onTyping: (d) => {
+      if (d.from === selectedPartnerId) setPartnerTyping(d.isTyping)
+    },
+  })
 
   const { data: inbox = [] as Inbox[], isLoading } = useQuery<Inbox[]>({
     queryKey: ['parent-inbox'],
@@ -95,7 +110,7 @@ export default function ParentMessagesPage() {
             <>
               <div className="bg-white border-b border-slate-200 px-6 py-4">
                 <p className="font-semibold text-slate-800">{selectedPartner?.name ?? 'Chat'}</p>
-                <p className="text-xs text-slate-400">Verified School</p>
+                <p className="text-xs text-slate-400">{partnerTyping ? 'typing…' : 'Verified School'}</p>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
                 {conversation.map(msg => (
@@ -111,6 +126,11 @@ export default function ParentMessagesPage() {
               </div>
               <form onSubmit={handleSubmit(onSend)} className="bg-white border-t border-slate-200 p-4 flex gap-3">
                 <input {...register('content', { required: true })}
+                  onChange={(e) => {
+                    register('content').onChange(e)
+                    if (myId && selectedPartnerId) emitTyping(myId, selectedPartnerId, e.target.value.length > 0)
+                  }}
+                  onBlur={() => { if (myId && selectedPartnerId) emitTyping(myId, selectedPartnerId, false) }}
                   placeholder="Type a message..." className="flex-1 border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
                 <button type="submit" disabled={sendMutation.isPending}
                   className="bg-sky-600 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-60">

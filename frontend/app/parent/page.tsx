@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import AuthGuard from '../../components/AuthGuard'
+import AnnouncementFeed from '../../components/AnnouncementFeed'
 import { apiFetch } from '../../lib/api'
 
 interface Child { id: string; userId: string; user: { name: string; photo: string | null }; class: { name: string; subject: string } | null }
@@ -75,6 +76,12 @@ export default function ParentDashboard() {
                 ))}
               </div>
             )}
+          </section>
+
+          {/* Announcements */}
+          <section className="mb-8">
+            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">📣 Announcements</h2>
+            <AnnouncementFeed accent="sky" limit={5} />
           </section>
 
           {/* Quick links */}

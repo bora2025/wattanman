@@ -47,6 +47,11 @@ model User {
   // Module 4: Messages
   messagesSent     Message[] @relation("MessageSender")
   messagesReceived Message[] @relation("MessageReceiver")
+
+  // Announcements (Phase 1: Communication Hub)
+  announcementsAuthored Announcement[]     @relation("AnnouncementAuthor")
+  announcementReads     AnnouncementRead[] @relation("AnnouncementReads")
+  notificationPreference NotificationPreference?
 }
 
 model Class {
@@ -67,6 +72,7 @@ model Class {
   sessionConfigs SessionConfig[]
   exams       Exam[]       @relation("ClassExams")
   assignments Assignment[] @relation("ClassAssignments")
+  announcements Announcement[] @relation("ClassAnnouncements")
 }
 
 model Student {
@@ -611,6 +617,8 @@ model ExamAttempt {
   studentId   String
   student     Student   @relation("StudentExamAttempts", fields: [studentId], references: [id])
   answers     Json?     // { questionId: answerText }
+  manualMarks Json?     // { questionId: number } — teacher-graded marks for non-MCQ questions
+  feedback    String?
   score       Float?
   grade       String?
   status      String    @default("IN_PROGRESS") // IN_PROGRESS, SUBMITTED, GRADED
@@ -673,4 +681,55 @@ model Message {
   readAt     DateTime?
   createdAt  DateTime  @default(now())
 }
+
+// ─── Phase 1: Communication Hub — Announcements & Broadcasts ────────────────
+
+model Announcement {
+  id          String    @id @default(cuid())
+  authorId    String
+  author      User      @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  title       String
+  body        String
+  // audience scope: SCHOOL | ROLE | CLASS
+  audience    String
+  // when audience=ROLE → one of: PARENT, TEACHER, STUDENT, ALL
+  targetRole  String?
+  // when audience=CLASS
+  classId     String?
+  class       Class?    @relation("ClassAnnouncements", fields: [classId], references: [id])
+  // CSV of channels: IN_APP,EMAIL,SMS
+  channels    String    @default("IN_APP")
+  pinned      Boolean   @default(false)
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  reads AnnouncementRead[]
+}
+
+model AnnouncementRead {
+  id             String       @id @default(cuid())
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation("AnnouncementReads", fields: [userId], references: [id])
+  readAt         DateTime     @default(now())
+
+  @@unique([announcementId, userId])
+}
+
+model NotificationPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailEnabled    Boolean  @default(true)
+  smsEnabled      Boolean  @default(true)
+  inAppEnabled    Boolean  @default(true)
+  announcementsEnabled Boolean @default(true)
+  messagesEnabled Boolean  @default(true)
+  digestFrequency String   @default("NONE") // NONE | DAILY | WEEKLY
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+}
+
 

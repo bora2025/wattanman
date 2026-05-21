@@ -46,6 +46,15 @@ interface Student {
   dateOfBirth: string | null;
   address: string;
   generation?: string;
+  parentId?: string | null;
+  parent?: { id: string; name: string; email: string; phone: string | null } | null;
+}
+
+interface ParentOption {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
 }
 
 interface SessionConfigItem {
@@ -211,7 +220,8 @@ function ManageClasses() {
   const [newStudentForm, setNewStudentForm] = useState({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
   const [showAddStudentForm, setShowAddStudentForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
-  const [editStudentData, setEditStudentData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
+  const [editStudentData, setEditStudentData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '', parentId: '' });
+  const [parents, setParents] = useState<ParentOption[]>([]);
   const [savingStudent, setSavingStudent] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [photoPreviewError, setPhotoPreviewError] = useState(false);
@@ -597,7 +607,14 @@ function ManageClasses() {
     setEditingStudent(student.id);
     setSaveError(null);
     setPhotoPreviewError(false);
-    setEditStudentData({ name: student.name || '', sex: student.sex || '', phone: student.phone || '', photo: student.photo || '', dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '', address: student.address || '', generation: student.generation || '', studentNumber: student.studentNumber || '' });
+    setEditStudentData({ name: student.name || '', sex: student.sex || '', phone: student.phone || '', photo: student.photo || '', dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '', address: student.address || '', generation: student.generation || '', studentNumber: student.studentNumber || '', parentId: student.parentId || '' });
+    // Lazy-load parent list once
+    if (parents.length === 0) {
+      apiFetch('/api/classes/parents')
+        .then(r => r.ok ? r.json() : [])
+        .then((list: ParentOption[]) => setParents(Array.isArray(list) ? list : []))
+        .catch(() => {});
+    }
   };
 
   const handleSaveStudent = async (studentId: string) => {
@@ -608,7 +625,7 @@ function ManageClasses() {
       const res = await apiFetch(`/api/classes/${selectedClass.id}/students/${studentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editStudentData),
+        body: JSON.stringify({ ...editStudentData, parentId: editStudentData.parentId || null }),
       });
       if (res.ok) {
         await fetchClassStudents(selectedClass.id);
@@ -1338,6 +1355,23 @@ function ManageClasses() {
                         <div>
                           <label className="form-label text-xs">{t('student.generation') || 'Generation'} <span className="text-slate-400">(ជំនាន់ទី)</span></label>
                           <input type="number" min="1" value={editStudentData.generation} onChange={(e) => setEditStudentData({ ...editStudentData, generation: e.target.value })} placeholder="1" />
+                        </div>
+                        <div className="sm:col-span-2 lg:col-span-3">
+                          <label className="form-label text-xs">Parent <span className="text-slate-400">(ឪពុកម្តាយ)</span></label>
+                          <select
+                            value={editStudentData.parentId}
+                            onChange={(e) => setEditStudentData({ ...editStudentData, parentId: e.target.value })}
+                          >
+                            <option value="">— None / Unlink —</option>
+                            {parents.map(p => (
+                              <option key={p.id} value={p.id}>
+                                {p.name} ({p.email}){p.phone ? ` · ${p.phone}` : ''}
+                              </option>
+                            ))}
+                          </select>
+                          {parents.length === 0 && (
+                            <div className="text-xs text-slate-400 mt-1">No parent accounts found. Create one under Users → Parents first.</div>
+                          )}
                         </div>
                         <div className="sm:col-span-2 lg:col-span-3">
                           <label className="form-label text-xs">Photo URL <span className="text-slate-400">(Google Drive share links auto-converted)</span></label>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import AuthGuard from '../../components/AuthGuard'
 import Sidebar from '../../components/Sidebar'
+import AnnouncementFeed from '../../components/AnnouncementFeed'
 import { teacherNav } from '../../lib/teacher-nav'
 import { apiFetch, getCurrentUser } from '../../lib/api'
 import { useLanguage } from '../../lib/i18n'
@@ -103,6 +104,13 @@ export default function TeacherDashboard() {
           </div>
 
           <div className="page-body space-y-4 sm:space-y-6">
+            {/* Announcements */}
+            <div className="card p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-slate-700">📣 Announcements</h3>
+              </div>
+              <AnnouncementFeed accent="emerald" limit={5} />
+            </div>
             {/* Student Attendance Summary */}
             <div className="card p-4 space-y-4">
               {/* Date navigation */}

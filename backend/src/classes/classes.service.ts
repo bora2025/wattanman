@@ -46,7 +46,11 @@ export class ClassesService {
   async getStudentsInClass(classId: string) {
     const students = await this.prisma.student.findMany({
       where: { classId },
-      include: { user: true, class: true },
+      include: {
+        user: true,
+        class: true,
+        parent: { select: { id: true, name: true, email: true, phone: true } },
+      },
     });
     return students.map(s => ({
       id: s.id,
@@ -62,7 +66,18 @@ export class ClassesService {
       address: s.address || '',
       generation: s.generation || '',
       className: s.class?.name || null,
+      parentId: s.parentId,
+      parent: s.parent,
     }));
+  }
+
+  async listParents() {
+    const parents = await this.prisma.user.findMany({
+      where: { role: 'PARENT' },
+      select: { id: true, name: true, email: true, phone: true },
+      orderBy: { name: 'asc' },
+    });
+    return parents;
   }
 
   async addStudentToClass(classId: string, studentId: string) {
@@ -395,8 +410,8 @@ export class ClassesService {
     return url;
   }
 
-  async updateStudent(studentId: string, data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string; studentNumber?: string }) {
-    // Update student fields (sex, photo, dateOfBirth, address, generation, studentNumber)
+  async updateStudent(studentId: string, data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string; studentNumber?: string; parentId?: string | null }) {
+    // Update student fields (sex, photo, dateOfBirth, address, generation, studentNumber, parentId)
     const studentData: any = {};
     if (data.sex !== undefined) studentData.sex = data.sex;
     if (data.photo !== undefined) studentData.photo = this.convertGoogleDriveUrl(data.photo || '');
@@ -404,6 +419,18 @@ export class ClassesService {
     if (data.address !== undefined) studentData.address = data.address;
     if (data.generation !== undefined) studentData.generation = data.generation;
     if (data.studentNumber !== undefined) studentData.studentNumber = data.studentNumber.trim() || null;
+    if (data.parentId !== undefined) {
+      if (data.parentId) {
+        const parent = await this.prisma.user.findUnique({
+          where: { id: data.parentId },
+          select: { id: true, role: true },
+        });
+        if (!parent || parent.role !== 'PARENT') {
+          throw new Error('parentId must reference a user with role PARENT');
+        }
+      }
+      studentData.parentId = data.parentId || null;
+    }
 
     const student = await this.prisma.student.update({
       where: { id: studentId },

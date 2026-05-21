@@ -74,4 +74,29 @@ export class NotificationService {
       console.error('Failed to log notification:', err?.message || err);
     }
   }
+
+  /** Generic email dispatcher used by announcements and future notifications. */
+  async sendEmail(to: string, subject: string, text: string) {
+    if (!process.env.SENDGRID_API_KEY) return { skipped: true, reason: 'no-api-key' };
+    await sgMail.send({
+      to,
+      from: process.env.SENDGRID_FROM || 'noreply@attendancesystem.com',
+      subject,
+      text,
+    });
+    return { sent: true };
+  }
+
+  /** Generic SMS dispatcher used by announcements and future notifications. */
+  async sendSms(to: string, body: string) {
+    if (!this.twilioClient || !process.env.TWILIO_PHONE_NUMBER) {
+      return { skipped: true, reason: 'no-twilio' };
+    }
+    await this.twilioClient.messages.create({
+      body,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to,
+    });
+    return { sent: true };
+  }
 }

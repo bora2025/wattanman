@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm, useFieldArray } from 'react-hook-form'
 import AuthGuard from '../../../components/AuthGuard'
@@ -89,6 +90,12 @@ export default function TeacherExamsPage() {
                     <p className="text-xs text-amber-600 mt-0.5">{exam._count.attempts} attempt(s)</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    <Link
+                      href={`/teacher/exams/${exam.id}/attempts`}
+                      className="text-xs px-2.5 py-1 rounded-md border border-sky-200 text-sky-700 hover:bg-sky-50 font-medium"
+                    >
+                      Grade ({exam._count.attempts})
+                    </Link>
                     <select value={exam.status}
                       onChange={e => statusMutation.mutate({ id: exam.id, status: e.target.value })}
                       className="text-xs border rounded-lg px-2 py-1 bg-white">
