@@ -127,18 +127,27 @@ export default function StaffCardsPage() {
 
   const handleEditorClose = () => { reloadDesign(); setShowEditor(false); };
 
-  const buildFieldValues = (name: string, displayId: string, subtitle: string, phone?: string | null): Record<string, string> => ({
+  const buildFieldValues = (name: string, displayId: string, subtitle: string, phone?: string | null, email?: string | null): Record<string, string> => ({
+    // Legacy human-readable keys (older templates)
     'Staff Name': name, 'Emp ID': displayId, 'Position': subtitle,
     'Phone': phone || '',
     'Student Name': '', 'Student ID': '', 'Class Name': '', 'Study Year': '',
     'Date of Birth': '', 'Address': '', 'Sex': '',
+    // New {{placeholder}} keys used by current card-designer templates
+    '{{name}}': name,
+    '{{email}}': email || '',
+    '{{phone}}': phone || '',
+    '{{role}}': subtitle,
+    '{{department}}': '',
+    '{{employeeId}}': displayId,
+    '{{qrCode}}': displayId,
   });
 
-  const downloadCard = async (name: string, subtitle: string, qrDataUrl: string, displayId: string, photoUrl?: string | null, phone?: string | null) => {
+  const downloadCard = async (name: string, subtitle: string, qrDataUrl: string, displayId: string, photoUrl?: string | null, phone?: string | null, email?: string | null) => {
     if (exporting) return;
     setExporting(true);
     try {
-      const canvas = await renderDesignToCanvas(liveDesign, { fieldValues: buildFieldValues(name, displayId, subtitle, phone), qrDataUrl, photoUrl });
+      const canvas = await renderDesignToCanvas(liveDesign, { fieldValues: buildFieldValues(name, displayId, subtitle, phone, email), qrDataUrl, photoUrl });
       const link = document.createElement('a');
       link.download = `${name.replace(/[^a-zA-Z0-9]/g, '-')}-id-card.png`;
       link.href = canvas.toDataURL(); link.click();
@@ -146,21 +155,21 @@ export default function StaffCardsPage() {
     finally { setExporting(false); }
   };
 
-  const downloadCardPDF = async (name: string, subtitle: string, qrDataUrl: string, displayId: string, photoUrl?: string | null, phone?: string | null) => {
+  const downloadCardPDF = async (name: string, subtitle: string, qrDataUrl: string, displayId: string, photoUrl?: string | null, phone?: string | null, email?: string | null) => {
     if (exporting) return;
     setExporting(true);
     try {
-      await downloadSingleCardPDF(liveDesign, { name, fieldValues: buildFieldValues(name, displayId, subtitle, phone), qrDataUrl, photoUrl });
+      await downloadSingleCardPDF(liveDesign, { name, fieldValues: buildFieldValues(name, displayId, subtitle, phone, email), qrDataUrl, photoUrl });
     } catch (err) { console.error('PDF export failed:', err); alert('Export failed.'); }
     finally { setExporting(false); }
   };
 
-  const downloadAllCardsPDFA4 = async (title: string, people: { name: string; subtitle: string; id: string; displayId: string; photo?: string | null; phone?: string | null }[]) => {
+  const downloadAllCardsPDFA4 = async (title: string, people: { name: string; subtitle: string; id: string; displayId: string; photo?: string | null; phone?: string | null; email?: string | null }[]) => {
     const valid = people.filter((p) => qrCodes[p.id]);
     if (valid.length === 0 || exporting) return;
     setExporting(true);
     try {
-      const entries = valid.map((p) => ({ name: p.name, fieldValues: buildFieldValues(p.name, p.displayId, p.subtitle, p.phone), qrDataUrl: qrCodes[p.id], photoUrl: p.photo }));
+      const entries = valid.map((p) => ({ name: p.name, fieldValues: buildFieldValues(p.name, p.displayId, p.subtitle, p.phone, p.email), qrDataUrl: qrCodes[p.id], photoUrl: p.photo }));
       await downloadA4CardsPDF(liveDesign, entries, title);
     } catch (err) { console.error('A4 PDF export failed:', err); alert('Export failed.'); }
     finally { setExporting(false); }
@@ -391,7 +400,7 @@ export default function StaffCardsPage() {
                 <button onClick={() => setStaffDownloadMenuOpen(staffDownloadMenuOpen === 'bulk' ? null : 'bulk')} className="btn-primary btn-sm whitespace-nowrap">📥 Download All ▾</button>
                 {staffDownloadMenuOpen === 'bulk' && (
                   <div className="absolute right-0 top-full mt-1 z-20 bg-white rounded-xl shadow-lg border border-slate-200 py-1 w-56 animate-[fadeIn_0.15s_ease-out]">
-                    <button onClick={() => { downloadAllCardsPDFA4('All Staff - ID Cards', cardFilteredStaff.map((m) => ({ name: m.name, subtitle: getRoleLabel(m.role), id: m.id, displayId: m.id, photo: m.photo, phone: m.phone }))); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">📄 Download Card ({cardFilteredStaff.length})</button>
+                    <button onClick={() => { downloadAllCardsPDFA4('All Staff - ID Cards', cardFilteredStaff.map((m) => ({ name: m.name, subtitle: getRoleLabel(m.role), id: m.id, displayId: m.id, photo: m.photo, phone: m.phone, email: m.email }))); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">📄 Download Card ({cardFilteredStaff.length})</button>
                     <button onClick={() => { downloadAllQRCodes('All Staff - QR Codes', cardFilteredStaff.map((m) => ({ name: m.name, id: m.id }))); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">📱 All QR Codes ({cardFilteredStaff.length})</button>
                     <div className="border-t border-slate-100 my-1" />
                     <button onClick={() => { downloadOfficerAttendanceQR(); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors font-medium">🎫 Officer Attendance QR</button>
@@ -428,9 +437,9 @@ export default function StaffCardsPage() {
                       qrDataUrl={qrCodes[staff.id]}
                       photo={staff.photo}
                       design={liveDesign}
-                      fieldValues={buildFieldValues(staff.name, staff.id, getRoleLabel(staff.role), staff.phone)}
-                      onDownload={() => downloadCard(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone)}
-                      onDownloadPDF={() => downloadCardPDF(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone)}
+                      fieldValues={buildFieldValues(staff.name, staff.id, getRoleLabel(staff.role), staff.phone, staff.email)}
+                      onDownload={() => downloadCard(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone, staff.email)}
+                      onDownloadPDF={() => downloadCardPDF(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone, staff.email)}
                       onDownloadQR={() => downloadQROnly(staff.name, staff.id)}
                     />
                   ))}
@@ -473,8 +482,8 @@ export default function StaffCardsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => downloadCard(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40" title="Download ID Card PNG">📥 PNG</button>
-                          <button onClick={() => downloadCardPDF(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40" title="Download ID Card PDF">📄 PDF</button>
+                          <button onClick={() => downloadCard(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone, staff.email)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40" title="Download ID Card PNG">📥 PNG</button>
+                          <button onClick={() => downloadCardPDF(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone, staff.email)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40" title="Download ID Card PDF">📄 PDF</button>
                           <button onClick={() => downloadQROnly(staff.name, staff.id)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40" title="Download QR only">📱</button>
                         </div>
                       </td>

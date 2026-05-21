@@ -175,8 +175,9 @@ export default function StudentCardsPage() {
 
   const buildFieldValues = (
     name: string, subtitle: string, displayId: string,
-    extra?: { dateOfBirth?: string | null; address?: string; phone?: string; sex?: string | null; studyYear?: string },
+    extra?: { dateOfBirth?: string | null; address?: string; phone?: string; sex?: string | null; studyYear?: string; email?: string | null },
   ): Record<string, string> => ({
+    // Legacy human-readable keys (older templates)
     'Student Name': name,
     'Student ID': displayId,
     'Class Name': subtitle,
@@ -186,6 +187,17 @@ export default function StudentCardsPage() {
     'Phone': extra?.phone || '',
     'Sex': extra?.sex === 'MALE' ? 'ប្រុស' : extra?.sex === 'FEMALE' ? 'ស្រី' : '',
     'Emp ID': '', 'Position': '', 'Staff Name': '',
+    // New {{placeholder}} keys used by current card-designer templates
+    '{{name}}': name,
+    '{{studentNumber}}': displayId,
+    '{{class}}': subtitle,
+    '{{studyYear}}': extra?.studyYear || '',
+    '{{dateOfBirth}}': formatDOB(extra?.dateOfBirth, lang),
+    '{{address}}': extra?.address || '',
+    '{{phone}}': extra?.phone || '',
+    '{{email}}': extra?.email || '',
+    '{{sex}}': extra?.sex === 'MALE' ? 'ប្រុស' : extra?.sex === 'FEMALE' ? 'ស្រី' : '',
+    '{{qrCode}}': displayId,
   });
 
   const downloadCard = async (
