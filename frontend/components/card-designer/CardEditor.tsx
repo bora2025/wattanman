@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import QRCode from 'qrcode';
 import {
   CardDesign, CardType, FONT_OPTIONS,
   LogoElement, PhotoPlaceholder, QrPlaceholder, ShapeElement, TextElement,
@@ -128,6 +129,24 @@ function applyPreviewData(text: string): string {
   });
 }
 
+// Inline SVG portrait silhouette used as the sample photo when preview mode is on.
+// Avoids any network request and looks neutral on light/dark cards.
+const PREVIEW_PHOTO_DATA_URL =
+  'data:image/svg+xml;utf8,' + encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6366f1"/>
+          <stop offset="100%" stop-color="#8b5cf6"/>
+        </linearGradient>
+      </defs>
+      <rect width="200" height="240" fill="url(#bg)"/>
+      <circle cx="100" cy="92" r="38" fill="#ffffff" opacity="0.95"/>
+      <path d="M30 230 C30 170, 170 170, 170 230 Z" fill="#ffffff" opacity="0.95"/>
+      <text x="100" y="225" font-family="system-ui,sans-serif" font-size="14" font-weight="600" fill="#4f46e5" text-anchor="middle">Sample</text>
+    </svg>`
+  );
+
 // ── Compact top-bar icon button ──────────────────────────────────────────────
 /* ── SVG icon library for the top bar ──────────────────────────────────── */
 const Icons = {
@@ -200,6 +219,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const [zoom, setZoom] = useState(100); // percent
   const [showGrid, setShowGrid] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [previewQrUrl, setPreviewQrUrl] = useState<string | null>(null);
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [showNewProject, setShowNewProject] = useState(openNewProject ?? false);
@@ -876,6 +896,18 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     ? { ...design, texts: design.texts.map((t) => ({ ...t, content: applyPreviewData(t.content) })) }
     : design;
 
+  // Generate a real sample QR code when entering preview mode so the QR placeholder
+  // shows scannable imagery instead of an empty box.
+  useEffect(() => {
+    if (!isPreviewMode) return;
+    let cancelled = false;
+    const sampleValue = PREVIEW_DATA.qrCode || PREVIEW_DATA['Student ID'] || 'WATTAMAN-PREVIEW';
+    QRCode.toDataURL(sampleValue, { width: 256, margin: 1 })
+      .then((url) => { if (!cancelled) setPreviewQrUrl(url); })
+      .catch(() => { /* fall back to placeholder rendering */ });
+    return () => { cancelled = true; };
+  }, [isPreviewMode]);
+
   // ── Selected element info (for floating property bar) ─────────────────────
   const selText = design.texts.find((t) => t.id === selectedId);
   const selLogo = design.logos.find((l) => l.id === selectedId);
@@ -1278,7 +1310,16 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
             <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center', transition: 'transform 0.15s', filter: 'drop-shadow(0 8px 32px rgba(0,0,0,0.6))' }}>
               {isPreviewMode ? (
                 <div className="pointer-events-none">
-                  <CardCanvas design={previewDesign} selectedId={null} onSelect={() => {}} onMoveText={() => {}} onMoveLogo={() => {}} />
+                  <CardCanvas
+                    design={previewDesign}
+                    selectedId={null}
+                    onSelect={() => {}}
+                    onMoveText={() => {}}
+                    onMoveLogo={() => {}}
+                    isPreviewMode
+                    previewPhotoUrl={PREVIEW_PHOTO_DATA_URL}
+                    previewQrUrl={previewQrUrl}
+                  />
                 </div>
               ) : (
                 <CardCanvas

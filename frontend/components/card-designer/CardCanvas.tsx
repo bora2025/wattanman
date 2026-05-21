@@ -30,9 +30,15 @@ interface CardCanvasProps {
   onContextMenu?: (e: React.MouseEvent, id: string | null) => void;
   /** Called when a Field button is dropped onto the canvas. (x, y) are in design (unscaled) pixels. */
   onDropField?: (fieldKey: string, x: number, y: number) => void;
+  /** When true, photo + QR placeholders render with sample imagery instead of empty boxes. */
+  isPreviewMode?: boolean;
+  /** Sample photo URL used when isPreviewMode is true. */
+  previewPhotoUrl?: string | null;
+  /** Sample QR data URL used when isPreviewMode is true. */
+  previewQrUrl?: string | null;
 }
 
-export default function CardCanvas({ design, selectedId, onSelect, onMoveText, onMoveLogo, onResizeLogo, onMoveShape, onResizeShape, onMovePhoto, onResizePhoto, onMoveQr, onResizeQr, onContextMenu, onDropField }: CardCanvasProps) {
+export default function CardCanvas({ design, selectedId, onSelect, onMoveText, onMoveLogo, onResizeLogo, onMoveShape, onResizeShape, onMovePhoto, onResizePhoto, onMoveQr, onResizeQr, onContextMenu, onDropField, isPreviewMode, previewPhotoUrl, previewQrUrl }: CardCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   // Build {{name}} → "Sokha Chan" preview lookup based on current cardType,
   // with a global fallback so common placeholders still substitute even when
@@ -472,10 +478,20 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                     }}
                     onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); onSelect('__photo__'); onContextMenu?.(e, '__photo__'); }}
                   >
-                    <div className="text-center leading-tight pointer-events-none">
-                      <span className="block text-lg">👤</span>
-                      <span className="block mt-0.5">Photo</span>
-                    </div>
+                    {isPreviewMode && previewPhotoUrl ? (
+                      <img
+                        src={previewPhotoUrl}
+                        alt="Sample"
+                        draggable={false}
+                        className="w-full h-full object-cover pointer-events-none"
+                        style={{ borderRadius: Math.max(0, photo.borderRadius - photo.borderWidth) }}
+                      />
+                    ) : (
+                      <div className="text-center leading-tight pointer-events-none">
+                        <span className="block text-lg">👤</span>
+                        <span className="block mt-0.5">Photo</span>
+                      </div>
+                    )}
                   </div>
                 );
               }
@@ -518,10 +534,20 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                     }}
                     onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); onSelect('__qr__'); onContextMenu?.(e, '__qr__'); }}
                   >
-                    <div className="text-center leading-tight pointer-events-none">
-                      <span className="block text-base">📱</span>
-                      <span className="block mt-0.5" style={{ fontSize: 9 }}>QR Code</span>
-                    </div>
+                    {isPreviewMode && previewQrUrl ? (
+                      <img
+                        src={previewQrUrl}
+                        alt="QR"
+                        draggable={false}
+                        className="w-full h-full object-contain pointer-events-none bg-white"
+                        style={{ borderRadius: Math.max(0, qr.borderRadius - qr.borderWidth) }}
+                      />
+                    ) : (
+                      <div className="text-center leading-tight pointer-events-none">
+                        <span className="block text-base">📱</span>
+                        <span className="block mt-0.5" style={{ fontSize: 9 }}>QR Code</span>
+                      </div>
+                    )}
                   </div>
                 );
               }
