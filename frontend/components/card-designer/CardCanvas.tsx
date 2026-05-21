@@ -19,9 +19,11 @@ interface CardCanvasProps {
   onMoveQr?: (x: number, y: number) => void;
   onResizeQr?: (changes: Partial<QrPlaceholder>) => void;
   onContextMenu?: (e: React.MouseEvent, id: string | null) => void;
+  /** Called when a Field button is dropped onto the canvas. (x, y) are in design (unscaled) pixels. */
+  onDropField?: (fieldKey: string, x: number, y: number) => void;
 }
 
-export default function CardCanvas({ design, selectedId, onSelect, onMoveText, onMoveLogo, onResizeLogo, onMoveShape, onResizeShape, onMovePhoto, onResizePhoto, onMoveQr, onResizeQr, onContextMenu }: CardCanvasProps) {
+export default function CardCanvas({ design, selectedId, onSelect, onMoveText, onMoveLogo, onResizeLogo, onMoveShape, onResizeShape, onMovePhoto, onResizePhoto, onMoveQr, onResizeQr, onContextMenu, onDropField }: CardCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
     type: 'text' | 'logo' | 'shape' | 'photo' | 'qr' | 'resize' | 'photo-resize' | 'qr-resize' | 'logo-resize' | 'rotate';
@@ -355,6 +357,27 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
           }}
           onMouseDown={() => onSelect(null)}
           onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(e, null); }}
+          onDragOver={(e) => {
+            // Only react to our own field drags, not files/text from elsewhere
+            if (!onDropField) return;
+            if (Array.from(e.dataTransfer.types).includes('application/x-wattaman-field')) {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'copy';
+            }
+          }}
+          onDrop={(e) => {
+            if (!onDropField) return;
+            const key = e.dataTransfer.getData('application/x-wattaman-field');
+            if (!key) return;
+            e.preventDefault();
+            const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+            // Account for zoom scaling: canvas is rendered at scale(zoom/100); rect.width is post-scale
+            const scaleX = rect.width > 0 ? design.width / rect.width : 1;
+            const scaleY = rect.height > 0 ? design.height / rect.height : 1;
+            const x = Math.max(0, Math.min(design.width, (e.clientX - rect.left) * scaleX));
+            const y = Math.max(0, Math.min(design.height, (e.clientY - rect.top) * scaleY));
+            onDropField(key, x, y);
+          }}
         >
           {/* Photo placeholder — rendered with other elements via z-index sorting below */}
 

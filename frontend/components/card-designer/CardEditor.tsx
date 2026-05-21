@@ -788,6 +788,25 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     setSelectedId(n.id); closeContextMenu();
   };
 
+  /** Drop handler invoked from <CardCanvas> when a Field is dragged from the Toolbar.
+   *  (x, y) arrive in design (unscaled) pixels and represent the cursor position;
+   *  we offset slightly so the inserted text is centered near the drop point. */
+  const handleDropField = useCallback((fieldKey: string, x: number, y: number) => {
+    const fontSize = 13;
+    const approxWidth = fieldKey.length * fontSize * 0.55; // rough text width estimate
+    const offsetX = Math.max(0, x - approxWidth / 2);
+    const offsetY = Math.max(0, y - fontSize / 2);
+    setDesign((prev) => {
+      const n: TextElement = {
+        id: genId(), content: fieldKey, x: offsetX, y: offsetY,
+        fontSize, color: prev.frameColor || '#1e293b', fontWeight: 'normal', fontStyle: 'normal',
+        textAlign: 'left', fontFamily: 'Inter, sans-serif', zIndex: getMaxZ(prev) + 1,
+      };
+      setSelectedId(n.id);
+      return { ...prev, texts: [...prev.texts, n] };
+    });
+  }, []);
+
   // Context menu: add shape
   const ctxAddShape = (type: 'rectangle' | 'circle' | 'line') => {
     const n: ShapeElement = {
@@ -1187,6 +1206,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                   onMovePhoto={handleMovePhoto} onResizePhoto={handleResizePhoto}
                   onMoveQr={handleMoveQr} onResizeQr={handleResizeQr}
                   onContextMenu={handleCanvasContextMenu}
+                  onDropField={handleDropField}
                 />
               )}
             </div>

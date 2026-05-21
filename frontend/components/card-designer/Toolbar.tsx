@@ -776,17 +776,24 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
                     <svg viewBox="0 0 14 14" className="w-3.5 h-3.5 text-indigo-400 shrink-0" fill="currentColor"><circle cx="7" cy="7" r="6"/><path d="M7 5v5M7 3.5v1" fill="none" stroke="white" strokeWidth={1.5} strokeLinecap="round"/></svg>
                     <span className="text-[10px] text-indigo-300 font-medium">{purposeLabel[design.cardType] ?? design.cardType}</span>
                   </div>
-                  <p className="text-[10px] text-slate-500 leading-relaxed px-0.5">Click a field to insert it as a text layer. Placeholders are replaced with real data when printing.</p>
+                  <p className="text-[10px] text-slate-500 leading-relaxed px-0.5">Click to insert at top-left, or <strong className="text-indigo-400">drag &amp; drop</strong> onto the card to place at any position. Placeholders are replaced with real data when printing.</p>
                   <div className="space-y-1">
                     {fields.map((field) => (
                       <button key={field.key}
+                        draggable
+                        onDragStart={(e) => {
+                          // Use a custom MIME type so we can ignore unrelated drags (e.g. files, text)
+                          e.dataTransfer.setData('application/x-wattaman-field', field.key);
+                          e.dataTransfer.setData('text/plain', field.key);
+                          e.dataTransfer.effectAllowed = 'copy';
+                        }}
                         onClick={() => {
                           const newText: TextElement = { id: genId(), content: field.key, x: 20, y: 20 + design.texts.length * 28, fontSize: 13, color: '#f1f5f9', fontWeight: 'normal', fontStyle: 'normal', textAlign: 'left', fontFamily: 'Inter, sans-serif', zIndex: getMaxZ() + 1 };
                           update({ texts: [...design.texts, newText] });
                           onSelect?.(newText.id);
                           setActiveTab('text');
                         }}
-                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-800 transition-all group text-left"
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-800 transition-all group text-left cursor-grab active:cursor-grabbing"
                       >
                         <code className="text-[9px] font-mono bg-slate-800 group-hover:bg-indigo-600/20 text-indigo-400 px-1.5 py-0.5 rounded shrink-0 border border-slate-700 group-hover:border-indigo-500/50">{field.key}</code>
                         <div className="flex-1 min-w-0">
