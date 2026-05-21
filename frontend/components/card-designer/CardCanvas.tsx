@@ -1,7 +1,16 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { CardDesign, LogoElement, TextElement, ShapeElement, PhotoPlaceholder, QrPlaceholder } from './types';
+import { useEffect, useMemo, useRef } from 'react';
+import { CardDesign, LogoElement, TextElement, ShapeElement, PhotoPlaceholder, QrPlaceholder, CARD_TYPE_FIELDS } from './types';
+
+/** Replace {{Placeholder}} tokens with example values for in-editor preview. */
+function previewSubstitute(content: string, exampleMap: Record<string, string>): string {
+  if (!content || content.indexOf('{{') === -1) return content;
+  return content.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+    const k = String(key).trim().toLowerCase();
+    return exampleMap[k] ?? match;
+  });
+}
 
 type HandlePosition = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
@@ -25,6 +34,17 @@ interface CardCanvasProps {
 
 export default function CardCanvas({ design, selectedId, onSelect, onMoveText, onMoveLogo, onResizeLogo, onMoveShape, onResizeShape, onMovePhoto, onResizePhoto, onMoveQr, onResizeQr, onContextMenu, onDropField }: CardCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
+  // Build {{name}} → "Sokha Chan" preview lookup based on current cardType
+  const previewExamples = useMemo(() => {
+    const map: Record<string, string> = {};
+    const fields = CARD_TYPE_FIELDS[design.cardType] ?? [];
+    for (const f of fields) {
+      // key is stored as "{{name}}" — strip braces and lowercase for lookup
+      const k = f.key.replace(/[{}]/g, '').trim().toLowerCase();
+      map[k] = f.example;
+    }
+    return map;
+  }, [design.cardType]);
   const dragRef = useRef<{
     type: 'text' | 'logo' | 'shape' | 'photo' | 'qr' | 'resize' | 'photo-resize' | 'qr-resize' | 'logo-resize' | 'rotate';
     id: string;
@@ -578,7 +598,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                   onMouseDown={(e) => handleMouseDown(e, 'text', text.id, text.x, text.y)}
                   onContextMenu={(e) => { e.stopPropagation(); e.preventDefault(); onSelect(text.id); onContextMenu?.(e, text.id); }}
                 >
-                  {text.content || 'Double-click to edit'}
+                  {text.content ? previewSubstitute(text.content, previewExamples) : 'Double-click to edit'}
                 </div>
               );
             })}
