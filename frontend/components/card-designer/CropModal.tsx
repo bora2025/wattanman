@@ -46,7 +46,21 @@ export default function CropModal({ logo, onConfirm, onClose }: CropModalProps) 
   // Initialise crop box from existing fractions when the image finishes loading
   const initCrop = useCallback(() => {
     if (!imgRef.current) return;
-    const { width, height } = imgRef.current.getBoundingClientRect();
+    const rect = imgRef.current.getBoundingClientRect();
+    let { width, height } = rect;
+    // Some browsers fire onload BEFORE first layout — bbox can be 0×0. Fall
+    // back to natural dimensions scaled to fit our viewport so we never
+    // produce a zero-sized crop (which would yield NaN fractions on confirm
+    // and cause renderDesignToCanvas to draw a black box).
+    if (width < 1 || height < 1) {
+      const nw = imgRef.current.naturalWidth || 1;
+      const nh = imgRef.current.naturalHeight || 1;
+      const maxW = window.innerWidth * 0.8;
+      const maxH = window.innerHeight * 0.68;
+      const s = Math.min(maxW / nw, maxH / nh, 1);
+      width = nw * s;
+      height = nh * s;
+    }
     setImgSize({ w: width, h: height });
     setCrop({
       x: (logo.cropX ?? 0) * width,
@@ -119,13 +133,15 @@ export default function CropModal({ logo, onConfirm, onClose }: CropModalProps) 
   }, [onClose]);
 
   const handleConfirm = () => {
-    if (!crop || !imgSize) return;
-    onConfirm(
-      Math.max(0, crop.x / imgSize.w),
-      Math.max(0, crop.y / imgSize.h),
-      Math.min(1, crop.w / imgSize.w),
-      Math.min(1, crop.h / imgSize.h),
-    );
+    if (!crop || !imgSize || imgSize.w < 1 || imgSize.h < 1) return;
+    // Clamp into [0, 1] AND keep cropX+cropW <= 1 / cropY+cropH <= 1 so the
+    // canvas renderer never tries to draw past the source's edge (which
+    // produces transparent-black pixels filling the destination rect).
+    const fx = Math.max(0, Math.min(1, crop.x / imgSize.w));
+    const fy = Math.max(0, Math.min(1, crop.y / imgSize.h));
+    const fw = Math.max(0.01, Math.min(1 - fx, crop.w / imgSize.w));
+    const fh = Math.max(0.01, Math.min(1 - fy, crop.h / imgSize.h));
+    onConfirm(fx, fy, fw, fh);
   };
 
   const hasCrop = crop && imgSize && (crop.x > 0 || crop.y > 0 || crop.w < imgSize.w || crop.h < imgSize.h);

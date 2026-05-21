@@ -594,6 +594,20 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
               }
               if (item.kind === 'logo') {
                 const logo = item.data as LogoElement;
+                // Crop fractions — guard against divide-by-zero / out-of-range values.
+                const cropW = Math.max(0.001, Math.min(1, logo.cropW ?? 1));
+                const cropH = Math.max(0.001, Math.min(1, logo.cropH ?? 1));
+                const cropX = Math.max(0, Math.min(1 - cropW, logo.cropX ?? 0));
+                const cropY = Math.max(0, Math.min(1 - cropH, logo.cropY ?? 0));
+                // Compute the natural image's displayed size in PIXELS so it's
+                // independent of CSS-percentage quirks (margin-top % is based on
+                // container WIDTH, not height — that bug used to make cropped
+                // logos render at the wrong vertical offset / appear black when
+                // pushed entirely outside the clip box on tall containers).
+                const dispW = logo.width / cropW;
+                const dispH = logo.height / cropH;
+                const offX = -cropX * dispW;
+                const offY = -cropY * dispH;
                 return (
                   <div
                     key={logo.id}
@@ -614,10 +628,14 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                       className="pointer-events-none"
                       draggable={false}
                       style={{
-                        width: `${100 / (logo.cropW ?? 1)}%`,
-                        height: `${100 / (logo.cropH ?? 1)}%`,
-                        marginLeft: `-${((logo.cropX ?? 0) / (logo.cropW ?? 1)) * 100}%`,
-                        marginTop: `-${((logo.cropY ?? 0) / (logo.cropH ?? 1)) * 100}%`,
+                        position: 'absolute',
+                        display: 'block',
+                        left: offX,
+                        top: offY,
+                        width: dispW,
+                        height: dispH,
+                        maxWidth: 'none',
+                        maxHeight: 'none',
                         filter: logo.blur && logo.blur > 0 ? `blur(${logo.blur}px)` : undefined,
                         mixBlendMode: logo.removeBg ? 'multiply' : undefined,
                       }}

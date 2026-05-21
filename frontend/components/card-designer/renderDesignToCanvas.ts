@@ -270,10 +270,18 @@ function drawLogoImg(
     const timer = setTimeout(() => { resolve(); }, 3000);
     img.onload = () => {
       clearTimeout(timer);
-      const cx = (crop?.cropX ?? 0) * img.naturalWidth;
-      const cy = (crop?.cropY ?? 0) * img.naturalHeight;
-      const cw = (crop?.cropW ?? 1) * img.naturalWidth;
-      const ch = (crop?.cropH ?? 1) * img.naturalHeight;
+      // Clamp crop fractions: cropX/Y in [0,1], cropW/H in (0,1], and
+      // cropX+cropW <= 1 / cropY+cropH <= 1 so drawImage never reads past the
+      // source. Out-of-range source rects produce transparent-black pixels in
+      // the destination — the very symptom the user reported.
+      const cwf = Math.max(0.001, Math.min(1, crop?.cropW ?? 1));
+      const chf = Math.max(0.001, Math.min(1, crop?.cropH ?? 1));
+      const cxf = Math.max(0, Math.min(1 - cwf, crop?.cropX ?? 0));
+      const cyf = Math.max(0, Math.min(1 - chf, crop?.cropY ?? 0));
+      const cx = cxf * img.naturalWidth;
+      const cy = cyf * img.naturalHeight;
+      const cw = cwf * img.naturalWidth;
+      const ch = chf * img.naturalHeight;
       ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h);
       resolve();
     };
