@@ -19,6 +19,7 @@ import CardCanvas from './CardCanvas';
 import Toolbar from './Toolbar';
 import LayersPanel from './LayersPanel';
 import NewProjectDialog from './NewProjectDialog';
+import { apiFetch } from '../../lib/api';
 
 // Module-level cache: avoids duplicate API calls within the same page session
 let _templateListCache: SavedTemplate[] | null = null;
@@ -220,6 +221,9 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const [showGrid, setShowGrid] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [previewQrUrl, setPreviewQrUrl] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewSubject, setPreviewSubject] = useState<string | null>(null);
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [showNewProject, setShowNewProject] = useState(openNewProject ?? false);
@@ -908,6 +912,102 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     return () => { cancelled = true; };
   }, [isPreviewMode]);
 
+  // ── Real-data preview render ─────────────────────────────────────────────
+  // When preview mode is enabled, fetch a real staff/student record and render
+  // the card via the SAME renderer used for printing — so what you see in the
+  // editor matches the printed/exported card pixel-for-pixel.
+  useEffect(() => {
+    if (!isPreviewMode) {
+      setPreviewImageUrl(null);
+      setPreviewSubject(null);
+      return;
+    }
+    let cancelled = false;
+    setPreviewLoading(true);
+
+    const buildSampleFieldValues = (subject: { name: string; id: string; subtitle: string; phone?: string; email?: string }): Record<string, string> => ({
+      'Staff Name': subject.name, 'Student Name': subject.name,
+      'Emp ID': subject.id, 'Student ID': subject.id, 'ID': subject.id,
+      'Position': subject.subtitle, 'Class Name': subject.subtitle, 'Class': subject.subtitle,
+      'Phone': subject.phone || '', 'Email': subject.email || '',
+      '{{name}}': subject.name,
+      '{{email}}': subject.email || '',
+      '{{phone}}': subject.phone || '',
+      '{{role}}': subject.subtitle,
+      '{{class}}': subject.subtitle,
+      '{{department}}': subject.subtitle,
+      '{{employeeId}}': subject.id,
+      '{{studentNumber}}': subject.id,
+      '{{qrCode}}': subject.id,
+    });
+
+    const fetchSubject = async (): Promise<{ name: string; id: string; subtitle: string; phone?: string; email?: string; photo?: string | null } | null> => {
+      try {
+        const isStudent = design.cardType === 'student' || design.cardType === 'certificate-student';
+        if (isStudent) {
+          // First class with students wins. The student-cards page uses the same pattern.
+          const yrRes = await apiFetch('/api/study-years');
+          const yrs = yrRes.ok ? await yrRes.json() : [];
+          const currentYr = yrs.find((y: { isCurrent: boolean }) => y.isCurrent) || yrs[0];
+          if (!currentYr) return null;
+          const clsRes = await apiFetch(`/api/classes?studyYearId=${currentYr.id}`);
+          const classes = clsRes.ok ? await clsRes.json() : [];
+          for (const cls of classes) {
+            const studRes = await apiFetch(`/api/classes/${cls.id}/students`);
+            const studs = studRes.ok ? await studRes.json() : [];
+            if (studs.length > 0) {
+              const s = studs[0];
+              return {
+                name: s.name, id: s.studentNumber || s.qrCode || s.id,
+                subtitle: cls.name, phone: s.phone, email: s.email, photo: s.photo,
+              };
+            }
+          }
+          return null;
+        }
+        // Staff
+        const res = await apiFetch('/api/auth/users');
+        const all = res.ok ? await res.json() : [];
+        const staff = all.find((u: { role: string }) => u.role !== 'STUDENT' && u.role !== 'PARENT');
+        if (!staff) return null;
+        return {
+          name: staff.name, id: staff.employeeId || staff.id,
+          subtitle: staff.role || 'Staff',
+          phone: staff.phone, email: staff.email, photo: staff.photo,
+        };
+      } catch { return null; }
+    };
+
+    (async () => {
+      const real = await fetchSubject();
+      if (cancelled) return;
+      const subject = real ?? {
+        name: PREVIEW_DATA.name, id: PREVIEW_DATA.studentNumber,
+        subtitle: PREVIEW_DATA.class, phone: PREVIEW_DATA.phone, email: PREVIEW_DATA.email,
+        photo: PREVIEW_PHOTO_DATA_URL,
+      };
+      setPreviewSubject(real ? `${real.name} · ${real.subtitle}` : 'Sample data');
+      try {
+        const qrDataUrl = await QRCode.toDataURL(subject.id || 'WATTAMAN-PREVIEW', { width: 400, margin: 1 });
+        const canvas = await renderDesignToCanvas(design, {
+          fieldValues: buildSampleFieldValues(subject),
+          qrDataUrl,
+          photoUrl: subject.photo || PREVIEW_PHOTO_DATA_URL,
+          scale: 2,
+        });
+        if (!cancelled) setPreviewImageUrl(canvas.toDataURL('image/png'));
+      } catch (err) {
+        console.error('Preview render failed:', err);
+        if (!cancelled) setPreviewImageUrl(null);
+      } finally {
+        if (!cancelled) setPreviewLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+    // Re-render preview whenever the design changes while in preview mode
+  }, [isPreviewMode, design]);
+
   // ── Selected element info (for floating property bar) ─────────────────────
   const selText = design.texts.find((t) => t.id === selectedId);
   const selLogo = design.logos.find((l) => l.id === selectedId);
@@ -1309,17 +1409,28 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           >
             <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center', transition: 'transform 0.15s', filter: 'drop-shadow(0 8px 32px rgba(0,0,0,0.6))' }}>
               {isPreviewMode ? (
-                <div className="pointer-events-none">
-                  <CardCanvas
-                    design={previewDesign}
-                    selectedId={null}
-                    onSelect={() => {}}
-                    onMoveText={() => {}}
-                    onMoveLogo={() => {}}
-                    isPreviewMode
-                    previewPhotoUrl={PREVIEW_PHOTO_DATA_URL}
-                    previewQrUrl={previewQrUrl}
-                  />
+                <div
+                  className="relative flex items-center justify-center bg-white rounded-xl overflow-hidden"
+                  style={{ width: design.width, height: design.height }}
+                >
+                  {previewImageUrl ? (
+                    <img
+                      src={previewImageUrl}
+                      alt="Card preview"
+                      draggable={false}
+                      className="w-full h-full object-contain pointer-events-none select-none"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-slate-400 text-xs">
+                      <Icons.Spinner />
+                      <span>{previewLoading ? 'Rendering preview…' : 'Preview unavailable'}</span>
+                    </div>
+                  )}
+                  {previewSubject && (
+                    <span className="absolute bottom-1 left-1 px-2 py-0.5 rounded bg-black/55 text-white text-[10px] font-medium tracking-wide pointer-events-none">
+                      {previewSubject}
+                    </span>
+                  )}
                 </div>
               ) : (
                 <CardCanvas
