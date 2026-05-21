@@ -567,18 +567,6 @@ function DashboardContent() {
             ))}
           </div>
 
-          {/* ── Class Attendance Progress (real-time) ── */}
-          <ClassProgressPanel
-            rows={classProgress}
-            loading={classProgressLoading}
-            flash={classProgressFlash}
-            search={classProgressSearch}
-            setSearch={setClassProgressSearch}
-            sortMode={classProgressSort}
-            setSortMode={setClassProgressSort}
-            isToday={isToday}
-          />
-
           {/* ── Today's Insights (auto-computed) ── */}
           {insights && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -666,6 +654,18 @@ function DashboardContent() {
               </div>
             </div>
           )}
+
+          {/* ── Class Attendance Progress (real-time) ── */}
+          <ClassProgressPanel
+            rows={classProgress}
+            loading={classProgressLoading}
+            flash={classProgressFlash}
+            search={classProgressSearch}
+            setSearch={setClassProgressSearch}
+            sortMode={classProgressSort}
+            setSortMode={setClassProgressSort}
+            isToday={isToday}
+          />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Student Attendance Distribution */}
