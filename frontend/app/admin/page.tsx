@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
+import { io, Socket } from 'socket.io-client'
 import { Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import Sidebar from '../../components/Sidebar'
 import AuthGuard from '../../components/AuthGuard'
@@ -93,7 +94,15 @@ function DashboardContent() {
   const [density, setDensity] = useState<'comfortable'|'compact'>('comfortable')
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [agoStr, setAgoStr] = useState('')
+  // Per-class real-time progress
+  interface ClassProgressRow { classId: string; className: string; total: number; present: number; late: number; absent: number; permission: number; scanned: number; pctPresent: number; pctScanned: number }
+  const [classProgress, setClassProgress] = useState<ClassProgressRow[]>([])
+  const [classProgressLoading, setClassProgressLoading] = useState(false)
+  const [classProgressFlash, setClassProgressFlash] = useState<Record<string, number>>({}) // classId -> timestamp of last update for flash highlight
+  const [classProgressSearch, setClassProgressSearch] = useState('')
+  const [classProgressSort, setClassProgressSort] = useState<'name'|'pctAsc'|'pctDesc'>('name')
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Monthly trend
   const [trendData, setTrendData] = useState<{ day: number; studentPresent: number; studentAbsent: number; staffPresent: number; staffAbsent: number }[]>([])
@@ -109,6 +118,7 @@ function DashboardContent() {
     } catch {}
   }, [])
   useEffect(() => { if (selectedDate) fetchDashboard() }, [selectedDate])
+  useEffect(() => { if (selectedDate) fetchClassProgress() }, [selectedDate])
   useEffect(() => { fetchTrend() }, [trendYear, trendMonth])
 
   /* Live Cambodia clock for hero */
@@ -141,11 +151,43 @@ function DashboardContent() {
     const poll = () => {
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
       fetchDashboard({ silent: true })
+      fetchClassProgress({ silent: true })
     }
     const iv = setInterval(poll, POLL_MS)
     const onVis = () => { if (document.visibilityState === 'visible') poll() }
     document.addEventListener('visibilitychange', onVis)
     return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVis) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate])
+
+  /* Push-based real-time updates via socket.io — instant refresh on student scans */
+  useEffect(() => {
+    if (!selectedDate) return
+    if (selectedDate !== todayCambodia()) return
+    const base = process.env.NEXT_PUBLIC_API_URL || ''
+    let socket: Socket | null = null
+    try {
+      socket = io(base || undefined, { transports: ['websocket', 'polling'], withCredentials: true })
+      socket.on('connect', () => { socket?.emit('joinDashboard') })
+      socket.on('dashboardUpdate', (payload: { classId?: string }) => {
+        // Flash the affected class row
+        if (payload?.classId) {
+          setClassProgressFlash(prev => ({ ...prev, [payload.classId!]: Date.now() }))
+        }
+        // Debounce rapid scans into a single refresh
+        if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+        refreshTimerRef.current = setTimeout(() => {
+          fetchDashboard({ silent: true })
+          fetchClassProgress({ silent: true })
+        }, 600)
+      })
+    } catch (err) {
+      console.error('Socket.io connection failed', err)
+    }
+    return () => {
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+      try { socket?.emit('leaveDashboard'); socket?.disconnect() } catch {}
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate])
 
@@ -195,6 +237,19 @@ function DashboardContent() {
       setLastUpdated(new Date())
     } catch (err) { console.error('Failed to fetch dashboard data', err) }
     finally { if (!opts.silent) setLoading(false) }
+  }
+
+  const fetchClassProgress = async (opts: { silent?: boolean } = {}) => {
+    if (!selectedDate) return
+    if (!opts.silent) setClassProgressLoading(true)
+    try {
+      const res = await apiFetch(`/api/reports/class-attendance-progress?date=${selectedDate}`)
+      if (res.ok) {
+        const json = await res.json()
+        setClassProgress(json.rows || [])
+      }
+    } catch (err) { console.error('Failed to fetch class progress', err) }
+    finally { if (!opts.silent) setClassProgressLoading(false) }
   }
 
   const fetchTrend = async () => {
@@ -511,6 +566,18 @@ function DashboardContent() {
               </Link>
             ))}
           </div>
+
+          {/* ── Class Attendance Progress (real-time) ── */}
+          <ClassProgressPanel
+            rows={classProgress}
+            loading={classProgressLoading}
+            flash={classProgressFlash}
+            search={classProgressSearch}
+            setSearch={setClassProgressSearch}
+            sortMode={classProgressSort}
+            setSortMode={setClassProgressSort}
+            isToday={isToday}
+          />
 
           {/* ── Today's Insights (auto-computed) ── */}
           {insights && (
@@ -831,5 +898,130 @@ export default function AdminPage() {
     <AuthGuard requiredRole="ADMIN">
       <DashboardContent/>
     </AuthGuard>
+  )
+}
+
+/* ── Class Attendance Progress Panel ───────────────────────────────
+   Renders one row per class with a stacked progress bar:
+   green = present, amber = late, purple = permission, red = absent.
+   Flashes briefly when a student scan event arrives for the class. */
+interface ClassProgressRow { classId: string; className: string; total: number; present: number; late: number; absent: number; permission: number; scanned: number; pctPresent: number; pctScanned: number }
+interface ClassProgressPanelProps {
+  rows: ClassProgressRow[]
+  loading: boolean
+  flash: Record<string, number>
+  search: string
+  setSearch: (s: string) => void
+  sortMode: 'name' | 'pctAsc' | 'pctDesc'
+  setSortMode: (m: 'name' | 'pctAsc' | 'pctDesc') => void
+  isToday: boolean
+}
+function ClassProgressPanel({ rows, loading, flash, search, setSearch, sortMode, setSortMode, isToday }: ClassProgressPanelProps) {
+  const now = Date.now()
+  const filtered = rows.filter(r => r.className.toLowerCase().includes(search.trim().toLowerCase()))
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortMode === 'name') return a.className.localeCompare(b.className, undefined, { numeric: true })
+    if (sortMode === 'pctAsc') return a.pctPresent - b.pctPresent
+    return b.pctPresent - a.pctPresent
+  })
+  // Aggregate
+  const agg = rows.reduce((acc, r) => {
+    acc.total += r.total; acc.present += r.present; acc.late += r.late; acc.permission += r.permission; acc.absent += r.absent; acc.scanned += r.scanned
+    return acc
+  }, { total: 0, present: 0, late: 0, permission: 0, absent: 0, scanned: 0 })
+  const aggPctPresent = agg.total > 0 ? Math.round((agg.present / agg.total) * 100) : 0
+  const aggPctScanned = agg.total > 0 ? Math.round((agg.scanned / agg.total) * 100) : 0
+
+  return (
+    <div className="rounded-2xl border border-slate-200/70 bg-white shadow-sm overflow-hidden">
+      <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📊</span>
+          <h3 className="text-sm font-bold text-slate-800">Class Attendance Progress</h3>
+          {isToday && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[10px] font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              LIVE
+            </span>
+          )}
+          {loading && <span className="text-[10px] text-slate-400">refreshing…</span>}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search class…"
+            className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 outline-none w-32 sm:w-44"
+          />
+          <select
+            value={sortMode}
+            onChange={e => setSortMode(e.target.value as any)}
+            className="px-2 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white outline-none"
+          >
+            <option value="name">Name</option>
+            <option value="pctDesc">Present % ↓</option>
+            <option value="pctAsc">Present % ↑</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Overall summary */}
+      <div className="px-4 py-3 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100 grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+        <div><div className="text-[10px] uppercase tracking-wider text-slate-500">Classes</div><div className="text-lg font-bold text-slate-800">{rows.length}</div></div>
+        <div><div className="text-[10px] uppercase tracking-wider text-slate-500">Students</div><div className="text-lg font-bold text-slate-800">{agg.total}</div></div>
+        <div><div className="text-[10px] uppercase tracking-wider text-emerald-600">Scanned</div><div className="text-lg font-bold text-emerald-700">{agg.scanned}<span className="text-xs font-medium text-emerald-500"> ({aggPctScanned}%)</span></div></div>
+        <div><div className="text-[10px] uppercase tracking-wider text-emerald-600">Present</div><div className="text-lg font-bold text-emerald-700">{agg.present}<span className="text-xs font-medium text-emerald-500"> ({aggPctPresent}%)</span></div></div>
+        <div><div className="text-[10px] uppercase tracking-wider text-rose-600">Absent</div><div className="text-lg font-bold text-rose-700">{agg.absent}</div></div>
+      </div>
+
+      {/* Rows */}
+      <div className="divide-y divide-slate-100 max-h-[480px] overflow-y-auto">
+        {sorted.length === 0 && !loading && (
+          <div className="px-4 py-8 text-center text-sm text-slate-400">No classes match.</div>
+        )}
+        {sorted.length === 0 && loading && (
+          <div className="px-4 py-8 text-center text-sm text-slate-400">Loading classes…</div>
+        )}
+        {sorted.map(row => {
+          const flashTime = flash[row.classId]
+          const flashing = flashTime && (now - flashTime) < 2500
+          const pctP = row.total > 0 ? (row.present / row.total) * 100 : 0
+          const pctL = row.total > 0 ? (row.late / row.total) * 100 : 0
+          const pctPerm = row.total > 0 ? (row.permission / row.total) * 100 : 0
+          const pctA = row.total > 0 ? (row.absent / row.total) * 100 : 0
+          return (
+            <div key={row.classId} className={`px-4 py-2.5 transition-colors ${flashing ? 'bg-emerald-50/70' : 'hover:bg-slate-50/60'}`}>
+              <div className="flex items-center gap-3">
+                <div className="min-w-0 flex-shrink-0 w-32 sm:w-40">
+                  <div className="text-sm font-semibold text-slate-800 truncate" title={row.className}>{row.className}</div>
+                  <div className="text-[10px] text-slate-500">{row.total} student{row.total === 1 ? '' : 's'}</div>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="relative h-5 rounded-full bg-slate-100 overflow-hidden flex">
+                    {pctP > 0 && <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" style={{ width: `${pctP}%` }} title={`Present: ${row.present}`} />}
+                    {pctL > 0 && <div className="h-full bg-gradient-to-r from-amber-300 to-amber-500" style={{ width: `${pctL}%` }} title={`Late: ${row.late}`} />}
+                    {pctPerm > 0 && <div className="h-full bg-gradient-to-r from-purple-300 to-purple-500" style={{ width: `${pctPerm}%` }} title={`Permission: ${row.permission}`} />}
+                    {pctA > 0 && <div className="h-full bg-gradient-to-r from-rose-300 to-rose-500" style={{ width: `${pctA}%` }} title={`Absent: ${row.absent}`} />}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px]">
+                    <span className="text-emerald-700">● {row.present} present</span>
+                    {row.late > 0 && <span className="text-amber-700">● {row.late} late</span>}
+                    {row.permission > 0 && <span className="text-purple-700">● {row.permission} perm</span>}
+                    {row.absent > 0 && <span className="text-rose-700">● {row.absent} absent</span>}
+                  </div>
+                </div>
+
+                <div className="flex-shrink-0 w-14 text-right">
+                  <div className={`text-lg font-extrabold tabular-nums ${row.pctPresent >= 80 ? 'text-emerald-600' : row.pctPresent >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>{row.pctPresent}%</div>
+                  <div className="text-[9px] uppercase tracking-wider text-slate-400">present</div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }

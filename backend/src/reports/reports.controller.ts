@@ -50,6 +50,16 @@ export class ReportsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @Get('class-attendance-progress')
+  async getClassAttendanceProgress(@Request() req, @Query('date') date?: string) {
+    return this.reportsService.getClassAttendanceProgress(
+      date ? new Date(date) : undefined,
+      req?.user?.userId,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Get('monthly-trend')
   async getMonthlyTrend(@Query('year') year?: string, @Query('month') month?: string) {
     const y = year ? parseInt(year, 10) : new Date().getUTCFullYear();

@@ -627,6 +627,87 @@ export class ReportsService {
     };
   }
 
+  /**
+   * Per-class attendance progress for a given date.
+   * Returns one row per class with total students and headcount by status.
+   * Used by the admin dashboard to show real-time progress bars per class.
+   */
+  async getClassAttendanceProgress(date?: Date, requesterUserId?: string) {
+    const targetDate = date || new Date();
+    const dayStart = toUTCMidnight(targetDate);
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+    const organizationId = requesterUserId
+      ? await this.sessionConfigService.getUserOrganizationId(requesterUserId)
+      : null;
+
+    const classRule = await this.sessionConfigService.getFormatRules('CLASS', organizationId);
+    const classAbsentThreshold = (classRule as any).enabled
+      ? ((classRule as any).absentSessionsForDayAbsent ?? 0)
+      : 0;
+
+    // All classes (we want even classes with zero records to appear)
+    const classes = await this.prisma.class.findMany({
+      select: {
+        id: true,
+        name: true,
+        students: { select: { id: true } },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    // All attendance records for the day, grouped by class
+    const attendances = await this.prisma.attendance.findMany({
+      where: { date: { gte: dayStart, lt: dayEnd } },
+      select: {
+        classId: true,
+        studentId: true,
+        status: true,
+        date: true,
+        session: true,
+      },
+    });
+    const byClass = new Map<string, typeof attendances>();
+    for (const a of attendances) {
+      if (!byClass.has(a.classId)) byClass.set(a.classId, []);
+      byClass.get(a.classId)!.push(a);
+    }
+
+    const rows = classes.map(c => {
+      const total = c.students.length;
+      const recs = byClass.get(c.id) || [];
+      const totals = countDailyHeadcount(
+        recs as any,
+        (a: any) => a.studentId,
+        classRule.caseStudyABEnabled ?? true,
+        classAbsentThreshold,
+      );
+      // Students with no record at all → treat as absent
+      const withRecord = new Set(recs.map(r => r.studentId));
+      const noRecordAbsent = c.students.filter(s => !withRecord.has(s.id)).length;
+      const present = totals.present;
+      const late = totals.late;
+      const permission = totals.permission;
+      const absent = totals.absent + noRecordAbsent;
+      const scanned = present + late; // students physically scanned in
+      const pctPresent = total > 0 ? Math.round((present / total) * 100) : 0;
+      const pctScanned = total > 0 ? Math.round((scanned / total) * 100) : 0;
+      return {
+        classId: c.id,
+        className: c.name,
+        total,
+        present,
+        late,
+        absent,
+        permission,
+        scanned,
+        pctPresent,
+        pctScanned,
+      };
+    });
+
+    return { date: dayStart.toISOString().split('T')[0], rows };
+  }
+
   async getMonthlyTrend(year: number, month: number) {
     const start = new Date(Date.UTC(year, month - 1, 1));
     const end = new Date(Date.UTC(year, month, 0)); // last day of month
