@@ -21,6 +21,7 @@ const studentNav = [
 interface Message { id: string; content: string; createdAt: string; readAt: string | null; sender: { id: string; name: string; photo: string | null }; receiver: { id: string; name: string } }
 interface Inbox { partner: { id: string; name: string; photo: string | null; role: string }; lastMessage: Message }
 interface Teacher { id: string; name: string; role: string }
+interface FamilyContact { id: string; name: string; role: string; relation: 'parent' | 'child' }
 
 export default function StudentMessagesPage() {
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null)
@@ -44,6 +45,15 @@ export default function StudentMessagesPage() {
     queryKey: ['message-teachers'],
     queryFn: async () => { const r = await apiFetch('/api/messages/teachers'); if (!r.ok) throw new Error(); return r.json() },
   })
+  const { data: family = [] as FamilyContact[] } = useQuery<FamilyContact[]>({
+    queryKey: ['student-family-contacts'],
+    queryFn: async () => {
+      const r = await apiFetch('/api/messages/family-contacts')
+      if (!r.ok) return []
+      const list = await r.json()
+      return Array.isArray(list) ? list : []
+    },
+  })
   const { data: conversation = [] as Message[] } = useQuery<Message[]>({
     queryKey: ['conversation', selectedPartnerId],
     queryFn: async () => { const r = await apiFetch(`/api/messages/conversation/${selectedPartnerId}`); if (!r.ok) throw new Error(); return r.json() },
@@ -65,6 +75,7 @@ export default function StudentMessagesPage() {
 
   const selectedPartner = inbox.find(i => i.partner.id === selectedPartnerId)?.partner
     ?? teachers.find(t => t.id === selectedPartnerId)
+    ?? family.find(f => f.id === selectedPartnerId)
 
   return (
     <AuthGuard requiredRole="STUDENT">
@@ -78,15 +89,31 @@ export default function StudentMessagesPage() {
           <div className="flex-1 overflow-y-auto p-2">
             <button onClick={() => setShowTeacherList(!showTeacherList)}
               className="w-full text-xs text-sky-600 py-2 hover:underline">+ New Message</button>
-            {showTeacherList && teachers.map(t => (
-              <button key={t.id} onClick={() => { setSelectedPartnerId(t.id); setShowTeacherList(false) }}
-                className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-50 text-slate-700">{t.name} ({t.role})</button>
-            ))}
+            {showTeacherList && (
+              <div className="mb-2">
+                {family.length > 0 && (
+                  <>
+                    <p className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wide text-slate-400">My family</p>
+                    {family.map(f => (
+                      <button key={f.id} onClick={() => { setSelectedPartnerId(f.id); setShowTeacherList(false) }}
+                        className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-emerald-50 text-emerald-700">
+                        {f.name} <span className="text-slate-400">(Parent)</span>
+                      </button>
+                    ))}
+                  </>
+                )}
+                <p className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wide text-slate-400">School staff</p>
+                {teachers.map(t => (
+                  <button key={t.id} onClick={() => { setSelectedPartnerId(t.id); setShowTeacherList(false) }}
+                    className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-50 text-slate-700">{t.name} ({t.role})</button>
+                ))}
+              </div>
+            )}
             {isLoading ? <div className="animate-pulse h-10 bg-slate-100 rounded-lg m-2" /> : inbox.map(item => (
               <button key={item.partner.id} onClick={() => setSelectedPartnerId(item.partner.id)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 ${selectedPartnerId === item.partner.id ? 'bg-sky-100 text-sky-700' : 'text-slate-600 hover:bg-slate-50'}`}>
                 <p className="font-medium truncate">{item.partner.name}</p>
-                <p className="text-xs truncate text-slate-400">{item.lastMessage.content}</p>
+                <p className="text-xs truncate text-slate-400">{item.lastMessage?.content ?? ''}</p>
               </button>
             ))}
           </div>
@@ -107,16 +134,19 @@ export default function StudentMessagesPage() {
                 <p className="text-xs text-slate-400">Verified School</p>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
-                {conversation.map(msg => (
-                  <div key={msg.id} className={`flex ${msg.sender.id === selectedPartnerId ? 'justify-start' : 'justify-end'}`}>
-                    <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${msg.sender.id === selectedPartnerId ? 'bg-white border border-slate-200 text-slate-800' : 'bg-sky-600 text-white'}`}>
-                      <p>{msg.content}</p>
-                      <p className={`text-xs mt-1 ${msg.sender.id === selectedPartnerId ? 'text-slate-400' : 'text-sky-200'}`}>
-                        {formatCambodiaTime(msg.createdAt)}
-                      </p>
+                {conversation.map(msg => {
+                  const fromPartner = msg.sender?.id === selectedPartnerId
+                  return (
+                    <div key={msg.id} className={`flex ${fromPartner ? 'justify-start' : 'justify-end'}`}>
+                      <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${fromPartner ? 'bg-white border border-slate-200 text-slate-800' : 'bg-sky-600 text-white'}`}>
+                        <p>{msg.content}</p>
+                        <p className={`text-xs mt-1 ${fromPartner ? 'text-slate-400' : 'text-sky-200'}`}>
+                          {formatCambodiaTime(msg.createdAt)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
               <form onSubmit={handleSubmit(onSend)} className="bg-white border-t border-slate-200 p-4 flex gap-3">
                 <input {...register('content', { required: true })}

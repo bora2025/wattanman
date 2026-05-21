@@ -44,4 +44,8 @@ export class MessagesController {
   @Roles('TEACHER', 'ADMIN')
   @Get('parents-students')
   getParentsStudents() { return this.svc.getParentsStudents(); }
+
+  @Roles('PARENT', 'STUDENT')
+  @Get('family-contacts')
+  getFamilyContacts(@Request() req: any) { return this.svc.getFamilyContacts(req.user.userId); }
 }

@@ -127,4 +127,40 @@ export class MessagesService {
       orderBy: [{ role: 'asc' }, { name: 'asc' }],
     });
   }
+
+  /**
+   * Returns the user's family contacts:
+   *   - PARENT  → their linked children (User rows, role=STUDENT)
+   *   - STUDENT → their linked parent  (User row, role=PARENT) — if any
+   *   - others  → []
+   */
+  async getFamilyContacts(userId: string) {
+    const me = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true },
+    });
+    if (!me) return [];
+    if (me.role === 'PARENT') {
+      const kids = await this.prisma.student.findMany({
+        where: { parentId: userId },
+        include: { user: { select: { id: true, name: true, photo: true, role: true } } },
+      });
+      return kids
+        .filter(k => k.user)
+        .map(k => ({ ...k.user, relation: 'child' as const }));
+    }
+    if (me.role === 'STUDENT') {
+      const student = await this.prisma.student.findUnique({
+        where: { userId },
+        select: { parentId: true },
+      });
+      if (!student?.parentId) return [];
+      const parent = await this.prisma.user.findUnique({
+        where: { id: student.parentId },
+        select: { id: true, name: true, photo: true, role: true },
+      });
+      return parent ? [{ ...parent, relation: 'parent' as const }] : [];
+    }
+    return [];
+  }
 }
