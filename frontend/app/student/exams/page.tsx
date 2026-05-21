@@ -12,6 +12,7 @@ const studentNav = [
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
   { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
+  { label: 'Messages', href: '/student/messages', icon: 'clipboard' },
 ]
 
 interface Exam { id: string; title: string; duration: number; totalMarks: number; passMark: number; status: string; class: { name: string } | null; attempt: { id: string; status: string; score: number | null; submittedAt: string | null } | null }

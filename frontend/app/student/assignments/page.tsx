@@ -12,6 +12,7 @@ const studentNav = [
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
   { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
+  { label: 'Messages', href: '/student/messages', icon: 'clipboard' },
 ]
 
 interface Assignment { id: string; title: string; description: string | null; dueDate: string | null; totalMarks: number; class: { name: string; subject: string }; createdBy: { name: string }; submission: { id: string; marks: number | null; submittedAt: string; isLate: boolean } | null }

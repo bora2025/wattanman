@@ -18,19 +18,46 @@ interface AttendanceRecord {
   } | null;
 }
 
+interface AssignmentLite {
+  id: string;
+  title: string;
+  dueDate: string | null;
+  totalMarks: number;
+  class?: { name: string; subject: string } | null;
+  submission: { marks: number | null; isLate: boolean } | null;
+}
+
+interface ExamLite {
+  id: string;
+  title: string;
+  status: string;
+  duration: number;
+  totalMarks: number;
+  passMark: number;
+  class?: { name: string } | null;
+  attempt: { status: string; score: number | null } | null;
+}
+
 const studentNav = [
   { label: 'nav.dashboard', href: '/student', icon: 'dashboard' },
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
   { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
+  { label: 'Messages', href: '/student/messages', icon: 'clipboard' },
 ];
 
 export default function StudentPortal() {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentLite[]>([]);
+  const [exams, setExams] = useState<ExamLite[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
 
-  useEffect(() => { fetchAttendance(); }, []);
+  useEffect(() => {
+    fetchAttendance();
+    fetchAssignments();
+    fetchExams();
+  }, []);
 
   const fetchAttendance = async () => {
     try {
@@ -43,6 +70,26 @@ export default function StudentPortal() {
       }
     } catch (err) { console.error('Failed to fetch attendance', err); }
     finally { setLoading(false); }
+  };
+
+  const fetchAssignments = async () => {
+    try {
+      const res = await apiFetch('/api/assignments/student/my-assignments');
+      if (res.ok) {
+        const data = await res.json();
+        setAssignments(Array.isArray(data) ? data : []);
+      }
+    } catch { /* silent */ }
+  };
+
+  const fetchExams = async () => {
+    try {
+      const res = await apiFetch('/api/exams/student/my-exams');
+      if (res.ok) {
+        const data = await res.json();
+        setExams(Array.isArray(data) ? data : []);
+      }
+    } catch { /* silent */ }
   };
 
   const downloadReport = () => {
@@ -58,6 +105,25 @@ export default function StudentPortal() {
 
   const presentCount = attendance.filter(r => r.status === 'PRESENT').length;
   const rate = attendance.length > 0 ? ((presentCount / attendance.length) * 100).toFixed(0) : '--';
+
+  const now = Date.now();
+  const pendingAssignments = assignments.filter(a => !a.submission && (!a.dueDate || new Date(a.dueDate).getTime() >= now));
+  const overdueAssignments = assignments.filter(a => !a.submission && a.dueDate && new Date(a.dueDate).getTime() < now);
+  const upcomingDeadlines = assignments
+    .filter(a => !a.submission && a.dueDate && new Date(a.dueDate).getTime() >= now)
+    .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
+    .slice(0, 5);
+  const activeExams = exams.filter(e => e.status === 'ACTIVE' && !e.attempt);
+
+  const gradedAssignments = assignments.filter(a => a.submission && a.submission.marks !== null);
+  const overallGrade = gradedAssignments.length
+    ? Math.round(
+        gradedAssignments.reduce(
+          (sum, a) => sum + ((a.submission!.marks ?? 0) / Math.max(1, a.totalMarks)) * 100,
+          0,
+        ) / gradedAssignments.length,
+      )
+    : null;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -175,6 +241,90 @@ export default function StudentPortal() {
         </div>
 
         <main className="max-w-5xl mx-auto px-6 py-6 space-y-4">
+          {/* Quick Access */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: 'Assignments', href: '/student/assignments', icon: '📚', count: pendingAssignments.length, badge: overdueAssignments.length, badgeLabel: 'overdue', color: 'bg-sky-50 text-sky-700 border-sky-200' },
+              { label: 'Exams', href: '/student/exams', icon: '📝', count: activeExams.length, badge: 0, color: 'bg-purple-50 text-purple-700 border-purple-200' },
+              { label: 'My Scores', href: '/student/scores', icon: '📊', count: gradedAssignments.length, badge: 0, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+              { label: 'Messages', href: '/student/messages', icon: '💬', count: 0, badge: 0, color: 'bg-amber-50 text-amber-700 border-amber-200' },
+            ].map(item => (
+              <Link key={item.href} href={item.href}
+                className={`flex flex-col items-start p-4 rounded-xl border ${item.color} hover:opacity-90 transition-opacity relative`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="text-sm font-semibold">{item.label}</span>
+                </div>
+                {item.count > 0 && <p className="text-2xl font-bold leading-none mt-1">{item.count}</p>}
+                {item.badge > 0 && (
+                  <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold rounded-full px-2 py-0.5">
+                    {item.badge} {item.badgeLabel}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+
+          {/* Upcoming Deadlines */}
+          {upcomingDeadlines.length > 0 && (
+            <div className="card p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">⏰ Upcoming Deadlines</h2>
+                <Link href="/student/assignments" className="text-xs text-sky-600 hover:underline">View all</Link>
+              </div>
+              <div className="space-y-2">
+                {upcomingDeadlines.map(a => {
+                  const days = Math.ceil((new Date(a.dueDate!).getTime() - now) / (1000 * 60 * 60 * 24));
+                  const urgency = days <= 1 ? 'text-red-600' : days <= 3 ? 'text-amber-600' : 'text-slate-500';
+                  return (
+                    <Link key={a.id} href="/student/assignments" className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-slate-50">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-800 truncate">{a.title}</p>
+                        <p className="text-xs text-slate-400 truncate">{a.class?.name ?? ''} · {a.class?.subject ?? ''}</p>
+                      </div>
+                      <div className={`text-xs font-semibold ${urgency} flex-shrink-0`}>
+                        {days <= 0 ? 'Today' : days === 1 ? 'Tomorrow' : `${days} days`}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Active Exams */}
+          {activeExams.length > 0 && (
+            <div className="card p-5 border-2 border-purple-200 bg-purple-50/30">
+              <h2 className="text-sm font-bold text-purple-700 uppercase tracking-wide mb-3">📝 Active Exams — Take Now</h2>
+              <div className="space-y-2">
+                {activeExams.map(e => (
+                  <Link key={e.id} href={`/student/exams/${e.id}`}
+                    className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-white border border-purple-100 hover:border-purple-300">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{e.title}</p>
+                      <p className="text-xs text-slate-400">{e.class?.name ?? 'General'} · {e.duration} min · Pass {e.passMark}/{e.totalMarks}</p>
+                    </div>
+                    <span className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-lg font-semibold">Start</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Performance summary */}
+          {overallGrade !== null && (
+            <div className="card p-5 flex items-center gap-4">
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white ${overallGrade >= 70 ? 'bg-emerald-500' : overallGrade >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}>
+                {overallGrade}
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-slate-800">Overall Grade: {overallGrade}%</p>
+                <p className="text-xs text-slate-500">{gradedAssignments.length} graded assignment(s) — attendance rate {rate}%</p>
+              </div>
+              <Link href="/student/scores" className="text-sm text-sky-600 hover:underline">Details →</Link>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex justify-end">
             <button onClick={downloadReport} className="btn-primary btn-sm">

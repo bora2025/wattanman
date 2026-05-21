@@ -10,6 +10,7 @@ const studentNav = [
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
   { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
+  { label: 'Messages', href: '/student/messages', icon: 'clipboard' },
 ]
 
 interface Grade { id: string; marks: number; assignment: { title: string; totalMarks: number; class: { name: string; subject: string } } }
