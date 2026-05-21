@@ -69,4 +69,12 @@ export class MessagesService {
       orderBy: { name: 'asc' },
     });
   }
+
+  async getParentsStudents() {
+    return this.prisma.user.findMany({
+      where: { role: { in: ['PARENT', 'STUDENT'] } },
+      select: { id: true, name: true, photo: true, role: true },
+      orderBy: [{ role: 'asc' }, { name: 'asc' }],
+    });
+  }
 }
