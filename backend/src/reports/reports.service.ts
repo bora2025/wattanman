@@ -745,21 +745,31 @@ export class ReportsService {
     return { year, month, data: result };
   }
 
-  async getStudentAttendance(studentId: string) {
+  async getStudentAttendance(studentId?: string, userId?: string) {
+    let resolvedStudentId = studentId;
+    if (!resolvedStudentId && userId) {
+      const student = await this.prisma.student.findFirst({ where: { userId }, select: { id: true } });
+      if (!student) return [];
+      resolvedStudentId = student.id;
+    }
+    if (!resolvedStudentId) return [];
+
     const attendances = await this.prisma.attendance.findMany({
-      where: { studentId },
+      where: { studentId: resolvedStudentId },
       orderBy: { date: 'desc' },
-      include: { class: { select: { name: true } } },
+      include: { class: { select: { name: true, subject: true } } },
     });
 
     return attendances.map(a => ({
+      id: a.id,
       date: a.date,
       status: a.status,
       permissionType: a.permissionType,
       permissionStartDate: a.permissionStartDate,
       permissionEndDate: a.permissionEndDate,
       classId: a.classId,
-      className: a.class.name,
+      className: a.class?.name ?? '',
+      class: a.class ? { name: a.class.name, subject: a.class.subject } : { name: '', subject: '' },
       session: a.session,
       sessionLabel: SESSION_LABELS[a.session] || `Session ${a.session}`,
       checkInTime: toCambodiaTime(a.checkInTime),

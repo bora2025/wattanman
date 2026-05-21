@@ -75,8 +75,11 @@ export class ReportsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('student-attendance')
-  async getStudentAttendance(@Query('studentId') studentId: string) {
-    return this.reportsService.getStudentAttendance(studentId);
+  async getStudentAttendance(
+    @Query('studentId') studentId?: string,
+    @Query('userId') userId?: string,
+  ) {
+    return this.reportsService.getStudentAttendance(studentId, userId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

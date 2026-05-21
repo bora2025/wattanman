@@ -12,10 +12,10 @@ interface AttendanceRecord {
   id: string;
   date: string;
   status: string;
-  class: {
+  class?: {
     name: string;
     subject: string;
-  };
+  } | null;
 }
 
 const studentNav = [
@@ -37,14 +37,17 @@ export default function StudentPortal() {
       const user = await getCurrentUser();
       if (!user) return;
       const res = await apiFetch(`/api/reports/student-attendance?userId=${user.userId}`);
-      if (res.ok) setAttendance(await res.json());
-    } catch (err) { console.error('Failed to fetch attendance'); }
+      if (res.ok) {
+        const data = await res.json();
+        setAttendance(Array.isArray(data) ? data : []);
+      }
+    } catch (err) { console.error('Failed to fetch attendance', err); }
     finally { setLoading(false); }
   };
 
   const downloadReport = () => {
     const csv = 'Date,Class,Subject,Status\n' +
-      attendance.map(r => `${r.date},${r.class.name},${r.class.subject},${r.status}`).join('\n');
+      attendance.map(r => `${r.date},${r.class?.name ?? ''},${r.class?.subject ?? ''},${r.status}`).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -112,7 +115,7 @@ export default function StudentPortal() {
                     }`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-800 truncate">
-                        {record.class.name} — {record.class.subject}
+                        {record.class?.name ?? '—'} — {record.class?.subject ?? ''}
                       </p>
                       <p className="text-xs text-slate-500 mt-0.5">
                         {new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -189,7 +192,7 @@ export default function StudentPortal() {
                 }`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-800">
-                    {record.class.name} — {record.class.subject}
+                    {record.class?.name ?? '—'} — {record.class?.subject ?? ''}
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5">
                     {new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
