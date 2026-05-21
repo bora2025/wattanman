@@ -27,7 +27,10 @@ export default function StaffCardDesignerPage() {
             <span className="text-xs text-slate-400">/</span>
             <Link href="/admin/card-designer" className="text-xs text-slate-500 hover:text-slate-700">Designer</Link>
             <span className="text-xs text-slate-400">/</span>
-            <span className="text-xs font-semibold text-slate-700">👨‍🏫 Staff ID Card</span>
+            <span className="text-xs font-semibold text-emerald-700 inline-flex items-center gap-1">
+              <span>👨‍🏫</span> Staff ID Card Workspace
+            </span>
+            <span className="ml-2 text-[10px] text-slate-400 hidden sm:inline">• Staff designs only</span>
           </div>
           <div className="flex-1 overflow-hidden">
             <CardEditor initialCardType="staff" />

@@ -27,7 +27,10 @@ export default function StudentCardDesignerPage() {
             <span className="text-xs text-slate-400">/</span>
             <Link href="/admin/card-designer" className="text-xs text-slate-500 hover:text-slate-700">Designer</Link>
             <span className="text-xs text-slate-400">/</span>
-            <span className="text-xs font-semibold text-slate-700">🎓 Student ID Card</span>
+            <span className="text-xs font-semibold text-indigo-700 inline-flex items-center gap-1">
+              <span>🎓</span> Student ID Card Workspace
+            </span>
+            <span className="ml-2 text-[10px] text-slate-400 hidden sm:inline">• Student designs only</span>
           </div>
           <div className="flex-1 overflow-hidden">
             <CardEditor initialCardType="student" />

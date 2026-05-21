@@ -749,6 +749,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
   // ── Card type switch ──────────────────────────────────────────────────────
   const handleCardTypeChange = (type: CardType) => {
+    // Workspace lock: ignore switches that would leave the locked type.
+    if (initialCardType && type !== initialCardType) return;
     isLoadingRef.current = true;
     setIsStartScreen(false);
     const sd = loadSavedDesign(type);
@@ -846,6 +848,20 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     selQr ? `${Math.round(selQr.x)}, ${Math.round(selQr.y)}` : null;
 
   const isCertMode = design.cardType === 'certificate-student' || design.cardType === 'certificate-staff';
+  // When CardEditor is mounted from a dedicated workspace page (staff-only or
+  // student-only), `initialCardType` is supplied and we lock the editor to that
+  // type — no type switcher, template picker filtered to the locked type only.
+  const lockedType: CardType | null = initialCardType ?? null;
+  const lockedTypeLabel = lockedType === 'student' ? 'Student ID Card'
+    : lockedType === 'staff' ? 'Staff ID Card'
+    : lockedType === 'certificate-student' ? 'Student Certificate'
+    : lockedType === 'certificate-staff' ? 'Staff Certificate'
+    : null;
+  const lockedTypeIcon = lockedType === 'student' ? '🎓'
+    : lockedType === 'staff' ? '👨‍🏫'
+    : lockedType === 'certificate-student' ? '📜'
+    : lockedType === 'certificate-staff' ? '🏅'
+    : null;
 
   return (
     <div className="flex flex-col bg-[#1a1a1a] h-full">
@@ -854,8 +870,8 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         <StartScreen
           previews={startPreviews}
           savedTemplates={startTemplates}
-          onNewStudent={() => handleCardTypeChange('student')}
-          onNewStaff={() => handleCardTypeChange('staff')}
+          onNewStudent={() => router.push('/admin/card-designer/student')}
+          onNewStaff={() => router.push('/admin/card-designer/staff')}
           onNewStudentCert={() => handleCardTypeChange('certificate-student')}
           onNewStaffCert={() => handleCardTypeChange('certificate-staff')}
           onOpen={(d) => handleApplyTemplate(d)}
@@ -876,8 +892,17 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         <TopBtn icon={<Icons.Redo />} label="Redo" title="Redo (Ctrl+Y)" onClick={redo} disabled={!canRedo} />
         <Divider />
 
-        {/* Card type switcher (mode-aware) */}
-        {isCertMode ? (
+        {/* Card type switcher (mode-aware) — hidden when workspace is locked to one type */}
+        {lockedType ? (
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-[#444] bg-[#1f1f1f] text-[11px] font-medium text-white shrink-0"
+            title={`Locked workspace · ${lockedTypeLabel}`}
+          >
+            <span className="text-[13px] leading-none">{lockedTypeIcon}</span>
+            <span className="hidden sm:inline">{lockedTypeLabel}</span>
+            <span className="text-[9px] text-[#777] ml-1">🔒</span>
+          </div>
+        ) : isCertMode ? (
           <div className="flex rounded border border-[#444] overflow-hidden shrink-0 text-[11px] font-medium">
             <button onClick={() => handleCardTypeChange('certificate-student')} title="Student Certificate"
               className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'certificate-student' ? 'bg-violet-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
@@ -1344,44 +1369,55 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
               </>
             ) : (
               <>
-                {/* ID Card built-in */}
+                {/* ID Card built-in — hide opposite type when workspace is locked */}
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Built-in</h4>
                 <div className="grid grid-cols-3 gap-3 mb-5">
-                  {[{ key: '__builtin_blank', d: BLANK_TEMPLATE, emoji: '📄', label: 'Blank Card' },
-                    { key: '__builtin_student', d: STUDENT_TEMPLATE, emoji: '🎓', label: 'Student' },
-                    { key: '__builtin_staff', d: STAFF_TEMPLATE, emoji: '👨‍🏫', label: 'Staff' }
-                  ].map(({ key, d: tpl, emoji, label }) => (
-                    <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} />
-                  ))}
+                  {[{ key: '__builtin_blank', d: BLANK_TEMPLATE, emoji: '📄', label: 'Blank Card', type: null as CardType | null },
+                    { key: '__builtin_student', d: STUDENT_TEMPLATE, emoji: '🎓', label: 'Student', type: 'student' as CardType },
+                    { key: '__builtin_staff', d: STAFF_TEMPLATE, emoji: '👨‍🏫', label: 'Staff', type: 'staff' as CardType }
+                  ].filter(({ type }) => !lockedType || type === null || type === lockedType)
+                   .map(({ key, d: tpl, emoji, label, type }) => {
+                    // When locked, force the blank template's cardType to match the workspace
+                    const finalTpl = lockedType && type === null ? { ...tpl, cardType: lockedType } : tpl;
+                    return <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(finalTpl)} />;
+                  })}
                 </div>
 
-                {/* Student presets */}
-                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">🎓 Student Styles</h4>
-                <div className="grid grid-cols-5 gap-2 mb-5">
-                  {([
-                    { key: '__preset_st1', d: STUDENT_CLASSIC_BLUE, emoji: '🔵', label: 'Classic Blue' },
-                    { key: '__preset_st2', d: STUDENT_DARK_NAVY, emoji: '🌌', label: 'Dark Navy' },
-                    { key: '__preset_st3', d: STUDENT_SKY_WAVE, emoji: '🌊', label: 'Sky Wave' },
-                    { key: '__preset_st4', d: STUDENT_GEOMETRIC, emoji: '🔷', label: 'Geometric' },
-                    { key: '__preset_st5', d: STUDENT_MINIMAL, emoji: '⬜', label: 'Minimal' },
-                  ] as const).map(({ key, d: tpl, emoji, label }) => (
-                    <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} small />
-                  ))}
-                </div>
+                {/* Student presets — hidden in staff-locked workspace */}
+                {lockedType !== 'staff' && (
+                  <>
+                    <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">🎓 Student Styles</h4>
+                    <div className="grid grid-cols-5 gap-2 mb-5">
+                      {([
+                        { key: '__preset_st1', d: STUDENT_CLASSIC_BLUE, emoji: '🔵', label: 'Classic Blue' },
+                        { key: '__preset_st2', d: STUDENT_DARK_NAVY, emoji: '🌌', label: 'Dark Navy' },
+                        { key: '__preset_st3', d: STUDENT_SKY_WAVE, emoji: '🌊', label: 'Sky Wave' },
+                        { key: '__preset_st4', d: STUDENT_GEOMETRIC, emoji: '🔷', label: 'Geometric' },
+                        { key: '__preset_st5', d: STUDENT_MINIMAL, emoji: '⬜', label: 'Minimal' },
+                      ] as const).map(({ key, d: tpl, emoji, label }) => (
+                        <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} small />
+                      ))}
+                    </div>
+                  </>
+                )}
 
-                {/* Staff presets */}
-                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">👨‍🏫 Staff Styles</h4>
-                <div className="grid grid-cols-5 gap-2 mb-5">
-                  {([
-                    { key: '__preset_sf1', d: STAFF_CORPORATE_TEAL, emoji: '🟢', label: 'Corp Teal' },
-                    { key: '__preset_sf2', d: STAFF_DEEP_OCEAN, emoji: '🌑', label: 'Deep Ocean' },
-                    { key: '__preset_sf3', d: STAFF_ROSE, emoji: '🌸', label: 'Rose Pro' },
-                    { key: '__preset_sf4', d: STAFF_FOREST, emoji: '🌿', label: 'Forest' },
-                    { key: '__preset_sf5', d: STAFF_SLATE_EXECUTIVE, emoji: '🏛️', label: 'Executive' },
-                  ] as const).map(({ key, d: tpl, emoji, label }) => (
-                    <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} small />
-                  ))}
-                </div>
+                {/* Staff presets — hidden in student-locked workspace */}
+                {lockedType !== 'student' && (
+                  <>
+                    <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">👨‍🏫 Staff Styles</h4>
+                    <div className="grid grid-cols-5 gap-2 mb-5">
+                      {([
+                        { key: '__preset_sf1', d: STAFF_CORPORATE_TEAL, emoji: '🟢', label: 'Corp Teal' },
+                        { key: '__preset_sf2', d: STAFF_DEEP_OCEAN, emoji: '🌑', label: 'Deep Ocean' },
+                        { key: '__preset_sf3', d: STAFF_ROSE, emoji: '🌸', label: 'Rose Pro' },
+                        { key: '__preset_sf4', d: STAFF_FOREST, emoji: '🌿', label: 'Forest' },
+                        { key: '__preset_sf5', d: STAFF_SLATE_EXECUTIVE, emoji: '🏛️', label: 'Executive' },
+                      ] as const).map(({ key, d: tpl, emoji, label }) => (
+                        <TemplateCard key={key} preview={templatePreviews[key]} emoji={emoji} label={label} onClick={() => handleApplyTemplate(tpl)} small />
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 {/* Saved ID card templates */}
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Your Saved Templates</h4>
@@ -1394,14 +1430,14 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                       </div>
                     ))}
                   </div>
-                ) : savedTemplates.filter((t) => t.cardType === 'student' || t.cardType === 'staff').length === 0 ? (
+                ) : savedTemplates.filter((t) => lockedType ? t.cardType === lockedType : (t.cardType === 'student' || t.cardType === 'staff')).length === 0 ? (
                   <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                     <span className="text-3xl block mb-2">📭</span>
                     <p className="text-sm text-slate-400">No saved templates yet. Click &ldquo;As Template&rdquo; to save one.</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
-                    {savedTemplates.filter((t) => t.cardType === 'student' || t.cardType === 'staff').map((tpl) => (
+                    {savedTemplates.filter((t) => lockedType ? t.cardType === lockedType : (t.cardType === 'student' || t.cardType === 'staff')).map((tpl) => (
                       <div key={tpl.id} className="rounded-xl border-2 border-slate-200 hover:border-slate-400 bg-white transition-all relative group overflow-hidden">
                         <button onClick={() => handleLoadTemplate(tpl)} className="w-full text-left">
                           <div className="bg-slate-50 flex items-center justify-center p-3 border-b border-slate-100 h-28">
