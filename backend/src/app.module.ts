@@ -21,6 +21,7 @@ import { BusModule } from './bus/bus.module';
 import { ExamModule } from './exam/exam.module';
 import { AssignmentsModule } from './assignments/assignments.module';
 import { ParentModule } from './parent/parent.module';
+import { BackupModule } from './backup/backup.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ParentModule } from './parent/parent.module';
     ExamModule,
     AssignmentsModule,
     ParentModule,
+    BackupModule,
   ],
   controllers: [AppController],
   providers: [
