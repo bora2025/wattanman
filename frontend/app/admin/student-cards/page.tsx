@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import QRCode from 'qrcode';
 import Sidebar from '../../../components/Sidebar';
 import { adminNav } from '../../../lib/admin-nav';
@@ -10,8 +11,19 @@ import { useLanguage } from '../../../lib/i18n';
 import { formatDOB } from '../../../lib/dateUtils';
 import { CardDesign, STUDENT_TEMPLATE, DESIGN_STORAGE_KEY, loadSavedDesign, apiGetActiveDesign, saveDesign } from '../../../components/card-designer/types';
 import { renderDesignToCanvas } from '../../../components/card-designer/renderDesignToCanvas';
-import CardEditor from '../../../components/card-designer/CardEditor';
 import { downloadSingleCardPDF, downloadA4CardsPDF } from '../../../components/card-designer/generateCardPDF';
+
+// Lazy-load the heavy card editor (QRCode + jsPDF + canvas + ~50KB) so the
+// student-cards page itself loads instantly. The editor only mounts when the
+// admin actually opens it.
+const CardEditor = dynamic(() => import('../../../components/card-designer/CardEditor'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-full w-full">
+      <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
+});
 
 interface Student {
   id: string;
