@@ -31,7 +31,7 @@ export default function ParentDashboard() {
   }
 
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={['PARENT', 'ADMIN']}>
       <div className="flex min-h-screen bg-slate-50">
         {/* Sidebar */}
         <aside className="w-56 bg-white border-r border-slate-200 flex flex-col p-4">
