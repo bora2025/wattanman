@@ -178,7 +178,9 @@ function InboxTab() {
             <p className="text-xs text-slate-400 px-3 py-6 text-center">No conversations yet.</p>
           )}
           {inbox.map(item => {
-            const unread = !item.lastMessage.readAt && item.lastMessage.sender.id === item.partner.id
+            const lm = item.lastMessage
+            const senderId = lm?.sender?.id
+            const unread = !lm?.readAt && senderId === item.partner.id
             return (
               <button key={item.partner.id} onClick={() => onPick(item.partner.id)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 ${partnerId === item.partner.id ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-white'}`}>
@@ -186,7 +188,7 @@ function InboxTab() {
                   <p className={`truncate ${unread ? 'font-bold text-slate-800' : 'font-medium'}`}>{item.partner.name}</p>
                   {unread && <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0" />}
                 </div>
-                <p className="text-xs truncate text-slate-400">{item.lastMessage.content}</p>
+                <p className="text-xs truncate text-slate-400">{lm?.content ?? ''}</p>
               </button>
             )
           })}
@@ -211,16 +213,19 @@ function InboxTab() {
               {conversation.length === 0 && (
                 <p className="text-center text-sm text-slate-400 mt-8">No messages yet.</p>
               )}
-              {conversation.map(msg => (
-                <div key={msg.id} className={`flex ${msg.sender.id === partnerId ? 'justify-start' : 'justify-end'}`}>
-                  <div className={`max-w-md px-4 py-2 rounded-2xl text-sm ${msg.sender.id === partnerId ? 'bg-white border border-slate-200 text-slate-800' : 'bg-indigo-600 text-white'}`}>
-                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                    <p className={`text-xs mt-1 ${msg.sender.id === partnerId ? 'text-slate-400' : 'text-indigo-200'}`}>
-                      {formatCambodiaTime(msg.createdAt)}
-                    </p>
+              {conversation.map(msg => {
+                const fromPartner = msg.sender?.id === partnerId
+                return (
+                  <div key={msg.id} className={`flex ${fromPartner ? 'justify-start' : 'justify-end'}`}>
+                    <div className={`max-w-md px-4 py-2 rounded-2xl text-sm ${fromPartner ? 'bg-white border border-slate-200 text-slate-800' : 'bg-indigo-600 text-white'}`}>
+                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                      <p className={`text-xs mt-1 ${fromPartner ? 'text-slate-400' : 'text-indigo-200'}`}>
+                        {formatCambodiaTime(msg.createdAt)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
             <form onSubmit={handleSubmit(onSend)} className="bg-white border-t border-slate-200 p-4 flex gap-3">
               <input {...register('content', { required: true })} autoComplete="off"

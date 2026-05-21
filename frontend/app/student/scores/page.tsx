@@ -39,8 +39,9 @@ export default function StudentScoresPage() {
     queryKey: ['student-exam-results'],
     queryFn: async () => {
       const r = await apiFetch('/api/exams/student/results')
-      if (!r.ok) throw new Error('Failed to load exam results')
-      return r.json() as Promise<any[]>
+      if (!r.ok) return [] as any[]
+      const data = await r.json()
+      return Array.isArray(data) ? data : ([] as any[])
     },
   })
 
@@ -49,17 +50,20 @@ export default function StudentScoresPage() {
   const refetch = () => { assignmentsQuery.refetch(); examsQuery.refetch() }
 
   const assignmentScores: UnifiedScore[] = (assignmentsQuery.data ?? [])
-    .filter((a: any) => a?.submission?.marks !== null && a?.submission?.marks !== undefined)
-    .map((a: any) => ({
-      id: `a-${a.id}`,
-      kind: 'assignment',
-      title: a.title,
-      subject: a.class?.subject ?? 'Other',
-      className: a.class?.name ?? null,
-      marks: a.submission.marks,
-      totalMarks: a.totalMarks,
-      date: a.submission.submittedAt ?? null,
-    }))
+    .flatMap((a: any): UnifiedScore[] => {
+      const sub = Array.isArray(a?.submissions) ? a.submissions[0] : a?.submission
+      if (!sub || sub.marks === null || sub.marks === undefined) return []
+      return [{
+        id: `a-${a.id}`,
+        kind: 'assignment' as const,
+        title: a.title,
+        subject: a.class?.subject ?? a.subject ?? 'Other',
+        className: a.class?.name ?? null,
+        marks: sub.marks,
+        totalMarks: a.totalMarks,
+        date: sub.gradedAt ?? sub.submittedAt ?? null,
+      }]
+    })
 
   const examScores: UnifiedScore[] = (examsQuery.data ?? [])
     .filter((e: any) => e?.status === 'GRADED' && e?.score !== null && e?.score !== undefined)

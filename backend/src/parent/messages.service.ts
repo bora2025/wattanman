@@ -54,15 +54,21 @@ export class MessagesService {
   }
 
   async getInbox(userId: string) {
-    // Latest message per conversation partner
+    // Latest message per conversation partner.
+    // Include both sender and receiver on each row so the frontend can always
+    // read `lastMessage.sender.id` regardless of message direction.
+    const both = {
+      sender: { select: { id: true, name: true, photo: true, role: true } },
+      receiver: { select: { id: true, name: true, photo: true, role: true } },
+    } as const;
     const sent = await this.prisma.message.findMany({
       where: { senderId: userId },
-      include: { receiver: { select: { id: true, name: true, photo: true, role: true } } },
+      include: both,
       orderBy: { createdAt: 'desc' },
     });
     const received = await this.prisma.message.findMany({
       where: { receiverId: userId },
-      include: { sender: { select: { id: true, name: true, photo: true, role: true } } },
+      include: both,
       orderBy: { createdAt: 'desc' },
     });
     // Group by partner

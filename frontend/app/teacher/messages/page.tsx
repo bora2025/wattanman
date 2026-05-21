@@ -129,7 +129,8 @@ export default function TeacherMessagesPage() {
             ) : inbox.length === 0 ? (
               <p className="text-xs text-slate-400 px-3 py-4 text-center">No conversations yet. Tap “New Message” to start one.</p>
             ) : inbox.map(item => {
-              const unread = !item.lastMessage.readAt && item.lastMessage.sender.id === item.partner.id
+              const lm = item.lastMessage
+              const unread = !lm?.readAt && lm?.sender?.id === item.partner.id
               return (
                 <button key={item.partner.id} onClick={() => onSelectPartner(item.partner.id)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 ${selectedPartnerId === item.partner.id ? 'bg-sky-100 text-sky-700' : 'text-slate-600 hover:bg-slate-50'}`}>
@@ -137,7 +138,7 @@ export default function TeacherMessagesPage() {
                     <p className={`truncate ${unread ? 'font-bold text-slate-800' : 'font-medium'}`}>{item.partner.name}</p>
                     {unread && <span className="w-2 h-2 rounded-full bg-sky-500 flex-shrink-0" />}
                   </div>
-                  <p className="text-xs truncate text-slate-400">{item.lastMessage.content}</p>
+                  <p className="text-xs truncate text-slate-400">{lm?.content ?? ''}</p>
                 </button>
               )
             })}
