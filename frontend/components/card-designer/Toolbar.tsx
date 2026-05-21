@@ -757,15 +757,38 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
         {/* ━━ FIELDS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         {activeTab === 'fields' && (
           <div className="p-3 space-y-3">
+            <PanelLabel>Data Source</PanelLabel>
+            {/* Purpose switcher — lets user link a Blank/General project to a data source after creation */}
+            <div className="grid grid-cols-2 gap-1.5">
+              {([
+                { id: 'student', label: 'Student', icon: '🎓' },
+                { id: 'staff', label: 'Staff', icon: '👨‍🏫' },
+                { id: 'certificate-student', label: 'Cert · Student', icon: '📜' },
+                { id: 'certificate-staff', label: 'Cert · Staff', icon: '🏅' },
+                { id: 'general', label: 'General', icon: '✏️' },
+              ] as const).map((p) => (
+                <button key={p.id}
+                  onClick={() => update({ cardType: p.id })}
+                  className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-all ${
+                    design.cardType === p.id
+                      ? 'border-indigo-500/60 bg-indigo-600/20 text-indigo-300'
+                      : 'border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800'
+                  }`}
+                >
+                  <span className="text-sm">{p.icon}</span>
+                  <span className="truncate">{p.label}</span>
+                </button>
+              ))}
+            </div>
             <PanelLabel>Data Fields</PanelLabel>
             {(() => {
               const fields = CARD_TYPE_FIELDS[design.cardType] ?? [];
               if (fields.length === 0) {
                 return (
-                  <div className="py-8 text-center space-y-2">
-                    <div className="text-2xl opacity-20">{ }</div>
+                  <div className="py-6 text-center space-y-2">
+                    <div className="text-2xl opacity-20">🔗</div>
                     <p className="text-xs text-slate-500 font-medium">No data source linked</p>
-                    <p className="text-[10px] text-slate-600 leading-relaxed px-2">This project is set to <strong className="text-slate-400">General</strong>. Create a new project and choose a purpose to link to student or staff data.</p>
+                    <p className="text-[10px] text-slate-600 leading-relaxed px-2">Pick <strong className="text-indigo-400">Student</strong>, <strong className="text-emerald-400">Staff</strong>, or a Certificate type above to enable drag-and-drop fields like <code className="font-mono text-indigo-400">{'{{name}}'}</code>.</p>
                   </div>
                 );
               }
