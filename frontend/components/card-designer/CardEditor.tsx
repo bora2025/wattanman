@@ -203,11 +203,24 @@ function Divider() {
 
 export default function CardEditor({ initialCardType, openNewProject, onSave }: { initialCardType?: CardType; openNewProject?: boolean; onSave?: () => void } = {}) {
   const router = useRouter();
-  const [design, setDesign] = useState<CardDesign>(
-    initialCardType === 'staff' ? STAFF_TEMPLATE :
-    initialCardType === 'student' ? STUDENT_TEMPLATE :
-    BLANK_TEMPLATE
-  );
+  // Synchronously seed from localStorage so returning admins see the LAST APPLIED design
+  // on first paint — no flicker from the built-in default template before the server fetch.
+  const [design, setDesign] = useState<CardDesign>(() => {
+    if (typeof window !== 'undefined' && initialCardType) {
+      const cached = loadSavedDesign(initialCardType);
+      if (cached) return cached;
+    }
+    return initialCardType === 'staff' ? STAFF_TEMPLATE :
+           initialCardType === 'student' ? STUDENT_TEMPLATE :
+           BLANK_TEMPLATE;
+  });
+  // Only true once the server-side active design has been resolved (or we know there is none).
+  // Used to show a subtle overlay on first-time opens when there is no localStorage cache.
+  const [designReady, setDesignReady] = useState<boolean>(() => {
+    if (!initialCardType) return true;
+    if (typeof window === 'undefined') return false;
+    return loadSavedDesign(initialCardType) !== null;
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -314,7 +327,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
   // ── Load on mount ────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!initialCardType) { isLoadingRef.current = false; return; }
+    if (!initialCardType) { isLoadingRef.current = false; setDesignReady(true); return; }
     isLoadingRef.current = true;
     const cardType = initialCardType;
     const localDesign = loadSavedDesign(cardType);
@@ -328,7 +341,10 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       }
       // Note: we deliberately do NOT auto-push localDesign when the server has no active design.
       // That used to clobber peer admins' state — only an explicit Apply or user edit may push.
-    }).finally(() => { setTimeout(() => { isLoadingRef.current = false; }, 2000); });
+    }).finally(() => {
+      setDesignReady(true);
+      setTimeout(() => { isLoadingRef.current = false; }, 2000);
+    });
   }, [initialCardType, syncToServer]);
 
   // ── Refresh active design when the tab regains focus ─────────────────────
@@ -1407,7 +1423,18 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
             }}
             onClick={(e) => { if (e.target === e.currentTarget) setSelectedId(null); }}
           >
-            <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center', transition: 'transform 0.15s', filter: 'drop-shadow(0 8px 32px rgba(0,0,0,0.6))' }}>
+            <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center', transition: 'transform 0.15s', filter: 'drop-shadow(0 8px 32px rgba(0,0,0,0.6))', position: 'relative' }}>
+              {!designReady && (
+                <div
+                  className="absolute inset-0 z-20 flex items-center justify-center bg-[#2a2a2a]/85 backdrop-blur-sm rounded-xl"
+                  style={{ pointerEvents: 'auto' }}
+                >
+                  <div className="flex flex-col items-center gap-3 text-slate-200">
+                    <Icons.Spinner />
+                    <span className="text-xs tracking-wide">Loading applied template…</span>
+                  </div>
+                </div>
+              )}
               {isPreviewMode ? (
                 <div
                   className="relative flex items-center justify-center bg-white rounded-xl overflow-hidden"
