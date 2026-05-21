@@ -18,6 +18,9 @@ export const adminNav = [
 
   // ── People ──
   { label: 'nav.manageUsers', href: '/admin/users', icon: 'users', section: 'nav.section.people' },
+  { label: 'Teacher Portal', href: '/admin/teachers', icon: 'graduation' },
+  { label: 'Student Portal', href: '/admin/students', icon: 'users' },
+  { label: 'Parent Portal', href: '/admin/parents', icon: 'users' },
   { label: 'nav.manageHub', href: '/admin/manage-hub', icon: 'briefcase' },
   { label: 'nav.manageOfficer', href: '/admin/employees', icon: 'briefcase' },
   { label: 'nav.manageTeachers', href: '/wattaman/scheduled-teacher', icon: 'graduation' },

@@ -128,6 +128,17 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @Put('users/:id/password')
+  async resetUserPassword(@Param('id') id: string, @Body() body: { password: string }) {
+    if (!body?.password || body.password.length < 6) {
+      throw new HttpException('Password must be at least 6 characters', HttpStatus.BAD_REQUEST);
+    }
+    await this.authService.resetUserPassword(id, body.password);
+    return { ok: true };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Put('users/:id')
   async updateUser(
     @Param('id') id: string,

@@ -143,6 +143,14 @@ export class AuthService {
     });
   }
 
+  async resetUserPassword(userId: string, newPassword: string) {
+    const hashed = await bcrypt.hash(newPassword, 12);
+    await this.prisma.user.update({ where: { id: userId }, data: { password: hashed } });
+    // Revoke all existing refresh tokens so old sessions cannot continue.
+    await this.prisma.refreshToken.deleteMany({ where: { userId } });
+    return { ok: true };
+  }
+
   async deleteUser(userId: string) {
     // Clean up related records before deleting the user
     const student = await this.prisma.student.findUnique({ where: { userId } });
