@@ -191,16 +191,62 @@ export class AuthService {
   }
 
   async deleteUser(userId: string) {
-    // Clean up related records before deleting the user
-    const student = await this.prisma.student.findUnique({ where: { userId } });
-    if (student) {
-      await this.prisma.attendance.deleteMany({ where: { studentId: student.id } });
-      await this.prisma.student.delete({ where: { id: student.id } });
+    // Refuse if user is currently assigned as a teacher to any class —
+    // those classes would be orphaned. Surface a clear, actionable error.
+    const teachingClasses = await this.prisma.class.findMany({
+      where: { teacherId: userId },
+      select: { name: true },
+      take: 5,
+    });
+    if (teachingClasses.length > 0) {
+      const names = teachingClasses.map(c => c.name).join(', ');
+      throw new Error(
+        `Cannot delete: user is the assigned teacher for ${teachingClasses.length} class(es) (${names}). Reassign those classes first.`,
+      );
     }
-    await this.prisma.staffAttendance.deleteMany({ where: { userId } });
-    await this.prisma.notification.deleteMany({ where: { userId } });
-    await this.prisma.refreshToken.deleteMany({ where: { userId } });
-    return this.prisma.user.delete({ where: { id: userId } });
+
+    // Detach the student profile (if any) and its attendance.
+    const student = await this.prisma.student.findUnique({ where: { userId } });
+
+    // Wipe every record that references this user, in dependency order.
+    await this.prisma.$transaction([
+      // Student-side
+      ...(student
+        ? [
+            this.prisma.attendance.deleteMany({ where: { studentId: student.id } }),
+            this.prisma.feeRecord.deleteMany({ where: { studentId: student.id } }),
+            this.prisma.student.delete({ where: { id: student.id } }),
+          ]
+        : []),
+
+      // As parent: detach children (do not delete the students)
+      this.prisma.student.updateMany({ where: { parentId: userId }, data: { parentId: null } }),
+
+      // Attendance marker (student + staff)
+      this.prisma.attendance.deleteMany({ where: { markedById: userId } }),
+      this.prisma.staffAttendance.deleteMany({ where: { markedById: userId } }),
+      this.prisma.staffAttendance.deleteMany({ where: { userId } }),
+
+      // Communication
+      this.prisma.message.deleteMany({ where: { OR: [{ senderId: userId }, { receiverId: userId }] } }),
+      this.prisma.announcementRead.deleteMany({ where: { userId } }),
+      this.prisma.announcement.deleteMany({ where: { authorId: userId } }),
+
+      // Modules
+      this.prisma.salary.deleteMany({ where: { userId } }),
+      this.prisma.exam.deleteMany({ where: { createdById: userId } }),
+      this.prisma.assignment.deleteMany({ where: { createdById: userId } }),
+
+      // Preferences / notifications / sessions
+      this.prisma.notification.deleteMany({ where: { userId } }),
+      this.prisma.notificationPreference.deleteMany({ where: { userId } }),
+      this.prisma.refreshToken.deleteMany({ where: { userId } }),
+
+      // Finally the user
+      this.prisma.user.delete({ where: { id: userId } }),
+    ].filter(Boolean) as any);
+
+    return { ok: true, id: userId };
   }
 
   async updateUser(userId: string, data: { name?: string; email?: string; role?: string; phone?: string; departmentId?: string | null }) {
