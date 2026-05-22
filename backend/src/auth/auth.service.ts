@@ -175,6 +175,13 @@ export class AuthService {
     });
   }
 
+  async findById(userId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true, role: true },
+    });
+  }
+
   async resetUserPassword(userId: string, newPassword: string) {
     const hashed = await bcrypt.hash(newPassword, 12);
     await this.prisma.user.update({ where: { id: userId }, data: { password: hashed } });

@@ -43,9 +43,12 @@ async function fetchMe(): Promise<{ role: string } | null> {
 }
 
 function isRoleAllowed(userRole: string, requiredRole?: string, allowedRoles?: string[]): boolean {
+  // SUPER_ADMIN is a superset of ADMIN — can access anything ADMIN can.
+  const effectiveAllows = (target: string) =>
+    userRole === target || (target === 'ADMIN' && userRole === 'SUPER_ADMIN');
+
   if (allowedRoles && allowedRoles.length > 0) {
-    // Check explicit role match first
-    if (allowedRoles.includes(userRole)) return true;
+    if (allowedRoles.some(r => effectiveAllows(r))) return true;
     // Special meta-role: EMPLOYEE means any role not in excluded list
     if (allowedRoles.includes('EMPLOYEE')) {
       return !EMPLOYEE_EXCLUDED_ROLES.includes(userRole);
@@ -53,7 +56,7 @@ function isRoleAllowed(userRole: string, requiredRole?: string, allowedRoles?: s
     return false;
   }
   if (requiredRole) {
-    return userRole === requiredRole;
+    return effectiveAllows(requiredRole);
   }
   return true; // no restriction
 }

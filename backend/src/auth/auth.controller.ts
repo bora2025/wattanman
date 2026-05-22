@@ -31,6 +31,19 @@ export class AuthController {
     return req.ip ?? req.socket?.remoteAddress ?? null;
   }
 
+  /**
+   * Only a SUPER_ADMIN can modify or delete another SUPER_ADMIN.
+   * Throws 403 otherwise.
+   */
+  private async assertCanManageTarget(actorRole: string | undefined, targetUserId: string) {
+    const target = await this.authService.findById(targetUserId);
+    if (!target) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    if (target.role === 'SUPER_ADMIN' && actorRole !== 'SUPER_ADMIN') {
+      throw new HttpException('Only a Super Admin can modify another Super Admin', HttpStatus.FORBIDDEN);
+    }
+    return target;
+  }
+
   /** Helper: set both access + refresh cookies */
   private setTokenCookies(res: Response, accessToken: string, refreshToken: string) {
     res.cookie('access_token', accessToken, {
@@ -176,10 +189,11 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Put('users/:id/password')
-  async resetUserPassword(@Param('id') id: string, @Body() body: { password: string }) {
+  async resetUserPassword(@Param('id') id: string, @Body() body: { password: string }, @Request() req: any) {
     if (!body?.password || body.password.length < 6) {
       throw new HttpException('Password must be at least 6 characters', HttpStatus.BAD_REQUEST);
     }
+    await this.assertCanManageTarget(req.user?.role, id);
     await this.authService.resetUserPassword(id, body.password);
     return { ok: true };
   }
@@ -190,7 +204,13 @@ export class AuthController {
   async updateUser(
     @Param('id') id: string,
     @Body() body: { name?: string; email?: string; role?: string; phone?: string; departmentId?: string | null },
+    @Request() req: any,
   ) {
+    await this.assertCanManageTarget(req.user?.role, id);
+    // Also: only SUPER_ADMIN may promote a user TO SUPER_ADMIN.
+    if (body?.role === 'SUPER_ADMIN' && req.user?.role !== 'SUPER_ADMIN') {
+      throw new HttpException('Only a Super Admin can assign the Super Admin role', HttpStatus.FORBIDDEN);
+    }
     try {
       return await this.authService.updateUser(id, body);
     } catch (error: any) {
@@ -231,6 +251,7 @@ export class AuthController {
     if (req.user?.userId === id) {
       throw new HttpException('Cannot delete your own account', HttpStatus.FORBIDDEN);
     }
+    await this.assertCanManageTarget(req.user?.role, id);
     try {
       return await this.authService.deleteUser(id);
     } catch (error: any) {
