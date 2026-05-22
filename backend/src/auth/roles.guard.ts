@@ -2,6 +2,24 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from './roles.decorator';
 
+/**
+ * Role hierarchy — a user with a "higher" role implicitly satisfies any
+ * @Roles() check that requires one of the "lower" roles.
+ *
+ *   SUPER_ADMIN  ─┐
+ *                 ├─ implicitly grants ADMIN, SCHOOL_ADMIN, WATTAMAN
+ *   SCHOOL_ADMIN ─┘     (and anything ADMIN can do)
+ *
+ *   ADMIN        ─── implicitly grants WATTAMAN
+ *
+ * This avoids having to list every higher-tier role on every endpoint.
+ */
+const ROLE_INHERITS: Record<string, string[]> = {
+  SUPER_ADMIN: ['ADMIN', 'SCHOOL_ADMIN', 'WATTAMAN'],
+  SCHOOL_ADMIN: ['ADMIN', 'WATTAMAN'],
+  ADMIN: ['WATTAMAN'],
+};
+
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
@@ -15,6 +33,14 @@ export class RolesGuard implements CanActivate {
       return true; // No @Roles() decorator → allow all authenticated users
     }
     const { user } = context.switchToHttp().getRequest();
-    return requiredRoles.includes(user?.role);
+    const userRole: string | undefined = user?.role;
+    if (!userRole) return false;
+
+    // Direct match
+    if (requiredRoles.includes(userRole)) return true;
+
+    // Hierarchical match — does this user's role inherit any required role?
+    const inherited = ROLE_INHERITS[userRole] || [];
+    return inherited.some((r) => requiredRoles.includes(r));
   }
 }
