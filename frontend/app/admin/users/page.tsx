@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Sidebar from '../../../components/Sidebar'
+import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
@@ -324,6 +325,7 @@ export default function ManageUsers() {
   }
 
   return (
+    <AuthGuard requiredRole="ADMIN">
     <div className="page-shell">
       <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
       <div className="page-content">
@@ -645,5 +647,6 @@ export default function ManageUsers() {
         </div>
       )}
     </div>
+    </AuthGuard>
   )
 }
