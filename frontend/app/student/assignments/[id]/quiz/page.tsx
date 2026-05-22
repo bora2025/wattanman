@@ -11,10 +11,12 @@ type QType = 'MCQ' | 'TF' | 'MATCHING' | 'ESSAY' | 'NUMERICAL'
 interface Question {
   id: string; type: QType; prompt: string; points: number; order: number
   data: any
+  correctData?: any
 }
 interface QuizPayload {
   assignment: { id: string; title: string; instructions: string | null; dueDate: string | null; totalMarks: number; maxAttempts: number; allowLate: boolean; timeLimitMinutes: number | null }
   questions: Question[]
+  revealAnswers?: boolean
   submission: { id: string; status: string; marks: number | null; attemptNumber: number; submittedAt: string; quizStartedAt: string | null; answers: Array<{ questionId: string; response: any; pointsAwarded: number | null; feedback: string | null }> } | null
 }
 
@@ -110,6 +112,9 @@ export default function StudentQuizPage() {
   const exhausted = assignment.maxAttempts > 0 && attemptsUsed >= assignment.maxAttempts
   const alreadyGraded = submission?.status === 'GRADED' && submission.marks !== null
   const canRetake = !exhausted && !!submission && !result
+  const revealAnswers = !!data.revealAnswers
+  const answerByQ = new Map<string, { response: any; pointsAwarded: number | null; feedback: string | null }>()
+  for (const a of submission?.answers ?? []) answerByQ.set(a.questionId, a)
 
   return (
     <AuthGuard requiredRole="STUDENT">
@@ -155,29 +160,52 @@ export default function StudentQuizPage() {
                 <p className="text-slate-400">This quiz has no questions yet.</p>
               </div>
             )}
-            {questions.map((q, i) => (
+            {questions.map((q, i) => {
+              const ans = answerByQ.get(q.id)
+              return (
               <div key={q.id} className="bg-white rounded-xl shadow-sm p-5 border border-slate-100">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold">Q{i + 1}</span>
                   <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">{q.points} pt</span>
+                  {revealAnswers && ans && ans.pointsAwarded != null && (
+                    <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${ans.pointsAwarded >= q.points ? 'bg-emerald-100 text-emerald-700' : ans.pointsAwarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>You: {ans.pointsAwarded}/{q.points}</span>
+                  )}
                 </div>
                 <p className="text-sm text-slate-800 whitespace-pre-wrap mb-3">{q.prompt}</p>
-                <QuestionInput q={q} value={answers[q.id]} onChange={(v) => setAnswer(q.id, v)} disabled={exhausted && !!submission} />
+                <QuestionInput q={q} value={answers[q.id]} onChange={(v) => setAnswer(q.id, v)} disabled={(exhausted && !!submission) || revealAnswers} />
+                {revealAnswers && q.correctData && (
+                  <CorrectAnswerPanel q={q} />
+                )}
+                {revealAnswers && ans?.feedback && (
+                  <p className="text-xs text-slate-600 italic mt-2">Teacher feedback: “{ans.feedback}”</p>
+                )}
               </div>
-            ))}
+              )
+            })}
           </div>
 
           {questions.length > 0 && (
             <div className="mt-4 flex items-center justify-between gap-3">
               <p className="text-xs text-slate-500">
-                {exhausted ? 'No more attempts available.' : (submission ? 'Resubmitting replaces your previous answers.' : 'Submit when you are ready.')}
+                {exhausted ? 'No more attempts available.' : (submission ? 'Resubmitting starts a new attempt.' : 'Submit when you are ready.')}
               </p>
-              <button
-                onClick={() => submitMutation.mutate()}
-                disabled={submitMutation.isPending || (exhausted && !!submission)}
-                className="bg-sky-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-sky-700 disabled:opacity-50">
-                {submitMutation.isPending ? 'Submitting…' : (submission ? 'Resubmit Quiz' : 'Submit Quiz')}
-              </button>
+              <div className="flex items-center gap-2">
+                {(exhausted || revealAnswers || (!!submission && !canRetake)) && (
+                  <button
+                    onClick={() => router.push('/student/assignments')}
+                    className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-300">
+                    ✅ Finish
+                  </button>
+                )}
+                {!exhausted && (
+                  <button
+                    onClick={() => submitMutation.mutate()}
+                    disabled={submitMutation.isPending}
+                    className="bg-sky-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-sky-700 disabled:opacity-50">
+                    {submitMutation.isPending ? 'Submitting…' : (submission ? 'Resubmit Quiz' : 'Submit Quiz')}
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -262,4 +290,49 @@ function QuestionInput({ q, value, onChange, disabled }: { q: Question; value: a
     }
   }
   return null
+}
+
+function CorrectAnswerPanel({ q }: { q: Question }) {
+  const cd = q.correctData
+  if (!cd) return null
+  let content: React.ReactNode = null
+  switch (q.type) {
+    case 'MCQ': {
+      const choices: Array<{ id: string; text: string }> = q.data?.choices ?? []
+      const correctIds: string[] = cd.correctIds ?? []
+      content = (
+        <ul className="list-disc list-inside text-sm text-emerald-700">
+          {choices.filter(c => correctIds.includes(c.id)).map(c => <li key={c.id}>{c.text}</li>)}
+        </ul>
+      )
+      break
+    }
+    case 'TF':
+      content = <p className="text-sm text-emerald-700 font-semibold">{cd.correct ? 'True' : 'False'}</p>
+      break
+    case 'NUMERICAL':
+      content = <p className="text-sm text-emerald-700 font-semibold">{String(cd.correct)}{cd.tolerance ? ` (±${cd.tolerance})` : ''}</p>
+      break
+    case 'MATCHING': {
+      const left: Array<{ id: string; text: string }> = q.data?.left ?? []
+      const right: Array<{ id: string; text: string }> = q.data?.right ?? []
+      const pairs: Array<{ leftId: string; rightId: string }> = cd.pairs ?? []
+      const leftMap = new Map(left.map(l => [l.id, l.text]))
+      const rightMap = new Map(right.map(r => [r.id, r.text]))
+      content = (
+        <ul className="text-sm text-emerald-700 space-y-0.5">
+          {pairs.map((p, i) => <li key={i}>{leftMap.get(p.leftId) ?? p.leftId} → {rightMap.get(p.rightId) ?? p.rightId}</li>)}
+        </ul>
+      )
+      break
+    }
+    default:
+      return null
+  }
+  return (
+    <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+      <p className="text-[11px] uppercase font-semibold text-emerald-700 mb-1">✓ Correct answer</p>
+      {content}
+    </div>
+  )
 }

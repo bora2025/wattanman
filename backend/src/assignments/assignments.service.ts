@@ -501,10 +501,35 @@ export class AssignmentsService {
     if ((assignment as any).randomizeQuestions) {
       questions = seededShuffle(questions, `Q:${seedBase}`);
     }
+    const attemptsUsed = submission?.attemptNumber ?? 0;
+    const maxAttempts = assignment.maxAttempts ?? 1;
+    const exhausted = maxAttempts > 0 && attemptsUsed >= maxAttempts;
+    const revealAnswers = !!submission && (exhausted || assignment.status === 'CLOSED');
     const sanitized = questions.map(q => {
       const s = sanitizeQuestionForStudent(q);
       if ((assignment as any).randomizeChoices && s.type === 'MCQ' && Array.isArray(s.data?.choices)) {
         s.data = { ...s.data, choices: seededShuffle(s.data.choices, `C:${seedBase}:${s.id}`) };
+      }
+      if (revealAnswers) {
+        const d: any = q.data || {};
+        let correct: any = null;
+        switch (q.type) {
+          case 'MCQ':
+            correct = { correctIds: (d.choices || []).filter((c: any) => c.isCorrect).map((c: any) => c.id) };
+            break;
+          case 'TF':
+            correct = { correct: !!d.correct };
+            break;
+          case 'NUMERICAL':
+            correct = { correct: d.correct, tolerance: d.tolerance ?? 0 };
+            break;
+          case 'MATCHING':
+            correct = { pairs: d.pairs || [] };
+            break;
+          default:
+            correct = null;
+        }
+        (s as any).correctData = correct;
       }
       return s;
     });
@@ -520,6 +545,7 @@ export class AssignmentsService {
         timeLimitMinutes: (assignment as any).timeLimitMinutes ?? null,
       },
       questions: sanitized,
+      revealAnswers,
       submission: submission ? {
         id: submission.id,
         status: submission.status,
