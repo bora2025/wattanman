@@ -68,12 +68,30 @@ function pickBottomTabs(navItems: NavItem[], bottomTabs?: string[]): NavItem[] {
   // UX-specific fixed tab order where camera stays centered.
   const hasAdminRoot = navItems.some(n => n.href === '/admin');
   const hasTeacherRoot = navItems.some(n => n.href === '/teacher');
+  const hasStudentRoot = navItems.some(n => n.href === '/student');
+  const hasParentRoot = navItems.some(n => n.href === '/parent');
 
   if (hasTeacherRoot) {
     const teacherOrder = ['/teacher', '/teacher/classes', '/teacher/camera', '/teacher/messages'];
     const teacherTabs = teacherOrder.map(href => navItems.find(n => n.href === href)).filter(Boolean) as NavItem[];
     if (teacherTabs.length === 4) {
       return [...teacherTabs, { label: 'common.more', href: '__more__', icon: 'settings' }];
+    }
+  }
+
+  if (hasStudentRoot) {
+    const studentOrder = ['/student', '/student/assignments', '/student/scores', '/student/messages'];
+    const studentTabs = studentOrder.map(href => navItems.find(n => n.href === href)).filter(Boolean) as NavItem[];
+    if (studentTabs.length === 4) {
+      return [...studentTabs, { label: 'common.more', href: '__more__', icon: 'settings' }];
+    }
+  }
+
+  if (hasParentRoot) {
+    const parentOrder = ['/parent', '/parent/attendance', '/parent/grades', '/parent/messages'];
+    const parentTabs = parentOrder.map(href => navItems.find(n => n.href === href)).filter(Boolean) as NavItem[];
+    if (parentTabs.length === 4) {
+      return [...parentTabs, { label: 'common.more', href: '__more__', icon: 'settings' }];
     }
   }
 

@@ -7,7 +7,6 @@ import Sidebar from '../../components/Sidebar';
 import AnnouncementFeed from '../../components/AnnouncementFeed';
 import { apiFetch, getCurrentUser } from '../../lib/api';
 import { useLanguage } from '../../lib/i18n';
-import { IconClipboard, IconDownload } from '../../components/Icons';
 
 interface AttendanceRecord {
   id: string;
@@ -52,10 +51,12 @@ export default function StudentPortal() {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [assignments, setAssignments] = useState<AssignmentLite[]>([]);
   const [exams, setExams] = useState<ExamLite[]>([]);
+  const [studentName, setStudentName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
 
   useEffect(() => {
+    getCurrentUser().then(u => { if (u) setStudentName(u.name || ''); });
     fetchAttendance();
     fetchAssignments();
     fetchExams();
@@ -144,22 +145,39 @@ export default function StudentPortal() {
           <Sidebar title="Student" subtitle="Portal" navItems={studentNav} accentColor="emerald" />
           <div className="page-content">
             <div className="h-14" />
+            <div className="page-header">
+              <h1 className="text-xl font-bold text-slate-800">
+                👋 Hello{studentName ? `, ${studentName}` : ''}
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">{t('student.subtitle')}</p>
+            </div>
             <div className="page-body space-y-4">
+              {/* Quick actions */}
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { href: '/student/assignments', icon: '📚', label: 'Assignments', bg: 'from-emerald-500 to-teal-500', count: pendingAssignments.length },
+                  { href: '/student/exams', icon: '📝', label: 'Exams', bg: 'from-violet-500 to-purple-500', count: activeExams.length },
+                  { href: '/student/scores', icon: '📊', label: 'Scores', bg: 'from-sky-500 to-blue-500', count: 0 },
+                  { href: '/student/messages', icon: '💬', label: 'Messages', bg: 'from-amber-500 to-orange-500', count: 0 },
+                ].map(a => (
+                  <Link key={a.href} href={a.href} className="group relative">
+                    <div className={`rounded-2xl bg-gradient-to-br ${a.bg} p-3 text-white shadow-sm active:scale-[0.97] transition-transform h-full flex flex-col items-center justify-center gap-1`}>
+                      <span className="text-2xl" aria-hidden>{a.icon}</span>
+                      <span className="text-[10px] font-semibold text-center leading-tight">{a.label}</span>
+                    </div>
+                    {a.count > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow">
+                        {a.count > 9 ? '9+' : a.count}
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+
               {/* Announcements */}
               <div className="card p-4">
                 <h3 className="text-sm font-semibold text-slate-700 mb-3">📣 Announcements</h3>
                 <AnnouncementFeed accent="emerald" limit={5} />
-              </div>
-              {/* Mobile Action Grid */}
-              <div className="grid grid-cols-4 gap-3">
-                <Link href="/student" className="action-card-mobile">
-                  <span className="action-icon" style={{ color: 'var(--color-icon)' }}><IconClipboard size={26} /></span>
-                  <span className="action-label">{t('student.title')}</span>
-                </Link>
-                <button onClick={downloadReport} className="action-card-mobile">
-                  <span className="action-icon" style={{ color: 'var(--color-icon)' }}><IconDownload size={26} /></span>
-                  <span className="action-label">{t('student.downloadReport')}</span>
-                </button>
               </div>
 
               {/* Summary Stats */}
@@ -215,15 +233,17 @@ export default function StudentPortal() {
         </div>
       </div>
 
-      {/* ── Desktop layout (original sky theme) ── */}
+      {/* ── Desktop layout (emerald root brand) ── */}
       <div className="hidden lg:block min-h-screen bg-slate-50">
         {/* Header */}
-        <div className="bg-gradient-to-r from-sky-600 to-sky-800 text-white">
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="max-w-5xl mx-auto px-6 py-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold">{t('student.title')}</h1>
-                <p className="text-sky-200 text-sm mt-1">{t('student.subtitle')}</p>
+                <h1 className="text-2xl font-bold">
+                  👋 Hello{studentName ? `, ${studentName}` : ''}
+                </h1>
+                <p className="text-emerald-100 text-sm mt-1">{t('student.subtitle')}</p>
               </div>
               <Link href="/" className="px-3 py-1.5 rounded-lg text-sm bg-white/10 hover:bg-white/20 transition-colors">
                 ← Home
@@ -232,15 +252,15 @@ export default function StudentPortal() {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 mt-6">
               <div className="bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
-                <p className="text-xs text-sky-200 uppercase tracking-wider">{t('student.totalRecords')}</p>
+                <p className="text-xs text-emerald-100 uppercase tracking-wider">{t('student.totalRecords')}</p>
                 <p className="text-2xl font-bold mt-1">{attendance.length}</p>
               </div>
               <div className="bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
-                <p className="text-xs text-sky-200 uppercase tracking-wider">{t('common.present')}</p>
+                <p className="text-xs text-emerald-100 uppercase tracking-wider">{t('common.present')}</p>
                 <p className="text-2xl font-bold mt-1">{presentCount}</p>
               </div>
               <div className="bg-white/10 rounded-xl px-4 py-3 backdrop-blur-sm">
-                <p className="text-xs text-sky-200 uppercase tracking-wider">{t('student.rate')}</p>
+                <p className="text-xs text-emerald-100 uppercase tracking-wider">{t('student.rate')}</p>
                 <p className="text-2xl font-bold mt-1">{rate}%</p>
               </div>
             </div>
@@ -251,9 +271,9 @@ export default function StudentPortal() {
           {/* Quick Access */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Assignments', href: '/student/assignments', icon: '📚', count: pendingAssignments.length, badge: overdueAssignments.length, badgeLabel: 'overdue', color: 'bg-sky-50 text-sky-700 border-sky-200' },
+              { label: 'Assignments', href: '/student/assignments', icon: '📚', count: pendingAssignments.length, badge: overdueAssignments.length, badgeLabel: 'overdue', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
               { label: 'Exams', href: '/student/exams', icon: '📝', count: activeExams.length, badge: 0, color: 'bg-purple-50 text-purple-700 border-purple-200' },
-              { label: 'My Scores', href: '/student/scores', icon: '📊', count: gradedAssignments.length, badge: 0, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+              { label: 'My Scores', href: '/student/scores', icon: '📊', count: gradedAssignments.length, badge: 0, color: 'bg-sky-50 text-sky-700 border-sky-200' },
               { label: 'Messages', href: '/student/messages', icon: '💬', count: 0, badge: 0, color: 'bg-amber-50 text-amber-700 border-amber-200' },
             ].map(item => (
               <Link key={item.href} href={item.href}
@@ -277,7 +297,7 @@ export default function StudentPortal() {
             <div className="card p-5">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">⏰ Upcoming Deadlines</h2>
-                <Link href="/student/assignments" className="text-xs text-sky-600 hover:underline">View all</Link>
+                <Link href="/student/assignments" className="text-xs text-emerald-600 hover:underline">View all</Link>
               </div>
               <div className="space-y-2">
                 {upcomingDeadlines.map(a => {
@@ -328,7 +348,7 @@ export default function StudentPortal() {
                 <p className="font-bold text-slate-800">Overall Grade: {overallGrade}%</p>
                 <p className="text-xs text-slate-500">{gradedAssignments.length} graded assignment(s) — attendance rate {rate}%</p>
               </div>
-              <Link href="/student/scores" className="text-sm text-sky-600 hover:underline">Details →</Link>
+              <Link href="/student/scores" className="text-sm text-emerald-600 hover:underline">Details →</Link>
             </div>
           )}
 
