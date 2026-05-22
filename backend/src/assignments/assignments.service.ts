@@ -3,6 +3,129 @@ import { PrismaService } from '../database/prisma.service';
 
 const ALLOWED_TYPES = ['HOMEWORK', 'QUIZ', 'PROJECT', 'LAB', 'ESSAY'];
 const ALLOWED_STATUS = ['DRAFT', 'PUBLISHED', 'CLOSED'];
+const ALLOWED_QUESTION_TYPES = ['MCQ', 'TF', 'MATCHING', 'ESSAY', 'NUMERICAL'];
+
+function sanitizeQuestionInput(body: any) {
+  const type = String(body.type || '').toUpperCase();
+  if (!ALLOWED_QUESTION_TYPES.includes(type)) {
+    throw new BadRequestException(`Question type must be one of ${ALLOWED_QUESTION_TYPES.join(', ')}`);
+  }
+  const prompt = String(body.prompt || '').trim();
+  if (!prompt) throw new BadRequestException('Question prompt is required');
+  const points = Math.max(0, Number(body.points) || 1);
+  const raw = body.data ?? {};
+  let data: any;
+  switch (type) {
+    case 'MCQ': {
+      const choices = Array.isArray(raw.choices) ? raw.choices : [];
+      const cleanedChoices = choices
+        .filter((c: any) => c && (c.text ?? '').toString().trim())
+        .map((c: any, i: number) => ({
+          id: String(c.id || `c${i}`),
+          text: String(c.text).trim(),
+          isCorrect: !!c.isCorrect,
+        }));
+      if (cleanedChoices.length < 2) throw new BadRequestException('MCQ needs at least 2 choices');
+      if (!cleanedChoices.some(c => c.isCorrect)) throw new BadRequestException('MCQ needs at least 1 correct choice');
+      data = { choices: cleanedChoices, multiple: !!raw.multiple };
+      break;
+    }
+    case 'TF': {
+      data = { correct: !!raw.correct };
+      break;
+    }
+    case 'MATCHING': {
+      const left = Array.isArray(raw.left) ? raw.left : [];
+      const right = Array.isArray(raw.right) ? raw.right : [];
+      const cleanedLeft = left.filter((x: any) => (x?.text ?? '').toString().trim()).map((x: any, i: number) => ({ id: String(x.id || `l${i}`), text: String(x.text).trim() }));
+      const cleanedRight = right.filter((x: any) => (x?.text ?? '').toString().trim()).map((x: any, i: number) => ({ id: String(x.id || `r${i}`), text: String(x.text).trim() }));
+      if (cleanedLeft.length < 2 || cleanedRight.length < 2) throw new BadRequestException('Matching needs at least 2 items on each side');
+      const pairs = Array.isArray(raw.pairs) ? raw.pairs : [];
+      const cleanedPairs = pairs
+        .filter((p: any) => p && cleanedLeft.some(l => l.id === p.leftId) && cleanedRight.some(r => r.id === p.rightId))
+        .map((p: any) => ({ leftId: String(p.leftId), rightId: String(p.rightId) }));
+      if (!cleanedPairs.length) throw new BadRequestException('Matching needs at least one correct pair');
+      data = { left: cleanedLeft, right: cleanedRight, pairs: cleanedPairs };
+      break;
+    }
+    case 'NUMERICAL': {
+      const correct = Number(raw.correct);
+      if (isNaN(correct)) throw new BadRequestException('Numerical question needs a numeric correct answer');
+      const tolerance = Math.max(0, Number(raw.tolerance) || 0);
+      data = { correct, tolerance };
+      break;
+    }
+    case 'ESSAY':
+    default:
+      data = { minWords: Math.max(0, Number(raw.minWords) || 0) };
+      break;
+  }
+  return { type, prompt, points, data };
+}
+
+function sanitizeQuestionForStudent(q: { id: string; type: string; prompt: string; points: number; order: number; data: any }) {
+  const d = q.data || {};
+  let safe: any;
+  switch (q.type) {
+    case 'MCQ':
+      safe = {
+        choices: (d.choices || []).map((c: any) => ({ id: c.id, text: c.text })),
+        multiple: !!d.multiple,
+      };
+      break;
+    case 'TF':
+      safe = {};
+      break;
+    case 'MATCHING':
+      safe = { left: d.left || [], right: d.right || [] };
+      break;
+    case 'NUMERICAL':
+      safe = {};
+      break;
+    case 'ESSAY':
+    default:
+      safe = { minWords: d.minWords || 0 };
+      break;
+  }
+  return { id: q.id, type: q.type, prompt: q.prompt, points: q.points, order: q.order, data: safe };
+}
+
+function gradeQuestion(q: { type: string; points: number; data: any }, response: any): { pointsAwarded: number | null; autoGraded: boolean } {
+  if (response == null) {
+    if (q.type === 'ESSAY') return { pointsAwarded: null, autoGraded: false };
+    return { pointsAwarded: 0, autoGraded: true };
+  }
+  const d = q.data || {};
+  switch (q.type) {
+    case 'MCQ': {
+      const correctIds = new Set((d.choices || []).filter((c: any) => c.isCorrect).map((c: any) => c.id));
+      const chosen = new Set(Array.isArray(response) ? response.map(String) : [String(response)]);
+      const equal = chosen.size === correctIds.size && [...chosen].every(id => correctIds.has(id));
+      return { pointsAwarded: equal ? q.points : 0, autoGraded: true };
+    }
+    case 'TF':
+      return { pointsAwarded: !!response === !!d.correct ? q.points : 0, autoGraded: true };
+    case 'MATCHING': {
+      const correctMap = new Map<string, string>((d.pairs || []).map((p: any) => [p.leftId, p.rightId]));
+      const given = Array.isArray(response) ? response : [];
+      let correct = 0;
+      for (const p of given) {
+        if (p && correctMap.get(String(p.leftId)) === String(p.rightId)) correct++;
+      }
+      const totalPairs = correctMap.size || 1;
+      return { pointsAwarded: (q.points * correct) / totalPairs, autoGraded: true };
+    }
+    case 'NUMERICAL': {
+      const num = Number(response);
+      if (isNaN(num)) return { pointsAwarded: 0, autoGraded: true };
+      const ok = Math.abs(num - Number(d.correct)) <= Number(d.tolerance || 0);
+      return { pointsAwarded: ok ? q.points : 0, autoGraded: true };
+    }
+    case 'ESSAY':
+    default:
+      return { pointsAwarded: null, autoGraded: false };
+  }
+}
 
 type AssignmentInput = {
   title?: string;
@@ -252,6 +375,199 @@ export class AssignmentsService {
         latePenaltyApplied: null,
       },
     });
+  }
+
+  // ── Quiz Questions (Teacher) ──
+
+  async listQuestions(assignmentId: string) {
+    return this.prisma.quizQuestion.findMany({
+      where: { assignmentId },
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
+  async createQuestion(assignmentId: string, body: any) {
+    const a = await this.prisma.assignment.findUnique({ where: { id: assignmentId } });
+    if (!a) throw new NotFoundException('Assignment not found');
+    const cleaned = sanitizeQuestionInput(body);
+    const count = await this.prisma.quizQuestion.count({ where: { assignmentId } });
+    const created = await this.prisma.quizQuestion.create({
+      data: {
+        assignmentId,
+        order: body.order != null ? Number(body.order) : count,
+        type: cleaned.type,
+        prompt: cleaned.prompt,
+        points: cleaned.points,
+        data: cleaned.data,
+      },
+    });
+    await this.syncAssignmentTotalMarks(assignmentId);
+    return created;
+  }
+
+  async updateQuestion(questionId: string, body: any) {
+    const existing = await this.prisma.quizQuestion.findUnique({ where: { id: questionId } });
+    if (!existing) throw new NotFoundException('Question not found');
+    const cleaned = sanitizeQuestionInput({ ...existing, ...body, data: body.data ?? existing.data });
+    const updated = await this.prisma.quizQuestion.update({
+      where: { id: questionId },
+      data: {
+        type: cleaned.type,
+        prompt: cleaned.prompt,
+        points: cleaned.points,
+        data: cleaned.data,
+        ...(body.order != null ? { order: Number(body.order) } : {}),
+      },
+    });
+    await this.syncAssignmentTotalMarks(existing.assignmentId);
+    return updated;
+  }
+
+  async deleteQuestion(questionId: string) {
+    const existing = await this.prisma.quizQuestion.findUnique({ where: { id: questionId } });
+    if (!existing) throw new NotFoundException('Question not found');
+    const deleted = await this.prisma.quizQuestion.delete({ where: { id: questionId } });
+    await this.syncAssignmentTotalMarks(existing.assignmentId);
+    return deleted;
+  }
+
+  private async syncAssignmentTotalMarks(assignmentId: string) {
+    const agg = await this.prisma.quizQuestion.aggregate({
+      where: { assignmentId },
+      _sum: { points: true },
+    });
+    const total = agg._sum.points ?? 0;
+    if (total > 0) {
+      await this.prisma.assignment.update({ where: { id: assignmentId }, data: { totalMarks: total } });
+    }
+  }
+
+  // ── Quiz (Student) ──
+
+  async getStudentQuiz(assignmentId: string, userId: string) {
+    const student = await this.prisma.student.findUnique({ where: { userId } });
+    if (!student) throw new NotFoundException('Student not found');
+    const assignment = await this.prisma.assignment.findUnique({ where: { id: assignmentId } });
+    if (!assignment) throw new NotFoundException('Assignment not found');
+    if (assignment.classId !== student.classId) throw new ForbiddenException('Not your class');
+    if (assignment.status === 'DRAFT') throw new ForbiddenException('Quiz not published yet');
+    const questions = await this.prisma.quizQuestion.findMany({
+      where: { assignmentId },
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+    });
+    const submission = await this.prisma.assignmentSubmission.findUnique({
+      where: { assignmentId_studentId: { assignmentId, studentId: student.id } },
+      include: { answers: true },
+    });
+    return {
+      assignment: {
+        id: assignment.id,
+        title: assignment.title,
+        instructions: assignment.instructions,
+        dueDate: assignment.dueDate,
+        totalMarks: assignment.totalMarks,
+        maxAttempts: assignment.maxAttempts,
+        allowLate: assignment.allowLate,
+      },
+      questions: questions.map(sanitizeQuestionForStudent),
+      submission: submission ? {
+        id: submission.id,
+        status: submission.status,
+        marks: submission.marks,
+        attemptNumber: submission.attemptNumber,
+        submittedAt: submission.submittedAt,
+        answers: submission.answers.map(a => ({ questionId: a.questionId, response: a.response, pointsAwarded: a.pointsAwarded })),
+      } : null,
+    };
+  }
+
+  async submitQuiz(assignmentId: string, userId: string, body: { answers: Array<{ questionId: string; response: any }> }) {
+    const student = await this.prisma.student.findUnique({ where: { userId } });
+    if (!student) throw new NotFoundException('Student not found');
+    const assignment = await this.prisma.assignment.findUnique({ where: { id: assignmentId } });
+    if (!assignment) throw new NotFoundException('Assignment not found');
+    if (assignment.classId !== student.classId) throw new ForbiddenException('Not your class');
+    if (assignment.status === 'DRAFT') throw new ForbiddenException('Quiz not published yet');
+    if (assignment.status === 'CLOSED') throw new ForbiddenException('Quiz is closed');
+    if (assignment.availableFrom && new Date() < assignment.availableFrom) {
+      throw new ForbiddenException('Quiz is not yet available');
+    }
+    const now = new Date();
+    const isLate = !!(assignment.dueDate && now > assignment.dueDate);
+    if (isLate && !assignment.allowLate) throw new ForbiddenException('Late submissions are not allowed');
+
+    const existing = await this.prisma.assignmentSubmission.findUnique({
+      where: { assignmentId_studentId: { assignmentId, studentId: student.id } },
+    });
+    const maxAttempts = assignment.maxAttempts ?? 1;
+    const currentAttempt = existing?.attemptNumber ?? 0;
+    if (existing && maxAttempts > 0 && currentAttempt >= maxAttempts) {
+      throw new ForbiddenException(`Maximum attempts (${maxAttempts}) reached`);
+    }
+
+    const questions = await this.prisma.quizQuestion.findMany({ where: { assignmentId } });
+    if (!questions.length) throw new BadRequestException('This quiz has no questions yet');
+    const byId = new Map(questions.map(q => [q.id, q]));
+    const answersByQ = new Map<string, any>();
+    for (const a of body.answers || []) {
+      if (a && a.questionId && byId.has(a.questionId)) answersByQ.set(a.questionId, a.response);
+    }
+
+    let autoTotal = 0;
+    let hasEssay = false;
+    const answersToCreate: Array<{ questionId: string; response: any; pointsAwarded: number | null; autoGraded: boolean }> = [];
+    for (const q of questions) {
+      const resp = answersByQ.has(q.id) ? answersByQ.get(q.id) : null;
+      const { pointsAwarded, autoGraded } = gradeQuestion(q, resp);
+      if (!autoGraded) hasEssay = true;
+      if (pointsAwarded != null) autoTotal += pointsAwarded;
+      answersToCreate.push({ questionId: q.id, response: resp ?? null, pointsAwarded, autoGraded });
+    }
+
+    // Apply late penalty to auto marks (essay portion will be added by teacher later).
+    const penaltyPct = isLate ? assignment.latePenaltyPct || 0 : 0;
+    const adjustedAuto = Math.max(0, autoTotal - (autoTotal * penaltyPct) / 100);
+
+    const submission = await this.prisma.$transaction(async (tx) => {
+      const sub = await tx.assignmentSubmission.upsert({
+        where: { assignmentId_studentId: { assignmentId, studentId: student.id } },
+        create: {
+          assignmentId,
+          studentId: student.id,
+          content: null,
+          attachmentUrl: null,
+          status: hasEssay ? (isLate ? 'LATE' : 'SUBMITTED') : 'GRADED',
+          attemptNumber: 1,
+          marks: hasEssay ? null : adjustedAuto,
+          latePenaltyApplied: penaltyPct || null,
+          gradedAt: hasEssay ? null : new Date(),
+        },
+        update: {
+          status: hasEssay ? (isLate ? 'LATE' : 'SUBMITTED') : 'GRADED',
+          attemptNumber: currentAttempt + 1,
+          submittedAt: now,
+          marks: hasEssay ? null : adjustedAuto,
+          feedback: null,
+          gradedAt: hasEssay ? null : new Date(),
+          latePenaltyApplied: penaltyPct || null,
+        },
+      });
+      await tx.quizAnswer.deleteMany({ where: { submissionId: sub.id } });
+      if (answersToCreate.length) {
+        await tx.quizAnswer.createMany({
+          data: answersToCreate.map(a => ({ ...a, submissionId: sub.id })),
+        });
+      }
+      return sub;
+    });
+
+    return {
+      submissionId: submission.id,
+      autoScore: autoTotal,
+      adjustedAutoScore: adjustedAuto,
+      hasManualGrading: hasEssay,
+      latePenaltyApplied: penaltyPct || null,
+    };
   }
 
   async gradeSubmission(submissionId: string, data: { marks: number; feedback?: string }) {

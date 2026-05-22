@@ -676,6 +676,7 @@ model Assignment {
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
   submissions    AssignmentSubmission[]
+  questions      QuizQuestion[]
 }
 
 model AssignmentSubmission {
@@ -695,8 +696,39 @@ model AssignmentSubmission {
   gradedAt           DateTime?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
+  answers            QuizAnswer[]
 
   @@unique([assignmentId, studentId])
+}
+
+model QuizQuestion {
+  id           String       @id @default(cuid())
+  assignmentId String
+  assignment   Assignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  order        Int          @default(0)
+  type         String       // MCQ, TF, MATCHING, ESSAY, NUMERICAL
+  prompt       String
+  points       Float        @default(1)
+  data         Json         // type-specific config (choices, correct answer, pairs, tolerance, etc.)
+  answers      QuizAnswer[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model QuizAnswer {
+  id            String               @id @default(cuid())
+  submissionId  String
+  submission    AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  questionId    String
+  question      QuizQuestion         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  response      Json
+  pointsAwarded Float?
+  autoGraded    Boolean              @default(false)
+  feedback      String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@unique([submissionId, questionId])
 }
 
 // ─── Module 4: Parents Portal — Messaging ────────────────────────────────────

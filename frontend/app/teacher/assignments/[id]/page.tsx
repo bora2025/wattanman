@@ -78,6 +78,9 @@ export default function TeacherGradingPage() {
               {assignment.attachmentUrl && (
                 <a href={assignment.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 underline mt-1">📎 Reference attachment</a>
               )}
+              {assignment.type === 'QUIZ' && (
+                <Link href={`/teacher/assignments/${assignmentId}/quiz`} className="inline-block mt-3 bg-violet-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-violet-700">📝 Manage Quiz Questions</Link>
+              )}
             </div>
           )}
 

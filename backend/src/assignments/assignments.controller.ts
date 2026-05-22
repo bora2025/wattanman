@@ -45,6 +45,36 @@ export class AssignmentsController {
     return this.svc.gradeSubmission(id, body);
   }
 
+  // ── Quiz questions (Teacher) ──
+  @Roles('ADMIN', 'TEACHER')
+  @Get(':id/questions')
+  listQuestions(@Param('id') id: string) { return this.svc.listQuestions(id); }
+
+  @Roles('ADMIN', 'TEACHER')
+  @Post(':id/questions')
+  createQuestion(@Param('id') id: string, @Body() body: any) { return this.svc.createQuestion(id, body); }
+
+  @Roles('ADMIN', 'TEACHER')
+  @Put('questions/:qid')
+  updateQuestion(@Param('qid') qid: string, @Body() body: any) { return this.svc.updateQuestion(qid, body); }
+
+  @Roles('ADMIN', 'TEACHER')
+  @Delete('questions/:qid')
+  deleteQuestion(@Param('qid') qid: string) { return this.svc.deleteQuestion(qid); }
+
+  // ── Quiz (Student) ──
+  @Roles('STUDENT', 'ADMIN')
+  @Get(':id/quiz')
+  getStudentQuiz(@Param('id') id: string, @Request() req: any) {
+    return this.svc.getStudentQuiz(id, req.user.userId);
+  }
+
+  @Roles('STUDENT', 'ADMIN')
+  @Post(':id/submit-quiz')
+  submitQuiz(@Param('id') id: string, @Request() req: any, @Body() body: any) {
+    return this.svc.submitQuiz(id, req.user.userId, body);
+  }
+
   // ── Student ──
   @Roles('STUDENT', 'ADMIN')
   @Get('student/my-assignments')

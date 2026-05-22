@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
+import Link from 'next/link'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { apiFetch } from '../../../lib/api'
@@ -197,10 +198,17 @@ export default function StudentAssignmentsPage() {
                         )}
                       </div>
                       {(canSubmit || canResubmit) && (
-                        <button onClick={() => { setSubmitFor(a); setSubmitError(null); reset({ content: a.submission?.content ?? '', attachmentUrl: a.submission?.attachmentUrl ?? '' }) }}
-                          className="text-xs bg-sky-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-sky-700 flex-shrink-0">
-                          {canResubmit ? 'Resubmit' : 'Submit'}
-                        </button>
+                        a.type === 'QUIZ' ? (
+                          <Link href={`/student/assignments/${a.id}/quiz`}
+                            className="text-xs bg-violet-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-violet-700 flex-shrink-0">
+                            {canResubmit ? 'Retake quiz' : 'Take quiz'}
+                          </Link>
+                        ) : (
+                          <button onClick={() => { setSubmitFor(a); setSubmitError(null); reset({ content: a.submission?.content ?? '', attachmentUrl: a.submission?.attachmentUrl ?? '' }) }}
+                            className="text-xs bg-sky-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-sky-700 flex-shrink-0">
+                            {canResubmit ? 'Resubmit' : 'Submit'}
+                          </button>
+                        )
                       )}
                     </div>
                   </div>
