@@ -99,6 +99,10 @@ model Student {
   examAttempts     ExamAttempt[]       @relation("StudentExamAttempts")
   assignmentSubmissions AssignmentSubmission[] @relation("StudentSubmissions")
   parentLinkRequests ParentLinkRequest[]
+
+  @@index([studentNumber])
+  @@index([classId])
+  @@index([parentId])
 }
 
 model Attendance {

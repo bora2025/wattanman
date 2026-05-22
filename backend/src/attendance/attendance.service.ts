@@ -1352,13 +1352,16 @@ export class AttendanceService {
     const attendanceDate = toUTCMidnight(cambodiaNow);
     const hhmm = `${String(cambodiaNow.getUTCHours()).padStart(2, '0')}:${String(cambodiaNow.getUTCMinutes()).padStart(2, '0')}`;
 
-    // Resolve the student – accept userId, student.id, or student.qrCode
+    // Resolve the student – accept userId, student.id, student.qrCode, or studentNumber.
+    // studentNumber fallback lets cards keep working even if the underlying cuid
+    // changes after a CSV re-import (the studentNumber is stable across imports).
     const student = await this.prisma.student.findFirst({
       where: {
         OR: [
           { userId: qrData },
           { id: qrData },
           { qrCode: qrData },
+          { studentNumber: qrData },
         ],
       },
       include: {
