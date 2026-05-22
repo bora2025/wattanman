@@ -76,12 +76,12 @@ export default function ExamGradebookPage() {
 
   return (
     <AuthGuard requiredRole="TEACHER">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
-        <main className="flex-1 p-6 max-w-5xl mx-auto">
-          <div className="mb-6 flex items-center gap-3">
+        <main className="flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full">
+          <div className="mb-4 sm:mb-6 flex items-center gap-3 flex-wrap">
             <button onClick={() => router.push('/teacher/exams')} className="text-sm text-slate-500 hover:text-slate-800">← Back</button>
-            <h1 className="text-2xl font-bold text-slate-800">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">
               📊 Gradebook {exam ? `· ${exam.title}` : ''}
             </h1>
           </div>

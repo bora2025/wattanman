@@ -861,7 +861,7 @@ function FeeManagementContent() {
 export default function FeeManagementPage() {
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex min-h-screen lg:h-screen bg-gray-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar
           title="Admin"
           navItems={adminNav}

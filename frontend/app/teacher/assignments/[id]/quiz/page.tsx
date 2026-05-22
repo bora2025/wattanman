@@ -120,12 +120,12 @@ export default function TeacherQuizEditorPage() {
 
   return (
     <AuthGuard requiredRole="TEACHER">
-      <div className="min-h-screen bg-slate-50 p-6">
+      <div className="min-h-screen bg-slate-50 px-4 sm:px-6 pt-6 pb-[88px] lg:pb-6">
         <div className="max-w-3xl mx-auto">
           <Link href={`/teacher/assignments/${assignmentId}`} className="text-sm text-sky-600 mb-4 block">← Back to assignment</Link>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">📝 Quiz Questions</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-800">📝 Quiz Questions</h1>
               {assignment && <p className="text-xs text-slate-500 mt-1">{assignment.title} · {questions.length} question(s) · {totalPoints} total points</p>}
             </div>
             <button onClick={openNew} className="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-700">+ Add Question</button>

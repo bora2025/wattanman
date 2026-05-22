@@ -66,10 +66,10 @@ export default function TeacherGradingPage() {
 
   return (
     <AuthGuard requiredRole="TEACHER">
-      <div className="min-h-screen bg-slate-50 p-6">
+      <div className="min-h-screen bg-slate-50 px-4 sm:px-6 pt-6 pb-[88px] lg:pb-6">
         <div className="max-w-3xl mx-auto">
           <Link href="/teacher/assignments" className="text-sm text-sky-600 mb-4 block">← Back to Assignments</Link>
-          <h1 className="text-2xl font-bold text-slate-800 mb-1">Grade Submissions</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">Grade Submissions</h1>
           {assignment && (
             <div className="mb-6">
               <p className="text-sm text-slate-500">{assignment.title} · {assignment.class?.name} · {assignment.totalMarks} marks · {assignment.type}</p>

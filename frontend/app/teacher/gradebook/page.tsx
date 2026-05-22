@@ -83,12 +83,12 @@ export default function TeacherGradebookPage() {
 
   return (
     <AuthGuard requiredRole="TEACHER">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
 
-        <main className="flex-1 p-6 overflow-x-auto">
-          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-            <h1 className="text-2xl font-bold text-slate-800">📒 Gradebook</h1>
+        <main className="flex-1 p-3 sm:p-6 overflow-x-auto">
+          <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">📒 Gradebook</h1>
             <select value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)}
               className="border rounded-lg px-3 py-2 text-sm bg-white">
               <option value="">Select class...</option>

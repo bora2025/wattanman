@@ -168,7 +168,7 @@ export default function TeachersPage() {
 
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex min-h-screen lg:h-screen bg-gray-100 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">

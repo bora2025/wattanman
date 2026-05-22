@@ -97,11 +97,11 @@ export default function SalaryPage() {
 
   return (
     <AuthGuard requiredRole="ADMIN">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
-        <main className="flex-1 p-6 max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-            <h1 className="text-2xl font-bold text-slate-800">Salary Management</h1>
+        <main className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
+          <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Salary Management</h1>
             <div className="flex items-center gap-2 flex-wrap">
               <select value={month} onChange={e => setMonth(Number(e.target.value))} className="border rounded-lg px-3 py-2 text-sm bg-white">
                 {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}

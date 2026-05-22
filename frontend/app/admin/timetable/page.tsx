@@ -795,7 +795,7 @@ export default function TimetablePage() {
 
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
-      <div className="flex h-screen bg-gray-100 print:bg-white print:h-auto print:block">
+      <div className="flex min-h-screen lg:h-screen bg-gray-100 print:bg-white print:h-auto print:block pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
         <div className="flex-1 flex flex-col overflow-hidden print:hidden">
           {/* Ribbon Toolbar */}

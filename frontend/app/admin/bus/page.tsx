@@ -44,7 +44,7 @@ export default function BusAdminPage() {
 
   return (
     <AuthGuard requiredRole="ADMIN">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
         <main className="flex-1 p-6 max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">

@@ -50,12 +50,12 @@ export default function TeacherExamsPage() {
 
   return (
     <AuthGuard requiredRole="TEACHER">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
 
-        <main className="flex-1 p-6 max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-slate-800">📝 My Exams</h1>
+        <main className="flex-1 p-4 sm:p-6 max-w-4xl mx-auto w-full">
+          <div className="flex items-center justify-between mb-4 sm:mb-6 gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">📝 My Exams</h1>
             <button onClick={() => setShowForm(true)}
               className="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-700">
               + Create Exam

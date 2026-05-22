@@ -228,10 +228,10 @@ export default function TeacherAssignmentsPage() {
 
   return (
     <AuthGuard requiredRole="TEACHER">
-      <div className="min-h-screen bg-slate-50 p-6">
+      <div className="min-h-screen bg-slate-50 px-4 sm:px-6 pt-16 sm:pt-6 pb-[88px] lg:pb-6">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-slate-800">📚 My Assignments</h1>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">📚 My Assignments</h1>
             <button onClick={openCreate} className="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-700">+ New Assignment</button>
           </div>
 

@@ -321,7 +321,7 @@ export default function ManageEmployees() {
   const presentRoles = Array.from(new Set(users.map(u => u.role)))
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
       <Sidebar title="Admin" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
 
       <main className="flex-1 lg:ml-0">

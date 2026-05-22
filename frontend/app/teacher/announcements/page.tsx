@@ -104,10 +104,10 @@ export default function TeacherAnnouncementsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
       <Sidebar title="Teacher Portal" subtitle="Wattanman" navItems={teacherNav} accentColor="emerald" />
-      <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
-        <h1 className="text-2xl font-bold text-slate-800 mb-1">Class Announcements</h1>
+      <main className="flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">Class Announcements</h1>
         <p className="text-slate-500 mb-6 text-sm">
           Broadcast to one of your classes — reaches students and their parents.
         </p>
