@@ -331,7 +331,6 @@ export default function ManageUsers() {
         <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">{t('users.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">{users.length} user{users.length !== 1 ? 's' : ''} registered</p>
           </div>
           <div className="flex gap-2">
             <button onClick={() => { setShowBulk(!showBulk); setShowForm(false) }} className="btn-outline">

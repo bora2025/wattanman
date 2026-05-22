@@ -118,7 +118,8 @@ export class AuthService {
     }
     return this.prisma.user.findMany({
       where,
-      select: { id: true, email: true, name: true, phone: true, role: true, photo: true, departmentId: true, createdAt: true, department: { select: { id: true, name: true, nameKh: true } } },
+      orderBy: { updatedAt: 'desc' },
+      select: { id: true, email: true, name: true, phone: true, role: true, photo: true, departmentId: true, createdAt: true, updatedAt: true, department: { select: { id: true, name: true, nameKh: true } } },
     });
   }
 

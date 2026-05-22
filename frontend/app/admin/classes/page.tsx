@@ -736,38 +736,13 @@ function ManageClasses() {
       <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
-        {/* Hero stats banner */}
+        {/* Header */}
         <div className="page-header">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-xl">
-            <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.4) 0%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.3) 0%, transparent 40%)' }} />
-            <div className="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-              <div>
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">🏫</span>
-                  <div>
-                    <h1 className="text-xl sm:text-2xl font-bold">{t('classes.title')}</h1>
-                    <p className="text-xs sm:text-sm text-white/80 mt-0.5">Organize classes, assign teachers, and manage student rosters</p>
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 border border-white/20">
-                  <div className="text-[10px] uppercase tracking-wider text-white/70 font-semibold">Classes</div>
-                  <div className="text-xl sm:text-2xl font-bold leading-tight">{classes.length}</div>
-                </div>
-                <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 border border-white/20">
-                  <div className="text-[10px] uppercase tracking-wider text-white/70 font-semibold">Students</div>
-                  <div className="text-xl sm:text-2xl font-bold leading-tight">{totalStudents}</div>
-                </div>
-                <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 border border-white/20">
-                  <div className="text-[10px] uppercase tracking-wider text-white/70 font-semibold">Teachers</div>
-                  <div className="text-xl sm:text-2xl font-bold leading-tight">{uniqueTeachers}</div>
-                </div>
-                <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2 border border-white/20">
-                  <div className="text-[10px] uppercase tracking-wider text-white/70 font-semibold">Avg / Class</div>
-                  <div className="text-xl sm:text-2xl font-bold leading-tight">{avgStudentsPerClass}</div>
-                </div>
-              </div>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">🏫</span>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-800">{t('classes.title')}</h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Organize classes, assign teachers, and manage student rosters</p>
             </div>
           </div>
 

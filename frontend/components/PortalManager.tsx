@@ -29,11 +29,27 @@ export interface PortalUser {
   photo?: string
   role: string
   createdAt: string
+  updatedAt?: string
   studentProfile?: {
     studentNumber?: string
     class?: { id: string; name: string } | null
   } | null
   parentStudents?: { id: string; user: { name: string } }[]
+}
+
+function formatRelativeTime(iso?: string): string {
+  if (!iso) return '—'
+  const then = new Date(iso).getTime()
+  if (Number.isNaN(then)) return '—'
+  const diffSec = Math.round((Date.now() - then) / 1000)
+  if (diffSec < 60) return 'just now'
+  const diffMin = Math.round(diffSec / 60)
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHr = Math.round(diffMin / 60)
+  if (diffHr < 24) return `${diffHr}h ago`
+  const diffDay = Math.round(diffHr / 24)
+  if (diffDay < 7) return `${diffDay}d ago`
+  return new Date(iso).toLocaleDateString()
 }
 
 export interface PortalManagerProps {
@@ -286,9 +302,7 @@ export default function PortalManager({
         <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">{title}</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              {subtitle ? subtitle + ' · ' : ''}{users.length} user{users.length !== 1 ? 's' : ''}
-            </p>
+            {subtitle && <p className="text-sm text-slate-500 mt-1">{subtitle}</p>}
           </div>
           <div className="flex gap-2">
             <button
@@ -409,6 +423,7 @@ export default function PortalManager({
                       <th>Phone</th>
                       {roles.length > 1 && <th>Role</th>}
                       <th>Extra</th>
+                      <th>Last updated</th>
                       <th className="text-right">Actions</th>
                     </tr>
                   </thead>
@@ -439,6 +454,9 @@ export default function PortalManager({
                           {u.parentStudents && u.parentStudents.length > 0 && (
                             <div>{u.parentStudents.length} child{u.parentStudents.length !== 1 ? 'ren' : ''}</div>
                           )}
+                        </td>
+                        <td className="text-xs text-slate-500 whitespace-nowrap" title={u.updatedAt ? new Date(u.updatedAt).toLocaleString() : undefined}>
+                          {formatRelativeTime(u.updatedAt)}
                         </td>
                         <td className="text-right space-x-2 whitespace-nowrap">
                           <button onClick={() => openEdit(u)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Edit</button>
