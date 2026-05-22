@@ -31,10 +31,20 @@ export interface PortalUser {
   createdAt: string
   updatedAt?: string
   studentProfile?: {
+    id?: string
     studentNumber?: string
+    parentId?: string | null
     class?: { id: string; name: string } | null
+    parent?: { id: string; name: string; email: string; phone: string | null } | null
   } | null
   parentStudents?: { id: string; user: { name: string } }[]
+}
+
+export interface ParentOption {
+  id: string
+  name: string
+  email: string
+  phone: string | null
 }
 
 function formatRelativeTime(iso?: string): string {
@@ -120,6 +130,9 @@ export default function PortalManager({
   const [editPhone, setEditPhone] = useState('')
   const [editRole, setEditRole] = useState('')
   const [editPhoto, setEditPhoto] = useState('')
+  const [editParentId, setEditParentId] = useState<string>('')
+  const [parents, setParents] = useState<ParentOption[]>([])
+  const [parentsLoaded, setParentsLoaded] = useState(false)
 
   const [resetUser, setResetUser] = useState<PortalUser | null>(null)
   const [resetPassword, setResetPassword] = useState('')
@@ -216,6 +229,16 @@ export default function PortalManager({
     setEditPhone(u.phone || '')
     setEditRole(u.role)
     setEditPhoto(u.photo || '')
+    setEditParentId(u.studentProfile?.parentId || '')
+    if (u.role === 'STUDENT' && !parentsLoaded) {
+      apiFetch('/api/classes/parents')
+        .then(r => r.ok ? r.json() : [])
+        .then((list: ParentOption[]) => {
+          setParents(Array.isArray(list) ? list : [])
+          setParentsLoaded(true)
+        })
+        .catch(() => setParentsLoaded(true))
+    }
   }
 
   async function handleEditSubmit(e: React.FormEvent) {
@@ -238,6 +261,21 @@ export default function PortalManager({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ photo: normalizePhotoUrl(editPhoto) }),
         })
+      }
+      if (editingUser.role === 'STUDENT') {
+        const currentParentId = editingUser.studentProfile?.parentId || ''
+        if (editParentId !== currentParentId) {
+          const pr = await apiFetch(`/api/auth/users/${editingUser.id}/parent`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parentId: editParentId || null }),
+          })
+          if (!pr.ok) {
+            const data = await pr.json().catch(() => ({}))
+            showMessage('Error: ' + (data.message || 'Failed to update parent'), 'error')
+            return
+          }
+        }
       }
       showMessage('User updated', 'success')
       setEditingUser(null)
@@ -451,6 +489,11 @@ export default function PortalManager({
                         <td className="text-xs text-slate-500">
                           {u.studentProfile?.studentNumber && <div>#{u.studentProfile.studentNumber}</div>}
                           {u.studentProfile?.class?.name && <div>{u.studentProfile.class.name}</div>}
+                          {u.role === 'STUDENT' && (
+                            u.studentProfile?.parent
+                              ? <div className="text-emerald-600">👪 {u.studentProfile.parent.name}</div>
+                              : <div className="text-amber-600">No parent linked</div>
+                          )}
                           {u.parentStudents && u.parentStudents.length > 0 && (
                             <div>{u.parentStudents.length} child{u.parentStudents.length !== 1 ? 'ren' : ''}</div>
                           )}
@@ -519,6 +562,20 @@ export default function PortalManager({
                   <select value={editRole} onChange={e => setEditRole(e.target.value)}>
                     {roles.map(r => <option key={r} value={r}>{getRoleLabel(r)}</option>)}
                   </select>
+                </div>
+              )}
+              {editingUser?.role === 'STUDENT' && (
+                <div>
+                  <label className="form-label">Parent</label>
+                  <select value={editParentId} onChange={e => setEditParentId(e.target.value)}>
+                    <option value="">— No parent linked —</option>
+                    {parents.map(p => (
+                      <option key={p.id} value={p.id}>{p.name} ({p.email})</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Don’t see the parent? Create them first in the <strong>Parent Portal</strong>.
+                  </p>
                 </div>
               )}
               <div className="flex justify-end gap-2 pt-2">

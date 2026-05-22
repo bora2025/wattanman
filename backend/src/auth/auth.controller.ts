@@ -157,6 +157,20 @@ export class AuthController {
     }
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Put('users/:id/parent')
+  async setStudentParent(
+    @Param('id') studentUserId: string,
+    @Body() body: { parentId: string | null },
+  ) {
+    try {
+      return await this.authService.setStudentParent(studentUserId, body?.parentId ?? null);
+    } catch (e: any) {
+      throw new HttpException(e?.message ?? 'Failed to set parent', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('users/search')
   async searchUsers(@Query('q') query: string, @Query('role') role?: string) {

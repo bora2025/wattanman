@@ -119,8 +119,39 @@ export class AuthService {
     return this.prisma.user.findMany({
       where,
       orderBy: { updatedAt: 'desc' },
-      select: { id: true, email: true, name: true, phone: true, role: true, photo: true, departmentId: true, createdAt: true, updatedAt: true, department: { select: { id: true, name: true, nameKh: true } } },
+      select: {
+        id: true, email: true, name: true, phone: true, role: true, photo: true,
+        departmentId: true, createdAt: true, updatedAt: true,
+        department: { select: { id: true, name: true, nameKh: true } },
+        studentProfile: {
+          select: {
+            id: true, studentNumber: true, parentId: true,
+            class: { select: { id: true, name: true } },
+            parent: { select: { id: true, name: true, email: true, phone: true } },
+          },
+        },
+        parentStudents: { select: { id: true, user: { select: { name: true } } } },
+      },
     });
+  }
+
+  async setStudentParent(studentUserId: string, parentId: string | null) {
+    const student = await this.prisma.student.findUnique({ where: { userId: studentUserId } });
+    if (!student) throw new Error('Student profile not found for this user');
+    if (parentId) {
+      const parent = await this.prisma.user.findUnique({
+        where: { id: parentId },
+        select: { id: true, role: true },
+      });
+      if (!parent || parent.role !== 'PARENT') {
+        throw new Error('parentId must reference a user with role PARENT');
+      }
+    }
+    await this.prisma.student.update({
+      where: { id: student.id },
+      data: { parentId: parentId || null },
+    });
+    return { ok: true };
   }
 
   async bulkRegister(users: { email: string; password: string; name: string; role: string; photo?: string }[]) {
