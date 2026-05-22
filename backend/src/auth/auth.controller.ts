@@ -76,7 +76,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Post('register')
   async register(@Body() body: RegisterDto & { departmentId?: string }) {
     try {
@@ -103,7 +103,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('users')
   async getUsers(@Query('role') role?: string, @Query('roles') roles?: string) {
     if (roles) {
@@ -114,7 +114,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Post('users/bulk')
   async bulkRegister(@Body() body: { users: { email: string; password: string; name: string; role: string; photo?: string }[] }) {
     return this.authService.bulkRegister(body.users);
@@ -127,7 +127,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Put('users/:id/password')
   async resetUserPassword(@Param('id') id: string, @Body() body: { password: string }) {
     if (!body?.password || body.password.length < 6) {
@@ -138,7 +138,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Put('users/:id')
   async updateUser(
     @Param('id') id: string,
@@ -158,7 +158,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Put('users/:id/parent')
   async setStudentParent(
     @Param('id') studentUserId: string,
@@ -178,7 +178,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Delete('users/:id')
   async deleteUser(@Param('id') id: string, @Request() req: any) {
     if (req.user?.userId === id) {
@@ -193,7 +193,7 @@ export class AuthController {
 
   @SkipThrottle()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('users/:id/schedule')
   getStudentSchedule(@Param('id') id: string) {
     return this.authService.getStudentSchedule(id);
@@ -201,7 +201,7 @@ export class AuthController {
 
   @SkipThrottle()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('users/:id/full-profile')
   getFullProfile(@Param('id') id: string) {
     return this.authService.getFullProfile(id);

@@ -9,7 +9,7 @@ interface AuthGuardProps {
   allowedRoles?: string[];
 }
 
-const EMPLOYEE_EXCLUDED_ROLES = ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT', 'WATTAMAN'];
+const EMPLOYEE_EXCLUDED_ROLES = ['ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN', 'DEPARTMENT_ADMIN', 'OFFICE_ADMIN', 'TEACHER', 'STUDENT', 'PARENT', 'WATTAMAN'];
 
 // ── Module-level auth cache ────────────────────────────────────────────────
 // `/api/auth/me` is called once per app session and cached here so subsequent

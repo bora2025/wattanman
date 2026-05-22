@@ -40,7 +40,7 @@ function LoginContent() {
         if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
           router.push(returnTo);
         } else {
-          const adminRoles = ['ADMIN'];
+          const adminRoles = ['ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN', 'DEPARTMENT_ADMIN', 'OFFICE_ADMIN'];
           const teacherRoles = ['TEACHER'];
           const studentRoles = ['STUDENT'];
           const parentRoles = ['PARENT'];

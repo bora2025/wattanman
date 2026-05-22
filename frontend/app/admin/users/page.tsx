@@ -18,7 +18,11 @@ interface User {
 }
 
 const roleLabels: Record<string, string> = {
+  SUPER_ADMIN: 'Super Admin',
   ADMIN: 'Admin',
+  SCHOOL_ADMIN: 'School Admin / Principal',
+  DEPARTMENT_ADMIN: 'Department Admin',
+  OFFICE_ADMIN: 'Office Admin',
   STUDENT: 'Student',
   PARENT: 'Parent',
   PRIMARY_SCHOOL_PRINCIPAL: 'នាយកសាលាបឋម',
@@ -52,11 +56,18 @@ const roleLabels: Record<string, string> = {
 }
 
 const roleBadge: Record<string, string> = {
+  SUPER_ADMIN: 'badge-red',
   ADMIN: 'badge-blue',
+  SCHOOL_ADMIN: 'badge-blue',
+  DEPARTMENT_ADMIN: 'badge-blue',
+  OFFICE_ADMIN: 'badge-blue',
   TEACHER: 'badge-green',
   STUDENT: 'badge-yellow',
   PARENT: 'badge-gray',
 }
+
+// Roles considered admin-level for the Manage Users screen filter.
+const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'SCHOOL_ADMIN', 'DEPARTMENT_ADMIN', 'OFFICE_ADMIN']
 
 const allRoles = Object.keys(roleLabels).filter(r => r !== 'STUDENT')
 
@@ -126,7 +137,7 @@ export default function ManageUsers() {
       const res = await apiFetch('/api/auth/users')
       const data = await res.json()
       // Show only admin/system roles here; employees are managed in /admin/employees
-      const adminRoles = ['ADMIN', 'PARENT']
+      const adminRoles = [...ADMIN_ROLES, 'PARENT']
       setUsers(data.filter((u: User) => adminRoles.includes(u.role)))
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -325,7 +336,7 @@ export default function ManageUsers() {
   }
 
   return (
-    <AuthGuard requiredRole="ADMIN">
+    <AuthGuard allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
     <div className="page-shell">
       <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
       <div className="page-content">
