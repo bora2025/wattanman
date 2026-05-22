@@ -343,7 +343,6 @@ export default function AuditLogsPage() {
                           </tr>
                           )
                         })()}
-                        )}
                       </Fragment>
                     ))}
                     {!loading && page.items.length === 0 && (
