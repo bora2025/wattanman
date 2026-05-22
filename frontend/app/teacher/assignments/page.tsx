@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import AuthGuard from '../../../components/AuthGuard'
 import { apiFetch } from '../../../lib/api'
 
@@ -74,6 +75,7 @@ type FormShape = {
 
 export default function TeacherAssignmentsPage() {
   const qc = useQueryClient()
+  const router = useRouter()
   const [editing, setEditing] = useState<Assignment | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -108,7 +110,14 @@ export default function TeacherAssignmentsPage() {
       }
       return r.json()
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['teacher-assignments'] }); closeForm() },
+    onSuccess: (created: any, vars: any) => {
+      qc.invalidateQueries({ queryKey: ['teacher-assignments'] })
+      closeForm()
+      // If a new QUIZ was just created, jump straight to the question editor.
+      if (!vars?.id && vars?.type === 'QUIZ' && created?.id) {
+        router.push(`/teacher/assignments/${created.id}/quiz`)
+      }
+    },
     onError: (e: any) => setFormError(e?.message || 'Failed to save assignment'),
   })
   const deleteMutation = useMutation({
@@ -270,6 +279,9 @@ export default function TeacherAssignmentsPage() {
                     <p className="text-xs text-amber-600 mt-0.5">{a._count?.submissions ?? 0} submission(s){a.latePenaltyPct > 0 ? ` · ${a.latePenaltyPct}% late penalty` : ''}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {a.type === 'QUIZ' && (
+                      <Link href={`/teacher/assignments/${a.id}/quiz`} className="text-xs bg-violet-100 text-violet-700 px-3 py-1.5 rounded-lg font-medium hover:bg-violet-200">📝 Questions</Link>
+                    )}
                     <Link href={`/teacher/assignments/${a.id}`} className="text-xs bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-medium hover:bg-slate-200">Grade</Link>
                     <button onClick={() => openEdit(a)} className="text-xs bg-sky-50 text-sky-700 px-3 py-1.5 rounded-lg font-medium hover:bg-sky-100">Edit</button>
                     <button onClick={() => { if (confirm(`Delete "${a.title}"?`)) deleteMutation.mutate(a.id) }} className="text-xs text-red-500 hover:underline">Delete</button>
@@ -348,7 +360,14 @@ export default function TeacherAssignmentsPage() {
 
                 {watchType === 'QUIZ' && (
                   <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-3 space-y-2">
-                    <div className="text-xs font-semibold text-violet-700">Quiz settings</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-xs font-semibold text-violet-700">Quiz settings</div>
+                      {editing ? (
+                        <Link href={`/teacher/assignments/${editing.id}/quiz`} className="text-xs bg-violet-600 text-white px-3 py-1 rounded-lg font-medium hover:bg-violet-700">📝 Add / edit questions</Link>
+                      ) : (
+                        <span className="text-[10px] text-violet-600">You'll be taken to the question editor after saving.</span>
+                      )}
+                    </div>
                     <div className="grid grid-cols-3 gap-3 items-end">
                       <label className="text-xs text-slate-600 flex items-center gap-2">
                         <input type="checkbox" {...register('randomizeQuestions')} className="h-4 w-4" />
