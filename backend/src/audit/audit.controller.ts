@@ -29,7 +29,7 @@ export class AuditController {
     const take = Math.min(Math.max(parseInt(pageSize, 10) || 50, 1), 200);
     const pageNum = Math.max(parseInt(page, 10) || 1, 1);
     const skip = (pageNum - 1) * take;
-    const [items, total] = await Promise.all([
+    const [rawItems, total] = await Promise.all([
       this.prisma.auditLog.findMany({
         where,
         orderBy: { createdAt: 'desc' },
@@ -38,6 +38,7 @@ export class AuditController {
       }),
       this.prisma.auditLog.count({ where }),
     ]);
+    const items = await this.enrichLabels(rawItems);
     return { items, total, page: pageNum, pageSize: take, pages: Math.ceil(total / take) };
   }
 
@@ -76,11 +77,12 @@ export class AuditController {
     @Query('q') q?: string,
   ) {
     const where = this.buildWhere({ actorId, action, resource, resourceId, success, from, to, q });
-    const rows = await this.prisma.auditLog.findMany({
+    const rawRows = await this.prisma.auditLog.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: 50000,
     });
+    const rows = await this.enrichLabels(rawRows);
     const header = [
       'Timestamp', 'Actor', 'Email', 'Role', 'Action', 'Resource', 'Resource ID',
       'Resource Label', 'Method', 'Path', 'Status', 'Success', 'IP', 'Error',
@@ -162,5 +164,145 @@ export class AuditController {
       ];
     }
     return where;
+  }
+
+  /**
+   * Backfill a human-friendly `resourceLabel` for rows whose label was never
+   * captured at write time. Looks up the matching record by id in the
+   * appropriate table based on the audit row's `resource` string, and falls
+   * back to a User lookup so that cryptic ids like "cmov3l7zl…" become
+   * "Bora Sok (ADMIN)" in the UI.
+   */
+  private async enrichLabels<T extends { resource: string; resourceId: string | null; resourceLabel: string | null }>(
+    items: T[],
+  ): Promise<T[]> {
+    const need = items.filter((r) => !r.resourceLabel && r.resourceId);
+    if (need.length === 0) return items;
+
+    // Group ids by resource for batched lookups.
+    const idsByResource = new Map<string, Set<string>>();
+    for (const r of need) {
+      const set = idsByResource.get(r.resource) ?? new Set<string>();
+      set.add(r.resourceId!);
+      idsByResource.set(r.resource, set);
+    }
+
+    const labels = new Map<string, string>(); // key = `${resource}:${id}`
+    const remember = (resource: string, id: string, label: string) => {
+      labels.set(`${resource}:${id}`, label);
+    };
+
+    await Promise.all(
+      [...idsByResource.entries()].map(async ([resource, idSet]) => {
+        const ids = [...idSet];
+        try {
+          switch (resource) {
+            case 'USERS':
+            case 'AUTH':
+            case 'PARENT':
+            case 'PARENTS':
+            case 'NOTIFICATION-PREFERENCE': {
+              const rows = await this.prisma.user.findMany({
+                where: { id: { in: ids } },
+                select: { id: true, name: true, email: true, role: true },
+              });
+              for (const u of rows) {
+                remember(resource, u.id, `${u.name || u.email || u.id} (${u.role})`);
+              }
+              break;
+            }
+            case 'CLASSES': {
+              const rows = await this.prisma.class.findMany({
+                where: { id: { in: ids } },
+                select: { id: true, name: true },
+              });
+              for (const r of rows) remember(resource, r.id, r.name);
+              break;
+            }
+            case 'STUDENTS': {
+              const rows = await this.prisma.student.findMany({
+                where: { id: { in: ids } },
+                select: { id: true, user: { select: { name: true, email: true } } },
+              });
+              for (const r of rows) remember(resource, r.id, r.user?.name || r.user?.email || r.id);
+              break;
+            }
+            case 'ANNOUNCEMENTS': {
+              const rows = await this.prisma.announcement.findMany({
+                where: { id: { in: ids } },
+                select: { id: true, title: true },
+              });
+              for (const r of rows) remember(resource, r.id, r.title);
+              break;
+            }
+            case 'DEPARTMENTS': {
+              const rows = await this.prisma.department.findMany({
+                where: { id: { in: ids } },
+                select: { id: true, name: true },
+              });
+              for (const r of rows) remember(resource, r.id, r.name);
+              break;
+            }
+            case 'HOLIDAYS': {
+              const rows = await this.prisma.holiday.findMany({
+                where: { id: { in: ids } },
+                select: { id: true, name: true },
+              });
+              for (const r of rows) remember(resource, r.id, r.name);
+              break;
+            }
+            case 'EXAM':
+            case 'EXAMS': {
+              const rows = await this.prisma.exam.findMany({
+                where: { id: { in: ids } },
+                select: { id: true, title: true },
+              });
+              for (const r of rows) remember(resource, r.id, r.title);
+              break;
+            }
+            case 'ASSIGNMENTS': {
+              const rows = await this.prisma.assignment.findMany({
+                where: { id: { in: ids } },
+                select: { id: true, title: true },
+              });
+              for (const r of rows) remember(resource, r.id, r.title);
+              break;
+            }
+            case 'STUDY-YEARS': {
+              const rows = await this.prisma.studyYear.findMany({
+                where: { id: { in: ids } },
+                select: { id: true, name: true },
+              });
+              for (const r of rows) remember(resource, r.id, r.name);
+              break;
+            }
+          }
+        } catch {
+          // best-effort
+        }
+
+        // Fallback: try the User table for anything still unresolved.
+        const stillMissing = ids.filter((id) => !labels.has(`${resource}:${id}`));
+        if (stillMissing.length > 0) {
+          try {
+            const rows = await this.prisma.user.findMany({
+              where: { id: { in: stillMissing } },
+              select: { id: true, name: true, email: true, role: true },
+            });
+            for (const u of rows) {
+              remember(resource, u.id, `${u.name || u.email || u.id} (${u.role})`);
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }),
+    );
+
+    return items.map((r) => {
+      if (r.resourceLabel || !r.resourceId) return r;
+      const lbl = labels.get(`${r.resource}:${r.resourceId}`);
+      return lbl ? { ...r, resourceLabel: lbl } : r;
+    });
   }
 }
