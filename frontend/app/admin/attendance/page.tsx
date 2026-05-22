@@ -411,8 +411,10 @@ function AdminTakeAttendance() {
     }
 
     let studentId = qrData
+    let qrWasJson = false
     try {
       const parsedData = JSON.parse(qrData)
+      qrWasJson = parsedData !== null && typeof parsedData === 'object'
       if (parsedData.studentId) studentId = parsedData.studentId
       if (parsedData.staffId) {
         // Handle staff QR code via auto-scan API
@@ -516,7 +518,16 @@ function AdminTakeAttendance() {
 
     const currentStudents = studentsRef.current
     const currentAttendance = attendanceRef.current
-    const student = currentStudents.find(s => s.id === studentId || s.userId === studentId || s.qrCode === studentId || s.qrCode === qrData)
+    // Priority-ordered matching: primary IDs first, then legacy qrCode field as fallback.
+    // This way an exact Student.id / User.id match always wins over a stale qrCode collision
+    // (which previously could cause Student A's scan to surface Student B), while still
+    // allowing legacy printed cards whose QR encodes the qrCode field to scan.
+    const student =
+      currentStudents.find(s => s.id === studentId) ||
+      currentStudents.find(s => s.userId === studentId) ||
+      (qrWasJson
+        ? currentStudents.find(s => !!s.qrCode && s.qrCode === studentId)
+        : currentStudents.find(s => !!s.qrCode && (s.qrCode === studentId || s.qrCode === qrData)))
 
     if (!student) {
       playSound('error')
@@ -571,6 +582,12 @@ function AdminTakeAttendance() {
     const autoStatus: 'PRESENT' | 'LATE' = isLateByConfig() ? 'LATE' : 'PRESENT'
 
     playSound('success')
+    // Synchronously block re-entry BEFORE awaiting any state update (setState/useEffect is async).
+    // Without this, two QR detections in the same tick could both pass the guard above and
+    // overwrite the displayed student (e.g. Student A scanned but Student B shown).
+    showStudentInfoRef.current = true
+    // Clear any previously running countdown to avoid leaked intervals from a stale scan.
+    if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null }
     setCurrentStudent(student)
     setShowStudentInfo(true)
     setCountdown(10)

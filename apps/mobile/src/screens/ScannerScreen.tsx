@@ -207,14 +207,23 @@ export default function ScannerScreen({ navigation, route }: any) {
       processingRef.current = true;
 
       let studentId = data;
+      let qrWasJson = false;
       try {
         const parsed = JSON.parse(data);
+        qrWasJson = parsed !== null && typeof parsed === 'object';
         if (parsed.studentId) studentId = parsed.studentId;
       } catch {}
 
-      const student = students.find(
-        (s: any) => s.id === studentId || s.userId === studentId || s.qrCode === studentId || s.qrCode === data
-      );
+      // Priority-ordered matching: primary IDs first, then legacy qrCode field as fallback.
+      // An exact Student.id / User.id match always wins over a stale qrCode collision (which
+      // previously could cause Student A's scan to surface Student B), while still allowing
+      // legacy printed cards whose QR encodes the qrCode field to scan.
+      const student =
+        students.find((s: any) => s.id === studentId) ||
+        students.find((s: any) => s.userId === studentId) ||
+        (qrWasJson
+          ? students.find((s: any) => !!s.qrCode && s.qrCode === studentId)
+          : students.find((s: any) => !!s.qrCode && (s.qrCode === studentId || s.qrCode === data)));
 
       if (!student) {
         await playError();
