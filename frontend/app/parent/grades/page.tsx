@@ -11,9 +11,9 @@ const parentNav = [
   { label: 'Dashboard', href: '/parent', icon: 'dashboard' },
   { label: 'Attendance', href: '/parent/attendance', icon: 'calendar' },
   { label: 'Grades', href: '/parent/grades', icon: 'chart' },
-  { label: 'Messages', href: '/parent/messages', icon: 'clipboard' },
+  { label: 'Messages', href: '/parent/messages', icon: '💬', badgeKey: 'messages' as const },
   { label: 'Fees', href: '/parent/fees', icon: 'money' },
-  { label: 'Bus Tracker', href: '/parent/bus', icon: 'calendar' },
+  { label: 'Bus Tracker', href: '/parent/bus', icon: 'globe' },
 ]
 
 interface Grade { id: string; marks: number; feedback: string | null; gradedAt: string; assignment: { title: string; totalMarks: number; class: { name: string; subject: string } } }
@@ -41,20 +41,32 @@ export default function ParentGradesPage() {
 
   return (
     <AuthGuard requiredRole="PARENT">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
         <Sidebar title="Parent" subtitle="Portal" navItems={parentNav} accentColor="emerald" />
-        <aside className="w-44 bg-white border-r border-slate-200 p-4">
+        <div className="h-14 lg:hidden" />
+        <aside className="hidden lg:block w-44 bg-white border-r border-slate-200 p-4">
           <p className="text-sm font-bold text-slate-600 mb-2">Select Child</p>
           {children.map(c => (
             <button key={c.id} onClick={() => setChildId(c.id)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 ${childId === c.id ? 'bg-sky-100 text-sky-700 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 ${childId === c.id ? 'bg-emerald-100 text-emerald-700 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
               {c.user.name}
             </button>
           ))}
         </aside>
 
-        <main className="flex-1 p-6 max-w-3xl mx-auto">
-          <h1 className="text-2xl font-bold text-slate-800 mb-6">📊 Grades & Progress</h1>
+        <main className="flex-1 p-4 sm:p-6 max-w-3xl mx-auto w-full">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-4">📊 Grades & Progress</h1>
+
+          {children.length > 1 && (
+            <div className="lg:hidden flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
+              {children.map(c => (
+                <button key={c.id} onClick={() => setChildId(c.id)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-all ${childId === c.id ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm' : 'bg-white text-slate-600 border-slate-200'}`}>
+                  {c.user.name}
+                </button>
+              ))}
+            </div>
+          )}
 
           {avg !== null && (
             <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex items-center gap-4 border border-slate-100">

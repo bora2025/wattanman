@@ -10,7 +10,7 @@ const studentNav = [
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
   { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
-  { label: 'Messages', href: '/student/messages', icon: 'clipboard' },
+  { label: 'Messages', href: '/student/messages', icon: '💬', badgeKey: 'messages' as const },
   { label: 'My Parent', href: '/student/parent', icon: 'users' },
 ]
 
@@ -96,11 +96,12 @@ export default function StudentScoresPage() {
 
   return (
     <AuthGuard requiredRole="STUDENT">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
         <Sidebar title="Student" subtitle="Portal" navItems={studentNav} accentColor="emerald" />
-        <main className="flex-1 p-6">
+        <div className="h-14 lg:hidden" />
+        <main className="flex-1 p-4 sm:p-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl font-bold text-slate-800 mb-6">📊 My Scores</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-6">📊 My Scores</h1>
 
           {isLoading ? (
             <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="bg-white h-16 rounded-xl animate-pulse" />)}</div>

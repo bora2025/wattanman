@@ -13,7 +13,7 @@ const studentNav = [
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
   { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
-  { label: 'Messages', href: '/student/messages', icon: 'clipboard' },
+  { label: 'Messages', href: '/student/messages', icon: '💬', badgeKey: 'messages' as const },
   { label: 'My Parent', href: '/student/parent', icon: 'users' },
 ]
 
@@ -48,7 +48,7 @@ interface Assignment {
 
 const STATUS_MAP = {
   graded: { label: 'Graded', color: 'bg-emerald-100 text-emerald-700' },
-  submitted: { label: 'Submitted', color: 'bg-sky-100 text-sky-700' },
+  submitted: { label: 'Submitted', color: 'bg-emerald-100 text-emerald-700' },
   late: { label: 'Late', color: 'bg-orange-100 text-orange-700' },
   pending: { label: 'Pending', color: 'bg-amber-100 text-amber-700' },
   missing: { label: 'Missing', color: 'bg-red-100 text-red-700' },
@@ -126,11 +126,12 @@ export default function StudentAssignmentsPage() {
 
   return (
     <AuthGuard requiredRole="STUDENT">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
         <Sidebar title="Student" subtitle="Portal" navItems={studentNav} accentColor="emerald" />
-        <main className="flex-1 p-6">
+        <div className="h-14 lg:hidden" />
+        <main className="flex-1 p-4 sm:p-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl font-bold text-slate-800 mb-4">📚 My Assignments</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-4">📚 My Assignments</h1>
 
           <div className="bg-white rounded-xl shadow-sm p-3 mb-4 flex flex-wrap items-center gap-2 border border-slate-100">
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title…" className="flex-1 min-w-[160px] border rounded-lg px-3 py-1.5 text-sm" />
@@ -183,7 +184,7 @@ export default function StudentAssignmentsPage() {
                         {a.dueDate && <p className="text-xs text-slate-400 mt-0.5">Due: {new Date(a.dueDate).toLocaleString()}</p>}
                         {a.instructions && <p className="text-xs text-slate-600 mt-1 whitespace-pre-wrap line-clamp-3">{a.instructions}</p>}
                         {a.attachmentUrl && (
-                          <a href={a.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 underline mt-1">📎 Resource link</a>
+                          <a href={a.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-emerald-600 underline mt-1">📎 Resource link</a>
                         )}
                         {a.maxAttempts > 1 && <p className="text-xs text-slate-400 mt-1">Attempts: {attemptsUsed}/{a.maxAttempts}</p>}
                         {a.latePenaltyPct > 0 && <p className="text-xs text-orange-600 mt-0.5">Late penalty: {a.latePenaltyPct}%</p>}
@@ -195,7 +196,7 @@ export default function StudentAssignmentsPage() {
                         )}
                         {a.submission?.feedback && <p className="text-xs text-slate-500 italic mt-1">Feedback: "{a.submission.feedback}"</p>}
                         {a.submission?.attachmentUrl && (
-                          <a href={a.submission.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 underline mt-1">📎 My submission link</a>
+                          <a href={a.submission.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-emerald-600 underline mt-1">📎 My submission link</a>
                         )}
                       </div>
                       {(canSubmit || canResubmit) && (
@@ -206,7 +207,7 @@ export default function StudentAssignmentsPage() {
                           </Link>
                         ) : (
                           <button onClick={() => { setSubmitFor(a); setSubmitError(null); reset({ content: a.submission?.content ?? '', attachmentUrl: a.submission?.attachmentUrl ?? '' }) }}
-                            className="text-xs bg-sky-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-sky-700 flex-shrink-0">
+                            className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-700 flex-shrink-0">
                             {canResubmit ? 'Resubmit' : 'Submit'}
                           </button>
                         )
@@ -231,16 +232,16 @@ export default function StudentAssignmentsPage() {
                 <textarea {...register('content')}
                   rows={5}
                   placeholder="Write your answer (optional if you provide a link below)…"
-                  className="w-full border rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-sky-300 mb-3" />
+                  className="w-full border rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-300 mb-3" />
                 <label className="block text-xs text-slate-500 mb-1">Google Drive / Dropbox / link</label>
                 <input {...register('attachmentUrl')}
                   placeholder="https://drive.google.com/…"
-                  className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4" />
+                  className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 mb-4" />
                 <p className="text-[11px] text-slate-400 mb-3">Tip: in Google Drive, click Share → Anyone with the link → Viewer, then paste the link here.</p>
                 <div className="flex gap-2 justify-end">
                   <button type="button" onClick={() => { setSubmitFor(null); setSubmitError(null) }} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>
                   <button type="submit" disabled={submitMutation.isPending}
-                    className="px-4 py-2 text-sm bg-sky-600 text-white rounded-lg font-medium disabled:opacity-60">
+                    className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg font-medium disabled:opacity-60">
                     {submitMutation.isPending ? 'Submitting…' : 'Submit Assignment'}
                   </button>
                 </div>

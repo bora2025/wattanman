@@ -13,9 +13,9 @@ const parentNav = [
   { label: 'Dashboard', href: '/parent', icon: 'dashboard' },
   { label: 'Attendance', href: '/parent/attendance', icon: 'calendar' },
   { label: 'Grades', href: '/parent/grades', icon: 'chart' },
-  { label: 'Messages', href: '/parent/messages', icon: 'clipboard' },
+  { label: 'Messages', href: '/parent/messages', icon: '💬', badgeKey: 'messages' as const },
   { label: 'Fees', href: '/parent/fees', icon: 'money' },
-  { label: 'Bus Tracker', href: '/parent/bus', icon: 'calendar' },
+  { label: 'Bus Tracker', href: '/parent/bus', icon: 'globe' },
 ]
 
 interface Bus { id: string; licensePlate: string; driverName: string | null; status: string; capacity: number }
@@ -53,12 +53,13 @@ export default function ParentBusPage() {
 
   return (
     <AuthGuard requiredRole="PARENT">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
         <Sidebar title="Parent" subtitle="Portal" navItems={parentNav} accentColor="emerald" />
+        <div className="h-14 lg:hidden" />
         {/* Bus selector */}
-        <aside className="w-52 bg-white border-r border-slate-200 flex flex-col">
+        <aside className={`${selectedBusId ? 'hidden lg:flex' : 'flex'} w-full lg:w-60 bg-white border-r border-slate-200 flex-col`}>
           <div className="p-4 border-b border-slate-100">
-            <Link href="/parent" className="text-xs text-sky-600">← Back</Link>
+            <Link href="/parent" className="text-xs text-emerald-600">← Back</Link>
             <p className="text-base font-bold text-slate-800 mt-2">🚌 School Bus Tracker</p>
             <p className="text-xs text-slate-400">Live GPS tracking</p>
           </div>
@@ -72,7 +73,7 @@ export default function ParentBusPage() {
                 const meta = BUS_STATUS[bus.status as keyof typeof BUS_STATUS] ?? BUS_STATUS.INACTIVE
                 return (
                   <button key={bus.id} onClick={() => setSelectedBusId(bus.id)}
-                    className={`w-full text-left p-3 rounded-xl mb-2 border-2 transition-all ${selectedBusId === bus.id ? 'border-sky-500 bg-sky-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                    className={`w-full text-left p-3 rounded-xl mb-2 border-2 transition-all ${selectedBusId === bus.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-sm font-semibold text-slate-800">{bus.licensePlate}</p>
                       <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${meta.color}`}>{meta.label}</span>
@@ -87,7 +88,7 @@ export default function ParentBusPage() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 flex flex-col">
+        <main className={`${selectedBusId ? 'flex' : 'hidden lg:flex'} flex-1 flex-col`}>
           {!selectedBusId ? (
             <div className="flex-1 flex items-center justify-center bg-slate-50">
               <div className="text-center">
@@ -99,19 +100,20 @@ export default function ParentBusPage() {
           ) : (
             <>
               {/* Info bar */}
-              <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-slate-800">Bus {selectedBus?.licensePlate}</p>
-                  <p className="text-xs text-slate-400">
+              <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between gap-2 sticky top-0 z-10">
+                <button onClick={() => setSelectedBusId(null)} className="lg:hidden w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition-transform shrink-0" aria-label="Back">←</button>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-800 truncate">Bus {selectedBus?.licensePlate}</p>
+                  <p className="text-xs text-slate-400 truncate">
                     {location
                       ? `Last updated: ${formatCambodiaTime(location.timestamp)}`
                       : locationLoading ? 'Fetching location...' : 'No location data'}
                   </p>
                 </div>
                 {location?.speed !== null && location?.speed !== undefined && (
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-slate-800">{Math.round(location.speed)}</p>
-                    <p className="text-xs text-slate-400">km/h</p>
+                  <div className="text-right shrink-0">
+                    <p className="text-xl sm:text-2xl font-bold text-slate-800">{Math.round(location.speed)}</p>
+                    <p className="text-[10px] text-slate-400">km/h</p>
                   </div>
                 )}
               </div>
@@ -124,7 +126,7 @@ export default function ParentBusPage() {
                   ) : (
                     <div className="w-full h-full bg-slate-100 flex flex-col items-center justify-center rounded-xl">
                       {locationLoading ? (
-                        <><div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mb-2" />
+                        <><div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-2" />
                         <p className="text-slate-400 text-sm">Fetching GPS location...</p></>
                       ) : (
                         <><p className="text-4xl mb-3">📍</p>

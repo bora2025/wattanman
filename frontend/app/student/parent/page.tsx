@@ -13,7 +13,7 @@ const studentNav = [
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
   { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
-  { label: 'Messages', href: '/student/messages', icon: 'clipboard' },
+  { label: 'Messages', href: '/student/messages', icon: '💬', badgeKey: 'messages' as const },
   { label: 'My Parent', href: '/student/parent', icon: 'users' },
 ]
 
@@ -96,9 +96,10 @@ export default function StudentParentPage() {
 
   return (
     <AuthGuard requiredRole="STUDENT">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
         <Sidebar title="Student" subtitle="Portal" navItems={studentNav} accentColor="emerald" />
-        <main className="flex-1 p-6 max-w-2xl mx-auto">
+        <div className="h-14 lg:hidden" />
+        <main className="flex-1 p-4 sm:p-6 max-w-2xl mx-auto w-full">
           <div className="mb-6">
             <Link href="/student" className="text-xs text-emerald-600 hover:underline">← Dashboard</Link>
             <h1 className="text-2xl font-bold text-slate-800 mt-2">👨‍👩‍👧 My Parent</h1>

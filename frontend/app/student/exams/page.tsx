@@ -12,7 +12,7 @@ const studentNav = [
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
   { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
-  { label: 'Messages', href: '/student/messages', icon: 'clipboard' },
+  { label: 'Messages', href: '/student/messages', icon: '💬', badgeKey: 'messages' as const },
   { label: 'My Parent', href: '/student/parent', icon: 'users' },
 ]
 
@@ -20,7 +20,7 @@ interface Exam { id: string; title: string; duration: number; totalMarks: number
 
 const STATUS_COLOR: Record<string, string> = {
   DRAFT: 'bg-slate-100 text-slate-600',
-  PUBLISHED: 'bg-sky-100 text-sky-700',
+  PUBLISHED: 'bg-indigo-100 text-indigo-700',
   ACTIVE: 'bg-emerald-100 text-emerald-700',
   COMPLETED: 'bg-purple-100 text-purple-700',
 }
@@ -33,11 +33,12 @@ export default function StudentExamsPage() {
 
   return (
     <AuthGuard requiredRole="STUDENT">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
         <Sidebar title="Student" subtitle="Portal" navItems={studentNav} accentColor="emerald" />
-        <main className="flex-1 p-6">
+        <div className="h-14 lg:hidden" />
+        <main className="flex-1 p-4 sm:p-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl font-bold text-slate-800 mb-6">📝 My Exams</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-6">📝 My Exams</h1>
 
           {isLoading ? (
             <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-20 rounded-xl animate-pulse" />)}</div>
@@ -75,7 +76,7 @@ export default function StudentExamsPage() {
                     <div className="flex-shrink-0">
                       {canTake && (
                         <Link href={`/student/exams/${exam.id}`}
-                          className="bg-sky-600 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-sky-700">
+                          className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-emerald-700">
                           Start Exam
                         </Link>
                       )}
