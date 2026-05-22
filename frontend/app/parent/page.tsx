@@ -15,7 +15,7 @@ interface Child {
   class: { name: string; subject: string } | null
 }
 
-export const parentNav = [
+const parentNav = [
   { label: 'Dashboard', href: '/parent', icon: 'dashboard' },
   { label: 'Attendance', href: '/parent/attendance', icon: 'calendar' },
   { label: 'Grades', href: '/parent/grades', icon: 'chart' },
