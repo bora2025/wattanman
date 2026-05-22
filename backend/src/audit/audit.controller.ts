@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards, Res, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Res, HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -42,14 +42,38 @@ export class AuditController {
         orderBy: { createdAt: 'desc' },
         skip,
         take,
+        // Exclude heavy JSON columns (changes, metadata) and userAgent from
+        // the list view — they're only shown in the per-row expanded panel.
+        // Loading them for every row blew up the response from ~50KB to MBs.
+        select: {
+          id: true,
+          createdAt: true,
+          actorId: true,
+          actorRole: true,
+          actorName: true,
+          actorEmail: true,
+          action: true,
+          resource: true,
+          resourceId: true,
+          resourceLabel: true,
+          method: true,
+          path: true,
+          statusCode: true,
+          ip: true,
+          success: true,
+          errorMessage: true,
+        },
       }),
-      // For unfiltered queries the COUNT(*) on a huge append-only table can
-      // dominate the latency. Use Postgres' planner estimate instead — the
-      // exact number isn't meaningful for the pager anyway.
       hasFilters ? this.prisma.auditLog.count({ where }) : this.estimatedCount('AuditLog'),
     ]);
-    const items = await this.enrichLabels(rawItems);
+    const items = await this.enrichLabels(rawItems as any);
     return { items, total, page: pageNum, pageSize: take, pages: Math.ceil(total / take) };
+  }
+
+  /** Full detail for a single log entry (includes heavy JSON columns). */
+  @Get('logs/:id')
+  async getOne(@Param('id') id: string) {
+    return this.prisma.auditLog.findUnique({ where: { id } });
   }
 
   /** Cheap row-count estimate from pg_class. Falls back to a real count on error. */

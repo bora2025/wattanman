@@ -78,6 +78,8 @@ export default function AuditLogsPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [detailCache, setDetailCache] = useState<Record<string, AuditLog>>({})
+  const [detailLoading, setDetailLoading] = useState(false)
 
   const [actor, setActor] = useState('')
   const [action, setAction] = useState('')
@@ -127,6 +129,22 @@ export default function AuditLogsPage() {
   const resetFilters = () => {
     setActor(''); setAction(''); setResource(''); setSuccess(''); setQ(''); setFrom(''); setTo(''); setCurrentPage(1)
   }
+
+  const toggleExpand = useCallback(async (id: string) => {
+    if (expanded === id) { setExpanded(null); return }
+    setExpanded(id)
+    if (detailCache[id]) return
+    setDetailLoading(true)
+    try {
+      const r = await apiFetch(`/api/audit/logs/${id}`)
+      if (r.ok) {
+        const full = await r.json()
+        if (full) setDetailCache(prev => ({ ...prev, [id]: full }))
+      }
+    } finally {
+      setDetailLoading(false)
+    }
+  }, [expanded, detailCache])
 
   const exportCsv = () => {
     const p = new URLSearchParams()
@@ -278,46 +296,53 @@ export default function AuditLogsPage() {
                               : <span className="text-red-600 text-xs">✕ {log.statusCode ?? 'ERR'}</span>}
                           </td>
                           <td className="px-3 py-2 text-right">
-                            <button onClick={() => setExpanded(expanded === log.id ? null : log.id)} className="text-xs text-indigo-600 hover:text-indigo-800">
+                            <button onClick={() => toggleExpand(log.id)} className="text-xs text-indigo-600 hover:text-indigo-800">
                               {expanded === log.id ? 'Hide' : 'Details'}
                             </button>
                           </td>
                         </tr>
-                        {expanded === log.id && (
+                        {expanded === log.id && (() => {
+                          const full = detailCache[log.id] ?? log
+                          return (
                           <tr className="bg-slate-50/60">
                             <td colSpan={8} className="px-4 py-3">
+                              {detailLoading && !detailCache[log.id] && (
+                                <div className="text-xs text-slate-500 mb-2">Loading details…</div>
+                              )}
                               <div className="grid sm:grid-cols-2 gap-4 text-xs">
                                 <DetailBlock title="Request">
-                                  <KV k="When" v={new Date(log.createdAt).toLocaleString()} />
-                                  <KV k="Method" v={log.method} />
-                                  <KV k="Path" v={log.path} />
-                                  <KV k="Status" v={log.statusCode} />
-                                  <KV k="IP" v={log.ip} />
-                                  <KV k="User-Agent" v={log.userAgent} truncate />
+                                  <KV k="When" v={new Date(full.createdAt).toLocaleString()} />
+                                  <KV k="Method" v={full.method} />
+                                  <KV k="Path" v={full.path} />
+                                  <KV k="Status" v={full.statusCode} />
+                                  <KV k="IP" v={full.ip} />
+                                  <KV k="User-Agent" v={full.userAgent} truncate />
                                 </DetailBlock>
                                 <DetailBlock title="Target">
-                                  <KV k="Resource" v={log.resource} />
-                                  <KV k="Resource ID" v={log.resourceId} />
-                                  <KV k="Label" v={log.resourceLabel} />
-                                  {log.errorMessage && <KV k="Error" v={log.errorMessage} />}
+                                  <KV k="Resource" v={full.resource} />
+                                  <KV k="Resource ID" v={full.resourceId} />
+                                  <KV k="Label" v={full.resourceLabel} />
+                                  {full.errorMessage && <KV k="Error" v={full.errorMessage} />}
                                 </DetailBlock>
-                                {log.changes && (
+                                {full.changes && (
                                   <DetailBlock title="Changes" wide>
                                     <pre className="bg-white p-2 rounded border border-slate-200 max-h-64 overflow-auto text-[11px]">
-                                      {JSON.stringify(log.changes, null, 2)}
+                                      {JSON.stringify(full.changes, null, 2)}
                                     </pre>
                                   </DetailBlock>
                                 )}
-                                {log.metadata && (
+                                {full.metadata && (
                                   <DetailBlock title="Metadata" wide>
                                     <pre className="bg-white p-2 rounded border border-slate-200 max-h-64 overflow-auto text-[11px]">
-                                      {JSON.stringify(log.metadata, null, 2)}
+                                      {JSON.stringify(full.metadata, null, 2)}
                                     </pre>
                                   </DetailBlock>
                                 )}
                               </div>
                             </td>
                           </tr>
+                          )
+                        })()}
                         )}
                       </Fragment>
                     ))}
