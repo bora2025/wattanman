@@ -1355,7 +1355,7 @@ export class AttendanceService {
     // Resolve the student – accept userId, student.id, student.qrCode, or studentNumber.
     // studentNumber fallback lets cards keep working even if the underlying cuid
     // changes after a CSV re-import (the studentNumber is stable across imports).
-    const student = await this.prisma.student.findFirst({
+    let student = await this.prisma.student.findFirst({
       where: {
         OR: [
           { userId: qrData },
@@ -1370,8 +1370,33 @@ export class AttendanceService {
       },
     });
 
+    // Final fallback: check the card-alias table (admin can link unknown cards
+    // to a current student once, and they will resolve forever after).
     if (!student) {
-      throw new NotFoundException(`Student not recognised — card ID not found in system`);
+      const alias = await this.prisma.cardAlias.findUnique({
+        where: { qrValue: qrData },
+        include: {
+          student: {
+            include: {
+              user: { select: { name: true, photo: true } },
+              class: { select: { id: true, name: true, schedule: true, sessionConfigs: true } },
+            },
+          },
+        },
+      });
+      if (alias?.student) student = alias.student as any;
+    }
+
+    if (!student) {
+      // Return a structured "unmatched" response (NOT a thrown exception) so the
+      // scanner UI can offer the admin a one-click "link this card to a student"
+      // action without surfacing a scary 404.
+      return {
+        action: 'UNMATCHED',
+        unmatched: true,
+        qrValue: qrData,
+        message: 'Card not recognised — link it to a student',
+      } as any;
     }
 
     if (!student.classId || !student.class) {

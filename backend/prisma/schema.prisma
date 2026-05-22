@@ -99,10 +99,25 @@ model Student {
   examAttempts     ExamAttempt[]       @relation("StudentExamAttempts")
   assignmentSubmissions AssignmentSubmission[] @relation("StudentSubmissions")
   parentLinkRequests ParentLinkRequest[]
+  cardAliases  CardAlias[]
 
   @@index([studentNumber])
   @@index([classId])
   @@index([parentId])
+}
+
+// Maps an arbitrary QR payload (e.g. an old cuid printed on a physical card)
+// to the current Student. Lets pre-printed cards keep working after a CSV
+// re-import regenerates Student.id values.
+model CardAlias {
+  id          String   @id @default(cuid())
+  qrValue     String   @unique
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@index([studentId])
 }
 
 model Attendance {

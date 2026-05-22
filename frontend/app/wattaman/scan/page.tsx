@@ -156,6 +156,14 @@ function WattamanScanContent() {
   const [editError, setEditError] = useState('')
   const [configRefreshTick, setConfigRefreshTick] = useState(0)
 
+  /* ── Unknown-card linking modal (lets admin link a printed card to a current student) ── */
+  const [linkCardQr, setLinkCardQr] = useState<string | null>(null)
+  const [linkSearch, setLinkSearch] = useState('')
+  const [linkResults, setLinkResults] = useState<Array<{ id: string; studentNumber: string | null; photo: string | null; user: { name: string; photo: string | null }; class: { name: string } | null }>>([])
+  const [linkLoading, setLinkLoading] = useState(false)
+  const [linkSaving, setLinkSaving] = useState(false)
+  const [linkError, setLinkError] = useState('')
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const codeReaderRef = useRef<BrowserQRCodeReader | null>(null)
   const allCamerasRef = useRef<MediaDeviceInfo[]>([])
@@ -320,6 +328,59 @@ function WattamanScanContent() {
     setIsLoading(false)
   }, [])
 
+  /* ── Link unknown card handlers ── */
+  const closeLinkModal = useCallback(() => {
+    setLinkCardQr(null)
+    setLinkSearch('')
+    setLinkResults([])
+    setLinkError('')
+    setLinkSaving(false)
+    dismissLock()
+  }, [dismissLock])
+
+  // Debounced student search while modal is open
+  useEffect(() => {
+    if (!linkCardQr) return
+    setLinkLoading(true)
+    const handle = setTimeout(() => {
+      apiFetch(`/api/card-aliases/students?q=${encodeURIComponent(linkSearch.trim())}`)
+        .then(r => r.ok ? r.json() : [])
+        .then((data: any[]) => { if (Array.isArray(data)) setLinkResults(data) })
+        .catch(() => setLinkResults([]))
+        .finally(() => setLinkLoading(false))
+    }, 250)
+    return () => clearTimeout(handle)
+  }, [linkCardQr, linkSearch])
+
+  const linkCardToStudent = useCallback(async (studentId: string) => {
+    if (!linkCardQr || linkSaving) return
+    setLinkSaving(true)
+    setLinkError('')
+    try {
+      const res = await apiFetch('/api/card-aliases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qrValue: linkCardQr, studentId }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setLinkError(body?.message || 'Failed to link card')
+        setLinkSaving(false)
+        return
+      }
+      playSound('success')
+      const linkedQr = linkCardQr
+      closeLinkModal()
+      // Immediately re-scan so this card now records attendance
+      setTimeout(() => { handleQrScanned(linkedQr) }, 150)
+    } catch {
+      setLinkError('Network error — try again')
+      setLinkSaving(false)
+    }
+    // handleQrScanned added later in closure; safe because the call happens in setTimeout
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkCardQr, linkSaving, playSound, closeLinkModal])
+
   const handleLogout = useCallback(async () => {
     // Stop camera before logging out
     if (autoResetRef.current) { clearInterval(autoResetRef.current); autoResetRef.current = null }
@@ -414,6 +475,18 @@ function WattamanScanContent() {
       setIsLoading(false)
       if (res.ok) {
         const result: ScanResult = await res.json()
+        // Unknown card → open link-card modal so admin can attach it to a student
+        if ((result as any).action === 'UNMATCHED' || (result as any).unmatched) {
+          playSound('error')
+          setPendingPhoto(null)
+          setLinkCardQr(((result as any).qrValue as string) || resolvedQr)
+          setLinkSearch('')
+          setLinkResults([])
+          setLinkError('')
+          if ('vibrate' in navigator) navigator.vibrate([60, 40, 60])
+          // Don't auto-release lock — the modal's close handler does it
+          return
+        }
         const isAlready = result.action === 'ALREADY_RECORDED'
         const isDayOff = result.action === 'DAY_OFF'
         const isLate = result.status === 'LATE'
@@ -1063,6 +1136,95 @@ function WattamanScanContent() {
                 disabled={editSaving}
                 className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors disabled:opacity-50"
               >{editSaving ? 'Saving…' : 'Save'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Link unknown card to student modal ── */}
+      {linkCardQr && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-3"
+          onClick={closeLinkModal}>
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col max-h-[85vh]"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="px-5 pt-5 pb-3 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 text-xl">
+                  ⚠️
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    Unknown card
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 break-all">
+                    QR: <span className="font-mono">{linkCardQr.slice(0, 32)}{linkCardQr.length > 32 ? '…' : ''}</span>
+                  </div>
+                  <div className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                    Pick a student to link this card to. Future scans will work automatically.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-5 py-3 border-b border-slate-200 dark:border-slate-700">
+              <input
+                autoFocus
+                type="text"
+                placeholder="Search by name or student number…"
+                value={linkSearch}
+                onChange={(e) => setLinkSearch(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                disabled={linkSaving}
+              />
+              {linkError && (
+                <div className="mt-2 text-xs text-red-600 dark:text-red-400">{linkError}</div>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-2 py-2">
+              {linkLoading && linkResults.length === 0 && (
+                <div className="px-3 py-6 text-center text-sm text-slate-500">Loading…</div>
+              )}
+              {!linkLoading && linkResults.length === 0 && (
+                <div className="px-3 py-6 text-center text-sm text-slate-500">No students found</div>
+              )}
+              {linkResults.map((s) => {
+                const photo = s.photo || s.user?.photo
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => linkCardToStudent(s.id)}
+                    disabled={linkSaving}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-[0.98] transition-all text-left disabled:opacity-50"
+                  >
+                    {photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photo} alt="" className="w-10 h-10 rounded-full object-cover bg-slate-200" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 font-semibold">
+                        {s.user?.name?.[0] ?? '?'}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{s.user?.name ?? '—'}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        {s.studentNumber ? `#${s.studentNumber}` : 'no number'}
+                        {s.class?.name ? ` · ${s.class.name}` : ''}
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+              <button
+                onClick={closeLinkModal}
+                disabled={linkSaving}
+                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg disabled:opacity-50"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

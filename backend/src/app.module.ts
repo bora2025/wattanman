@@ -25,6 +25,7 @@ import { BackupModule } from './backup/backup.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { NotificationPreferenceModule } from './notification-preference/notification-preference.module';
 import { AuditModule } from './audit/audit.module';
+import { CardAliasesModule } from './card-aliases/card-aliases.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { AuditModule } from './audit/audit.module';
     BackupModule,
     AnnouncementsModule,
     NotificationPreferenceModule,
+    CardAliasesModule,
   ],
   controllers: [AppController],
   providers: [
