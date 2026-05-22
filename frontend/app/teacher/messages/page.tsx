@@ -78,9 +78,11 @@ export default function TeacherMessagesPage() {
 
   return (
     <AuthGuard requiredRole="TEACHER">
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
         <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="emerald" />
-        <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
+        {/* Mobile top spacer for fixed bar */}
+        <div className="h-14 lg:hidden" />
+        <aside className={`${selectedPartnerId ? 'hidden lg:flex' : 'flex'} w-full lg:w-72 bg-white border-r border-slate-200 flex-col`}>
           <div className="p-4 border-b border-slate-100">
             <Link href="/teacher" className="text-xs text-sky-600">← Back</Link>
             <p className="text-sm font-bold text-slate-700 mt-2">Messages</p>
@@ -145,45 +147,61 @@ export default function TeacherMessagesPage() {
           </div>
         </aside>
 
-        <main className="flex-1 flex flex-col">
+        <main className={`${selectedPartnerId ? 'flex' : 'hidden lg:flex'} flex-1 flex-col`}>
           {!selectedPartnerId ? (
             <div className="flex-1 flex items-center justify-center text-slate-400">
               <div className="text-center">
-                <p className="text-4xl mb-3">💬</p>
-                <p>Select a conversation or start a new one</p>
-                <p className="text-xs text-slate-400 mt-1">You can message any parent or student.</p>
+                <p className="text-5xl mb-3">💬</p>
+                <p className="text-slate-500 font-medium">Select a conversation</p>
+                <p className="text-xs text-slate-400 mt-1">or start a new one with any parent or student.</p>
               </div>
             </div>
           ) : (
             <>
-              <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-slate-800">{selectedPartner?.name ?? 'Chat'}</p>
+              <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sticky top-0 z-10">
+                <button onClick={() => setSelectedPartnerId(null)} className="lg:hidden w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition-transform" aria-label="Back to conversations">←</button>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 text-white font-bold flex items-center justify-center shadow-sm">
+                  {(selectedPartner?.name || '?').charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-slate-800 truncate">{selectedPartner?.name ?? 'Chat'}</p>
                   <p className="text-xs text-slate-400">{selectedPartner?.role ?? ''}</p>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-6 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-2 bg-slate-50">
                 {conversation.length === 0 && (
-                  <p className="text-center text-sm text-slate-400 mt-8">No messages yet — say hello.</p>
+                  <p className="text-center text-sm text-slate-400 mt-8">No messages yet — say hello 👋</p>
                 )}
-                {conversation.map(msg => (
-                  <div key={msg.id} className={`flex ${msg.sender.id === selectedPartnerId ? 'justify-start' : 'justify-end'}`}>
-                    <div className={`max-w-md px-4 py-2 rounded-2xl text-sm ${msg.sender.id === selectedPartnerId ? 'bg-white border border-slate-200 text-slate-800' : 'bg-sky-600 text-white'}`}>
-                      <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                      <p className={`text-xs mt-1 ${msg.sender.id === selectedPartnerId ? 'text-slate-400' : 'text-sky-200'}`}>
-                        {formatCambodiaTime(msg.createdAt)}
-                      </p>
+                {conversation.map((msg, i) => {
+                  const mine = msg.sender.id !== selectedPartnerId
+                  const prev = conversation[i - 1]
+                  const showAvatar = !mine && (!prev || prev.sender.id !== msg.sender.id)
+                  return (
+                    <div key={msg.id} className={`flex items-end gap-2 ${mine ? 'justify-end' : 'justify-start'}`}>
+                      {!mine && (
+                        showAvatar ? (
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                            {(selectedPartner?.name || '?').charAt(0).toUpperCase()}
+                          </div>
+                        ) : <div className="w-7 shrink-0" />
+                      )}
+                      <div className={`max-w-[80%] sm:max-w-md px-3.5 py-2 rounded-2xl text-sm shadow-sm ${mine ? 'bg-sky-600 text-white rounded-br-md' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-md'}`}>
+                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                        <p className={`text-[10px] mt-1 ${mine ? 'text-sky-100' : 'text-slate-400'}`}>
+                          {formatCambodiaTime(msg.createdAt)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
-              <form onSubmit={handleSubmit(onSend)} className="bg-white border-t border-slate-200 p-4 flex gap-3">
+              <form onSubmit={handleSubmit(onSend)} className="bg-white border-t border-slate-200 p-3 sm:p-4 flex gap-2 sm:gap-3 sticky bottom-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}>
                 <input {...register('content', { required: true })}
                   placeholder="Type a message…" autoComplete="off"
-                  className="flex-1 border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                  className="flex-1 border border-slate-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
                 <button type="submit" disabled={sendMutation.isPending}
-                  className="bg-sky-600 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-60">
-                  {sendMutation.isPending ? '...' : 'Send'}
+                  className="bg-sky-600 text-white px-4 sm:px-5 py-2.5 rounded-full text-sm font-semibold disabled:opacity-60 active:scale-95 transition-transform">
+                  {sendMutation.isPending ? '…' : 'Send'}
                 </button>
               </form>
             </>

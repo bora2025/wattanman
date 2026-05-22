@@ -70,7 +70,7 @@ function pickBottomTabs(navItems: NavItem[], bottomTabs?: string[]): NavItem[] {
   const hasTeacherRoot = navItems.some(n => n.href === '/teacher');
 
   if (hasTeacherRoot) {
-    const teacherOrder = ['/teacher', '/teacher/classes', '/teacher/camera', '/teacher/reports'];
+    const teacherOrder = ['/teacher', '/teacher/classes', '/teacher/camera', '/teacher/messages'];
     const teacherTabs = teacherOrder.map(href => navItems.find(n => n.href === href)).filter(Boolean) as NavItem[];
     if (teacherTabs.length === 4) {
       return [...teacherTabs, { label: 'common.more', href: '__more__', icon: 'settings' }];
@@ -207,6 +207,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
             }
             const isActive = pathname === tab.href;
             const isCameraCenter = tabs.length === 5 && idx === 2;
+            const badgeCount = tab.badgeKey ? unread[tab.badgeKey] : 0;
             return (
               <Link
                 key={tab.href}
@@ -214,7 +215,14 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
                 className={`mobile-tab-btn ${isCameraCenter ? 'mobile-tab-camera' : ''}`}
                 style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}
               >
-                <NavIcon icon={tab.icon} size={22} />
+                <span className="relative inline-flex">
+                  <NavIcon icon={tab.icon} size={22} />
+                  {badgeCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {badgeCount > 9 ? '9+' : badgeCount}
+                    </span>
+                  )}
+                </span>
                 {isActive && <span className="mobile-tab-indicator" style={{ background: 'var(--color-primary)' }} />}
               </Link>
             );

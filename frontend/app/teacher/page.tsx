@@ -36,6 +36,7 @@ interface ClassSummary {
 export default function TeacherDashboard() {
   const [classes, setClasses] = useState<Class[]>([])
   const [teacherId, setTeacherId] = useState<string | null>(null)
+  const [teacherName, setTeacherName] = useState<string>('')
   const [summaries, setSummaries] = useState<ClassSummary[]>([])
   const [selectedDate, setSelectedDate] = useState(() => todayCambodia())
   const [loadingSummary, setLoadingSummary] = useState(false)
@@ -43,7 +44,7 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     getCurrentUser().then(user => {
-      if (user) setTeacherId(user.userId)
+      if (user) { setTeacherId(user.userId); setTeacherName(user.name || '') }
     })
   }, [])
 
@@ -99,11 +100,29 @@ export default function TeacherDashboard() {
         <div className="page-content">
           <div className="h-14 lg:hidden" />
           <div className="page-header">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">{t('teacher.title')}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">
+              {teacherName ? `👋 ${t('common.hello') || 'Hello'}, ${teacherName}` : t('teacher.title')}
+            </h1>
             <p className="text-sm text-slate-500 mt-1">{t('teacher.subtitle')}</p>
           </div>
 
           <div className="page-body space-y-4 sm:space-y-6">
+            {/* Quick Actions */}
+            <div className="grid grid-cols-4 gap-2 sm:gap-3">
+              {[
+                { href: '/teacher/camera', icon: '📷', label: t('teacher.takeAttendance') || 'Attendance', bg: 'from-emerald-500 to-teal-500' },
+                { href: '/teacher/messages', icon: '💬', label: 'Messages', bg: 'from-sky-500 to-blue-500' },
+                { href: '/teacher/assignments', icon: '📝', label: 'Assignments', bg: 'from-violet-500 to-purple-500' },
+                { href: '/teacher/gradebook', icon: '📊', label: 'Gradebook', bg: 'from-amber-500 to-orange-500' },
+              ].map(a => (
+                <Link key={a.href} href={a.href} className="group">
+                  <div className={`rounded-2xl bg-gradient-to-br ${a.bg} p-3 sm:p-4 text-white shadow-sm active:scale-[0.97] transition-transform h-full flex flex-col items-center justify-center gap-1`}>
+                    <span className="text-2xl sm:text-3xl" aria-hidden>{a.icon}</span>
+                    <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{a.label}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
             {/* Announcements */}
             <div className="card p-4">
               <div className="flex items-center justify-between mb-3">

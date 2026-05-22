@@ -68,6 +68,7 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
 export async function getCurrentUser(): Promise<{
   userId: string;
   email: string;
+  name?: string;
   role: string;
   departmentId?: string | null;
   department?: { id: string; name: string; nameKh?: string } | null;
@@ -79,6 +80,7 @@ export async function getCurrentUser(): Promise<{
       return {
         userId: data.id,
         email: data.email,
+        name: data.name,
         role: data.role,
         departmentId: data.departmentId ?? null,
         department: data.department ?? null,

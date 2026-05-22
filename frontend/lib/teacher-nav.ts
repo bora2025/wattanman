@@ -8,6 +8,6 @@ export const teacherNav = [
   { label: 'Assignments', href: '/teacher/assignments', icon: 'book' },
   { label: 'Examinations', href: '/teacher/exams', icon: 'clipboard' },
   { label: 'Gradebook', href: '/teacher/gradebook', icon: 'chart' },
-  { label: 'Messages', href: '/teacher/messages', icon: 'clipboard', badgeKey: 'messages' as const },
-  { label: 'Announcements', href: '/teacher/announcements', icon: 'clipboard', badgeKey: 'announcements' as const },
+  { label: 'Messages', href: '/teacher/messages', icon: '💬', badgeKey: 'messages' as const },
+  { label: 'Announcements', href: '/teacher/announcements', icon: '📣', badgeKey: 'announcements' as const },
 ]
