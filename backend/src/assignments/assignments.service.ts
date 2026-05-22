@@ -196,7 +196,10 @@ function sanitizeWriteData(input: AssignmentInput) {
   if (input.weight !== undefined) data.weight = Number(input.weight) || 1;
   if (input.totalMarks !== undefined) data.totalMarks = Number(input.totalMarks) || 0;
   if (input.latePenaltyPct !== undefined) data.latePenaltyPct = Math.max(0, Math.min(100, Number(input.latePenaltyPct) || 0));
-  if (input.maxAttempts !== undefined) data.maxAttempts = Math.max(0, Number(input.maxAttempts) || 1);
+  if (input.maxAttempts !== undefined) {
+    const n = Number(input.maxAttempts);
+    data.maxAttempts = isFinite(n) && n >= 0 ? Math.floor(n) : 1;
+  }
   if (input.allowLate !== undefined) data.allowLate = !!input.allowLate;
   if ((input as any).randomizeQuestions !== undefined) data.randomizeQuestions = !!(input as any).randomizeQuestions;
   if ((input as any).randomizeChoices !== undefined) data.randomizeChoices = !!(input as any).randomizeChoices;

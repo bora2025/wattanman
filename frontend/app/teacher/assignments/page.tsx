@@ -71,6 +71,7 @@ type FormShape = {
   randomizeQuestions?: boolean
   randomizeChoices?: boolean
   timeLimitMinutes?: number | string
+  allowRetake?: boolean
 }
 
 export default function TeacherAssignmentsPage() {
@@ -127,6 +128,7 @@ export default function TeacherAssignmentsPage() {
 
   const { register, handleSubmit, reset, watch, formState: { isSubmitting } } = useForm<FormShape>()
   const watchType = watch('type')
+  const watchAllowRetake = watch('allowRetake')
 
   function openCreate() {
     setEditing(null)
@@ -136,6 +138,7 @@ export default function TeacherAssignmentsPage() {
       latePenaltyPct: 0, maxAttempts: 1, allowLate: true,
       availableFrom: '', dueDate: '', attachmentUrl: '', status: 'PUBLISHED',
       randomizeQuestions: false, randomizeChoices: false, timeLimitMinutes: '',
+      allowRetake: false,
     })
     setFormError(null)
     setShowForm(true)
@@ -161,6 +164,7 @@ export default function TeacherAssignmentsPage() {
       randomizeQuestions: !!a.randomizeQuestions,
       randomizeChoices: !!a.randomizeChoices,
       timeLimitMinutes: a.timeLimitMinutes ?? '',
+      allowRetake: a.maxAttempts !== 1,
     })
     setFormError(null)
     setShowForm(true)
@@ -188,6 +192,13 @@ export default function TeacherAssignmentsPage() {
       payload.randomizeQuestions = !!data.randomizeQuestions
       payload.randomizeChoices = !!data.randomizeChoices
       payload.timeLimitMinutes = data.timeLimitMinutes === '' || data.timeLimitMinutes == null ? null : Number(data.timeLimitMinutes) || null
+      if (!data.allowRetake) {
+        payload.maxAttempts = 1
+      } else {
+        // 0 = unlimited; any other positive int otherwise.
+        const n = Number(data.maxAttempts)
+        payload.maxAttempts = isFinite(n) && n >= 0 ? n : 0
+      }
     }
     if (editing) payload.id = editing.id
     setFormError(null)
@@ -347,9 +358,11 @@ export default function TeacherAssignmentsPage() {
                   <label className="text-xs text-slate-500">Late penalty %
                     <input type="number" step="any" min={0} max={100} {...register('latePenaltyPct')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
                   </label>
-                  <label className="text-xs text-slate-500">Max attempts
-                    <input type="number" min={1} {...register('maxAttempts')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
-                  </label>
+                  {watchType !== 'QUIZ' ? (
+                    <label className="text-xs text-slate-500">Max attempts
+                      <input type="number" min={1} {...register('maxAttempts')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
+                    </label>
+                  ) : <div />}
                   <label className="text-xs text-slate-500 flex items-center gap-2 mt-5">
                     <input type="checkbox" {...register('allowLate')} className="h-4 w-4" />
                     Allow late submissions
@@ -380,6 +393,19 @@ export default function TeacherAssignmentsPage() {
                       <label className="text-xs text-slate-500">Time limit (minutes)
                         <input type="number" min={1} max={600} placeholder="No limit" {...register('timeLimitMinutes')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
                       </label>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 items-end pt-2 border-t border-violet-200/60">
+                      <label className="text-xs text-slate-700 flex items-center gap-2 col-span-2">
+                        <input type="checkbox" {...register('allowRetake')} className="h-4 w-4" />
+                        <span>Allow students to <strong>retake</strong> this quiz</span>
+                      </label>
+                      {watchAllowRetake ? (
+                        <label className="text-xs text-slate-500">Max attempts
+                          <input type="number" min={0} max={50} placeholder="0 = unlimited" {...register('maxAttempts')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
+                        </label>
+                      ) : (
+                        <span className="text-[11px] text-slate-500 mt-5">Students get a single attempt.</span>
+                      )}
                     </div>
                   </div>
                 )}
