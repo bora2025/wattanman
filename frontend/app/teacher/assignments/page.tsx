@@ -23,9 +23,23 @@ export default function TeacherAssignmentsPage() {
     queryFn: async () => { const r = await apiFetch('/api/classes'); if (!r.ok) throw new Error(); return r.json() as Promise<ClassItem[]> },
   })
 
+  const [formError, setFormError] = useState<string | null>(null)
+
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiFetch('/api/assignments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['teacher-assignments'] }); setShowForm(false) },
+    mutationFn: async (data: any) => {
+      const r = await apiFetch('/api/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({ message: `HTTP ${r.status}` }))
+        throw new Error(err?.message || 'Failed to create assignment')
+      }
+      return r.json()
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['teacher-assignments'] }); setShowForm(false); setFormError(null) },
+    onError: (e: any) => setFormError(e?.message || 'Failed to create assignment'),
   })
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiFetch(`/api/assignments/${id}`, { method: 'DELETE' }),
@@ -33,7 +47,25 @@ export default function TeacherAssignmentsPage() {
   })
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm()
-  const onSubmit = async (data: any) => { await createMutation.mutateAsync({ ...data, totalMarks: Number(data.totalMarks) }); reset() }
+  const onSubmit = async (data: any) => {
+    const payload: any = {
+      title: String(data.title || '').trim(),
+      description: data.description ? String(data.description).trim() : null,
+      classId: data.classId,
+      totalMarks: data.totalMarks ? Number(data.totalMarks) : 100,
+    }
+    if (data.dueDate) {
+      // input type=date returns "YYYY-MM-DD"; convert to ISO so Prisma accepts it
+      payload.dueDate = new Date(data.dueDate).toISOString()
+    }
+    setFormError(null)
+    try {
+      await createMutation.mutateAsync(payload)
+      reset()
+    } catch {
+      /* error surfaced via formError */
+    }
+  }
 
   return (
     <AuthGuard requiredRole="TEACHER">
@@ -80,6 +112,9 @@ export default function TeacherAssignmentsPage() {
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
               <h2 className="text-lg font-bold mb-4">New Assignment</h2>
+              {formError && (
+                <div className="mb-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{formError}</div>
+              )}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
                 <input {...register('title', { required: true })} placeholder="Title *" className="w-full border rounded-lg px-3 py-2 text-sm" />
                 <textarea {...register('description')} rows={2} placeholder="Description" className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
@@ -92,7 +127,7 @@ export default function TeacherAssignmentsPage() {
                   <input type="date" {...register('dueDate')} className="border rounded-lg px-3 py-2 text-sm" />
                 </div>
                 <div className="flex gap-2 justify-end pt-2">
-                  <button type="button" onClick={() => { setShowForm(false); reset() }} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>
+                  <button type="button" onClick={() => { setShowForm(false); setFormError(null); reset() }} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>
                   <button type="submit" disabled={isSubmitting} className="px-4 py-2 text-sm bg-sky-600 text-white rounded-lg font-medium disabled:opacity-60">
                     {isSubmitting ? 'Creating...' : 'Create'}
                   </button>
