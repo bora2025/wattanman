@@ -240,6 +240,51 @@ model RefreshToken {
   @@index([expiresAt])
 }
 
+/// Append-only audit trail of every privileged action in the system.
+/// Designed for compliance + forensics: actor identity is denormalized so
+/// the record survives even if the user is later deleted.
+model AuditLog {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+
+  // ── Who ──
+  actorId       String?  // null for anonymous / system events (e.g. failed login attempt)
+  actorRole     String?
+  actorName     String?  // denormalized snapshot
+  actorEmail    String?  // denormalized snapshot
+
+  // ── What ──
+  // High-level verb. Suggested set: CREATE, READ, UPDATE, DELETE, LOGIN,
+  // LOGIN_FAILED, LOGOUT, EXPORT, IMPORT, ROLE_CHANGE, PASSWORD_RESET,
+  // PERMISSION_CHANGE, BACKUP, RESTORE.
+  action        String
+  // Resource type, e.g. USER, STUDENT, CLASS, ATTENDANCE, CARD_TEMPLATE,
+  // EXAM, FEE, SALARY, ANNOUNCEMENT, BACKUP, SETTINGS, etc.
+  resource      String
+  resourceId    String?
+  resourceLabel String?  // human-readable snapshot (e.g. student name)
+
+  // ── Detail ──
+  changes       Json?    // { before: {...}, after: {...} } or array of diffs
+  metadata      Json?    // arbitrary structured context
+
+  // ── Request context ──
+  method        String?  // HTTP method
+  path          String?  // request path
+  statusCode    Int?
+  ip            String?
+  userAgent     String?
+
+  // ── Outcome ──
+  success       Boolean  @default(true)
+  errorMessage  String?
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([resource, resourceId, createdAt])
+  @@index([action, createdAt])
+}
+
 model CardTemplate {
   id        String   @id @default(cuid())
   name      String

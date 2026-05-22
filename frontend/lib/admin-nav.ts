@@ -46,5 +46,6 @@ export const adminNav = [
   { label: 'nav.sessionSettings', href: '/admin/session-settings', icon: 'clock', section: 'nav.section.settings' },
   { label: 'nav.holidays', href: '/admin/holidays', icon: 'holiday' },
   { label: 'Backup & Restore', href: '/admin/backup', icon: 'briefcase' },
+  { label: 'Audit Logs', href: '/admin/audit', icon: 'clipboard' },
   { label: 'nav.settings', href: '/admin/settings', icon: 'settings' },
 ]

@@ -7,6 +7,7 @@ import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { AuditService } from '../audit/audit.service';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const COOKIE_OPTIONS = {
@@ -18,7 +19,17 @@ const COOKIE_OPTIONS = {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private audit: AuditService,
+  ) {}
+
+  /** Extract client IP honouring X-Forwarded-For */
+  private clientIp(req: any): string | null {
+    const xff = req.headers?.['x-forwarded-for'];
+    if (typeof xff === 'string' && xff.length > 0) return xff.split(',')[0].trim();
+    return req.ip ?? req.socket?.remoteAddress ?? null;
+  }
 
   /** Helper: set both access + refresh cookies */
   private setTokenCookies(res: Response, accessToken: string, refreshToken: string) {
@@ -35,13 +46,37 @@ export class AuthController {
 
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('login')
-  async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {
+  async login(@Body() body: LoginDto, @Request() req: any, @Res({ passthrough: true }) res: Response) {
     const user = await this.authService.validateUser(body.email, body.password);
     if (!user) {
+      this.audit.log({
+        action: 'LOGIN_FAILED',
+        resource: 'AUTH',
+        actorEmail: body?.email ?? null,
+        method: 'POST',
+        path: '/auth/login',
+        ip: this.clientIp(req),
+        userAgent: req.headers?.['user-agent'] ?? null,
+        success: false,
+        errorMessage: 'Invalid credentials',
+      });
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
     const { access_token, refresh_token } = await this.authService.login(user);
     this.setTokenCookies(res, access_token, refresh_token);
+    this.audit.log({
+      action: 'LOGIN',
+      resource: 'AUTH',
+      actorId: user.id,
+      actorRole: user.role,
+      actorName: user.name,
+      actorEmail: user.email,
+      method: 'POST',
+      path: '/auth/login',
+      ip: this.clientIp(req),
+      userAgent: req.headers?.['user-agent'] ?? null,
+      success: true,
+    });
     // Return tokens in body as well (mobile app needs them)
     return { access_token, refresh_token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
   }
@@ -61,17 +96,29 @@ export class AuthController {
   @Post('logout')
   async logout(@Request() req, @Res({ passthrough: true }) res: Response) {
     // Try to revoke refresh tokens if user is authenticated, but don't require it
+    let logoutActorId: string | null = null;
     try {
       const token = req.cookies?.access_token;
       if (token) {
         const payload = require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'change-me-in-production-use-a-strong-random-key');
         if (payload?.sub) {
+          logoutActorId = payload.sub;
           await this.authService.revokeAllRefreshTokens(payload.sub);
         }
       }
     } catch { /* token expired or invalid – still allow logout */ }
     res.clearCookie('access_token', { ...COOKIE_OPTIONS });
     res.clearCookie('refresh_token', { ...COOKIE_OPTIONS, path: '/api/auth/refresh' });
+    this.audit.log({
+      action: 'LOGOUT',
+      resource: 'AUTH',
+      actorId: logoutActorId,
+      method: 'POST',
+      path: '/auth/logout',
+      ip: this.clientIp(req),
+      userAgent: req.headers?.['user-agent'] ?? null,
+      success: true,
+    });
     return { message: 'Logged out' };
   }
 

@@ -24,11 +24,13 @@ import { ParentModule } from './parent/parent.module';
 import { BackupModule } from './backup/backup.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { NotificationPreferenceModule } from './notification-preference/notification-preference.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
     // Rate limiting: max 300 requests per 60 seconds per IP
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 300 }]),
+    AuditModule,
     AuthModule,
     AttendanceModule,
     NotificationModule,

@@ -1,96 +1,371 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
-import { useLanguage } from '../../../lib/i18n'
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
 interface AuditLog {
   id: string
-  student: {
-    user: {
-      name: string
-    }
-  }
-  class: {
-    name: string
-  }
-  status: string
-  markedBy: {
-    name: string
-  }
-  timestamp: string
+  createdAt: string
+  actorId: string | null
+  actorRole: string | null
+  actorName: string | null
+  actorEmail: string | null
+  action: string
+  resource: string
+  resourceId: string | null
+  resourceLabel: string | null
+  changes: any
+  metadata: any
+  method: string | null
+  path: string | null
+  statusCode: number | null
+  ip: string | null
+  userAgent: string | null
+  success: boolean
+  errorMessage: string | null
 }
 
-export default function AuditLogs() {
-  const { t } = useLanguage()
-  const [logs, setLogs] = useState<AuditLog[]>([])
+interface Page<T> { items: T[]; total: number; page: number; pageSize: number; pages: number }
+interface Facets {
+  actions: string[]
+  resources: string[]
+  actors: { actorId: string; actorName: string | null; actorEmail: string | null; actorRole: string | null }[]
+}
+interface Stats {
+  last24h: number
+  last7d: number
+  failures24h: number
+  byAction: { action: string; count: number }[]
+}
 
-  useEffect(() => {
-    fetchLogs()
+const ACTION_STYLES: Record<string, string> = {
+  CREATE: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  UPDATE: 'bg-amber-100 text-amber-700 border-amber-200',
+  DELETE: 'bg-red-100 text-red-700 border-red-200',
+  LOGIN: 'bg-sky-100 text-sky-700 border-sky-200',
+  LOGIN_FAILED: 'bg-rose-100 text-rose-700 border-rose-200',
+  LOGOUT: 'bg-slate-100 text-slate-700 border-slate-200',
+  EXPORT: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  IMPORT: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  ROLE_CHANGE: 'bg-purple-100 text-purple-700 border-purple-200',
+  PASSWORD_RESET: 'bg-purple-100 text-purple-700 border-purple-200',
+}
+const actionStyle = (a: string) => ACTION_STYLES[a] || 'bg-slate-100 text-slate-700 border-slate-200'
+
+function relativeTime(iso: string): string {
+  const d = new Date(iso).getTime()
+  const diff = Date.now() - d
+  const s = Math.floor(diff / 1000)
+  if (s < 60) return `${s}s ago`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  const days = Math.floor(h / 24)
+  if (days < 30) return `${days}d ago`
+  return new Date(iso).toLocaleDateString()
+}
+
+export default function AuditLogsPage() {
+  const [page, setPage] = useState<Page<AuditLog>>({ items: [], total: 0, page: 1, pageSize: 50, pages: 0 })
+  const [facets, setFacets] = useState<Facets>({ actions: [], resources: [], actors: [] })
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [expanded, setExpanded] = useState<string | null>(null)
+
+  const [actor, setActor] = useState('')
+  const [action, setAction] = useState('')
+  const [resource, setResource] = useState('')
+  const [success, setSuccess] = useState('')
+  const [q, setQ] = useState('')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const queryString = useMemo(() => {
+    const p = new URLSearchParams()
+    if (actor) p.set('actorId', actor)
+    if (action) p.set('action', action)
+    if (resource) p.set('resource', resource)
+    if (success) p.set('success', success)
+    if (q) p.set('q', q)
+    if (from) p.set('from', from)
+    if (to) p.set('to', to)
+    p.set('page', String(currentPage))
+    p.set('pageSize', '50')
+    return p.toString()
+  }, [actor, action, resource, success, q, from, to, currentPage])
+
+  const fetchLogs = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await apiFetch(`/api/audit/logs?${queryString}`)
+      if (res.ok) setPage(await res.json())
+    } finally {
+      setLoading(false)
+    }
+  }, [queryString])
+
+  const fetchFacets = useCallback(async () => {
+    const [f, s] = await Promise.all([
+      apiFetch('/api/audit/logs/facets').then(r => r.ok ? r.json() : null),
+      apiFetch('/api/audit/logs/stats').then(r => r.ok ? r.json() : null),
+    ])
+    if (f) setFacets(f)
+    if (s) setStats(s)
   }, [])
 
-  const fetchLogs = async () => {
-    try {
-      const res = await apiFetch('/api/reports/audit-logs')
-      if (!res.ok) return
-      const data = await res.json()
-      if (Array.isArray(data)) setLogs(data)
-    } catch (error) {
-      console.error('Error fetching logs:', error)
-    }
+  useEffect(() => { fetchFacets() }, [fetchFacets])
+  useEffect(() => { fetchLogs() }, [fetchLogs])
+
+  const resetFilters = () => {
+    setActor(''); setAction(''); setResource(''); setSuccess(''); setQ(''); setFrom(''); setTo(''); setCurrentPage(1)
+  }
+
+  const exportCsv = () => {
+    const p = new URLSearchParams()
+    if (actor) p.set('actorId', actor)
+    if (action) p.set('action', action)
+    if (resource) p.set('resource', resource)
+    if (success) p.set('success', success)
+    if (q) p.set('q', q)
+    if (from) p.set('from', from)
+    if (to) p.set('to', to)
+    window.open(`/api/audit/logs/export.csv?${p.toString()}`, '_blank')
   }
 
   return (
-    <AuthGuard requiredRole="ADMIN">
+    <AuthGuard allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
       <div className="page-shell">
         <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
         <div className="page-content">
           <div className="h-14 lg:hidden" />
-          <div className="page-header">
-            <h1 className="text-2xl font-bold text-slate-800">{t('audit.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">{t('audit.subtitle')}</p>
+
+          <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">Audit Logs</h1>
+              <p className="text-sm text-slate-500 mt-1">Append-only record of every admin action across the system.</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={fetchLogs} className="btn-outline btn-sm" disabled={loading}>
+                {loading ? '⏳' : '🔄'} Refresh
+              </button>
+              <button onClick={exportCsv} className="btn-primary btn-sm">📥 Export CSV</button>
+            </div>
           </div>
-          <div className="page-body">
+
+          <div className="page-body space-y-6">
+            {stats && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <StatTile label="Last 24h" value={stats.last24h} tone="indigo" />
+                <StatTile label="Last 7 days" value={stats.last7d} tone="sky" />
+                <StatTile label="Failures (24h)" value={stats.failures24h} tone={stats.failures24h > 0 ? 'red' : 'slate'} />
+                <StatTile label="Distinct actors" value={facets.actors.length} tone="emerald" />
+              </div>
+            )}
+
+            <div className="card p-4 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                  <label className="form-label">Search</label>
+                  <input value={q} onChange={e => { setQ(e.target.value); setCurrentPage(1) }} placeholder="name, email, path…" />
+                </div>
+                <div>
+                  <label className="form-label">Actor</label>
+                  <select value={actor} onChange={e => { setActor(e.target.value); setCurrentPage(1) }}>
+                    <option value="">All actors</option>
+                    {facets.actors.map(a => (
+                      <option key={a.actorId} value={a.actorId}>
+                        {a.actorName || a.actorEmail || a.actorId}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Action</label>
+                  <select value={action} onChange={e => { setAction(e.target.value); setCurrentPage(1) }}>
+                    <option value="">All actions</option>
+                    {facets.actions.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Resource</label>
+                  <select value={resource} onChange={e => { setResource(e.target.value); setCurrentPage(1) }}>
+                    <option value="">All resources</option>
+                    {facets.resources.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Outcome</label>
+                  <select value={success} onChange={e => { setSuccess(e.target.value); setCurrentPage(1) }}>
+                    <option value="">All</option>
+                    <option value="true">Success only</option>
+                    <option value="false">Failures only</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">From</label>
+                  <input type="datetime-local" value={from} onChange={e => { setFrom(e.target.value); setCurrentPage(1) }} />
+                </div>
+                <div>
+                  <label className="form-label">To</label>
+                  <input type="datetime-local" value={to} onChange={e => { setTo(e.target.value); setCurrentPage(1) }} />
+                </div>
+                <div className="flex items-end">
+                  <button onClick={resetFilters} className="btn-outline btn-sm w-full">Clear filters</button>
+                </div>
+              </div>
+            </div>
+
             <div className="card overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.studentName')}</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.class')}</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.status')}</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.markedBy')}</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">{t('common.timestamp')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {logs.map(log => (
-                    <tr key={log.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 text-slate-700">{log.student.user.name}</td>
-                      <td className="px-4 py-3 text-slate-700">{log.class.name}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                          log.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-700' :
-                          log.status === 'LATE' ? 'bg-amber-100 text-amber-700' :
-                          log.status === 'ABSENT' ? 'bg-red-100 text-red-700' :
-                          'bg-slate-100 text-slate-600'
-                        }`}>{log.status}</span>
-                      </td>
-                      <td className="px-4 py-3 text-slate-700">{log.markedBy.name}</td>
-                      <td className="px-4 py-3 text-slate-500">{new Date(log.timestamp).toLocaleString()}</td>
+              <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between text-sm">
+                <span className="text-slate-600">
+                  {loading ? 'Loading…' : <>Showing <strong>{page.items.length}</strong> of <strong>{page.total}</strong> entries</>}
+                </span>
+                {page.pages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="btn-outline btn-sm">←</button>
+                    <span className="px-2 text-slate-500">Page {currentPage} / {page.pages}</span>
+                    <button onClick={() => setCurrentPage(p => Math.min(page.pages, p + 1))} disabled={currentPage >= page.pages} className="btn-outline btn-sm">→</button>
+                  </div>
+                )}
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-left">
+                      <th className="px-3 py-2 font-medium text-slate-600">When</th>
+                      <th className="px-3 py-2 font-medium text-slate-600">Actor</th>
+                      <th className="px-3 py-2 font-medium text-slate-600">Action</th>
+                      <th className="px-3 py-2 font-medium text-slate-600">Resource</th>
+                      <th className="px-3 py-2 font-medium text-slate-600">Target</th>
+                      <th className="px-3 py-2 font-medium text-slate-600">IP</th>
+                      <th className="px-3 py-2 font-medium text-slate-600">Status</th>
+                      <th className="px-3 py-2"></th>
                     </tr>
-                  ))}
-                  {logs.length === 0 && (
-                    <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">{t('audit.noLogs')}</td></tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {page.items.map(log => (
+                      <Fragment key={log.id}>
+                        <tr className={`hover:bg-slate-50 ${!log.success ? 'bg-red-50/40' : ''}`}>
+                          <td className="px-3 py-2 whitespace-nowrap text-slate-700" title={new Date(log.createdAt).toLocaleString()}>
+                            {relativeTime(log.createdAt)}
+                          </td>
+                          <td className="px-3 py-2 text-slate-700">
+                            <div className="font-medium">{log.actorName || <span className="text-slate-400">anonymous</span>}</div>
+                            <div className="text-xs text-slate-500">{log.actorEmail || '—'} {log.actorRole && <span className="ml-1 text-[10px] text-slate-400">[{log.actorRole}]</span>}</div>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium border ${actionStyle(log.action)}`}>{log.action}</span>
+                          </td>
+                          <td className="px-3 py-2 text-slate-700">
+                            <div className="font-medium">{log.resource}</div>
+                            {log.method && <div className="text-xs text-slate-400">{log.method} {log.path}</div>}
+                          </td>
+                          <td className="px-3 py-2 text-slate-700">
+                            <div className="font-mono text-xs">{log.resourceLabel || log.resourceId || '—'}</div>
+                          </td>
+                          <td className="px-3 py-2 text-slate-500 font-mono text-xs">{log.ip || '—'}</td>
+                          <td className="px-3 py-2">
+                            {log.success
+                              ? <span className="text-emerald-600 text-xs">✓ {log.statusCode ?? 'OK'}</span>
+                              : <span className="text-red-600 text-xs">✕ {log.statusCode ?? 'ERR'}</span>}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <button onClick={() => setExpanded(expanded === log.id ? null : log.id)} className="text-xs text-indigo-600 hover:text-indigo-800">
+                              {expanded === log.id ? 'Hide' : 'Details'}
+                            </button>
+                          </td>
+                        </tr>
+                        {expanded === log.id && (
+                          <tr className="bg-slate-50/60">
+                            <td colSpan={8} className="px-4 py-3">
+                              <div className="grid sm:grid-cols-2 gap-4 text-xs">
+                                <DetailBlock title="Request">
+                                  <KV k="When" v={new Date(log.createdAt).toLocaleString()} />
+                                  <KV k="Method" v={log.method} />
+                                  <KV k="Path" v={log.path} />
+                                  <KV k="Status" v={log.statusCode} />
+                                  <KV k="IP" v={log.ip} />
+                                  <KV k="User-Agent" v={log.userAgent} truncate />
+                                </DetailBlock>
+                                <DetailBlock title="Target">
+                                  <KV k="Resource" v={log.resource} />
+                                  <KV k="Resource ID" v={log.resourceId} />
+                                  <KV k="Label" v={log.resourceLabel} />
+                                  {log.errorMessage && <KV k="Error" v={log.errorMessage} />}
+                                </DetailBlock>
+                                {log.changes && (
+                                  <DetailBlock title="Changes" wide>
+                                    <pre className="bg-white p-2 rounded border border-slate-200 max-h-64 overflow-auto text-[11px]">
+                                      {JSON.stringify(log.changes, null, 2)}
+                                    </pre>
+                                  </DetailBlock>
+                                )}
+                                {log.metadata && (
+                                  <DetailBlock title="Metadata" wide>
+                                    <pre className="bg-white p-2 rounded border border-slate-200 max-h-64 overflow-auto text-[11px]">
+                                      {JSON.stringify(log.metadata, null, 2)}
+                                    </pre>
+                                  </DetailBlock>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    ))}
+                    {!loading && page.items.length === 0 && (
+                      <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No audit entries match the current filters.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </AuthGuard>
+  )
+}
+
+function StatTile({ label, value, tone }: { label: string; value: number; tone: 'indigo' | 'sky' | 'red' | 'emerald' | 'slate' }) {
+  const tones = {
+    indigo: 'from-indigo-50 to-indigo-100 text-indigo-700 border-indigo-200',
+    sky: 'from-sky-50 to-sky-100 text-sky-700 border-sky-200',
+    red: 'from-red-50 to-red-100 text-red-700 border-red-200',
+    emerald: 'from-emerald-50 to-emerald-100 text-emerald-700 border-emerald-200',
+    slate: 'from-slate-50 to-slate-100 text-slate-700 border-slate-200',
+  }
+  return (
+    <div className={`card bg-gradient-to-br border ${tones[tone]} px-4 py-3`}>
+      <div className="text-xs font-medium opacity-75">{label}</div>
+      <div className="text-2xl font-bold mt-1">{value.toLocaleString()}</div>
+    </div>
+  )
+}
+
+function DetailBlock({ title, children, wide }: { title: string; children: React.ReactNode; wide?: boolean }) {
+  return (
+    <div className={wide ? 'sm:col-span-2' : ''}>
+      <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-1">{title}</div>
+      <div className="space-y-0.5">{children}</div>
+    </div>
+  )
+}
+
+function KV({ k, v, truncate }: { k: string; v: any; truncate?: boolean }) {
+  if (v === null || v === undefined || v === '') return null
+  return (
+    <div className="flex gap-2">
+      <span className="text-slate-500 min-w-[80px]">{k}:</span>
+      <span className={`text-slate-800 font-mono ${truncate ? 'truncate max-w-md' : ''}`}>{String(v)}</span>
+    </div>
   )
 }
