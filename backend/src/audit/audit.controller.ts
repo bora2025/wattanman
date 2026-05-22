@@ -11,6 +11,12 @@ import { PrismaService } from '../database/prisma.service';
 export class AuditController {
   constructor(private readonly prisma: PrismaService) {}
 
+  // In-memory cache for the heavy aggregate endpoints. Audit data is
+  // append-only and the UI doesn't need millisecond freshness here.
+  private facetsCache: { at: number; data: any } | null = null;
+  private statsCache: { at: number; data: any } | null = null;
+  private static readonly AGG_TTL_MS = 60_000; // 1 min
+
   /** Paginated, filtered list of audit log entries. */
   @Get('logs')
   async list(
@@ -29,6 +35,7 @@ export class AuditController {
     const take = Math.min(Math.max(parseInt(pageSize, 10) || 50, 1), 200);
     const pageNum = Math.max(parseInt(page, 10) || 1, 1);
     const skip = (pageNum - 1) * take;
+    const hasFilters = Object.keys(where).length > 0;
     const [rawItems, total] = await Promise.all([
       this.prisma.auditLog.findMany({
         where,
@@ -36,31 +43,56 @@ export class AuditController {
         skip,
         take,
       }),
-      this.prisma.auditLog.count({ where }),
+      // For unfiltered queries the COUNT(*) on a huge append-only table can
+      // dominate the latency. Use Postgres' planner estimate instead — the
+      // exact number isn't meaningful for the pager anyway.
+      hasFilters ? this.prisma.auditLog.count({ where }) : this.estimatedCount('AuditLog'),
     ]);
     const items = await this.enrichLabels(rawItems);
     return { items, total, page: pageNum, pageSize: take, pages: Math.ceil(total / take) };
   }
 
+  /** Cheap row-count estimate from pg_class. Falls back to a real count on error. */
+  private async estimatedCount(table: string): Promise<number> {
+    try {
+      const rows = await this.prisma.$queryRawUnsafe<Array<{ estimate: bigint | number }>>(
+        `SELECT reltuples::bigint AS estimate FROM pg_class WHERE relname = $1`,
+        table,
+      );
+      const v = rows?.[0]?.estimate;
+      if (v !== undefined && v !== null) return Number(v);
+    } catch { /* ignore */ }
+    return this.prisma.auditLog.count();
+  }
+
   /** Distinct values for filter dropdowns. */
   @Get('logs/facets')
   async facets() {
+    if (this.facetsCache && Date.now() - this.facetsCache.at < AuditController.AGG_TTL_MS) {
+      return this.facetsCache.data;
+    }
+    // Scope to the last 30 days so DISTINCT uses the createdAt index and
+    // doesn't scan the entire table on every page load.
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const recent = { createdAt: { gte: since } };
     const [actions, resources, actors] = await Promise.all([
-      this.prisma.auditLog.findMany({ select: { action: true }, distinct: ['action'], orderBy: { action: 'asc' } }),
-      this.prisma.auditLog.findMany({ select: { resource: true }, distinct: ['resource'], orderBy: { resource: 'asc' } }),
+      this.prisma.auditLog.findMany({ where: recent, select: { action: true }, distinct: ['action'], orderBy: { action: 'asc' } }),
+      this.prisma.auditLog.findMany({ where: recent, select: { resource: true }, distinct: ['resource'], orderBy: { resource: 'asc' } }),
       this.prisma.auditLog.findMany({
-        where: { actorId: { not: null } },
+        where: { ...recent, actorId: { not: null } },
         select: { actorId: true, actorName: true, actorEmail: true, actorRole: true },
         distinct: ['actorId'],
         orderBy: { actorName: 'asc' },
         take: 500,
       }),
     ]);
-    return {
+    const data = {
       actions: actions.map((r) => r.action),
       resources: resources.map((r) => r.resource),
       actors,
     };
+    this.facetsCache = { at: Date.now(), data };
+    return data;
   }
 
   /** Stream a CSV of the current filter set (max 50k rows). */
@@ -107,6 +139,9 @@ export class AuditController {
   /** Aggregate stats for the dashboard card. */
   @Get('logs/stats')
   async stats() {
+    if (this.statsCache && Date.now() - this.statsCache.at < AuditController.AGG_TTL_MS) {
+      return this.statsCache.data;
+    }
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const sinceWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const [last24h, last7d, failures24h, byAction] = await Promise.all([
@@ -121,12 +156,14 @@ export class AuditController {
         take: 10,
       }),
     ]);
-    return {
+    const data = {
       last24h,
       last7d,
       failures24h,
       byAction: byAction.map((b) => ({ action: b.action, count: b._count.action })),
     };
+    this.statsCache = { at: Date.now(), data };
+    return data;
   }
 
   private buildWhere(f: {
