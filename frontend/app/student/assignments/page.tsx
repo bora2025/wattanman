@@ -52,7 +52,7 @@ export default function StudentAssignmentsPage() {
   const onSubmit = (data: { content: string }) => { if (submitFor) submitMutation.mutate({ id: submitFor.id, content: data.content }) }
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="STUDENT">
       <div className="flex min-h-screen bg-slate-50">
         <Sidebar title="Student" subtitle="Portal" navItems={studentNav} accentColor="emerald" />
         <main className="flex-1 p-6">

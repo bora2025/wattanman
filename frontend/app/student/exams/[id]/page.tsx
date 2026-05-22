@@ -63,7 +63,7 @@ export default function StudentExamTakingPage() {
   )
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="STUDENT">
       <div className="min-h-screen bg-slate-50">
         {/* Header */}
         <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">

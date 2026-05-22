@@ -82,7 +82,7 @@ export default function TeacherGradebookPage() {
   })
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="TEACHER">
       <div className="flex min-h-screen bg-slate-50">
         <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
 

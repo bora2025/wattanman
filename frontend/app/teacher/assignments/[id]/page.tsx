@@ -45,7 +45,7 @@ export default function TeacherGradingPage() {
   }
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="TEACHER">
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="max-w-3xl mx-auto">
           <Link href="/teacher/assignments" className="text-sm text-sky-600 mb-4 block">← Back to Assignments</Link>

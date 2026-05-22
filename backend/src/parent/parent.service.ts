@@ -203,6 +203,10 @@ export class ParentService {
       });
     }
 
+    if (!parentUser?.id) {
+      throw new Error('Failed to resolve parent user');
+    }
+
     await this.prisma.student.update({
       where: { id: req.studentId },
       data: { parentId: parentUser.id },

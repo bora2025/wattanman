@@ -96,7 +96,7 @@ export default function SalaryPage() {
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i)
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="ADMIN">
       <div className="flex min-h-screen bg-slate-50">
         <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
         <main className="flex-1 p-6 max-w-6xl mx-auto">

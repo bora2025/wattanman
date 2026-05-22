@@ -52,7 +52,7 @@ export default function ParentBusPage() {
   const selectedBus = buses.find(b => b.id === selectedBusId)
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="PARENT">
       <div className="flex min-h-screen bg-slate-50">
         <Sidebar title="Parent" subtitle="Portal" navItems={parentNav} accentColor="emerald" />
         {/* Bus selector */}

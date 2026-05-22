@@ -45,7 +45,7 @@ export default function ParentFeesPage() {
   const totalDue = fees.filter(f => f.status === 'PENDING' || f.status === 'OVERDUE').reduce((s, f) => s + f.amount, 0)
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="PARENT">
       <div className="flex min-h-screen bg-slate-50">
         <Sidebar title="Parent" subtitle="Portal" navItems={parentNav} accentColor="emerald" />
         <aside className="w-44 bg-white border-r border-slate-200 p-4">

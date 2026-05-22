@@ -88,7 +88,7 @@ export default function ParentMessagesPage() {
     ?? children.find(c => c.id === selectedPartnerId)
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="PARENT">
       <div className="flex min-h-screen bg-slate-50">
         <Sidebar title="Parent" subtitle="Portal" navItems={parentNav} accentColor="emerald" />
         <aside className="w-52 bg-white border-r border-slate-200 flex flex-col">

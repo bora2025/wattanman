@@ -21,6 +21,7 @@ export class ClassesController {
     return this.classesService.getClasses(teacherId, studyYearId);
   }
 
+  @Roles('ADMIN')
   @Get('parents')
   async listParents() {
     return this.classesService.listParents();
@@ -37,6 +38,7 @@ export class ClassesController {
     return this.classesService.getStudentsInClass(classId);
   }
 
+  @Roles('ADMIN', 'TEACHER')
   @Patch(':classId/students/:studentId')
   async updateStudent(
     @Param('classId') classId: string,
@@ -46,11 +48,13 @@ export class ClassesController {
     return this.classesService.updateStudent(studentId, data);
   }
 
+  @Roles('ADMIN')
   @Post(':id/students')
   async addStudentToClass(@Param('id') classId: string, @Body() data: { studentId: string }) {
     return this.classesService.addStudentToClass(classId, data.studentId);
   }
 
+  @Roles('ADMIN')
   @Post(':id/students/bulk-csv')
   @UseInterceptors(FileInterceptor('file'))
   async bulkAddStudentsFromCsv(@Param('id') classId: string, @UploadedFile() file: Express.Multer.File) {
@@ -72,6 +76,7 @@ export class ClassesController {
     return this.classesService.cleanupOrphanedStudents();
   }
 
+  @Roles('ADMIN')
   @Delete(':id/students/:studentId')
   async removeStudentFromClass(@Param('id') classId: string, @Param('studentId') studentId: string) {
     return this.classesService.removeStudentFromClass(classId, studentId);

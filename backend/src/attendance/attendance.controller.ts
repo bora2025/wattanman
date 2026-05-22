@@ -1,12 +1,15 @@
 import { Controller, Post, Patch, Get, Delete, Body, Query, UseGuards, Request } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('attendance')
 export class AttendanceController {
   constructor(private attendanceService: AttendanceService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('TEACHER', 'ADMIN')
   @Post('record')
   async recordAttendance(
     @Request() req,
@@ -52,7 +55,8 @@ export class AttendanceController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('TEACHER', 'ADMIN')
   @Post('bulk')
   async recordBulkAttendance(
     @Request() req,
@@ -85,7 +89,8 @@ export class AttendanceController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('TEACHER', 'ADMIN')
   @Post('check-out')
   async recordCheckOut(
     @Request() req,
@@ -96,7 +101,8 @@ export class AttendanceController {
     return this.attendanceService.recordCheckOut(studentId, classId, session ?? 1, attendanceDate);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Post('staff/record')
   async recordStaffAttendance(
     @Request() req,
@@ -134,7 +140,8 @@ export class AttendanceController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Post('staff/check-out')
   async recordStaffCheckOut(
     @Request() req,
@@ -145,7 +152,8 @@ export class AttendanceController {
     return this.attendanceService.recordStaffCheckOut(userId, session ?? 1, attendanceDate);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Post('staff/auto-scan')
   async autoScanStaffAttendance(
     @Request() req,
@@ -195,7 +203,8 @@ export class AttendanceController {
     return this.attendanceService.getStaffAttendanceRecords(date);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch('update')
   async updateAttendance(
     @Request() req,
@@ -218,7 +227,8 @@ export class AttendanceController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch('edit-permission-type')
   async editPermissionType(
     @Request() req,
@@ -234,7 +244,8 @@ export class AttendanceController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch('staff/update')
   async updateStaffAttendance(
     @Request() req,
@@ -257,7 +268,8 @@ export class AttendanceController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Post('create-record')
   async createAttendanceRecord(
     @Request() req,
@@ -286,7 +298,8 @@ export class AttendanceController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Post('staff/create-record')
   async createStaffAttendanceRecord(
     @Request() req,
@@ -313,7 +326,8 @@ export class AttendanceController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Patch('staff/edit-permission-type')
   async editStaffPermissionType(
     @Request() req,
@@ -328,7 +342,8 @@ export class AttendanceController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Delete('record')
   async deleteAttendanceRecord(
     @Body() body: { attendanceId: string },
@@ -336,7 +351,8 @@ export class AttendanceController {
     return this.attendanceService.deleteAttendanceRecord(body.attendanceId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   @Delete('staff/record')
   async deleteStaffAttendanceRecord(
     @Body() body: { staffAttendanceId: string },

@@ -26,6 +26,7 @@ export class SessionConfigController {
   }
 
   /** Save all 4 session configs (global or per-class) */
+  @Roles('ADMIN')
   @Post()
   async saveConfigs(
     @Body()
@@ -39,6 +40,7 @@ export class SessionConfigController {
   }
 
   /** Delete class-specific overrides */
+  @Roles('ADMIN')
   @Delete()
   async deleteClassConfigs(@Query('classId') classId: string) {
     return this.sessionConfigService.deleteClassConfigs(classId);
@@ -57,6 +59,7 @@ export class SessionConfigController {
   }
 
   /** Save attendance format rules for a scope */
+  @Roles('ADMIN')
   @Post('format-rules')
   async saveFormatRules(
     @Request() req,

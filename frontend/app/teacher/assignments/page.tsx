@@ -36,7 +36,7 @@ export default function TeacherAssignmentsPage() {
   const onSubmit = async (data: any) => { await createMutation.mutateAsync({ ...data, totalMarks: Number(data.totalMarks) }); reset() }
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="TEACHER">
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-6">
