@@ -39,7 +39,7 @@ export class AnnouncementsService {
   }
 
   /** Per-user feed: announcements relevant to this user, with read state. */
-  async listForUser(userId: string, take = 20, skip = 0) {
+  async listForUser(userId: string, take = 100, skip = 0) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
