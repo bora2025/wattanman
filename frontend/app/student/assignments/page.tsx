@@ -167,7 +167,8 @@ export default function StudentAssignmentsPage() {
                 const status = getStatus(a)
                 const meta = STATUS_MAP[status]
                 const attemptsUsed = a.submission?.attemptNumber ?? 0
-                const canResubmit = !!a.submission && a.maxAttempts > 0 && attemptsUsed < a.maxAttempts && a.status !== 'CLOSED' && a.submission.marks === null
+                const attemptsRemain = a.maxAttempts === 0 || attemptsUsed < a.maxAttempts
+                const canResubmit = !!a.submission && a.status !== 'CLOSED' && attemptsRemain && (a.type === 'QUIZ' || a.submission.marks === null)
                 const canSubmit = !a.submission && a.status !== 'CLOSED'
                 return (
                   <div key={a.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100">

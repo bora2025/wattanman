@@ -62,8 +62,8 @@ export default function StudentQuizPage() {
 
   // Start quiz timer when timeLimit is set and quiz is takeable.
   const timeLimit = data?.assignment.timeLimitMinutes ?? null
-  const isTakeable = !!data && !result && !(data.submission?.status === 'GRADED' && data.submission?.marks != null)
   const attemptsExhausted = !!data && data.assignment.maxAttempts > 0 && (data.submission?.attemptNumber ?? 0) >= data.assignment.maxAttempts
+  const isTakeable = !!data && !result && !attemptsExhausted
 
   useEffect(() => {
     if (!data || !timeLimit || !isTakeable || attemptsExhausted) return
@@ -109,6 +109,7 @@ export default function StudentQuizPage() {
   const attemptsUsed = submission?.attemptNumber ?? 0
   const exhausted = assignment.maxAttempts > 0 && attemptsUsed >= assignment.maxAttempts
   const alreadyGraded = submission?.status === 'GRADED' && submission.marks !== null
+  const canRetake = !exhausted && !!submission && !result
 
   return (
     <AuthGuard requiredRole="STUDENT">
@@ -131,7 +132,7 @@ export default function StudentQuizPage() {
 
           {(result || alreadyGraded) && (
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-4">
-              <p className="font-semibold text-emerald-800 mb-1">{alreadyGraded ? 'Graded' : 'Submitted'}</p>
+              <p className="font-semibold text-emerald-800 mb-1">{alreadyGraded ? 'Graded' : 'Submitted'}{canRetake ? ' — you may retake below' : ''}</p>
               {result && (
                 <p className="text-sm text-emerald-700">
                   Auto-graded score: {result.adjustedAutoScore.toFixed(2)} / {totalPoints}
