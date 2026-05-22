@@ -70,9 +70,11 @@ function pickBottomTabs(navItems: NavItem[], bottomTabs?: string[]): NavItem[] {
   const hasTeacherRoot = navItems.some(n => n.href === '/teacher');
 
   if (hasTeacherRoot) {
-    const teacherOrder = ['/teacher', '/teacher/classes', '/teacher/camera', '/teacher/reports', '/teacher/session-settings'];
+    const teacherOrder = ['/teacher', '/teacher/classes', '/teacher/camera', '/teacher/reports'];
     const teacherTabs = teacherOrder.map(href => navItems.find(n => n.href === href)).filter(Boolean) as NavItem[];
-    if (teacherTabs.length === 5) return teacherTabs;
+    if (teacherTabs.length === 4) {
+      return [...teacherTabs, { label: 'common.more', href: '__more__', icon: 'settings' }];
+    }
   }
 
   if (hasAdminRoot) {
