@@ -27,7 +27,9 @@ interface User {
   createdAt: string
 }
 
-const ADMIN_ROLES = ['ADMIN', 'STUDENT', 'PARENT']
+// Roles that should NEVER appear on the "Manage Officers" page.
+// Admin-tier accounts are managed from the dedicated Admins page.
+const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'SCHOOL_ADMIN', 'STUDENT', 'PARENT']
 
 const EMPLOYEE_ROLES = [
   'TEACHER','PRIMARY_SCHOOL_PRINCIPAL','SECONDARY_SCHOOL_PRINCIPAL','HIGH_SCHOOL_PRINCIPAL',
