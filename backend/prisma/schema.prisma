@@ -123,6 +123,11 @@ model Attendance {
   timestamp   DateTime @default(now())
 
   @@unique([studentId, classId, date, session])
+  @@index([date])
+  @@index([classId, date])
+  @@index([studentId, date])
+  @@index([status])
+  @@index([markedById])
 }
 
 model Notification {
@@ -133,6 +138,10 @@ model Notification {
   type      String   // e.g., "absence", "late"
   sentAt    DateTime @default(now())
   readAt    DateTime?
+
+  @@index([userId, sentAt])
+  @@index([sentAt])
+  @@index([readAt])
 }
 
 // Student-initiated request to be linked to a parent account. Reviewed by admin.
@@ -174,6 +183,10 @@ model StaffAttendance {
   timestamp    DateTime @default(now())
 
   @@unique([userId, date, session])
+  @@index([date])
+  @@index([userId, date])
+  @@index([status])
+  @@index([markedById])
 }
 
 model SessionConfig {
@@ -215,6 +228,7 @@ model Holiday {
   updatedAt   DateTime @updatedAt
 
   @@unique([date, name])
+  @@index([date])
 }
 
 model Department {
@@ -590,6 +604,8 @@ model Salary {
   updatedAt   DateTime  @updatedAt
 
   @@unique([userId, month, year])
+  @@index([year, month])
+  @@index([isPaid])
 }
 
 // ─── Module 2: School Bus Tracking ───────────────────────────────────────────
@@ -638,6 +654,8 @@ model BusLocation {
   speed     Float?
   heading   Float?
   timestamp DateTime @default(now())
+
+  @@index([busId, timestamp])
 }
 
 // ─── Module 3: Examination ───────────────────────────────────────────────────
@@ -694,6 +712,9 @@ model ExamAttempt {
   updatedAt   DateTime  @updatedAt
 
   @@unique([examId, studentId])
+  @@index([studentId])
+  @@index([examId])
+  @@index([status])
 }
 
 // ─── Modules 5 & 6: Assignments (Student + Teacher shared) ───────────────────
@@ -748,6 +769,9 @@ model AssignmentSubmission {
   answers            QuizAnswer[]
 
   @@unique([assignmentId, studentId])
+  @@index([studentId])
+  @@index([status])
+  @@index([submittedAt])
 }
 
 model QuizQuestion {
@@ -791,6 +815,10 @@ model Message {
   content    String
   readAt     DateTime?
   createdAt  DateTime  @default(now())
+
+  @@index([senderId, receiverId, createdAt])
+  @@index([receiverId, readAt])
+  @@index([createdAt])
 }
 
 // ─── Phase 1: Communication Hub — Announcements & Broadcasts ────────────────
@@ -816,6 +844,11 @@ model Announcement {
   createdAt   DateTime  @default(now())
 
   reads AnnouncementRead[]
+
+  @@index([sentAt])
+  @@index([classId, sentAt])
+  @@index([audience, targetRole, sentAt])
+  @@index([pinned, sentAt])
 }
 
 model AnnouncementRead {
@@ -827,6 +860,7 @@ model AnnouncementRead {
   readAt         DateTime     @default(now())
 
   @@unique([announcementId, userId])
+  @@index([userId])
 }
 
 model NotificationPreference {
