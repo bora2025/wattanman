@@ -1,18 +1,81 @@
 "use client"
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import Link from 'next/link'
 import AuthGuard from '../../../components/AuthGuard'
 import { apiFetch } from '../../../lib/api'
 
-interface Assignment { id: string; title: string; description: string | null; dueDate: string | null; totalMarks: number; class: { id: string; name: string; subject: string }; _count: { submissions: number } }
+interface Assignment {
+  id: string
+  title: string
+  description: string | null
+  instructions: string | null
+  dueDate: string | null
+  availableFrom: string | null
+  totalMarks: number
+  type: string
+  weight: number
+  latePenaltyPct: number
+  maxAttempts: number
+  allowLate: boolean
+  status: string
+  attachmentUrl: string | null
+  class: { id: string; name: string; subject: string }
+  _count: { submissions: number }
+}
 interface ClassItem { id: string; name: string; subject: string }
 
+const TYPE_BADGES: Record<string, string> = {
+  HOMEWORK: 'bg-sky-100 text-sky-700',
+  QUIZ: 'bg-violet-100 text-violet-700',
+  PROJECT: 'bg-amber-100 text-amber-700',
+  LAB: 'bg-teal-100 text-teal-700',
+  ESSAY: 'bg-pink-100 text-pink-700',
+}
+const STATUS_BADGES: Record<string, string> = {
+  DRAFT: 'bg-slate-200 text-slate-700',
+  PUBLISHED: 'bg-emerald-100 text-emerald-700',
+  CLOSED: 'bg-rose-100 text-rose-700',
+}
+
+function toDatetimeLocalInput(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+type FormShape = {
+  id?: string
+  title: string
+  description?: string
+  instructions?: string
+  classId: string
+  type: string
+  weight: number
+  totalMarks: number
+  latePenaltyPct: number
+  maxAttempts: number
+  allowLate: boolean
+  availableFrom?: string
+  dueDate?: string
+  attachmentUrl?: string
+  status: string
+}
+
 export default function TeacherAssignmentsPage() {
-  const [showForm, setShowForm] = useState(false)
   const qc = useQueryClient()
+  const [editing, setEditing] = useState<Assignment | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [filterStatus, setFilterStatus] = useState<string>('ALL')
+  const [filterType, setFilterType] = useState<string>('ALL')
+  const [filterClass, setFilterClass] = useState<string>('ALL')
+  const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<'createdAt' | 'dueDate' | 'title'>('createdAt')
 
   const { data: assignments = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['teacher-assignments'],
@@ -23,57 +86,144 @@ export default function TeacherAssignmentsPage() {
     queryFn: async () => { const r = await apiFetch('/api/classes?teacherId=me'); if (!r.ok) throw new Error(); return r.json() as Promise<ClassItem[]> },
   })
 
-  const [formError, setFormError] = useState<string | null>(null)
-
-  const createMutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: async (data: any) => {
-      const r = await apiFetch('/api/assignments', {
-        method: 'POST',
+      const url = data.id ? `/api/assignments/${data.id}` : '/api/assignments'
+      const method = data.id ? 'PUT' : 'POST'
+      const { id, ...payload } = data
+      const r = await apiFetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
       if (!r.ok) {
         const err = await r.json().catch(() => ({ message: `HTTP ${r.status}` }))
-        throw new Error(err?.message || 'Failed to create assignment')
+        throw new Error(err?.message || 'Failed to save assignment')
       }
       return r.json()
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['teacher-assignments'] }); setShowForm(false); setFormError(null) },
-    onError: (e: any) => setFormError(e?.message || 'Failed to create assignment'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['teacher-assignments'] }); closeForm() },
+    onError: (e: any) => setFormError(e?.message || 'Failed to save assignment'),
   })
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiFetch(`/api/assignments/${id}`, { method: 'DELETE' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['teacher-assignments'] }),
   })
 
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm()
-  const onSubmit = async (data: any) => {
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<FormShape>()
+
+  function openCreate() {
+    setEditing(null)
+    reset({
+      title: '', description: '', instructions: '', classId: '',
+      type: 'HOMEWORK', weight: 1, totalMarks: 100,
+      latePenaltyPct: 0, maxAttempts: 1, allowLate: true,
+      availableFrom: '', dueDate: '', attachmentUrl: '', status: 'PUBLISHED',
+    })
+    setFormError(null)
+    setShowForm(true)
+  }
+  function openEdit(a: Assignment) {
+    setEditing(a)
+    reset({
+      id: a.id,
+      title: a.title,
+      description: a.description ?? '',
+      instructions: a.instructions ?? '',
+      classId: a.class.id,
+      type: a.type,
+      weight: a.weight,
+      totalMarks: a.totalMarks,
+      latePenaltyPct: a.latePenaltyPct,
+      maxAttempts: a.maxAttempts,
+      allowLate: a.allowLate,
+      availableFrom: toDatetimeLocalInput(a.availableFrom),
+      dueDate: toDatetimeLocalInput(a.dueDate),
+      attachmentUrl: a.attachmentUrl ?? '',
+      status: a.status,
+    })
+    setFormError(null)
+    setShowForm(true)
+  }
+  function closeForm() { setShowForm(false); setEditing(null); setFormError(null); reset() }
+
+  const onSubmit = async (data: FormShape) => {
     const payload: any = {
       title: String(data.title || '').trim(),
       description: data.description ? String(data.description).trim() : null,
+      instructions: data.instructions ? String(data.instructions).trim() : null,
       classId: data.classId,
-      totalMarks: data.totalMarks ? Number(data.totalMarks) : 100,
+      type: data.type,
+      weight: Number(data.weight) || 1,
+      totalMarks: Number(data.totalMarks) || 100,
+      latePenaltyPct: Number(data.latePenaltyPct) || 0,
+      maxAttempts: Number(data.maxAttempts) || 1,
+      allowLate: !!data.allowLate,
+      status: data.status || 'PUBLISHED',
+      attachmentUrl: data.attachmentUrl?.trim() || null,
+      dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+      availableFrom: data.availableFrom ? new Date(data.availableFrom).toISOString() : null,
     }
-    if (data.dueDate) {
-      // input type=date returns "YYYY-MM-DD"; convert to ISO so Prisma accepts it
-      payload.dueDate = new Date(data.dueDate).toISOString()
-    }
+    if (editing) payload.id = editing.id
     setFormError(null)
-    try {
-      await createMutation.mutateAsync(payload)
-      reset()
-    } catch {
-      /* error surfaced via formError */
-    }
+    try { await saveMutation.mutateAsync(payload) } catch { /* surfaced */ }
   }
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    const rows = assignments.filter(a => {
+      if (filterStatus !== 'ALL' && a.status !== filterStatus) return false
+      if (filterType !== 'ALL' && a.type !== filterType) return false
+      if (filterClass !== 'ALL' && a.class.id !== filterClass) return false
+      if (q && !a.title.toLowerCase().includes(q)) return false
+      return true
+    })
+    const sorted = [...rows].sort((a, b) => {
+      if (sortBy === 'title') return a.title.localeCompare(b.title)
+      if (sortBy === 'dueDate') {
+        const ad = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER
+        const bd = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER
+        return ad - bd
+      }
+      return 0 // default keeps API ordering (createdAt desc)
+    })
+    return sorted
+  }, [assignments, filterStatus, filterType, filterClass, search, sortBy])
 
   return (
     <AuthGuard requiredRole="TEACHER">
       <div className="min-h-screen bg-slate-50 p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold text-slate-800">📚 My Assignments</h1>
-            <button onClick={() => setShowForm(true)} className="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-700">+ New Assignment</button>
+            <button onClick={openCreate} className="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-700">+ New Assignment</button>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-3 mb-4 flex flex-wrap items-center gap-2 border border-slate-100">
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title…" className="flex-1 min-w-[160px] border rounded-lg px-3 py-1.5 text-sm" />
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border rounded-lg px-2 py-1.5 text-sm">
+              <option value="ALL">All status</option>
+              <option value="DRAFT">Draft</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="CLOSED">Closed</option>
+            </select>
+            <select value={filterType} onChange={e => setFilterType(e.target.value)} className="border rounded-lg px-2 py-1.5 text-sm">
+              <option value="ALL">All types</option>
+              <option value="HOMEWORK">Homework</option>
+              <option value="QUIZ">Quiz</option>
+              <option value="PROJECT">Project</option>
+              <option value="LAB">Lab</option>
+              <option value="ESSAY">Essay</option>
+            </select>
+            <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="border rounded-lg px-2 py-1.5 text-sm">
+              <option value="ALL">All classes</option>
+              {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="border rounded-lg px-2 py-1.5 text-sm">
+              <option value="createdAt">Newest</option>
+              <option value="dueDate">Due date</option>
+              <option value="title">Title</option>
+            </select>
           </div>
 
           {isLoading ? (
@@ -83,24 +233,30 @@ export default function TeacherAssignmentsPage() {
               <p className="text-red-600 mb-2">Failed to load assignments</p>
               <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
             </div>
-          ) : assignments.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="bg-white rounded-xl p-12 text-center shadow-sm">
               <p className="text-4xl mb-3">📚</p>
-              <p className="text-slate-400">No assignments created yet</p>
+              <p className="text-slate-400">{assignments.length === 0 ? 'No assignments created yet' : 'No assignments match your filters'}</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {assignments.map(a => (
+              {filtered.map(a => (
                 <div key={a.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-800">{a.title}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{a.class.name} · {a.class.subject} · {a.totalMarks} marks</p>
-                    {a.dueDate && <p className="text-xs text-slate-400">Due: {new Date(a.dueDate).toLocaleDateString()}</p>}
-                    <p className="text-xs text-amber-600 mt-0.5">{a._count.submissions} submission(s)</p>
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <p className="font-semibold text-slate-800 truncate">{a.title}</p>
+                      <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${STATUS_BADGES[a.status] || 'bg-slate-100 text-slate-600'}`}>{a.status}</span>
+                      <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${TYPE_BADGES[a.type] || 'bg-slate-100 text-slate-600'}`}>{a.type}</span>
+                      {a.weight !== 1 && <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-indigo-100 text-indigo-700">×{a.weight}</span>}
+                    </div>
+                    <p className="text-xs text-slate-500">{a.class?.name} · {a.class?.subject} · {a.totalMarks} marks{a.maxAttempts > 1 ? ` · up to ${a.maxAttempts} attempts` : ''}</p>
+                    {a.dueDate && <p className="text-xs text-slate-400">Due: {new Date(a.dueDate).toLocaleString()}</p>}
+                    <p className="text-xs text-amber-600 mt-0.5">{a._count?.submissions ?? 0} submission(s){a.latePenaltyPct > 0 ? ` · ${a.latePenaltyPct}% late penalty` : ''}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Link href={`/teacher/assignments/${a.id}`} className="text-xs bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-medium hover:bg-slate-200">Grade</Link>
-                    <button onClick={() => deleteMutation.mutate(a.id)} className="text-xs text-red-500 hover:underline">Delete</button>
+                    <button onClick={() => openEdit(a)} className="text-xs bg-sky-50 text-sky-700 px-3 py-1.5 rounded-lg font-medium hover:bg-sky-100">Edit</button>
+                    <button onClick={() => { if (confirm(`Delete "${a.title}"?`)) deleteMutation.mutate(a.id) }} className="text-xs text-red-500 hover:underline">Delete</button>
                   </div>
                 </div>
               ))}
@@ -109,27 +265,75 @@ export default function TeacherAssignmentsPage() {
         </div>
 
         {showForm && (
-          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-              <h2 className="text-lg font-bold mb-4">New Assignment</h2>
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl my-8">
+              <h2 className="text-lg font-bold mb-4">{editing ? 'Edit Assignment' : 'New Assignment'}</h2>
               {formError && (
                 <div className="mb-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{formError}</div>
               )}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
                 <input {...register('title', { required: true })} placeholder="Title *" className="w-full border rounded-lg px-3 py-2 text-sm" />
-                <textarea {...register('description')} rows={2} placeholder="Description" className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
-                <select {...register('classId', { required: true })} className="w-full border rounded-lg px-3 py-2 text-sm">
-                  <option value="">Select class *</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.name} — {c.subject}</option>)}
-                </select>
+                <textarea {...register('description')} rows={2} placeholder="Short description" className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
+                <textarea {...register('instructions')} rows={4} placeholder="Detailed instructions (visible to students)" className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
+
                 <div className="grid grid-cols-2 gap-3">
-                  <input type="number" {...register('totalMarks')} defaultValue={100} placeholder="Total marks" className="border rounded-lg px-3 py-2 text-sm" />
-                  <input type="date" {...register('dueDate')} className="border rounded-lg px-3 py-2 text-sm" />
+                  <select {...register('classId', { required: true })} className="border rounded-lg px-3 py-2 text-sm">
+                    <option value="">Select class *</option>
+                    {classes.map(c => <option key={c.id} value={c.id}>{c.name} — {c.subject}</option>)}
+                  </select>
+                  <select {...register('type')} className="border rounded-lg px-3 py-2 text-sm">
+                    <option value="HOMEWORK">Homework</option>
+                    <option value="QUIZ">Quiz</option>
+                    <option value="PROJECT">Project</option>
+                    <option value="LAB">Lab</option>
+                    <option value="ESSAY">Essay</option>
+                  </select>
                 </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <label className="text-xs text-slate-500">Total marks
+                    <input type="number" step="any" min={0} {...register('totalMarks')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
+                  </label>
+                  <label className="text-xs text-slate-500">Weight
+                    <input type="number" step="0.1" min={0} {...register('weight')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
+                  </label>
+                  <label className="text-xs text-slate-500">Status
+                    <select {...register('status')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm">
+                      <option value="DRAFT">Draft</option>
+                      <option value="PUBLISHED">Published</option>
+                      <option value="CLOSED">Closed</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="text-xs text-slate-500">Available from
+                    <input type="datetime-local" {...register('availableFrom')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
+                  </label>
+                  <label className="text-xs text-slate-500">Due date & time
+                    <input type="datetime-local" {...register('dueDate')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <label className="text-xs text-slate-500">Late penalty %
+                    <input type="number" step="any" min={0} max={100} {...register('latePenaltyPct')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
+                  </label>
+                  <label className="text-xs text-slate-500">Max attempts
+                    <input type="number" min={1} {...register('maxAttempts')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
+                  </label>
+                  <label className="text-xs text-slate-500 flex items-center gap-2 mt-5">
+                    <input type="checkbox" {...register('allowLate')} className="h-4 w-4" />
+                    Allow late submissions
+                  </label>
+                </div>
+
+                <input {...register('attachmentUrl')} placeholder="Attachment URL (Google Drive, Dropbox, etc.)" className="w-full border rounded-lg px-3 py-2 text-sm" />
+
                 <div className="flex gap-2 justify-end pt-2">
-                  <button type="button" onClick={() => { setShowForm(false); setFormError(null); reset() }} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>
+                  <button type="button" onClick={closeForm} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>
                   <button type="submit" disabled={isSubmitting} className="px-4 py-2 text-sm bg-sky-600 text-white rounded-lg font-medium disabled:opacity-60">
-                    {isSubmitting ? 'Creating...' : 'Create'}
+                    {isSubmitting ? 'Saving…' : (editing ? 'Save changes' : 'Create')}
                   </button>
                 </div>
               </form>

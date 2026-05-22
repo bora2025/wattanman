@@ -654,37 +654,47 @@ model ExamAttempt {
 // ─── Modules 5 & 6: Assignments (Student + Teacher shared) ───────────────────
 
 model Assignment {
-  id            String                 @id @default(cuid())
-  title         String
-  description   String?
-  classId       String
-  class         Class                  @relation("ClassAssignments", fields: [classId], references: [id])
-  createdById   String
-  createdBy     User                   @relation("AssignmentCreator", fields: [createdById], references: [id])
-  dueDate       DateTime?
-  totalMarks    Float                  @default(100)
-  status        String                 @default("PUBLISHED") // DRAFT, PUBLISHED, CLOSED
-  attachmentUrl String?
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-  submissions   AssignmentSubmission[]
+  id              String                 @id @default(cuid())
+  title           String
+  description     String?
+  instructions    String?
+  classId         String
+  class           Class                  @relation("ClassAssignments", fields: [classId], references: [id])
+  createdById     String
+  createdBy       User                   @relation("AssignmentCreator", fields: [createdById], references: [id])
+  type            String                 @default("HOMEWORK") // HOMEWORK, QUIZ, PROJECT, LAB, ESSAY
+  weight          Float                  @default(1.0)
+  availableFrom   DateTime?
+  dueDate         DateTime?
+  totalMarks      Float                  @default(100)
+  allowLate       Boolean                @default(true)
+  latePenaltyPct  Float                  @default(0)
+  maxAttempts     Int                    @default(1)
+  status          String                 @default("PUBLISHED") // DRAFT, PUBLISHED, CLOSED
+  attachmentUrl   String?
+  publishedAt     DateTime?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  submissions    AssignmentSubmission[]
 }
 
 model AssignmentSubmission {
-  id            String     @id @default(cuid())
-  assignmentId  String
-  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  studentId     String
-  student       Student    @relation("StudentSubmissions", fields: [studentId], references: [id])
-  content       String?
-  attachmentUrl String?
-  marks         Float?
-  feedback      String?
-  status        String     @default("SUBMITTED") // SUBMITTED, LATE, GRADED
-  submittedAt   DateTime   @default(now())
-  gradedAt      DateTime?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id                 String     @id @default(cuid())
+  assignmentId       String
+  assignment         Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId          String
+  student            Student    @relation("StudentSubmissions", fields: [studentId], references: [id])
+  content            String?
+  attachmentUrl      String?
+  marks              Float?
+  feedback           String?
+  status             String     @default("SUBMITTED") // SUBMITTED, LATE, GRADED
+  attemptNumber      Int        @default(1)
+  latePenaltyApplied Float?
+  submittedAt        DateTime   @default(now())
+  gradedAt           DateTime?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
   @@unique([assignmentId, studentId])
 }

@@ -9,11 +9,31 @@ import AuthGuard from '../../../../components/AuthGuard'
 import { apiFetch } from '../../../../lib/api'
 
 interface Submission {
-  id: string; content: string; submittedAt: string; isLate: boolean
-  marks: number | null; feedback: string | null; gradedAt: string | null
+  id: string
+  content: string | null
+  attachmentUrl: string | null
+  submittedAt: string
+  status: string // SUBMITTED | LATE | GRADED
+  attemptNumber: number
+  latePenaltyApplied: number | null
+  marks: number | null
+  feedback: string | null
+  gradedAt: string | null
   student: { user: { name: string; photo: string | null } }
 }
-interface AssignmentDetail { id: string; title: string; totalMarks: number; class: { name: string } }
+interface AssignmentDetail {
+  id: string
+  title: string
+  totalMarks: number
+  type: string
+  status: string
+  latePenaltyPct: number
+  maxAttempts: number
+  attachmentUrl: string | null
+  instructions: string | null
+  dueDate: string | null
+  class: { name: string; subject?: string }
+}
 
 export default function TeacherGradingPage() {
   const params = useParams()
@@ -50,7 +70,16 @@ export default function TeacherGradingPage() {
         <div className="max-w-3xl mx-auto">
           <Link href="/teacher/assignments" className="text-sm text-sky-600 mb-4 block">← Back to Assignments</Link>
           <h1 className="text-2xl font-bold text-slate-800 mb-1">Grade Submissions</h1>
-          {assignment && <p className="text-sm text-slate-500 mb-6">{assignment.title} · {assignment.class.name} · {assignment.totalMarks} marks</p>}
+          {assignment && (
+            <div className="mb-6">
+              <p className="text-sm text-slate-500">{assignment.title} · {assignment.class?.name} · {assignment.totalMarks} marks · {assignment.type}</p>
+              {assignment.dueDate && <p className="text-xs text-slate-400 mt-0.5">Due: {new Date(assignment.dueDate).toLocaleString()}</p>}
+              {assignment.latePenaltyPct > 0 && <p className="text-xs text-orange-600 mt-0.5">Late penalty: {assignment.latePenaltyPct}% off final score</p>}
+              {assignment.attachmentUrl && (
+                <a href={assignment.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 underline mt-1">📎 Reference attachment</a>
+              )}
+            </div>
+          )}
 
           {isLoading ? (
             <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-24 rounded-xl animate-pulse" />)}</div>
@@ -70,13 +99,20 @@ export default function TeacherGradingPage() {
                 <div key={sub.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-slate-800">{sub.student.user.name}</p>
-                        {sub.isLate && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">Late</span>}
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="font-semibold text-slate-800">{sub.student?.user?.name}</p>
+                        {sub.status === 'LATE' && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">Late</span>}
+                        {sub.attemptNumber > 1 && <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-semibold">Attempt {sub.attemptNumber}</span>}
                         {sub.marks !== null && <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Graded: {sub.marks}/{assignment?.totalMarks}</span>}
+                        {sub.latePenaltyApplied != null && sub.latePenaltyApplied > 0 && (
+                          <span className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full font-semibold">−{sub.latePenaltyApplied}% applied</span>
+                        )}
                       </div>
                       <p className="text-xs text-slate-400 mb-2">Submitted: {new Date(sub.submittedAt).toLocaleString()}</p>
-                      <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 whitespace-pre-wrap line-clamp-3">{sub.content}</p>
+                      {sub.content && <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 whitespace-pre-wrap line-clamp-4">{sub.content}</p>}
+                      {sub.attachmentUrl && (
+                        <a href={sub.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 underline mt-1">📎 View attachment</a>
+                      )}
                       {sub.feedback && <p className="text-xs text-slate-500 italic mt-1">Feedback: "{sub.feedback}"</p>}
                     </div>
                     <button onClick={() => setGradingId(sub.id)}
