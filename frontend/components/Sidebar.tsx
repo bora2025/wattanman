@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../lib/i18n';
 import { iconMap, IconDashboard, IconGlobe, IconLogout } from './Icons';
+import InstallAppButton from './InstallAppButton';
 
 /** Renders an icon: if `key` maps to an SVG component, uses it; otherwise falls back to text/emoji. */
 function NavIcon({ icon, size = 20, className }: { icon: string; size?: number; className?: string }) {
@@ -165,6 +166,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
             {subtitle && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{subtitle}</p>}
           </div>
           <div className="flex items-center gap-2">
+          <InstallAppButton variant="compact" />
           <button
             onClick={() => setLang(lang === 'en' ? 'kh' : 'en')}
             className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm ring-1 ring-white/70"
@@ -260,6 +262,9 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
               })}
             </nav>
             <div className="px-3 pb-4 space-y-0.5">
+              <div className="px-1 pb-2">
+                <InstallAppButton variant="row" />
+              </div>
               <Link
                 href="/"
                 onClick={() => { setCollapsed(false); setShowMore(false); }}
@@ -350,6 +355,11 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
 
         {/* Bottom */}
         <div className="px-2 py-3 border-t border-white/10 space-y-0.5">
+          {sidebarOpen && (
+            <div className="px-1 pb-2">
+              <InstallAppButton variant="row" />
+            </div>
+          )}
           <button
             onClick={() => setLang(lang === 'en' ? 'kh' : 'en')}
             title={sidebarOpen ? undefined : (lang === 'en' ? 'ភាសាខ្មែរ' : 'English')}
