@@ -45,6 +45,7 @@ const studentNav = [
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
   { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
   { label: 'Messages', href: '/student/messages', icon: 'clipboard', badgeKey: 'messages' as const },
+  { label: 'My Parent', href: '/student/parent', icon: 'users' },
 ];
 
 export default function StudentPortal() {

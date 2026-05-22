@@ -98,6 +98,7 @@ model Student {
   feeRecords  FeeRecord[]
   examAttempts     ExamAttempt[]       @relation("StudentExamAttempts")
   assignmentSubmissions AssignmentSubmission[] @relation("StudentSubmissions")
+  parentLinkRequests ParentLinkRequest[]
 }
 
 model Attendance {
@@ -132,6 +133,25 @@ model Notification {
   type      String   // e.g., "absence", "late"
   sentAt    DateTime @default(now())
   readAt    DateTime?
+}
+
+// Student-initiated request to be linked to a parent account. Reviewed by admin.
+model ParentLinkRequest {
+  id           String    @id @default(cuid())
+  studentId    String
+  student      Student   @relation(fields: [studentId], references: [id])
+  parentEmail  String
+  parentName   String?
+  parentPhone  String?
+  note         String?
+  status       String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  rejectReason String?
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+  resolvedBy   String?   // admin user id
+
+  @@index([status])
+  @@index([studentId])
 }
 
 model StaffAttendance {

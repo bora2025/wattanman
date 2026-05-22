@@ -27,6 +27,7 @@ export const adminNav = [
 
   // ── Communication ──
   { label: 'Communication Hub', href: '/admin/communication', icon: 'clipboard', section: 'Communication', badgeKey: 'messages' as const },
+  { label: 'Parent Link Requests', href: '/admin/parent-requests', icon: 'users' },
 
   // ── Reports & Cards ──
   { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', section: 'nav.section.reports' },
