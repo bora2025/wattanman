@@ -673,6 +673,9 @@ model Assignment {
   status          String                 @default("PUBLISHED") // DRAFT, PUBLISHED, CLOSED
   attachmentUrl   String?
   publishedAt     DateTime?
+  randomizeQuestions Boolean             @default(false)
+  randomizeChoices   Boolean             @default(false)
+  timeLimitMinutes   Int?
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
   submissions    AssignmentSubmission[]
@@ -692,6 +695,7 @@ model AssignmentSubmission {
   status             String     @default("SUBMITTED") // SUBMITTED, LATE, GRADED
   attemptNumber      Int        @default(1)
   latePenaltyApplied Float?
+  quizStartedAt      DateTime?
   submittedAt        DateTime   @default(now())
   gradedAt           DateTime?
   createdAt          DateTime   @default(now())

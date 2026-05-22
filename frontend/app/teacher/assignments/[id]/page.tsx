@@ -7,7 +7,6 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
 import { apiFetch } from '../../../../lib/api'
-
 interface Submission {
   id: string
   content: string | null
@@ -39,6 +38,7 @@ export default function TeacherGradingPage() {
   const params = useParams()
   const assignmentId = params?.id as string
   const [gradingId, setGradingId] = useState<string | null>(null)
+  const [perQId, setPerQId] = useState<string | null>(null)
   const qc = useQueryClient()
 
   const { data: assignment } = useQuery({
@@ -118,11 +118,23 @@ export default function TeacherGradingPage() {
                       )}
                       {sub.feedback && <p className="text-xs text-slate-500 italic mt-1">Feedback: "{sub.feedback}"</p>}
                     </div>
-                    <button onClick={() => setGradingId(sub.id)}
-                      className="flex-shrink-0 text-xs bg-sky-100 text-sky-700 px-3 py-1.5 rounded-lg font-medium hover:bg-sky-200">
-                      {sub.marks !== null ? 'Re-grade' : 'Grade'}
-                    </button>
+                    <div className="flex flex-col gap-2 flex-shrink-0">
+                      <button onClick={() => setGradingId(sub.id === gradingId ? null : sub.id)}
+                        className="text-xs bg-sky-100 text-sky-700 px-3 py-1.5 rounded-lg font-medium hover:bg-sky-200">
+                        {sub.marks !== null ? 'Re-grade total' : 'Grade total'}
+                      </button>
+                      {assignment?.type === 'QUIZ' && (
+                        <button onClick={() => setPerQId(sub.id === perQId ? null : sub.id)}
+                          className="text-xs bg-violet-100 text-violet-700 px-3 py-1.5 rounded-lg font-medium hover:bg-violet-200">
+                          {perQId === sub.id ? 'Hide answers' : 'Grade per Q'}
+                        </button>
+                      )}
+                    </div>
                   </div>
+
+                  {perQId === sub.id && assignment?.type === 'QUIZ' && (
+                    <PerQuestionGrader submissionId={sub.id} totalMarks={assignment.totalMarks} onGraded={() => qc.invalidateQueries({ queryKey: ['submissions', assignmentId] })} />
+                  )}
 
                   {gradingId === sub.id && (
                     <form onSubmit={handleSubmit(onGrade)} className="mt-4 border-t border-slate-100 pt-4 flex gap-3 items-end">
@@ -145,5 +157,132 @@ export default function TeacherGradingPage() {
         </div>
       </div>
     </AuthGuard>
+  )
+}
+
+const Q_TYPE_LABEL: Record<string, string> = {
+  MCQ: 'Multiple Choice', TF: 'True/False', MATCHING: 'Matching', ESSAY: 'Essay', NUMERICAL: 'Numerical',
+}
+
+function PerQuestionGrader({ submissionId, totalMarks, onGraded }: { submissionId: string; totalMarks: number; onGraded: () => void }) {
+  const qc = useQueryClient()
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['submission-detail', submissionId],
+    queryFn: async () => {
+      const r = await apiFetch(`/api/assignments/submissions/${submissionId}/detail`)
+      if (!r.ok) throw new Error('Failed to load')
+      return r.json() as Promise<{
+        submission: { id: string; status: string; marks: number | null; latePenaltyApplied: number | null }
+        assignmentTotalMarks: number
+        questions: Array<{ id: string; type: string; prompt: string; points: number; order: number; data: any }>
+        answers: Array<{ id: string; questionId: string; response: any; pointsAwarded: number | null; autoGraded: boolean; feedback: string | null }>
+      }>
+    },
+  })
+
+  const gradeAns = useMutation({
+    mutationFn: async ({ answerId, pointsAwarded, feedback }: { answerId: string; pointsAwarded: number | null; feedback: string | null }) => {
+      const r = await apiFetch(`/api/assignments/answers/${answerId}/grade`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pointsAwarded, feedback }),
+      })
+      if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e?.message || 'Failed') }
+      return r.json()
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['submission-detail', submissionId] }); onGraded() },
+  })
+
+  if (isLoading) return <div className="mt-4 border-t border-slate-100 pt-4 text-xs text-slate-400">Loading answers…</div>
+  if (isError || !data) return <div className="mt-4 border-t border-slate-100 pt-4 text-xs text-red-500">Failed to load answers.</div>
+
+  const answerByQ = new Map(data.answers.map(a => [a.questionId, a]))
+
+  return (
+    <div className="mt-4 border-t border-slate-100 pt-4 space-y-3">
+      {data.questions.map((q, i) => {
+        const a = answerByQ.get(q.id)
+        return (
+          <AnswerRow
+            key={q.id}
+            index={i + 1}
+            question={q}
+            answer={a}
+            onSave={(pts, fb) => a && gradeAns.mutate({ answerId: a.id, pointsAwarded: pts, feedback: fb })}
+          />
+        )
+      })}
+      <p className="text-xs text-slate-500">Total: <strong>{data.submission.marks ?? '—'}</strong> / {data.assignmentTotalMarks}{data.submission.latePenaltyApplied ? ` (late −${data.submission.latePenaltyApplied}%)` : ''}</p>
+    </div>
+  )
+}
+
+function AnswerRow({ index, question, answer, onSave }: { index: number; question: { id: string; type: string; prompt: string; points: number; data: any }; answer: any; onSave: (pts: number | null, fb: string | null) => void }) {
+  const [pts, setPts] = useState<string>(answer?.pointsAwarded != null ? String(answer.pointsAwarded) : '')
+  const [fb, setFb] = useState<string>(answer?.feedback ?? '')
+  const isCorrect = question.type === 'MCQ' && Array.isArray(question.data?.choices)
+    ? question.data.choices.filter((c: any) => c.isCorrect).map((c: any) => c.id)
+    : null
+
+  function renderResponse() {
+    const r = answer?.response
+    if (r == null || r === '') return <span className="italic text-slate-400">(no answer)</span>
+    if (question.type === 'MCQ') {
+      const sel = Array.isArray(r) ? r : [r]
+      const choices = question.data?.choices ?? []
+      return (
+        <ul className="space-y-0.5">
+          {choices.map((c: any) => {
+            const chosen = sel.includes(c.id)
+            const correct = isCorrect?.includes(c.id)
+            return <li key={c.id} className={`text-xs ${chosen ? (correct ? 'text-emerald-700 font-semibold' : 'text-red-600 font-semibold') : (correct ? 'text-emerald-600' : 'text-slate-400')}`}>{chosen ? '●' : '○'} {c.text} {correct && !chosen ? '(correct)' : ''}</li>
+          })}
+        </ul>
+      )
+    }
+    if (question.type === 'TF') return <span>Student: <strong>{r === true ? 'True' : r === false ? 'False' : String(r)}</strong> · Correct: <strong>{question.data?.correct ? 'True' : 'False'}</strong></span>
+    if (question.type === 'NUMERICAL') return <span>Student: <strong>{String(r)}</strong> · Correct: <strong>{question.data?.correct}</strong> ± {question.data?.tolerance ?? 0}</span>
+    if (question.type === 'MATCHING') {
+      const pairs = Array.isArray(r) ? r : []
+      const leftMap = Object.fromEntries((question.data?.left ?? []).map((l: any) => [l.id, l.text]))
+      const rightMap = Object.fromEntries((question.data?.right ?? []).map((r: any) => [r.id, r.text]))
+      return <ul className="text-xs space-y-0.5">{pairs.map((p: any, i: number) => <li key={i}>{leftMap[p.leftId] ?? '?'} → {rightMap[p.rightId] ?? '(none)'}</li>)}</ul>
+    }
+    if (question.type === 'ESSAY') return <div className="text-xs bg-slate-50 rounded p-2 whitespace-pre-wrap max-h-40 overflow-auto">{String(r)}</div>
+    return <span>{JSON.stringify(r)}</span>
+  }
+
+  const isEssay = question.type === 'ESSAY'
+  return (
+    <div className="border border-slate-200 rounded-lg p-3">
+      <div className="flex items-center gap-2 mb-1 flex-wrap">
+        <span className="text-[10px] uppercase font-semibold bg-slate-100 px-1.5 py-0.5 rounded">Q{index}</span>
+        <span className="text-[10px] uppercase font-semibold bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">{Q_TYPE_LABEL[question.type] ?? question.type}</span>
+        <span className="text-[10px] uppercase font-semibold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">{question.points} pt</span>
+        {answer?.autoGraded && <span className="text-[10px] uppercase font-semibold bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded">auto</span>}
+        {answer?.pointsAwarded == null && <span className="text-[10px] uppercase font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">needs grading</span>}
+      </div>
+      <p className="text-sm text-slate-800 mb-2 whitespace-pre-wrap">{question.prompt}</p>
+      <div className="mb-2">{renderResponse()}</div>
+      <div className="flex gap-2 items-center mt-2">
+        <input
+          type="number" min={0} max={question.points} step="any"
+          value={pts}
+          onChange={e => setPts(e.target.value)}
+          placeholder={`/ ${question.points}`}
+          className={`w-20 border rounded-lg px-2 py-1 text-xs ${isEssay ? 'border-amber-300' : ''}`}
+        />
+        <span className="text-xs text-slate-400">/ {question.points}</span>
+        <input
+          value={fb}
+          onChange={e => setFb(e.target.value)}
+          placeholder="Feedback (optional)"
+          className="flex-1 border rounded-lg px-2 py-1 text-xs"
+        />
+        <button
+          onClick={() => onSave(pts === '' ? null : Number(pts), fb || null)}
+          className="text-xs bg-emerald-600 text-white px-3 py-1 rounded-lg font-medium hover:bg-emerald-700"
+        >Save</button>
+      </div>
+    </div>
   )
 }

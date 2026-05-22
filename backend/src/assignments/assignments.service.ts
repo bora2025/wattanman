@@ -142,7 +142,31 @@ type AssignmentInput = {
   maxAttempts?: number;
   status?: string;
   attachmentUrl?: string | null;
+  randomizeQuestions?: boolean;
+  randomizeChoices?: boolean;
+  timeLimitMinutes?: number | null;
 };
+
+function seededShuffle<T>(arr: T[], seed: string): T[] {
+  let h = 1779033703 ^ seed.length;
+  for (let i = 0; i < seed.length; i++) {
+    h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  let a = h >>> 0;
+  const rng = () => {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 function toDate(v: string | null | undefined): Date | null | undefined {
   if (v === undefined) return undefined;
@@ -174,6 +198,16 @@ function sanitizeWriteData(input: AssignmentInput) {
   if (input.latePenaltyPct !== undefined) data.latePenaltyPct = Math.max(0, Math.min(100, Number(input.latePenaltyPct) || 0));
   if (input.maxAttempts !== undefined) data.maxAttempts = Math.max(0, Number(input.maxAttempts) || 1);
   if (input.allowLate !== undefined) data.allowLate = !!input.allowLate;
+  if ((input as any).randomizeQuestions !== undefined) data.randomizeQuestions = !!(input as any).randomizeQuestions;
+  if ((input as any).randomizeChoices !== undefined) data.randomizeChoices = !!(input as any).randomizeChoices;
+  if ((input as any).timeLimitMinutes !== undefined) {
+    const v = (input as any).timeLimitMinutes;
+    if (v === null || v === '' || v === 0) data.timeLimitMinutes = null;
+    else {
+      const n = Math.max(1, Math.min(600, Number(v) || 0));
+      data.timeLimitMinutes = n;
+    }
+  }
 
   const dueDate = toDate(input.dueDate);
   if (dueDate !== undefined) data.dueDate = dueDate;
@@ -451,13 +485,25 @@ export class AssignmentsService {
     if (!assignment) throw new NotFoundException('Assignment not found');
     if (assignment.classId !== student.classId) throw new ForbiddenException('Not your class');
     if (assignment.status === 'DRAFT') throw new ForbiddenException('Quiz not published yet');
-    const questions = await this.prisma.quizQuestion.findMany({
+    let questions = await this.prisma.quizQuestion.findMany({
       where: { assignmentId },
       orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
     });
     const submission = await this.prisma.assignmentSubmission.findUnique({
       where: { assignmentId_studentId: { assignmentId, studentId: student.id } },
       include: { answers: true },
+    });
+    // Randomization (deterministic per student & assignment so refresh keeps order)
+    const seedBase = `${assignmentId}:${student.id}:${submission?.attemptNumber ?? 0}`;
+    if ((assignment as any).randomizeQuestions) {
+      questions = seededShuffle(questions, `Q:${seedBase}`);
+    }
+    const sanitized = questions.map(q => {
+      const s = sanitizeQuestionForStudent(q);
+      if ((assignment as any).randomizeChoices && s.type === 'MCQ' && Array.isArray(s.data?.choices)) {
+        s.data = { ...s.data, choices: seededShuffle(s.data.choices, `C:${seedBase}:${s.id}`) };
+      }
+      return s;
     });
     return {
       assignment: {
@@ -468,17 +514,56 @@ export class AssignmentsService {
         totalMarks: assignment.totalMarks,
         maxAttempts: assignment.maxAttempts,
         allowLate: assignment.allowLate,
+        timeLimitMinutes: (assignment as any).timeLimitMinutes ?? null,
       },
-      questions: questions.map(sanitizeQuestionForStudent),
+      questions: sanitized,
       submission: submission ? {
         id: submission.id,
         status: submission.status,
         marks: submission.marks,
         attemptNumber: submission.attemptNumber,
         submittedAt: submission.submittedAt,
-        answers: submission.answers.map(a => ({ questionId: a.questionId, response: a.response, pointsAwarded: a.pointsAwarded })),
+        quizStartedAt: (submission as any).quizStartedAt ?? null,
+        answers: submission.answers.map(a => ({ questionId: a.questionId, response: a.response, pointsAwarded: a.pointsAwarded, feedback: a.feedback })),
       } : null,
     };
+  }
+
+  async startQuiz(assignmentId: string, userId: string) {
+    const student = await this.prisma.student.findUnique({ where: { userId } });
+    if (!student) throw new NotFoundException('Student not found');
+    const assignment = await this.prisma.assignment.findUnique({ where: { id: assignmentId } });
+    if (!assignment) throw new NotFoundException('Assignment not found');
+    if (assignment.classId !== student.classId) throw new ForbiddenException('Not your class');
+    if (assignment.status !== 'PUBLISHED') throw new ForbiddenException('Quiz not available');
+    const existing = await this.prisma.assignmentSubmission.findUnique({
+      where: { assignmentId_studentId: { assignmentId, studentId: student.id } },
+    });
+    const maxAttempts = assignment.maxAttempts ?? 1;
+    if (existing && maxAttempts > 0 && (existing.attemptNumber ?? 0) >= maxAttempts && !(existing as any).quizStartedAt) {
+      throw new ForbiddenException(`Maximum attempts (${maxAttempts}) reached`);
+    }
+    const now = new Date();
+    if (existing) {
+      if (!(existing as any).quizStartedAt) {
+        await this.prisma.assignmentSubmission.update({
+          where: { id: existing.id },
+          data: { quizStartedAt: now } as any,
+        });
+        return { startedAt: now, timeLimitMinutes: (assignment as any).timeLimitMinutes ?? null };
+      }
+      return { startedAt: (existing as any).quizStartedAt, timeLimitMinutes: (assignment as any).timeLimitMinutes ?? null };
+    }
+    const created = await this.prisma.assignmentSubmission.create({
+      data: {
+        assignmentId,
+        studentId: student.id,
+        status: 'SUBMITTED',
+        attemptNumber: 0,
+        quizStartedAt: now,
+      } as any,
+    });
+    return { startedAt: (created as any).quizStartedAt ?? now, timeLimitMinutes: (assignment as any).timeLimitMinutes ?? null };
   }
 
   async submitQuiz(assignmentId: string, userId: string, body: { answers: Array<{ questionId: string; response: any }> }) {
@@ -503,6 +588,13 @@ export class AssignmentsService {
     const currentAttempt = existing?.attemptNumber ?? 0;
     if (existing && maxAttempts > 0 && currentAttempt >= maxAttempts) {
       throw new ForbiddenException(`Maximum attempts (${maxAttempts}) reached`);
+    }
+    const timeLimit = (assignment as any).timeLimitMinutes as number | null | undefined;
+    if (timeLimit && existing && (existing as any).quizStartedAt) {
+      const elapsedSec = (now.getTime() - new Date((existing as any).quizStartedAt).getTime()) / 1000;
+      if (elapsedSec > timeLimit * 60 + 10) {
+        throw new ForbiddenException('Time limit exceeded for this quiz attempt');
+      }
     }
 
     const questions = await this.prisma.quizQuestion.findMany({ where: { assignmentId } });
@@ -550,7 +642,8 @@ export class AssignmentsService {
           feedback: null,
           gradedAt: hasEssay ? null : new Date(),
           latePenaltyApplied: penaltyPct || null,
-        },
+          quizStartedAt: null,
+        } as any,
       });
       await tx.quizAnswer.deleteMany({ where: { submissionId: sub.id } });
       if (answersToCreate.length) {
@@ -568,6 +661,131 @@ export class AssignmentsService {
       hasManualGrading: hasEssay,
       latePenaltyApplied: penaltyPct || null,
     };
+  }
+
+  async gradeQuizAnswer(answerId: string, body: { pointsAwarded: number | null; feedback?: string | null }) {
+    const ans = await this.prisma.quizAnswer.findUnique({
+      where: { id: answerId },
+      include: { question: true, submission: { include: { assignment: { select: { id: true, totalMarks: true, latePenaltyPct: true, title: true } }, student: { select: { userId: true } } } } },
+    });
+    if (!ans) throw new NotFoundException('Answer not found');
+    let pts: number | null = null;
+    if (body.pointsAwarded != null) {
+      pts = Math.max(0, Math.min(Number(body.pointsAwarded) || 0, ans.question.points));
+    }
+    await this.prisma.quizAnswer.update({
+      where: { id: answerId },
+      data: { pointsAwarded: pts, feedback: body.feedback ?? null },
+    });
+    // Recompute submission marks from all answers
+    const allAnswers = await this.prisma.quizAnswer.findMany({ where: { submissionId: ans.submissionId } });
+    const anyPending = allAnswers.some(a => a.pointsAwarded == null);
+    const rawTotal = allAnswers.reduce((sum, a) => sum + (a.pointsAwarded ?? 0), 0);
+    const isLate = ans.submission.status === 'LATE';
+    const penaltyPct = isLate ? ans.submission.assignment.latePenaltyPct || 0 : 0;
+    const cap = ans.submission.assignment.totalMarks ?? rawTotal;
+    const capped = Math.min(rawTotal, cap);
+    const finalMarks = Math.max(0, capped - (capped * penaltyPct) / 100);
+
+    const updated = await this.prisma.assignmentSubmission.update({
+      where: { id: ans.submissionId },
+      data: {
+        marks: finalMarks,
+        status: anyPending ? ans.submission.status : 'GRADED',
+        gradedAt: anyPending ? null : new Date(),
+        latePenaltyApplied: penaltyPct || null,
+      },
+    });
+
+    if (!anyPending) {
+      try {
+        await this.prisma.notification.create({
+          data: {
+            userId: ans.submission.student.userId,
+            type: 'assignment_graded',
+            message: `Your submission for "${ans.submission.assignment.title}" was graded: ${finalMarks}/${ans.submission.assignment.totalMarks}`,
+          },
+        });
+      } catch {}
+    }
+    return { answer: { id: answerId, pointsAwarded: pts, feedback: body.feedback ?? null }, submission: updated };
+  }
+
+  async getSubmissionDetail(submissionId: string) {
+    const sub = await this.prisma.assignmentSubmission.findUnique({
+      where: { id: submissionId },
+      include: {
+        assignment: { include: { questions: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] } } },
+        answers: true,
+        student: { include: { user: { select: { name: true } } } },
+      },
+    });
+    if (!sub) throw new NotFoundException('Submission not found');
+    return {
+      submission: {
+        id: sub.id,
+        status: sub.status,
+        marks: sub.marks,
+        latePenaltyApplied: sub.latePenaltyApplied,
+        attemptNumber: sub.attemptNumber,
+        studentName: sub.student?.user?.name,
+      },
+      assignmentTotalMarks: sub.assignment.totalMarks,
+      questions: sub.assignment.questions,
+      answers: sub.answers,
+    };
+  }
+
+  async exportQuestions(assignmentId: string) {
+    const assignment = await this.prisma.assignment.findUnique({ where: { id: assignmentId } });
+    if (!assignment) throw new NotFoundException('Assignment not found');
+    const questions = await this.prisma.quizQuestion.findMany({
+      where: { assignmentId },
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+    });
+    return {
+      assignmentTitle: assignment.title,
+      exportedAt: new Date().toISOString(),
+      questions: questions.map(q => ({
+        type: q.type,
+        prompt: q.prompt,
+        points: q.points,
+        order: q.order,
+        data: q.data,
+      })),
+    };
+  }
+
+  async importQuestions(assignmentId: string, body: { questions: any[]; replaceExisting?: boolean }) {
+    const assignment = await this.prisma.assignment.findUnique({ where: { id: assignmentId } });
+    if (!assignment) throw new NotFoundException('Assignment not found');
+    if (!Array.isArray(body?.questions) || body.questions.length === 0) {
+      throw new BadRequestException('questions array is required');
+    }
+    if (body.replaceExisting) {
+      await this.prisma.quizQuestion.deleteMany({ where: { assignmentId } });
+    }
+    const existingCount = body.replaceExisting
+      ? 0
+      : await this.prisma.quizQuestion.count({ where: { assignmentId } });
+    let created = 0;
+    for (let i = 0; i < body.questions.length; i++) {
+      const raw = body.questions[i];
+      const cleaned = sanitizeQuestionInput(raw);
+      await this.prisma.quizQuestion.create({
+        data: {
+          assignmentId,
+          order: raw?.order != null ? Number(raw.order) : existingCount + i + 1,
+          type: cleaned.type,
+          prompt: cleaned.prompt,
+          points: cleaned.points,
+          data: cleaned.data,
+        },
+      });
+      created++;
+    }
+    await this.syncAssignmentTotalMarks(assignmentId);
+    return { created, replaced: !!body.replaceExisting };
   }
 
   async gradeSubmission(submissionId: string, data: { marks: number; feedback?: string }) {

@@ -22,6 +22,9 @@ interface Assignment {
   allowLate: boolean
   status: string
   attachmentUrl: string | null
+  randomizeQuestions?: boolean
+  randomizeChoices?: boolean
+  timeLimitMinutes?: number | null
   class: { id: string; name: string; subject: string }
   _count: { submissions: number }
 }
@@ -64,6 +67,9 @@ type FormShape = {
   dueDate?: string
   attachmentUrl?: string
   status: string
+  randomizeQuestions?: boolean
+  randomizeChoices?: boolean
+  timeLimitMinutes?: number | string
 }
 
 export default function TeacherAssignmentsPage() {
@@ -110,7 +116,8 @@ export default function TeacherAssignmentsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['teacher-assignments'] }),
   })
 
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<FormShape>()
+  const { register, handleSubmit, reset, watch, formState: { isSubmitting } } = useForm<FormShape>()
+  const watchType = watch('type')
 
   function openCreate() {
     setEditing(null)
@@ -119,6 +126,7 @@ export default function TeacherAssignmentsPage() {
       type: 'HOMEWORK', weight: 1, totalMarks: 100,
       latePenaltyPct: 0, maxAttempts: 1, allowLate: true,
       availableFrom: '', dueDate: '', attachmentUrl: '', status: 'PUBLISHED',
+      randomizeQuestions: false, randomizeChoices: false, timeLimitMinutes: '',
     })
     setFormError(null)
     setShowForm(true)
@@ -141,6 +149,9 @@ export default function TeacherAssignmentsPage() {
       dueDate: toDatetimeLocalInput(a.dueDate),
       attachmentUrl: a.attachmentUrl ?? '',
       status: a.status,
+      randomizeQuestions: !!a.randomizeQuestions,
+      randomizeChoices: !!a.randomizeChoices,
+      timeLimitMinutes: a.timeLimitMinutes ?? '',
     })
     setFormError(null)
     setShowForm(true)
@@ -163,6 +174,11 @@ export default function TeacherAssignmentsPage() {
       attachmentUrl: data.attachmentUrl?.trim() || null,
       dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
       availableFrom: data.availableFrom ? new Date(data.availableFrom).toISOString() : null,
+    }
+    if (data.type === 'QUIZ') {
+      payload.randomizeQuestions = !!data.randomizeQuestions
+      payload.randomizeChoices = !!data.randomizeChoices
+      payload.timeLimitMinutes = data.timeLimitMinutes === '' || data.timeLimitMinutes == null ? null : Number(data.timeLimitMinutes) || null
     }
     if (editing) payload.id = editing.id
     setFormError(null)
@@ -329,6 +345,25 @@ export default function TeacherAssignmentsPage() {
                 </div>
 
                 <input {...register('attachmentUrl')} placeholder="Attachment URL (Google Drive, Dropbox, etc.)" className="w-full border rounded-lg px-3 py-2 text-sm" />
+
+                {watchType === 'QUIZ' && (
+                  <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-3 space-y-2">
+                    <div className="text-xs font-semibold text-violet-700">Quiz settings</div>
+                    <div className="grid grid-cols-3 gap-3 items-end">
+                      <label className="text-xs text-slate-600 flex items-center gap-2">
+                        <input type="checkbox" {...register('randomizeQuestions')} className="h-4 w-4" />
+                        Randomize question order
+                      </label>
+                      <label className="text-xs text-slate-600 flex items-center gap-2">
+                        <input type="checkbox" {...register('randomizeChoices')} className="h-4 w-4" />
+                        Randomize MCQ choices
+                      </label>
+                      <label className="text-xs text-slate-500">Time limit (minutes)
+                        <input type="number" min={1} max={600} placeholder="No limit" {...register('timeLimitMinutes')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
+                      </label>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex gap-2 justify-end pt-2">
                   <button type="button" onClick={closeForm} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>

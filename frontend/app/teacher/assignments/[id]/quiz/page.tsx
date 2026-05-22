@@ -131,6 +131,58 @@ export default function TeacherQuizEditorPage() {
             <button onClick={openNew} className="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-700">+ Add Question</button>
           </div>
 
+          <div className="flex flex-wrap gap-2 mb-4">
+            <button
+              onClick={async () => {
+                const r = await apiFetch(`/api/assignments/${assignmentId}/questions/export`)
+                if (!r.ok) { alert('Export failed'); return }
+                const json = await r.json()
+                const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `quiz-${(json.assignmentTitle || 'questions').replace(/[^a-z0-9]+/gi, '_')}.json`
+                a.click()
+                URL.revokeObjectURL(url)
+              }}
+              className="text-xs border border-slate-300 px-3 py-1.5 rounded-lg hover:bg-slate-100"
+              disabled={!questions.length}
+            >⬇️ Export JSON</button>
+            <label className="text-xs border border-slate-300 px-3 py-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+              ⬆️ Import JSON
+              <input
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  try {
+                    const text = await file.text()
+                    const parsed = JSON.parse(text)
+                    const arr = Array.isArray(parsed) ? parsed : parsed?.questions
+                    if (!Array.isArray(arr)) { alert('Invalid file: missing questions array'); return }
+                    const replace = questions.length > 0 && confirm(`This file has ${arr.length} question(s). Replace existing ${questions.length} question(s)? (Cancel = append)`)
+                    const r = await apiFetch(`/api/assignments/${assignmentId}/questions/import`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ questions: arr, replaceExisting: replace }),
+                    })
+                    if (!r.ok) { const er = await r.json().catch(() => ({})); alert(er?.message || 'Import failed'); return }
+                    const result = await r.json()
+                    alert(`Imported ${result.created} question(s)`)
+                    qc.invalidateQueries({ queryKey: ['quiz-questions', assignmentId] })
+                    qc.invalidateQueries({ queryKey: ['assignment-detail', assignmentId] })
+                  } catch (err: any) {
+                    alert(err?.message || 'Import failed')
+                  } finally {
+                    e.target.value = ''
+                  }
+                }}
+              />
+            </label>
+          </div>
+
           {isLoading ? (
             <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white h-20 rounded-xl animate-pulse" />)}</div>
           ) : questions.length === 0 ? (

@@ -62,11 +62,35 @@ export class AssignmentsController {
   @Delete('questions/:qid')
   deleteQuestion(@Param('qid') qid: string) { return this.svc.deleteQuestion(qid); }
 
+  @Roles('ADMIN', 'TEACHER')
+  @Get('submissions/:id/detail')
+  getSubmissionDetail(@Param('id') id: string) { return this.svc.getSubmissionDetail(id); }
+
+  @Roles('ADMIN', 'TEACHER')
+  @Patch('answers/:aid/grade')
+  gradeAnswer(@Param('aid') aid: string, @Body() body: { pointsAwarded: number | null; feedback?: string | null }) {
+    return this.svc.gradeQuizAnswer(aid, body);
+  }
+
+  @Roles('ADMIN', 'TEACHER')
+  @Get(':id/questions/export')
+  exportQuestions(@Param('id') id: string) { return this.svc.exportQuestions(id); }
+
+  @Roles('ADMIN', 'TEACHER')
+  @Post(':id/questions/import')
+  importQuestions(@Param('id') id: string, @Body() body: any) { return this.svc.importQuestions(id, body); }
+
   // ── Quiz (Student) ──
   @Roles('STUDENT', 'ADMIN')
   @Get(':id/quiz')
   getStudentQuiz(@Param('id') id: string, @Request() req: any) {
     return this.svc.getStudentQuiz(id, req.user.userId);
+  }
+
+  @Roles('STUDENT', 'ADMIN')
+  @Post(':id/start-quiz')
+  startQuiz(@Param('id') id: string, @Request() req: any) {
+    return this.svc.startQuiz(id, req.user.userId);
   }
 
   @Roles('STUDENT', 'ADMIN')

@@ -13,9 +13,9 @@ interface Question {
   data: any
 }
 interface QuizPayload {
-  assignment: { id: string; title: string; instructions: string | null; dueDate: string | null; totalMarks: number; maxAttempts: number; allowLate: boolean }
+  assignment: { id: string; title: string; instructions: string | null; dueDate: string | null; totalMarks: number; maxAttempts: number; allowLate: boolean; timeLimitMinutes: number | null }
   questions: Question[]
-  submission: { id: string; status: string; marks: number | null; attemptNumber: number; submittedAt: string; answers: Array<{ questionId: string; response: any; pointsAwarded: number | null }> } | null
+  submission: { id: string; status: string; marks: number | null; attemptNumber: number; submittedAt: string; quizStartedAt: string | null; answers: Array<{ questionId: string; response: any; pointsAwarded: number | null; feedback: string | null }> } | null
 }
 
 export default function StudentQuizPage() {
@@ -25,6 +25,9 @@ export default function StudentQuizPage() {
   const [answers, setAnswers] = useState<Record<string, any>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [result, setResult] = useState<{ autoScore: number; adjustedAutoScore: number; hasManualGrading: boolean; latePenaltyApplied: number | null } | null>(null)
+  const [deadline, setDeadline] = useState<Date | null>(null)
+  const [remainingSec, setRemainingSec] = useState<number | null>(null)
+  const [autoSubmittedReason, setAutoSubmittedReason] = useState<string | null>(null)
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['student-quiz', assignmentId],
@@ -57,6 +60,43 @@ export default function StudentQuizPage() {
 
   function setAnswer(qId: string, value: any) { setAnswers(a => ({ ...a, [qId]: value })) }
 
+  // Start quiz timer when timeLimit is set and quiz is takeable.
+  const timeLimit = data?.assignment.timeLimitMinutes ?? null
+  const isTakeable = !!data && !result && !(data.submission?.status === 'GRADED' && data.submission?.marks != null)
+  const attemptsExhausted = !!data && data.assignment.maxAttempts > 0 && (data.submission?.attemptNumber ?? 0) >= data.assignment.maxAttempts
+
+  useEffect(() => {
+    if (!data || !timeLimit || !isTakeable || attemptsExhausted) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const r = await apiFetch(`/api/assignments/${assignmentId}/start-quiz`, { method: 'POST' })
+        if (!r.ok || cancelled) return
+        const j = await r.json() as { startedAt: string; timeLimitMinutes: number | null }
+        if (!j?.startedAt || !j.timeLimitMinutes) return
+        const dl = new Date(new Date(j.startedAt).getTime() + j.timeLimitMinutes * 60_000)
+        setDeadline(dl)
+      } catch {}
+    })()
+    return () => { cancelled = true }
+  }, [data?.assignment.id, timeLimit, isTakeable, attemptsExhausted, assignmentId])
+
+  useEffect(() => {
+    if (!deadline) return
+    const tick = () => {
+      const s = Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / 1000))
+      setRemainingSec(s)
+      if (s === 0) {
+        setAutoSubmittedReason('Time is up — your answers were submitted automatically.')
+        submitMutation.mutate()
+      }
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deadline?.getTime()])
+
   if (isLoading) {
     return <AuthGuard requiredRole="STUDENT"><div className="min-h-screen bg-slate-50 p-6"><div className="max-w-3xl mx-auto space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-24 rounded-xl animate-pulse" />)}</div></div></AuthGuard>
   }
@@ -80,6 +120,13 @@ export default function StudentQuizPage() {
             <p className="text-xs text-slate-500">{questions.length} question(s) · {totalPoints} points total{assignment.dueDate ? ` · Due ${new Date(assignment.dueDate).toLocaleString()}` : ''}</p>
             {assignment.instructions && <p className="text-sm text-slate-600 mt-3 whitespace-pre-wrap">{assignment.instructions}</p>}
             {assignment.maxAttempts > 1 && <p className="text-xs text-slate-400 mt-2">Attempts: {attemptsUsed}/{assignment.maxAttempts}</p>}
+            {timeLimit && remainingSec != null && isTakeable && (
+              <div className={`mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold ${remainingSec < 60 ? 'bg-red-100 text-red-700' : remainingSec < 300 ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700'}`}>
+                ⏱ Time remaining: {Math.floor(remainingSec / 60)}:{String(remainingSec % 60).padStart(2, '0')}
+              </div>
+            )}
+            {timeLimit && !remainingSec && isTakeable && <p className="text-xs text-slate-400 mt-2">Time limit: {timeLimit} minutes — timer will start.</p>}
+            {autoSubmittedReason && <p className="mt-2 text-xs text-red-600 font-semibold">{autoSubmittedReason}</p>}
           </div>
 
           {(result || alreadyGraded) && (
