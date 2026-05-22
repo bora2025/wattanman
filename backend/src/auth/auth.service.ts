@@ -191,25 +191,14 @@ export class AuthService {
   }
 
   async deleteUser(userId: string) {
-    // Refuse if user is currently assigned as a teacher to any class —
-    // those classes would be orphaned. Surface a clear, actionable error.
-    const teachingClasses = await this.prisma.class.findMany({
-      where: { teacherId: userId },
-      select: { name: true },
-      take: 5,
-    });
-    if (teachingClasses.length > 0) {
-      const names = teachingClasses.map(c => c.name).join(', ');
-      throw new Error(
-        `Cannot delete: user is the assigned teacher for ${teachingClasses.length} class(es) (${names}). Reassign those classes first.`,
-      );
-    }
-
     // Detach the student profile (if any) and its attendance.
     const student = await this.prisma.student.findUnique({ where: { userId } });
 
     // Wipe every record that references this user, in dependency order.
     await this.prisma.$transaction([
+      // Detach any classes this user was teaching (do not delete the classes;
+      // students/attendance stay intact, an admin can reassign a teacher later).
+      this.prisma.class.updateMany({ where: { teacherId: userId }, data: { teacherId: null } }),
       // Student-side
       ...(student
         ? [

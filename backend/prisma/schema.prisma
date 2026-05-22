@@ -58,8 +58,8 @@ model Class {
   id          String   @id @default(cuid())
   name        String
   subject     String?
-  teacherId   String
-  teacher     User     @relation("TeacherClasses", fields: [teacherId], references: [id])
+  teacherId   String?
+  teacher     User?    @relation("TeacherClasses", fields: [teacherId], references: [id])
   studyYearId String?
   studyYear   StudyYear? @relation(fields: [studyYearId], references: [id])
   schedule    String? // e.g., "Mon 9:00-10:00"

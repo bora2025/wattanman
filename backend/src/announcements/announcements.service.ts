@@ -238,7 +238,7 @@ export class AnnouncementsService {
       });
       if (!cls) return [];
       const set = new Map<string, { id: string; email: string | null; phone: string | null; role: string }>();
-      set.set(cls.teacher.id, cls.teacher);
+      if (cls.teacher) set.set(cls.teacher.id, cls.teacher);
       for (const s of cls.students) {
         set.set(s.user.id, s.user);
         if (s.parent) set.set(s.parent.id, s.parent);
