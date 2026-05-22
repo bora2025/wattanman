@@ -71,6 +71,47 @@ export class ClassesService {
     }));
   }
 
+  /**
+   * Batch fetch students for many classes in a single query.
+   * Returns a map of { [classId]: Student[] } — empty arrays for classes with no students.
+   */
+  async getStudentsByClasses(classIds: string[]): Promise<Record<string, any[]>> {
+    const result: Record<string, any[]> = {};
+    for (const id of classIds) result[id] = [];
+    if (classIds.length === 0) return result;
+    const students = await this.prisma.student.findMany({
+      where: { classId: { in: classIds } },
+      include: {
+        user: true,
+        class: true,
+        parent: { select: { id: true, name: true, email: true, phone: true } },
+      },
+    });
+    for (const s of students) {
+      const mapped = {
+        id: s.id,
+        studentNumber: s.studentNumber || '',
+        userId: s.userId,
+        name: s.user.name,
+        email: s.user.email,
+        phone: s.user.phone || '',
+        qrCode: s.qrCode,
+        photo: s.photo,
+        sex: s.sex,
+        dateOfBirth: s.dateOfBirth,
+        address: s.address || '',
+        generation: s.generation || '',
+        className: s.class?.name || null,
+        parentId: s.parentId,
+        parent: s.parent,
+      };
+      const cid = s.classId as string;
+      if (!result[cid]) result[cid] = [];
+      result[cid].push(mapped);
+    }
+    return result;
+  }
+
   async listParents() {
     const parents = await this.prisma.user.findMany({
       where: { role: 'PARENT' },

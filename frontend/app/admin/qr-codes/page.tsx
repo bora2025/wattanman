@@ -154,17 +154,24 @@ export default function GenerateQRCodes() {
       if (!classRes.ok) return;
       const classList: ClassItem[] = await classRes.json();
 
-      const classesWithStudents: ClassWithStudents[] = await Promise.all(
-        classList.map(async (cls) => {
-          try {
-            const studRes = await apiFetch(`/api/classes/${cls.id}/students`);
-            const students = studRes.ok ? await studRes.json() : [];
-            return { ...cls, students };
-          } catch {
-            return { ...cls, students: [] };
+      // Single batch call instead of N+1
+      let studentsByClass: Record<string, Student[]> = {};
+      if (classList.length > 0) {
+        try {
+          const ids = classList.map(c => c.id).join(',');
+          const batchRes = await apiFetch(`/api/classes/students/batch?ids=${encodeURIComponent(ids)}`);
+          if (batchRes.ok) {
+            studentsByClass = await batchRes.json();
           }
-        })
-      );
+        } catch {
+          studentsByClass = {};
+        }
+      }
+
+      const classesWithStudents: ClassWithStudents[] = classList.map((cls) => ({
+        ...cls,
+        students: studentsByClass[cls.id] || [],
+      }));
 
       setClasses(classesWithStudents);
 

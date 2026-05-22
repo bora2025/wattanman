@@ -143,20 +143,20 @@ function DashboardContent() {
     tick(); const iv = setInterval(tick, 1000); return () => clearInterval(iv)
   }, [lastUpdated])
 
-  /* Real-time polling: refresh dashboard every 30s while viewing today and tab is visible */
+  /* Tab visibility refresh — refresh when the user returns to the tab.
+     The 30s background poll was removed in favor of socket.io push updates below;
+     we still re-fetch on tab focus so stale data is replaced immediately. */
   useEffect(() => {
     if (!selectedDate) return
     if (selectedDate !== todayCambodia()) return
-    const POLL_MS = 30_000
-    const poll = () => {
-      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
-      fetchDashboard({ silent: true })
-      fetchClassProgress({ silent: true })
+    const onVis = () => {
+      if (document.visibilityState === 'visible') {
+        fetchDashboard({ silent: true })
+        fetchClassProgress({ silent: true })
+      }
     }
-    const iv = setInterval(poll, POLL_MS)
-    const onVis = () => { if (document.visibilityState === 'visible') poll() }
     document.addEventListener('visibilitychange', onVis)
-    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVis) }
+    return () => { document.removeEventListener('visibilitychange', onVis) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate])
 

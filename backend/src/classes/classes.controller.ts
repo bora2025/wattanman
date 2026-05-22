@@ -44,6 +44,17 @@ export class ClassesController {
     return this.classesService.getStudentsInClass(classId);
   }
 
+  /**
+   * Batch endpoint: fetch students for many classes in one round-trip.
+   * Query: ?ids=classId1,classId2,...
+   * Returns: { [classId]: Student[] }
+   */
+  @Get('students/batch')
+  async getStudentsByClasses(@Query('ids') ids?: string) {
+    const classIds = (ids || '').split(',').map(s => s.trim()).filter(Boolean);
+    return this.classesService.getStudentsByClasses(classIds);
+  }
+
   @Roles('ADMIN', 'TEACHER')
   @Patch(':classId/students/:studentId')
   async updateStudent(

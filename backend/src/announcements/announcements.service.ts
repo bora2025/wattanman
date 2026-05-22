@@ -39,7 +39,7 @@ export class AnnouncementsService {
   }
 
   /** Per-user feed: announcements relevant to this user, with read state. */
-  async listForUser(userId: string) {
+  async listForUser(userId: string, take = 20, skip = 0) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
@@ -81,7 +81,8 @@ export class AnnouncementsService {
         reads: { where: { userId }, select: { id: true, readAt: true } },
       },
       orderBy: [{ pinned: 'desc' }, { sentAt: 'desc' }],
-      take: 100,
+      take: Math.min(Math.max(take, 1), 100),
+      skip: Math.max(skip, 0),
     });
 
     return items.map((a) => ({
@@ -92,9 +93,47 @@ export class AnnouncementsService {
     }));
   }
 
+  /**
+   * Efficient unread count: counts relevant announcements that have no read
+   * record for this user. Avoids fetching the entire feed.
+   */
   async unreadCount(userId: string) {
-    const list = await this.listForUser(userId);
-    return { count: list.filter((a) => !a.read).length };
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return { count: 0 };
+
+    const teacherClassIds = (
+      await this.prisma.class.findMany({ where: { teacherId: userId }, select: { id: true } })
+    ).map((c) => c.id);
+
+    let studentClassIds: string[] = [];
+    if (user.role === 'STUDENT') {
+      const sp = await this.prisma.student.findUnique({
+        where: { userId },
+        select: { classId: true },
+      });
+      if (sp?.classId) studentClassIds.push(sp.classId);
+    } else if (user.role === 'PARENT') {
+      const kids = await this.prisma.student.findMany({
+        where: { parentId: userId },
+        select: { classId: true },
+      });
+      studentClassIds = kids.map((k) => k.classId).filter((v): v is string => !!v);
+    }
+    const classIds = Array.from(new Set([...teacherClassIds, ...studentClassIds]));
+
+    const count = await this.prisma.announcement.count({
+      where: {
+        sentAt: { not: null },
+        OR: [
+          { audience: 'SCHOOL' },
+          { audience: 'ROLE', targetRole: 'ALL' },
+          { audience: 'ROLE', targetRole: user.role },
+          ...(classIds.length ? [{ audience: 'CLASS', classId: { in: classIds } }] : []),
+        ],
+        reads: { none: { userId } },
+      },
+    });
+    return { count };
   }
 
   async markRead(announcementId: string, userId: string) {

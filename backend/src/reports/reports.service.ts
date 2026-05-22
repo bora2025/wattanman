@@ -440,34 +440,37 @@ export class ReportsService {
       ? await this.sessionConfigService.getUserOrganizationId(requesterUserId)
       : null;
 
-    // Student attendance for today
-    const studentAttendances = await this.prisma.attendance.findMany({
-      where: { date: { gte: dayStart, lt: dayEnd } },
-      include: {
-        student: { include: { user: { select: { name: true } }, class: { select: { name: true } } } },
-        class: { select: { name: true } },
-      },
-    });
-
-    // Staff attendance for today
-    const staffAttendances = await this.prisma.staffAttendance.findMany({
-      where: { date: { gte: dayStart, lt: dayEnd } },
-      include: {
-        user: { select: { id: true, name: true, role: true, department: { select: { name: true } } } },
-      },
-    });
-
-    // Totals — fetch all students with basic info so we can add no-record students to the detail table
-    const allStudents = await this.prisma.student.findMany({
-      select: {
-        id: true,
-        studentNumber: true,
-        user: { select: { name: true } },
-        class: { select: { name: true } },
-      },
-    });
+    // Parallelize independent queries
+    const staffRoleFilter = { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } };
+    const [studentAttendances, staffAttendances, allStudents, allStaffUsers] = await Promise.all([
+      this.prisma.attendance.findMany({
+        where: { date: { gte: dayStart, lt: dayEnd } },
+        include: {
+          student: { include: { user: { select: { name: true } }, class: { select: { name: true } } } },
+          class: { select: { name: true } },
+        },
+      }),
+      this.prisma.staffAttendance.findMany({
+        where: { date: { gte: dayStart, lt: dayEnd } },
+        include: {
+          user: { select: { id: true, name: true, role: true, department: { select: { name: true } } } },
+        },
+      }),
+      this.prisma.student.findMany({
+        select: {
+          id: true,
+          studentNumber: true,
+          user: { select: { name: true } },
+          class: { select: { name: true } },
+        },
+      }),
+      this.prisma.user.findMany({
+        where: staffRoleFilter,
+        select: { id: true, name: true, role: true, department: { select: { name: true } } },
+      }),
+    ]);
     const totalStudents = allStudents.length;
-    const totalStaff = await this.prisma.user.count({ where: { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } } });
+    const totalStaff = allStaffUsers.length;
 
     // Student summary — headcount: each student counted once by dominant status for the day
     const classRule = await this.sessionConfigService.getFormatRules('CLASS', organizationId);
@@ -501,10 +504,6 @@ export class ReportsService {
     const staffPermission = staffTotals.permission;
     // Staff with no attendance record = absent (not recorded)
     const staffWithRecords = new Set(staffAttendances.map(a => a.userId));
-    const allStaffUsers = await this.prisma.user.findMany({
-      where: { role: { notIn: ['STUDENT', 'PARENT', 'ADMIN', 'WATTAMAN'] } },
-      select: { id: true, name: true, role: true, department: { select: { name: true } } },
-    });
     const staffNoRecord = allStaffUsers.filter(u => !staffWithRecords.has(u.id));
     const totalStaffAbsent = staffRecordedAbsent + staffNoRecord.length;
 
@@ -599,8 +598,10 @@ export class ReportsService {
     }
 
     // Get classes and departments for filter options
-    const classes = await this.prisma.class.findMany({ select: { id: true, name: true } });
-    const departments = await this.prisma.department.findMany({ select: { id: true, name: true } });
+    const [classes, departments] = await Promise.all([
+      this.prisma.class.findMany({ select: { id: true, name: true } }),
+      this.prisma.department.findMany({ select: { id: true, name: true } }),
+    ]);
 
     return {
       students: {

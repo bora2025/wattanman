@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -32,8 +33,14 @@ export class AnnouncementsController {
   // Personal feed for any authenticated user
   @Roles('ADMIN', 'TEACHER', 'STUDENT', 'PARENT')
   @Get('feed')
-  feed(@Request() req: any) {
-    return this.svc.listForUser(req.user.userId);
+  feed(
+    @Request() req: any,
+    @Query('take') take?: string,
+    @Query('skip') skip?: string,
+  ) {
+    const takeNum = take ? parseInt(take, 10) : 20;
+    const skipNum = skip ? parseInt(skip, 10) : 0;
+    return this.svc.listForUser(req.user.userId, isNaN(takeNum) ? 20 : takeNum, isNaN(skipNum) ? 0 : skipNum);
   }
 
   @Roles('ADMIN', 'TEACHER', 'STUDENT', 'PARENT')
