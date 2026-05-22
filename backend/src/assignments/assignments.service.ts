@@ -78,14 +78,21 @@ export class AssignmentsService {
     });
     if (!student || !student.classId) return [];
 
-    return this.prisma.assignment.findMany({
+    const rows = await this.prisma.assignment.findMany({
       where: { classId: student.classId, status: { in: ['PUBLISHED', 'CLOSED'] } },
       include: {
-        class: { select: { id: true, name: true } },
-        submissions: { where: { studentId: student.id } },
+        class: { select: { id: true, name: true, subject: true } },
+        createdBy: { select: { id: true, name: true } },
+        submissions: { where: { studentId: student.id }, take: 1 },
       },
       orderBy: { dueDate: 'asc' },
     });
+
+    // Flatten student-specific submission into a single field expected by the UI.
+    return rows.map(({ submissions, ...rest }) => ({
+      ...rest,
+      submission: submissions[0] ?? null,
+    }));
   }
 
   async submitAssignment(assignmentId: string, userId: string, data: { content?: string; attachmentUrl?: string }) {

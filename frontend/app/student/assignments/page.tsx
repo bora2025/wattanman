@@ -16,7 +16,7 @@ const studentNav = [
   { label: 'My Parent', href: '/student/parent', icon: 'users' },
 ]
 
-interface Assignment { id: string; title: string; description: string | null; dueDate: string | null; totalMarks: number; class: { name: string; subject: string }; createdBy: { name: string }; submission: { id: string; marks: number | null; submittedAt: string; isLate: boolean } | null }
+interface Assignment { id: string; title: string; description: string | null; dueDate: string | null; totalMarks: number; class?: { name?: string; subject?: string } | null; createdBy?: { name?: string } | null; submission: { id: string; marks: number | null; submittedAt: string; isLate: boolean } | null }
 
 const STATUS_MAP = {
   graded: { label: 'Graded', color: 'bg-emerald-100 text-emerald-700' },
@@ -84,7 +84,7 @@ export default function StudentAssignmentsPage() {
                           <p className="font-semibold text-slate-800">{a.title}</p>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${meta.color}`}>{meta.label}</span>
                         </div>
-                        <p className="text-xs text-slate-500">{a.class.name} · {a.class.subject} · by {a.createdBy.name}</p>
+                        <p className="text-xs text-slate-500">{[a.class?.name, a.class?.subject, a.createdBy?.name && `by ${a.createdBy.name}`].filter(Boolean).join(' · ')}</p>
                         {a.dueDate && <p className="text-xs text-slate-400 mt-0.5">Due: {new Date(a.dueDate).toLocaleDateString()}</p>}
                         {a.submission?.marks !== null && a.submission && (
                           <p className="text-xs font-semibold text-emerald-600 mt-1">Score: {a.submission.marks}/{a.totalMarks}</p>
@@ -108,7 +108,7 @@ export default function StudentAssignmentsPage() {
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
               <h2 className="text-lg font-bold mb-1">{submitFor.title}</h2>
-              <p className="text-xs text-slate-400 mb-4">{submitFor.class.name}</p>
+              <p className="text-xs text-slate-400 mb-4">{submitFor.class?.name ?? ''}</p>
               <form onSubmit={handleSubmit(onSubmit)}>
                 <textarea {...register('content', { required: true })}
                   rows={5}
