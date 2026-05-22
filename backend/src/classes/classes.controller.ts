@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Patch, Body, Query, Param, Delete, UseInterceptors, UploadedFile, BadRequestException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Body, Query, Param, Delete, UseInterceptors, UploadedFile, BadRequestException, UseGuards, Request } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ClassesService } from './classes.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -17,8 +17,14 @@ export class ClassesController {
   }
 
   @Get()
-  async getClasses(@Query('teacherId') teacherId?: string, @Query('studyYearId') studyYearId?: string) {
-    return this.classesService.getClasses(teacherId, studyYearId);
+  async getClasses(
+    @Request() req: any,
+    @Query('teacherId') teacherId?: string,
+    @Query('studyYearId') studyYearId?: string,
+  ) {
+    // Alias 'me' resolves to the current user's id (useful for teachers)
+    const resolvedTeacherId = teacherId === 'me' ? req?.user?.userId : teacherId;
+    return this.classesService.getClasses(resolvedTeacherId, studyYearId);
   }
 
   @Roles('ADMIN')

@@ -19,8 +19,8 @@ export default function TeacherAssignmentsPage() {
     queryFn: async () => { const r = await apiFetch('/api/assignments/my-assignments'); if (!r.ok) throw new Error(); return r.json() as Promise<Assignment[]> },
   })
   const { data: classes = [] } = useQuery({
-    queryKey: ['classes-list'],
-    queryFn: async () => { const r = await apiFetch('/api/classes'); if (!r.ok) throw new Error(); return r.json() as Promise<ClassItem[]> },
+    queryKey: ['teacher-my-classes'],
+    queryFn: async () => { const r = await apiFetch('/api/classes?teacherId=me'); if (!r.ok) throw new Error(); return r.json() as Promise<ClassItem[]> },
   })
 
   const [formError, setFormError] = useState<string | null>(null)
