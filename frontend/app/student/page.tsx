@@ -154,8 +154,9 @@ export default function StudentPortal() {
             </div>
             <div className="page-body space-y-4">
               {/* Quick actions */}
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-5 gap-2">
                 {[
+                  { href: '/student/courses', icon: '🎓', label: 'Courses', bg: 'from-rose-500 to-pink-500', count: 0 },
                   { href: '/student/assignments', icon: '📚', label: 'Assignments', bg: 'from-emerald-500 to-teal-500', count: pendingAssignments.length },
                   { href: '/student/exams', icon: '📝', label: 'Exams', bg: 'from-violet-500 to-purple-500', count: activeExams.length },
                   { href: '/student/scores', icon: '📊', label: 'Scores', bg: 'from-sky-500 to-blue-500', count: 0 },
