@@ -163,7 +163,7 @@ export default function LessonPlayPage() {
       qc.invalidateQueries({ queryKey: ['student-course', courseId] })
       qc.invalidateQueries({ queryKey: ['student-courses'] })
     },
-    onError: (e: any) => alert(e?.message || 'Could not finish lesson'),
+    onError: (e: any) => setTeacherMsg(e?.message || 'Could not finish lesson'),
   })
 
   function handleNext() {
@@ -207,6 +207,28 @@ export default function LessonPlayPage() {
           <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             {(startMutation.error as Error)?.message || 'Could not start lesson.'}
           </div>
+        )}
+
+        {teacherMsg && (
+          <TeacherSaysModal
+            message={teacherMsg}
+            onClose={() => setTeacherMsg(null)}
+            onBack={() => router.push(`/student/courses/${courseId}`)}
+            onJumpToVideo={() => {
+              const videoPage = pages.find(
+                (p) =>
+                  p.pageType === 'CONTENT' &&
+                  p.content?.mediaUrl &&
+                  (p.content?.mediaType === 'video' ||
+                    p.content?.mediaType === 'embed'),
+              )
+              if (videoPage) {
+                setCurrentPageId(videoPage.id)
+                setLastResult(null)
+              }
+              setTeacherMsg(null)
+            }}
+          />
         )}
 
         {finished && (
@@ -305,6 +327,105 @@ function Progress({
           className="h-full bg-sky-500 transition-all"
           style={{ width: `${pct}%` }}
         />
+      </div>
+    </div>
+  )
+}
+
+function TeacherSaysModal({
+  message,
+  onClose,
+  onBack,
+  onJumpToVideo,
+}: {
+  message: string
+  onClose: () => void
+  onBack: () => void
+  onJumpToVideo: () => void
+}) {
+  const m = /current:\s*(\d+)%/i.exec(message)
+  const current = m ? Number(m[1]) : null
+  const r = /at least\s*(\d+)%/i.exec(message)
+  const required = r ? Number(r[1]) : null
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center gap-3 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-amber-100 px-5 py-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500 text-xl text-white">
+            👩‍🏫
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+              Teacher says
+            </div>
+            <div className="text-sm font-semibold text-amber-900">
+              Almost there — keep watching!
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4 px-5 py-5">
+          <p className="text-sm text-slate-700">{message}</p>
+
+          {required != null && current != null && (
+            <div>
+              <div className="mb-1 flex justify-between text-[11px] text-slate-500">
+                <span>Watched</span>
+                <span>
+                  {current}% / {required}%
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full bg-amber-500 transition-all"
+                  style={{
+                    width: `${Math.min(100, Math.round((current / required) * 100))}%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <ul className="space-y-1 text-xs text-slate-600">
+            <li>• Scroll back to the video page and press play.</li>
+            <li>• Your watched time is saved automatically.</li>
+            <li>
+              • Once you reach the required %, tap <strong>Finish</strong> again
+              to complete the lesson.
+            </li>
+          </ul>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-200"
+          >
+            ← Back to course
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              onClick={onJumpToVideo}
+              className="rounded-md bg-amber-500 px-4 py-1.5 text-sm font-semibold text-white hover:bg-amber-600"
+            >
+              ▶ Go to video
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
