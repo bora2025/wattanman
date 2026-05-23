@@ -182,7 +182,11 @@ export default function StudentCourseDetailPage() {
             </header>
 
             <div className="grid gap-4 lg:grid-cols-3">
-              <aside className="lg:col-span-1 space-y-2">
+              <aside
+                className={`space-y-2 lg:col-span-1 lg:block ${
+                  selectedLessonId ? 'hidden' : 'block'
+                }`}
+              >
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                   Lessons ({visibleLessons.length})
                 </h2>
@@ -219,7 +223,11 @@ export default function StudentCourseDetailPage() {
                 </ul>
               </aside>
 
-              <section className="lg:col-span-2 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <section
+                className={`rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 lg:block ${
+                  selectedLessonId ? 'block' : 'hidden lg:block'
+                }`}
+              >
                 {!selectedLesson && (
                   <div className="text-sm text-slate-500">
                     Select a lesson to view its pages.
@@ -227,24 +235,36 @@ export default function StudentCourseDetailPage() {
                 )}
                 {selectedLesson && (
                   <div className="space-y-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLessonId(null)}
+                      className="text-sm text-sky-600 hover:underline lg:hidden"
+                    >
+                      ← Back to lessons
+                    </button>
+                    <div className="sticky top-0 -mx-5 -mt-5 mb-2 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-white/95 px-5 py-3 backdrop-blur lg:static lg:mx-0 lg:mt-0 lg:border-0 lg:p-0">
+                      <div className="min-w-0">
+                        <h3 className="truncate text-base font-semibold text-slate-800 sm:text-lg">
                           {selectedLesson.title}
                         </h3>
-                        {selectedLesson.description && (
-                          <p className="mt-1 text-sm text-slate-600">
-                            {selectedLesson.description}
-                          </p>
-                        )}
+                        <div className="text-xs text-slate-500">
+                          {selectedLesson._count.pages} page
+                          {selectedLesson._count.pages === 1 ? '' : 's'} ·{' '}
+                          {selectedLesson.totalPoints} pts
+                        </div>
                       </div>
                       <Link
                         href={`/student/courses/${courseId}/lessons/${selectedLesson.id}/play`}
-                        className="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+                        className="shrink-0 rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-sky-700"
                       >
                         ▶ Start lesson
                       </Link>
                     </div>
+                    {selectedLesson.description && (
+                      <p className="text-sm text-slate-600">
+                        {selectedLesson.description}
+                      </p>
+                    )}
 
                     {pagesLoading && (
                       <div className="text-sm text-slate-500">Loading pages…</div>
@@ -277,6 +297,18 @@ export default function StudentCourseDetailPage() {
                 )}
               </section>
             </div>
+
+            {/* Mobile floating Start button when a lesson is selected. */}
+            {selectedLesson && (
+              <div className="fixed inset-x-0 bottom-3 z-30 flex justify-center px-4 lg:hidden">
+                <Link
+                  href={`/student/courses/${courseId}/lessons/${selectedLesson.id}/play`}
+                  className="flex items-center gap-2 rounded-full bg-sky-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-sky-700"
+                >
+                  ▶ Start lesson
+                </Link>
+              </div>
+            )}
           </>
         )}
       </div>

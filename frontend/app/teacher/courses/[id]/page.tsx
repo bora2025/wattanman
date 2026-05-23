@@ -163,13 +163,14 @@ export default function CourseDetailPage() {
         <div className="mx-auto max-w-7xl px-4 py-6">
           {/* Header */}
           <div className="mb-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/teacher/courses"
                 className="text-sm text-blue-600 hover:underline"
               >
                 ← All Courses
               </Link>
+              <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
               <Link
                 href={`/teacher/courses/${courseId}/attendance`}
                 className="text-sm rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-sky-700 hover:bg-sky-100"
@@ -182,6 +183,7 @@ export default function CourseDetailPage() {
               >
                 📊 Engagement
               </Link>
+              </div>
             </div>
             <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -213,7 +215,11 @@ export default function CourseDetailPage() {
 
           <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
             {/* Lesson list */}
-            <div className="rounded-xl bg-white p-4 shadow-sm">
+            <div
+              className={`rounded-xl bg-white p-4 shadow-sm lg:block ${
+                selectedLessonId ? 'hidden' : 'block'
+              }`}
+            >
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-slate-700">Lessons</h2>
                 <button
@@ -273,12 +279,24 @@ export default function CourseDetailPage() {
             </div>
 
             {/* Lesson editor */}
-            <div className="rounded-xl bg-white p-5 shadow-sm">
+            <div
+              className={`rounded-xl bg-white p-5 shadow-sm lg:block ${
+                selectedLessonId ? 'block' : 'hidden lg:block'
+              }`}
+            >
               {!selectedLesson ? (
                 <div className="flex h-full min-h-[200px] items-center justify-center text-sm text-slate-400">
                   Select a lesson on the left to edit its pages.
                 </div>
               ) : (
+                <>
+                <button
+                  type="button"
+                  onClick={() => setSelectedLessonId(null)}
+                  className="mb-3 text-sm text-blue-600 hover:underline lg:hidden"
+                >
+                  ← Back to lessons
+                </button>
                 <LessonEditor
                   key={selectedLesson.id}
                   lesson={selectedLesson}
@@ -295,6 +313,7 @@ export default function CourseDetailPage() {
                     }
                   }}
                 />
+                </>
               )}
             </div>
           </div>
