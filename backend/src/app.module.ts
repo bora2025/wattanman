@@ -20,6 +20,7 @@ import { SalaryModule } from './salary/salary.module';
 import { BusModule } from './bus/bus.module';
 import { ExamModule } from './exam/exam.module';
 import { AssignmentsModule } from './assignments/assignments.module';
+import { CoursesModule } from './courses/courses.module';
 import { ParentModule } from './parent/parent.module';
 import { BackupModule } from './backup/backup.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
@@ -49,6 +50,7 @@ import { CardAliasesModule } from './card-aliases/card-aliases.module';
     BusModule,
     ExamModule,
     AssignmentsModule,
+    CoursesModule,
     ParentModule,
     BackupModule,
     AnnouncementsModule,
