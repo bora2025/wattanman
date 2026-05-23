@@ -107,6 +107,7 @@ model Student {
   cardAliases           CardAlias[]
   courseEnrollments     CourseEnrollment[]     @relation("StudentCourseEnrollments")
   courseAttendances     CourseAttendance[]     @relation("StudentCourseAttendances")
+  lessonViews           LessonView[]           @relation("StudentLessonViews")
 
   @@index([studentNumber])
   @@index([classId])
@@ -952,12 +953,15 @@ model CourseLesson {
   branchingEnabled Boolean         @default(false)
   totalPoints      Float           @default(0)
   passingScore     Float?
+  requireVideoWatch Boolean        @default(false)
+  videoWatchPct    Int             @default(90) // % of video required to count as finished
   publishedAt      DateTime?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   pages            LessonPage[]
   attempts         LessonAttempt[]
   sessions         CourseSession[]
+  views            LessonView[]
 
   @@index([courseId])
   @@index([status])
@@ -1083,4 +1087,26 @@ model CourseAttendance {
   @@index([sessionId])
   @@index([studentId])
   @@index([status])
+}
+
+
+// ─── Lesson access tracking ───────────────────────────────────────────
+// One row per (lesson, student). Updated on every open + video heartbeat.
+model LessonView {
+  id               String       @id @default(cuid())
+  lessonId         String
+  lesson           CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  studentId        String
+  student          Student      @relation("StudentLessonViews", fields: [studentId], references: [id])
+  firstOpenedAt    DateTime     @default(now())
+  lastOpenedAt     DateTime     @default(now())
+  openCount        Int          @default(1)
+  watchedSeconds   Int          @default(0) // max watched seconds across attempts
+  videoDurationSec Int?         // last known video duration
+  videoCompleted   Boolean      @default(false)
+  completedAt      DateTime?
+
+  @@unique([lessonId, studentId])
+  @@index([lessonId])
+  @@index([studentId])
 }

@@ -73,6 +73,8 @@ interface LessonInput {
   branchingEnabled?: boolean;
   totalPoints?: number;
   passingScore?: number | null;
+  requireVideoWatch?: boolean;
+  videoWatchPct?: number;
 }
 
 interface PageInput {
@@ -145,6 +147,12 @@ function sanitizeLessonInput(input: LessonInput) {
   if (input.passingScore !== undefined) {
     if (input.passingScore === null) data.passingScore = null;
     else data.passingScore = Math.max(0, Number(input.passingScore) || 0);
+  }
+  if (input.requireVideoWatch !== undefined)
+    data.requireVideoWatch = !!input.requireVideoWatch;
+  if (input.videoWatchPct !== undefined) {
+    const pct = Math.max(1, Math.min(100, Number(input.videoWatchPct) || 90));
+    data.videoWatchPct = Math.round(pct);
   }
   return data;
 }
@@ -840,6 +848,8 @@ export class CoursesService {
             passingScore: true,
             gradingMode: true,
             courseId: true,
+            requireVideoWatch: true,
+            videoWatchPct: true,
           },
         },
       },
@@ -849,6 +859,27 @@ export class CoursesService {
       throw new ForbiddenException('Not your attempt');
     }
     if (attempt.status === 'COMPLETED') return attempt;
+
+    // Video-watch gate
+    if (attempt.lesson.requireVideoWatch) {
+      const view = await this.prisma.lessonView.findUnique({
+        where: {
+          lessonId_studentId: {
+            lessonId: attempt.lesson.id,
+            studentId: student.id,
+          },
+        },
+      });
+      const need = attempt.lesson.videoWatchPct ?? 90;
+      const dur = view?.videoDurationSec ?? 0;
+      const watched = view?.watchedSeconds ?? 0;
+      const pct = dur > 0 ? Math.round((watched / dur) * 100) : 0;
+      if (!view || dur === 0 || pct < need) {
+        throw new BadRequestException(
+          `You must watch at least ${need}% of the video before finishing this lesson (current: ${pct}%).`,
+        );
+      }
+    }
 
     const passing = attempt.lesson.passingScore;
     const passed =
@@ -1182,5 +1213,254 @@ export class CoursesService {
       hasCheckInCode: !!s.checkInCode,
       attendance: s.attendances[0] ?? null,
     }));
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Lesson access tracking (views + video watch progress)
+  // ──────────────────────────────────────────────────────────────────────
+
+  /** Called when a student opens a lesson. Upserts the LessonView row. */
+  async recordLessonOpen(lessonId: string, userId: string) {
+    const student = await this.getStudentByUserId(userId);
+    await this.assertLessonVisibleToStudent(lessonId, student);
+    const now = new Date();
+    return this.prisma.lessonView.upsert({
+      where: { lessonId_studentId: { lessonId, studentId: student.id } },
+      create: {
+        lessonId,
+        studentId: student.id,
+        firstOpenedAt: now,
+        lastOpenedAt: now,
+        openCount: 1,
+      },
+      update: {
+        lastOpenedAt: now,
+        openCount: { increment: 1 },
+      },
+    });
+  }
+
+  /** Heartbeat from the video player. Stores max watched seconds + duration. */
+  async updateLessonVideoProgress(
+    lessonId: string,
+    body: { watchedSeconds?: number; videoDurationSec?: number },
+    userId: string,
+  ) {
+    const student = await this.getStudentByUserId(userId);
+    await this.assertLessonVisibleToStudent(lessonId, student);
+    const watchedSeconds = Math.max(0, Math.floor(Number(body.watchedSeconds) || 0));
+    const videoDurationSec =
+      body.videoDurationSec != null
+        ? Math.max(0, Math.floor(Number(body.videoDurationSec)))
+        : null;
+    const lesson = await this.prisma.courseLesson.findUnique({
+      where: { id: lessonId },
+      select: { videoWatchPct: true },
+    });
+    const view = await this.prisma.lessonView.upsert({
+      where: { lessonId_studentId: { lessonId, studentId: student.id } },
+      create: {
+        lessonId,
+        studentId: student.id,
+        watchedSeconds,
+        videoDurationSec,
+      },
+      update: {},
+    });
+    const newWatched = Math.max(view.watchedSeconds, watchedSeconds);
+    const newDur = videoDurationSec ?? view.videoDurationSec ?? null;
+    const needPct = lesson?.videoWatchPct ?? 90;
+    const completed =
+      newDur && newDur > 0
+        ? Math.round((newWatched / newDur) * 100) >= needPct
+        : false;
+    return this.prisma.lessonView.update({
+      where: { id: view.id },
+      data: {
+        watchedSeconds: newWatched,
+        videoDurationSec: newDur,
+        videoCompleted: completed,
+        completedAt: completed && !view.videoCompleted ? new Date() : view.completedAt,
+      },
+    });
+  }
+
+  /** Student view of their own lesson view record. */
+  async getMyLessonView(lessonId: string, userId: string) {
+    const student = await this.getStudentByUserId(userId);
+    await this.assertLessonVisibleToStudent(lessonId, student);
+    return this.prisma.lessonView.findUnique({
+      where: { lessonId_studentId: { lessonId, studentId: student.id } },
+    });
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Bulk: create one CourseSession per published lesson
+  // ──────────────────────────────────────────────────────────────────────
+
+  async generateSessionsFromLessons(
+    courseId: string,
+    userId: string,
+    role: string,
+  ) {
+    const course = await this.assertCanManageCourse(courseId, userId, role);
+    const lessons = await this.prisma.courseLesson.findMany({
+      where: { courseId, status: 'PUBLISHED' },
+      orderBy: { order: 'asc' },
+      select: { id: true, title: true, publishedAt: true, order: true },
+    });
+    if (lessons.length === 0) {
+      throw new BadRequestException('No published lessons to generate sessions for');
+    }
+    const existing = await this.prisma.courseSession.findMany({
+      where: { courseId, lessonId: { in: lessons.map((l) => l.id) } },
+      select: { lessonId: true },
+    });
+    const taken = new Set(existing.map((e) => e.lessonId));
+    const baseDate = course.startDate ?? new Date();
+    const toCreate = lessons.filter((l) => !taken.has(l.id));
+    let created = 0;
+    for (const l of toCreate) {
+      const scheduledAt =
+        l.publishedAt ??
+        new Date(baseDate.getTime() + l.order * 7 * 24 * 60 * 60 * 1000);
+      await this.prisma.courseSession.create({
+        data: {
+          courseId,
+          lessonId: l.id,
+          title: l.title,
+          scheduledAt,
+          durationMinutes: 60,
+        },
+      });
+      created++;
+    }
+    return { created, skipped: lessons.length - toCreate.length };
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Engagement / lesson-attendance report (teacher view)
+  // ──────────────────────────────────────────────────────────────────────
+
+  async getEngagementReport(courseId: string, userId: string, role: string) {
+    await this.assertCanManageCourse(courseId, userId, role);
+    const [lessons, enrollments, views, attempts, sessions, attendance] =
+      await Promise.all([
+        this.prisma.courseLesson.findMany({
+          where: { courseId, status: 'PUBLISHED' },
+          orderBy: { order: 'asc' },
+          select: {
+            id: true,
+            title: true,
+            requireVideoWatch: true,
+            videoWatchPct: true,
+          },
+        }),
+        this.prisma.courseEnrollment.findMany({
+          where: { courseId },
+          include: {
+            student: {
+              select: {
+                id: true,
+                studentNumber: true,
+                user: { select: { name: true, email: true } },
+              },
+            },
+          },
+        }),
+        this.prisma.lessonView.findMany({
+          where: { lesson: { courseId } },
+        }),
+        this.prisma.lessonAttempt.findMany({
+          where: { lesson: { courseId } },
+          select: {
+            lessonId: true,
+            studentId: true,
+            status: true,
+            score: true,
+            maxScore: true,
+            passed: true,
+          },
+        }),
+        this.prisma.courseSession.findMany({
+          where: { courseId },
+          select: { id: true },
+        }),
+        this.prisma.courseAttendance.findMany({
+          where: { session: { courseId } },
+          select: { sessionId: true, studentId: true, status: true },
+        }),
+      ]);
+
+    const sessionCount = sessions.length;
+    type Key = string;
+    const k = (lessonId: string, studentId: string): Key =>
+      `${lessonId}|${studentId}`;
+    const viewByKey = new Map<Key, (typeof views)[number]>();
+    for (const v of views) viewByKey.set(k(v.lessonId, v.studentId), v);
+    const attemptByKey = new Map<Key, (typeof attempts)[number]>();
+    for (const a of attempts) {
+      const key = k(a.lessonId, a.studentId);
+      const prev = attemptByKey.get(key);
+      if (!prev || (a.status === 'COMPLETED' && prev.status !== 'COMPLETED')) {
+        attemptByKey.set(key, a);
+      }
+    }
+
+    const rows = enrollments.map((e) => {
+      const lessonRows = lessons.map((l) => {
+        const v = viewByKey.get(k(l.id, e.studentId));
+        const a = attemptByKey.get(k(l.id, e.studentId));
+        const pct =
+          v && v.videoDurationSec && v.videoDurationSec > 0
+            ? Math.round((v.watchedSeconds / v.videoDurationSec) * 100)
+            : 0;
+        return {
+          lessonId: l.id,
+          opened: !!v,
+          openCount: v?.openCount ?? 0,
+          lastOpenedAt: v?.lastOpenedAt ?? null,
+          watchedSeconds: v?.watchedSeconds ?? 0,
+          videoDurationSec: v?.videoDurationSec ?? null,
+          videoPct: pct,
+          videoCompleted: v?.videoCompleted ?? false,
+          attemptStatus: a?.status ?? null,
+          attemptScore: a?.score ?? null,
+          attemptMaxScore: a?.maxScore ?? null,
+          attemptPassed: a?.passed ?? null,
+        };
+      });
+      const opened = lessonRows.filter((r) => r.opened).length;
+      const completed = lessonRows.filter(
+        (r) => r.attemptStatus === 'COMPLETED',
+      ).length;
+      const present = attendance.filter(
+        (r) => r.studentId === e.studentId && r.status !== 'ABSENT',
+      ).length;
+      return {
+        studentId: e.studentId,
+        studentNumber: e.student.studentNumber,
+        name: e.student.user.name,
+        email: e.student.user.email,
+        progressPct: e.progressPct,
+        lessonsOpened: opened,
+        lessonsCompleted: completed,
+        sessionsAttended: present,
+        attendancePct:
+          sessionCount > 0 ? Math.round((present / sessionCount) * 100) : 0,
+        lessons: lessonRows,
+      };
+    });
+
+    return {
+      course: { id: courseId, sessionCount, lessonCount: lessons.length },
+      lessons: lessons.map((l) => ({
+        id: l.id,
+        title: l.title,
+        requireVideoWatch: l.requireVideoWatch,
+        videoWatchPct: l.videoWatchPct,
+      })),
+      students: rows,
+    };
   }
 }

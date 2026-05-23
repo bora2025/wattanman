@@ -29,6 +29,8 @@ interface Lesson {
   branchingEnabled: boolean
   totalPoints: number
   passingScore: number | null
+  requireVideoWatch?: boolean
+  videoWatchPct?: number
   publishedAt: string | null
   _count: { pages: number }
 }
@@ -173,6 +175,12 @@ export default function CourseDetailPage() {
                 className="text-sm rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-sky-700 hover:bg-sky-100"
               >
                 📋 Attendance
+              </Link>
+              <Link
+                href={`/teacher/courses/${courseId}/engagement`}
+                className="text-sm rounded-md border border-violet-200 bg-violet-50 px-3 py-1 text-violet-700 hover:bg-violet-100"
+              >
+                📊 Engagement
               </Link>
             </div>
             <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
@@ -366,6 +374,12 @@ function LessonEditor({
   const [passingScore, setPassingScore] = useState<string>(
     lesson.passingScore != null ? String(lesson.passingScore) : '',
   )
+  const [requireVideoWatch, setRequireVideoWatch] = useState<boolean>(
+    !!lesson.requireVideoWatch,
+  )
+  const [videoWatchPct, setVideoWatchPct] = useState<string>(
+    String(lesson.videoWatchPct ?? 90),
+  )
 
   const { data: pages = [], isLoading: pagesLoading } = useQuery({
     queryKey: ['lesson-pages', lesson.id],
@@ -429,6 +443,8 @@ function LessonEditor({
       showProgressBar,
       branchingEnabled,
       passingScore: passingScore === '' ? null : Number(passingScore),
+      requireVideoWatch,
+      videoWatchPct: Math.max(1, Math.min(100, Number(videoWatchPct) || 90)),
     })
   }
 
@@ -540,6 +556,33 @@ function LessonEditor({
             />
             Allow branching pages
           </label>
+          <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={requireVideoWatch}
+              onChange={(e) => setRequireVideoWatch(e.target.checked)}
+            />
+            Require watching video before finishing
+          </label>
+          {requireVideoWatch && (
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-600">
+                Minimum watched %
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={videoWatchPct}
+                onChange={(e) => setVideoWatchPct(e.target.value)}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              />
+              <p className="mt-1 text-[11px] text-slate-500">
+                Tracked for uploaded videos (HTML5). YouTube/Vimeo embeds cannot be
+                tracked automatically.
+              </p>
+            </div>
+          )}
         </div>
         <div className="mt-3 flex justify-between">
           <button

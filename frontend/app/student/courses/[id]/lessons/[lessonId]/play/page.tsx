@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -46,6 +46,8 @@ interface Lesson {
   description: string | null
   passingScore: number | null
   gradingMode?: 'GRADED' | 'PRACTICE' | 'UNGRADED'
+  requireVideoWatch?: boolean
+  videoWatchPct?: number
 }
 
 export default function LessonPlayPage() {
@@ -75,6 +77,14 @@ export default function LessonPlayPage() {
       startMutation.mutate()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonId])
+
+  // Record that the student opened this lesson (for engagement report).
+  useEffect(() => {
+    if (!lessonId) return
+    apiFetch(`/api/courses/lessons/${lessonId}/views/open`, { method: 'POST' }).catch(
+      () => {},
+    )
   }, [lessonId])
 
   const attempt = startMutation.data ?? null
@@ -142,7 +152,10 @@ export default function LessonPlayPage() {
       const r = await apiFetch(`/api/courses/attempts/${attempt!.id}/finish`, {
         method: 'POST',
       })
-      if (!r.ok) throw new Error('Failed to finalize lesson')
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({ message: `HTTP ${r.status}` }))
+        throw new Error(err?.message || 'Failed to finalize lesson')
+      }
       return r.json() as Promise<Attempt>
     },
     onSuccess: (a) => {
@@ -150,6 +163,7 @@ export default function LessonPlayPage() {
       qc.invalidateQueries({ queryKey: ['student-course', courseId] })
       qc.invalidateQueries({ queryKey: ['student-courses'] })
     },
+    onError: (e: any) => alert(e?.message || 'Could not finish lesson'),
   })
 
   function handleNext() {
@@ -211,7 +225,7 @@ export default function LessonPlayPage() {
             </h2>
 
             {currentPage.pageType === 'CONTENT' && (
-              <ContentView content={currentPage.content} />
+              <ContentView content={currentPage.content} lessonId={lessonId} />
             )}
             {currentPage.pageType === 'QUESTION' && (
               <QuestionView
@@ -296,7 +310,7 @@ function Progress({
   )
 }
 
-function ContentView({ content }: { content: any }) {
+function ContentView({ content, lessonId }: { content: any; lessonId: string }) {
   const body = typeof content?.body === 'string' ? content.body : ''
   const mediaUrl = content?.mediaUrl as string | null | undefined
   const mediaType = content?.mediaType as string | null | undefined
@@ -307,6 +321,38 @@ function ContentView({ content }: { content: any }) {
   const showAsEmbed =
     !!embedUrl && (mediaType === 'embed' || mediaType === 'video')
 
+  // Throttled video progress reporter for native <video>.
+  const lastSentRef = useRef(0)
+  function handleTimeUpdate(e: React.SyntheticEvent<HTMLVideoElement>) {
+    const v = e.currentTarget
+    const now = Date.now()
+    if (now - lastSentRef.current < 5000) return
+    lastSentRef.current = now
+    apiFetch(`/api/courses/lessons/${lessonId}/views/progress`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        watchedSeconds: Math.floor(v.currentTime || 0),
+        videoDurationSec: Number.isFinite(v.duration)
+          ? Math.floor(v.duration)
+          : undefined,
+      }),
+    }).catch(() => {})
+  }
+  function handleEnded(e: React.SyntheticEvent<HTMLVideoElement>) {
+    const v = e.currentTarget
+    apiFetch(`/api/courses/lessons/${lessonId}/views/progress`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        watchedSeconds: Math.floor(v.duration || v.currentTime || 0),
+        videoDurationSec: Number.isFinite(v.duration)
+          ? Math.floor(v.duration)
+          : undefined,
+      }),
+    }).catch(() => {})
+  }
+
   return (
     <div className="space-y-3">
       {mediaUrl && mediaType === 'image' && (
@@ -314,7 +360,13 @@ function ContentView({ content }: { content: any }) {
         <img src={mediaUrl} alt="" className="max-h-80 rounded-md" />
       )}
       {mediaUrl && mediaType === 'video' && !showAsEmbed && (
-        <video src={mediaUrl} controls className="w-full rounded-md" />
+        <video
+          src={mediaUrl}
+          controls
+          className="w-full rounded-md"
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={handleEnded}
+        />
       )}
       {showAsEmbed && (
         <div className="relative w-full overflow-hidden rounded-md border border-slate-200" style={{ paddingTop: '56.25%' }}>

@@ -277,4 +277,41 @@ export class CoursesController {
   myCourseAttendance(@Param('id') id: string, @Request() req: any) {
     return this.svc.getMyCourseAttendance(id, req.user.userId);
   }
+
+  // ── Lesson access tracking ──────────────────────────────────────────
+  @Roles('STUDENT', 'ADMIN', 'SUPER_ADMIN')
+  @Post('lessons/:lessonId/views/open')
+  recordOpen(@Param('lessonId') lessonId: string, @Request() req: any) {
+    return this.svc.recordLessonOpen(lessonId, req.user.userId);
+  }
+
+  @Roles('STUDENT', 'ADMIN', 'SUPER_ADMIN')
+  @Post('lessons/:lessonId/views/progress')
+  updateProgress(
+    @Param('lessonId') lessonId: string,
+    @Body() body: { watchedSeconds?: number; videoDurationSec?: number },
+    @Request() req: any,
+  ) {
+    return this.svc.updateLessonVideoProgress(lessonId, body, req.user.userId);
+  }
+
+  @Roles('STUDENT', 'ADMIN', 'SUPER_ADMIN')
+  @Get('lessons/:lessonId/my-view')
+  myLessonView(@Param('lessonId') lessonId: string, @Request() req: any) {
+    return this.svc.getMyLessonView(lessonId, req.user.userId);
+  }
+
+  // ── Bulk: generate one session per published lesson ─────────────────
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER')
+  @Post(':id/sessions/generate-from-lessons')
+  generateSessions(@Param('id') id: string, @Request() req: any) {
+    return this.svc.generateSessionsFromLessons(id, req.user.userId, req.user.role);
+  }
+
+  // ── Engagement report ───────────────────────────────────────────────
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER')
+  @Get(':id/engagement-report')
+  engagementReport(@Param('id') id: string, @Request() req: any) {
+    return this.svc.getEngagementReport(id, req.user.userId, req.user.role);
+  }
 }

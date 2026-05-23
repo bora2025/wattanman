@@ -113,6 +113,23 @@ export default function TeacherCourseAttendancePage() {
     },
   })
 
+  const generateFromLessons = useMutation({
+    mutationFn: async () => {
+      const r = await apiFetch(
+        `/api/courses/${courseId}/sessions/generate-from-lessons`,
+        { method: 'POST' },
+      )
+      if (!r.ok)
+        throw new Error((await r.json()).message || 'Failed to generate sessions')
+      return r.json() as Promise<{ created: number; skipped: number }>
+    },
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['course-sessions', courseId] })
+      alert(`Created ${res.created} session(s). Skipped ${res.skipped} already linked.`)
+    },
+    onError: (e: any) => alert(e?.message || 'Failed'),
+  })
+
   const deleteSession = useMutation({
     mutationFn: async (sessionId: string) => {
       const r = await apiFetch(`/api/courses/sessions/${sessionId}`, {
@@ -137,6 +154,7 @@ export default function TeacherCourseAttendancePage() {
             >
               ← Back to course
             </Link>
+            <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setShowForm((s) => !s)}
@@ -144,6 +162,24 @@ export default function TeacherCourseAttendancePage() {
             >
               {showForm ? 'Cancel' : '+ New session'}
             </button>
+            <button
+              type="button"
+              disabled={generateFromLessons.isPending}
+              onClick={() => {
+                if (
+                  confirm(
+                    'Create one session per published lesson? Lessons already linked to a session will be skipped.',
+                  )
+                )
+                  generateFromLessons.mutate()
+              }}
+              className="rounded-md border border-blue-300 bg-white px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-50 disabled:opacity-60"
+            >
+              {generateFromLessons.isPending
+                ? 'Generating…'
+                : '⚡ Generate per lesson'}
+            </button>
+            </div>
           </div>
 
           <h1 className="text-2xl font-bold text-slate-800">
