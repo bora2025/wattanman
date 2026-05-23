@@ -115,6 +115,12 @@ export default function StudentCourseDetailPage() {
           >
             ← All courses
           </Link>
+          <Link
+            href={`/student/courses/${courseId}/attendance`}
+            className="text-sm rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-sky-700 hover:bg-sky-100"
+          >
+            📋 Attendance
+          </Link>
         </div>
 
         {isLoading && (

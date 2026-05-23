@@ -207,4 +207,74 @@ export class CoursesController {
   finishAttempt(@Param('attemptId') attemptId: string, @Request() req: any) {
     return this.svc.finishLessonAttempt(attemptId, req.user.userId);
   }
+
+  // ── Course attendance: sessions ─────────────────────────────────────
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER', 'STUDENT')
+  @Get(':id/sessions')
+  listSessions(@Param('id') id: string, @Request() req: any) {
+    return this.svc.listSessions(id, req.user.userId, req.user.role);
+  }
+
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER')
+  @Post(':id/sessions')
+  createSession(
+    @Param('id') id: string,
+    @Body() body: any,
+    @Request() req: any,
+  ) {
+    return this.svc.createSession(id, body, req.user.userId, req.user.role);
+  }
+
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER')
+  @Put('sessions/:sessionId')
+  updateSession(
+    @Param('sessionId') sessionId: string,
+    @Body() body: any,
+    @Request() req: any,
+  ) {
+    return this.svc.updateSession(sessionId, body, req.user.userId, req.user.role);
+  }
+
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER')
+  @Delete('sessions/:sessionId')
+  deleteSession(@Param('sessionId') sessionId: string, @Request() req: any) {
+    return this.svc.deleteSession(sessionId, req.user.userId, req.user.role);
+  }
+
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER')
+  @Get('sessions/:sessionId/attendance')
+  sessionRoster(@Param('sessionId') sessionId: string, @Request() req: any) {
+    return this.svc.getSessionRoster(sessionId, req.user.userId, req.user.role);
+  }
+
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER')
+  @Post('sessions/:sessionId/attendance')
+  markAttendance(
+    @Param('sessionId') sessionId: string,
+    @Body() body: { studentId: string; status: string; notes?: string },
+    @Request() req: any,
+  ) {
+    return this.svc.markAttendance(
+      sessionId,
+      body,
+      req.user.userId,
+      req.user.role,
+    );
+  }
+
+  @Roles('STUDENT', 'ADMIN', 'SUPER_ADMIN')
+  @Post('sessions/:sessionId/check-in')
+  studentCheckIn(
+    @Param('sessionId') sessionId: string,
+    @Body() body: { code: string },
+    @Request() req: any,
+  ) {
+    return this.svc.studentCheckIn(sessionId, body?.code, req.user.userId);
+  }
+
+  @Roles('STUDENT', 'ADMIN', 'SUPER_ADMIN')
+  @Get(':id/my-attendance')
+  myCourseAttendance(@Param('id') id: string, @Request() req: any) {
+    return this.svc.getMyCourseAttendance(id, req.user.userId);
+  }
 }

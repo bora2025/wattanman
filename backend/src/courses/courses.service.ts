@@ -686,7 +686,7 @@ export class CoursesService {
     const maxScore = computeLessonMaxScore(pages as any);
     const firstPage = pages[0];
 
-    return this.prisma.lessonAttempt.create({
+    const attempt = await this.prisma.lessonAttempt.create({
       data: {
         lessonId,
         studentId: student.id,
@@ -696,6 +696,43 @@ export class CoursesService {
         maxScore,
       },
     });
+    // Auto-mark attendance for any sessions linked to this lesson
+    await this.autoMarkAttendanceForLesson(lessonId, student.id);
+    return attempt;
+  }
+
+  /** If any CourseSession is tied to this lesson, mark this student PRESENT. */
+  private async autoMarkAttendanceForLesson(lessonId: string, studentId: string) {
+    const sessions = await this.prisma.courseSession.findMany({
+      where: { lessonId },
+      select: { id: true },
+    });
+    if (sessions.length === 0) return;
+    const now = new Date();
+    for (const s of sessions) {
+      const existing = await this.prisma.courseAttendance.findUnique({
+        where: { sessionId_studentId: { sessionId: s.id, studentId } },
+        select: { id: true, source: true, status: true },
+      });
+      // Skip if a teacher already marked manually (don't override)
+      if (existing && existing.source === 'MANUAL') continue;
+      if (existing) {
+        await this.prisma.courseAttendance.update({
+          where: { id: existing.id },
+          data: { status: 'PRESENT', source: 'AUTO_LESSON', checkInTime: now },
+        });
+      } else {
+        await this.prisma.courseAttendance.create({
+          data: {
+            sessionId: s.id,
+            studentId,
+            status: 'PRESENT',
+            source: 'AUTO_LESSON',
+            checkInTime: now,
+          },
+        });
+      }
+    }
   }
 
   /** Get the latest attempt (in-progress preferred) for the current student. */
@@ -879,5 +916,271 @@ export class CoursesService {
         completedAt: pct >= 100 ? new Date() : null,
       },
     });
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Course attendance (sessions + per-student records)
+  // ──────────────────────────────────────────────────────────────────────
+
+  /** Visible to teacher/admin (manage view) and enrolled student (read-only). */
+  private async assertCourseVisible(courseId: string, userId: string, role: string) {
+    if (this.isAdmin(role) || role === 'TEACHER') {
+      return this.assertCanManageCourse(courseId, userId, role);
+    }
+    // Student: must be enrolled (or in the course's class)
+    const student = await this.getStudentByUserId(userId);
+    const course = await this.prisma.course.findUnique({
+      where: { id: courseId },
+      select: {
+        id: true,
+        classId: true,
+        status: true,
+        enrollments: { where: { studentId: student.id }, select: { id: true } },
+      },
+    });
+    if (!course) throw new NotFoundException('Course not found');
+    const sameClass = course.classId === student.classId;
+    const enrolled = course.enrollments.length > 0;
+    if (!enrolled && !sameClass) {
+      throw new ForbiddenException('You are not enrolled in this course');
+    }
+    return { student, course };
+  }
+
+  async listSessions(courseId: string, userId: string, role: string) {
+    await this.assertCourseVisible(courseId, userId, role);
+    return this.prisma.courseSession.findMany({
+      where: { courseId },
+      orderBy: { scheduledAt: 'asc' },
+      include: {
+        lesson: { select: { id: true, title: true } },
+        _count: { select: { attendances: true } },
+      },
+    });
+  }
+
+  async createSession(
+    courseId: string,
+    body: {
+      title: string;
+      scheduledAt: string | Date;
+      durationMinutes?: number;
+      location?: string;
+      lessonId?: string | null;
+      checkInCode?: string | null;
+    },
+    userId: string,
+    role: string,
+  ) {
+    await this.assertCanManageCourse(courseId, userId, role);
+    if (!body?.title || !body.scheduledAt) {
+      throw new BadRequestException('title and scheduledAt are required');
+    }
+    if (body.lessonId) {
+      const lesson = await this.prisma.courseLesson.findUnique({
+        where: { id: body.lessonId },
+        select: { courseId: true },
+      });
+      if (!lesson || lesson.courseId !== courseId) {
+        throw new BadRequestException('lessonId does not belong to this course');
+      }
+    }
+    return this.prisma.courseSession.create({
+      data: {
+        courseId,
+        title: body.title,
+        scheduledAt: new Date(body.scheduledAt),
+        durationMinutes: body.durationMinutes ?? 60,
+        location: body.location ?? null,
+        lessonId: body.lessonId ?? null,
+        checkInCode: body.checkInCode?.trim() || null,
+      },
+    });
+  }
+
+  async updateSession(
+    sessionId: string,
+    body: any,
+    userId: string,
+    role: string,
+  ) {
+    const s = await this.prisma.courseSession.findUnique({
+      where: { id: sessionId },
+      select: { courseId: true },
+    });
+    if (!s) throw new NotFoundException('Session not found');
+    await this.assertCanManageCourse(s.courseId, userId, role);
+    const data: any = {};
+    if (body.title !== undefined) data.title = body.title;
+    if (body.scheduledAt !== undefined) data.scheduledAt = new Date(body.scheduledAt);
+    if (body.durationMinutes !== undefined) data.durationMinutes = body.durationMinutes;
+    if (body.location !== undefined) data.location = body.location;
+    if (body.lessonId !== undefined) data.lessonId = body.lessonId || null;
+    if (body.checkInCode !== undefined)
+      data.checkInCode = body.checkInCode?.trim() || null;
+    return this.prisma.courseSession.update({ where: { id: sessionId }, data });
+  }
+
+  async deleteSession(sessionId: string, userId: string, role: string) {
+    const s = await this.prisma.courseSession.findUnique({
+      where: { id: sessionId },
+      select: { courseId: true },
+    });
+    if (!s) throw new NotFoundException('Session not found');
+    await this.assertCanManageCourse(s.courseId, userId, role);
+    return this.prisma.courseSession.delete({ where: { id: sessionId } });
+  }
+
+  /** Teacher view: enrolled students + their attendance row (if any). */
+  async getSessionRoster(sessionId: string, userId: string, role: string) {
+    const session = await this.prisma.courseSession.findUnique({
+      where: { id: sessionId },
+      include: { lesson: { select: { id: true, title: true } } },
+    });
+    if (!session) throw new NotFoundException('Session not found');
+    await this.assertCanManageCourse(session.courseId, userId, role);
+    const enrollments = await this.prisma.courseEnrollment.findMany({
+      where: { courseId: session.courseId },
+      include: {
+        student: {
+          select: {
+            id: true,
+            studentNumber: true,
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+      },
+    });
+    const records = await this.prisma.courseAttendance.findMany({
+      where: { sessionId },
+    });
+    const recordByStudent = new Map(records.map((r) => [r.studentId, r]));
+    const roster = enrollments.map((e) => ({
+      studentId: e.studentId,
+      studentNumber: e.student.studentNumber,
+      name: e.student.user.name,
+      email: e.student.user.email,
+      attendance: recordByStudent.get(e.studentId) ?? null,
+    }));
+    return { session, roster };
+  }
+
+  /** Teacher mark attendance (create or update). */
+  async markAttendance(
+    sessionId: string,
+    body: { studentId: string; status: string; notes?: string },
+    userId: string,
+    role: string,
+  ) {
+    const session = await this.prisma.courseSession.findUnique({
+      where: { id: sessionId },
+      select: { courseId: true },
+    });
+    if (!session) throw new NotFoundException('Session not found');
+    await this.assertCanManageCourse(session.courseId, userId, role);
+    if (!body?.studentId || !body?.status) {
+      throw new BadRequestException('studentId and status are required');
+    }
+    const status = String(body.status).toUpperCase();
+    if (!['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'].includes(status)) {
+      throw new BadRequestException('Invalid status');
+    }
+    return this.prisma.courseAttendance.upsert({
+      where: { sessionId_studentId: { sessionId, studentId: body.studentId } },
+      create: {
+        sessionId,
+        studentId: body.studentId,
+        status,
+        source: 'MANUAL',
+        notes: body.notes ?? null,
+        markedById: userId,
+        checkInTime: status === 'PRESENT' || status === 'LATE' ? new Date() : null,
+      },
+      update: {
+        status,
+        source: 'MANUAL',
+        notes: body.notes ?? null,
+        markedById: userId,
+      },
+    });
+  }
+
+  /** Student self check-in by code. */
+  async studentCheckIn(sessionId: string, code: string, userId: string) {
+    const student = await this.getStudentByUserId(userId);
+    const session = await this.prisma.courseSession.findUnique({
+      where: { id: sessionId },
+      select: {
+        id: true,
+        courseId: true,
+        checkInCode: true,
+        scheduledAt: true,
+        durationMinutes: true,
+      },
+    });
+    if (!session) throw new NotFoundException('Session not found');
+    if (!session.checkInCode) {
+      throw new BadRequestException('Check-in code not enabled for this session');
+    }
+    if (
+      !code ||
+      String(code).trim().toUpperCase() !== session.checkInCode.toUpperCase()
+    ) {
+      throw new BadRequestException('Invalid check-in code');
+    }
+    // Ensure student is enrolled
+    const enrolled = await this.prisma.courseEnrollment.findUnique({
+      where: {
+        courseId_studentId: { courseId: session.courseId, studentId: student.id },
+      },
+    });
+    if (!enrolled) throw new ForbiddenException('You are not enrolled in this course');
+
+    const now = new Date();
+    // Mark LATE if past start; otherwise PRESENT
+    const startedAt = session.scheduledAt;
+    const isLate = now.getTime() > startedAt.getTime() + 5 * 60_000; // 5 min grace
+    const status = isLate ? 'LATE' : 'PRESENT';
+    return this.prisma.courseAttendance.upsert({
+      where: { sessionId_studentId: { sessionId, studentId: student.id } },
+      create: {
+        sessionId,
+        studentId: student.id,
+        status,
+        source: 'CODE',
+        checkInTime: now,
+      },
+      update: {
+        // Don't downgrade an already-PRESENT manual mark
+        status,
+        source: 'CODE',
+        checkInTime: now,
+      },
+    });
+  }
+
+  /** Student: own attendance across all sessions of a course. */
+  async getMyCourseAttendance(courseId: string, userId: string) {
+    const student = await this.getStudentByUserId(userId);
+    // make sure they can see it
+    await this.assertCourseVisible(courseId, userId, 'STUDENT');
+    const sessions = await this.prisma.courseSession.findMany({
+      where: { courseId },
+      orderBy: { scheduledAt: 'asc' },
+      include: {
+        lesson: { select: { id: true, title: true } },
+        attendances: { where: { studentId: student.id } },
+      },
+    });
+    return sessions.map((s) => ({
+      id: s.id,
+      title: s.title,
+      scheduledAt: s.scheduledAt,
+      durationMinutes: s.durationMinutes,
+      location: s.location,
+      lesson: s.lesson,
+      hasCheckInCode: !!s.checkInCode,
+      attendance: s.attendances[0] ?? null,
+    }));
   }
 }

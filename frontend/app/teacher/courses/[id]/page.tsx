@@ -161,12 +161,20 @@ export default function CourseDetailPage() {
         <div className="mx-auto max-w-7xl px-4 py-6">
           {/* Header */}
           <div className="mb-6">
-            <Link
-              href="/teacher/courses"
-              className="text-sm text-blue-600 hover:underline"
-            >
-              ← All Courses
-            </Link>
+            <div className="flex items-center justify-between">
+              <Link
+                href="/teacher/courses"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                ← All Courses
+              </Link>
+              <Link
+                href={`/teacher/courses/${courseId}/attendance`}
+                className="text-sm rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-sky-700 hover:bg-sky-100"
+              >
+                📋 Attendance
+              </Link>
+            </div>
             <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">

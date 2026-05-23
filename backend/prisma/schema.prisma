@@ -46,6 +46,7 @@ model User {
 
   // Courses (LMS): authored by teachers / admins
   coursesCreated Course[] @relation("CourseCreator")
+  courseAttendancesMarked CourseAttendance[] @relation("CourseAttendanceMarkedBy")
 
   // Module 4: Messages
   messagesSent     Message[] @relation("MessageSender")
@@ -105,6 +106,7 @@ model Student {
   parentLinkRequests    ParentLinkRequest[]
   cardAliases           CardAlias[]
   courseEnrollments     CourseEnrollment[]     @relation("StudentCourseEnrollments")
+  courseAttendances     CourseAttendance[]     @relation("StudentCourseAttendances")
 
   @@index([studentNumber])
   @@index([classId])
@@ -928,6 +930,7 @@ model Course {
   updatedAt      DateTime           @updatedAt
   lessons        CourseLesson[]
   enrollments    CourseEnrollment[]
+  sessions       CourseSession[]
 
   @@index([classId])
   @@index([status])
@@ -954,6 +957,7 @@ model CourseLesson {
   updatedAt        DateTime        @updatedAt
   pages            LessonPage[]
   attempts         LessonAttempt[]
+  sessions         CourseSession[]
 
   @@index([courseId])
   @@index([status])
@@ -1032,4 +1036,51 @@ model PageResponse {
   @@unique([attemptId, pageId])
   @@index([attemptId])
   @@index([pageId])
+}
+
+
+// --- Course attendance ------------------------------------------------
+// Per-course meetings/sessions and the per-student attendance records.
+// A session may optionally be tied to a CourseLesson � opening / finishing
+// that lesson auto-marks the student PRESENT for the linked session.
+model CourseSession {
+  id              String   @id @default(cuid())
+  courseId        String
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonId        String?
+  lesson          CourseLesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  title           String
+  scheduledAt     DateTime
+  durationMinutes Int      @default(60)
+  location        String?
+  checkInCode     String?  // optional code students enter to self-check-in
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  attendances     CourseAttendance[]
+
+  @@index([courseId])
+  @@index([lessonId])
+  @@index([scheduledAt])
+}
+
+model CourseAttendance {
+  id           String        @id @default(cuid())
+  sessionId    String
+  session      CourseSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student       @relation("StudentCourseAttendances", fields: [studentId], references: [id])
+  status       String        @default("PRESENT") // PRESENT, LATE, ABSENT, EXCUSED
+  source       String        @default("MANUAL")  // MANUAL, AUTO_LESSON, CODE
+  checkInTime  DateTime?
+  notes        String?
+  markedById   String?
+  markedBy     User?         @relation("CourseAttendanceMarkedBy", fields: [markedById], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([sessionId, studentId])
+  @@index([sessionId])
+  @@index([studentId])
+  @@index([status])
 }
