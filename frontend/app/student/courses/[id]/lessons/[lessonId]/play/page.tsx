@@ -127,6 +127,7 @@ export default function LessonPlayPage() {
 
   const [lastResult, setLastResult] = useState<SubmitResult | null>(null)
   const [finished, setFinished] = useState<Attempt | null>(null)
+  const [teacherMsg, setTeacherMsg] = useState<string | null>(null)
 
   const submitMutation = useMutation({
     mutationFn: async (payload: { pageId: string; answer: any }) => {
