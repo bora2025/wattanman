@@ -89,7 +89,12 @@ export default function LessonPlayPage() {
 
   const attempt = startMutation.data ?? null
 
-  const { data: pages = [] } = useQuery({
+  const {
+    data: pages = [],
+    isLoading: pagesLoading,
+    isError: pagesError,
+    error: pagesErrorObj,
+  } = useQuery({
     queryKey: ['lesson-play-pages', lessonId],
     enabled: !!lessonId && !!attempt,
     queryFn: async () => {
@@ -180,7 +185,7 @@ export default function LessonPlayPage() {
   // ── Render ──────────────────────────────────────────────────────────
   return (
     <AuthGuard allowedRoles={['STUDENT', 'ADMIN', 'SUPER_ADMIN']}>
-      <div className="mx-auto max-w-3xl p-4 sm:p-6 space-y-4">
+      <div className="mx-auto max-w-3xl min-h-screen p-4 sm:p-6 space-y-4">
         <div className="flex items-center justify-between">
           <Link
             href={`/student/courses/${courseId}`}
@@ -207,6 +212,27 @@ export default function LessonPlayPage() {
         {startMutation.isError && (
           <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             {(startMutation.error as Error)?.message || 'Could not start lesson.'}
+          </div>
+        )}
+
+        {attempt && pagesLoading && (
+          <div className="rounded-md border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
+            Loading lesson pages…
+          </div>
+        )}
+        {attempt && pagesError && (
+          <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            {(pagesErrorObj as Error)?.message || 'Failed to load lesson pages.'}
+          </div>
+        )}
+        {attempt && !pagesLoading && !pagesError && pages.length === 0 && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            This lesson has no pages yet. Please contact your teacher.
+          </div>
+        )}
+        {attempt && pages.length > 0 && !currentPage && !finished && (
+          <div className="rounded-md border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
+            Preparing lesson…
           </div>
         )}
 
