@@ -96,14 +96,16 @@ export class AuthController {
 
   @SkipThrottle()
   @Post('refresh')
-  async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
-    const oldToken = req.cookies?.refresh_token;
+  async refresh(@Request() req, @Body() body: { refresh_token?: string } = {}, @Res({ passthrough: true }) res: Response) {
+    // Cookie for web; body for mobile (no cookies available).
+    const oldToken = req.cookies?.refresh_token || body?.refresh_token;
     if (!oldToken) {
       throw new HttpException('No refresh token', HttpStatus.UNAUTHORIZED);
     }
     const { accessToken, refreshToken } = await this.authService.rotateRefreshToken(oldToken);
     this.setTokenCookies(res, accessToken, refreshToken);
-    return { access_token: accessToken };
+    // Return both tokens in body so mobile clients can persist them.
+    return { access_token: accessToken, refresh_token: refreshToken };
   }
 
   @Post('logout')
