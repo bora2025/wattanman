@@ -5,6 +5,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import {
+  validatePageContent,
+  gradeQuestion,
+  computeLessonMaxScore,
+  resolveNextPageId,
+  QuestionPagePayload,
+  SubmittedAnswer,
+} from './lesson-content';
 
 // ─── Lifecycle constants ──────────────────────────────────────────────────
 // Mirrors the documented state-flow:
@@ -31,6 +39,7 @@ const ALLOWED_TRANSITIONS: Record<CourseStatus, CourseStatus[]> = {
 };
 
 const LESSON_STATUSES = ['DRAFT', 'PUBLISHED'] as const;
+const LESSON_GRADING_MODES = ['GRADED', 'PRACTICE', 'UNGRADED'] as const;
 const PAGE_TYPES = ['CONTENT', 'QUESTION', 'BRANCH'] as const;
 
 function toDate(v: string | Date | null | undefined): Date | null | undefined {
@@ -57,6 +66,7 @@ interface LessonInput {
   description?: string | null;
   order?: number;
   status?: string;
+  gradingMode?: string;
   availableFrom?: string | null;
   availableUntil?: string | null;
   showProgressBar?: boolean;
@@ -114,6 +124,15 @@ function sanitizeLessonInput(input: LessonInput) {
       );
     }
     data.status = s;
+  }
+  if (input.gradingMode !== undefined) {
+    const g = String(input.gradingMode).toUpperCase();
+    if (!LESSON_GRADING_MODES.includes(g as any)) {
+      throw new BadRequestException(
+        `gradingMode must be one of ${LESSON_GRADING_MODES.join(', ')}`,
+      );
+    }
+    data.gradingMode = g;
   }
   if (input.availableFrom !== undefined) data.availableFrom = toDate(input.availableFrom);
   if (input.availableUntil !== undefined) data.availableUntil = toDate(input.availableUntil);
@@ -524,7 +543,7 @@ export class CoursesService {
     if (!body.title?.trim()) throw new BadRequestException('Page title is required');
     const data = sanitizePageInput(body);
     data.pageType = data.pageType || 'CONTENT';
-    data.content = data.content ?? {};
+    data.content = validatePageContent(data.pageType, data.content ?? body.content ?? {});
     if (data.order === undefined) {
       const last = await this.prisma.lessonPage.findFirst({
         where: { lessonId },
@@ -549,6 +568,11 @@ export class CoursesService {
     if (!page) throw new NotFoundException('Page not found');
     await this.assertCanManageCourse(page.lesson.courseId, userId, role);
     const data = sanitizePageInput(body);
+    if (data.content !== undefined || data.pageType !== undefined) {
+      const nextType = data.pageType || page.pageType;
+      const nextContent = data.content !== undefined ? data.content : page.content;
+      data.content = validatePageContent(nextType, nextContent);
+    }
     return this.prisma.lessonPage.update({ where: { id: pageId }, data });
   }
 
@@ -592,6 +616,268 @@ export class CoursesService {
         _count: { select: { lessons: true } },
       },
       orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Lesson attempts (student player)
+  // ──────────────────────────────────────────────────────────────────────
+
+  private async getStudentByUserId(userId: string) {
+    const student = await this.prisma.student.findUnique({
+      where: { userId },
+      select: { id: true, classId: true },
+    });
+    if (!student) throw new ForbiddenException('Student profile required');
+    return student;
+  }
+
+  private async assertLessonVisibleToStudent(
+    lessonId: string,
+    student: { id: string; classId: string | null },
+  ) {
+    const lesson = await this.prisma.courseLesson.findUnique({
+      where: { id: lessonId },
+      include: {
+        course: {
+          select: {
+            id: true,
+            classId: true,
+            status: true,
+            enrollments: {
+              where: { studentId: student.id },
+              select: { id: true },
+            },
+          },
+        },
+      },
+    });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    if (lesson.status !== 'PUBLISHED') {
+      throw new ForbiddenException('Lesson is not published');
+    }
+    const sameClass = lesson.course.classId === student.classId;
+    const enrolled = lesson.course.enrollments.length > 0;
+    const visibleStatus = ['PUBLISHED', 'ENROLLMENT', 'ACTIVE', 'COMPLETED'].includes(
+      lesson.course.status,
+    );
+    if (!enrolled && !(sameClass && visibleStatus)) {
+      throw new ForbiddenException('You do not have access to this lesson');
+    }
+    return lesson;
+  }
+
+  /** Start a new attempt or return the in-progress one. */
+  async startLessonAttempt(lessonId: string, userId: string) {
+    const student = await this.getStudentByUserId(userId);
+    await this.assertLessonVisibleToStudent(lessonId, student);
+
+    const existing = await this.prisma.lessonAttempt.findFirst({
+      where: { lessonId, studentId: student.id, status: 'IN_PROGRESS' },
+      orderBy: { startedAt: 'desc' },
+    });
+    if (existing) return existing;
+
+    const pages = await this.prisma.lessonPage.findMany({
+      where: { lessonId },
+      orderBy: { order: 'asc' },
+      select: { id: true, pageType: true, content: true },
+    });
+    const maxScore = computeLessonMaxScore(pages as any);
+    const firstPage = pages[0];
+
+    return this.prisma.lessonAttempt.create({
+      data: {
+        lessonId,
+        studentId: student.id,
+        status: 'IN_PROGRESS',
+        currentPageId: firstPage?.id ?? null,
+        score: 0,
+        maxScore,
+      },
+    });
+  }
+
+  /** Get the latest attempt (in-progress preferred) for the current student. */
+  async getMyLessonAttempt(lessonId: string, userId: string) {
+    const student = await this.getStudentByUserId(userId);
+    await this.assertLessonVisibleToStudent(lessonId, student);
+    return this.prisma.lessonAttempt.findFirst({
+      where: { lessonId, studentId: student.id },
+      orderBy: [{ status: 'asc' }, { startedAt: 'desc' }],
+      include: { responses: true },
+    });
+  }
+
+  /** Submit an answer for a page within an attempt. Returns grading + next page. */
+  async submitPageResponse(
+    attemptId: string,
+    pageId: string,
+    answer: SubmittedAnswer,
+    userId: string,
+  ) {
+    const student = await this.getStudentByUserId(userId);
+    const attempt = await this.prisma.lessonAttempt.findUnique({
+      where: { id: attemptId },
+      include: { lesson: { select: { id: true, gradingMode: true } } },
+    });
+    if (!attempt) throw new NotFoundException('Attempt not found');
+    if (attempt.studentId !== student.id) {
+      throw new ForbiddenException('Not your attempt');
+    }
+    if (attempt.status !== 'IN_PROGRESS') {
+      throw new BadRequestException('Attempt is no longer active');
+    }
+
+    const page = await this.prisma.lessonPage.findUnique({
+      where: { id: pageId },
+    });
+    if (!page || page.lessonId !== attempt.lessonId) {
+      throw new NotFoundException('Page not in this lesson');
+    }
+
+    let correct: boolean | null = null;
+    let pointsAwarded = 0;
+    if (page.pageType === 'QUESTION') {
+      const grading = gradeQuestion(page.content as QuestionPagePayload, answer);
+      correct = grading.correct;
+      pointsAwarded = grading.pointsAwarded;
+    }
+
+    const allPages = await this.prisma.lessonPage.findMany({
+      where: { lessonId: attempt.lessonId },
+      orderBy: { order: 'asc' },
+      select: { id: true, order: true },
+    });
+    const nextPageId = resolveNextPageId(page as any, allPages, answer);
+
+    // Upsert so retrying the same page replaces the prior answer.
+    const prior = await this.prisma.pageResponse.findUnique({
+      where: { attemptId_pageId: { attemptId, pageId } },
+    });
+    await this.prisma.pageResponse.upsert({
+      where: { attemptId_pageId: { attemptId, pageId } },
+      create: {
+        attemptId,
+        pageId,
+        answer: answer as any,
+        correct,
+        pointsAwarded,
+        nextPageId,
+      },
+      update: {
+        answer: answer as any,
+        correct,
+        pointsAwarded,
+        nextPageId,
+        answeredAt: new Date(),
+      },
+    });
+
+    const scoreDelta = pointsAwarded - (prior?.pointsAwarded ?? 0);
+    await this.prisma.lessonAttempt.update({
+      where: { id: attemptId },
+      data: {
+        score: { increment: scoreDelta },
+        currentPageId: nextPageId,
+      },
+    });
+
+    return {
+      correct,
+      pointsAwarded,
+      nextPageId,
+      done: nextPageId === null,
+    };
+  }
+
+  /** Finalize an attempt: compute pass/fail, update enrollment progress. */
+  async finishLessonAttempt(attemptId: string, userId: string) {
+    const student = await this.getStudentByUserId(userId);
+    const attempt = await this.prisma.lessonAttempt.findUnique({
+      where: { id: attemptId },
+      include: {
+        lesson: {
+          select: {
+            id: true,
+            passingScore: true,
+            gradingMode: true,
+            courseId: true,
+          },
+        },
+      },
+    });
+    if (!attempt) throw new NotFoundException('Attempt not found');
+    if (attempt.studentId !== student.id) {
+      throw new ForbiddenException('Not your attempt');
+    }
+    if (attempt.status === 'COMPLETED') return attempt;
+
+    const passing = attempt.lesson.passingScore;
+    const passed =
+      attempt.lesson.gradingMode === 'UNGRADED'
+        ? null
+        : passing != null
+          ? attempt.score >= passing
+          : attempt.maxScore === 0
+            ? true
+            : attempt.score >= attempt.maxScore / 2;
+
+    const finished = await this.prisma.lessonAttempt.update({
+      where: { id: attemptId },
+      data: {
+        status: 'COMPLETED',
+        passed,
+        completedAt: new Date(),
+      },
+    });
+
+    await this.recomputeEnrollmentProgress(
+      attempt.lesson.courseId,
+      student.id,
+    );
+
+    return finished;
+  }
+
+  /** Recompute progressPct = completed lessons / published lessons * 100. */
+  private async recomputeEnrollmentProgress(
+    courseId: string,
+    studentId: string,
+  ) {
+    const enrollment = await this.prisma.courseEnrollment.findUnique({
+      where: { courseId_studentId: { courseId, studentId } },
+    });
+    if (!enrollment) return;
+
+    const publishedLessons = await this.prisma.courseLesson.findMany({
+      where: { courseId, status: 'PUBLISHED' },
+      select: { id: true },
+    });
+    if (publishedLessons.length === 0) return;
+    const lessonIds = publishedLessons.map((l) => l.id);
+
+    const completed = await this.prisma.lessonAttempt.findMany({
+      where: {
+        studentId,
+        status: 'COMPLETED',
+        lessonId: { in: lessonIds },
+      },
+      select: { lessonId: true },
+      distinct: ['lessonId'],
+    });
+
+    const pct = Math.round(
+      (completed.length / publishedLessons.length) * 1000,
+    ) / 10;
+
+    await this.prisma.courseEnrollment.update({
+      where: { courseId_studentId: { courseId, studentId } },
+      data: {
+        progressPct: pct,
+        status: pct >= 100 ? 'COMPLETED' : 'ACTIVE',
+        completedAt: pct >= 100 ? new Date() : null,
+      },
     });
   }
 }

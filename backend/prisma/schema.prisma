@@ -935,39 +935,42 @@ model Course {
 }
 
 model CourseLesson {
-  id               String       @id @default(cuid())
+  id               String          @id @default(cuid())
   courseId         String
-  course           Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course           Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title            String
   description      String?
-  order            Int          @default(0)
-  status           String       @default("DRAFT") // DRAFT, PUBLISHED
+  order            Int             @default(0)
+  status           String          @default("DRAFT") // DRAFT, PUBLISHED
+  gradingMode      String          @default("GRADED") // GRADED, PRACTICE, UNGRADED
   availableFrom    DateTime?
   availableUntil   DateTime?
-  showProgressBar  Boolean      @default(true)
-  branchingEnabled Boolean      @default(false)
-  totalPoints      Float        @default(0)
+  showProgressBar  Boolean         @default(true)
+  branchingEnabled Boolean         @default(false)
+  totalPoints      Float           @default(0)
   passingScore     Float?
   publishedAt      DateTime?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
   pages            LessonPage[]
+  attempts         LessonAttempt[]
 
   @@index([courseId])
   @@index([status])
 }
 
 model LessonPage {
-  id         String       @id @default(cuid())
+  id         String         @id @default(cuid())
   lessonId   String
-  lesson     CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson     CourseLesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   title      String
-  pageType   String       @default("CONTENT") // CONTENT, QUESTION, BRANCH
+  pageType   String         @default("CONTENT") // CONTENT, QUESTION, BRANCH
   content    Json // page-type specific body (html/markdown, question payload, branch rules)
-  order      Int          @default(0)
+  order      Int            @default(0)
   nextPageId String? // optional next page (or null = sequential)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  responses  PageResponse[]
 
   @@index([lessonId])
   @@index([pageType])
@@ -989,4 +992,44 @@ model CourseEnrollment {
   @@index([courseId])
   @@index([studentId])
   @@index([status])
+}
+
+// ─── Lesson attempts ──────────────────────────────────────────────────
+// Tracks a student's pass through a lesson: which pages they answered,
+// resulting score, pass/fail, etc. Lessons can be retaken — each retake
+// creates a new LessonAttempt row.
+model LessonAttempt {
+  id             String         @id @default(cuid())
+  lessonId       String
+  lesson         CourseLesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  studentId      String
+  status         String         @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, ABANDONED
+  currentPageId  String?
+  score          Float          @default(0)
+  maxScore       Float          @default(0)
+  passed         Boolean?
+  startedAt      DateTime       @default(now())
+  completedAt    DateTime?
+  responses      PageResponse[]
+
+  @@index([lessonId])
+  @@index([studentId])
+  @@index([status])
+}
+
+model PageResponse {
+  id          String        @id @default(cuid())
+  attemptId   String
+  attempt     LessonAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  pageId      String
+  page        LessonPage    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  answer      Json // student-submitted answer (shape depends on question type)
+  correct     Boolean?
+  pointsAwarded Float       @default(0)
+  nextPageId  String? // page the player was sent to after this response
+  answeredAt  DateTime      @default(now())
+
+  @@unique([attemptId, pageId])
+  @@index([attemptId])
+  @@index([pageId])
 }

@@ -173,4 +173,38 @@ export class CoursesController {
   studentCourses(@Request() req: any) {
     return this.svc.getStudentCourses(req.user.userId);
   }
+
+  // ── Lesson attempts (student player) ────────────────────────────────
+  @Roles('STUDENT', 'ADMIN', 'SUPER_ADMIN')
+  @Post('lessons/:lessonId/attempts/start')
+  startAttempt(@Param('lessonId') lessonId: string, @Request() req: any) {
+    return this.svc.startLessonAttempt(lessonId, req.user.userId);
+  }
+
+  @Roles('STUDENT', 'ADMIN', 'SUPER_ADMIN')
+  @Get('lessons/:lessonId/my-attempt')
+  myAttempt(@Param('lessonId') lessonId: string, @Request() req: any) {
+    return this.svc.getMyLessonAttempt(lessonId, req.user.userId);
+  }
+
+  @Roles('STUDENT', 'ADMIN', 'SUPER_ADMIN')
+  @Post('attempts/:attemptId/responses')
+  submitResponse(
+    @Param('attemptId') attemptId: string,
+    @Body() body: { pageId: string; answer: any },
+    @Request() req: any,
+  ) {
+    return this.svc.submitPageResponse(
+      attemptId,
+      body?.pageId,
+      body?.answer ?? {},
+      req.user.userId,
+    );
+  }
+
+  @Roles('STUDENT', 'ADMIN', 'SUPER_ADMIN')
+  @Post('attempts/:attemptId/finish')
+  finishAttempt(@Param('attemptId') attemptId: string, @Request() req: any) {
+    return this.svc.finishLessonAttempt(attemptId, req.user.userId);
+  }
 }
