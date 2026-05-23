@@ -37,7 +37,7 @@ export class CoursesController {
     });
   }
 
-  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER', 'STUDENT')
   @Get(':id')
   getOne(@Param('id') id: string) {
     return this.svc.getOne(id);

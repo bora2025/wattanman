@@ -40,6 +40,7 @@ interface ExamLite {
 
 const studentNav = [
   { label: 'nav.dashboard', href: '/student', icon: 'dashboard' },
+  { label: 'Courses', href: '/student/courses', icon: 'book' },
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
   { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
