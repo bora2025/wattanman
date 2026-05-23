@@ -300,16 +300,34 @@ function ContentView({ content }: { content: any }) {
   const body = typeof content?.body === 'string' ? content.body : ''
   const mediaUrl = content?.mediaUrl as string | null | undefined
   const mediaType = content?.mediaType as string | null | undefined
+
+  // Auto-detect YouTube / Vimeo URLs even if mediaType is "video" — they need
+  // an iframe embed, not <video>. Returns a normalized embed URL or null.
+  const embedUrl = mediaUrl ? toEmbedUrl(mediaUrl) : null
+  const showAsEmbed =
+    !!embedUrl && (mediaType === 'embed' || mediaType === 'video')
+
   return (
     <div className="space-y-3">
       {mediaUrl && mediaType === 'image' && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={mediaUrl} alt="" className="max-h-80 rounded-md" />
       )}
-      {mediaUrl && mediaType === 'video' && (
+      {mediaUrl && mediaType === 'video' && !showAsEmbed && (
         <video src={mediaUrl} controls className="w-full rounded-md" />
       )}
-      {mediaUrl && mediaType === 'embed' && (
+      {showAsEmbed && (
+        <div className="relative w-full overflow-hidden rounded-md border border-slate-200" style={{ paddingTop: '56.25%' }}>
+          <iframe
+            src={embedUrl!}
+            className="absolute inset-0 h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+      )}
+      {mediaUrl && mediaType === 'embed' && !embedUrl && (
         <iframe
           src={mediaUrl}
           className="aspect-video w-full rounded-md border border-slate-200"
@@ -319,6 +337,70 @@ function ContentView({ content }: { content: any }) {
       <div className="whitespace-pre-wrap text-sm text-slate-700">{body}</div>
     </div>
   )
+}
+
+/**
+ * Normalize a user-pasted media URL into an embeddable iframe URL.
+ * Supports YouTube (watch / youtu.be / shorts / already-embed) and Vimeo.
+ * Returns null when the URL is not a known embeddable provider.
+ */
+function toEmbedUrl(raw: string): string | null {
+  const url = raw.trim()
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    const host = u.hostname.replace(/^www\./, '')
+
+    // youtu.be/<id>
+    if (host === 'youtu.be') {
+      const id = u.pathname.split('/').filter(Boolean)[0]
+      if (id) return buildYouTubeEmbed(id, u)
+    }
+    // youtube.com / m.youtube.com / youtube-nocookie.com
+    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+      // already an /embed/<id> URL
+      if (u.pathname.startsWith('/embed/')) return url
+      // /watch?v=<id>
+      const v = u.searchParams.get('v')
+      if (v) return buildYouTubeEmbed(v, u)
+      // /shorts/<id> or /live/<id>
+      const m = u.pathname.match(/^\/(shorts|live)\/([^/]+)/)
+      if (m) return buildYouTubeEmbed(m[2], u)
+    }
+    // Vimeo: vimeo.com/<id> → player.vimeo.com/video/<id>
+    if (host === 'vimeo.com') {
+      const id = u.pathname.split('/').filter(Boolean)[0]
+      if (id && /^\d+$/.test(id)) return `https://player.vimeo.com/video/${id}`
+    }
+    if (host === 'player.vimeo.com') return url
+  } catch {
+    return null
+  }
+  return null
+}
+
+function buildYouTubeEmbed(id: string, src: URL): string {
+  const params = new URLSearchParams()
+  const t = src.searchParams.get('t') || src.searchParams.get('start')
+  if (t) {
+    const secs = parseYouTubeTime(t)
+    if (secs > 0) params.set('start', String(secs))
+  }
+  const list = src.searchParams.get('list')
+  if (list) params.set('list', list)
+  const qs = params.toString()
+  return `https://www.youtube.com/embed/${id}${qs ? `?${qs}` : ''}`
+}
+
+function parseYouTubeTime(t: string): number {
+  // Accepts "90", "90s", "1m30s", "1h2m3s"
+  if (/^\d+$/.test(t)) return Number(t)
+  const m = t.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)?$/)
+  if (!m) return 0
+  const h = Number(m[1] || 0)
+  const min = Number(m[2] || 0)
+  const s = Number(m[3] || 0)
+  return h * 3600 + min * 60 + s
 }
 
 function QuestionView({
