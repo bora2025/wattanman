@@ -221,15 +221,23 @@ export default function StudentCourseDetailPage() {
                 )}
                 {selectedLesson && (
                   <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-slate-800">
-                        {selectedLesson.title}
-                      </h3>
-                      {selectedLesson.description && (
-                        <p className="mt-1 text-sm text-slate-600">
-                          {selectedLesson.description}
-                        </p>
-                      )}
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-800">
+                          {selectedLesson.title}
+                        </h3>
+                        {selectedLesson.description && (
+                          <p className="mt-1 text-sm text-slate-600">
+                            {selectedLesson.description}
+                          </p>
+                        )}
+                      </div>
+                      <Link
+                        href={`/student/courses/${courseId}/lessons/${selectedLesson.id}/play`}
+                        className="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+                      >
+                        ▶ Start lesson
+                      </Link>
                     </div>
 
                     {pagesLoading && (

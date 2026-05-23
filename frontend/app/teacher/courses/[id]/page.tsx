@@ -8,7 +8,14 @@ import AuthGuard from '../../../../components/AuthGuard'
 import { apiFetch } from '../../../../lib/api'
 
 type LessonStatus = 'DRAFT' | 'PUBLISHED'
+type GradingMode = 'GRADED' | 'PRACTICE' | 'UNGRADED'
 type PageType = 'CONTENT' | 'QUESTION' | 'BRANCH'
+type QuestionType =
+  | 'MCQ_SINGLE'
+  | 'MCQ_MULTI'
+  | 'TRUE_FALSE'
+  | 'SHORT_ANSWER'
+  | 'NUMERIC'
 
 interface Lesson {
   id: string
@@ -17,6 +24,7 @@ interface Lesson {
   description: string | null
   order: number
   status: LessonStatus
+  gradingMode?: GradingMode
   showProgressBar: boolean
   branchingEnabled: boolean
   totalPoints: number
@@ -342,6 +350,9 @@ function LessonEditor({
   const [title, setTitle] = useState(lesson.title)
   const [description, setDescription] = useState(lesson.description ?? '')
   const [status, setStatus] = useState<LessonStatus>(lesson.status)
+  const [gradingMode, setGradingMode] = useState<GradingMode>(
+    (lesson.gradingMode as GradingMode) || 'GRADED',
+  )
   const [showProgressBar, setShowProgressBar] = useState(lesson.showProgressBar)
   const [branchingEnabled, setBranchingEnabled] = useState(lesson.branchingEnabled)
   const [passingScore, setPassingScore] = useState<string>(
@@ -406,6 +417,7 @@ function LessonEditor({
       title: title.trim() || lesson.title,
       description: description.trim() || null,
       status,
+      gradingMode,
       showProgressBar,
       branchingEnabled,
       passingScore: passingScore === '' ? null : Number(passingScore),
@@ -417,10 +429,25 @@ function LessonEditor({
     if (!title?.trim()) return
     const baseContent =
       pageType === 'CONTENT'
-        ? { body: '' }
+        ? { body: '', mediaUrl: null, mediaType: null }
         : pageType === 'QUESTION'
-          ? { questionType: 'MCQ', prompt: '', choices: [] }
-          : { rules: [] }
+          ? {
+              questionType: 'MCQ_SINGLE',
+              prompt: '',
+              points: 1,
+              choices: [
+                { id: 'c1', text: '' },
+                { id: 'c2', text: '' },
+              ],
+              correctChoiceId: null,
+            }
+          : {
+              prompt: '',
+              choices: [
+                { id: 'b1', text: '', nextPageId: null },
+                { id: 'b2', text: '', nextPageId: null },
+              ],
+            }
     createPageMutation.mutate({ title: title.trim(), pageType, content: baseContent })
   }
 
@@ -460,6 +487,20 @@ function LessonEditor({
             >
               <option value="DRAFT">Draft</option>
               <option value="PUBLISHED">Published</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              Grading mode
+            </label>
+            <select
+              value={gradingMode}
+              onChange={(e) => setGradingMode(e.target.value as GradingMode)}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            >
+              <option value="GRADED">Graded</option>
+              <option value="PRACTICE">Practice</option>
+              <option value="UNGRADED">Ungraded</option>
             </select>
           </div>
           <div>
@@ -554,6 +595,7 @@ function LessonEditor({
               <PageRow
                 key={p.id}
                 page={p}
+                allPages={pages}
                 onSave={(body) => updatePageMutation.mutate({ id: p.id, body })}
                 onDelete={() => {
                   if (confirm(`Delete page "${p.title}"?`)) {
@@ -575,22 +617,20 @@ function LessonEditor({
 
 function PageRow({
   page,
+  allPages,
   onSave,
   onDelete,
   saving,
 }: {
   page: LessonPage
+  allPages: LessonPage[]
   onSave: (body: any) => void
   onDelete: () => void
   saving: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState(page.title)
-  const [body, setBody] = useState<string>(() =>
-    typeof page.content === 'string'
-      ? page.content
-      : JSON.stringify(page.content ?? {}, null, 2),
-  )
+  const [content, setContent] = useState<any>(() => normalizeContent(page))
 
   return (
     <li className="rounded-md border border-slate-200">
@@ -611,7 +651,7 @@ function PageRow({
         </button>
       </div>
       {open && (
-        <div className="space-y-2 border-t border-slate-100 px-3 py-3">
+        <div className="space-y-3 border-t border-slate-100 px-3 py-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">Title</label>
             <input
@@ -620,33 +660,25 @@ function PageRow({
               className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
             />
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
-              Content (JSON or text)
-            </label>
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              rows={6}
-              className="w-full rounded-md border border-slate-300 px-2 py-1.5 font-mono text-xs"
+
+          {page.pageType === 'CONTENT' && (
+            <ContentEditor value={content} onChange={setContent} />
+          )}
+          {page.pageType === 'QUESTION' && (
+            <QuestionEditor value={content} onChange={setContent} />
+          )}
+          {page.pageType === 'BRANCH' && (
+            <BranchEditor
+              value={content}
+              onChange={setContent}
+              otherPages={allPages.filter((p) => p.id !== page.id)}
             />
-            <p className="mt-1 text-[11px] text-slate-500">
-              Tip: stored as JSON. For content pages, use{' '}
-              <code className="rounded bg-slate-100 px-1">{`{"body": "..."}`}</code>.
-            </p>
-          </div>
+          )}
+
           <div className="flex justify-end">
             <button
               disabled={saving}
-              onClick={() => {
-                let content: any
-                try {
-                  content = JSON.parse(body)
-                } catch {
-                  content = { body }
-                }
-                onSave({ title: title.trim() || page.title, content })
-              }}
+              onClick={() => onSave({ title: title.trim() || page.title, content })}
               className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save page'}
@@ -655,5 +687,439 @@ function PageRow({
         </div>
       )}
     </li>
+  )
+}
+
+// ─── Per-type editors ─────────────────────────────────────────────────
+
+function normalizeContent(page: LessonPage): any {
+  const c =
+    typeof page.content === 'object' && page.content !== null
+      ? { ...page.content }
+      : {}
+  if (page.pageType === 'CONTENT') {
+    return {
+      body: typeof c.body === 'string' ? c.body : '',
+      mediaUrl: c.mediaUrl ?? null,
+      mediaType: c.mediaType ?? null,
+    }
+  }
+  if (page.pageType === 'QUESTION') {
+    const qt = String(c.questionType || 'MCQ_SINGLE').toUpperCase()
+    const allowed = ['MCQ_SINGLE', 'MCQ_MULTI', 'TRUE_FALSE', 'SHORT_ANSWER', 'NUMERIC']
+    const questionType = allowed.includes(qt) ? qt : 'MCQ_SINGLE'
+    return {
+      questionType,
+      prompt: typeof c.prompt === 'string' ? c.prompt : '',
+      explanation: c.explanation ?? '',
+      points: Number.isFinite(Number(c.points)) ? Number(c.points) : 1,
+      choices: Array.isArray(c.choices)
+        ? c.choices.map((ch: any, i: number) => ({
+            id: String(ch?.id ?? `c${i + 1}`),
+            text: String(ch?.text ?? ''),
+          }))
+        : [
+            { id: 'c1', text: '' },
+            { id: 'c2', text: '' },
+          ],
+      correctChoiceId: c.correctChoiceId ?? null,
+      correctChoiceIds: Array.isArray(c.correctChoiceIds)
+        ? c.correctChoiceIds.map((s: any) => String(s))
+        : [],
+      correctAnswer: !!c.correctAnswer,
+      acceptedAnswers: Array.isArray(c.acceptedAnswers)
+        ? c.acceptedAnswers.map((s: any) => String(s))
+        : [],
+      caseSensitive: !!c.caseSensitive,
+      correctValue: Number.isFinite(Number(c.correctValue)) ? Number(c.correctValue) : 0,
+      tolerance: Number.isFinite(Number(c.tolerance)) ? Number(c.tolerance) : 0,
+    }
+  }
+  // BRANCH
+  return {
+    prompt: typeof c.prompt === 'string' ? c.prompt : '',
+    choices: Array.isArray(c.choices) && c.choices.length > 0
+      ? c.choices.map((ch: any, i: number) => ({
+          id: String(ch?.id ?? `b${i + 1}`),
+          text: String(ch?.text ?? ''),
+          nextPageId: ch?.nextPageId ?? null,
+        }))
+      : [
+          { id: 'b1', text: '', nextPageId: null },
+          { id: 'b2', text: '', nextPageId: null },
+        ],
+  }
+}
+
+function ContentEditor({
+  value,
+  onChange,
+}: {
+  value: any
+  onChange: (v: any) => void
+}) {
+  return (
+    <div className="space-y-2">
+      <div>
+        <label className="mb-1 block text-xs font-medium text-slate-600">Body</label>
+        <textarea
+          value={value.body ?? ''}
+          onChange={(e) => onChange({ ...value, body: e.target.value })}
+          rows={6}
+          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          placeholder="Lesson content (plain text or markdown)…"
+        />
+      </div>
+      <div className="grid gap-2 sm:grid-cols-[1fr_140px]">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-600">
+            Media URL (optional)
+          </label>
+          <input
+            value={value.mediaUrl ?? ''}
+            onChange={(e) =>
+              onChange({ ...value, mediaUrl: e.target.value || null })
+            }
+            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            placeholder="https://…"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-600">
+            Media type
+          </label>
+          <select
+            value={value.mediaType ?? ''}
+            onChange={(e) =>
+              onChange({ ...value, mediaType: e.target.value || null })
+            }
+            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          >
+            <option value="">—</option>
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+            <option value="embed">Embed</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function QuestionEditor({
+  value,
+  onChange,
+}: {
+  value: any
+  onChange: (v: any) => void
+}) {
+  const qt: QuestionType = value.questionType
+
+  function updateChoice(idx: number, patch: Partial<{ text: string }>) {
+    const choices = [...(value.choices || [])]
+    choices[idx] = { ...choices[idx], ...patch }
+    onChange({ ...value, choices })
+  }
+  function addChoice() {
+    const choices = [...(value.choices || [])]
+    const id = `c${choices.length + 1}_${Math.random().toString(36).slice(2, 6)}`
+    choices.push({ id, text: '' })
+    onChange({ ...value, choices })
+  }
+  function removeChoice(idx: number) {
+    const choices = [...(value.choices || [])]
+    const [removed] = choices.splice(idx, 1)
+    const next: any = { ...value, choices }
+    if (next.correctChoiceId === removed?.id) next.correctChoiceId = null
+    if (Array.isArray(next.correctChoiceIds)) {
+      next.correctChoiceIds = next.correctChoiceIds.filter(
+        (id: string) => id !== removed?.id,
+      )
+    }
+    onChange(next)
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-2 sm:grid-cols-[1fr_120px]">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-600">
+            Question type
+          </label>
+          <select
+            value={qt}
+            onChange={(e) => onChange({ ...value, questionType: e.target.value })}
+            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          >
+            <option value="MCQ_SINGLE">Multiple choice (single)</option>
+            <option value="MCQ_MULTI">Multiple choice (multi)</option>
+            <option value="TRUE_FALSE">True / False</option>
+            <option value="SHORT_ANSWER">Short answer</option>
+            <option value="NUMERIC">Numeric</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-600">Points</label>
+          <input
+            type="number"
+            min={0}
+            value={value.points ?? 1}
+            onChange={(e) => onChange({ ...value, points: Number(e.target.value) })}
+            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-xs font-medium text-slate-600">Prompt</label>
+        <textarea
+          value={value.prompt ?? ''}
+          onChange={(e) => onChange({ ...value, prompt: e.target.value })}
+          rows={2}
+          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+        />
+      </div>
+
+      {(qt === 'MCQ_SINGLE' || qt === 'MCQ_MULTI') && (
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-slate-600">Choices</label>
+          {(value.choices || []).map((ch: any, idx: number) => {
+            const isCorrect =
+              qt === 'MCQ_SINGLE'
+                ? value.correctChoiceId === ch.id
+                : Array.isArray(value.correctChoiceIds) &&
+                  value.correctChoiceIds.includes(ch.id)
+            return (
+              <div key={ch.id} className="flex items-center gap-2">
+                <input
+                  type={qt === 'MCQ_SINGLE' ? 'radio' : 'checkbox'}
+                  name="correct"
+                  checked={isCorrect}
+                  onChange={() => {
+                    if (qt === 'MCQ_SINGLE') {
+                      onChange({ ...value, correctChoiceId: ch.id })
+                    } else {
+                      const set = new Set<string>(value.correctChoiceIds || [])
+                      if (set.has(ch.id)) set.delete(ch.id)
+                      else set.add(ch.id)
+                      onChange({ ...value, correctChoiceIds: Array.from(set) })
+                    }
+                  }}
+                />
+                <input
+                  value={ch.text}
+                  onChange={(e) => updateChoice(idx, { text: e.target.value })}
+                  placeholder={`Choice ${idx + 1}`}
+                  className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeChoice(idx)}
+                  className="rounded px-2 py-1 text-xs text-rose-600 hover:bg-rose-50"
+                >
+                  ✕
+                </button>
+              </div>
+            )
+          })}
+          <button
+            type="button"
+            onClick={addChoice}
+            className="mt-1 rounded-md border border-dashed border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+          >
+            + Add choice
+          </button>
+          <p className="text-[11px] text-slate-500">
+            {qt === 'MCQ_SINGLE'
+              ? 'Tick the single correct choice.'
+              : 'Tick every correct choice (all required, no extras).'}
+          </p>
+        </div>
+      )}
+
+      {qt === 'TRUE_FALSE' && (
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-600">
+            Correct answer
+          </label>
+          <div className="flex gap-3 text-sm">
+            <label className="flex items-center gap-1">
+              <input
+                type="radio"
+                checked={value.correctAnswer === true}
+                onChange={() => onChange({ ...value, correctAnswer: true })}
+              />
+              True
+            </label>
+            <label className="flex items-center gap-1">
+              <input
+                type="radio"
+                checked={value.correctAnswer === false}
+                onChange={() => onChange({ ...value, correctAnswer: false })}
+              />
+              False
+            </label>
+          </div>
+        </div>
+      )}
+
+      {qt === 'SHORT_ANSWER' && (
+        <div className="space-y-2">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              Accepted answers (one per line)
+            </label>
+            <textarea
+              value={(value.acceptedAnswers || []).join('\n')}
+              onChange={(e) =>
+                onChange({
+                  ...value,
+                  acceptedAnswers: e.target.value
+                    .split('\n')
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                })
+              }
+              rows={3}
+              className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={!!value.caseSensitive}
+              onChange={(e) => onChange({ ...value, caseSensitive: e.target.checked })}
+            />
+            Case sensitive
+          </label>
+        </div>
+      )}
+
+      {qt === 'NUMERIC' && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              Correct value
+            </label>
+            <input
+              type="number"
+              value={value.correctValue ?? 0}
+              onChange={(e) =>
+                onChange({ ...value, correctValue: Number(e.target.value) })
+              }
+              className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              Tolerance (±)
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={value.tolerance ?? 0}
+              onChange={(e) =>
+                onChange({ ...value, tolerance: Number(e.target.value) })
+              }
+              className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            />
+          </div>
+        </div>
+      )}
+
+      <div>
+        <label className="mb-1 block text-xs font-medium text-slate-600">
+          Explanation (shown after answering)
+        </label>
+        <textarea
+          value={value.explanation ?? ''}
+          onChange={(e) => onChange({ ...value, explanation: e.target.value })}
+          rows={2}
+          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+        />
+      </div>
+    </div>
+  )
+}
+
+function BranchEditor({
+  value,
+  onChange,
+  otherPages,
+}: {
+  value: any
+  onChange: (v: any) => void
+  otherPages: LessonPage[]
+}) {
+  function updateChoice(idx: number, patch: Partial<{ text: string; nextPageId: string | null }>) {
+    const choices = [...(value.choices || [])]
+    choices[idx] = { ...choices[idx], ...patch }
+    onChange({ ...value, choices })
+  }
+  function addChoice() {
+    const choices = [...(value.choices || [])]
+    const id = `b${choices.length + 1}_${Math.random().toString(36).slice(2, 6)}`
+    choices.push({ id, text: '', nextPageId: null })
+    onChange({ ...value, choices })
+  }
+  function removeChoice(idx: number) {
+    const choices = [...(value.choices || [])]
+    choices.splice(idx, 1)
+    onChange({ ...value, choices })
+  }
+
+  return (
+    <div className="space-y-2">
+      <div>
+        <label className="mb-1 block text-xs font-medium text-slate-600">Prompt</label>
+        <textarea
+          value={value.prompt ?? ''}
+          onChange={(e) => onChange({ ...value, prompt: e.target.value })}
+          rows={2}
+          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+        />
+      </div>
+      <label className="block text-xs font-medium text-slate-600">
+        Choices → next page
+      </label>
+      {(value.choices || []).map((ch: any, idx: number) => (
+        <div key={ch.id} className="grid gap-2 sm:grid-cols-[1fr_220px_auto]">
+          <input
+            value={ch.text}
+            onChange={(e) => updateChoice(idx, { text: e.target.value })}
+            placeholder={`Choice ${idx + 1}`}
+            className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          />
+          <select
+            value={ch.nextPageId ?? ''}
+            onChange={(e) =>
+              updateChoice(idx, { nextPageId: e.target.value || null })
+            }
+            className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          >
+            <option value="">— next in order —</option>
+            {otherPages.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.order + 1}. {p.title}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => removeChoice(idx)}
+            className="rounded px-2 py-1 text-xs text-rose-600 hover:bg-rose-50"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addChoice}
+        className="rounded-md border border-dashed border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+      >
+        + Add choice
+      </button>
+    </div>
   )
 }
