@@ -120,9 +120,19 @@ export default function LessonPlayPage() {
 
   const [currentPageId, setCurrentPageId] = useState<string | null>(null)
   useEffect(() => {
-    if (attempt && currentPageId === null) {
-      setCurrentPageId(attempt.currentPageId ?? pages[0]?.id ?? null)
-    }
+    if (!attempt || pages.length === 0) return
+    // If we haven't picked a page yet, OR the page we picked no longer exists
+    // (e.g. the teacher edited/deleted pages while this attempt was in progress),
+    // fall back to the attempt's stored page or the first page in the lesson.
+    const stillExists =
+      currentPageId != null && pages.some((p) => p.id === currentPageId)
+    if (stillExists) return
+    const attemptPageExists =
+      attempt.currentPageId != null &&
+      pages.some((p) => p.id === attempt.currentPageId)
+    setCurrentPageId(
+      attemptPageExists ? attempt.currentPageId : pages[0].id,
+    )
   }, [attempt, pages, currentPageId])
 
   const currentPage = useMemo(
