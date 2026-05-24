@@ -1273,16 +1273,32 @@ export class ReportsService {
     const printWeeklySchedule = parseWeeklySchedule(cls.schedule);
     const schoolDays = this.computeSchoolDays(start, end, printSyBounds.yearStart, printSyBounds.yearEnd, rangeHolidaySet, printWeeklySchedule);
 
+    // Build set of dates that are scheduled day-off (e.g. SAT/SUN per weekly schedule).
+    // Records on these dates must NOT be counted in permission/absent totals —
+    // they are simply non-school days, not actual leave/permission absences.
+    const scheduledDayOffDates = new Set<string>();
+    if (printWeeklySchedule) {
+      let cur = new Date(start);
+      while (cur < end) {
+        if (isScheduleDayOff(printWeeklySchedule, cur)) {
+          scheduledDayOffDates.add(cur.toISOString().split('T')[0]);
+        }
+        cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000);
+      }
+    }
+
     const students = cls.students.map((s, idx) => {
       const studentRecs = records.filter(r => r.studentId === s.id);
-      const studentDays = new Set(studentRecs.map((r: any) => r.date.toISOString().split('T')[0]));
+      // Exclude records on scheduled day-off dates before calculating totals
+      const countableRecs = studentRecs.filter((r: any) => !scheduledDayOffDates.has(r.date.toISOString().split('T')[0]));
+      const studentDays = new Set(countableRecs.map((r: any) => r.date.toISOString().split('T')[0]));
       const noRecordAbsent = [...schoolDays].filter(d => !studentDays.has(d)).length;
       const halfDayTotals = countPrintReportTotals(
-        studentRecs as any,
+        countableRecs as any,
         (r: any) => r.studentId,
         formatRule.caseStudyABEnabled ?? true,
       );
-      const permissionBreakdown = buildPermissionTypeBreakdown(studentRecs as any);
+      const permissionBreakdown = buildPermissionTypeBreakdown(countableRecs as any);
       return {
         studentId: s.id,
         studentNumber: s.studentNumber || String(idx + 1).padStart(4, '0'),
