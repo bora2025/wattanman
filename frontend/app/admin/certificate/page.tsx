@@ -111,7 +111,14 @@ export default function CertificatePage() {
   const [studentPage, setStudentPage] = useState(1);
   const studentPageSize = 12;
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
-  const [topRankFilter, setTopRankFilter] = useState<number | 'all'>('all');
+  const [topRankFilter, setTopRankFilter] = useState<number | 'all'>(() => {
+    try {
+      const v = typeof window !== 'undefined' ? localStorage.getItem('cert-student-rank-filter') : null;
+      if (!v || v === 'all') return 'all';
+      const n = Number(v);
+      return [3, 4, 5].includes(n) ? (n as number) : 'all';
+    } catch { return 'all'; }
+  });
 
   const [studentDesign, setStudentDesign] = useState<CardDesign>(BLANK_CERTIFICATE_STUDENT);
   const [studentDesignLoading, setStudentDesignLoading] = useState(true);
@@ -288,9 +295,8 @@ export default function CertificatePage() {
     }
   };
 
-  // Fetch scores when a class is selected; reset rank filter on class change
+  // Fetch scores when a class is selected
   useEffect(() => {
-    setTopRankFilter('all');
     setSelectedStudentIds(new Set());
     if (selectedClassId) fetchClassScores(selectedClassId);
     else setScoresByStudentId({});
@@ -592,7 +598,12 @@ export default function CertificatePage() {
                         {(['all', 3, 4, 5] as const).map((opt) => (
                           <button
                             key={String(opt)}
-                            onClick={() => { setTopRankFilter(opt); setStudentPage(1); setSelectedStudentIds(new Set()); }}
+                            onClick={() => {
+                              setTopRankFilter(opt);
+                              try { localStorage.setItem('cert-student-rank-filter', String(opt)); } catch { /**/ }
+                              setStudentPage(1);
+                              setSelectedStudentIds(new Set());
+                            }}
                             className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                               topRankFilter === opt
                                 ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
