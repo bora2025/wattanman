@@ -583,6 +583,34 @@ export default function CertificatePage() {
 
               {selectedStudyYear && !loadingClasses && selectedClass && (
                 <div className="space-y-4">
+
+                  {/* ── Generate for bar (above the controls card) ── */}
+                  {hasScores && (
+                    <div className="card px-4 py-3 flex items-center gap-3 flex-wrap border-l-4 border-l-amber-400">
+                      <span className="text-xs font-semibold text-slate-600 shrink-0">🏆 Generate for:</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {(['all', 3, 4, 5] as const).map((opt) => (
+                          <button
+                            key={String(opt)}
+                            onClick={() => { setTopRankFilter(opt); setStudentPage(1); setSelectedStudentIds(new Set()); }}
+                            className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                              topRankFilter === opt
+                                ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                                : 'border-slate-200 text-slate-600 hover:bg-amber-50 hover:border-amber-200'
+                            }`}
+                          >
+                            {opt === 'all' ? '🎓 All Students' : `🏆 Top ${opt}`}
+                          </button>
+                        ))}
+                      </div>
+                      {topRankFilter !== 'all' && (
+                        <span className="ml-auto text-xs text-amber-600 font-medium shrink-0">
+                          {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''} shown
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <div className="card p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <button
@@ -634,29 +662,6 @@ export default function CertificatePage() {
                         )}
                       </div>
                     </div>
-                    {hasScores && (
-                      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-medium text-slate-500 shrink-0">🏆 Generate for:</span>
-                        {(['all', 3, 4, 5] as const).map((opt) => (
-                          <button
-                            key={String(opt)}
-                            onClick={() => { setTopRankFilter(opt); setStudentPage(1); setSelectedStudentIds(new Set()); }}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                              topRankFilter === opt
-                                ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
-                                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                            }`}
-                          >
-                            {opt === 'all' ? '🎓 All Students' : `🏆 Top ${opt}`}
-                          </button>
-                        ))}
-                        {topRankFilter !== 'all' && (
-                          <span className="text-xs text-amber-600 font-medium">
-                            · {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''} shown
-                          </span>
-                        )}
-                      </div>
-                    )}
                     {selectedStudentIds.size > 0 && (
                       <div className="mt-3 pt-3 border-t border-slate-100">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium border border-amber-200">
