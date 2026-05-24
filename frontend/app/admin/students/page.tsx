@@ -690,11 +690,13 @@ function ManageStudents() {
                         </tbody>
                       </table>
                     )}
-                  </div>
 
-                  {/* Footer */}
-                  <div className="text-xs text-slate-400 text-right">
-                    {filteredStudents.length} of {students.length} students shown
+                    {/* Footer — sits right below the cards/table */}
+                    {filteredStudents.length > 0 && (
+                      <p className="text-xs text-slate-400 text-right pt-2 pb-1">
+                        {filteredStudents.length} of {students.length} students shown
+                      </p>
+                    )}
                   </div>
                 </>
               )}
