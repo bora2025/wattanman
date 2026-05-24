@@ -11,7 +11,7 @@ import { useLanguage } from '../../../lib/i18n';
 interface StudyYear { id: string; year: number; label: string | null; isCurrent: boolean }
 interface Grade { id: string; name: string; subject: string; teacher?: { name: string }; studyYearId?: string }
 interface Student {
-  id: string; studentNumber: string; name: string; email: string; phone: string;
+  id: string; userId: string; studentNumber: string; name: string; email: string; phone: string;
   photo: string | null; sex: string | null; dateOfBirth: string | null;
   address: string; generation?: string; parentId?: string | null;
 }
@@ -60,6 +60,11 @@ function ManageStudents() {
   /* ── CSV ── */
   const [csvUploading, setCsvUploading] = useState(false);
   const [csvResult, setCsvResult] = useState<{ total: number; success: number; errors: number; skipped: number } | null>(null);
+
+  /* ── reset password ── */
+  const [resetStudent, setResetStudent] = useState<Student | null>(null);
+  const [resetPwd, setResetPwd] = useState('');
+  const [resetMsg, setResetMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   /* ─────────────────── fetch helpers ─────────────────── */
   const fetchStudyYears = async () => {
@@ -220,6 +225,25 @@ function ManageStudents() {
       await fetchStudents(selectedGrade.id);
       setGradeCounts(prev => ({ ...prev, [selectedGrade.id]: (prev[selectedGrade.id] ?? 0) + 1 }));
     } finally { setAddingStudent(false); }
+  };
+
+  const handleResetPwd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetStudent) return;
+    if (resetPwd.length < 6) { setResetMsg({ text: 'Password must be at least 6 characters', ok: false }); return; }
+    try {
+      const res = await apiFetch(`/api/auth/users/${resetStudent.userId}/password`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: resetPwd }),
+      });
+      if (res.ok) {
+        setResetMsg({ text: `Password reset for ${resetStudent.name}`, ok: true });
+        setTimeout(() => { setResetStudent(null); setResetPwd(''); setResetMsg(null); }, 1500);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setResetMsg({ text: d.message || 'Failed to reset password', ok: false });
+      }
+    } catch { setResetMsg({ text: 'Network error', ok: false }); }
   };
 
   const handleCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -469,6 +493,7 @@ function ManageStudents() {
                                     <button onClick={() => editingId === s.id ? setEditingId(null) : handleEdit(s)} className="btn-warning btn-sm">
                                       {editingId === s.id ? 'Cancel' : 'Edit'}
                                     </button>
+                                    <button onClick={() => { setResetStudent(s); setResetPwd(''); setResetMsg(null); }} className="btn-secondary btn-sm">Reset PW</button>
                                     <button onClick={() => handleDelete(s)} className="btn-danger btn-sm">Delete</button>
                                   </div>
                                 </td>
@@ -558,6 +583,40 @@ function ManageStudents() {
           </div>
         </div>
       </div>
+
+      {/* ── Reset Password Modal ── */}
+      {resetStudent && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setResetStudent(null); setResetMsg(null); }}>
+          <div className="bg-white rounded-xl max-w-md w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-slate-800">Reset Password</h3>
+            <p className="text-sm text-slate-500">
+              Set a new password for <strong className="text-slate-800">{resetStudent.name}</strong> ({resetStudent.email}).
+              Existing sessions will be revoked.
+            </p>
+            <form onSubmit={handleResetPwd} className="space-y-3">
+              <div>
+                <label className="form-label">New password</label>
+                <input
+                  type="text"
+                  value={resetPwd}
+                  onChange={e => { setResetPwd(e.target.value); setResetMsg(null); }}
+                  required
+                  minLength={6}
+                  placeholder="Min 6 characters"
+                  autoFocus
+                />
+              </div>
+              {resetMsg && (
+                <p className={`text-sm font-medium ${resetMsg.ok ? 'text-emerald-600' : 'text-red-600'}`}>{resetMsg.text}</p>
+              )}
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => { setResetStudent(null); setResetMsg(null); }} className="btn-secondary">Cancel</button>
+                <button type="submit" className="btn-primary">Reset Password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
