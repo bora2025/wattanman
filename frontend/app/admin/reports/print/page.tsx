@@ -36,6 +36,7 @@ interface StudentDailyRow {
   checkOutAfternoon: string | null
   dayOff: boolean
   isHoliday?: boolean
+  isScheduleDayOff?: boolean
   session1Status: string | null
   session2Status: string | null
   session3Status: string | null
@@ -469,28 +470,37 @@ function PrintReportContent() {
               <>
                 {dailyRows.map((row, idx) => {
                   const isHoliday = row.isHoliday
+                  // When the class weekly schedule marks this day as day-off but there are
+                  // no attendance records (status = null), fall back to 'PERMISSION' so
+                  // TimeCell renders 'P' instead of the absent '✗'.
+                  const isDayOffRow = row.dayOff || row.isScheduleDayOff
+                  const dayOffFallback = isDayOffRow ? 'PERMISSION' : null
+                  const s1 = row.session1Status ?? dayOffFallback
+                  const s2 = row.session2Status ?? dayOffFallback
+                  const s3 = row.session3Status ?? dayOffFallback
+                  const s4 = row.session4Status ?? dayOffFallback
                   return (
-                    <tr key={row.studentId} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                    <tr key={row.studentId} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}${isDayOffRow ? ' opacity-70' : ''}`}>
                       <td className="border border-slate-300 px-2 py-1.5 text-center font-mono">{row.studentNumber}</td>
                       <td className="border border-slate-300 px-2 py-1.5 text-slate-800">{row.studentName}</td>
                       {showMorning && (
                         <td className="border border-slate-300 px-2 py-1.5 text-center">
-                          {isHoliday ? <span className="text-slate-400">{'\u2014'}</span> : <TimeCell time={row.checkInMorning} status={row.session1Status} />}
+                          {isHoliday ? <span className="text-slate-400">{'\u2014'}</span> : <TimeCell time={row.checkInMorning} status={s1} />}
                         </td>
                       )}
                       {showMorning && (
                         <td className="border border-slate-300 px-2 py-1.5 text-center">
-                          {isHoliday ? <span className="text-slate-400">{'\u2014'}</span> : <TimeCell time={row.checkOutMorning} status={row.session2Status} />}
+                          {isHoliday ? <span className="text-slate-400">{'\u2014'}</span> : <TimeCell time={row.checkOutMorning} status={s2} />}
                         </td>
                       )}
                       {showAfternoon && (
                         <td className="border border-slate-300 px-2 py-1.5 text-center">
-                          {isHoliday ? <span className="text-slate-400">{'\u2014'}</span> : <TimeCell time={row.checkInAfternoon} status={row.session3Status} />}
+                          {isHoliday ? <span className="text-slate-400">{'\u2014'}</span> : <TimeCell time={row.checkInAfternoon} status={s3} />}
                         </td>
                       )}
                       {showAfternoon && (
                         <td className="border border-slate-300 px-2 py-1.5 text-center">
-                          {isHoliday ? <span className="text-slate-400">{'\u2014'}</span> : <TimeCell time={row.checkOutAfternoon} status={row.session4Status} />}
+                          {isHoliday ? <span className="text-slate-400">{'\u2014'}</span> : <TimeCell time={row.checkOutAfternoon} status={s4} />}
                         </td>
                       )}
                     </tr>
