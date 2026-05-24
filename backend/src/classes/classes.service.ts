@@ -165,11 +165,39 @@ export class ClassesService {
   }
 
   async removeStudentFromClass(classId: string, studentId: string) {
-    return this.prisma.student.update({
+    // Fully delete the student and their user account from the database.
+    // This prevents orphaned duplicates accumulating across CSV re-imports.
+    const student = await this.prisma.student.findUnique({
       where: { id: studentId },
-      data: { classId: null },
-      include: { user: true },
+      select: { id: true, userId: true },
     });
+    if (!student) return { success: false, message: 'Student not found' };
+
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Delete all child records that reference student (no DB-level cascade)
+      await tx.attendance.deleteMany({ where: { studentId } });
+      await tx.feeRecord.deleteMany({ where: { studentId } });
+      await tx.parentLinkRequest.deleteMany({ where: { studentId } });
+
+      // ExamAttempt, AssignmentSubmission, CourseEnrollment, CourseAttendance,
+      // LessonView — delete only if the models exist in this Prisma client.
+      const p = tx as any;
+      if (p.examAttempt) await p.examAttempt.deleteMany({ where: { studentId } });
+      if (p.assignmentSubmission) await p.assignmentSubmission.deleteMany({ where: { studentId } });
+      if (p.courseEnrollment) await p.courseEnrollment.deleteMany({ where: { studentId } });
+      if (p.courseAttendance) await p.courseAttendance.deleteMany({ where: { studentId } });
+      if (p.lessonView) await p.lessonView.deleteMany({ where: { studentId } });
+
+      // 2. Delete student (cardAliases cascade via DB onDelete: Cascade)
+      await tx.student.delete({ where: { id: studentId } });
+
+      // 3. Delete the linked user account
+      await tx.refreshToken.deleteMany({ where: { userId: student.userId } });
+      await tx.notification.deleteMany({ where: { userId: student.userId } });
+      await tx.user.delete({ where: { id: student.userId, role: 'STUDENT' } });
+    });
+
+    return { success: true };
   }
 
   async getAvailableStudents(classId: string) {

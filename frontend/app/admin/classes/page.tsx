@@ -592,15 +592,22 @@ function ManageClasses() {
     } catch (err) { console.error('Failed to add student'); }
   };
 
-  const handleRemoveStudent = async (studentId: string) => {
+  const handleRemoveStudent = async (studentId: string, studentName: string) => {
     if (!selectedClass) return;
+    const confirmed = window.confirm(
+      `Permanently delete "${studentName}" from the database?\n\nThis will remove all their attendance records, fee records, and user account. This cannot be undone.`
+    );
+    if (!confirmed) return;
     try {
       const res = await apiFetch(`/api/classes/${selectedClass.id}/students/${studentId}`, { method: 'DELETE' });
       if (res.ok) {
         await fetchClassStudents(selectedClass.id);
         await fetchAvailableStudents(selectedClass.id);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        alert(`Failed to delete student: ${body?.message ?? res.statusText}`);
       }
-    } catch (err) { console.error('Failed to remove student'); }
+    } catch (err) { console.error('Failed to delete student', err); }
   };
 
   const handleEditStudent = (student: Student) => {
@@ -1252,7 +1259,7 @@ function ManageClasses() {
                                     <td className="px-3 py-2 text-right">
                                       <div className="flex justify-end gap-1">
                                         <button onClick={() => handleEditStudent(s)} className="btn-warning btn-sm">Edit</button>
-                                        <button onClick={() => handleRemoveStudent(s.id)} className="btn-danger btn-sm">Remove</button>
+                                        <button onClick={() => handleRemoveStudent(s.id, s.name)} className="btn-danger btn-sm">Delete</button>
                                       </div>
                                     </td>
                                   </tr>
