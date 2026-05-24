@@ -111,6 +111,7 @@ export default function CertificatePage() {
   const [studentPage, setStudentPage] = useState(1);
   const studentPageSize = 12;
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
+  const [topRankFilter, setTopRankFilter] = useState<number | 'all'>('all');
 
   const [studentDesign, setStudentDesign] = useState<CardDesign>(BLANK_CERTIFICATE_STUDENT);
   const [studentDesignLoading, setStudentDesignLoading] = useState(true);
@@ -287,8 +288,10 @@ export default function CertificatePage() {
     }
   };
 
-  // Fetch scores when a class is selected
+  // Fetch scores when a class is selected; reset rank filter on class change
   useEffect(() => {
+    setTopRankFilter('all');
+    setSelectedStudentIds(new Set());
     if (selectedClassId) fetchClassScores(selectedClassId);
     else setScoresByStudentId({});
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -408,13 +411,29 @@ export default function CertificatePage() {
   const selectedClass = classes.find((c) => c.id === selectedClassId);
   const totalStudents = classes.reduce((s, c) => s + c.students.length, 0);
 
-  const filteredStudents = selectedClass
-    ? selectedClass.students.filter((s) =>
-        !studentSearch ||
-        s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
-        (s.studentNumber && s.studentNumber.toLowerCase().includes(studentSearch.toLowerCase()))
-      )
-    : [];
+  const hasScores = Object.keys(scoresByStudentId).length > 0;
+  const filteredStudents = (() => {
+    if (!selectedClass) return [];
+    let list = selectedClass.students.filter((s) =>
+      !studentSearch ||
+      s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
+      (s.studentNumber && s.studentNumber.toLowerCase().includes(studentSearch.toLowerCase()))
+    );
+    // Sort by ranking when scores are loaded
+    if (hasScores) {
+      list = [...list].sort(
+        (a, b) => (scoresByStudentId[a.id]?.ranking ?? 99999) - (scoresByStudentId[b.id]?.ranking ?? 99999)
+      );
+    }
+    // Apply top-N filter
+    if (topRankFilter !== 'all' && hasScores) {
+      list = list.filter((s) => {
+        const rank = scoresByStudentId[s.id]?.ranking;
+        return rank !== undefined && rank <= (topRankFilter as number);
+      });
+    }
+    return list;
+  })();
   const totalStudentPages = Math.max(1, Math.ceil(filteredStudents.length / studentPageSize));
   const safeStudentPage = Math.min(studentPage, totalStudentPages);
   const pagedStudents = filteredStudents.slice((safeStudentPage - 1) * studentPageSize, safeStudentPage * studentPageSize);
@@ -596,21 +615,48 @@ export default function CertificatePage() {
                         </div>
                         <button onClick={() => setSelectedStudentIds(new Set(filteredStudents.map((s) => s.id)))} className="px-3 py-2 text-xs rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 font-medium transition-colors">☑ All</button>
                         <button onClick={() => setSelectedStudentIds(new Set())} className="px-3 py-2 text-xs rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 font-medium transition-colors">☐ None</button>
-                        {selectedClass.students.length > 0 && (
+                        {filteredStudents.length > 0 && (
                           <button
                             onClick={() => {
                               const toExport = selectedStudentIds.size > 0
-                                ? selectedClass.students.filter((s) => selectedStudentIds.has(s.id))
-                                : selectedClass.students;
+                                ? filteredStudents.filter((s) => selectedStudentIds.has(s.id))
+                                : filteredStudents;
                               exportAllStudentsPDF(selectedClass.name, studyYearLabel, toExport, selectedClass.name);
                             }}
                             className="px-3 py-2 rounded-lg text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors"
                           >
-                            📄 {selectedStudentIds.size > 0 ? `PDF (${selectedStudentIds.size})` : `PDF All (${selectedClass.students.length})`}
+                            📄 {selectedStudentIds.size > 0
+                              ? `PDF (${selectedStudentIds.size})`
+                              : topRankFilter !== 'all'
+                                ? `PDF Top ${topRankFilter} (${filteredStudents.length})`
+                                : `PDF All (${filteredStudents.length})`}
                           </button>
                         )}
                       </div>
                     </div>
+                    {hasScores && (
+                      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-medium text-slate-500 shrink-0">🏆 Generate for:</span>
+                        {(['all', 3, 4, 5] as const).map((opt) => (
+                          <button
+                            key={String(opt)}
+                            onClick={() => { setTopRankFilter(opt); setStudentPage(1); setSelectedStudentIds(new Set()); }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                              topRankFilter === opt
+                                ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                            }`}
+                          >
+                            {opt === 'all' ? '🎓 All Students' : `🏆 Top ${opt}`}
+                          </button>
+                        ))}
+                        {topRankFilter !== 'all' && (
+                          <span className="text-xs text-amber-600 font-medium">
+                            · {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''} shown
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {selectedStudentIds.size > 0 && (
                       <div className="mt-3 pt-3 border-t border-slate-100">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium border border-amber-200">
@@ -634,6 +680,7 @@ export default function CertificatePage() {
                           design={studentDesign}
                           fieldValues={buildStudentFields(student, selectedClass.name, studyYearLabel)}
                           isSelected={selectedStudentIds.has(student.id)}
+                          ranking={scoresByStudentId[student.id]?.ranking}
                           onToggleSelect={() => setSelectedStudentIds((prev) => {
                             const next = new Set(prev);
                             next.has(student.id) ? next.delete(student.id) : next.add(student.id);
@@ -883,7 +930,7 @@ function PaginationBar({
 }
 
 function CertPreview({
-  name, subtitle, photo, design, fieldValues, isSelected, onToggleSelect, onDownloadPDF, onDownloadPNG,
+  name, subtitle, photo, design, fieldValues, isSelected, onToggleSelect, onDownloadPDF, onDownloadPNG, ranking,
 }: {
   name: string;
   subtitle: string;
@@ -894,6 +941,7 @@ function CertPreview({
   onToggleSelect: () => void;
   onDownloadPDF: () => void;
   onDownloadPNG: () => void;
+  ranking?: number;
 }) {
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [rendering, setRendering] = useState(true);
@@ -927,6 +975,16 @@ function CertPreview({
         {isSelected && (
           <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center shadow">
             <span className="text-white text-xs font-bold leading-none">✓</span>
+          </div>
+        )}
+        {ranking !== undefined && ranking <= 3 && (
+          <div className="absolute top-2 left-2 text-2xl leading-none drop-shadow-md select-none pointer-events-none">
+            {ranking === 1 ? '🥇' : ranking === 2 ? '🥈' : '🥉'}
+          </div>
+        )}
+        {ranking !== undefined && ranking > 3 && (
+          <div className="absolute top-2 left-2 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow leading-none pointer-events-none">
+            #{ranking}
           </div>
         )}
       </div>
