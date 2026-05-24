@@ -64,6 +64,36 @@ interface StaffUser {
 
 type ActiveTab = 'student' | 'staff';
 
+// ── Scoring interfaces ────────────────────────────────────────────────────────
+
+interface ScoringEntry { studentId: string; subjectId: string; score: number | null }
+interface ScoringSubject { id: string; maxScore: number }
+interface ScoringExamTab { id: string }
+interface ScoringSheetClass { classId: string }
+interface ScoringSheet {
+  id: string;
+  classes: ScoringSheetClass[];
+  subjects: ScoringSubject[];
+  examTabs: ScoringExamTab[];
+}
+interface StudentScoreStats {
+  total: number;
+  maxTotal: number;
+  averagePct: number;
+  gpa: number;
+  grade: string;
+  ranking: number;
+}
+
+const CERT_GRADE_MAP = [
+  { min: 90, letter: 'A', point: 4.00 },
+  { min: 75, letter: 'B', point: 3.00 },
+  { min: 60, letter: 'C', point: 2.00 },
+  { min: 50, letter: 'D', point: 1.00 },
+  { min: 40, letter: 'E', point: 0.50 },
+  { min: 0,  letter: 'F', point: 0.00 },
+] as const;
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CertificatePage() {
@@ -98,6 +128,10 @@ export default function CertificatePage() {
   const [staffDesign, setStaffDesign] = useState<CardDesign>(BLANK_CERTIFICATE_STAFF);
   const [staffDesignLoading, setStaffDesignLoading] = useState(true);
   const [showStaffEditor, setShowStaffEditor] = useState(false);
+
+  // ── Score data for student certificates ──
+  const [scoresByStudentId, setScoresByStudentId] = useState<Record<string, StudentScoreStats>>({});
+  const [loadingScores, setLoadingScores] = useState(false);
 
   // ── Shared ──
   const [exporting, setExporting] = useState(false);
@@ -182,22 +216,108 @@ export default function CertificatePage() {
     finally { setLoadingStaff(false); }
   };
 
+  const fetchClassScores = async (classId: string) => {
+    setLoadingScores(true);
+    setScoresByStudentId({});
+    try {
+      const sheetsRes = await apiFetch('/api/scoring/sheets');
+      if (!sheetsRes.ok) return;
+      const allSheets: ScoringSheet[] = await sheetsRes.json();
+      const classSheets = allSheets.filter((s) => s.classes.some((c) => c.classId === classId));
+      if (classSheets.length === 0) return;
+
+      // Build subject maxScore map and collect all entries for this class
+      const subjectMaxMap: Record<string, number> = {};
+      const allEntries: ScoringEntry[] = [];
+
+      for (const sheet of classSheets) {
+        for (const subj of sheet.subjects) {
+          subjectMaxMap[subj.id] = subj.maxScore > 0 ? subj.maxScore : 100;
+        }
+        for (const tab of sheet.examTabs) {
+          try {
+            const tabRes = await apiFetch(`/api/scoring/exam-tabs/${tab.id}/scores?classIds=${classId}`);
+            if (!tabRes.ok) continue;
+            const { entries } = await tabRes.json() as { entries: ScoringEntry[]; students: unknown[] };
+            allEntries.push(...entries);
+          } catch { /* skip failed tab */ }
+        }
+      }
+
+      // Group entries by studentId
+      const entryByStudent: Record<string, ScoringEntry[]> = {};
+      for (const entry of allEntries) {
+        if (entry.score === null) continue;
+        if (!entryByStudent[entry.studentId]) entryByStudent[entry.studentId] = [];
+        entryByStudent[entry.studentId].push(entry);
+      }
+
+      // Compute raw totals
+      const raw: Record<string, { total: number; maxTotal: number }> = {};
+      for (const [sid, entries] of Object.entries(entryByStudent)) {
+        let total = 0, maxTotal = 0;
+        for (const e of entries) {
+          total += e.score as number;
+          maxTotal += subjectMaxMap[e.subjectId] ?? 100;
+        }
+        raw[sid] = { total, maxTotal };
+      }
+
+      // Sort by total desc for ranking
+      const sorted = Object.entries(raw).sort(([, a], [, b]) => b.total - a.total);
+
+      const finalStats: Record<string, StudentScoreStats> = {};
+      sorted.forEach(([sid, { total, maxTotal }], idx) => {
+        const averagePct = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
+        const gradeEntry = CERT_GRADE_MAP.find((g) => averagePct >= g.min) ?? CERT_GRADE_MAP[CERT_GRADE_MAP.length - 1];
+        finalStats[sid] = {
+          total,
+          maxTotal,
+          averagePct,
+          gpa: gradeEntry.point,
+          grade: gradeEntry.letter,
+          ranking: idx + 1,
+        };
+      });
+      setScoresByStudentId(finalStats);
+    } catch (err) {
+      console.error('Failed to fetch class scores', err);
+    } finally {
+      setLoadingScores(false);
+    }
+  };
+
+  // Fetch scores when a class is selected
+  useEffect(() => {
+    if (selectedClassId) fetchClassScores(selectedClassId);
+    else setScoresByStudentId({});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClassId]);
+
   // ── Field value builders ──────────────────────────────────────────────────
 
-  const buildStudentFields = (student: Student, className: string, studyYearLabel: string): Record<string, string> => ({
-    '{{name}}': student.name,
-    '{{studentNumber}}': student.studentNumber || '',
-    '{{class}}': className,
-    '{{studyYear}}': studyYearLabel,
-    '{{dateOfBirth}}': formatDOB(student.dateOfBirth, lang),
-    '{{sex}}': student.sex === 'MALE' ? 'ប្រុស' : student.sex === 'FEMALE' ? 'ស្រី' : '',
-    '{{certificateDate}}': certificateDate,
-    '{{schoolName}}': 'Wattanman Academy',
-    'Student Name': student.name,
-    'Student ID': student.studentNumber || '',
-    'Class Name': className,
-    'Study Year': studyYearLabel,
-  });
+  const buildStudentFields = (student: Student, className: string, studyYearLabel: string): Record<string, string> => {
+    const stats = scoresByStudentId[student.id];
+    return {
+      '{{name}}': student.name,
+      '{{studentNumber}}': student.studentNumber || '',
+      '{{class}}': className,
+      '{{studyYear}}': studyYearLabel,
+      '{{dateOfBirth}}': formatDOB(student.dateOfBirth, lang),
+      '{{sex}}': student.sex === 'MALE' ? 'ប្រុស' : student.sex === 'FEMALE' ? 'ស្រី' : '',
+      '{{certificateDate}}': certificateDate,
+      '{{schoolName}}': 'Wattanman Academy',
+      '{{total}}': stats ? stats.total.toFixed(0) : '-',
+      '{{average}}': stats ? stats.averagePct.toFixed(1) + '%' : '-',
+      '{{gpa}}': stats ? stats.gpa.toFixed(2) : '-',
+      '{{grade}}': stats ? stats.grade : '-',
+      '{{ranking}}': stats ? String(stats.ranking) : '-',
+      'Student Name': student.name,
+      'Student ID': student.studentNumber || '',
+      'Class Name': className,
+      'Study Year': studyYearLabel,
+    };
+  };
 
   const buildStaffFields = (staff: StaffUser): Record<string, string> => ({
     '{{name}}': staff.name,
@@ -460,6 +580,8 @@ export default function CertificatePage() {
                             {selectedClass.teacher && `${selectedClass.teacher.name} · `}
                             {studyYearLabel && `${studyYearLabel} · `}
                             {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
+                            {loadingScores && <span className="ml-2 inline-flex items-center gap-1 text-amber-500"><span className="inline-block w-2.5 h-2.5 rounded-full border-2 border-amber-400 border-t-transparent animate-spin" />Loading scores…</span>}
+                            {!loadingScores && Object.keys(scoresByStudentId).length > 0 && <span className="ml-2 text-green-600">· 📊 Scores loaded</span>}
                           </p>
                         </div>
                       </div>

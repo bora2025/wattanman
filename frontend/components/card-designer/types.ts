@@ -149,6 +149,11 @@ export const CARD_TYPE_FIELDS: Record<CardType, { key: string; label: string; ex
     { key: '{{sex}}', label: 'Gender', example: 'MALE' },
     { key: '{{certificateDate}}', label: 'Issue Date', example: '13/05/2026' },
     { key: '{{schoolName}}', label: 'School Name', example: 'Wattaman School' },
+    { key: '{{total}}', label: 'Total Score', example: '450' },
+    { key: '{{average}}', label: 'Average %', example: '85.0%' },
+    { key: '{{gpa}}', label: 'GPA', example: '3.00' },
+    { key: '{{grade}}', label: 'Letter Grade', example: 'A' },
+    { key: '{{ranking}}', label: 'Class Ranking', example: '1' },
   ],
   'certificate-staff': [
     { key: '{{name}}', label: 'Full Name', example: 'Dara Sothea' },
