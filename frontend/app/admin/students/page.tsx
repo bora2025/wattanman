@@ -303,7 +303,7 @@ function ManageStudents() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-                <span className="text-2xl">ðŸŽ“</span>
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Student Management</h1>
@@ -322,8 +322,8 @@ function ManageStudents() {
               </div>
               {selectedGrade && (
                 <>
-                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold">â™‚ {maleCount}</div>
-                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-50 border border-pink-100 text-pink-700 text-xs font-semibold">â™€ {femaleCount}</div>
+                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold">M {maleCount}</div>
+                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-50 border border-pink-100 text-pink-700 text-xs font-semibold">F {femaleCount}</div>
                 </>
               )}
             </div>
@@ -346,7 +346,7 @@ function ManageStudents() {
               >
                 <option value="">All Study Years</option>
                 {studyYears.map(sy => (
-                  <option key={sy.id} value={sy.id}>{sy.label || sy.year}{sy.isCurrent ? ' âœ“ Current' : ''}</option>
+                  <option key={sy.id} value={sy.id}>{sy.label || sy.year}{sy.isCurrent ? ' (Current)' : ''}</option>
                 ))}
               </select>
 
@@ -355,10 +355,10 @@ function ManageStudents() {
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
                 <input
                   type="text" value={gradeSearch} onChange={e => setGradeSearch(e.target.value)}
-                  placeholder="Search gradeâ€¦"
+                  placeholder="Search grade..."
                   className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-white shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 />
-                {gradeSearch && <button onClick={() => setGradeSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">Ã—</button>}
+                {gradeSearch && <button onClick={() => setGradeSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>}
               </div>
 
               {/* Grade list */}
@@ -366,7 +366,7 @@ function ManageStudents() {
                 {loadingGrades ? (
                   <div className="py-12 flex flex-col items-center gap-3 text-slate-400">
                     <svg className="w-8 h-8 animate-spin text-indigo-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
-                    <span className="text-sm">Loading gradesâ€¦</span>
+                    <span className="text-sm">Loading grades...</span>
                   </div>
                 ) : filteredGrades.length === 0 ? (
                   <div className="py-12 text-center text-slate-400 text-sm">No grades found</div>
@@ -386,17 +386,17 @@ function ManageStudents() {
                         </span>
                         <span className={`shrink-0 min-w-[28px] text-center text-xs font-bold px-2 py-0.5 rounded-full transition-colors
                           ${isActive ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'}`}>
-                          {count ?? 'â€¦'}
+                          {count ?? '...'}
                         </span>
                       </div>
                       {g.teacher && (
                         <p className={`text-xs mt-0.5 truncate ${isActive ? 'text-indigo-500' : 'text-slate-400'}`}>
-                          ðŸ‘¤ {g.teacher.name}
+                          {g.teacher.name}
                         </p>
                       )}
                       {g.subject && (
                         <p className={`text-xs truncate ${isActive ? 'text-violet-500' : 'text-slate-400'}`}>
-                          ðŸ“š {g.subject}
+                          {g.subject}
                         </p>
                       )}
                     </button>
@@ -406,7 +406,7 @@ function ManageStudents() {
 
               {/* Summary footer */}
               <div className="text-xs text-slate-400 text-center pb-1">
-                {filteredGrades.length} grade{filteredGrades.length !== 1 ? 's' : ''} Â· {totalStudentsAll} total students
+                {filteredGrades.length} grade{filteredGrades.length !== 1 ? 's' : ''} / {totalStudentsAll} total students
               </div>
             </div>
 
@@ -430,19 +430,21 @@ function ManageStudents() {
                   {/* â”€â”€ Class Banner â”€â”€ */}
                   <div className="rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 p-4 text-white shadow-lg shadow-indigo-200 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-xl">ðŸ«</div>
+                      <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                      </div>
                       <div>
                         <h2 className="text-base font-bold leading-tight">{selectedGrade.name}</h2>
                         <p className="text-indigo-200 text-xs mt-0.5">
                           {selectedGrade.subject && <span>{selectedGrade.subject}</span>}
-                          {selectedGrade.teacher && <span> Â· ðŸ‘¤ {selectedGrade.teacher.name}</span>}
+                          {selectedGrade.teacher && <span> / {selectedGrade.teacher.name}</span>}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className="bg-white/20 backdrop-blur rounded-lg px-3 py-1.5 text-sm font-semibold">{students.length} students</div>
-                      <div className="bg-white/20 backdrop-blur rounded-lg px-2.5 py-1.5 text-xs font-medium">â™‚ {maleCount}</div>
-                      <div className="bg-white/20 backdrop-blur rounded-lg px-2.5 py-1.5 text-xs font-medium">â™€ {femaleCount}</div>
+                      <div className="bg-white/20 backdrop-blur rounded-lg px-2.5 py-1.5 text-xs font-medium">M {maleCount}</div>
+                      <div className="bg-white/20 backdrop-blur rounded-lg px-2.5 py-1.5 text-xs font-medium">F {femaleCount}</div>
                     </div>
                   </div>
 
@@ -453,10 +455,10 @@ function ManageStudents() {
                       <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
                       <input
                         type="text" value={studentSearch} onChange={e => setStudentSearch(e.target.value)}
-                        placeholder="Search by name, ID, emailâ€¦"
+                        placeholder="Search by name, ID, email..."
                         className="pl-8 pr-8 py-1.5 text-sm rounded-xl border border-slate-200 bg-white shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 w-56"
                       />
-                      {studentSearch && <button onClick={() => setStudentSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-base">Ã—</button>}
+                      {studentSearch && <button onClick={() => setStudentSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -479,7 +481,7 @@ function ManageStudents() {
                         ) : (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" /></svg>
                         )}
-                        {csvUploading ? 'Uploadingâ€¦' : 'Import CSV'}
+                        {csvUploading ? 'Uploading...' : 'Import CSV'}
                         <input type="file" accept=".csv" className="hidden" onChange={handleCsv} />
                       </label>
 
@@ -498,8 +500,8 @@ function ManageStudents() {
                   {/* CSV result banner */}
                   {csvResult && (
                     <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2.5 text-sm text-emerald-800 flex items-center justify-between">
-                      <span>âœ… CSV imported: <b>{csvResult.success}</b> added Â· {csvResult.skipped} skipped Â· {csvResult.errors} errors Â· {csvResult.total} total</span>
-                      <button onClick={() => setCsvResult(null)} className="text-emerald-400 hover:text-emerald-600 text-xl ml-3 leading-none">Ã—</button>
+                      <span>CSV imported: <b>{csvResult.success}</b> added / {csvResult.skipped} skipped / {csvResult.errors} errors / {csvResult.total} total</span>
+                      <button onClick={() => setCsvResult(null)} className="text-emerald-400 hover:text-emerald-600 ml-3"><svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>
                     </div>
                   )}
 
@@ -515,7 +517,7 @@ function ManageStudents() {
                       <div className="grid sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
                         <div className="sm:col-span-2">
                           <label className="form-label text-xs">Full Name *</label>
-                          <input type="text" required value={newForm.name} onChange={e => setNewForm({ ...newForm, name: e.target.value })} placeholder="ážˆáŸ’áž˜áŸ„áŸ‡ / Full name" />
+                          <input type="text" required value={newForm.name} onChange={e => setNewForm({ ...newForm, name: e.target.value })} placeholder="Full name" />
                         </div>
                         <div className="sm:col-span-2">
                           <label className="form-label text-xs">Email *</label>
@@ -532,9 +534,9 @@ function ManageStudents() {
                         <div>
                           <label className="form-label text-xs">Sex</label>
                           <select value={newForm.sex} onChange={e => setNewForm({ ...newForm, sex: e.target.value })}>
-                            <option value="">Selectâ€¦</option>
-                            <option value="MALE">â™‚ áž”áŸ’ážšáž»ážŸ</option>
-                            <option value="FEMALE">â™€ ážŸáŸ’ážšáž¸</option>
+                            <option value="">Select...</option>
+                            <option value="MALE">Male</option>
+                            <option value="FEMALE">Female</option>
                           </select>
                         </div>
                         <div>
@@ -557,7 +559,7 @@ function ManageStudents() {
                       <div className="flex justify-end">
                         <button type="submit" disabled={addingStudent}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-semibold shadow-sm hover:shadow-md disabled:opacity-60">
-                          {addingStudent ? <><svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>Addingâ€¦</> : 'Add Student'}
+                          {addingStudent ? <><svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>Adding...</> : 'Add Student'}
                         </button>
                       </div>
                     </form>
@@ -568,12 +570,15 @@ function ManageStudents() {
                     {loadingStudents ? (
                       <div className="py-20 flex flex-col items-center gap-3 text-slate-400">
                         <svg className="w-10 h-10 animate-spin text-indigo-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
-                        <span className="text-sm">Loading studentsâ€¦</span>
+                        <span className="text-sm">Loading students...</span>
                       </div>
                     ) : filteredStudents.length === 0 ? (
                       <div className="py-20 flex flex-col items-center gap-3 text-slate-400">
-                        <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-3xl">
-                          {studentSearch ? 'ðŸ”' : 'ðŸ‘¥'}
+                        <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center">
+                          {studentSearch
+                            ? <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
+                            : <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          }
                         </div>
                         <p className="text-sm font-medium text-slate-500">{studentSearch ? 'No students match your search' : 'No students in this grade yet'}</p>
                         {!studentSearch && <button onClick={() => setShowAddForm(true)} className="text-xs text-indigo-500 hover:text-indigo-700 font-medium">+ Add the first student</button>}
@@ -596,7 +601,7 @@ function ManageStudents() {
                               {/* Sex badge */}
                               {s.sex && (
                                 <span className={`absolute top-2 right-2 text-xs font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm ${s.sex === 'MALE' ? 'bg-blue-500/80 text-white' : 'bg-pink-500/80 text-white'}`}>
-                                  {s.sex === 'MALE' ? 'â™‚' : 'â™€'}
+                                  {s.sex === 'MALE' ? 'M' : 'F'}
                                 </span>
                               )}
                               {/* ID badge */}
@@ -665,13 +670,13 @@ function ManageStudents() {
                               <td className="px-3 py-2.5">
                                 {s.sex ? (
                                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${s.sex === 'MALE' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>
-                                    {s.sex === 'MALE' ? 'â™‚ áž”áŸ’ážšáž»ážŸ' : 'â™€ ážŸáŸ’ážšáž¸'}
+                                    {s.sex === 'MALE' ? 'Male' : 'Female'}
                                   </span>
-                                ) : <span className="text-slate-300 text-xs">â€”</span>}
+                              ) : <span className="text-slate-300 text-xs">-</span>}
                               </td>
-                              <td className="px-3 py-2.5 text-slate-500 text-xs">{s.dateOfBirth ? new Date(s.dateOfBirth).toLocaleDateString() : <span className="text-slate-300">â€”</span>}</td>
-                              <td className="px-3 py-2.5 text-slate-500 text-xs">{s.phone || <span className="text-slate-300">â€”</span>}</td>
-                              <td className="px-3 py-2.5 text-xs">{s.generation ? <span className="px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium">G{s.generation}</span> : <span className="text-slate-300">â€”</span>}</td>
+                              <td className="px-3 py-2.5 text-slate-500 text-xs">{s.dateOfBirth ? new Date(s.dateOfBirth).toLocaleDateString() : <span className="text-slate-300">-</span>}</td>
+                              <td className="px-3 py-2.5 text-slate-500 text-xs">{s.phone || <span className="text-slate-300">-</span>}</td>
+                              <td className="px-3 py-2.5 text-xs">{s.generation ? <span className="px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium">G{s.generation}</span> : <span className="text-slate-300">-</span>}</td>
                               <td className="px-3 py-2.5 text-right">
                                 <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button onClick={() => handleEdit(s)} title="Edit" className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors">
@@ -722,7 +727,7 @@ function ManageStudents() {
                   <p className="text-xs text-slate-400">{students.find(s => s.id === editingId)?.name}</p>
                 </div>
               </div>
-              <button onClick={() => { setEditModalOpen(false); setEditingId(null); }} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">Ã—</button>
+              <button onClick={() => { setEditModalOpen(false); setEditingId(null); }} className="text-slate-400 hover:text-slate-600"><svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>
             </div>
 
             {/* Modal body */}
@@ -731,7 +736,7 @@ function ManageStudents() {
                 <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
                   <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-2xl bg-white border border-amber-100 shadow-2xl">
                     <svg className="w-10 h-10 text-amber-500 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
-                    <p className="text-sm font-semibold text-slate-700">Savingâ€¦</p>
+                    <p className="text-sm font-semibold text-slate-700">Saving...</p>
                   </div>
                 </div>
               )}
@@ -749,9 +754,9 @@ function ManageStudents() {
                 <div>
                   <label className="form-label text-xs">Sex</label>
                   <select value={editData.sex} onChange={e => setEditData({ ...editData, sex: e.target.value })}>
-                    <option value="">Selectâ€¦</option>
-                    <option value="MALE">â™‚ áž”áŸ’ážšáž»ážŸ (Male)</option>
-                    <option value="FEMALE">â™€ ážŸáŸ’ážšáž¸ (Female)</option>
+                    <option value="">Select...</option>
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
                   </select>
                 </div>
                 <div>
@@ -763,7 +768,7 @@ function ManageStudents() {
                   <input type="date" value={editData.dateOfBirth} onChange={e => setEditData({ ...editData, dateOfBirth: e.target.value })} />
                 </div>
                 <div>
-                  <label className="form-label text-xs">Generation (áž‡áŸ†áž“áž¶áž“áŸ‹áž‘áž¸)</label>
+                  <label className="form-label text-xs">Generation</label>
                   <input type="number" min="1" value={editData.generation} onChange={e => setEditData({ ...editData, generation: e.target.value })} placeholder="1" />
                 </div>
                 <div className="sm:col-span-2">
@@ -772,17 +777,17 @@ function ManageStudents() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="form-label text-xs">Photo URL</label>
-                  <input type="text" value={editData.photo} onChange={e => setEditData({ ...editData, photo: e.target.value })} placeholder="https://â€¦" />
+                  <input type="text" value={editData.photo} onChange={e => setEditData({ ...editData, photo: e.target.value })} placeholder="https://..." />
                   {editData.photo && (
                     <img src={editData.photo} alt="preview" className="mt-2 w-16 h-16 rounded-xl object-cover border border-slate-200" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   )}
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="form-label text-xs">Parent (ážªáž–áž»áž€áž˜áŸ’ážáž¶áž™)</label>
+                  <label className="form-label text-xs">Parent</label>
                   <select value={editData.parentId} onChange={e => setEditData({ ...editData, parentId: e.target.value })}>
-                    <option value="">â€” None / Unlink â€”</option>
+                    <option value="">-- None / Unlink --</option>
                     {parents.map(p => (
-                      <option key={p.id} value={p.id}>{p.name} ({p.email}){p.phone ? ` Â· ${p.phone}` : ''}</option>
+                      <option key={p.id} value={p.id}>{p.name} ({p.email}){p.phone ? ` / ${p.phone}` : ''}</option>
                     ))}
                   </select>
                 </div>
@@ -814,7 +819,7 @@ function ManageStudents() {
                 </div>
                 <h3 className="text-base font-bold text-slate-800">Reset Password</h3>
               </div>
-              <button onClick={() => { setResetStudent(null); setResetMsg(null); }} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">Ã—</button>
+              <button onClick={() => { setResetStudent(null); setResetMsg(null); }} className="text-slate-400 hover:text-slate-600"><svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>
             </div>
             <form onSubmit={handleResetPwd} className="px-6 py-4 space-y-4">
               <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
@@ -837,7 +842,7 @@ function ManageStudents() {
               </div>
               {resetMsg && (
                 <div className={`px-3 py-2 rounded-xl text-sm font-medium ${resetMsg.ok ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                  {resetMsg.ok ? 'âœ… ' : 'âŒ '}{resetMsg.text}
+                  {resetMsg.ok ? 'Done: ' : 'Error: '}{resetMsg.text}
                 </div>
               )}
               <div className="flex justify-end gap-2 pt-1">
