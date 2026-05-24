@@ -217,6 +217,15 @@ export const IconLayers = multi([
   'M2 12l10 5 10-5',
 ]);
 
+export const IconCertificate = multi([
+  'M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7z',
+  'M9 12h6',
+  'M9 8h6',
+  'M9 16h3',
+  'M15 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
+  'M18 18l2.5 2.5',
+]);
+
 // Icon name → component map for easy lookup
 export const iconMap: Record<string, React.FC<IconProps>> = {
   dashboard: IconDashboard,
@@ -248,4 +257,5 @@ export const iconMap: Record<string, React.FC<IconProps>> = {
   money: IconMoney,
   trophy: IconTrophy,
   layers: IconLayers,
+  certificate: IconCertificate,
 };

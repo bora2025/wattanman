@@ -36,6 +36,7 @@ export const adminNav = [
   { label: 'nav.cardDesigner', href: '/admin/card-designer', icon: 'design' },
   { label: 'nav.studentCards', href: '/admin/student-cards', icon: 'id-card' },
   { label: 'nav.staffCards', href: '/admin/staff-cards', icon: 'id-card' },
+  { label: 'Certificate', href: '/admin/certificate', icon: 'certificate' },
 
   // ── New Modules ──
   { label: 'Salary Management', href: '/admin/salary', icon: 'money', section: 'Modules' },
