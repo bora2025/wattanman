@@ -171,7 +171,7 @@ const DAYS_OF_WEEK = [
 ];
 
 const DEFAULT_SCHEDULE: Record<string, string> = {
-  MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'day-off', SUN: 'day-off',
+  MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'same', SUN: 'same',
 };
 
 const DAY_PRESETS = [

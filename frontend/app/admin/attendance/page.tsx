@@ -1168,9 +1168,12 @@ function AdminTakeAttendance() {
 
         {/* Scheduled day-off warning banner */}
         {scheduledDayOff && (
-          <div className="px-4 py-3 rounded-xl text-sm font-medium shadow-sm bg-red-50 text-red-800 border border-red-200 flex items-center gap-2">
-            <span className="text-lg">🚫</span>
-            <span>Today is a <strong>scheduled day-off</strong> for this class. All students are auto-marked as PERMISSION. The backend will also enforce this.</span>
+          <div className="px-4 py-3 rounded-xl text-sm font-medium shadow-sm bg-red-50 text-red-800 border border-red-200 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-lg shrink-0">🚫</span>
+              <span>Today is a <strong>scheduled day-off</strong> for this class. All students are auto-marked as PERMISSION. The backend will also enforce this.</span>
+            </div>
+            <a href="/admin/classes" className="shrink-0 text-xs underline underline-offset-2 hover:text-red-900 whitespace-nowrap">Edit schedule →</a>
           </div>
         )}
 

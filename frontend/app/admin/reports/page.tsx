@@ -548,9 +548,14 @@ export default function AdminReports() {
           )}
 
           {isScheduleDayOff && !isHolidayDate && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
-              <span className="text-lg">🚫</span>
-              <span dangerouslySetInnerHTML={{ __html: `${t('reports.scheduledDayOff')} ${selectedClassName} ${t('reports.perWeeklySchedule')}` }} />
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-lg shrink-0">🚫</span>
+                <span dangerouslySetInnerHTML={{ __html: `${t('reports.scheduledDayOff')} <strong>${selectedClassName}</strong> ${t('reports.perWeeklySchedule')}` }} />
+              </div>
+              <a href="/admin/classes" className="shrink-0 text-xs underline underline-offset-2 hover:text-red-900 whitespace-nowrap">
+                Edit schedule →
+              </a>
             </div>
           )}
 

@@ -16,7 +16,14 @@ export class AppController {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      service: 'SchoolSync API'
+      service: 'SchoolSync API',
+      version: process.env.npm_package_version || '1.0.0',
+      commit: process.env.RAILWAY_GIT_COMMIT_SHA?.slice(0, 7) || process.env.GIT_COMMIT?.slice(0, 7) || 'unknown',
+      deployedAt: process.env.RAILWAY_DEPLOYMENT_DRAINING_TIMEOUT_SECONDS
+        ? undefined
+        : (process.env.RAILWAY_SNAPSHOT_ID || process.env.RAILWAY_DEPLOYMENT_ID || 'local'),
+      railwayProjectName: process.env.RAILWAY_PROJECT_NAME || null,
+      railwayServiceName: process.env.RAILWAY_SERVICE_NAME || null,
     };
   }
 
