@@ -434,6 +434,54 @@ export class ReportsService {
     };
   }
 
+  /**
+   * Find students that share the same name inside the same class — strong
+   * indicator of duplicate CSV imports. Returns groups with ≥ 2 members.
+   */
+  async getDuplicateStudents() {
+    const students = await this.prisma.student.findMany({
+      where: { classId: { not: null } },
+      select: {
+        id: true,
+        studentNumber: true,
+        classId: true,
+        updatedAt: true,
+        user: { select: { name: true, phone: true } },
+        class: { select: { name: true } },
+      },
+      orderBy: { updatedAt: 'asc' },
+    });
+
+    // Group by classId + normalised name
+    const groups = new Map<string, typeof students>();
+    for (const s of students) {
+      const key = `${s.classId}||${(s.user.name ?? '').trim().toLowerCase()}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(s);
+    }
+
+    const duplicates: Array<{
+      className: string;
+      name: string;
+      students: Array<{ id: string; studentNumber: string | null; updatedAt: Date }>;
+    }> = [];
+
+    for (const members of groups.values()) {
+      if (members.length < 2) continue;
+      duplicates.push({
+        className: members[0].class?.name ?? '',
+        name: members[0].user.name ?? '',
+        students: members.map(s => ({
+          id: s.id,
+          studentNumber: s.studentNumber,
+          updatedAt: s.updatedAt,
+        })),
+      });
+    }
+
+    return { count: duplicates.length, groups: duplicates };
+  }
+
   async getAttendanceSummary(classId?: string, date?: Date) {
     const where: any = {};
     if (classId) where.classId = classId;

@@ -248,6 +248,13 @@ export class ReportsController {
     res.send(bom + csv);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get('duplicate-students')
+  async getDuplicateStudents() {
+    return this.reportsService.getDuplicateStudents();
+  }
+
   // ========== EMPLOYEE SELF-SERVICE REPORTS ==========
 
   @UseGuards(JwtAuthGuard)

@@ -1352,39 +1352,67 @@ export class AttendanceService {
     const attendanceDate = toUTCMidnight(cambodiaNow);
     const hhmm = `${String(cambodiaNow.getUTCHours()).padStart(2, '0')}:${String(cambodiaNow.getUTCMinutes()).padStart(2, '0')}`;
 
-    // Resolve the student – accept userId, student.id, student.qrCode, or studentNumber.
-    // studentNumber fallback lets cards keep working even if the underlying cuid
-    // changes after a CSV re-import (the studentNumber is stable across imports).
-    let student = await this.prisma.student.findFirst({
-      where: {
-        OR: [
-          { userId: qrData },
-          { id: qrData },
-          { qrCode: qrData },
-          { studentNumber: qrData },
-        ],
-      },
-      include: {
-        user: { select: { name: true, photo: true } },
-        class: { select: { id: true, name: true, schedule: true, sessionConfigs: true } },
-      },
-    });
+    // Resolve the student using PRIORITY-ORDERED lookups to avoid returning the
+    // wrong student when duplicate records exist (e.g. after a CSV re-import).
+    // Priority: card-alias > exact id > userId > qrCode > studentNumber (active class first).
+    const studentInclude = {
+      user: { select: { name: true, photo: true } },
+      class: { select: { id: true, name: true, schedule: true, sessionConfigs: true } },
+    };
 
-    // Final fallback: check the card-alias table (admin can link unknown cards
-    // to a current student once, and they will resolve forever after).
+    let student: any = null;
+
+    // 1. Card-alias lookup FIRST — admin explicitly linked this card to a specific student.
+    //    This takes highest priority so admins can override any ambiguity.
+    const alias = await this.prisma.cardAlias.findUnique({
+      where: { qrValue: qrData },
+      include: { student: { include: studentInclude } },
+    });
+    if (alias?.student) {
+      student = alias.student;
+    }
+
+    // 2. Exact student.id match (cuid) — unambiguous
     if (!student) {
-      const alias = await this.prisma.cardAlias.findUnique({
-        where: { qrValue: qrData },
-        include: {
-          student: {
-            include: {
-              user: { select: { name: true, photo: true } },
-              class: { select: { id: true, name: true, schedule: true, sessionConfigs: true } },
-            },
-          },
-        },
+      student = await this.prisma.student.findUnique({
+        where: { id: qrData },
+        include: studentInclude,
       });
-      if (alias?.student) student = alias.student as any;
+    }
+
+    // 3. userId match — unambiguous (unique constraint)
+    if (!student) {
+      const byUser = await this.prisma.student.findFirst({
+        where: { userId: qrData },
+        include: studentInclude,
+      });
+      if (byUser) student = byUser;
+    }
+
+    // 4. qrCode match — unique field, unambiguous
+    if (!student) {
+      const byQr = await this.prisma.student.findFirst({
+        where: { qrCode: qrData },
+        include: studentInclude,
+      });
+      if (byQr) student = byQr;
+    }
+
+    // 5. studentNumber fallback — NOT unique; when multiple students share a number
+    //    (e.g. duplicate CSV imports) prefer the one with an active class assignment,
+    //    then the most-recently-updated record.
+    if (!student) {
+      const byNumber = await this.prisma.student.findMany({
+        where: { studentNumber: qrData },
+        include: studentInclude,
+        orderBy: { updatedAt: 'desc' },
+      });
+      if (byNumber.length === 1) {
+        student = byNumber[0];
+      } else if (byNumber.length > 1) {
+        // Prefer student with an active class assignment
+        student = byNumber.find(s => s.classId) ?? byNumber[0];
+      }
     }
 
     if (!student) {

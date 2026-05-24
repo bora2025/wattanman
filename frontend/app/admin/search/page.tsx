@@ -318,14 +318,43 @@ export default function SearchPage() {
               <p className="text-sm text-slate-400 mt-1">{t('search.noResultsHint')}</p>
             </div>
           ) : results.length > 0 ? (
+            (() => {
+              // Detect duplicates: same name + same class within the current result set
+              const dupKeys = new Set<string>()
+              const seenKeys = new Map<string, number>()
+              for (const u of results) {
+                const classId = u.studentProfile?.class?.id
+                if (!classId) continue
+                const key = `${u.name.trim().toLowerCase()}||${classId}`
+                seenKeys.set(key, (seenKeys.get(key) ?? 0) + 1)
+              }
+              for (const [key, count] of seenKeys) {
+                if (count >= 2) dupKeys.add(key)
+              }
+              const isDup = (u: SearchResult) => {
+                const classId = u.studentProfile?.class?.id
+                if (!classId) return false
+                return dupKeys.has(`${u.name.trim().toLowerCase()}||${classId}`)
+              }
+              const hasDuplicates = dupKeys.size > 0
+              return (
             <>
+              {/* Duplicate student warning */}
+              {hasDuplicates && (
+                <div className="mb-3 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+                  <span className="text-base shrink-0">⚠️</span>
+                  <div>
+                    <strong>Duplicate students detected.</strong> Students highlighted in orange share the same name and class — likely caused by a CSV re-import. The QR scanner may identify the wrong student. Please remove the old duplicate record from Admin → Students.
+                  </div>
+                </div>
+              )}
               {/* Mobile card list */}
               <div className="flex flex-col gap-2 sm:hidden">
                 {results.map(user => (
                   <button
                     key={user.id}
                     onClick={() => handleSelectUser(user)}
-                    className="w-full text-left bg-white rounded-2xl shadow-sm border border-slate-100 px-4 py-3 flex items-center gap-3 active:bg-indigo-50 transition-colors"
+                    className={`w-full text-left rounded-2xl shadow-sm border px-4 py-3 flex items-center gap-3 active:bg-indigo-50 transition-colors ${isDup(user) ? 'bg-amber-50 border-amber-300' : 'bg-white border-slate-100'}`}
                   >
                     <div className="relative flex-shrink-0">
                       {user.photo || user.studentProfile?.photo ? (
@@ -386,7 +415,7 @@ export default function SearchPage() {
                   </thead>
                   <tbody>
                     {results.map(user => (
-                      <tr key={user.id} className="cursor-pointer hover:bg-indigo-50/50" onClick={() => handleSelectUser(user)}>
+                      <tr key={user.id} className={`cursor-pointer ${isDup(user) ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-indigo-50/50'}`} onClick={() => handleSelectUser(user)}>
                         <td>
                           <div className="flex items-center gap-3">
                             {user.photo || user.studentProfile?.photo ? (
@@ -409,7 +438,10 @@ export default function SearchPage() {
                               {user.name.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <span className="font-medium text-slate-800">{user.name}</span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-medium text-slate-800">{user.name}</span>
+                                {isDup(user) && <span className="text-[10px] font-semibold bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">DUPLICATE</span>}
+                              </div>
                               {user.studentProfile?.studentNumber && (
                                 <p className="text-xs text-slate-400">#{user.studentProfile.studentNumber}</p>
                               )}
@@ -441,6 +473,8 @@ export default function SearchPage() {
                 </div>
               </div>
             </>
+              )
+            })()
           ) : null}
         </div>
       </div>
