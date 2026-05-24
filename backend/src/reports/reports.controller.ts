@@ -31,8 +31,7 @@ function getDateRange(period: string, dateStr?: string): { start: Date; end: Dat
 export class ReportsController {
   constructor(private reportsService: ReportsService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @UseGuards(JwtAuthGuard)
   @Get('system-status')
   async getSystemStatus() {
     return this.reportsService.getSystemStatus();

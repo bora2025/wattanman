@@ -405,19 +405,25 @@ export class ReportsService {
   }
 
   async getSystemStatus() {
-    const lastAttendance = await this.prisma.attendance.findFirst({
-      orderBy: { timestamp: 'desc' },
-      select: { timestamp: true },
-    });
-    const lastUser = await this.prisma.user.findFirst({
-      orderBy: { updatedAt: 'desc' },
-      select: { updatedAt: true },
-    });
+    const [lastAttendance, lastStaffAttendance, lastUser] = await Promise.all([
+      this.prisma.attendance.findFirst({
+        orderBy: { timestamp: 'desc' },
+        select: { timestamp: true },
+      }),
+      this.prisma.staffAttendance.findFirst({
+        orderBy: { timestamp: 'desc' },
+        select: { timestamp: true },
+      }),
+      this.prisma.user.findFirst({
+        orderBy: { updatedAt: 'desc' },
+        select: { updatedAt: true },
+      }),
+    ]);
     const totalStudents = await this.prisma.student.count();
     const totalClasses = await this.prisma.class.count();
     const totalUsers = await this.prisma.user.count();
 
-    const dates = [lastAttendance?.timestamp, lastUser?.updatedAt].filter(Boolean) as Date[];
+    const dates = [lastAttendance?.timestamp, lastStaffAttendance?.timestamp, lastUser?.updatedAt].filter(Boolean) as Date[];
     const lastUpdated = dates.length > 0 ? new Date(Math.max(...dates.map(d => d.getTime()))) : null;
 
     return {
