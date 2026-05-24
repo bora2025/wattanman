@@ -228,7 +228,18 @@ model SessionConfig {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+
   @@unique([classId, session, scope])
+}
+
+// Global weekly schedule for STAFF (single row, id = "default").
+// `schedule` is a JSON string: { MON:'same'|'day-off'|..., TUE:..., ..., SUN:... }
+// Same value vocabulary as Class.schedule. 'day-off' days are excluded from
+// staff attendance reports (not auto-marked ABSENT, not counted in totals).
+model StaffWeeklySchedule {
+  id        String   @id @default("default")
+  schedule  String
+  updatedAt DateTime @updatedAt
 }
 
 model StudyYear {

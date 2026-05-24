@@ -241,4 +241,47 @@ export class SessionConfigService {
       data: { scope: data.scope, organizationId: orgId, ...payload },
     });
   }
+
+  // ─── Staff weekly schedule (global) ────────────────────────────────────────
+  // Single-row config controlling which weekdays count as working days for staff
+  // attendance reports. Defaults to SAT/SUN as 'day-off' when no row exists.
+  private static readonly STAFF_SCHEDULE_DEFAULT: Record<string, string> = {
+    MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'day-off', SUN: 'day-off',
+  };
+  private static readonly STAFF_SCHEDULE_ID = 'default';
+
+  async getStaffWeeklySchedule(): Promise<{ schedule: Record<string, string>; isDefault: boolean }> {
+    const row = await this.prisma.staffWeeklySchedule.findUnique({
+      where: { id: SessionConfigService.STAFF_SCHEDULE_ID },
+    });
+    if (!row) {
+      return { schedule: { ...SessionConfigService.STAFF_SCHEDULE_DEFAULT }, isDefault: true };
+    }
+    try {
+      const parsed = JSON.parse(row.schedule);
+      if (parsed && typeof parsed === 'object') {
+        // Merge over default so missing keys fall back gracefully
+        return { schedule: { ...SessionConfigService.STAFF_SCHEDULE_DEFAULT, ...parsed }, isDefault: false };
+      }
+    } catch { /* fall through */ }
+    return { schedule: { ...SessionConfigService.STAFF_SCHEDULE_DEFAULT }, isDefault: true };
+  }
+
+  async saveStaffWeeklySchedule(schedule: Record<string, string>) {
+    // Whitelist keys + values to keep storage clean.
+    const allowedDays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const allowedValues = new Set(['same', 'day-off', 'full-day', 'morning-only', 'afternoon-only', 'evening', 'night-shift']);
+    const cleaned: Record<string, string> = { ...SessionConfigService.STAFF_SCHEDULE_DEFAULT };
+    for (const day of allowedDays) {
+      const v = schedule?.[day];
+      if (typeof v === 'string' && allowedValues.has(v)) cleaned[day] = v;
+    }
+    const json = JSON.stringify(cleaned);
+    await this.prisma.staffWeeklySchedule.upsert({
+      where: { id: SessionConfigService.STAFF_SCHEDULE_ID },
+      update: { schedule: json },
+      create: { id: SessionConfigService.STAFF_SCHEDULE_ID, schedule: json },
+    });
+    return { schedule: cleaned, isDefault: false };
+  }
 }

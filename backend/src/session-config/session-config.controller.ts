@@ -83,4 +83,17 @@ export class SessionConfigController {
       caseStudyABEnabled: body.caseStudyABEnabled ?? true,
     });
   }
+
+  /** Get the global staff weekly schedule (which weekdays are working/day-off) */
+  @Get('staff-schedule')
+  async getStaffSchedule() {
+    return this.sessionConfigService.getStaffWeeklySchedule();
+  }
+
+  /** Save the global staff weekly schedule */
+  @Roles('ADMIN')
+  @Post('staff-schedule')
+  async saveStaffSchedule(@Body() body: { schedule: Record<string, string> }) {
+    return this.sessionConfigService.saveStaffWeeklySchedule(body.schedule);
+  }
 }

@@ -33,6 +33,32 @@ const SESSION_LABELS: Record<number, string> = {
   4: 'Afternoon 2',
 };
 
+// Day-of-week keys aligned with Date.getUTCDay() (0=Sun .. 6=Sat) — matches the
+// frontend Class.schedule JSON ({ MON: 'same', SAT: 'day-off', ... }).
+const SCHEDULE_DAY_KEYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+/** Parse the JSON weekly schedule stored on Class.schedule. Returns null when
+ *  the field is missing or contains legacy free-text (e.g. "Mon 9:00-10:00"). */
+function parseWeeklySchedule(schedule: string | null | undefined): Record<string, string> | null {
+  if (!schedule) return null;
+  try {
+    const parsed = JSON.parse(schedule);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, string>;
+    }
+  } catch {
+    // Legacy free-text schedule — caller should fall back to defaults.
+  }
+  return null;
+}
+
+/** Whether the given UTC-midnight date is a 'day-off' per the class weekly schedule. */
+function isScheduleDayOff(weeklySchedule: Record<string, string> | null, date: Date): boolean {
+  if (!weeklySchedule) return false;
+  const key = SCHEDULE_DAY_KEYS[date.getUTCDay()];
+  return (weeklySchedule[key] || 'same') === 'day-off';
+}
+
 /** Check if a session's end time has passed for a given date (Cambodia time) */
 function isSessionOvertime(
   sessionNum: number,
@@ -951,6 +977,13 @@ export class ReportsService {
     });
     if (!cls) return [];
 
+    // Honour the class's weekly schedule (e.g. SAT/SUN = day-off, or a weekend
+    // class with MON–FRI = day-off). When today is a scheduled day-off we must
+    // NOT auto-fill ABSENT for overtime sessions and we expose the flag so the
+    // UI can render the day-off pill.
+    const weeklySchedule = parseWeeklySchedule(cls.schedule);
+    const todayIsScheduleDayOff = isScheduleDayOff(weeklySchedule, dayStart);
+
     const attendances = await this.prisma.attendance.findMany({
       where: { classId, date: { gte: dayStart, lt: dayEnd } },
     });
@@ -998,7 +1031,7 @@ export class ReportsService {
         if (!cfg) return true;
         return cfg.startTime !== cfg.endTime;
       };
-      if (!isHoliday) {
+      if (!isHoliday && !todayIsScheduleDayOff) {
         if (!session1Status && isActiveSession(1) && isSessionOvertime(1, configs, dayStart, todayCambodia, cambodiaNowHHMM)) session1Status = 'ABSENT';
         if (!session2Status && isActiveSession(2) && isSessionOvertime(2, configs, dayStart, todayCambodia, cambodiaNowHHMM)) session2Status = 'ABSENT';
         if (!session3Status && isActiveSession(3) && isSessionOvertime(3, configs, dayStart, todayCambodia, cambodiaNowHHMM)) session3Status = 'ABSENT';
@@ -1021,8 +1054,9 @@ export class ReportsService {
               ? toCambodiaTimeShort(s4.checkInTime || s3?.checkOutTime)
               : (s3?.checkOutTime ? toCambodiaTimeShort(s3.checkOutTime) : null))
           : (s4 && s4.status !== 'ABSENT' && !isDayOffStatus(s4.status) ? toCambodiaTimeShort(s4.checkOutTime || s4.checkInTime) : null),
-        dayOff: hasDayOff,
+        dayOff: hasDayOff || todayIsScheduleDayOff,
         isHoliday,
+        isScheduleDayOff: todayIsScheduleDayOff,
         session1Status,
         session2Status,
         session3Status,
@@ -1073,11 +1107,14 @@ export class ReportsService {
 
   /**
    * Compute the set of actual school/work days in a given period range.
-   * A school day is a weekday (Mon–Fri) that:
+   * A school day is a day that:
    *  - Falls within [periodStart, periodEnd)
    *  - Falls within [studyYearStart, studyYearEnd)
    *  - Is not a holiday
    *  - Is not in the future (relative to today UTC)
+   *  - Is an operating day for the entity:
+   *      * If `weeklySchedule` is provided → any day whose preset is not 'day-off'.
+   *      * Otherwise → weekdays (Mon–Fri) only (legacy default).
    *
    * This is used to count absences for students/staff who have no scan records.
    */
@@ -1087,6 +1124,7 @@ export class ReportsService {
     studyYearStart: Date,
     studyYearEnd: Date,
     holidayDateSet: Set<string>,
+    weeklySchedule?: Record<string, string> | null,
   ): Set<string> {
     const todayUTC = toUTCMidnight(new Date());
     // cutoff = beginning of tomorrow UTC so today is included
@@ -1097,7 +1135,14 @@ export class ReportsService {
     let cur = new Date(effectiveStart);
     while (cur < effectiveEnd) {
       const dow = cur.getUTCDay();
-      if (dow >= 1 && dow <= 5) { // Mon–Fri
+      let isOperatingDay: boolean;
+      if (weeklySchedule) {
+        const key = SCHEDULE_DAY_KEYS[dow];
+        isOperatingDay = (weeklySchedule[key] || 'same') !== 'day-off';
+      } else {
+        isOperatingDay = dow >= 1 && dow <= 5; // Mon–Fri
+      }
+      if (isOperatingDay) {
         const d = cur.toISOString().split('T')[0];
         if (!holidayDateSet.has(d)) days.add(d);
       }
@@ -1148,12 +1193,15 @@ export class ReportsService {
     // Fetch format rules for CLASS scope
     const formatRule = await this.sessionConfigService.getFormatRules('CLASS');
 
-    // School days = weekdays (Mon–Fri) within the study year date range, not holidays, not future.
+    // School days = operating days within the study year, not holidays, not future.
+    // If the class has a weekly schedule (Class.schedule JSON), 'day-off' presets
+    // (e.g. SAT/SUN by default, or MON–FRI for a weekend-only class) are excluded
+    // so unrecorded scheduled-off days are NOT counted as absent.
     // Students with NO record on a school day are treated as absent (unrecorded = not present).
-    // Using study year bounds means editing the study year's start/end date directly changes what counts.
-    const weekSchoolDays = this.computeSchoolDays(weekStart, weekEnd, yearStart, yearEnd, holidayDateSet);
-    const monthSchoolDays = this.computeSchoolDays(monthStart, monthEnd, yearStart, yearEnd, holidayDateSet);
-    const yearSchoolDays = this.computeSchoolDays(yearStart, yearEnd, yearStart, yearEnd, holidayDateSet);
+    const weeklySchedule = parseWeeklySchedule(cls.schedule);
+    const weekSchoolDays = this.computeSchoolDays(weekStart, weekEnd, yearStart, yearEnd, holidayDateSet, weeklySchedule);
+    const monthSchoolDays = this.computeSchoolDays(monthStart, monthEnd, yearStart, yearEnd, holidayDateSet, weeklySchedule);
+    const yearSchoolDays = this.computeSchoolDays(yearStart, yearEnd, yearStart, yearEnd, holidayDateSet, weeklySchedule);
 
     const countFor = (recs: any[], studentId: string, schoolDays: Set<string>) => {
       const studentRecs = recs.filter(r => r.studentId === studentId);
@@ -1213,8 +1261,11 @@ export class ReportsService {
     const rangeHolidaySet = new Set(rangeHolidays.map(h => h.date.toISOString().split('T')[0]));
     // Study year bounds from the class's linked study year (startDate and endDate used independently)
     const printSyBounds = this.computeSyBounds(cls.studyYear, cls.studyYear?.year ?? start.getUTCFullYear());
-    // School days = weekdays (Mon–Fri) in the range constrained to study year, not holidays, not future
-    const schoolDays = this.computeSchoolDays(start, end, printSyBounds.yearStart, printSyBounds.yearEnd, rangeHolidaySet);
+    // School days = operating days in the range constrained to study year, not holidays,
+    // not future. Honours the class weekly schedule (e.g. SAT/SUN day-off, or weekend-only
+    // classes) so scheduled non-operating days are NOT counted as absent.
+    const printWeeklySchedule = parseWeeklySchedule(cls.schedule);
+    const schoolDays = this.computeSchoolDays(start, end, printSyBounds.yearStart, printSyBounds.yearEnd, rangeHolidaySet, printWeeklySchedule);
 
     const students = cls.students.map((s, idx) => {
       const studentRecs = records.filter(r => r.studentId === s.id);
@@ -1274,8 +1325,11 @@ export class ReportsService {
     const rangeHolidaySet = new Set(rangeHolidays.map(h => h.date.toISOString().split('T')[0]));
     // Study year bounds to constrain work days to the academic calendar
     const { yearStart: staffPrintSyStart, yearEnd: staffPrintSyEnd } = await this.getStudyYearBounds(start.getUTCFullYear());
-    // Work days = weekdays (Mon–Fri) in the range constrained to study year, not holidays, not future
-    const workDays = this.computeSchoolDays(start, end, staffPrintSyStart, staffPrintSyEnd, rangeHolidaySet);
+    // Configured staff weekly schedule (admin → session-settings → STAFF tab).
+    // Falls back to SAT+SUN day-off when nothing is configured.
+    const staffPrintSchedule = (await this.sessionConfigService.getStaffWeeklySchedule()).schedule;
+    // Work days = configured operating days in the range constrained to study year, not holidays, not future
+    const workDays = this.computeSchoolDays(start, end, staffPrintSyStart, staffPrintSyEnd, rangeHolidaySet, staffPrintSchedule);
 
     const staffData = staff.map((u, idx) => {
       const userRecs = records.filter(r => r.userId === u.id);
@@ -1432,6 +1486,10 @@ export class ReportsService {
     const todayCambodia = new Date(Date.UTC(cambodiaNow.getUTCFullYear(), cambodiaNow.getUTCMonth(), cambodiaNow.getUTCDate()));
     const cambodiaNowHHMM = cambodiaNow.toISOString().slice(11, 16);
 
+    // Configured staff weekly schedule (admin → session-settings → STAFF tab).
+    // Falls back to SAT+SUN day-off when nothing is configured.
+    const staffSchedule = (await this.sessionConfigService.getStaffWeeklySchedule()).schedule;
+
     return staff.map((u, idx) => {
       const recs = records.filter(r => r.userId === u.id);
       const s1 = recs.find(r => r.session === 1);
@@ -1454,8 +1512,11 @@ export class ReportsService {
       let session4Status = (s4rec && isDayOffStatus(s4rec.status)) ? s4rec.status
         : s3?.checkOutTime ? (s3.status || 'PRESENT') : null;
 
-      // Mark overtime sessions as ABSENT (past sessions with no record)
-      if (!isHoliday) {
+      // Mark overtime sessions as ABSENT (past sessions with no record).
+      // Skip scheduled day-off weekdays (default SAT+SUN; admin-configurable) and
+      // holidays — staff are not expected to scan on non-working days.
+      const isStaffWeekend = isScheduleDayOff(staffSchedule, dayStart);
+      if (!isHoliday && !isStaffWeekend) {
         if (!session1Status && isSessionOvertime(1, staffConfigs, dayStart, todayCambodia, cambodiaNowHHMM)) session1Status = 'ABSENT';
         if (!session2Status && isSessionOvertime(2, staffConfigs, dayStart, todayCambodia, cambodiaNowHHMM)) session2Status = 'ABSENT';
         if (!session3Status && isSessionOvertime(3, staffConfigs, dayStart, todayCambodia, cambodiaNowHHMM)) session3Status = 'ABSENT';
@@ -1488,6 +1549,7 @@ export class ReportsService {
         session4PermissionStartDate: s4rec?.permissionStartDate?.toISOString().split('T')[0] || null,
         session4PermissionEndDate: s4rec?.permissionEndDate?.toISOString().split('T')[0] || null,
         isHoliday,
+        isScheduleDayOff: isStaffWeekend,
         scanLatitude: locRecord?.scanLatitude || null,
         scanLongitude: locRecord?.scanLongitude || null,
         scanLocation: locRecord?.scanLocation || null,
@@ -1528,12 +1590,16 @@ export class ReportsService {
     // Fetch format rules for STAFF scope
     const formatRule = await this.sessionConfigService.getFormatRules('STAFF');
 
-    // Work days = weekdays (Mon–Fri) within the study year date range, not holidays, not future.
+    // Configured staff weekly schedule (admin → session-settings → STAFF tab).
+    // Falls back to SAT+SUN day-off when nothing is configured.
+    const staffSchedule = (await this.sessionConfigService.getStaffWeeklySchedule()).schedule;
+
+    // Work days = configured operating days within the study year date range, not holidays, not future.
     // Staff with NO record on a work day are treated as absent (unrecorded = not present).
     // Using study year bounds means editing the study year's start/end date directly changes what counts.
-    const weekWorkDays = this.computeSchoolDays(weekStart, weekEnd, yearStart, yearEnd, holidayDateSet);
-    const monthWorkDays = this.computeSchoolDays(monthStart, monthEnd, yearStart, yearEnd, holidayDateSet);
-    const yearWorkDays = this.computeSchoolDays(yearStart, yearEnd, yearStart, yearEnd, holidayDateSet);
+    const weekWorkDays = this.computeSchoolDays(weekStart, weekEnd, yearStart, yearEnd, holidayDateSet, staffSchedule);
+    const monthWorkDays = this.computeSchoolDays(monthStart, monthEnd, yearStart, yearEnd, holidayDateSet, staffSchedule);
+    const yearWorkDays = this.computeSchoolDays(yearStart, yearEnd, yearStart, yearEnd, holidayDateSet, staffSchedule);
 
     const countFor = (recs: any[], userId: string, workDays: Set<string>) => {
       const userRecs = recs.filter(r => r.userId === userId);

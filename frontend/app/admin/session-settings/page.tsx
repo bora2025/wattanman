@@ -162,6 +162,14 @@ export default function SessionSettingsPage() {
   const [classFormatRule, setClassFormatRule] = useState({ permissionsPerAbsent: 3, latesPerAbsentHalf: 3, absentSessionsForDayAbsent: 3, teacherLateGraceMinutes: 20, caseStudyABEnabled: true, enabled: false })
   const [staffFormatRule, setStaffFormatRule] = useState({ permissionsPerAbsent: 3, latesPerAbsentHalf: 3, absentSessionsForDayAbsent: 3, teacherLateGraceMinutes: 20, caseStudyABEnabled: true, enabled: false })
 
+  // Staff weekly schedule (which weekdays count as working days for staff reports)
+  const STAFF_SCHEDULE_DEFAULT: Record<string, string> = { MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'day-off', SUN: 'day-off' }
+  const STAFF_SCHEDULE_DAYS: Array<{ key: string; label: string }> = [
+    { key: 'MON', label: 'Mon' }, { key: 'TUE', label: 'Tue' }, { key: 'WED', label: 'Wed' },
+    { key: 'THU', label: 'Thu' }, { key: 'FRI', label: 'Fri' }, { key: 'SAT', label: 'Sat' }, { key: 'SUN', label: 'Sun' },
+  ]
+  const [staffSchedule, setStaffSchedule] = useState<Record<string, string>>({ ...STAFF_SCHEDULE_DEFAULT })
+
   const detectPreset = (cfgs: SessionConfigItem[]): string => {
     for (const preset of ATTENDANCE_PRESETS) {
       const match = preset.configs.every(pc => {
@@ -187,10 +195,11 @@ export default function SessionSettingsPage() {
 
   const fetchAllConfigs = async () => {
     try {
-      const [classRes, staffRes, rulesRes, me] = await Promise.all([
+      const [classRes, staffRes, rulesRes, staffSchedRes, me] = await Promise.all([
         apiFetch('/api/session-config/global'),
         apiFetch('/api/session-config/staff'),
         apiFetch('/api/session-config/format-rules'),
+        apiFetch('/api/session-config/staff-schedule'),
         getCurrentUser(),
       ])
       if (me?.department?.name) setOrganizationName(me.department.name)
@@ -232,6 +241,10 @@ export default function SessionSettingsPage() {
           enabled: rules.STAFF.enabled,
         })
       }
+      if (staffSchedRes.ok) {
+        const data = await staffSchedRes.json()
+        if (data?.schedule) setStaffSchedule({ ...STAFF_SCHEDULE_DEFAULT, ...data.schedule })
+      }
     } catch (e) {
       console.error('Error fetching session configs:', e)
     } finally {
@@ -245,7 +258,7 @@ export default function SessionSettingsPage() {
     try {
       const isStaff = activeTab === 'STAFF'
       const currentRule = isStaff ? staffFormatRule : classFormatRule
-      const [res, rulesRes] = await Promise.all([
+      const requests: Promise<Response>[] = [
         apiFetch('/api/session-config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -268,8 +281,16 @@ export default function SessionSettingsPage() {
             enabled: currentRule.enabled,
           }),
         }),
-      ])
-      if (res.ok && rulesRes.ok) {
+      ]
+      if (isStaff) {
+        requests.push(apiFetch('/api/session-config/staff-schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ schedule: staffSchedule }),
+        }))
+      }
+      const results = await Promise.all(requests)
+      if (results.every(r => r.ok)) {
         setMessage(`${isStaff ? 'Staff' : 'Class'} session time settings saved successfully!`)
       } else {
         setMessage('Failed to save settings.')
@@ -661,6 +682,53 @@ export default function SessionSettingsPage() {
                   </div>
                 )}
               </div>
+
+              {/* Staff Weekly Schedule — which weekdays count as working days for staff reports */}
+              {activeTab === 'STAFF' && (
+                <div className="card p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-800">📅 Staff Weekly Schedule</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Mark days when staff are NOT expected to work. Day-off days are excluded from
+                        staff attendance reports (not counted as absent, not auto-marked ABSENT).
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStaffSchedule({ ...STAFF_SCHEDULE_DEFAULT })}
+                      className="btn-ghost btn-sm"
+                    >
+                      ↩ Reset (Sat/Sun off)
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {STAFF_SCHEDULE_DAYS.map(d => {
+                      const isOff = (staffSchedule[d.key] || 'same') === 'day-off'
+                      return (
+                        <button
+                          key={d.key}
+                          type="button"
+                          onClick={() => setStaffSchedule(prev => ({ ...prev, [d.key]: isOff ? 'same' : 'day-off' }))}
+                          className={`px-4 py-2 rounded-xl text-sm font-medium border-2 transition-all ${
+                            isOff
+                              ? 'bg-red-50 text-red-700 border-red-300'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                          }`}
+                        >
+                          {d.label}
+                          <span className="ml-2 text-xs opacity-70">{isOff ? '🚫 Off' : '✓ Working'}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => setStaffSchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'day-off', SUN: 'day-off' })} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">Mon–Fri</button>
+                    <button type="button" onClick={() => setStaffSchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'same', SUN: 'day-off' })} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">Mon–Sat</button>
+                    <button type="button" onClick={() => setStaffSchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'same', SUN: 'same' })} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">All 7 days</button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <button
