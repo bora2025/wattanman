@@ -117,6 +117,48 @@ function colorBadge(color: string | null, text: string) {
   )
 }
 
+// ─── Time Off Rules ─────────────────────────────────────────────────────────
+
+type TimeOffRule = { from: string; to: string }
+
+function parseTimeOffRules(raw: string | null | undefined): TimeOffRule[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) return parsed.filter((r: any) => r.from && r.to)
+    return []
+  } catch { return [] }
+}
+
+function serializeTimeOffRules(rules: TimeOffRule[]): string | null {
+  return rules.length > 0 ? JSON.stringify(rules) : null
+}
+
+function TimeOffEditor({ rules, onChange }: { rules: TimeOffRule[]; onChange: (r: TimeOffRule[]) => void }) {
+  return (
+    <div className="space-y-1.5">
+      {rules.map((rule, i) => (
+        <div key={i} className="flex items-center gap-1.5 bg-gray-50 rounded-lg px-2 py-1.5">
+          <span className="text-xs text-gray-500 shrink-0">No lesson</span>
+          <input type="time" value={rule.from}
+            onChange={e => { const n = [...rules]; n[i] = { ...rule, from: e.target.value }; onChange(n) }}
+            className="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 w-24" />
+          <span className="text-xs text-gray-400">–</span>
+          <input type="time" value={rule.to}
+            onChange={e => { const n = [...rules]; n[i] = { ...rule, to: e.target.value }; onChange(n) }}
+            className="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 w-24" />
+          <button type="button" onClick={() => onChange(rules.filter((_, j) => j !== i))}
+            className="ml-auto text-red-400 hover:text-red-600 font-bold text-sm leading-none">×</button>
+        </div>
+      ))}
+      <button type="button" onClick={() => onChange([...rules, { from: '12:00', to: '13:00' }])}
+        className="w-full text-xs text-indigo-600 border border-dashed border-indigo-300 rounded-lg py-1.5 hover:bg-indigo-50 transition-colors">
+        + Add Time Off Slot
+      </button>
+    </div>
+  )
+}
+
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function TimetablePage() {
@@ -152,7 +194,7 @@ export default function TimetablePage() {
   const [wPeriods, setWPeriods] = useState(8)
   const [wDays, setWDays] = useState(5)
   const [wWeekend, setWWeekend] = useState<string[]>(['SATURDAY', 'SUNDAY'])
-  const [wTimeOff, setWTimeOff] = useState('')
+  const [wTimeOffRules, setWTimeOffRules] = useState<TimeOffRule[]>([])
   const [wDistrib, setWDistrib] = useState('')
   const [wHomework, setWHomework] = useState('')
   const [wMaxOn, setWMaxOn] = useState<number | ''>('')
@@ -199,7 +241,7 @@ export default function TimetablePage() {
   const [sPeriods, setSPeriods] = useState(8)
   const [sDays, setSDays] = useState(5)
   const [sWeekend, setSWeekend] = useState<string[]>(['SATURDAY','SUNDAY'])
-  const [sTimeOff, setSTimeOff] = useState('')
+  const [sTimeOffRules, setSTimeOffRules] = useState<TimeOffRule[]>([])
   const [savingSettings, setSavingSettings] = useState(false)
 
   // Subject form
@@ -324,7 +366,7 @@ export default function TimetablePage() {
     setWizardStep(0); setWizardTimetableId(null); setWizardError('')
     setWSchoolName(''); setWAcademicYear('2025-2026')
     setWPeriods(8); setWDays(5); setWWeekend(['SATURDAY','SUNDAY'])
-    setWTimeOff(''); setWDistrib(''); setWHomework(''); setWMaxOn(''); setWDoc('')
+    setWTimeOffRules([]); setWDistrib(''); setWHomework(''); setWMaxOn(''); setWDoc('')
     setShowWizard(true)
   }
 
@@ -338,7 +380,7 @@ export default function TimetablePage() {
         body: JSON.stringify({
           name: wSchoolName || 'New Timetable', academicYear: wAcademicYear,
           periodsPerDay: wPeriods, numberOfDays: wDays, weekend: wWeekend,
-          timeOffRules: wTimeOff || null, distribution: wDistrib || null,
+          timeOffRules: serializeTimeOffRules(wTimeOffRules), distribution: wDistrib || null,
           homeworkPrep: wHomework || null, maxOnDay: wMaxOn || null, docNotes: wDoc || null,
         }),
       })
@@ -492,7 +534,7 @@ export default function TimetablePage() {
     const res = await apiFetch(`/api/timetable/${current.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ periodsPerDay: sPeriods, numberOfDays: sDays, weekend: sWeekend, timeOffRules: sTimeOff || null }),
+      body: JSON.stringify({ periodsPerDay: sPeriods, numberOfDays: sDays, weekend: sWeekend, timeOffRules: serializeTimeOffRules(sTimeOffRules) }),
     })
     if (res.ok) {
       const updated = await res.json()
@@ -917,7 +959,7 @@ export default function TimetablePage() {
                     setSPeriods(current.periodsPerDay)
                     setSDays(current.numberOfDays)
                     setSWeekend(current.weekend ?? ['SATURDAY','SUNDAY'])
-                    setSTimeOff(current.timeOffRules ?? '')
+                    setSTimeOffRules(parseTimeOffRules(current.timeOffRules))
                     setShowSettingsModal(true)
                   }} disabled={!current}
                     className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 transition-colors disabled:opacity-35 min-w-[44px]">
@@ -1183,13 +1225,7 @@ export default function TimetablePage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">{t('timetable.timeOffRules')}</label>
-                <textarea
-                  rows={3}
-                  placeholder="e.g. No classes before 07:30 or after 17:00"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                  value={sTimeOff}
-                  onChange={e => setSTimeOff(e.target.value)}
-                />
+                <TimeOffEditor rules={sTimeOffRules} onChange={setSTimeOffRules} />
               </div>
               <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
                 {t('timetable.settingsWarning')}
@@ -1360,9 +1396,9 @@ export default function TimetablePage() {
                     </div>
                   </div>
                   <div className="border-t pt-3 grid grid-cols-2 gap-3">
-                    <div>
+                    <div className="col-span-2">
                       <label className="label-sm">Time Off Rules</label>
-                      <input className="input-field" value={wTimeOff} onChange={e => setWTimeOff(e.target.value)} placeholder="e.g. No lesson 12:00-13:00" />
+                      <TimeOffEditor rules={wTimeOffRules} onChange={setWTimeOffRules} />
                     </div>
                     <div>
                       <label className="label-sm">Distribution</label>
