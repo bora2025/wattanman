@@ -328,6 +328,49 @@ export class AuthService {
     };
   }
 
+  async getTeacherSchedule(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    if (!user?.email) {
+      return { _debug: { reason: 'User not found or has no email' } };
+    }
+    const include = {
+      timetable: {
+        select: {
+          id: true, name: true, academicYear: true, status: true,
+          periodsPerDay: true, numberOfDays: true,
+          periodTimes: true, weekend: true,
+        },
+      },
+      entries: {
+        include: {
+          subject: { select: { name: true, short: true, color: true } },
+          class: { select: { name: true, short: true, color: true } },
+          classroom: { select: { name: true, short: true } },
+        },
+        orderBy: [{ day: 'asc' }, { period: 'asc' }] as any,
+      },
+    };
+    let ttTeacher = await this.prisma.timetableTeacher.findFirst({
+      where: { email: { equals: user.email, mode: 'insensitive' }, timetable: { status: 'PUBLISHED' } },
+      include,
+      orderBy: { timetable: { createdAt: 'desc' } } as any,
+    });
+    if (!ttTeacher) {
+      ttTeacher = await this.prisma.timetableTeacher.findFirst({
+        where: { email: { equals: user.email, mode: 'insensitive' } },
+        include,
+        orderBy: { timetable: { createdAt: 'desc' } } as any,
+      });
+    }
+    if (!ttTeacher) {
+      return { _debug: { reason: 'No timetable teacher found matching your email', email: user.email } };
+    }
+    return ttTeacher;
+  }
+
   async getStudentSchedule(userId: string) {
     const student = await this.prisma.student.findUnique({
       where: { userId },

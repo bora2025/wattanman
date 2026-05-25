@@ -6,6 +6,7 @@ import Link from 'next/link'
 import AuthGuard from '../../components/AuthGuard'
 import Sidebar from '../../components/Sidebar'
 import AnnouncementFeed from '../../components/AnnouncementFeed'
+import { ChildTimetableGrid } from '../../components/TimetableGrid'
 import { apiFetch, getCurrentUser } from '../../lib/api'
 
 interface Child {
@@ -143,6 +144,16 @@ export default function ParentDashboard() {
                     </Link>
                   ))}
                 </div>
+              </section>
+            )}
+
+            {/* Child schedule */}
+            {selectedChild && (
+              <section className="card p-4 sm:p-5">
+                <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                  📅 {selectedChild.user.name}&apos;s Schedule
+                </h2>
+                <ChildTimetableGrid childUserId={selectedChild.user.id} />
               </section>
             )}
           </div>

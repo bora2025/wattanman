@@ -270,6 +270,28 @@ export class AuthController {
   }
 
   @SkipThrottle()
+  @UseGuards(JwtAuthGuard)
+  @Get('my-schedule')
+  getMySchedule(@Request() req: any) {
+    return this.authService.getStudentSchedule(req.user.userId);
+  }
+
+  @SkipThrottle()
+  @UseGuards(JwtAuthGuard)
+  @Get('my-teacher-schedule')
+  getMyTeacherSchedule(@Request() req: any) {
+    return this.authService.getTeacherSchedule(req.user.userId);
+  }
+
+  @SkipThrottle()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PARENT', 'ADMIN', 'SUPER_ADMIN')
+  @Get('child-schedule/:childUserId')
+  getChildSchedule(@Param('childUserId') childUserId: string) {
+    return this.authService.getStudentSchedule(childUserId);
+  }
+
+  @SkipThrottle()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('users/:id/full-profile')

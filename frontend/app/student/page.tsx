@@ -5,6 +5,7 @@ import Link from 'next/link';
 import AuthGuard from '../../components/AuthGuard';
 import Sidebar from '../../components/Sidebar';
 import AnnouncementFeed from '../../components/AnnouncementFeed';
+import TimetableGrid from '../../components/TimetableGrid';
 import { apiFetch, getCurrentUser } from '../../lib/api';
 import { useLanguage } from '../../lib/i18n';
 
@@ -53,11 +54,12 @@ export default function StudentPortal() {
   const [assignments, setAssignments] = useState<AssignmentLite[]>([]);
   const [exams, setExams] = useState<ExamLite[]>([]);
   const [studentName, setStudentName] = useState<string>('');
+  const [studentUserId, setStudentUserId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
 
   useEffect(() => {
-    getCurrentUser().then(u => { if (u) setStudentName(u.name || ''); });
+    getCurrentUser().then(u => { if (u) { setStudentName(u.name || ''); setStudentUserId(u.userId); } });
     fetchAttendance();
     fetchAssignments();
     fetchExams();
@@ -182,6 +184,12 @@ export default function StudentPortal() {
                 <AnnouncementFeed accent="emerald" limit={5} />
               </div>
 
+              {/* My Schedule */}
+              <div className="card p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">📅 My Schedule</h3>
+                {studentUserId && <TimetableGrid userId={studentUserId} role="student" />}
+              </div>
+
               {/* Summary Stats */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="stat-card text-center">
@@ -270,6 +278,12 @@ export default function StudentPortal() {
         </div>
 
         <main className="max-w-5xl mx-auto px-6 py-6 space-y-4">
+          {/* My Schedule */}
+          <div className="card p-5">
+            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">📅 My Schedule</h2>
+            {studentUserId && <TimetableGrid userId={studentUserId} role="student" />}
+          </div>
+
           {/* Quick Access */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[

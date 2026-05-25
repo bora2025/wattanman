@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import AuthGuard from '../../components/AuthGuard'
 import Sidebar from '../../components/Sidebar'
 import AnnouncementFeed from '../../components/AnnouncementFeed'
+import TimetableGrid from '../../components/TimetableGrid'
 import { teacherNav } from '../../lib/teacher-nav'
 import { apiFetch, getCurrentUser } from '../../lib/api'
 import { useLanguage } from '../../lib/i18n'
@@ -227,6 +228,14 @@ export default function TeacherDashboard() {
                 </div>
               </div>
             </Link>
+
+            {/* My Timetable Schedule */}
+            {teacherId && (
+              <div className="card p-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">📅 My Teaching Schedule</h3>
+                <TimetableGrid userId={teacherId} role="teacher" />
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div className="stat-card">
                 <p className="stat-label">{t('teacher.myClasses')}</p>
