@@ -698,6 +698,12 @@ export default function TimetablePage() {
   function buildGrid() {
     if (!current) return null
     const { entries, numberOfDays } = current
+
+    // ── Time-off rules: which period times are blocked ─────────────────
+    const offRules = parseTimeOffRules(current.timeOffRules)
+    const isBlocked = (time: string) =>
+      offRules.length > 0 && offRules.some(r => r.from && r.to && time >= r.from && time < r.to)
+
     const khmerToArabic = (s: string) => s.replace(/[០-៩]/g, d => String(d.charCodeAt(0) - 0x17E0))
     const gradeNum = (s: string) => { const d = khmerToArabic(s).match(/\d+/); return d ? parseInt(d[0], 10) : 9999 }
     const classes = [...current.classes].sort((a, b) => {
@@ -713,8 +719,50 @@ export default function TimetablePage() {
     const hasBrk = morningCount > 0 && afternoonTimes.length > 0
     const dayColSpan = morningCount + (hasBrk ? 1 : 0) + afternoonTimes.length
 
-    function renderCell(cls: TClass, day: number, period: number, cellKey: string) {
+    function renderCell(cls: TClass, day: number, period: number, cellKey: string, blocked = false) {
       const entry = entries.find(e => e.classId === cls.id && e.day === day && e.period === period)
+
+      // ── Blocked (time-off) cell ──────────────────────────────────────
+      if (blocked) {
+        return (
+          <td key={cellKey} className="border border-gray-200 p-0 text-center align-middle"
+            style={{ minWidth: 56, height: 46, background: 'repeating-linear-gradient(135deg,#f3f4f6 0px,#f3f4f6 5px,#e5e7eb 5px,#e5e7eb 10px)' }}>
+            {entry ? (
+              // Entry exists in a blocked period – show it with warning outline so user can move it
+              <div
+                className="relative group rounded mx-0.5 my-0.5 px-1 py-0.5 text-white text-[10px] leading-tight cursor-grab active:cursor-grabbing ring-2 ring-orange-400"
+                style={{ backgroundColor: entry.subject.color ?? '#6366f1', opacity: 0.75 }}
+                draggable
+                onDragStart={e => {
+                  setDragEntry(entry)
+                  const synth: TLesson = {
+                    id: entry.lessonId ?? '', teacherId: entry.teacherId, subjectId: entry.subjectId,
+                    classId: entry.classId, perWeek: 999, lessonType: 'SINGLE',
+                    teacher: entry.teacher, subject: entry.subject, class: entry.class,
+                  }
+                  e.dataTransfer.setData('lesson', JSON.stringify(synth))
+                  e.dataTransfer.setData('sourceEntryId', entry.id)
+                }}
+                onDragEnd={() => setDragEntry(null)}
+                title="This period is in a time-off window — move or remove it"
+              >
+                <div className="font-semibold">{entry.subject.short}</div>
+                <div className="opacity-90 text-[9px] rounded px-0.5 mt-0.5 inline-block"
+                  style={{ backgroundColor: entry.teacher.color ?? '#374151' }}>{entry.teacher.short}</div>
+                <button
+                  className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 text-white rounded-full text-[8px] items-center justify-center hidden group-hover:flex leading-none"
+                  onMouseDown={e => e.stopPropagation()}
+                  onClick={e => { e.stopPropagation(); removeEntry(entry) }}
+                  title="Remove">×</button>
+              </div>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300 text-[13px]">⊘</div>
+            )}
+          </td>
+        )
+      }
+
+      // ── Normal cell ──────────────────────────────────────────────────
       const isTarget = dropTarget?.classId === cls.id && dropTarget?.day === day && dropTarget?.period === period
       return (
         <td key={cellKey}
@@ -722,7 +770,6 @@ export default function TimetablePage() {
           style={{ minWidth: 56, height: 46 }}
           onDragOver={e => {
             e.preventDefault()
-            // Only update state when the target cell actually changes to avoid constant re-renders
             setDropTarget(prev =>
               prev?.classId === cls.id && prev?.day === day && prev?.period === period
                 ? prev
@@ -737,13 +784,11 @@ export default function TimetablePage() {
             if (!raw) return
             const lesson: TLesson = JSON.parse(raw)
             const srcId = e.dataTransfer.getData('sourceEntryId') || undefined
-            // No-op if dropped onto the same cell it was dragged from
             if (srcId) {
               const src = current?.entries.find(en => en.id === srcId)
               if (src && src.classId === cls.id && src.day === day && src.period === period) return
             }
             const ok = await placeEntry(cls.id, day, period, lesson, srcId)
-            // If moving from another cell, delete the source entry
             if (ok && srcId) {
               const delRes = await apiFetch(`/api/timetable/entries/${srcId}`, { method: 'DELETE' })
               if (delRes.ok) setCurrent(prev => prev ? { ...prev, entries: prev.entries.filter(e => e.id !== srcId) } : prev)
@@ -757,7 +802,6 @@ export default function TimetablePage() {
               draggable
               onDragStart={e => {
                 setDragEntry(entry)
-                // Synth carries the original lessonId so perWeek checks work correctly
                 const synth: TLesson = {
                   id: entry.lessonId ?? '', teacherId: entry.teacherId, subjectId: entry.subjectId,
                   classId: entry.classId, perWeek: 999, lessonType: 'SINGLE',
@@ -805,11 +849,15 @@ export default function TimetablePage() {
               {days.map(d => (
                 <Fragment key={d}>
                   {morningTimes.map((time, idx) => (
-                    <th key={`${d}-m${idx}`} className="border border-indigo-700 px-1 py-1 min-w-[56px] text-center font-normal">{time}</th>
+                    isBlocked(time)
+                      ? <th key={`${d}-m${idx}`} className="border border-orange-700 bg-orange-800/70 text-orange-200 px-0.5 py-1 text-[9px] font-normal text-center" title={`Time-off: ${time}`}>⊘<br/>{time}</th>
+                      : <th key={`${d}-m${idx}`} className="border border-indigo-700 px-1 py-1 min-w-[56px] text-center font-normal">{time}</th>
                   ))}
                   {hasBrk && <th className="border border-indigo-900 bg-indigo-900/60 text-indigo-400 px-1 py-1 text-[9px] font-normal">☕<br/>{t('timetable.break')}</th>}
                   {afternoonTimes.map((time, idx) => (
-                    <th key={`${d}-a${idx}`} className="border border-indigo-700 px-1 py-1 min-w-[56px] text-center font-normal">{time}</th>
+                    isBlocked(time)
+                      ? <th key={`${d}-a${idx}`} className="border border-orange-700 bg-orange-800/70 text-orange-200 px-0.5 py-1 text-[9px] font-normal text-center" title={`Time-off: ${time}`}>⊘<br/>{time}</th>
+                      : <th key={`${d}-a${idx}`} className="border border-indigo-700 px-1 py-1 min-w-[56px] text-center font-normal">{time}</th>
                   ))}
                 </Fragment>
               ))}
@@ -830,9 +878,9 @@ export default function TimetablePage() {
                 </td>
                 {days.map(day => (
                   <Fragment key={day}>
-                    {morningTimes.map((_, idx) => renderCell(cls, day, idx + 1, `${day}-m${idx}`))}
+                    {morningTimes.map((time, idx) => renderCell(cls, day, idx + 1, `${day}-m${idx}`, isBlocked(time)))}
                     {hasBrk && <td className="border border-gray-200 bg-gray-100" style={{ width: 28 }} />}
-                    {afternoonTimes.map((_, idx) => renderCell(cls, day, morningCount + idx + 1, `${day}-a${idx}`))}
+                    {afternoonTimes.map((time, idx) => renderCell(cls, day, morningCount + idx + 1, `${day}-a${idx}`, isBlocked(time)))}
                   </Fragment>
                 ))}
               </tr>
