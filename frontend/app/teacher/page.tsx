@@ -82,6 +82,20 @@ export default function TeacherDashboard() {
     setSelectedDate(d.toISOString().split('T')[0])
   }
 
+  const formatSchedule = (schedule: string | null): string => {
+    if (!schedule) return ''
+    try {
+      const parsed = JSON.parse(schedule)
+      const abbr: Record<string, string> = { MON: 'Mon', TUE: 'Tue', WED: 'Wed', THU: 'Thu', FRI: 'Fri', SAT: 'Sat', SUN: 'Sun' }
+      const days = Object.entries(parsed)
+        .filter(([, v]) => v !== 'day-off')
+        .map(([k]) => abbr[k] || k)
+      return days.join(', ')
+    } catch {
+      return schedule
+    }
+  }
+
   const totals = summaries.reduce(
     (acc, s) => ({
       total: acc.total + s.totalStudents,
@@ -131,7 +145,7 @@ export default function TeacherDashboard() {
               <AnnouncementFeed accent="emerald" limit={5} />
             </div>
             {/* Student Attendance Summary */}
-            <div className="card p-4 space-y-4">
+            {classes.length > 0 && <div className="card p-4 space-y-4">
               {/* Date navigation */}
               <div className="flex items-center gap-2">
                 <button onClick={() => goDay(-1)} className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 active:bg-slate-100 text-sm transition-colors">◀</button>
@@ -196,7 +210,7 @@ export default function TeacherDashboard() {
                   )}
                 </>
               )}
-            </div>
+            </div>}
 
             {/* Quick Action — Staff Attendance (desktop only) */}
             <Link href="/teacher/staff-attendance" className="hidden lg:block">
@@ -245,7 +259,7 @@ export default function TeacherDashboard() {
                       <h3 className="font-semibold text-slate-800 text-base sm:text-lg">{cls.name}</h3>
                       <p className="text-sm text-slate-500 mt-0.5">{cls.subject}</p>
                       {cls.schedule && (
-                        <p className="text-xs text-slate-400 mt-2">🕐 {cls.schedule}</p>
+                        <p className="text-xs text-slate-400 mt-2">🕐 {formatSchedule(cls.schedule)}</p>
                       )}
                       <div className="mt-4 pt-3 border-t border-slate-100">
                         <Link href={`/teacher/attendance?classId=${cls.id}`}>
