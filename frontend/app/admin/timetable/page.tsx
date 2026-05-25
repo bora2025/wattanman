@@ -495,7 +495,14 @@ export default function TimetablePage() {
       body: JSON.stringify({ periodsPerDay: sPeriods, numberOfDays: sDays, weekend: sWeekend, timeOffRules: sTimeOff || null }),
     })
     if (res.ok) {
-      setCurrent(prev => prev ? { ...prev, periodsPerDay: sPeriods, numberOfDays: sDays, weekend: sWeekend, timeOffRules: sTimeOff || null } : null)
+      const updated = await res.json()
+      setCurrent(prev => prev ? {
+        ...prev,
+        periodsPerDay: updated.periodsPerDay ?? sPeriods,
+        numberOfDays: updated.numberOfDays ?? sDays,
+        weekend: updated.weekend ?? sWeekend,
+        timeOffRules: updated.timeOffRules ?? null,
+      } : null)
       showToast(t('timetable.settingsSaved'))
       setShowSettingsModal(false)
     } else {

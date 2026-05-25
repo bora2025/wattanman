@@ -58,10 +58,10 @@ export class TimetableService {
   }
 
   async updateTimetable(id: string, data: Partial<{
-    name: string; short: string; academicYear: string;
+    name: string; short: string | null; academicYear: string;
     periodsPerDay: number; numberOfDays: number; weekend: string[];
-    timeOffRules: string; distribution: string; homeworkPrep: string;
-    maxOnDay: number; docNotes: string; periodTimes: string; status: string;
+    timeOffRules: string | null; distribution: string | null; homeworkPrep: string | null;
+    maxOnDay: number | null; docNotes: string | null; periodTimes: string | null; status: string;
   }>) {
     return this.prisma.timetable.update({ where: { id }, data });
   }
