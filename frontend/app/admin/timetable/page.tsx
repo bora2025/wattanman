@@ -199,6 +199,7 @@ export default function TimetablePage() {
   const [sPeriods, setSPeriods] = useState(8)
   const [sDays, setSDays] = useState(5)
   const [sWeekend, setSWeekend] = useState<string[]>(['SATURDAY','SUNDAY'])
+  const [sTimeOff, setSTimeOff] = useState('')
   const [savingSettings, setSavingSettings] = useState(false)
 
   // Subject form
@@ -491,10 +492,10 @@ export default function TimetablePage() {
     const res = await apiFetch(`/api/timetable/${current.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ periodsPerDay: sPeriods, numberOfDays: sDays, weekend: sWeekend }),
+      body: JSON.stringify({ periodsPerDay: sPeriods, numberOfDays: sDays, weekend: sWeekend, timeOffRules: sTimeOff || null }),
     })
     if (res.ok) {
-      setCurrent(prev => prev ? { ...prev, periodsPerDay: sPeriods, numberOfDays: sDays, weekend: sWeekend } : null)
+      setCurrent(prev => prev ? { ...prev, periodsPerDay: sPeriods, numberOfDays: sDays, weekend: sWeekend, timeOffRules: sTimeOff || null } : null)
       showToast(t('timetable.settingsSaved'))
       setShowSettingsModal(false)
     } else {
@@ -909,6 +910,7 @@ export default function TimetablePage() {
                     setSPeriods(current.periodsPerDay)
                     setSDays(current.numberOfDays)
                     setSWeekend(current.weekend ?? ['SATURDAY','SUNDAY'])
+                    setSTimeOff(current.timeOffRules ?? '')
                     setShowSettingsModal(true)
                   }} disabled={!current}
                     className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 transition-colors disabled:opacity-35 min-w-[44px]">
@@ -1171,6 +1173,16 @@ export default function TimetablePage() {
                     </button>
                   ))}
                 </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">{t('timetable.timeOffRules')}</label>
+                <textarea
+                  rows={3}
+                  placeholder="e.g. No classes before 07:30 or after 17:00"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  value={sTimeOff}
+                  onChange={e => setSTimeOff(e.target.value)}
+                />
               </div>
               <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
                 {t('timetable.settingsWarning')}
