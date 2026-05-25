@@ -109,6 +109,8 @@ function LoginContent() {
               <label className="block text-[15px] font-semibold mb-2" style={{ color: 'var(--color-text)' }}>{t('common.email')}</label>
               <input
                 type="email"
+                name="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@school.edu"
@@ -122,6 +124,8 @@ function LoginContent() {
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -261,6 +265,8 @@ function LoginContent() {
                 <label className="form-label">{t('common.email')}</label>
                 <input
                   type="email"
+                  name="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@school.edu"
@@ -274,6 +280,8 @@ function LoginContent() {
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
