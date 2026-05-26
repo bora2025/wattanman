@@ -7,6 +7,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import { employeeNav } from '../../../lib/employee-nav'
 import { adminNav } from '../../../lib/admin-nav'
 import { teacherNav } from '../../../lib/teacher-nav'
+import { reporterNav } from '../../../lib/reporter-nav'
 import { apiFetch } from '../../../lib/api'
 import { formatCambodiaTime } from '../../../lib/dateUtils'
 import { useLanguage } from '../../../lib/i18n'
@@ -240,13 +241,13 @@ export default function EmployeeScanPage() {
   const formatTime = (iso?: string) => formatCambodiaTime(iso)
 
   return (
-    <AuthGuard allowedRoles={['EMPLOYEE', 'ADMIN', 'TEACHER']}>
+    <AuthGuard allowedRoles={['EMPLOYEE', 'ADMIN', 'TEACHER', 'WATTAMAN_REPORTER']}>
       <div className="flex min-h-screen bg-slate-50">
         <Sidebar
-          title={userRole === 'ADMIN' ? 'Admin' : userRole === 'TEACHER' ? 'Teacher' : 'Employee'}
+          title={userRole === 'ADMIN' ? 'Admin' : userRole === 'TEACHER' ? 'Teacher' : userRole === 'WATTAMAN_REPORTER' ? 'Reporter' : 'Employee'}
           subtitle={userName || 'Portal'}
-          navItems={userRole === 'ADMIN' ? adminNav : userRole === 'TEACHER' ? teacherNav : employeeNav}
-          accentColor={userRole === 'ADMIN' ? 'indigo' : userRole === 'TEACHER' ? 'sky' : 'emerald'}
+          navItems={userRole === 'ADMIN' ? adminNav : userRole === 'TEACHER' ? teacherNav : userRole === 'WATTAMAN_REPORTER' ? reporterNav : employeeNav}
+          accentColor={userRole === 'ADMIN' ? 'indigo' : userRole === 'TEACHER' ? 'sky' : userRole === 'WATTAMAN_REPORTER' ? 'teal' : 'emerald'}
         />
 
         <main className="flex-1 lg:ml-0">

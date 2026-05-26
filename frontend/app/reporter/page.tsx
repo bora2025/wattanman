@@ -16,6 +16,13 @@ function ReporterDashboardContent() {
 
   const reports = [
     {
+      title: 'My Attendance Scan',
+      desc: 'Scan your QR card to record your own daily attendance check-in.',
+      href: '/employee/scan',
+      icon: '📷',
+      accent: 'teal',
+    },
+    {
       title: 'Staff Attendance Report',
       desc: 'View and print daily, weekly, monthly, and yearly attendance reports for all staff members.',
       href: '/admin/staff-reports',
