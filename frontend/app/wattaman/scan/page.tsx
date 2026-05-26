@@ -397,6 +397,14 @@ function WattamanScanContent() {
   /* ── QR handler ── */
   const handleQrScanned = useCallback(async (qrData: string) => {
     if (lockRef.current) return
+
+    // Ignore scanner firmware / config strings
+    const upperQ = qrData.toUpperCase()
+    const isScannerConfig = upperQ.startsWith('FIRMWARE:') || upperQ.startsWith('CONFIG:') ||
+      upperQ.startsWith('VERSION:') || upperQ.startsWith('SCANCODE') ||
+      upperQ.startsWith('VM.') || /^[A-Z]+\.[0-9]{8}$/.test(qrData.trim())
+    if (isScannerConfig) return
+
     lockRef.current = true
     setIsLoading(true)
     setProfileVisible(false)

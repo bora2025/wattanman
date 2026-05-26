@@ -242,6 +242,14 @@ function UsbScanContent() {
   /* ── Process scanned QR value ── */
   const handleQrScanned = useCallback(async (qrData: string) => {
     if (lockRef.current) return
+
+    // Ignore scanner configuration / firmware strings (not student QR codes)
+    const upperQ = qrData.toUpperCase()
+    const isScannerConfig = upperQ.startsWith('FIRMWARE:') || upperQ.startsWith('CONFIG:') ||
+      upperQ.startsWith('VERSION:') || upperQ.startsWith('SCANCODE') ||
+      upperQ.startsWith('VM.') || /^[A-Z]+\.[0-9]{8}$/.test(qrData.trim())
+    if (isScannerConfig) return   // silently discard — device just booted or config button pressed
+
     lockRef.current = true
     setIsLoading(true)
     setProfileVisible(false)
