@@ -164,6 +164,9 @@ function physicalKeyToAscii(e: KeyboardEvent): string | null {
     Slash:        ['/', '?'],  Space:       [' ', ' '],
   }
   if (punct[code]) return shiftKey ? punct[code][1] : punct[code][0]
+  // Fallback: on some Android/tablet browsers e.code may be empty — use e.key directly
+  // if it's a single printable ASCII character (covers most scanner output)
+  if (e.key && e.key.length === 1 && e.key.charCodeAt(0) >= 32) return e.key
   return null
 }
 
@@ -667,6 +670,25 @@ function UsbScanContent() {
     document.addEventListener('keydown', onKeyDown, true)
     return () => document.removeEventListener('keydown', onKeyDown, true)
   }, [linkCardQr, handleQrScanned, handleAutoLinkScan, testMode])
+
+  // Re-focus the hidden input after any tap/click on the page.
+  // readOnly inputs don't trigger soft keyboards, so this is safe on touch devices.
+  // Keeps the page capturing scanner keystrokes even after the user taps buttons.
+  useEffect(() => {
+    const refocus = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement
+      // Don't steal focus from real text inputs (search box in link modal, etc.)
+      if (target.tagName === 'INPUT' && !target.classList.contains('sr-only')) return
+      if (target.tagName === 'TEXTAREA') return
+      requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }))
+    }
+    document.addEventListener('click', refocus, true)
+    document.addEventListener('touchend', refocus, { capture: true, passive: true })
+    return () => {
+      document.removeEventListener('click', refocus, true)
+      document.removeEventListener('touchend', refocus as EventListener, true)
+    }
+  }, [])
 
   const handleLogout = useCallback(async () => {
     try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }) } catch { /* ignore */ }
