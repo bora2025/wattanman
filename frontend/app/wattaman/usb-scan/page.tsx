@@ -148,6 +148,51 @@ function UsbScanContent() {
   const lastActivityTimeRef = useRef<number>(0)
   const deviceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  /* ── WebHID USB device detection ── */
+  const [hidSupported] = useState(() => typeof navigator !== 'undefined' && 'hid' in navigator)
+  const [hidDeviceName, setHidDeviceName] = useState<string | null>(null)
+  const [hidConnected, setHidConnected] = useState(false)
+
+  useEffect(() => {
+    if (!hidSupported) return
+    const nav = navigator as any
+    // Check already-authorized devices on mount
+    nav.hid.getDevices().then((devs: any[]) => {
+      if (devs.length > 0) {
+        setHidConnected(true)
+        setHidDeviceName(devs[0].productName || 'HID Device')
+      }
+    }).catch(() => {})
+    const onConnect = (e: any) => {
+      setHidConnected(true)
+      setHidDeviceName(e.device?.productName || 'HID Device')
+    }
+    const onDisconnect = (e: any) => {
+      nav.hid.getDevices().then((devs: any[]) => {
+        if (devs.length === 0) { setHidConnected(false); setHidDeviceName(null) }
+        else setHidDeviceName(devs[0].productName || 'HID Device')
+      }).catch(() => { setHidConnected(false); setHidDeviceName(null) })
+    }
+    nav.hid.addEventListener('connect', onConnect)
+    nav.hid.addEventListener('disconnect', onDisconnect)
+    return () => {
+      nav.hid.removeEventListener('connect', onConnect)
+      nav.hid.removeEventListener('disconnect', onDisconnect)
+    }
+  }, [hidSupported])
+
+  const requestHidDevice = useCallback(async () => {
+    if (!hidSupported) return
+    try {
+      const nav = navigator as any
+      const devs = await nav.hid.requestDevice({ filters: [] })
+      if (devs.length > 0) {
+        setHidConnected(true)
+        setHidDeviceName(devs[0].productName || 'HID Device')
+      }
+    } catch { /* user cancelled dialog */ }
+  }, [hidSupported])
+
   /* ── Test mode (scan without recording) ── */
   const [testMode, setTestMode] = useState(false)
   const [testResult, setTestResult] = useState<string | null>(null)
@@ -645,40 +690,69 @@ function UsbScanContent() {
             <div className={`rounded-xl border px-4 py-3 flex items-center gap-3 transition-all duration-500 ${
               deviceActive
                 ? 'bg-emerald-50 border-emerald-300'
-                : 'bg-slate-50 border-slate-200'
+                : hidConnected
+                  ? 'bg-blue-50 border-blue-200'
+                  : 'bg-slate-50 border-slate-200'
             }`}>
               <div className={`w-3 h-3 rounded-full flex-shrink-0 transition-all duration-300 ${
-                deviceActive ? 'bg-emerald-500 shadow-[0_0_8px_2px_rgba(52,211,153,0.6)]' : 'bg-slate-300'
+                deviceActive ? 'bg-emerald-500 shadow-[0_0_8px_2px_rgba(52,211,153,0.6)]' : hidConnected ? 'bg-blue-400' : 'bg-slate-300'
               }`}
                 style={deviceActive ? { animation: 'ping 1s ease-in-out 1' } : undefined}
               />
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-semibold ${
-                  deviceActive ? 'text-emerald-700' : 'text-slate-500'
+                  deviceActive ? 'text-emerald-700' : hidConnected ? 'text-blue-700' : 'text-slate-500'
                 }`}>
-                  {deviceActive ? '🔌 Scanner Connected & Active' : '⏸ Waiting for scanner input…'}
+                  {deviceActive
+                    ? `🔌 Scanner Active${hidDeviceName ? ` — ${hidDeviceName}` : ''}`
+                    : hidConnected
+                      ? `🔵 Device detected: ${hidDeviceName} — scan a card to test`
+                      : '⏸ Waiting for scanner input…'}
                 </p>
-                {lastActivityStr && (
-                  <p className="text-xs text-slate-400">Last activity: {lastActivityStr}</p>
-                )}
-                {!lastActivityStr && (
-                  <p className="text-xs text-slate-400">Plug in USB scanner, then press any button on it or scan a code</p>
-                )}
+                {lastActivityStr
+                  ? <p className="text-xs text-slate-400">Last activity: {lastActivityStr}</p>
+                  : !hidConnected && (
+                    <p className="text-xs text-slate-400">
+                      {hidSupported
+                        ? 'Click “Detect Scanner” to verify USB connection, or just scan a card'
+                        : 'Plug in USB scanner, then scan any card to activate'}
+                    </p>
+                  )}
               </div>
-              <button
-                onClick={() => {
-                  setTestMode(t => !t)
-                  setTestResult(null)
-                }}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all flex-shrink-0 ${
-                  testMode
-                    ? 'bg-violet-500 text-white border-violet-500'
-                    : 'bg-white text-slate-600 border-slate-300 hover:border-violet-400 hover:text-violet-600'
-                }`}
-              >
-                {testMode ? '🧪 Test Mode ON' : 'Test Mode'}
-              </button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {hidSupported && (
+                  <button
+                    onClick={requestHidDevice}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg border bg-white text-blue-600 border-blue-300 hover:bg-blue-50 transition-all"
+                    title="Open browser dialog to select and verify the USB scanner device"
+                  >
+                    🔍 Detect
+                  </button>
+                )}
+                <button
+                  onClick={() => { setTestMode(t => !t); setTestResult(null) }}
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
+                    testMode
+                      ? 'bg-violet-500 text-white border-violet-500'
+                      : 'bg-white text-slate-600 border-slate-300 hover:border-violet-400 hover:text-violet-600'
+                  }`}
+                >
+                  {testMode ? '🧪 Test ON' : 'Test Mode'}
+                </button>
+              </div>
             </div>
+
+            {/* Troubleshooting steps — shown when no scanner activity yet */}
+            {!lastActivityStr && !isLoading && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 space-y-1">
+                <p className="font-semibold text-amber-900">Checklist if scanner is not working:</p>
+                <p>{hidConnected ? '✅' : '□'} USB scanner plugged into a working USB port{hidConnected && hidDeviceName ? ` (${hidDeviceName} detected)` : ''}</p>
+                <p>{deviceActive ? '✅' : '□'} Scanner is sending keystrokes to this page</p>
+                <p>□ OS keyboard layout is any layout (scanner still works — we use physical key codes)</p>
+                <p>□ This browser tab is the active/focused window</p>
+                <p className="pt-1">Click <strong>Test Mode</strong> then scan a card to see the raw value the scanner sends.</p>
+              </div>
+            )}
 
             {/* Test mode result */}
             {testMode && (
