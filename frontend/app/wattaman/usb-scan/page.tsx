@@ -101,6 +101,16 @@ function UsbScanContent() {
   const lastKeyTimeRef = useRef(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  /* ── Device activity detection ── */
+  const [deviceActive, setDeviceActive] = useState(false)   // scanner sent keystrokes recently
+  const [lastActivityStr, setLastActivityStr] = useState<string | null>(null)
+  const lastActivityTimeRef = useRef<number>(0)
+  const deviceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  /* ── Test mode (scan without recording) ── */
+  const [testMode, setTestMode] = useState(false)
+  const [testResult, setTestResult] = useState<string | null>(null)
+
   /* ── Unknown-card linking modal ── */
   const [linkCardQr, setLinkCardQr] = useState<string | null>(null)
   const [linkSearch, setLinkSearch] = useState('')
@@ -402,6 +412,14 @@ function UsbScanContent() {
     const onKeyDown = (e: KeyboardEvent) => {
       if (linkCardQr) return   // modal is open — don't intercept
       const now = Date.now()
+
+      // Mark device as active and record timestamp
+      lastActivityTimeRef.current = now
+      setDeviceActive(true)
+      setLastActivityStr(new Date().toLocaleTimeString())
+      if (deviceTimerRef.current) clearTimeout(deviceTimerRef.current)
+      deviceTimerRef.current = setTimeout(() => setDeviceActive(false), 3000)
+
       // If there's a gap > 200ms between keystrokes, reset buffer (differentiates scanner from human)
       if (now - lastKeyTimeRef.current > 200 && bufferRef.current.length > 0) {
         bufferRef.current = ''
@@ -413,13 +431,22 @@ function UsbScanContent() {
         const code = bufferRef.current.trim()
         bufferRef.current = ''
         setBufferDisplay('')
-        if (code.length > 0) handleQrScanned(code)
+        if (code.length > 0) {
+          if (testMode) {
+            // Test mode: show raw value without calling API
+            setTestResult(code)
+            lockRef.current = false
+          } else {
+            handleQrScanned(code)
+          }
+        }
         return
       }
       // Only accumulate printable characters
       if (e.key.length === 1) {
         bufferRef.current += e.key
         setBufferDisplay(bufferRef.current)
+        setTestResult(null)  // clear test result while typing
       }
     }
     inputEl.addEventListener('keydown', onKeyDown)
@@ -495,6 +522,61 @@ function UsbScanContent() {
 
           {/* ── Left: Scanner zone ── */}
           <div className="flex-1 flex flex-col gap-4">
+
+            {/* ── Device connection status ── */}
+            <div className={`rounded-xl border px-4 py-3 flex items-center gap-3 transition-all duration-500 ${
+              deviceActive
+                ? 'bg-emerald-50 border-emerald-300'
+                : 'bg-slate-50 border-slate-200'
+            }`}>
+              <div className={`w-3 h-3 rounded-full flex-shrink-0 transition-all duration-300 ${
+                deviceActive ? 'bg-emerald-500 shadow-[0_0_8px_2px_rgba(52,211,153,0.6)]' : 'bg-slate-300'
+              }`}
+                style={deviceActive ? { animation: 'ping 1s ease-in-out 1' } : undefined}
+              />
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-semibold ${
+                  deviceActive ? 'text-emerald-700' : 'text-slate-500'
+                }`}>
+                  {deviceActive ? '🔌 Scanner Connected & Active' : '⏸ Waiting for scanner input…'}
+                </p>
+                {lastActivityStr && (
+                  <p className="text-xs text-slate-400">Last activity: {lastActivityStr}</p>
+                )}
+                {!lastActivityStr && (
+                  <p className="text-xs text-slate-400">Plug in USB scanner, then press any button on it or scan a code</p>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  setTestMode(t => !t)
+                  setTestResult(null)
+                }}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all flex-shrink-0 ${
+                  testMode
+                    ? 'bg-violet-500 text-white border-violet-500'
+                    : 'bg-white text-slate-600 border-slate-300 hover:border-violet-400 hover:text-violet-600'
+                }`}
+              >
+                {testMode ? '🧪 Test Mode ON' : 'Test Mode'}
+              </button>
+            </div>
+
+            {/* Test mode result */}
+            {testMode && (
+              <div className="rounded-xl border-2 border-violet-200 bg-violet-50 px-4 py-3">
+                <p className="text-xs font-semibold text-violet-600 uppercase tracking-wide mb-1">🧪 Test Mode — scan without recording</p>
+                {testResult ? (
+                  <div className="mt-2 bg-white rounded-lg px-3 py-2.5 border border-violet-200">
+                    <p className="text-xs text-slate-400 mb-1">Raw QR value received from scanner:</p>
+                    <p className="font-mono text-sm text-slate-800 break-all">{testResult}</p>
+                    <p className="text-xs text-emerald-600 mt-1.5 font-medium">✓ Scanner is sending data correctly</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500">Scan any card to see its raw QR value — attendance will NOT be recorded</p>
+                )}
+              </div>
+            )}
 
             {/* Scanner status card */}
             <div className={`rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
