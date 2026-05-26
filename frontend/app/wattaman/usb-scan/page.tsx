@@ -259,7 +259,8 @@ function UsbScanContent() {
     let resolvedQr = qrData
     try {
       const parsed = JSON.parse(qrData)
-      if (parsed.staffId || parsed.STAFFID) {
+      const keys: Record<string, string> = Object.fromEntries(Object.entries(parsed as Record<string, string>).map(([k, v]) => [k.toLowerCase(), v]))
+      if (keys['staffid']) {
         setIsLoading(false)
         playSound('error')
         setMessage('⚠️ Staff card — please scan a student ID card')
@@ -267,7 +268,7 @@ function UsbScanContent() {
         lockTimerRef.current = setTimeout(dismissLock, 3000)
         return
       }
-      const sid = parsed.studentId || parsed.STUDENTID || parsed.userId || parsed.USERID
+      const sid = keys['studentid'] || keys['userid']
       if (sid) resolvedQr = sid
     } catch {
       /* Raw QR string — try teacher endpoint first */
