@@ -65,11 +65,12 @@ const roleBadge: Record<string, string> = {
   TEACHER: 'badge-green',
   STUDENT: 'badge-yellow',
   PARENT: 'badge-gray',
+  WATTAMAN: 'badge-teal',
   WATTAMAN_REPORTER: 'badge-teal',
 }
 
 // Roles considered admin-level for the Manage Users screen filter.
-const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'SCHOOL_ADMIN', 'DEPARTMENT_ADMIN', 'OFFICE_ADMIN', 'WATTAMAN_REPORTER']
+const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'SCHOOL_ADMIN', 'DEPARTMENT_ADMIN', 'OFFICE_ADMIN', 'WATTAMAN', 'WATTAMAN_REPORTER']
 
 const allRoles = Object.keys(roleLabels).filter(r => r !== 'STUDENT')
 
