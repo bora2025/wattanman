@@ -1397,15 +1397,23 @@ export class AttendanceService {
       student = alias.student;
     }
 
-    // 2. Exact student.id match (cuid) — unambiguous
+    // 2. Exact student.id match (cuid) — try exact first, then case-insensitive
+    //    Cards are often printed with an UPPERCASE version of the student's lowercase cuid.
     if (!student) {
       student = await this.prisma.student.findUnique({
         where: { id: q },
         include: studentInclude,
       });
     }
+    if (!student) {
+      const byIdCI = await this.prisma.student.findFirst({
+        where: { id: { equals: q, mode: 'insensitive' } },
+        include: studentInclude,
+      });
+      if (byIdCI) student = byIdCI;
+    }
 
-    // 3. userId match — unambiguous (unique constraint)
+    // 3. userId match — exact then case-insensitive
     if (!student) {
       const byUser = await this.prisma.student.findFirst({
         where: { userId: q },
@@ -1413,14 +1421,28 @@ export class AttendanceService {
       });
       if (byUser) student = byUser;
     }
+    if (!student) {
+      const byUserCI = await this.prisma.student.findFirst({
+        where: { userId: { equals: q, mode: 'insensitive' } },
+        include: studentInclude,
+      });
+      if (byUserCI) student = byUserCI;
+    }
 
-    // 4. qrCode match — unique field, unambiguous
+    // 4. qrCode match — exact then case-insensitive
     if (!student) {
       const byQr = await this.prisma.student.findFirst({
         where: { qrCode: q },
         include: studentInclude,
       });
       if (byQr) student = byQr;
+    }
+    if (!student) {
+      const byQrCI = await this.prisma.student.findFirst({
+        where: { qrCode: { equals: q, mode: 'insensitive' } },
+        include: studentInclude,
+      });
+      if (byQrCI) student = byQrCI;
     }
 
     // 5. studentNumber fallback — case-insensitive; NOT unique; when multiple

@@ -107,13 +107,28 @@ export class CardAliasesService {
       return { id: s.id, studentNumber: s.studentNumber, name: s.user?.name ?? null, photo: s.photo ?? s.user?.photo ?? null, className: s.class?.name ?? null };
     }
 
-    // 2-4. Direct fields
+    // 2-4. Direct fields — exact match first, then case-insensitive
+    //      Cards are often printed with an UPPERCASE version of the student's lowercase cuid.
     const byField = await this.prisma.student.findFirst({
       where: { OR: [{ id: q }, { userId: q }, { qrCode: q }] },
       include,
     });
     if (byField) {
       return { id: byField.id, studentNumber: (byField as any).studentNumber, name: (byField as any).user?.name ?? null, photo: (byField as any).photo ?? (byField as any).user?.photo ?? null, className: (byField as any).class?.name ?? null };
+    }
+    // Case-insensitive fallback for id, userId, qrCode
+    const byFieldCI = await this.prisma.student.findFirst({
+      where: {
+        OR: [
+          { id: { equals: q, mode: 'insensitive' } },
+          { userId: { equals: q, mode: 'insensitive' } },
+          { qrCode: { equals: q, mode: 'insensitive' } },
+        ],
+      },
+      include,
+    });
+    if (byFieldCI) {
+      return { id: byFieldCI.id, studentNumber: (byFieldCI as any).studentNumber, name: (byFieldCI as any).user?.name ?? null, photo: (byFieldCI as any).photo ?? (byFieldCI as any).user?.photo ?? null, className: (byFieldCI as any).class?.name ?? null };
     }
 
     // 5. studentNumber fallback — case-insensitive
