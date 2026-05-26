@@ -80,6 +80,52 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
   )
 }
 
+function StudentProfileCardLarge({ result }: { result: ScanResult }) {
+  const meta = statusMeta(result.action, result.status)
+  const isAlready = result.action === 'ALREADY_RECORDED'
+  const timeDisplay = result.checkInTime ? formatCambodiaTime(result.checkInTime, true) : null
+  return (
+    <div className={`rounded-3xl overflow-hidden shadow-2xl ring-2 ${meta.ring}`}>
+      <div className={`${meta.bg} px-5 py-3.5 flex items-center justify-between`}>
+        <span className="text-white text-base font-extrabold tracking-wide">{meta.label}</span>
+        {result.session > 0 && (
+          <span className="text-white/80 text-sm font-semibold">Session {result.session}</span>
+        )}
+      </div>
+      <div className={`${meta.cardBg} flex flex-col items-center gap-4 px-6 py-6`}>
+        <div className={`ring-4 ${meta.ring} rounded-3xl overflow-hidden shadow-lg`}>
+          {result.studentPhoto ? (
+            <img src={result.studentPhoto} alt={result.studentName}
+              className="w-32 h-32 sm:w-40 sm:h-40 object-cover" />
+          ) : (
+            <div className="w-32 h-32 sm:w-40 sm:h-40 bg-white flex items-center justify-center text-7xl">👤</div>
+          )}
+        </div>
+        <div className="text-center space-y-1">
+          <p className="font-extrabold text-slate-800 text-2xl sm:text-3xl leading-tight">{result.studentName}</p>
+          <p className="text-slate-500 text-base">{result.className}</p>
+          {isAlready && <p className="text-indigo-500 text-sm font-medium mt-1">Already recorded — no duplicate</p>}
+        </div>
+        {timeDisplay && (
+          <div className="w-full rounded-2xl px-5 py-4 flex items-center justify-between"
+            style={{ background: meta.bgLight }}>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🕐</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                {isAlready ? 'First scan' : result.action === 'CHECK_OUT' ? 'Check-out' : 'Check-in'}
+              </span>
+            </div>
+            <span className="text-3xl sm:text-4xl font-extrabold tabular-nums tracking-tight"
+              style={{ color: meta.textHex }}>
+              {timeDisplay}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /**
  * Maps a KeyboardEvent's physical key (e.code) to its ASCII character,
  * ignoring the OS keyboard layout (Khmer, Thai, Arabic, etc.).
@@ -628,267 +674,300 @@ function UsbScanContent() {
     router.push('/login')
   }, [router])
 
-  const sessionBadgeColor = activeSession?.badge === 'Active'
-    ? 'bg-emerald-500 text-white'
-    : activeSession?.badge === 'Near'
-      ? 'bg-amber-400 text-white'
-      : 'bg-slate-200 text-slate-600'
-
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <Sidebar
-        title="Wattaman"
-        subtitle="USB Scanner"
-        navItems={wattamanNav}
-        accentColor="emerald"
-        bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/usb-scan', '/wattaman/teacher-scan', '/wattaman/teacher-reports']}
-      />
+    <div className="flex h-screen bg-slate-900 overflow-hidden">
+      {/* ── Desktop sidebar (xl+) — hidden on tablet/mobile ── */}
+      <div className="hidden xl:block flex-shrink-0">
+        <Sidebar
+          title="Wattaman"
+          subtitle="USB Scanner"
+          navItems={wattamanNav}
+          accentColor="emerald"
+          bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/usb-scan', '/wattaman/teacher-scan', '/wattaman/teacher-reports']}
+        />
+      </div>
 
       {/* ── Flash overlay ── */}
       {flashColor && (
-        <div className="fixed inset-0 z-50 pointer-events-none transition-opacity"
-          style={{ background: flashColor, opacity: 1 }} />
+        <div className="fixed inset-0 z-50 pointer-events-none"
+          style={{ background: flashColor }} />
       )}
 
-      {/* Hidden input that captures USB scanner keystrokes */}
-      <input
-        ref={inputRef}
-        type="text"
-        className="sr-only"
-        aria-label="USB scanner input"
-        autoFocus
-        readOnly
-      />
+      {/* Hidden scanner input */}
+      <input ref={inputRef} type="text" className="sr-only" autoFocus readOnly />
 
-      <main className="flex-1 flex flex-col overflow-y-auto">
-        {/* ── Top bar ── */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-10">
+      <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* ─── TABLET / MOBILE top bar (< xl) ─── */}
+        <header className="xl:hidden flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-800 border-b border-slate-700 flex-shrink-0">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-1.5 text-slate-300 hover:text-white text-sm font-semibold px-3 py-2 rounded-xl hover:bg-slate-700 active:scale-95 transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+          <div className="flex-1 text-center min-w-0">
+            <p className="text-white font-extrabold text-sm sm:text-base leading-tight">USB Attendance</p>
+            {activeSession ? (
+              <p className={`text-xs font-semibold leading-tight ${
+                activeSession.badge === 'Active' ? 'text-emerald-400'
+                : activeSession.badge === 'Near' ? 'text-amber-400'
+                : 'text-slate-500'
+              }`}>
+                {activeSession.badge === 'Active' ? '● ' : activeSession.badge === 'Near' ? '◎ ' : '○ '}
+                S{activeSession.session} · {activeSession.startTime}–{activeSession.endTime}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500 leading-tight">School Attendance</p>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="text-slate-300 font-mono text-xs sm:text-sm font-bold tabular-nums">{clockStr}</span>
+            <button
+              onClick={() => router.push('/wattaman')}
+              title="Wattaman home"
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-300 hover:text-white hover:bg-slate-700 active:scale-95 transition-all text-xl"
+            >🏠</button>
+          </div>
+        </header>
+
+        {/* ─── DESKTOP top bar (xl+) ─── */}
+        <header className="hidden xl:flex items-center justify-between px-6 py-3 bg-slate-800 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center gap-3">
             <span className="text-2xl">🖲️</span>
             <div>
-              <h1 className="font-bold text-slate-800 text-base leading-tight">USB Scanner Mode</h1>
-              <p className="text-xs text-slate-500">Connect your QR scanner device and scan cards</p>
+              <h1 className="font-extrabold text-white text-base leading-tight">USB Scanner — Attendance</h1>
+              <p className="text-slate-400 text-xs">School Attendance Management System</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {activeSession && (
-              <button onClick={() => {}} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${sessionBadgeColor}`}>
-                {activeSession.badge === 'Active' ? '● ' : activeSession.badge === 'Near' ? '◎ ' : '○ '}
-                S{activeSession.session} {activeSession.startTime}–{activeSession.endTime}
-              </button>
-            )}
-            <span className="text-sm font-mono font-semibold text-slate-600 tabular-nums">{clockStr}</span>
-          </div>
-        </div>
-
-        <div className="flex-1 flex flex-col lg:flex-row gap-0 lg:gap-6 p-4 sm:p-6 max-w-5xl w-full mx-auto">
-
-          {/* ── Left: Scanner zone ── */}
-          <div className="flex-1 flex flex-col gap-4">
-
-            {/* ── Device connection status ── */}
-            <div className={`rounded-xl border px-4 py-3 flex items-center gap-3 transition-all duration-500 ${
-              deviceActive
-                ? 'bg-emerald-50 border-emerald-300'
-                : hidConnected
-                  ? 'bg-blue-50 border-blue-200'
-                  : 'bg-slate-50 border-slate-200'
-            }`}>
-              <div className={`w-3 h-3 rounded-full flex-shrink-0 transition-all duration-300 ${
-                deviceActive ? 'bg-emerald-500 shadow-[0_0_8px_2px_rgba(52,211,153,0.6)]' : hidConnected ? 'bg-blue-400' : 'bg-slate-300'
-              }`}
-                style={deviceActive ? { animation: 'ping 1s ease-in-out 1' } : undefined}
-              />
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-semibold ${
-                  deviceActive ? 'text-emerald-700' : hidConnected ? 'text-blue-700' : 'text-slate-500'
-                }`}>
-                  {deviceActive
-                    ? `🔌 Scanner Active${hidDeviceName ? ` — ${hidDeviceName}` : ''}`
-                    : hidConnected
-                      ? `🔵 Device detected: ${hidDeviceName} — scan a card to test`
-                      : '⏸ Waiting for scanner input…'}
-                </p>
-                {lastActivityStr
-                  ? <p className="text-xs text-slate-400">Last activity: {lastActivityStr}</p>
-                  : !hidConnected && (
-                    <p className="text-xs text-slate-400">
-                      {hidSupported
-                        ? 'Click “Detect Scanner” to verify USB connection, or just scan a card'
-                        : 'Plug in USB scanner, then scan any card to activate'}
-                    </p>
-                  )}
+              <div className={`flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full ring-1 ${
+                activeSession.badge === 'Active'
+                  ? 'bg-emerald-500/20 text-emerald-300 ring-emerald-500/40'
+                  : activeSession.badge === 'Near'
+                    ? 'bg-amber-500/20 text-amber-300 ring-amber-500/40'
+                    : 'bg-slate-700 text-slate-400 ring-slate-600'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${
+                  activeSession.badge === 'Active' ? 'bg-emerald-400 animate-pulse'
+                  : activeSession.badge === 'Near' ? 'bg-amber-400'
+                  : 'bg-slate-500'
+                }`} />
+                S{activeSession.session} · {activeSession.type} · {activeSession.startTime}–{activeSession.endTime}
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
+            )}
+            <span className="text-slate-100 font-mono text-xl font-bold tabular-nums">{clockStr}</span>
+          </div>
+        </header>
+
+        {/* ─── MAIN CONTENT ─── */}
+        <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
+
+          {/* ══ SCAN ZONE (left on desktop, top on mobile/tablet) ══ */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+
+            {/* Device status bar */}
+            <div className={`flex items-center gap-2.5 px-3 sm:px-5 py-2 flex-shrink-0 border-b transition-colors duration-500 ${
+              deviceActive
+                ? 'bg-emerald-900/50 border-emerald-600/40'
+                : hidConnected
+                  ? 'bg-blue-900/40 border-blue-600/30'
+                  : 'bg-slate-800/80 border-slate-700'
+            }`}>
+              <div className="relative flex-shrink-0 w-3 h-3">
+                <div className={`w-3 h-3 rounded-full ${
+                  deviceActive ? 'bg-emerald-400' : hidConnected ? 'bg-blue-400' : 'bg-slate-600'
+                }`} />
+                {deviceActive && (
+                  <div className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-60" />
+                )}
+              </div>
+              <p className={`flex-1 text-xs font-semibold truncate ${
+                deviceActive ? 'text-emerald-300' : hidConnected ? 'text-blue-300' : 'text-slate-500'
+              }`}>
+                  {deviceActive
+                  ? `Scanner active${hidDeviceName ? ` — ${hidDeviceName}` : ''}${lastActivityStr ? ` · ${lastActivityStr}` : ''}`
+                  : hidConnected
+                    ? `${hidDeviceName} detected — scan a card to test`
+                      : 'Waiting for USB scanner…'}
+              </p>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
                 {hidSupported && (
                   <button
                     onClick={requestHidDevice}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-lg border bg-white text-blue-600 border-blue-300 hover:bg-blue-50 transition-all"
+                    className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white transition-all"
                     title="Open browser dialog to select and verify the USB scanner device"
                   >
-                    🔍 Detect
+                    Detect
                   </button>
                 )}
                 <button
                   onClick={() => { setTestMode(t => !t); setTestResult(null) }}
-                  className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
-                    testMode
-                      ? 'bg-violet-500 text-white border-violet-500'
-                      : 'bg-white text-slate-600 border-slate-300 hover:border-violet-400 hover:text-violet-600'
+                  className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-all ${
+                    testMode ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
                   }`}
                 >
-                  {testMode ? '🧪 Test ON' : 'Test Mode'}
+                  {testMode ? '🧪 Test ON' : 'Test'}
                 </button>
               </div>
             </div>
 
-            {/* Troubleshooting steps — shown when no scanner activity yet */}
-            {!lastActivityStr && !isLoading && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 space-y-1">
-                <p className="font-semibold text-amber-900">Checklist if scanner is not working:</p>
-                <p>{hidConnected ? '✅' : '□'} USB scanner plugged into a working USB port{hidConnected && hidDeviceName ? ` (${hidDeviceName} detected)` : ''}</p>
-                <p>{deviceActive ? '✅' : '□'} Scanner is sending keystrokes to this page</p>
-                <p>□ OS keyboard layout is any layout (scanner still works — we use physical key codes)</p>
-                <p>□ This browser tab is the active/focused window</p>
-                <p className="pt-1">Click <strong>Test Mode</strong> then scan a card to see the raw value the scanner sends.</p>
-              </div>
-            )}
-
-            {/* Test mode result */}
+            {/* Test mode panel */}
             {testMode && (
-              <div className="rounded-xl border-2 border-violet-200 bg-violet-50 px-4 py-3">
-                <p className="text-xs font-semibold text-violet-600 uppercase tracking-wide mb-1">🧪 Test Mode — scan without recording</p>
+              <div className="mx-3 mt-2 rounded-xl border border-violet-500/30 bg-violet-950/40 px-4 py-3 flex-shrink-0">
+                <p className="text-xs font-semibold text-violet-400 uppercase tracking-wide mb-2">🧪 Test Mode — attendance NOT recorded</p>
                 {testResult ? (
-                  <div className="mt-2 bg-white rounded-lg px-3 py-2.5 border border-violet-200">
-                    <p className="text-xs text-slate-400 mb-1">Raw QR value received from scanner:</p>
-                    <p className="font-mono text-sm text-slate-800 break-all">{testResult}</p>
-                    <p className="text-xs text-emerald-600 mt-1.5 font-medium">✓ Scanner is sending data correctly</p>
+                  <div className="bg-slate-900/80 rounded-lg px-3 py-2 border border-violet-500/20">
+                    <p className="text-xs text-slate-500 mb-1">Raw QR value from scanner:</p>
+                    <p className="font-mono text-sm text-violet-300 break-all">{testResult}</p>
+                    <p className="text-xs text-emerald-400 mt-1.5 font-medium">✓ Scanner is working correctly</p>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-500">Scan any card to see its raw QR value — attendance will NOT be recorded</p>
+                  <p className="text-xs text-slate-500">Scan any card — value shown here, no attendance recorded</p>
                 )}
               </div>
             )}
 
-            {/* Scanner status card */}
-            <div className={`rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
-              isLoading
-                ? 'border-amber-300 bg-amber-50'
-                : message && message.startsWith('❌')
-                  ? 'border-red-300 bg-red-50'
-                  : message
-                    ? 'border-orange-300 bg-orange-50'
-                    : linkSuccessMsg
-                      ? 'border-blue-300 bg-blue-50'
-                      : 'border-emerald-300 bg-emerald-50'
-            }`}>
-              <div className={`px-5 py-3 flex items-center gap-3 ${
-                isLoading ? 'bg-amber-400' : message ? 'bg-red-500' : linkSuccessMsg ? 'bg-blue-500' : 'bg-emerald-500'
-              }`}>
-                <span className="text-white text-xl">
-                  {isLoading ? '⏳' : message ? '⚠️' : linkSuccessMsg ? '🔗' : '✅'}
-                </span>
-                <span className="text-white font-bold text-sm">
-                  {isLoading ? 'Processing…' : message ? 'Scan Error' : linkSuccessMsg ?? 'Ready to Scan'}
-                </span>
-                {(scanCount > 0 || linkedCount > 0) && !isLoading && !message && !linkSuccessMsg && (
-                  <span className="ml-auto text-white/80 text-xs font-medium">
-                    {scanCount > 0 && `${scanCount} recorded`}{scanCount > 0 && linkedCount > 0 && ' · '}{linkedCount > 0 && `${linkedCount} linked`}
+            {/* ── Central scan display ── */}
+            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 overflow-y-auto">
+              {profileVisible && lastResult ? (
+                <div className="w-full max-w-sm sm:max-w-md" style={{ animation: 'slideUpFade 0.3s ease-out' }}>
+                  <StudentProfileCardLarge result={lastResult} />
+                </div>
+              ) : message ? (
+                <div className="flex flex-col items-center gap-4 w-full max-w-xs sm:max-w-sm text-center">
+                  <div className={`w-24 h-24 sm:w-32 sm:h-32 rounded-3xl flex items-center justify-center text-5xl sm:text-6xl shadow-lg ${
+                    message.startsWith('❌') ? 'bg-red-900/50 ring-2 ring-red-500/50' : 'bg-amber-900/50 ring-2 ring-amber-500/50'
+                  }`}>
+                    {message.startsWith('❌') ? '❌' : '⚠️'}
+                  </div>
+                  <p className="font-bold text-base sm:text-xl text-white leading-snug px-2">{message}</p>
+                  <button
+                    onClick={dismissLock}
+                    className="mt-1 text-sm font-semibold px-5 py-2.5 rounded-xl bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white transition-all active:scale-95"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              ) : isLoading ? (
+                <div className="flex flex-col items-center gap-5">
+                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl bg-amber-900/40 ring-2 ring-amber-500/40 flex items-center justify-center">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-4 border-amber-500/30 border-t-amber-400 animate-spin" />
+                  </div>
+                  <p className="text-slate-300 text-lg sm:text-xl font-semibold">Processing scan…</p>
+                  <p className="text-slate-500 text-sm">Checking student record</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-5 sm:gap-7">
+                  <div className="relative">
+                    <div
+                      className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-[2.5rem] bg-emerald-900/30 ring-2 ring-emerald-500/40 flex items-center justify-center text-6xl sm:text-7xl lg:text-8xl"
+                      style={{ boxShadow: '0 0 80px rgba(52,211,153,0.15)' }}
+                    >
+                      🖲️
+                    </div>
+                    <div className="absolute -inset-3 rounded-[3rem] ring-1 ring-emerald-400/20 animate-pulse" />
+                    <div className="absolute -inset-7 rounded-[3.5rem] ring-1 ring-emerald-400/10 animate-pulse" style={{ animationDelay: '0.75s' }} />
+                  </div>
+                  <div className="text-center space-y-2">
+                    <p className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">Ready to Scan</p>
+                    <p className="text-slate-400 text-sm sm:text-base">Point scanner at a student QR card</p>
+                  </div>
+                  <div className="w-48 sm:w-64 lg:w-80 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 rounded-full"
+                      style={{ animation: 'scanPulse 2s ease-in-out infinite' }} />
+                  </div>
+                  {(scanCount > 0 || linkedCount > 0 || linkSuccessMsg) && (
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      {scanCount > 0 && (
+                        <div className="flex items-center gap-1.5 bg-emerald-900/50 text-emerald-400 font-bold px-4 py-2 rounded-full ring-1 ring-emerald-500/40 text-sm">
+                          ✓ {scanCount} recorded
+                        </div>
+                      )}
+                      {linkedCount > 0 && (
+                        <div className="flex items-center gap-1.5 bg-blue-900/40 text-blue-400 font-bold px-4 py-2 rounded-full ring-1 ring-blue-500/30 text-sm">
+                          🔗 {linkedCount} linked
+                        </div>
+                      )}
+                      {linkSuccessMsg && (
+                        <div className="text-blue-300 font-semibold px-4 py-2 rounded-full bg-blue-900/40 ring-1 ring-blue-500/30 text-sm">
+                          {linkSuccessMsg}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Buffer display */}
+              {bufferDisplay && (
+                <div className="mt-5 bg-slate-800 border border-slate-600 rounded-2xl px-4 py-3 flex items-center gap-3 w-full max-w-xs sm:max-w-sm">
+                  <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider flex-shrink-0">Reading</span>
+                  <span className="font-mono text-sm text-emerald-300 truncate flex-1">{bufferDisplay}</span>
+                  <span className="w-1.5 h-4 bg-emerald-400 animate-pulse rounded-sm flex-shrink-0" />
+                </div>
+              )}
+            </div>
+
+            {/* Troubleshooting strip */}
+            {!lastActivityStr && !isLoading && !deviceActive && !profileVisible && (
+              <div className="mx-3 sm:mx-4 mb-3 rounded-xl border border-amber-700/30 bg-amber-950/20 px-4 py-2.5 text-xs flex-shrink-0">
+                <p className="font-semibold text-amber-400 mb-1">USB scanner not detected — checklist:</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-amber-400/70">
+                  <span>{hidConnected ? '✅' : '□'} Scanner plugged in{hidConnected && hidDeviceName ? ` (${hidDeviceName})` : ''}</span>
+                  <span>□ This tab is active &amp; focused</span>
+                  <span className="text-amber-400">Tap <strong>Test</strong> &amp; scan a card to verify</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ══ ATTENDED LIST PANEL ══ */}
+          <div className="flex flex-col flex-shrink-0 border-t lg:border-t-0 lg:border-l border-slate-700 bg-slate-800 lg:w-80 xl:w-96 max-h-[38vh] lg:max-h-none min-h-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-700 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-200 font-bold text-sm">Attended Today</span>
+                {scanHistory.length > 0 && (
+                  <span className="bg-emerald-500 text-white text-xs font-extrabold px-2 py-0.5 rounded-full leading-none">
+                    {scanHistory.length}
                   </span>
                 )}
               </div>
-
-              <div className="px-5 py-6 flex flex-col items-center gap-4">
-                {/* Scanner icon */}
-                <div className={`w-24 h-24 rounded-2xl flex items-center justify-center text-5xl shadow-inner ${
-                  isLoading ? 'bg-amber-100 animate-pulse' : message ? 'bg-red-100' : 'bg-white'
-                }`}>
-                  {isLoading ? '🔄' : '🖲️'}
-                </div>
-
-                {/* Buffer display */}
-                {bufferDisplay && (
-                  <div className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-                    <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Reading:</span>
-                    <span className="font-mono text-sm text-slate-700 truncate flex-1">{bufferDisplay}</span>
-                    <span className="w-2 h-4 bg-emerald-500 animate-pulse rounded-sm" />
-                  </div>
-                )}
-
-                {/* Message */}
-                {message ? (
-                  <p className="text-center font-semibold text-sm text-red-700">{message}</p>
-                ) : !bufferDisplay && (
-                  <p className="text-center text-sm text-slate-500">
-                    {isLoading
-                      ? 'Sending to server…'
-                      : 'Point the USB scanner at a student QR card and scan'}
-                  </p>
-                )}
-
-                {/* Scan line animation when idle */}
-                {!isLoading && !message && (
-                  <div className="w-full max-w-xs h-1 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-400 rounded-full"
-                      style={{ animation: 'usbScanPulse 2s ease-in-out infinite' }} />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Last result */}
-            <div className={`transition-all duration-300 ${profileVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
-              {lastResult && <StudentProfileCard result={lastResult} />}
-            </div>
-
-            {/* How it works */}
-            <div className="rounded-xl bg-white border border-slate-200 p-4 text-sm text-slate-600 space-y-2">
-              <p className="font-semibold text-slate-700 flex items-center gap-2">
-                <span>ℹ️</span> How USB Scanner Mode Works
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-xs text-slate-500">
-                <li>Connect your USB QR/barcode scanner to this computer</li>
-                <li>The scanner acts like a keyboard — keep this page open and focused</li>
-                <li>Scan a student&apos;s QR card — attendance is recorded automatically</li>
-                <li>Works with any HID-compatible USB barcode or QR scanner device</li>
-                <li>No camera or mobile app needed</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* ── Right: Scan history ── */}
-          <div className="lg:w-72 xl:w-80 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-slate-700 text-sm">Recent Scans</h2>
               {scanHistory.length > 0 && (
-                <button onClick={() => setScanHistory([])}
-                  className="text-xs text-slate-400 hover:text-red-400 transition-colors">
+                <button
+                  onClick={() => setScanHistory([])}
+                  className="text-xs text-slate-500 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700 transition-all"
+                >
                   Clear
                 </button>
               )}
             </div>
-            <div className="flex flex-col gap-2 overflow-y-auto max-h-[60vh] lg:max-h-full pr-0.5">
+            <div className="flex-1 overflow-y-auto p-2 space-y-1 min-h-0">
               {scanHistory.length === 0 ? (
-                <div className="rounded-xl bg-white border border-dashed border-slate-200 px-4 py-8 text-center">
-                  <p className="text-2xl mb-1">📋</p>
-                  <p className="text-xs text-slate-400">No scans yet</p>
+                <div className="flex flex-col items-center justify-center h-full py-8 gap-2 opacity-50">
+                  <span className="text-4xl">📋</span>
+                  <p className="text-xs text-slate-500">No scans yet</p>
                 </div>
               ) : (
                 scanHistory.map((r, i) => {
                   const meta = statusMeta(r.action, r.status)
                   return (
-                    <div key={i} className={`rounded-xl flex items-center gap-3 px-3 py-2.5 border ${meta.cardBg} ring-1 ${meta.ring}`}>
+                    <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-900/40 hover:bg-slate-700/60 border border-slate-700/50 transition-colors cursor-default">
                       {r.studentPhoto ? (
-                        <img src={r.studentPhoto} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                        <img src={r.studentPhoto} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0 ring-1 ring-slate-600" />
                       ) : (
-                        <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center text-xl flex-shrink-0">👤</div>
+                        <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-lg flex-shrink-0">👤</div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-slate-800 truncate">{r.studentName}</p>
-                        <p className="text-xs text-slate-500 truncate">{r.className}</p>
+                        <p className="text-xs font-semibold text-slate-200 truncate leading-tight">{r.studentName}</p>
+                        <p className="text-xs text-slate-500 truncate leading-tight">{r.className}</p>
                       </div>
-                      <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${meta.bg} text-white flex-shrink-0`}>
-                        {meta.label.replace(/^[^\w]+/, '')}
+                      <span className={`text-white font-bold px-1.5 py-0.5 rounded-md flex-shrink-0 ${meta.bg}`}
+                        style={{ fontSize: '10px', lineHeight: '1.5' }}>
+                        {r.action === 'ALREADY_RECORDED' ? 'Again' : r.action === 'CHECK_OUT' ? 'Out' : r.status === 'LATE' ? 'Late' : 'In'}
                       </span>
                     </div>
                   )
@@ -899,8 +978,16 @@ function UsbScanContent() {
         </div>
       </main>
 
-      {/* ── Animation styles ── */}
+      {/* ── Animations ── */}
       <style jsx global>{`
+        @keyframes scanPulse {
+          0%, 100% { width: 0%; margin-left: 0%; }
+          50% { width: 60%; margin-left: 20%; }
+        }
+        @keyframes slideUpFade {
+          from { opacity: 0; transform: translateY(20px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
         @keyframes usbScanPulse {
           0%, 100% { width: 0%; margin-left: 0%; }
           50% { width: 60%; margin-left: 20%; }
