@@ -121,6 +121,9 @@ function UsbScanContent() {
   const [linkLoading, setLinkLoading] = useState(false)
   const [linkSaving, setLinkSaving] = useState(false)
   const [linkError, setLinkError] = useState('')
+  const [linkedCount, setLinkedCount] = useState(0)
+  const [linkSuccessMsg, setLinkSuccessMsg] = useState<string | null>(null)
+  const linkSuccessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const lockRef = useRef(false)
   const locationRef = useRef<{ latitude: number; longitude: number } | null>(null)
@@ -212,8 +215,6 @@ function UsbScanContent() {
     setIsLoading(false)
     bufferRef.current = ''
     setBufferDisplay('')
-    // Re-focus the hidden input so the next scan is captured immediately
-    inputRef.current?.focus()
   }, [])
 
   /* ── Link-card modal ── */
@@ -394,44 +395,46 @@ function UsbScanContent() {
         setLinkSaving(false)
         return
       }
+      const studentName = linkResults.find(s => s.id === studentId)?.user?.name || 'Student'
       playSound('success')
-      const linkedQr = linkCardQr
+      setLinkedCount(c => c + 1)
       closeLinkModal()
-      setTimeout(() => { handleQrScanned(linkedQr) }, 150)
+      if (linkSuccessTimerRef.current) clearTimeout(linkSuccessTimerRef.current)
+      setLinkSuccessMsg(`✓ Linked: ${studentName}`)
+      linkSuccessTimerRef.current = setTimeout(() => setLinkSuccessMsg(null), 2500)
     } catch {
       setLinkError('Network error — try again')
       setLinkSaving(false)
     }
-  }, [linkCardQr, linkSaving, playSound, closeLinkModal, handleQrScanned])
+  }, [linkCardQr, linkSaving, linkResults, playSound, closeLinkModal])
 
-  /* ── Keep input focused + handle scanner keyboard input ── */
+  /* ── Capture scanner keyboard input at document level (capture phase) ── */
+  // Document-level listener fires regardless of which element has focus,
+  // so the scanner works even if the user clicks buttons or opens modals.
   useEffect(() => {
-    const inputEl = inputRef.current
-    if (!inputEl) return
-
-    // Re-focus whenever the window is clicked/tapped (so the input doesn't lose focus)
-    const refocus = (e: MouseEvent | TouchEvent) => {
-      if (linkCardQr) return   // don't steal focus from link modal
-      const target = e.target as HTMLElement
-      if (!target.closest('[data-modal]')) inputEl.focus()
-    }
-    document.addEventListener('mousedown', refocus)
-    document.addEventListener('touchstart', refocus)
-
     const onKeyDown = (e: KeyboardEvent) => {
-      if (linkCardQr) return   // modal is open — don't intercept
-      const now = Date.now()
+      // When the link modal is open, let the keyboard reach the search input
+      if (linkCardQr) return
 
-      // Mark device as active and record timestamp
+      // Skip events that originated from a visible text input/textarea
+      // (e.g. admin typing in a search box on another overlay)
+      const target = e.target as HTMLElement
+      if (
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') &&
+        !target.classList.contains('sr-only')
+      ) return
+
+      const now = Date.now()
       lastActivityTimeRef.current = now
       setDeviceActive(true)
       setLastActivityStr(new Date().toLocaleTimeString())
       if (deviceTimerRef.current) clearTimeout(deviceTimerRef.current)
       deviceTimerRef.current = setTimeout(() => setDeviceActive(false), 3000)
 
-      // If there's a gap > 200ms between keystrokes, reset buffer (differentiates scanner from human)
-      if (now - lastKeyTimeRef.current > 200 && bufferRef.current.length > 0) {
+      // Gap > 500ms: scanner paused or new card started — reset the buffer
+      if (now - lastKeyTimeRef.current > 500 && bufferRef.current.length > 0) {
         bufferRef.current = ''
+        setBufferDisplay('')
       }
       lastKeyTimeRef.current = now
 
@@ -440,9 +443,8 @@ function UsbScanContent() {
         const code = bufferRef.current.trim()
         bufferRef.current = ''
         setBufferDisplay('')
-        if (code.length > 0) {
+        if (code.length > 2) {
           if (testMode) {
-            // Test mode: show raw value without calling API
             setTestResult(code)
             lockRef.current = false
           } else {
@@ -451,22 +453,19 @@ function UsbScanContent() {
         }
         return
       }
-      // Only accumulate printable characters
+
       if (e.key.length === 1) {
+        e.preventDefault()
         bufferRef.current += e.key
         setBufferDisplay(bufferRef.current)
-        setTestResult(null)  // clear test result while typing
+        setTestResult(null)
       }
     }
-    inputEl.addEventListener('keydown', onKeyDown)
-    inputEl.focus()
 
-    return () => {
-      inputEl.removeEventListener('keydown', onKeyDown)
-      document.removeEventListener('mousedown', refocus)
-      document.removeEventListener('touchstart', refocus)
-    }
-  }, [linkCardQr, handleQrScanned])
+    // Capture phase: this listener fires before any element's own handler
+    document.addEventListener('keydown', onKeyDown, true)
+    return () => document.removeEventListener('keydown', onKeyDown, true)
+  }, [linkCardQr, handleQrScanned, testMode])
 
   const handleLogout = useCallback(async () => {
     try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }) } catch { /* ignore */ }
@@ -595,19 +594,23 @@ function UsbScanContent() {
                   ? 'border-red-300 bg-red-50'
                   : message
                     ? 'border-orange-300 bg-orange-50'
-                    : 'border-emerald-300 bg-emerald-50'
+                    : linkSuccessMsg
+                      ? 'border-blue-300 bg-blue-50'
+                      : 'border-emerald-300 bg-emerald-50'
             }`}>
               <div className={`px-5 py-3 flex items-center gap-3 ${
-                isLoading ? 'bg-amber-400' : message ? 'bg-red-500' : 'bg-emerald-500'
+                isLoading ? 'bg-amber-400' : message ? 'bg-red-500' : linkSuccessMsg ? 'bg-blue-500' : 'bg-emerald-500'
               }`}>
                 <span className="text-white text-xl">
-                  {isLoading ? '⏳' : message ? '⚠️' : '✅'}
+                  {isLoading ? '⏳' : message ? '⚠️' : linkSuccessMsg ? '🔗' : '✅'}
                 </span>
                 <span className="text-white font-bold text-sm">
-                  {isLoading ? 'Processing…' : message ? 'Scan Error' : 'Ready to Scan'}
+                  {isLoading ? 'Processing…' : message ? 'Scan Error' : linkSuccessMsg ?? 'Ready to Scan'}
                 </span>
-                {scanCount > 0 && !isLoading && !message && (
-                  <span className="ml-auto text-white/80 text-xs font-medium">{scanCount} scanned today</span>
+                {(scanCount > 0 || linkedCount > 0) && !isLoading && !message && !linkSuccessMsg && (
+                  <span className="ml-auto text-white/80 text-xs font-medium">
+                    {scanCount > 0 && `${scanCount} recorded`}{scanCount > 0 && linkedCount > 0 && ' · '}{linkedCount > 0 && `${linkedCount} linked`}
+                  </span>
                 )}
               </div>
 
