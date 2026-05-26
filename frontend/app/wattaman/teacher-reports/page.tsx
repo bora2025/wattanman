@@ -6,6 +6,7 @@ import { Suspense } from 'react'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { wattamanNav } from '../../../lib/wattaman-nav'
+import { reporterNav } from '../../../lib/reporter-nav'
 import { apiFetch } from '../../../lib/api'
 import { formatCambodiaTime } from '../../../lib/dateUtils'
 import Link from 'next/link'
@@ -117,14 +118,16 @@ function TeacherReportsContent() {
 
   const printUrl = `/wattaman/teacher-reports/print?timetableId=${selectedTimetableId}&startDate=${startDate}&endDate=${endDate}&timetableName=${encodeURIComponent(timetables.find(t => t.id === selectedTimetableId)?.name ?? '')}`
 
+  const isReporter = typeof window !== 'undefined' && localStorage.getItem('role') === 'WATTAMAN_REPORTER'
+
   return (
     <div className="page-shell">
       <Sidebar
-        title="Wattaman"
+        title={isReporter ? 'Reporter' : 'Wattaman'}
         subtitle="QR Attendance"
-        navItems={wattamanNav}
-        accentColor="emerald"
-        bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/usb-scan', '/wattaman/teacher-scan', '/wattaman/teacher-reports']}
+        navItems={isReporter ? reporterNav : wattamanNav}
+        accentColor={isReporter ? 'teal' : 'emerald'}
+        bottomTabs={isReporter ? undefined : ['/wattaman', '/wattaman/scan', '/wattaman/usb-scan', '/wattaman/teacher-scan', '/wattaman/teacher-reports']}
       />
       <div className="page-content">
         <div className="h-14 lg:hidden" />

@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Sidebar from '../../../components/Sidebar'
+import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
+import { reporterNav } from '../../../lib/reporter-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
 import { todayCambodia } from '../../../lib/dateUtils'
@@ -37,7 +39,7 @@ interface StaffTotalsRow {
   year: { present: number; late: number; absent: number; dayOff: number; convertedAbsentFromPermission?: number; convertedAbsentHalfFromLate?: number }
 }
 
-export default function AdminStaffReports() {
+function StaffReportsContent() {
   const { t } = useLanguage()
   const [selectedDate, setSelectedDate] = useState(() => todayCambodia())
   const [grid, setGrid] = useState<StaffGridRow[]>([])
@@ -187,7 +189,12 @@ export default function AdminStaffReports() {
 
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar
+        title={typeof window !== 'undefined' && localStorage.getItem('role') === 'WATTAMAN_REPORTER' ? 'Reporter' : 'Admin Panel'}
+        subtitle="Wattaman"
+        navItems={typeof window !== 'undefined' && localStorage.getItem('role') === 'WATTAMAN_REPORTER' ? reporterNav : adminNav}
+        accentColor={typeof window !== 'undefined' && localStorage.getItem('role') === 'WATTAMAN_REPORTER' ? 'teal' : 'indigo'}
+      />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
@@ -925,5 +932,13 @@ function SessionCell({ time, status }: { time: string | null; status: string | n
         <div className="text-[9px] sm:text-[10px] text-amber-500 font-medium">Late</div>
       )}
     </td>
+  )
+}
+
+export default function AdminStaffReports() {
+  return (
+    <AuthGuard allowedRoles={['ADMIN', 'WATTAMAN_REPORTER']}>
+      <StaffReportsContent />
+    </AuthGuard>
   )
 }

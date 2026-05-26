@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Sidebar from '../../../components/Sidebar'
+import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
+import { reporterNav } from '../../../lib/reporter-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
 import { todayCambodia } from '../../../lib/dateUtils'
@@ -422,8 +424,14 @@ export default function AdminReports() {
   const dailyAbsent = isHolidayDate ? 0 : dailyTotals.absent
 
   return (
+    <AuthGuard allowedRoles={['ADMIN', 'WATTAMAN_REPORTER']}>
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar
+        title={typeof window !== 'undefined' && localStorage.getItem('role') === 'WATTAMAN_REPORTER' ? 'Reporter' : 'Admin Panel'}
+        subtitle="Wattaman"
+        navItems={typeof window !== 'undefined' && localStorage.getItem('role') === 'WATTAMAN_REPORTER' ? reporterNav : adminNav}
+        accentColor={typeof window !== 'undefined' && localStorage.getItem('role') === 'WATTAMAN_REPORTER' ? 'teal' : 'indigo'}
+      />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
@@ -763,6 +771,7 @@ export default function AdminReports() {
         defaultDate={selectedDate}
       />
     </div>
+    </AuthGuard>
   )
 }
 
