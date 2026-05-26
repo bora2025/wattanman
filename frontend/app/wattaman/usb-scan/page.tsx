@@ -170,6 +170,9 @@ function UsbScanContent() {
   const locationRef = useRef<{ latitude: number; longitude: number } | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /* scanner buffer used while the link modal is open */
+  const linkBufferRef = useRef('')
+  const linkLastKeyRef = useRef(0)
   const sessionConfigsRef = useRef<Array<{ session: number; type: string; startTime: string; endTime: string }>>([])
 
   /* ── GPS ── */
@@ -449,13 +452,64 @@ function UsbScanContent() {
     }
   }, [linkCardQr, linkSaving, linkResults, playSound, closeLinkModal])
 
+  /**
+   * Called when the USB scanner reads a card while the link modal is open.
+   * Resolves the card to a student (without recording attendance) and
+   * auto-links the unknown card to that student.
+   */
+  const handleAutoLinkScan = useCallback(async (qrData: string) => {
+    let resolvedQr = qrData
+    try {
+      const parsed = JSON.parse(qrData)
+      const keys: Record<string, string> = Object.fromEntries(
+        Object.entries(parsed as Record<string, string>).map(([k, v]) => [k.toLowerCase(), v])
+      )
+      const sid = keys['studentid'] || keys['userid']
+      if (sid) resolvedQr = sid
+    } catch { /* raw QR */ }
+    try {
+      const res = await apiFetch(`/api/card-aliases/resolve?qr=${encodeURIComponent(resolvedQr)}`)
+      if (res.ok) {
+        const student = await res.json()
+        if (student?.id) {
+          linkCardToStudent(student.id)
+          return
+        }
+      }
+    } catch { /* ignore — fall through to manual search */ }
+    // Card not recognised — pre-fill search so admin can quickly find the student
+    setLinkSearch(resolvedQr)
+  }, [linkCardToStudent])
+
   /* ── Capture scanner keyboard input at document level (capture phase) ── */
   // Document-level listener fires regardless of which element has focus,
   // so the scanner works even if the user clicks buttons or opens modals.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      // When the link modal is open, let the keyboard reach the search input
-      if (linkCardQr) return
+      // When the link modal is open: track scanner input in a separate buffer.
+      // Fast chars + Enter = scanner scan → auto-resolve & link.
+      // Slow / normal typing → chars fall through to the search input naturally.
+      if (linkCardQr) {
+        const ch = physicalKeyToAscii(e)
+        const now = Date.now()
+        if (ch !== null) {
+          if (now - linkLastKeyRef.current > 500) linkBufferRef.current = '' // new scan or human gap
+          linkLastKeyRef.current = now
+          linkBufferRef.current += ch
+          return // don't preventDefault — let chars also reach the search input
+        }
+        if (e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter') {
+          const buf = linkBufferRef.current.trim()
+          linkBufferRef.current = ''
+          if (buf.length > 2 && now - linkLastKeyRef.current < 300) {
+            // Last char arrived < 300 ms ago → scanner input, not manual Enter
+            e.preventDefault()
+            handleAutoLinkScan(buf)
+          }
+          // else: human pressed Enter → let search input handle it
+        }
+        return
+      }
 
       // Skip events that originated from a visible text input/textarea
       // (e.g. admin typing in a search box on another overlay)
@@ -509,7 +563,7 @@ function UsbScanContent() {
     // Capture phase: this listener fires before any element's own handler
     document.addEventListener('keydown', onKeyDown, true)
     return () => document.removeEventListener('keydown', onKeyDown, true)
-  }, [linkCardQr, handleQrScanned, testMode])
+  }, [linkCardQr, handleQrScanned, handleAutoLinkScan, testMode])
 
   const handleLogout = useCallback(async () => {
     try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }) } catch { /* ignore */ }

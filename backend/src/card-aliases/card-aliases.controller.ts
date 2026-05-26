@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -29,6 +30,14 @@ export class CardAliasesController {
   @Roles('ADMIN', 'WATTAMAN')
   searchStudents(@Query('q') q?: string) {
     return this.svc.searchStudents(q);
+  }
+
+  /** Resolves a raw QR/card string to the student it belongs to (no attendance recorded). */
+  @Get('resolve')
+  @Roles('ADMIN', 'WATTAMAN')
+  resolve(@Query('qr') qr?: string) {
+    if (!qr) throw new BadRequestException('qr is required');
+    return this.svc.resolveStudent(qr);
   }
 
   @Post()
