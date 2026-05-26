@@ -404,7 +404,7 @@ function WattamanScanContent() {
     let resolvedQr = qrData
     try {
       const parsed = JSON.parse(qrData)
-      if (parsed.staffId) {
+      if (parsed.staffId || parsed.STAFFID) {
         setIsLoading(false)
         playSound('error')
         setPendingPhoto(null)
@@ -413,10 +413,10 @@ function WattamanScanContent() {
         lockTimerRef.current = setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
         return
       }
-      if (parsed.studentId) resolvedQr = parsed.studentId
-      else if (parsed.userId) resolvedQr = parsed.userId
+      const sid = parsed.studentId || parsed.STUDENTID || parsed.userId || parsed.USERID
+      if (sid) resolvedQr = sid
       // Pre-fill skeleton with cached photo if we've seen this student before
-      const cachedId = parsed.studentId || parsed.userId
+      const cachedId = parsed.studentId || parsed.STUDENTID || parsed.userId || parsed.USERID
       if (cachedId) setPendingPhoto(photoCacheRef.current.get(cachedId) ?? null)
     } catch {
       /* Raw QR — try teacher endpoint first */
