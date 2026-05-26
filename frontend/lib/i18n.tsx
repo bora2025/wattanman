@@ -120,6 +120,7 @@ const en: Record<string, string> = {
   'role.cashier': 'Cashier',
   'role.receptionist': 'Receptionist',
   'role.general_manager': 'General Manager',
+  'role.wattaman_reporter': 'Wattaman Reporter',
 
   // Login
   'login.welcome': 'Welcome back',
@@ -144,6 +145,8 @@ const en: Record<string, string> = {
   'home.employeeDesc': 'Scan QR code to check in, view attendance and reports.',
   'home.wattamanPortal': 'Wattaman Portal',
   'home.wattamanDesc': 'Scan any student ID card QR code to record attendance instantly.',
+  'home.reporterPortal': 'Reporter Portal',
+  'home.reporterDesc': 'View and print attendance reports for staff and students.',
   'home.qrScan': 'QR Scan',
   'home.instantCheckIn': 'Instant check-in',
   'home.realTime': 'Real-time',
@@ -1042,6 +1045,7 @@ const kh: Record<string, string> = {
   'role.cashier': 'អ្នកគិតលុយ',
   'role.receptionist': 'អ្នកទទួលភ្ញៀវ',
   'role.general_manager': 'អ្នកគ្រប់គ្រងទូទៅ',
+  'role.wattaman_reporter': 'Wattaman Reporter',
 
   // Login
   'login.welcome': 'សូមស្វាគមន៍',
@@ -1066,6 +1070,8 @@ const kh: Record<string, string> = {
   'home.employeeDesc': 'ស្កេនកូដ QR ដើម្បីចុះវត្តមាន មើលវត្តមាន និងរបាយការណ៍។',
   'home.wattamanPortal': 'ផ្ទាំង Wattaman',
   'home.wattamanDesc': 'ស្កេនកូដ QR អត្តសញ្ញាណបណ្ណសិស្សណាមួយ ដើម្បីកត់វត្តមានភ្លាមៗ។',
+  'home.reporterPortal': 'ផ្ទាំង Reporter',
+  'home.reporterDesc': 'មើល និងបោះពុម្ភរបាយការណ៍វត្តមានបុគ្គលិក និងសិស្ស។',
   'home.qrScan': 'ស្កេន QR',
   'home.instantCheckIn': 'ចុះវត្តមានភ្លាមៗ',
   'home.realTime': 'ពេលជាក់ស្តែង',

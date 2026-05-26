@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useLanguage } from '../lib/i18n'
-import { IconShield, IconBook, IconGraduation, IconBriefcase, IconCamera } from '../components/Icons'
+import { IconShield, IconBook, IconGraduation, IconBriefcase, IconCamera, IconBarChart } from '../components/Icons'
 
 const portals = [
   {
@@ -54,7 +54,17 @@ const portals = [
     gradient: 'from-teal-500 to-cyan-500',
     accentText: '#0F766E',
     borderColor: 'rgba(0,201,167,0.25)',
-    glowColor: 'rgba(0,201,167,0.1)',
+    glowColor: 'rgba(0,201,167,0.12)',
+  },
+  {
+    titleKey: 'home.reporterPortal',
+    descKey: 'home.reporterDesc',
+    href: '/reporter',
+    IconComp: IconBarChart,
+    gradient: 'from-violet-500 to-purple-600',
+    accentText: '#7C3AED',
+    borderColor: 'rgba(124,58,237,0.2)',
+    glowColor: 'rgba(124,58,237,0.1)',
   },
 ]
 

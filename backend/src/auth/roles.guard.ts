@@ -7,17 +7,20 @@ import { ROLES_KEY } from './roles.decorator';
  * @Roles() check that requires one of the "lower" roles.
  *
  *   SUPER_ADMIN  ─┐
- *                 ├─ implicitly grants ADMIN, SCHOOL_ADMIN, WATTAMAN
+ *                 ├─ implicitly grants ADMIN, SCHOOL_ADMIN, WATTAMAN, WATTAMAN_REPORTER
  *   SCHOOL_ADMIN ─┘     (and anything ADMIN can do)
  *
- *   ADMIN        ─── implicitly grants WATTAMAN
+ *   ADMIN        ─── implicitly grants WATTAMAN, WATTAMAN_REPORTER
+ *
+ *   WATTAMAN_REPORTER — read-only role; can view and print attendance reports
+ *                       for staff and students. Cannot scan or edit attendance.
  *
  * This avoids having to list every higher-tier role on every endpoint.
  */
 const ROLE_INHERITS: Record<string, string[]> = {
-  SUPER_ADMIN: ['ADMIN', 'SCHOOL_ADMIN', 'WATTAMAN'],
-  SCHOOL_ADMIN: ['ADMIN', 'WATTAMAN'],
-  ADMIN: ['WATTAMAN'],
+  SUPER_ADMIN: ['ADMIN', 'SCHOOL_ADMIN', 'WATTAMAN', 'WATTAMAN_REPORTER'],
+  SCHOOL_ADMIN: ['ADMIN', 'WATTAMAN', 'WATTAMAN_REPORTER'],
+  ADMIN: ['WATTAMAN', 'WATTAMAN_REPORTER'],
 };
 
 @Injectable()

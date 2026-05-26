@@ -395,7 +395,7 @@ function TeacherReportsContent() {
 
 export default function TeacherReportsPage() {
   return (
-    <AuthGuard allowedRoles={['WATTAMAN', 'ADMIN']}>
+    <AuthGuard allowedRoles={['WATTAMAN', 'ADMIN', 'WATTAMAN_REPORTER']}>
       <Suspense>
         <TeacherReportsContent />
       </Suspense>
