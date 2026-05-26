@@ -226,6 +226,40 @@ export const IconCertificate = multi([
   'M18 18l2.5 2.5',
 ]);
 
+/** Document scanner icon — corner-bracket scan frame with document and horizontal scan line */
+export const IconDocScanner = ({ size = 24, className }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    {/* Corner scan brackets */}
+    <path d="M3 8V3h5" />
+    <path d="M16 3h5v5" />
+    <path d="M3 16v5h5" />
+    <path d="M21 16v5h-5" />
+    {/* Document body */}
+    <path d="M7 5h7l3 3v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />
+    {/* Page fold corner */}
+    <path d="M14 5v4h3" />
+    {/* Text lines above scan */}
+    <path d="M9 9.5h5" strokeWidth={1.2} />
+    <path d="M9 11.5h5" strokeWidth={1.2} />
+    {/* Scan line — bold, prominent */}
+    <path d="M6 13.5h12" strokeWidth={2.4} />
+    {/* Text lines below scan */}
+    <path d="M9 15.5h5" strokeWidth={1.2} />
+    <path d="M9 17.5h3" strokeWidth={1.2} />
+  </svg>
+);
+IconDocScanner.displayName = 'IconDocScanner';
+
 // Icon name → component map for easy lookup
 export const iconMap: Record<string, React.FC<IconProps>> = {
   dashboard: IconDashboard,
@@ -258,4 +292,5 @@ export const iconMap: Record<string, React.FC<IconProps>> = {
   trophy: IconTrophy,
   layers: IconLayers,
   certificate: IconCertificate,
+  'doc-scanner': IconDocScanner,
 };
