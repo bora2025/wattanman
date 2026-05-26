@@ -301,10 +301,15 @@ function UsbScanContent() {
     setBufferDisplay('')
     bufferRef.current = ''
 
-    let resolvedQr = qrData
+    let resolvedQr = qrData.trim().replace(/\0/g, '')
     try {
-      const parsed = JSON.parse(qrData)
-      const keys: Record<string, string> = Object.fromEntries(Object.entries(parsed as Record<string, string>).map(([k, v]) => [k.toLowerCase(), v]))
+      const parsed = JSON.parse(resolvedQr)
+      // Convert all values to string so numeric IDs (e.g. {"studentId": 42}) work correctly
+      const keys: Record<string, string> = Object.fromEntries(
+        Object.entries(parsed as Record<string, unknown>)
+          .filter(([, v]) => v !== null && v !== undefined)
+          .map(([k, v]) => [k.toLowerCase(), String(v).trim()])
+      )
       if (keys['staffid']) {
         setIsLoading(false)
         playSound('error')
@@ -376,9 +381,11 @@ function UsbScanContent() {
         const result: ScanResult = await res.json()
         if ((result as any).action === 'UNMATCHED' || (result as any).unmatched) {
           playSound('error')
-          setMessage('❌ Card not recognised — check ID card')
+          const qv: string = ((result as any).qrValue as string) || resolvedQr
+          const display = qv.length > 40 ? qv.slice(0, 40) + '…' : qv
+          setMessage(`❌ Not recognised: ${display}`)
           if ('vibrate' in navigator) navigator.vibrate([100, 100, 100])
-          lockTimerRef.current = setTimeout(dismissLock, 5000)
+          lockTimerRef.current = setTimeout(dismissLock, 7000)
           return
         }
         const isAlready = result.action === 'ALREADY_RECORDED'
@@ -459,16 +466,18 @@ function UsbScanContent() {
    * auto-links the unknown card to that student.
    */
   const handleAutoLinkScan = useCallback(async (qrData: string) => {
-    let resolvedQr = qrData
+    let resolvedQr = qrData.trim().replace(/\0/g, '')
     try {
-      const parsed = JSON.parse(qrData)
+      const parsed = JSON.parse(resolvedQr)
       const keys: Record<string, string> = Object.fromEntries(
-        Object.entries(parsed as Record<string, string>).map(([k, v]) => [k.toLowerCase(), v])
+        Object.entries(parsed as Record<string, unknown>)
+          .filter(([, v]) => v !== null && v !== undefined)
+          .map(([k, v]) => [k.toLowerCase(), String(v).trim()])
       )
       const sid = keys['studentid'] || keys['userid'] || keys['id'] ||
         keys['student_number'] || keys['studentnumber'] || keys['no'] ||
         keys['number'] || keys['sn'] || keys['code']
-      if (sid) resolvedQr = sid.trim()
+      if (sid) resolvedQr = sid
     } catch { /* raw QR */ }
     try {
       const res = await apiFetch(`/api/card-aliases/resolve?qr=${encodeURIComponent(resolvedQr)}`)

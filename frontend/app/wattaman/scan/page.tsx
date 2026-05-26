@@ -412,7 +412,11 @@ function WattamanScanContent() {
     let resolvedQr = qrData
     try {
       const parsed = JSON.parse(qrData)
-      const keys: Record<string, string> = Object.fromEntries(Object.entries(parsed as Record<string, string>).map(([k, v]) => [k.toLowerCase(), v]))
+      const keys: Record<string, string> = Object.fromEntries(
+        Object.entries(parsed as Record<string, unknown>)
+          .filter(([, v]) => v !== null && v !== undefined)
+          .map(([k, v]) => [k.toLowerCase(), String(v).trim()])
+      )
       if (keys['staffid']) {
         setIsLoading(false)
         playSound('error')
