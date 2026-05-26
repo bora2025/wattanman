@@ -80,6 +80,47 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
   )
 }
 
+/**
+ * Maps a KeyboardEvent's physical key (e.code) to its ASCII character,
+ * ignoring the OS keyboard layout (Khmer, Thai, Arabic, etc.).
+ * This ensures USB scanners always produce the correct ASCII output
+ * even when the system keyboard is set to a non-Latin layout.
+ */
+function physicalKeyToAscii(e: KeyboardEvent): string | null {
+  const { code, shiftKey } = e
+  // Letters A-Z
+  if (code.startsWith('Key')) {
+    const letter = code.slice(3) // "KeyA" → "A"
+    return shiftKey ? letter : letter.toLowerCase()
+  }
+  // Digits 0-9
+  if (code.startsWith('Digit')) {
+    const digit = code.slice(5) // "Digit1" → "1"
+    if (!shiftKey) return digit
+    const shiftMap: Record<string, string> = {
+      '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
+      '6': '^', '7': '&', '8': '*', '9': '(', '0': ')',
+    }
+    return shiftMap[digit] ?? digit
+  }
+  // Numpad digits
+  if (code.startsWith('Numpad')) {
+    const rest = code.slice(6)
+    if (/^\d$/.test(rest)) return rest
+  }
+  // Common punctuation used in QR payloads (US physical layout)
+  const punct: Record<string, [string, string]> = {
+    Minus:        ['-', '_'],  Equal:       ['=', '+'],
+    BracketLeft:  ['[', '{'],  BracketRight: [']', '}'],
+    Backslash:    ['\\', '|'], Semicolon:   [';', ':'],
+    Quote:        ["'", '"'],  Backquote:   ['`', '~'],
+    Comma:        [',', '<'],  Period:      ['.', '>'],
+    Slash:        ['/', '?'],  Space:       [' ', ' '],
+  }
+  if (punct[code]) return shiftKey ? punct[code][1] : punct[code][0]
+  return null
+}
+
 /* ─── Main content ─────────────────────────────────────────── */
 function UsbScanContent() {
   const router = useRouter()
@@ -438,7 +479,7 @@ function UsbScanContent() {
       }
       lastKeyTimeRef.current = now
 
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter') {
         e.preventDefault()
         const code = bufferRef.current.trim()
         bufferRef.current = ''
@@ -454,9 +495,12 @@ function UsbScanContent() {
         return
       }
 
-      if (e.key.length === 1) {
+      // Derive the physical ASCII character from e.code so the buffer is
+      // always Latin/ASCII regardless of the OS keyboard layout (Khmer, Thai, etc.)
+      const ch = physicalKeyToAscii(e)
+      if (ch !== null) {
         e.preventDefault()
-        bufferRef.current += e.key
+        bufferRef.current += ch
         setBufferDisplay(bufferRef.current)
         setTestResult(null)
       }
