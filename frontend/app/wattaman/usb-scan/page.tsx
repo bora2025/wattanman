@@ -313,8 +313,11 @@ function UsbScanContent() {
         lockTimerRef.current = setTimeout(dismissLock, 3000)
         return
       }
-      const sid = keys['studentid'] || keys['userid']
-      if (sid) resolvedQr = sid
+      // Accept any of the common JSON key names used by card-printing systems
+      const sid = keys['studentid'] || keys['userid'] || keys['id'] ||
+        keys['student_number'] || keys['studentnumber'] || keys['no'] ||
+        keys['number'] || keys['sn'] || keys['code']
+      if (sid) resolvedQr = sid.trim()
     } catch {
       /* Raw QR string — try teacher endpoint first */
       const loc2 = locationRef.current
@@ -464,8 +467,10 @@ function UsbScanContent() {
       const keys: Record<string, string> = Object.fromEntries(
         Object.entries(parsed as Record<string, string>).map(([k, v]) => [k.toLowerCase(), v])
       )
-      const sid = keys['studentid'] || keys['userid']
-      if (sid) resolvedQr = sid
+      const sid = keys['studentid'] || keys['userid'] || keys['id'] ||
+        keys['student_number'] || keys['studentnumber'] || keys['no'] ||
+        keys['number'] || keys['sn'] || keys['code']
+      if (sid) resolvedQr = sid.trim()
     } catch { /* raw QR */ }
     try {
       const res = await apiFetch(`/api/card-aliases/resolve?qr=${encodeURIComponent(resolvedQr)}`)

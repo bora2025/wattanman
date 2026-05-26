@@ -73,6 +73,25 @@ export class CardAliasesService {
    */
   async resolveStudent(qrData: string) {
     if (!qrData) return null;
+
+    // Normalize: trim whitespace/null bytes, then attempt JSON extraction
+    let q = qrData.trim().replace(/\0/g, '');
+    if (q.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(q) as Record<string, unknown>;
+        const keys: Record<string, string> = Object.fromEntries(
+          Object.entries(parsed)
+            .filter(([, v]) => typeof v === 'string')
+            .map(([k, v]) => [k.toLowerCase(), (v as string).trim()]),
+        );
+        const extracted =
+          keys['studentid'] ?? keys['userid'] ?? keys['id'] ??
+          keys['student_number'] ?? keys['studentnumber'] ??
+          keys['no'] ?? keys['number'] ?? keys['sn'] ?? keys['code'];
+        if (extracted) q = extracted;
+      } catch { /* not valid JSON */ }
+    }
+
     const include = {
       user: { select: { name: true, photo: true } },
       class: { select: { name: true } },
@@ -80,7 +99,7 @@ export class CardAliasesService {
 
     // 1. Card-alias
     const alias = await this.prisma.cardAlias.findUnique({
-      where: { qrValue: qrData },
+      where: { qrValue: q },
       include: { student: { include } },
     });
     if (alias?.student) {
@@ -90,16 +109,16 @@ export class CardAliasesService {
 
     // 2-4. Direct fields
     const byField = await this.prisma.student.findFirst({
-      where: { OR: [{ id: qrData }, { userId: qrData }, { qrCode: qrData }] },
+      where: { OR: [{ id: q }, { userId: q }, { qrCode: q }] },
       include,
     });
     if (byField) {
       return { id: byField.id, studentNumber: (byField as any).studentNumber, name: (byField as any).user?.name ?? null, photo: (byField as any).photo ?? (byField as any).user?.photo ?? null, className: (byField as any).class?.name ?? null };
     }
 
-    // 5. studentNumber fallback
+    // 5. studentNumber fallback — case-insensitive
     const byNum = await this.prisma.student.findFirst({
-      where: { studentNumber: qrData },
+      where: { studentNumber: { equals: q, mode: 'insensitive' } },
       include,
       orderBy: { updatedAt: 'desc' },
     });

@@ -422,10 +422,12 @@ function WattamanScanContent() {
         lockTimerRef.current = setTimeout(() => { setMessage(''); lockRef.current = false }, 3000)
         return
       }
-      const sid = keys['studentid'] || keys['userid']
-      if (sid) resolvedQr = sid
+      const sid = keys['studentid'] || keys['userid'] || keys['id'] ||
+        keys['student_number'] || keys['studentnumber'] || keys['no'] ||
+        keys['number'] || keys['sn'] || keys['code']
+      if (sid) resolvedQr = sid.trim()
       // Pre-fill skeleton with cached photo if we've seen this student before
-      if (sid) setPendingPhoto(photoCacheRef.current.get(sid) ?? null)
+      if (sid) setPendingPhoto(photoCacheRef.current.get(sid.trim()) ?? null)
     } catch {
       /* Raw QR — try teacher endpoint first */
       const loc2 = locationRef.current

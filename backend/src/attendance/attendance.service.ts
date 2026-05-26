@@ -1352,6 +1352,31 @@ export class AttendanceService {
     const attendanceDate = toUTCMidnight(cambodiaNow);
     const hhmm = `${String(cambodiaNow.getUTCHours()).padStart(2, '0')}:${String(cambodiaNow.getUTCMinutes()).padStart(2, '0')}`;
 
+    // ── Normalize raw scanner input ───────────────────────────────────────────
+    // Trim whitespace and strip null bytes that some USB scanners append.
+    let q = (qrData ?? '').trim().replace(/\0/g, '');
+
+    // If the value looks like JSON (card-printing tools encode data as JSON),
+    // extract the student identifier from any recognised key name.
+    // This mirrors the frontend parsing but acts as a backend safety net when
+    // the raw JSON string is sent directly (e.g. from the camera-scan page).
+    if (q.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(q) as Record<string, unknown>;
+        const keys: Record<string, string> = Object.fromEntries(
+          Object.entries(parsed)
+            .filter(([, v]) => typeof v === 'string')
+            .map(([k, v]) => [k.toLowerCase(), (v as string).trim()]),
+        );
+        // Common JSON key names used by different card-printing systems
+        const extracted =
+          keys['studentid'] ?? keys['userid'] ?? keys['id'] ??
+          keys['student_number'] ?? keys['studentnumber'] ??
+          keys['no'] ?? keys['number'] ?? keys['sn'] ?? keys['code'];
+        if (extracted) q = extracted;
+      } catch { /* not valid JSON — use raw value */ }
+    }
+
     // Resolve the student using PRIORITY-ORDERED lookups to avoid returning the
     // wrong student when duplicate records exist (e.g. after a CSV re-import).
     // Priority: card-alias > exact id > userId > qrCode > studentNumber (active class first).
@@ -1365,7 +1390,7 @@ export class AttendanceService {
     // 1. Card-alias lookup FIRST — admin explicitly linked this card to a specific student.
     //    This takes highest priority so admins can override any ambiguity.
     const alias = await this.prisma.cardAlias.findUnique({
-      where: { qrValue: qrData },
+      where: { qrValue: q },
       include: { student: { include: studentInclude } },
     });
     if (alias?.student) {
@@ -1375,7 +1400,7 @@ export class AttendanceService {
     // 2. Exact student.id match (cuid) — unambiguous
     if (!student) {
       student = await this.prisma.student.findUnique({
-        where: { id: qrData },
+        where: { id: q },
         include: studentInclude,
       });
     }
@@ -1383,7 +1408,7 @@ export class AttendanceService {
     // 3. userId match — unambiguous (unique constraint)
     if (!student) {
       const byUser = await this.prisma.student.findFirst({
-        where: { userId: qrData },
+        where: { userId: q },
         include: studentInclude,
       });
       if (byUser) student = byUser;
@@ -1392,18 +1417,18 @@ export class AttendanceService {
     // 4. qrCode match — unique field, unambiguous
     if (!student) {
       const byQr = await this.prisma.student.findFirst({
-        where: { qrCode: qrData },
+        where: { qrCode: q },
         include: studentInclude,
       });
       if (byQr) student = byQr;
     }
 
-    // 5. studentNumber fallback — NOT unique; when multiple students share a number
-    //    (e.g. duplicate CSV imports) prefer the one with an active class assignment,
+    // 5. studentNumber fallback — case-insensitive; NOT unique; when multiple
+    //    students share a number prefer the one with an active class assignment,
     //    then the most-recently-updated record.
     if (!student) {
       const byNumber = await this.prisma.student.findMany({
-        where: { studentNumber: qrData },
+        where: { studentNumber: { equals: q, mode: 'insensitive' } },
         include: studentInclude,
         orderBy: { updatedAt: 'desc' },
       });
@@ -1422,7 +1447,7 @@ export class AttendanceService {
       return {
         action: 'UNMATCHED',
         unmatched: true,
-        qrValue: qrData,
+        qrValue: q,
         message: 'Card not recognised — link it to a student',
       } as any;
     }
