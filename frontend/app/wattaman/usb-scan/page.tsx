@@ -376,11 +376,9 @@ function UsbScanContent() {
         const result: ScanResult = await res.json()
         if ((result as any).action === 'UNMATCHED' || (result as any).unmatched) {
           playSound('error')
-          setLinkCardQr(((result as any).qrValue as string) || resolvedQr)
-          setLinkSearch('')
-          setLinkResults([])
-          setLinkError('')
-          if ('vibrate' in navigator) navigator.vibrate([60, 40, 60])
+          setMessage('❌ Card not recognised — check ID card')
+          if ('vibrate' in navigator) navigator.vibrate([100, 100, 100])
+          lockTimerRef.current = setTimeout(dismissLock, 5000)
           return
         }
         const isAlready = result.action === 'ALREADY_RECORDED'
