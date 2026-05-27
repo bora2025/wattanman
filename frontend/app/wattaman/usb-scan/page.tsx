@@ -1,12 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import AuthGuard from '../../../components/AuthGuard'
-import Sidebar from '../../../components/Sidebar'
-import { iconMap } from '../../../components/Icons'
-import { wattamanNav } from '../../../lib/wattaman-nav'
 import { apiFetch } from '../../../lib/api'
 import { formatCambodiaTime, todayCambodia } from '../../../lib/dateUtils'
 
@@ -175,7 +171,6 @@ function physicalKeyToAscii(e: KeyboardEvent): string | null {
 /* ─── Main content ─────────────────────────────────────────── */
 function UsbScanContent() {
   const router = useRouter()
-  const pathname = usePathname()
   const [lastResult, setLastResult] = useState<ScanResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -701,45 +696,6 @@ function UsbScanContent() {
 
   return (
     <div className="flex h-screen bg-slate-900 overflow-hidden">
-      {/* ── Desktop sidebar: lg+ (1024px+) ── */}
-      <div className="hidden lg:block flex-shrink-0">
-        <Sidebar
-          title="Wattaman"
-          subtitle="USB Scanner"
-          navItems={wattamanNav}
-          accentColor="emerald"
-          bottomTabs={['/wattaman', '/wattaman/scan', '/wattaman/usb-scan', '/wattaman/teacher-scan', '/wattaman/teacher-reports']}
-        />
-      </div>
-
-      {/* ── Compact icon nav: tablet md–lg (768px–1023px) ── */}
-      <nav className="hidden md:flex lg:hidden flex-col flex-shrink-0 w-14 bg-slate-800 border-r border-slate-700 py-3 gap-1 items-center">
-        {[
-          { href: '/wattaman', icon: 'dashboard', title: 'Dashboard' },
-          { href: '/wattaman/scan', icon: 'camera', title: 'Camera Scan' },
-          { href: '/wattaman/usb-scan', icon: 'doc-scanner', title: 'USB Scanner' },
-          { href: '/wattaman/teacher-scan', icon: 'camera', title: 'Teacher Scan' },
-          { href: '/wattaman/teacher-reports', icon: 'clipboard', title: 'Teacher Reports' },
-        ].map(item => {
-          const Icon = iconMap[item.icon]
-          const active = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={item.title}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
-                active
-                  ? 'bg-emerald-500/25 text-emerald-400'
-                  : 'text-slate-500 hover:text-slate-200 hover:bg-slate-700'
-              }`}
-            >
-              {Icon && <Icon size={19} />}
-            </Link>
-          )
-        })}
-      </nav>
-
       {/* ── Flash overlay ── */}
       {flashColor && (
         <div className="fixed inset-0 z-50 pointer-events-none"
