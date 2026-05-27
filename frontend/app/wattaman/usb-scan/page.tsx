@@ -83,29 +83,59 @@ function StudentProfileCardLarge({ result }: { result: ScanResult }) {
   const isAlready = result.action === 'ALREADY_RECORDED'
   const timeDisplay = result.checkInTime ? formatCambodiaTime(result.checkInTime, true) : null
   return (
-    <div className={`rounded-3xl overflow-hidden shadow-2xl ring-2 ${meta.ring}`}>
-      <div className={`${meta.bg} px-5 py-3.5 flex items-center justify-between`}>
-        <span className="text-white text-base font-extrabold tracking-wide">{meta.label}</span>
+    <div className={`rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl ring-2 ${meta.ring}`}>
+      {/* Status header */}
+      <div className={`${meta.bg} px-4 sm:px-5 py-2.5 sm:py-3.5 flex items-center justify-between`}>
+        <span className="text-white text-sm sm:text-base font-extrabold tracking-wide">{meta.label}</span>
         {result.session > 0 && (
-          <span className="text-white/80 text-sm font-semibold">Session {result.session}</span>
+          <span className="text-white/80 text-xs sm:text-sm font-semibold">Session {result.session}</span>
         )}
       </div>
-      <div className={`${meta.cardBg} flex flex-col items-center gap-4 px-6 py-6`}>
+
+      {/* ── Mobile layout (< sm): horizontal photo + stacked info ── */}
+      <div className={`${meta.cardBg} flex sm:hidden items-center gap-3 px-4 py-3`}>
+        <div className={`ring-2 ${meta.ring} rounded-2xl overflow-hidden flex-shrink-0 shadow`}>
+          {result.studentPhoto ? (
+            <img src={result.studentPhoto} alt={result.studentName} className="w-20 h-20 object-cover" />
+          ) : (
+            <div className="w-20 h-20 bg-white flex items-center justify-center text-4xl">👤</div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-extrabold text-slate-800 text-xl leading-tight">{result.studentName}</p>
+          <p className="text-slate-500 text-xs mt-0.5 truncate">{result.className}</p>
+          {isAlready && <p className="text-indigo-500 text-xs font-medium mt-1">Already recorded</p>}
+          {timeDisplay && (
+            <div className="flex items-center gap-1.5 mt-2 rounded-xl px-3 py-1.5" style={{ background: meta.bgLight }}>
+              <span className="text-sm">🕐</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                {isAlready ? 'First' : result.action === 'CHECK_OUT' ? 'Out' : 'In'}
+              </span>
+              <span className="ml-auto text-xl font-extrabold tabular-nums" style={{ color: meta.textHex }}>
+                {timeDisplay}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Desktop layout (≥ sm): vertical centered ── */}
+      <div className={`${meta.cardBg} hidden sm:flex flex-col items-center gap-4 px-6 py-6`}>
         <div className={`ring-4 ${meta.ring} rounded-3xl overflow-hidden shadow-lg`}>
           {result.studentPhoto ? (
             <img src={result.studentPhoto} alt={result.studentName}
-              className="w-32 h-32 sm:w-40 sm:h-40 object-cover" />
+              className="w-36 h-36 sm:w-40 sm:h-40 object-cover" />
           ) : (
-            <div className="w-32 h-32 sm:w-40 sm:h-40 bg-white flex items-center justify-center text-7xl">👤</div>
+            <div className="w-36 h-36 sm:w-40 sm:h-40 bg-white flex items-center justify-center text-7xl">👤</div>
           )}
         </div>
         <div className="text-center space-y-1">
           <p className="font-extrabold text-slate-800 text-2xl sm:text-3xl leading-tight">{result.studentName}</p>
-          <p className="text-slate-500 text-base">{result.className}</p>
+          <p className="text-slate-500 text-sm sm:text-base">{result.className}</p>
           {isAlready && <p className="text-indigo-500 text-sm font-medium mt-1">Already recorded — no duplicate</p>}
         </div>
         {timeDisplay && (
-          <div className="w-full rounded-2xl px-5 py-4 flex items-center justify-between"
+          <div className="w-full rounded-2xl px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between"
             style={{ background: meta.bgLight }}>
             <div className="flex items-center gap-2">
               <span className="text-xl">🕐</span>
@@ -841,7 +871,8 @@ function UsbScanContent() {
             )}
 
             {/* ── Central scan display ── */}
-            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <div className="min-h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
               {profileVisible && lastResult ? (
                 <div className="w-full max-w-sm sm:max-w-md" style={{ animation: 'slideUpFade 0.3s ease-out' }}>
                   <StudentProfileCardLarge result={lastResult} />
@@ -919,7 +950,8 @@ function UsbScanContent() {
                   <span className="w-1.5 h-4 bg-emerald-400 animate-pulse rounded-sm flex-shrink-0" />
                 </div>
               )}
-            </div>
+              </div>{/* end centering div */}
+            </div>{/* end scroll div */}
 
             {/* Troubleshooting strip */}
             {!lastActivityStr && !isLoading && !deviceActive && !profileVisible && (
