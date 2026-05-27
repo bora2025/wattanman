@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../lib/i18n';
-import { iconMap, IconDashboard, IconGlobe, IconLogout } from './Icons';
+import { iconMap, IconGlobe, IconLogout } from './Icons';
 import InstallAppButton from './InstallAppButton';
 
 /** Renders an icon: if `key` maps to an SVG component, uses it; otherwise falls back to text/emoji. */
@@ -342,6 +342,18 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
 
         {/* Navigation */}
         <nav className="flex-1 px-2 py-3 overflow-y-auto overscroll-contain">
+          {/* Back to Home */}
+          <Link
+            href="/"
+            title={sidebarOpen ? undefined : t('common.backToHome')}
+            className={`flex items-center gap-3 px-2.5 py-2 mb-1 rounded-xl text-sm ${colors.text} hover:bg-white/10 transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
+          >
+            <svg viewBox="0 0 20 20" className="shrink-0" width={17} height={17} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 4l-6 6 6 6" />
+            </svg>
+            {sidebarOpen && <span className="truncate text-white/70">{t('common.backToHome')}</span>}
+          </Link>
+          <div className={`border-t border-white/10 mb-2 ${sidebarOpen ? 'mx-1' : 'mx-0'}`} />
           {navItems.map((item, idx) => {
             const isActive = pathname === item.href;
             const badgeCount = item.badgeKey ? unread[item.badgeKey] : 0;
@@ -396,14 +408,6 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
             <IconGlobe size={17} />
             {sidebarOpen && <span className="truncate">{lang === 'en' ? 'ភាសាខ្មែរ' : 'English'}</span>}
           </button>
-          <Link
-            href="/"
-            title={sidebarOpen ? undefined : t('common.backToHome')}
-            className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm ${colors.text} hover:bg-white/10 transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
-          >
-            <IconDashboard size={17} />
-            {sidebarOpen && <span className="truncate">{t('common.backToHome')}</span>}
-          </Link>
           <Link
             href="/settings/notifications"
             title={sidebarOpen ? undefined : 'Notification settings'}
