@@ -775,6 +775,16 @@ function UsbScanContent() {
         {/* ─── DESKTOP top bar (xl+) ─── */}
         <header className="hidden md:flex items-center justify-between px-6 py-3 bg-slate-800 border-b border-slate-700 flex-shrink-0">
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/wattaman')}
+              title="Back to dashboard"
+              className="flex items-center gap-1.5 text-slate-300 hover:text-white text-sm font-semibold px-3 py-2 rounded-xl hover:bg-slate-700 active:scale-95 transition-all mr-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back
+            </button>
             <span className="text-2xl">🖲️</span>
             <div>
               <h1 className="font-extrabold text-white text-base leading-tight">USB Scanner — Attendance</h1>
