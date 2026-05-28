@@ -90,7 +90,7 @@ function CardPreview({
             {displayName}
           </div>
           {khmerName && (
-            <div style={{ fontSize: '8.5pt', fontWeight: 600, color: '#374151', lineHeight: 1.3, marginTop: '0.5mm', wordBreak: 'break-word', fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}>
+            <div style={{ fontSize: '8.5pt', fontWeight: 400, color: '#374151', lineHeight: 1.3, marginTop: '0.5mm', wordBreak: 'break-word', fontFamily: '"Khmer", var(--font-khmer), sans-serif' }}>
               {khmerName}
             </div>
           )}
