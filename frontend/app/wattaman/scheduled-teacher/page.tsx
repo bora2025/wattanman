@@ -443,7 +443,7 @@ function ManageTeachersContent() {
 
   const printCards = (ids: string[]) => {
     window.open(
-      `/wattaman/scheduled-teacher/print?teacherIds=${ids.join(',')}&orgName=${encodeURIComponent(orgName)}`,
+      `/wattaman/scheduled-teacher/print?teacherIds=${ids.join(',')}`,
       '_blank'
     )
   }

@@ -213,7 +213,7 @@ function PrintContent() {
 
         if (studyYearRes.ok) {
           const sy = await studyYearRes.json()
-          if (sy?.schoolName && !orgNameParam) setOrgName(sy.schoolName)
+          if (sy?.schoolName) setOrgName(sy.schoolName)
           if (sy?.logoUrl) setSchoolLogoUrl(sy.logoUrl)
         }
       } finally {
