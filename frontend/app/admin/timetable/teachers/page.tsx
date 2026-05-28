@@ -17,7 +17,7 @@ interface TLesson {
   class: { name: string; short: string; color: string | null }
 }
 interface TTeacher {
-  id: string; lastName: string; firstName: string; short: string
+  id: string; lastName: string; firstName: string; khmerName?: string | null; short: string
   sex: string | null; email: string | null; phone: string | null
   color: string | null; classTeacherId: string | null
   classTeacher: TClass | null
@@ -44,6 +44,7 @@ export default function TeachersPage() {
   const [showTeacherModal, setShowTeacherModal] = useState(false)
   const [editingTeacher, setEditingTeacher] = useState<TTeacher | null>(null)
   const [fFullName, setFFullName] = useState('')
+  const [fKhmerName, setFKhmerName] = useState('')
   const [fShort, setFShort] = useState('')
   const [fSex, setFSex] = useState('')
   const [fEmail, setFEmail] = useState('')
@@ -99,6 +100,7 @@ export default function TeachersPage() {
   function openTeacherModal(item?: TTeacher) {
     setEditingTeacher(item ?? null)
     setFFullName(item ? `${item.firstName}${item.lastName ? ' ' + item.lastName : ''}` : '')
+    setFKhmerName(item?.khmerName ?? '')
     setFShort(item?.short ?? ''); setFSex(item?.sex ?? '')
     setFEmail(item?.email ?? ''); setFPhone(item?.phone ?? '')
     setFColor(item?.color ?? '#22c55e'); setFClassTeacher(item?.classTeacherId ?? '')
@@ -126,7 +128,7 @@ export default function TeachersPage() {
       method: editingTeacher ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        lastName, firstName, short: fShort,
+        lastName, firstName, khmerName: fKhmerName.trim() || null, short: fShort,
         sex: fSex || null, email: fEmail || null, phone: fPhone || null,
         color: fColor, classTeacherId: fClassTeacher || null,
       }),
@@ -393,6 +395,16 @@ export default function TeachersPage() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
                 <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={fFullName} onChange={e => setFFullName(e.target.value)} placeholder="e.g. John Smith" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Khmer Name · ឈ្មោះខ្មែរ</label>
+                <input
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={fKhmerName}
+                  onChange={e => setFKhmerName(e.target.value)}
+                  placeholder="ឧ. សុខ ដារ៉ា"
+                  style={{ fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Short Name</label>

@@ -166,7 +166,7 @@ export class TimetableService {
   // ─── Teachers ──────────────────────────────────────────────────────
 
   async createTeacher(timetableId: string, data: {
-    lastName: string; firstName: string; short: string;
+    lastName: string; firstName: string; khmerName?: string; short: string;
     sex?: string; email?: string; phone?: string;
     color?: string; classTeacherId?: string;
   }) {
@@ -177,7 +177,7 @@ export class TimetableService {
   }
 
   async updateTeacher(id: string, data: Partial<{
-    lastName: string; firstName: string; short: string;
+    lastName: string; firstName: string; khmerName: string | null; short: string;
     sex: string; email: string; phone: string;
     color: string; classTeacherId: string | null;
   }>) {

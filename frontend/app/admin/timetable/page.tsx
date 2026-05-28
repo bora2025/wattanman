@@ -31,7 +31,7 @@ interface TClassroom {
   id: string; name: string; short: string; color: string | null; customFields: any
 }
 interface TTeacher {
-  id: string; lastName: string; firstName: string; short: string
+  id: string; lastName: string; firstName: string; khmerName?: string | null; short: string
   sex: string | null; email: string | null; phone: string | null
   color: string | null; classTeacherId: string | null; classTeacher?: TClass | null
 }
@@ -271,6 +271,7 @@ export default function TimetablePage() {
   // Teacher form
   const [fTLast, setFTLast] = useState('')
   const [fTFirst, setFTFirst] = useState('')
+  const [fTKhmer, setFTKhmer] = useState('')
   const [fTShort, setFTShort] = useState('')
   const [fTSex, setFTSex] = useState('')
   const [fTEmail, setFTEmail] = useState('')
@@ -476,7 +477,7 @@ export default function TimetablePage() {
     const isEdit = !!editingItem
     const url = isEdit ? `/api/timetable/teachers/${editingItem.id}` : `/api/timetable/${id}/teachers`
     const res = await apiFetch(url, { method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lastName: fTLast, firstName: fTFirst, short: fTShort,
+      body: JSON.stringify({ lastName: fTLast, firstName: fTFirst, khmerName: fTKhmer || null, short: fTShort,
         sex: fTSex || null, email: fTEmail || null, phone: fTPhone || null,
         color: fTColor, classTeacherId: fTClassTeacher || null }) })
     const fullName = `${fTFirst} ${fTLast}`.trim()
@@ -667,6 +668,7 @@ export default function TimetablePage() {
   }
   function openTeacherModal(item?: TTeacher) {
     setEditingItem(item ?? null); setFTLast(item?.lastName ?? ''); setFTFirst(item?.firstName ?? '')
+    setFTKhmer(item?.khmerName ?? '')
     setFTShort(item?.short ?? ''); setFTSex(item?.sex ?? ''); setFTEmail(item?.email ?? '')
     setFTPhone(item?.phone ?? ''); setFTColor(item?.color ?? '#22c55e'); setFTClassTeacher(item?.classTeacherId ?? '')
     if (!item) {
@@ -1763,6 +1765,15 @@ export default function TimetablePage() {
             <Field label="E-mail"><input type="email" className="input-field" value={fTEmail} onChange={e => setFTEmail(e.target.value)} /></Field>
             <Field label="Phone"><input className="input-field" value={fTPhone} onChange={e => setFTPhone(e.target.value)} /></Field>
           </div>
+          <Field label="Khmer Name · ឈ្មោះខ្មែរ">
+            <input
+              className="input-field"
+              value={fTKhmer}
+              onChange={e => setFTKhmer(e.target.value)}
+              placeholder="ឧ. សុខ ដារ៉ា"
+              style={{ fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}
+            />
+          </Field>
           <Field label="Class Teacher for (Class)">
             <div className="flex items-center gap-2">
               <select className="input-field" value={fTClassTeacher} onChange={e => setFTClassTeacher(e.target.value)}>

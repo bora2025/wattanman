@@ -483,6 +483,7 @@ model TimetableTeacher {
   timetable      Timetable       @relation(fields: [timetableId], references: [id], onDelete: Cascade)
   lastName       String
   firstName      String
+  khmerName      String?
   short          String
   sex            String? // MALE | FEMALE
   email          String?

@@ -22,6 +22,7 @@ interface ScheduledTeacher {
   qrCode: string | null
   email?: string | null
   phone?: string | null
+  khmerName?: string | null
   weeklyLessons: number
   lessons: { id: string; subjectName: string; className: string; perWeek: number }[]
   todayPeriods: number[]
@@ -39,6 +40,7 @@ const COLORS = [
 interface EditForm {
   firstName: string
   lastName: string
+  khmerName: string
   short: string
   sex: string
   email: string
@@ -57,6 +59,7 @@ function EditModal({
   const [form, setForm] = useState<EditForm>({
     firstName: nameParts.slice(0, -1).join(' ') || nameParts[0],
     lastName: nameParts.length > 1 ? nameParts[nameParts.length - 1] : '',
+    khmerName: teacher.khmerName ?? '',
     short: teacher.short ?? '',
     sex: teacher.sex ?? '',
     email: teacher.email ?? '',
@@ -83,6 +86,7 @@ function EditModal({
         body: JSON.stringify({
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
+          khmerName: form.khmerName.trim() || null,
           short: form.short.trim(),
           sex: form.sex || null,
           email: form.email.trim() || null,
@@ -93,6 +97,7 @@ function EditModal({
       if (!res.ok) throw new Error('Save failed')
       onSaved({
         name: `${form.firstName.trim()} ${form.lastName.trim()}`,
+        khmerName: form.khmerName.trim() || null,
         short: form.short.trim(),
         sex: form.sex || null,
         email: form.email.trim() || null,
@@ -144,6 +149,16 @@ function EditModal({
           <div>
             <label className="form-label">Email</label>
             <input type="email" value={form.email} onChange={e => set('email', e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="teacher@school.edu" />
+          </div>
+          <div>
+            <label className="form-label">Khmer Name · ឈ្មោះខ្មែរ</label>
+            <input
+              value={form.khmerName}
+              onChange={e => set('khmerName', e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              placeholder="ឧ. សុខ ដារ៉ា"
+              style={{ fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}
+            />
           </div>
           <div>
             <label className="form-label">Phone</label>

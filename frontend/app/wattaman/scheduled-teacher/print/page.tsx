@@ -14,6 +14,7 @@ interface PrintTeacher {
   sex: string | null
   color: string | null
   qrCode: string | null
+  khmerName?: string | null
   weeklyLessons: number
   lessons: { subjectName: string; className: string; perWeek: number }[]
 }
@@ -99,9 +100,14 @@ function TeacherIdCard({ teacher, orgName }: { teacher: PrintTeacher; orgName: s
 
         {/* Teacher name */}
         <div>
-          <div style={{ fontSize: '10pt', fontWeight: 700, color: '#1e293b', lineHeight: 1.2, wordBreak: 'break-word' }}>
+          <div style={{ fontSize: '10pt', fontWeight: 700, color: '#1e293b', lineHeight: 1.2, wordBreak: 'break-word', fontFamily: 'Inter, Arial, sans-serif' }}>
             {teacher.name}
           </div>
+          {teacher.khmerName && (
+            <div style={{ fontSize: '9pt', fontWeight: 600, color: '#374151', lineHeight: 1.3, marginTop: '0.5mm', wordBreak: 'break-word', fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}>
+              {teacher.khmerName}
+            </div>
+          )}
           <div
             style={{
               display: 'inline-block',
@@ -213,12 +219,13 @@ function PrintContent() {
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;600;700&display=swap');
         @page { size: A4; margin: 10mm; }
         @media print {
           body { margin: 0; }
           .no-print { display: none !important; }
         }
-        body { background: #f1f5f9; }
+        body { background: #f1f5f9; font-family: Inter, Arial, sans-serif; }
         .card-grid {
           display: flex;
           flex-wrap: wrap;
