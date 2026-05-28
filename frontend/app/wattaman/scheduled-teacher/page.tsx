@@ -36,6 +36,90 @@ const COLORS = [
   '#F97316','#64748B',
 ]
 
+// -- Card Preview (live) -----------------------------------------------------
+function CardPreview({
+  firstName, lastName, khmerName, short, color, orgName,
+  subjects,
+}: {
+  firstName: string; lastName: string; khmerName: string; short: string
+  color: string; orgName: string; subjects: string[]
+}) {
+  const displayName = [firstName, lastName].filter(Boolean).join(' ') || 'Teacher Name'
+  const displayShort = short || 'SH'
+  const displayColor = color || '#00C9A7'
+  const uniqueSubjects = [...new Set(subjects)].slice(0, 3)
+
+  return (
+    <div
+      style={{
+        width: '85.6mm',
+        height: '54mm',
+        display: 'flex',
+        flexDirection: 'row',
+        border: `1px solid #e2e8f0`,
+        borderRadius: '8px',
+        overflow: 'hidden',
+        background: '#fff',
+        boxSizing: 'border-box',
+        fontFamily: 'Inter, Arial, sans-serif',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
+      }}
+    >
+      {/* Left color strip */}
+      <div style={{ width: '12mm', background: displayColor, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <span style={{ color: '#fff', fontWeight: 700, fontSize: '7pt', letterSpacing: '0.05em', writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)' }}>
+          TEACHER
+        </span>
+      </div>
+
+      {/* Center info */}
+      <div style={{ flex: 1, padding: '4mm 3mm', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflow: 'hidden' }}>
+        {/* School name */}
+        <div style={{ fontSize: '5.5pt', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1mm', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {orgName}
+        </div>
+
+        {/* Teacher name */}
+        <div>
+          <div style={{ fontSize: '9pt', fontWeight: 700, color: '#1e293b', lineHeight: 1.2, wordBreak: 'break-word' }}>
+            {displayName}
+          </div>
+          {khmerName && (
+            <div style={{ fontSize: '8.5pt', fontWeight: 600, color: '#374151', lineHeight: 1.3, marginTop: '0.5mm', wordBreak: 'break-word', fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}>
+              {khmerName}
+            </div>
+          )}
+          <div style={{ display: 'inline-block', marginTop: '1mm', background: displayColor + '22', color: displayColor, fontWeight: 700, fontSize: '6.5pt', padding: '0.5mm 2mm', borderRadius: '3px', letterSpacing: '0.05em' }}>
+            {displayShort}
+          </div>
+        </div>
+
+        {/* Subjects */}
+        <div style={{ marginTop: '1.5mm' }}>
+          {uniqueSubjects.length > 0 ? uniqueSubjects.map((s, i) => (
+            <div key={i} style={{ fontSize: '6pt', color: '#475569', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>• {s}</div>
+          )) : (
+            <div style={{ fontSize: '6pt', color: '#cbd5e1', fontStyle: 'italic' }}>No subjects assigned</div>
+          )}
+        </div>
+
+        <div style={{ fontSize: '5pt', color: '#94a3b8', marginTop: '1mm' }}>Teacher ID Card</div>
+      </div>
+
+      {/* Right QR placeholder */}
+      <div style={{ width: '22mm', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid #f1f5f9', background: '#fafafa', padding: '2mm', flexShrink: 0 }}>
+        <div style={{ width: '16mm', height: '16mm', background: '#e2e8f0', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5">
+            <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            <path d="M14 14h1v1h-1zM17 14h1v1h-1zM14 17h1v1h-1zM17 17h3v3h-3z" />
+          </svg>
+        </div>
+        <div style={{ fontSize: '4.5pt', color: '#94a3b8', marginTop: '1.5mm', textAlign: 'center', lineHeight: 1.3 }}>SCAN TO<br />CHECK IN</div>
+      </div>
+    </div>
+  )
+}
+
 // -- Edit Modal --------------------------------------------------------------
 interface EditForm {
   firstName: string
@@ -49,9 +133,10 @@ interface EditForm {
 }
 
 function EditModal({
-  teacher, onClose, onSaved,
+  teacher, orgName, onClose, onSaved,
 }: {
   teacher: ScheduledTeacher
+  orgName: string
   onClose: () => void
   onSaved: (updated: Partial<ScheduledTeacher>) => void
 }) {
@@ -110,88 +195,161 @@ function EditModal({
     }
   }
 
+  const subjects = teacher.lessons.map(l => l.subjectName)
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
-        <h3 className="text-lg font-bold text-slate-800 mb-4">Edit Teacher</h3>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="form-label">First Name *</label>
-              <input value={form.firstName} onChange={e => set('firstName', e.target.value)} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="First name" />
-            </div>
-            <div>
-              <label className="form-label">Last Name *</label>
-              <input value={form.lastName} onChange={e => set('lastName', e.target.value)} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Last name" />
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-auto overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">Edit Teacher ID Card</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Changes preview instantly on the card</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="form-label">Short Code *</label>
-              <input
-                value={form.short}
-                onChange={e => set('short', e.target.value.toUpperCase())}
-                maxLength={6}
-                required
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono uppercase"
-                placeholder="e.g. SMITH"
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex flex-col md:flex-row overflow-auto max-h-[80vh]">
+
+          {/* Left: Live card preview */}
+          <div className="md:w-80 flex-shrink-0 bg-slate-50 flex flex-col items-center justify-start gap-4 p-6 border-b md:border-b-0 md:border-r border-slate-100">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide self-start">Card Preview</p>
+            {/* Scale card to fit the panel */}
+            <div style={{ transform: 'scale(0.85)', transformOrigin: 'top center', width: '85.6mm' }}>
+              <CardPreview
+                firstName={form.firstName}
+                lastName={form.lastName}
+                khmerName={form.khmerName}
+                short={form.short}
+                color={form.color}
+                orgName={orgName}
+                subjects={subjects}
               />
             </div>
-            <div>
-              <label className="form-label">Sex</label>
-              <select value={form.sex} onChange={e => set('sex', e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                <option value="">— unset —</option>
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
-              </select>
+            <div className="mt-2 text-center">
+              <p className="text-xs text-slate-400">85.6 × 54 mm (credit card size)</p>
             </div>
           </div>
-          <div>
-            <label className="form-label">Email</label>
-            <input type="email" value={form.email} onChange={e => set('email', e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="teacher@school.edu" />
-          </div>
-          <div>
-            <label className="form-label">Khmer Name · ឈ្មោះខ្មែរ</label>
-            <input
-              value={form.khmerName}
-              onChange={e => set('khmerName', e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              placeholder="ឧ. សុខ ដារ៉ា"
-              style={{ fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}
-            />
-          </div>
-          <div>
-            <label className="form-label">Phone</label>
-            <input value={form.phone} onChange={e => set('phone', e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="+855..." />
-          </div>
-          <div>
-            <label className="form-label">Card Color</label>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {COLORS.map(c => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => set('color', c)}
-                  className={`w-7 h-7 rounded-full border-2 transition-transform hover:scale-110 ${form.color === c ? 'border-slate-700 scale-110' : 'border-transparent'}`}
-                  style={{ background: c }}
-                  title={c}
-                />
-              ))}
+
+          {/* Right: Form */}
+          <form id="card-edit-form" onSubmit={handleSubmit} className="flex-1 p-6 space-y-4 overflow-y-auto">
+
+            {/* Name */}
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Name</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="form-label">First Name *</label>
+                  <input value={form.firstName} onChange={e => set('firstName', e.target.value)} required
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    placeholder="First name" />
+                </div>
+                <div>
+                  <label className="form-label">Last Name *</label>
+                  <input value={form.lastName} onChange={e => set('lastName', e.target.value)} required
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    placeholder="Last name" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="form-label">Khmer Name · ឈ្មោះខ្មែរ</label>
               <input
-                type="color"
-                value={form.color}
-                onChange={e => set('color', e.target.value)}
-                className="w-7 h-7 rounded-full cursor-pointer border border-slate-200 p-0"
-                title="Custom color"
+                value={form.khmerName}
+                onChange={e => set('khmerName', e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                placeholder="ឧ. សុខ ដារ៉ា"
+                style={{ fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}
               />
             </div>
-          </div>
-          {error && <p className="text-xs text-red-600">{error}</p>}
-          <div className="flex justify-end gap-2 mt-4">
+
+            {/* Short + Sex */}
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Card Badge</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="form-label">Short Code *</label>
+                  <input
+                    value={form.short}
+                    onChange={e => set('short', e.target.value.toUpperCase())}
+                    maxLength={6}
+                    required
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    placeholder="e.g. SMITH"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Sex</label>
+                  <select value={form.sex} onChange={e => set('sex', e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    <option value="">— unset —</option>
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Card color */}
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Card Color</p>
+              <div className="flex flex-wrap gap-2">
+                {COLORS.map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => set('color', c)}
+                    className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${form.color === c ? 'border-slate-700 scale-110 ring-2 ring-slate-400 ring-offset-1' : 'border-transparent'}`}
+                    style={{ background: c }}
+                    title={c}
+                  />
+                ))}
+                <label className="w-8 h-8 rounded-full border-2 border-slate-200 overflow-hidden cursor-pointer hover:scale-110 transition-all" title="Custom color">
+                  <input type="color" value={form.color} onChange={e => set('color', e.target.value)} className="opacity-0 w-full h-full cursor-pointer" />
+                  <div className="w-8 h-8 -mt-8 rounded-full" style={{ background: COLORS.includes(form.color) ? 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)' : form.color }} />
+                </label>
+              </div>
+              <p className="text-xs text-slate-400 mt-1.5">Selected: <span className="font-mono">{form.color}</span></p>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Contact</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="form-label">Email</label>
+                  <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    placeholder="teacher@school.edu" />
+                </div>
+                <div>
+                  <label className="form-label">Phone</label>
+                  <input value={form.phone} onChange={e => set('phone', e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    placeholder="+855..." />
+                </div>
+              </div>
+            </div>
+
+            {error && <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50">
+          <p className="text-xs text-slate-400">Card updates live as you type</p>
+          <div className="flex gap-2">
             <button type="button" onClick={onClose} className="btn-outline btn-sm">Cancel</button>
-            <button type="submit" disabled={saving} className="btn-primary btn-sm">{saving ? 'Saving...' : 'Save Changes'}</button>
+            <button type="submit" form="card-edit-form" disabled={saving} className="btn-primary btn-sm min-w-[100px]">
+              {saving ? 'Saving…' : 'Save Changes'}
+            </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   )
@@ -541,6 +699,7 @@ function ManageTeachersContent() {
         {editTeacher && (
           <EditModal
             teacher={editTeacher}
+            orgName={orgName}
             onClose={() => setEditTeacher(null)}
             onSaved={(patch) => applyEdit(editTeacher.id, patch)}
           />
