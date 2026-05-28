@@ -208,6 +208,10 @@ export default function TimetablePage() {
   // System classes for class picker (wizard + toolbar modal)
   const [wizardSystemClasses, setWizardSystemClasses] = useState<{id: string; name: string; studyYear?: {label?: string | null; year: number} | null}[]>([])
   const [wizardSystemClassesLoading, setWizardSystemClassesLoading] = useState(false)
+
+  // System teachers for teacher picker (from app database)
+  const [systemTeachers, setSystemTeachers] = useState<{id: string; name: string; email: string | null; phone: string | null}[]>([])
+  const [systemTeachersLoading, setSystemTeachersLoading] = useState(false)
   const [showTeacherModal, setShowTeacherModal] = useState(false)
   const [showLessonModal, setShowLessonModal] = useState(false)
   const [showContractPanel, setShowContractPanel] = useState(false)
@@ -665,6 +669,14 @@ export default function TimetablePage() {
     setEditingItem(item ?? null); setFTLast(item?.lastName ?? ''); setFTFirst(item?.firstName ?? '')
     setFTShort(item?.short ?? ''); setFTSex(item?.sex ?? ''); setFTEmail(item?.email ?? '')
     setFTPhone(item?.phone ?? ''); setFTColor(item?.color ?? '#22c55e'); setFTClassTeacher(item?.classTeacherId ?? '')
+    if (!item) {
+      setSystemTeachers([])
+      setSystemTeachersLoading(true)
+      apiFetch('/api/auth/users?roles=TEACHER').then(async res => {
+        if (res.ok) setSystemTeachers(await res.json())
+        setSystemTeachersLoading(false)
+      })
+    }
     setShowTeacherModal(true)
   }
   function openLessonModal(item?: TLesson, teacherDefault?: TTeacher) {
@@ -1689,6 +1701,47 @@ export default function TimetablePage() {
       {/* Teacher Modal */}
       {showTeacherModal && (
         <ItemModal title={editingItem ? 'Edit Teacher' : 'New Teacher'} onOk={saveTeacher} onCancel={() => setShowTeacherModal(false)} width="max-w-lg">
+          {!editingItem && (
+            <Field label="From existing teachers">
+              {systemTeachersLoading ? (
+                <p className="text-xs text-gray-400">Loading…</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+                  {systemTeachers
+                    .filter(st => !(current?.teachers ?? []).some(tt => tt.email && tt.email === st.email))
+                    .map(st => {
+                      const nameParts = st.name.trim().split(/\s+/)
+                      const first = nameParts[0] ?? ''
+                      const last = nameParts.slice(1).join(' ')
+                      return (
+                        <button
+                          key={st.id}
+                          type="button"
+                          onClick={() => {
+                            setFTFirst(first)
+                            setFTLast(last)
+                            setFTShort(autoShort(st.name))
+                            setFTEmail(st.email ?? '')
+                            setFTPhone(st.phone ?? '')
+                          }}
+                          className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                            fTEmail === st.email && st.email
+                              ? 'bg-emerald-600 text-white border-emerald-600'
+                              : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-emerald-400 hover:text-emerald-700'
+                          }`}
+                        >
+                          {st.name}
+                        </button>
+                      )
+                    })
+                  }
+                  {!systemTeachersLoading && systemTeachers.filter(st => !(current?.teachers ?? []).some(tt => tt.email && tt.email === st.email)).length === 0 && (
+                    <p className="text-xs text-gray-400">All existing teachers are already added, or no teachers found in the system.</p>
+                  )}
+                </div>
+              )}
+            </Field>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Field label="Last Name"><input className="input-field" value={fTLast} onChange={e => setFTLast(e.target.value)} /></Field>
             <Field label="First Name"><input className="input-field" value={fTFirst} onChange={e => setFTFirst(e.target.value)} /></Field>

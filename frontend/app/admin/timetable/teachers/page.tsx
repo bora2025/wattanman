@@ -54,6 +54,10 @@ export default function TeachersPage() {
   const [teacherError, setTeacherError] = useState('')
   const [deleteTeacherId, setDeleteTeacherId] = useState<string | null>(null)
 
+  // System teachers from app database
+  const [systemTeachers, setSystemTeachers] = useState<{id: string; name: string; email: string | null; phone: string | null}[]>([])
+  const [systemTeachersLoading, setSystemTeachersLoading] = useState(false)
+
   // Lesson modal
   const [showLessonModal, setShowLessonModal] = useState(false)
   const [editingLesson, setEditingLesson] = useState<TLesson | null>(null)
@@ -99,6 +103,14 @@ export default function TeachersPage() {
     setFEmail(item?.email ?? ''); setFPhone(item?.phone ?? '')
     setFColor(item?.color ?? '#22c55e'); setFClassTeacher(item?.classTeacherId ?? '')
     setTeacherError('')
+    if (!item) {
+      setSystemTeachers([])
+      setSystemTeachersLoading(true)
+      apiFetch('/api/auth/users?roles=TEACHER').then(async res => {
+        if (res.ok) setSystemTeachers(await res.json())
+        setSystemTeachersLoading(false)
+      })
+    }
     setShowTeacherModal(true)
   }
 
@@ -337,6 +349,46 @@ export default function TeachersPage() {
               <button onClick={() => setShowTeacherModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {!editingTeacher && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">From existing teachers</label>
+                  {systemTeachersLoading ? (
+                    <p className="text-xs text-gray-400">Loading…</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+                      {systemTeachers
+                        .filter(st => !teachers.some(tt => tt.email && tt.email === st.email))
+                        .map(st => (
+                          <button
+                            key={st.id}
+                            type="button"
+                            onClick={() => {
+                              setFFullName(st.name)
+                              const nameParts = st.name.trim().split(/\s+/)
+                              const initials = nameParts.length === 1
+                                ? st.name.slice(0, 5).toUpperCase()
+                                : nameParts.map((w: string) => w[0]).join('').slice(0, 6).toUpperCase()
+                              setFShort(initials)
+                              setFEmail(st.email ?? '')
+                              setFPhone(st.phone ?? '')
+                            }}
+                            className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                              fEmail === st.email && st.email
+                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-emerald-400 hover:text-emerald-700'
+                            }`}
+                          >
+                            {st.name}
+                          </button>
+                        ))
+                      }
+                      {!systemTeachersLoading && systemTeachers.filter(st => !teachers.some(tt => tt.email && tt.email === st.email)).length === 0 && (
+                        <p className="text-xs text-gray-400">All existing teachers are already added, or no teachers found in the system.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
                 <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
