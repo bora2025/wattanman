@@ -218,8 +218,8 @@ function PrintContent() {
 
   return (
     <>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;600;700&display=swap" />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;600;700&display=swap');
         @page { size: A4; margin: 10mm; }
         @media print {
           body { margin: 0; }

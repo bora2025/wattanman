@@ -488,6 +488,7 @@ export class TimetableService {
           timetableId: tt.id,
           timetableName: tt.name,
           name: `${t.firstName} ${t.lastName}`,
+          khmerName: t.khmerName ?? null,
           short: t.short,
           sex: t.sex,
           color: t.color,
