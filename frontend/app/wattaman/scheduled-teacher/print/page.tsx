@@ -112,7 +112,7 @@ function TeacherIdCard({ teacher, orgName, schoolLogoUrl }: { teacher: PrintTeac
             {teacher.name}
           </div>
           {teacher.khmerName && (
-            <div style={{ fontSize: '9pt', fontWeight: 600, color: '#374151', lineHeight: 1.3, marginTop: '0.5mm', wordBreak: 'break-word', fontFamily: '"Noto Sans Khmer", var(--font-khmer), sans-serif' }}>
+            <div className="khmer-text" style={{ fontSize: '9pt', fontWeight: 600, color: '#374151', lineHeight: 1.3, marginTop: '0.5mm', wordBreak: 'break-word', fontFamily: '"Noto Sans Khmer", sans-serif' }}>
               {teacher.khmerName}
             </div>
           )}
@@ -223,18 +223,26 @@ function PrintContent() {
     fetchData()
   }, [timetableId, teacherIds, orgNameParam])
 
-  // Wait for QR codes to render, then auto-print
+  // Wait for QR codes + Khmer font to render, then auto-print
   useEffect(() => {
     if (!loading && teachers.length > 0 && !qrReady) {
       setTimeout(() => {
         setQrReady(true)
-        setTimeout(() => {
+        setTimeout(async () => {
           if (!printedRef.current) {
             printedRef.current = true
-            document.fonts.ready.then(() => window.print())
+            // Wait for Noto Sans Khmer to load before printing
+            try {
+              await Promise.all([
+                document.fonts.load('400 12px "Noto Sans Khmer"'),
+                document.fonts.load('600 12px "Noto Sans Khmer"'),
+                document.fonts.load('700 12px "Noto Sans Khmer"'),
+              ])
+            } catch {}
+            window.print()
           }
         }, 800)
-      }, 1200)
+      }, 1500)
     }
   }, [loading, teachers, qrReady])
 
@@ -244,10 +252,9 @@ function PrintContent() {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;600;700&display=block" />
       <style>{`
-        @font-face {
-          font-family: 'Noto Sans Khmer';
-          font-display: block;
-        }
+        /* Force browser to load Noto Sans Khmer immediately */
+        @font-face { font-family: 'Noto Sans Khmer'; }
+        .khmer-text { font-family: 'Noto Sans Khmer', sans-serif; }
         @page { size: A4; margin: 10mm; }
         @media print {
           body { margin: 0; }
@@ -291,6 +298,9 @@ function PrintContent() {
           </button>
         </div>
       </div>
+
+      {/* Hidden element to force browser to load Noto Sans Khmer immediately */}
+      <div className="khmer-text" aria-hidden="true" style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', fontSize: '1px' }}>ក</div>
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
