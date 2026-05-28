@@ -112,7 +112,7 @@ function TeacherIdCard({ teacher, orgName, schoolLogoUrl }: { teacher: PrintTeac
             {teacher.name}
           </div>
           {teacher.khmerName && (
-            <div style={{ fontSize: '9pt', fontWeight: 600, color: '#374151', lineHeight: 1.3, marginTop: '0.5mm', wordBreak: 'break-word', fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}>
+            <div style={{ fontSize: '9pt', fontWeight: 600, color: '#374151', lineHeight: 1.3, marginTop: '0.5mm', wordBreak: 'break-word', fontFamily: '"Noto Sans Khmer", var(--font-khmer), sans-serif' }}>
               {teacher.khmerName}
             </div>
           )}
@@ -231,7 +231,7 @@ function PrintContent() {
         setTimeout(() => {
           if (!printedRef.current) {
             printedRef.current = true
-            window.print()
+            document.fonts.ready.then(() => window.print())
           }
         }, 800)
       }, 1200)
@@ -240,8 +240,14 @@ function PrintContent() {
 
   return (
     <>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;600;700&display=swap" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;600;700&display=block" />
       <style>{`
+        @font-face {
+          font-family: 'Noto Sans Khmer';
+          font-display: block;
+        }
         @page { size: A4; margin: 10mm; }
         @media print {
           body { margin: 0; }
