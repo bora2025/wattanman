@@ -101,7 +101,7 @@ function TeacherIdCard({ teacher, orgName, schoolLogoUrl }: { teacher: PrintTeac
               style={{ width: '6mm', height: '6mm', objectFit: 'contain', flexShrink: 0 }}
             />
           )}
-          <div style={{ fontSize: '5.5pt', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: '5.5pt', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: '"Khmer", Inter, Arial, sans-serif' }}>
             {orgName}
           </div>
         </div>

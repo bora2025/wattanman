@@ -221,13 +221,14 @@ export default function StudyYearsPage() {
 
                   {/* School Name */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">School Name</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">School Name · ឈ្មោះសាលា</label>
                     <input
                       type="text"
                       value={formData.schoolName}
                       onChange={e => setFormData({ ...formData, schoolName: e.target.value })}
                       placeholder="e.g. Wattaman International School"
                       className="input w-full"
+                      style={{ fontFamily: '"Khmer", var(--font-khmer), sans-serif' }}
                     />
                   </div>
 
@@ -326,7 +327,7 @@ export default function StudyYearsPage() {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-slate-800 text-lg leading-tight">{sy.label || sy.year}</h3>
                         {sy.schoolName && (
-                          <p className="text-sm text-indigo-700 font-medium mt-0.5 truncate">{sy.schoolName}</p>
+                          <p className="text-sm text-indigo-700 font-medium mt-0.5 truncate" style={{ fontFamily: '"Khmer", var(--font-khmer), sans-serif' }}>{sy.schoolName}</p>
                         )}
                         <p className="text-sm text-slate-500 mt-0.5">
                           {sy._count.classes} class{sy._count.classes !== 1 ? 'es' : ''}
