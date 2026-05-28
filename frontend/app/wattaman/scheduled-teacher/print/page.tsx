@@ -118,27 +118,30 @@ function TeacherIdCard({ teacher, orgName, schoolLogoUrl }: { teacher: PrintTeac
               {teacher.khmerName}
             </div>
           )}
-          <div
-            style={{
-              display: 'inline-block',
-              marginTop: '1mm',
-              background: color + '22',
-              color: color,
-              fontWeight: 700,
-              fontSize: '7pt',
-              padding: '0.5mm 2mm',
-              borderRadius: '3px',
-              letterSpacing: '0.05em',
-            }}
-          >
-            {teacher.short}
-          </div>
+          {teacher.short && (
+            <div
+              style={{
+                display: 'inline-block',
+                marginTop: '1mm',
+                background: color + '22',
+                color: color,
+                fontWeight: 700,
+                fontSize: '7pt',
+                padding: '0.5mm 2mm',
+                borderRadius: '3px',
+                letterSpacing: '0.02em',
+                fontFamily: '"Khmer", Inter, Arial, sans-serif',
+              }}
+            >
+              {teacher.short}
+            </div>
+          )}
         </div>
 
         {/* Subjects */}
         <div style={{ marginTop: '1.5mm' }}>
           {uniqueSubjects.slice(0, 3).map((s, i) => (
-            <div key={i} style={{ fontSize: '6.5pt', color: '#475569', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div key={i} style={{ fontSize: '6.5pt', color: '#475569', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: '"Khmer", Inter, Arial, sans-serif' }}>
               • {s}
             </div>
           ))}

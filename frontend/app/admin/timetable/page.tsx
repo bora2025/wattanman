@@ -826,9 +826,9 @@ export default function TimetablePage() {
               }}
               onDragEnd={() => setDragEntry(null)}
             >
-              <div className="font-semibold">{entry.subject.short}</div>
+              <div className="font-semibold" style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }}>{entry.subject.short}</div>
               <div className="opacity-90 text-[9px] rounded px-0.5 mt-0.5 inline-block"
-                style={{ backgroundColor: entry.teacher.color ?? '#374151' }}>
+                style={{ backgroundColor: entry.teacher.color ?? '#374151', fontFamily: '"Khmer", Inter, Arial, sans-serif' }}>
                 {entry.teacher.short}
               </div>
               <button
@@ -1611,8 +1611,8 @@ export default function TimetablePage() {
       {/* Subject Modal */}
       {showSubjectModal && (
         <ItemModal title={editingItem ? 'Edit Subject' : 'New Subject'} onOk={saveSubject} onCancel={() => setShowSubjectModal(false)}>
-          <Field label="Name"><input className="input-field" value={fSubName} onChange={e => setFSubName(e.target.value)} placeholder="e.g. Mathematics" /></Field>
-          <Field label="Short Name"><input className="input-field" value={fSubShort} onChange={e => setFSubShort(e.target.value)} maxLength={8} placeholder="e.g. Math" /></Field>
+          <Field label="Name"><input className="input-field" style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }} value={fSubName} onChange={e => setFSubName(e.target.value)} placeholder="e.g. Mathematics" /></Field>
+          <Field label="Short Name"><input className="input-field" style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }} value={fSubShort} onChange={e => setFSubShort(e.target.value)} maxLength={8} placeholder="e.g. Math" /></Field>
           <Field label="Custom Fields"><input className="input-field" value={fSubCustom} onChange={e => setFSubCustom(e.target.value)} placeholder="Optional notes" /></Field>
           <Field label="Classroom Count">
             <div className="flex items-center gap-2">
@@ -1667,8 +1667,8 @@ export default function TimetablePage() {
               )}
             </Field>
           )}
-          <Field label="Class Name"><input className="input-field" value={fClsName} onChange={e => setFClsName(e.target.value)} placeholder="e.g. Grade 10A" /></Field>
-          <Field label="Short Name"><input className="input-field" value={fClsShort} onChange={e => setFClsShort(e.target.value)} maxLength={8} placeholder="e.g. G10A" /></Field>
+          <Field label="Class Name"><input className="input-field" style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }} value={fClsName} onChange={e => setFClsName(e.target.value)} placeholder="e.g. Grade 10A" /></Field>
+          <Field label="Short Name"><input className="input-field" style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }} value={fClsShort} onChange={e => setFClsShort(e.target.value)} maxLength={8} placeholder="e.g. G10A" /></Field>
           <Field label="Custom Fields"><input className="input-field" value={fClsCustom} onChange={e => setFClsCustom(e.target.value)} placeholder="Optional notes" /></Field>
           <Field label="Color / Picture">
             <div className="flex items-center gap-3">
@@ -1745,10 +1745,10 @@ export default function TimetablePage() {
             </Field>
           )}
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Last Name"><input className="input-field" value={fTLast} onChange={e => setFTLast(e.target.value)} /></Field>
-            <Field label="First Name"><input className="input-field" value={fTFirst} onChange={e => setFTFirst(e.target.value)} /></Field>
+            <Field label="Last Name"><input className="input-field" style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }} value={fTLast} onChange={e => setFTLast(e.target.value)} /></Field>
+            <Field label="First Name"><input className="input-field" style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }} value={fTFirst} onChange={e => setFTFirst(e.target.value)} /></Field>
           </div>
-          <Field label="Short Name"><input className="input-field" value={fTShort} onChange={e => setFTShort(e.target.value)} maxLength={8} /></Field>
+          <Field label="Short Name"><input className="input-field" style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }} value={fTShort} onChange={e => setFTShort(e.target.value)} maxLength={8} /></Field>
           <Field label="Sex">
             <div className="flex gap-6 mt-1">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -1771,7 +1771,7 @@ export default function TimetablePage() {
               value={fTKhmer}
               onChange={e => setFTKhmer(e.target.value)}
               placeholder="ឧ. សុខ ដារ៉ា"
-              style={{ fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}
+              style={{ fontFamily: '"Khmer", var(--font-khmer), sans-serif' }}
             />
           </Field>
           <Field label="Class Teacher for (Class)">

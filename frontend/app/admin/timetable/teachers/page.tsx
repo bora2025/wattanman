@@ -394,6 +394,7 @@ export default function TeachersPage() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
                 <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }}
                   value={fFullName} onChange={e => setFFullName(e.target.value)} placeholder="e.g. John Smith" />
               </div>
               <div>
@@ -403,12 +404,13 @@ export default function TeachersPage() {
                   value={fKhmerName}
                   onChange={e => setFKhmerName(e.target.value)}
                   placeholder="ឧ. សុខ ដារ៉ា"
-                  style={{ fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}
+                  style={{ fontFamily: '"Khmer", var(--font-khmer), sans-serif' }}
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Short Name</label>
                 <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }}
                   value={fShort} onChange={e => setFShort(e.target.value)} maxLength={8} placeholder="e.g. SmithJ" />
               </div>
               <div>
