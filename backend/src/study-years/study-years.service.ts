@@ -19,7 +19,7 @@ export class StudyYearsService {
     });
   }
 
-  async create(data: { year: number; label?: string; startDate?: string; endDate?: string }) {
+  async create(data: { year: number; label?: string; startDate?: string; endDate?: string; schoolName?: string; logoUrl?: string }) {
     const existing = await this.prisma.studyYear.findUnique({ where: { year: data.year } });
     if (existing) {
       throw new BadRequestException(`Study year ${data.year} already exists`);
@@ -31,12 +31,14 @@ export class StudyYearsService {
         label: data.label || `${data.year}-${data.year + 1}`,
         startDate: data.startDate ? new Date(data.startDate) : undefined,
         endDate: data.endDate ? new Date(data.endDate) : undefined,
+        schoolName: data.schoolName || undefined,
+        logoUrl: data.logoUrl || undefined,
       },
       include: { _count: { select: { classes: true } } },
     });
   }
 
-  async update(id: string, data: { year?: number; label?: string; startDate?: string; endDate?: string }) {
+  async update(id: string, data: { year?: number; label?: string; startDate?: string; endDate?: string; schoolName?: string; logoUrl?: string | null }) {
     if (data.year) {
       const existing = await this.prisma.studyYear.findFirst({
         where: { year: data.year, NOT: { id } },
@@ -53,6 +55,8 @@ export class StudyYearsService {
         ...(data.label !== undefined && { label: data.label }),
         ...(data.startDate !== undefined && { startDate: new Date(data.startDate) }),
         ...(data.endDate !== undefined && { endDate: new Date(data.endDate) }),
+        ...(data.schoolName !== undefined && { schoolName: data.schoolName }),
+        ...(data.logoUrl !== undefined && { logoUrl: data.logoUrl }),
       },
       include: { _count: { select: { classes: true } } },
     });

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
@@ -15,6 +15,8 @@ interface StudyYear {
   startDate: string | null
   endDate: string | null
   isCurrent: boolean
+  schoolName: string | null
+  logoUrl: string | null
   _count: { classes: number }
 }
 
@@ -24,9 +26,14 @@ export default function StudyYearsPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [formData, setFormData] = useState({ year: new Date().getFullYear(), label: '', startDate: '', endDate: '' })
+  const [formData, setFormData] = useState({
+    year: new Date().getFullYear(), label: '', startDate: '', endDate: '',
+    schoolName: '', logoUrl: '',
+  })
+  const [logoPreview, setLogoPreview] = useState<string>('')
   const [message, setMessage] = useState('')
   const [msgType, setMsgType] = useState<'success' | 'error'>('success')
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { fetchStudyYears() }, [])
 
@@ -52,6 +59,8 @@ export default function StudyYearsPage() {
         label: formData.label || `${formData.year}-${Number(formData.year) + 1}`,
         ...(formData.startDate && { startDate: formData.startDate }),
         ...(formData.endDate && { endDate: formData.endDate }),
+        schoolName: formData.schoolName || null,
+        logoUrl: formData.logoUrl || null,
       }
 
       const res = editingId
@@ -62,7 +71,8 @@ export default function StudyYearsPage() {
         showMsg(editingId ? 'Study year updated' : 'Study year created')
         setShowForm(false)
         setEditingId(null)
-        setFormData({ year: new Date().getFullYear(), label: '', startDate: '', endDate: '' })
+        setFormData({ year: new Date().getFullYear(), label: '', startDate: '', endDate: '', schoolName: '', logoUrl: '' })
+        setLogoPreview('')
         fetchStudyYears()
       } else {
         const err = await res.json()
@@ -73,6 +83,22 @@ export default function StudyYearsPage() {
     }
   }
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      showMsg('Logo must be smaller than 2 MB', 'error')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const dataUrl = ev.target?.result as string
+      setFormData(f => ({ ...f, logoUrl: dataUrl }))
+      setLogoPreview(dataUrl)
+    }
+    reader.readAsDataURL(file)
+  }
+
   const handleEdit = (sy: StudyYear) => {
     setEditingId(sy.id)
     setFormData({
@@ -80,7 +106,10 @@ export default function StudyYearsPage() {
       label: sy.label || '',
       startDate: sy.startDate ? sy.startDate.split('T')[0] : '',
       endDate: sy.endDate ? sy.endDate.split('T')[0] : '',
+      schoolName: sy.schoolName || '',
+      logoUrl: sy.logoUrl || '',
     })
+    setLogoPreview(sy.logoUrl || '')
     setShowForm(true)
   }
 
@@ -115,7 +144,8 @@ export default function StudyYearsPage() {
   const cancelForm = () => {
     setShowForm(false)
     setEditingId(null)
-    setFormData({ year: new Date().getFullYear(), label: '', startDate: '', endDate: '' })
+    setFormData({ year: new Date().getFullYear(), label: '', startDate: '', endDate: '', schoolName: '', logoUrl: '' })
+    setLogoPreview('')
   }
 
   return (
@@ -188,7 +218,72 @@ export default function StudyYearsPage() {
                       />
                     </div>
                   </div>
-                  <div className="flex gap-2">
+
+                  {/* School Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">School Name</label>
+                    <input
+                      type="text"
+                      value={formData.schoolName}
+                      onChange={e => setFormData({ ...formData, schoolName: e.target.value })}
+                      placeholder="e.g. Wattaman International School"
+                      className="input w-full"
+                    />
+                  </div>
+
+                  {/* School Logo */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">School Logo</label>
+                    <div className="flex items-start gap-4">
+                      {/* Preview */}
+                      <div
+                        className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50 flex-shrink-0 overflow-hidden cursor-pointer hover:border-indigo-400 transition-colors"
+                        onClick={() => logoInputRef.current?.click()}
+                        title="Click to upload logo"
+                      >
+                        {logoPreview ? (
+                          <img src={logoPreview} alt="Logo preview" className="w-full h-full object-contain" />
+                        ) : (
+                          <div className="text-center text-slate-400">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-1">
+                              <rect x="3" y="3" width="18" height="18" rx="2" />
+                              <circle cx="8.5" cy="8.5" r="1.5" />
+                              <path d="M21 15l-5-5L5 21" />
+                            </svg>
+                            <span className="text-xs">Logo</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <input
+                          ref={logoInputRef}
+                          type="file"
+                          accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => logoInputRef.current?.click()}
+                          className="btn-outline text-sm px-4 py-2"
+                        >
+                          {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                        </button>
+                        {logoPreview && (
+                          <button
+                            type="button"
+                            onClick={() => { setLogoPreview(''); setFormData(f => ({ ...f, logoUrl: '' })) }}
+                            className="ml-2 text-xs text-red-500 hover:text-red-700"
+                          >
+                            Remove
+                          </button>
+                        )}
+                        <p className="text-xs text-slate-400">PNG, JPG, SVG or WebP · max 2 MB</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
                     <button type="submit" className="btn-primary text-sm px-4 py-2">
                       {editingId ? 'Update' : 'Create'}
                     </button>
@@ -219,11 +314,20 @@ export default function StudyYearsPage() {
                       </span>
                     )}
                     <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm flex-shrink-0">
-                        {sy.year.toString().slice(-2)}
+                      <div className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden border border-slate-100">
+                        {sy.logoUrl ? (
+                          <img src={sy.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                            {sy.year.toString().slice(-2)}
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-slate-800 text-lg">{sy.label || sy.year}</h3>
+                        <h3 className="font-semibold text-slate-800 text-lg leading-tight">{sy.label || sy.year}</h3>
+                        {sy.schoolName && (
+                          <p className="text-sm text-indigo-700 font-medium mt-0.5 truncate">{sy.schoolName}</p>
+                        )}
                         <p className="text-sm text-slate-500 mt-0.5">
                           {sy._count.classes} class{sy._count.classes !== 1 ? 'es' : ''}
                         </p>

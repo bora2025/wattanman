@@ -243,14 +243,16 @@ model StaffWeeklySchedule {
 }
 
 model StudyYear {
-  id        String    @id @default(cuid())
-  year      Int       @unique // e.g., 2026, 2027
-  label     String? // e.g., "2026-2027"
-  startDate DateTime?
-  endDate   DateTime?
-  isCurrent Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String    @id @default(cuid())
+  year       Int       @unique // e.g., 2026, 2027
+  label      String? // e.g., "2026-2027"
+  startDate  DateTime?
+  endDate    DateTime?
+  isCurrent  Boolean   @default(false)
+  schoolName String?   // e.g., "Wattaman International School"
+  logoUrl    String?   // base64 data URL or external URL
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   classes Class[]
 }

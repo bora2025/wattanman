@@ -21,13 +21,13 @@ export class StudyYearsController {
 
   @Roles('ADMIN')
   @Post()
-  async create(@Body() data: { year: number; label?: string; startDate?: string; endDate?: string }) {
+  async create(@Body() data: { year: number; label?: string; startDate?: string; endDate?: string; schoolName?: string; logoUrl?: string }) {
     return this.studyYearsService.create(data);
   }
 
   @Roles('ADMIN')
   @Put(':id')
-  async update(@Param('id') id: string, @Body() data: { year?: number; label?: string; startDate?: string; endDate?: string }) {
+  async update(@Param('id') id: string, @Body() data: { year?: number; label?: string; startDate?: string; endDate?: string; schoolName?: string; logoUrl?: string | null }) {
     return this.studyYearsService.update(id, data);
   }
 
