@@ -79,9 +79,11 @@ function CardPreview({
           {schoolLogoUrl && (
             <img src={schoolLogoUrl} alt="School" style={{ width: '5.5mm', height: '5.5mm', objectFit: 'contain', flexShrink: 0 }} />
           )}
-          <div style={{ fontSize: '5.5pt', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {orgName}
-          </div>
+          {orgName && (
+            <div style={{ fontSize: '6pt', color: '#64748b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: '"Khmer", Inter, Arial, sans-serif' }}>
+              {orgName}
+            </div>
+          )}
         </div>
 
         {/* Teacher name */}

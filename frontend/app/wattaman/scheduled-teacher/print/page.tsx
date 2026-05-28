@@ -101,9 +101,11 @@ function TeacherIdCard({ teacher, orgName, schoolLogoUrl }: { teacher: PrintTeac
               style={{ width: '6mm', height: '6mm', objectFit: 'contain', flexShrink: 0 }}
             />
           )}
-          <div style={{ fontSize: '5.5pt', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: '"Khmer", Inter, Arial, sans-serif' }}>
-            {orgName}
-          </div>
+          {orgName && (
+            <div style={{ fontSize: '6pt', color: '#64748b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: '"Khmer", Inter, Arial, sans-serif' }}>
+              {orgName}
+            </div>
+          )}
         </div>
 
         {/* Teacher name */}
@@ -185,7 +187,7 @@ function PrintContent() {
   const orgNameParam = searchParams.get('orgName') ?? ''
 
   const [teachers, setTeachers] = useState<PrintTeacher[]>([])
-  const [orgName, setOrgName] = useState(orgNameParam || 'School')
+  const [orgName, setOrgName] = useState('')
   const [schoolLogoUrl, setSchoolLogoUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [qrReady, setQrReady] = useState(false)
