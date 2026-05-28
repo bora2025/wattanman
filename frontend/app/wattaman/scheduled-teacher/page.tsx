@@ -444,7 +444,8 @@ function ManageTeachersContent() {
             {/* Header */}
             <div className="page-header">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">Manage Scheduled Teachers</h1>
+                <h1 className="text-2xl font-bold text-slate-900">Manage Part Time Teacher</h1>
+                <p className="text-sm font-medium mt-0.5" style={{ fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif', color: '#64748b' }}>គ្រូជួលក្រៅម៉ោង</p>
                 <p className="text-sm text-slate-500 mt-1">
                   {filtered.length} teacher{filtered.length !== 1 ? 's' : ''} · {timetables.length} timetable{timetables.length !== 1 ? 's' : ''}
                 </p>
