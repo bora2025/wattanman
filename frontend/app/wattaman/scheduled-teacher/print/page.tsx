@@ -19,7 +19,7 @@ interface PrintTeacher {
   lessons: { subjectName: string; className: string; perWeek: number }[]
 }
 
-function TeacherIdCard({ teacher, orgName }: { teacher: PrintTeacher; orgName: string }) {
+function TeacherIdCard({ teacher, orgName, schoolLogoUrl }: { teacher: PrintTeacher; orgName: string; schoolLogoUrl: string }) {
   const [qrDataUrl, setQrDataUrl] = useState<string>('')
 
   useEffect(() => {
@@ -34,7 +34,6 @@ function TeacherIdCard({ teacher, orgName }: { teacher: PrintTeacher; orgName: s
   }, [teacher.qrCode])
 
   const color = teacher.color || '#00C9A7'
-  const initials = teacher.short?.slice(0, 2).toUpperCase() ?? teacher.name.slice(0, 2).toUpperCase()
   const uniqueSubjects = [...new Set(teacher.lessons.map(l => l.subjectName))]
 
   return (
@@ -86,16 +85,25 @@ function TeacherIdCard({ teacher, orgName }: { teacher: PrintTeacher; orgName: s
       <div
         style={{
           flex: 1,
-          padding: '4mm 3mm',
+          padding: '3mm 3mm',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           overflow: 'hidden',
         }}
       >
-        {/* School name */}
-        <div style={{ fontSize: '6pt', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1mm' }}>
-          {orgName}
+        {/* School header: logo + name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5mm', marginBottom: '1mm' }}>
+          {schoolLogoUrl && (
+            <img
+              src={schoolLogoUrl}
+              alt="School Logo"
+              style={{ width: '6mm', height: '6mm', objectFit: 'contain', flexShrink: 0 }}
+            />
+          )}
+          <div style={{ fontSize: '5.5pt', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {orgName}
+          </div>
         </div>
 
         {/* Teacher name */}
@@ -174,9 +182,11 @@ function PrintContent() {
   const searchParams = useSearchParams()
   const timetableId = searchParams.get('timetableId') ?? ''
   const teacherIds = searchParams.get('teacherIds') ?? ''
-  const orgName = searchParams.get('orgName') ?? 'School'
+  const orgNameParam = searchParams.get('orgName') ?? ''
 
   const [teachers, setTeachers] = useState<PrintTeacher[]>([])
+  const [orgName, setOrgName] = useState(orgNameParam || 'School')
+  const [schoolLogoUrl, setSchoolLogoUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [qrReady, setQrReady] = useState(false)
   const printedRef = useRef(false)
@@ -184,22 +194,34 @@ function PrintContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await apiFetch('/api/timetable/scheduled-teachers/all')
-        if (!res.ok) throw new Error()
-        const data: PrintTeacher[] = await res.json()
-        let filtered = data
-        if (timetableId) filtered = filtered.filter(t => t.timetableId === timetableId)
-        if (teacherIds) {
-          const ids = new Set(teacherIds.split(','))
-          filtered = filtered.filter(t => ids.has(t.id))
+        // Fetch teachers and current study year in parallel
+        const [teachersRes, studyYearRes] = await Promise.all([
+          apiFetch('/api/timetable/scheduled-teachers/all'),
+          apiFetch('/api/study-years/current'),
+        ])
+
+        if (teachersRes.ok) {
+          const data: PrintTeacher[] = await teachersRes.json()
+          let filtered = data
+          if (timetableId) filtered = filtered.filter(t => t.timetableId === timetableId)
+          if (teacherIds) {
+            const ids = new Set(teacherIds.split(','))
+            filtered = filtered.filter(t => ids.has(t.id))
+          }
+          setTeachers(filtered)
         }
-        setTeachers(filtered)
+
+        if (studyYearRes.ok) {
+          const sy = await studyYearRes.json()
+          if (sy?.schoolName && !orgNameParam) setOrgName(sy.schoolName)
+          if (sy?.logoUrl) setSchoolLogoUrl(sy.logoUrl)
+        }
       } finally {
         setLoading(false)
       }
     }
     fetchData()
-  }, [timetableId, teacherIds])
+  }, [timetableId, teacherIds, orgNameParam])
 
   // Wait for QR codes to render, then auto-print
   useEffect(() => {
@@ -271,7 +293,7 @@ function PrintContent() {
       ) : (
         <div className="card-grid">
           {teachers.map(t => (
-            <TeacherIdCard key={t.id} teacher={t} orgName={orgName} />
+            <TeacherIdCard key={t.id} teacher={t} orgName={orgName} schoolLogoUrl={schoolLogoUrl} />
           ))}
         </div>
       )}

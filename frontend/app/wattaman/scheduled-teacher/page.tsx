@@ -38,11 +38,11 @@ const COLORS = [
 
 // -- Card Preview (live) -----------------------------------------------------
 function CardPreview({
-  firstName, lastName, khmerName, short, color, orgName,
+  firstName, lastName, khmerName, short, color, orgName, schoolLogoUrl,
   subjects,
 }: {
   firstName: string; lastName: string; khmerName: string; short: string
-  color: string; orgName: string; subjects: string[]
+  color: string; orgName: string; schoolLogoUrl: string; subjects: string[]
 }) {
   const displayName = [firstName, lastName].filter(Boolean).join(' ') || 'Teacher Name'
   const displayShort = short || 'SH'
@@ -74,9 +74,14 @@ function CardPreview({
 
       {/* Center info */}
       <div style={{ flex: 1, padding: '4mm 3mm', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflow: 'hidden' }}>
-        {/* School name */}
-        <div style={{ fontSize: '5.5pt', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1mm', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {orgName}
+        {/* School header: logo + name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5mm', marginBottom: '1mm' }}>
+          {schoolLogoUrl && (
+            <img src={schoolLogoUrl} alt="School" style={{ width: '5.5mm', height: '5.5mm', objectFit: 'contain', flexShrink: 0 }} />
+          )}
+          <div style={{ fontSize: '5.5pt', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {orgName}
+          </div>
         </div>
 
         {/* Teacher name */}
@@ -133,10 +138,11 @@ interface EditForm {
 }
 
 function EditModal({
-  teacher, orgName, onClose, onSaved,
+  teacher, orgName, schoolLogoUrl, onClose, onSaved,
 }: {
   teacher: ScheduledTeacher
   orgName: string
+  schoolLogoUrl: string
   onClose: () => void
   onSaved: (updated: Partial<ScheduledTeacher>) => void
 }) {
@@ -227,6 +233,7 @@ function EditModal({
                 short={form.short}
                 color={form.color}
                 orgName={orgName}
+                schoolLogoUrl={schoolLogoUrl}
                 subjects={subjects}
               />
             </div>
@@ -365,6 +372,7 @@ function ManageTeachersContent() {
   const [message, setMessage] = useState('')
   const [msgType, setMsgType] = useState<'success' | 'error'>('success')
   const [orgName, setOrgName] = useState<string>('School')
+  const [schoolLogoUrl, setSchoolLogoUrl] = useState<string>('')
   const [teacherMenuOpen, setTeacherMenuOpen] = useState(false)
   const teacherMenuRef = useRef<HTMLDivElement>(null)
 
@@ -380,6 +388,14 @@ function ManageTeachersContent() {
   useEffect(() => {
     const saved = localStorage.getItem('wattaman-org-name')
     if (saved) setOrgName(saved)
+    // Fetch current study year for school name + logo
+    apiFetch('/api/study-years/current')
+      .then(r => r.ok ? r.json() : null)
+      .then(sy => {
+        if (sy?.schoolName && !localStorage.getItem('wattaman-org-name')) setOrgName(sy.schoolName)
+        if (sy?.logoUrl) setSchoolLogoUrl(sy.logoUrl)
+      })
+      .catch(() => {})
     fetchTeachers()
   }, [])
 
@@ -701,6 +717,7 @@ function ManageTeachersContent() {
           <EditModal
             teacher={editTeacher}
             orgName={orgName}
+            schoolLogoUrl={schoolLogoUrl}
             onClose={() => setEditTeacher(null)}
             onSaved={(patch) => applyEdit(editTeacher.id, patch)}
           />
