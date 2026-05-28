@@ -108,7 +108,7 @@ function TeacherIdCard({ teacher, orgName, schoolLogoUrl }: { teacher: PrintTeac
 
         {/* Teacher name */}
         <div>
-          <div style={{ fontSize: '10pt', fontWeight: 700, color: '#1e293b', lineHeight: 1.2, wordBreak: 'break-word', fontFamily: 'Inter, Arial, sans-serif' }}>
+          <div style={{ fontSize: '10pt', fontWeight: 700, color: '#1e293b', lineHeight: 1.2, wordBreak: 'break-word', fontFamily: '"Khmer", Inter, Arial, sans-serif' }}>
             {teacher.name}
           </div>
           {teacher.khmerName && (
@@ -258,7 +258,7 @@ function PrintContent() {
           body { margin: 0; }
           .no-print { display: none !important; }
         }
-        body { background: #f1f5f9; font-family: Inter, Arial, sans-serif; }
+        body { background: #f1f5f9; font-family: 'Khmer', Inter, Arial, sans-serif; }
         .card-grid {
           display: flex;
           flex-wrap: wrap;

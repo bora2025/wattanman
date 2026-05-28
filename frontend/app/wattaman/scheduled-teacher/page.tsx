@@ -86,7 +86,7 @@ function CardPreview({
 
         {/* Teacher name */}
         <div>
-          <div style={{ fontSize: '9pt', fontWeight: 700, color: '#1e293b', lineHeight: 1.2, wordBreak: 'break-word' }}>
+          <div style={{ fontSize: '9pt', fontWeight: 700, color: '#1e293b', lineHeight: 1.2, wordBreak: 'break-word', fontFamily: '"Khmer", Inter, Arial, sans-serif' }}>
             {displayName}
           </div>
           {khmerName && (
