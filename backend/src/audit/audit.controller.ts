@@ -190,6 +190,128 @@ export class AuditController {
     return data;
   }
 
+  /**
+   * Portal activity monitor — gives Admins a per-portal (TEACHER / STUDENT /
+   * PARENT / CLASS) overview of what's happening across the system using the
+   * existing audit log as the source of truth.
+   *
+   * Returns event counts, distinct actor counts, top actions/resources, a
+   * health badge, and the last N events for each portal.
+   */
+  @Get('portal-activity')
+  async portalActivity(@Query('window') window = '24h') {
+    const hours = window === '7d' ? 24 * 7 : window === '1h' ? 1 : 24;
+    const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+
+    // Each portal is defined by (a) the actor roles that own it and
+    // (b) the resources users in that portal typically act on. We OR them
+    // together so we capture both teacher-as-actor and a teacher-resource
+    // touched by an admin assist.
+    const portals: {
+      key: string; label: string; icon: string;
+      roles: string[]; resources: string[];
+    }[] = [
+      {
+        key: 'TEACHER', label: 'Teachers', icon: '📚',
+        roles: ['TEACHER'],
+        resources: ['ASSIGNMENTS', 'COURSES', 'EXAM', 'EXAMS', 'SCORING'],
+      },
+      {
+        key: 'STUDENT', label: 'Students', icon: '🎓',
+        roles: ['STUDENT'],
+        resources: ['ASSIGNMENTS', 'COURSES', 'STUDENTS'],
+      },
+      {
+        key: 'PARENT', label: 'Parents', icon: '👪',
+        roles: ['PARENT'],
+        resources: ['FEES', 'PARENT', 'PARENTS', 'NOTIFICATION-PREFERENCE'],
+      },
+      {
+        key: 'CLASS', label: 'Classes & Activities', icon: '🏫',
+        roles: [],
+        resources: ['CLASSES', 'ATTENDANCE', 'TIMETABLE', 'ANNOUNCEMENTS', 'HOLIDAYS'],
+      },
+    ];
+
+    const result = await Promise.all(
+      portals.map(async (p) => {
+        const where: any = { createdAt: { gte: since } };
+        const or: any[] = [];
+        if (p.roles.length) or.push({ actorRole: { in: p.roles } });
+        if (p.resources.length) or.push({ resource: { in: p.resources } });
+        if (or.length) where.OR = or;
+
+        const [eventCount, failureCount, distinctActors, byAction, byResource, recent] = await Promise.all([
+          this.prisma.auditLog.count({ where }),
+          this.prisma.auditLog.count({ where: { ...where, success: false } }),
+          this.prisma.auditLog.findMany({
+            where: { ...where, actorId: { not: null } },
+            select: { actorId: true },
+            distinct: ['actorId'],
+            take: 1000,
+          }),
+          this.prisma.auditLog.groupBy({
+            by: ['action'],
+            where,
+            _count: { action: true },
+            orderBy: { _count: { action: 'desc' } },
+            take: 5,
+          }),
+          this.prisma.auditLog.groupBy({
+            by: ['resource'],
+            where,
+            _count: { resource: true },
+            orderBy: { _count: { resource: 'desc' } },
+            take: 5,
+          }),
+          this.prisma.auditLog.findMany({
+            where,
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+            select: {
+              id: true, createdAt: true,
+              actorName: true, actorRole: true,
+              action: true, resource: true, resourceLabel: true, resourceId: true,
+              success: true, statusCode: true, errorMessage: true,
+            },
+          }),
+        ]);
+
+        // Status heuristic:
+        //   healthy : has activity and < 10% failures
+        //   warning : has activity but high failure rate
+        //   quiet   : no activity in the window
+        let status: 'healthy' | 'warning' | 'quiet' = 'quiet';
+        if (eventCount > 0) {
+          const failRate = failureCount / eventCount;
+          status = failRate >= 0.1 ? 'warning' : 'healthy';
+        }
+
+        const enrichedRecent = await this.enrichLabels(recent as any);
+
+        return {
+          key: p.key,
+          label: p.label,
+          icon: p.icon,
+          status,
+          eventCount,
+          failureCount,
+          actorCount: distinctActors.length,
+          byAction: byAction.map((b) => ({ action: b.action, count: b._count.action })),
+          byResource: byResource.map((b) => ({ resource: b.resource, count: b._count.resource })),
+          recent: enrichedRecent,
+        };
+      }),
+    );
+
+    return {
+      window,
+      windowHours: hours,
+      since: since.toISOString(),
+      portals: result,
+    };
+  }
+
   private buildWhere(f: {
     actorId?: string; action?: string; resource?: string; resourceId?: string;
     success?: string; from?: string; to?: string; q?: string;

@@ -10,7 +10,7 @@ import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { formatCambodiaTime } from '../../../lib/dateUtils'
 
-type Tab = 'inbox' | 'broadcast' | 'history'
+type Tab = 'inbox' | 'broadcast' | 'history' | 'activity'
 
 interface Message {
   id: string; content: string; createdAt: string; readAt: string | null
@@ -54,7 +54,7 @@ export default function AdminCommunicationPage() {
           <div className="page-header">
             <h1 className="text-2xl font-bold text-slate-800">Communication Hub</h1>
             <p className="text-sm text-slate-500 mt-1">
-              Direct messages, school-wide broadcasts, and audit log.
+              Direct messages, school-wide broadcasts, portal activity, and audit log.
             </p>
           </div>
           <div className="page-body">
@@ -62,6 +62,7 @@ export default function AdminCommunicationPage() {
               {([
                 ['inbox', 'Inbox'],
                 ['broadcast', 'New Broadcast'],
+                ['activity', 'Portal Activity'],
                 ['history', 'History'],
               ] as [Tab, string][]).map(([id, label]) => (
                 <button
@@ -80,6 +81,7 @@ export default function AdminCommunicationPage() {
 
             {tab === 'inbox' && <InboxTab />}
             {tab === 'broadcast' && <BroadcastTab />}
+            {tab === 'activity' && <PortalActivityTab />}
             {tab === 'history' && <HistoryTab />}
           </div>
         </div>
@@ -448,3 +450,207 @@ function HistoryTab() {
     </div>
   )
 }
+
+// ─── Portal Activity tab — monitor what each portal is doing ────────────────
+interface PortalRecent {
+  id: string
+  createdAt: string
+  actorName: string | null
+  actorRole: string | null
+  action: string
+  resource: string
+  resourceLabel: string | null
+  resourceId: string | null
+  success: boolean
+  statusCode: number | null
+  errorMessage: string | null
+}
+interface PortalSummary {
+  key: string
+  label: string
+  icon: string
+  status: 'healthy' | 'warning' | 'quiet'
+  eventCount: number
+  failureCount: number
+  actorCount: number
+  byAction: { action: string; count: number }[]
+  byResource: { resource: string; count: number }[]
+  recent: PortalRecent[]
+}
+interface PortalActivityResp {
+  window: string
+  windowHours: number
+  since: string
+  portals: PortalSummary[]
+}
+
+function PortalActivityTab() {
+  const [window, setWindow] = useState<'1h' | '24h' | '7d'>('24h')
+  const { data, isLoading, refetch, isFetching } = useQuery<PortalActivityResp>({
+    queryKey: ['admin-portal-activity', window],
+    queryFn: async () => {
+      const r = await apiFetch(`/api/audit/portal-activity?window=${window}`)
+      if (!r.ok) throw new Error('Failed to load portal activity')
+      return r.json()
+    },
+    refetchInterval: 30_000,
+  })
+
+  const statusBadge = (s: PortalSummary['status']) => {
+    if (s === 'healthy') return { label: '✅ Healthy', cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' }
+    if (s === 'warning') return { label: '⚠️ Warning', cls: 'bg-amber-100 text-amber-700 border-amber-200' }
+    return { label: '💤 Quiet', cls: 'bg-slate-100 text-slate-500 border-slate-200' }
+  }
+
+  const actionBadge = (a: string) => {
+    if (a === 'CREATE') return 'bg-emerald-50 text-emerald-700'
+    if (a === 'UPDATE') return 'bg-blue-50 text-blue-700'
+    if (a === 'DELETE') return 'bg-red-50 text-red-700'
+    if (a === 'LOGIN' || a === 'LOGIN_FAILED') return 'bg-violet-50 text-violet-700'
+    return 'bg-slate-50 text-slate-600'
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Controls */}
+      <div className="card p-4 flex flex-wrap items-center gap-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-800">Portal Activity Monitor</p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Live view of what teachers, students, parents, and class activities are doing across the platform.
+          </p>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
+            {(['1h', '24h', '7d'] as const).map(w => (
+              <button key={w} onClick={() => setWindow(w)}
+                className={`px-3 py-1.5 text-xs font-semibold transition ${
+                  window === w ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
+                }`}>
+                {w === '1h' ? 'Last hour' : w === '24h' ? 'Last 24h' : 'Last 7 days'}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => refetch()} disabled={isFetching}
+            className="text-xs text-indigo-600 font-medium hover:underline disabled:opacity-60">
+            {isFetching ? 'Refreshing…' : '↻ Refresh'}
+          </button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="card p-12 text-center text-slate-400 text-sm">Loading portal activity…</div>
+      ) : !data ? (
+        <div className="card p-12 text-center text-red-500 text-sm">Failed to load portal activity.</div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {data.portals.map(p => {
+            const badge = statusBadge(p.status)
+            return (
+              <div key={p.key} className="card p-5 space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                      {p.icon}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold text-slate-800">{p.label}</h3>
+                      <p className="text-xs text-slate-500">
+                        {p.actorCount} active user{p.actorCount === 1 ? '' : 's'}
+                        {' · '}
+                        {p.eventCount} event{p.eventCount === 1 ? '' : 's'}
+                        {p.failureCount > 0 && (
+                          <span className="text-red-600 ml-1">· {p.failureCount} failed</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${badge.cls}`}>
+                    {badge.label}
+                  </span>
+                </div>
+
+                {/* Top actions + resources */}
+                {(p.byAction.length > 0 || p.byResource.length > 0) && (
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <p className="font-semibold text-slate-500 uppercase text-[10px] mb-1.5">Top actions</p>
+                      <div className="space-y-1">
+                        {p.byAction.length === 0
+                          ? <p className="text-slate-400">—</p>
+                          : p.byAction.map(a => (
+                            <div key={a.action} className="flex items-center justify-between">
+                              <span className={`inline-block px-2 py-0.5 rounded font-semibold ${actionBadge(a.action)}`}>{a.action}</span>
+                              <span className="text-slate-600 font-mono">{a.count}</span>
+                            </div>
+                          ))
+                        }
+                      </div>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-500 uppercase text-[10px] mb-1.5">Top resources</p>
+                      <div className="space-y-1">
+                        {p.byResource.length === 0
+                          ? <p className="text-slate-400">—</p>
+                          : p.byResource.map(r => (
+                            <div key={r.resource} className="flex items-center justify-between">
+                              <span className="text-slate-700 truncate">{r.resource}</span>
+                              <span className="text-slate-600 font-mono">{r.count}</span>
+                            </div>
+                          ))
+                        }
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Recent events */}
+                <div>
+                  <p className="font-semibold text-slate-500 uppercase text-[10px] mb-1.5">Recent events</p>
+                  {p.recent.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic">No activity in this window.</p>
+                  ) : (
+                    <ul className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                      {p.recent.map(ev => (
+                        <li key={ev.id} className="flex items-start gap-2 text-xs">
+                          <span className={`mt-0.5 inline-block px-1.5 py-0.5 rounded font-semibold flex-shrink-0 ${actionBadge(ev.action)}`}>
+                            {ev.action}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-slate-700 truncate">
+                              <span className="font-medium">{ev.actorName ?? 'System'}</span>
+                              {ev.actorRole && <span className="text-slate-400"> · {ev.actorRole}</span>}
+                              {' → '}
+                              <span className="text-slate-600">{ev.resource}</span>
+                              {ev.resourceLabel && <span className="text-slate-500"> · {ev.resourceLabel}</span>}
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              {formatCambodiaTime(ev.createdAt)}
+                              {!ev.success && (
+                                <span className="ml-2 text-red-600 font-semibold">
+                                  ⚠ {ev.statusCode ?? ''} {ev.errorMessage ?? 'failed'}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end pt-1 border-t border-slate-100">
+                  <Link href={`/admin/audit?resource=${encodeURIComponent(p.byResource[0]?.resource ?? '')}`}
+                    className="text-xs text-indigo-600 font-medium hover:underline">
+                    View full audit log →
+                  </Link>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
