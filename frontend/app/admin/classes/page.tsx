@@ -1481,7 +1481,8 @@ function ManageClasses() {
                       } catch { return null; }
                     })()}
                     <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
-                      <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-primary btn-sm flex-1 text-center">Attendance</Link>
+                      <Link href={`/admin/classes/${cls.id}`} className="btn-primary btn-sm flex-1 text-center" title="Manage assignments, exams, courses">📚 Manage</Link>
+                      <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-outline btn-sm flex-1 text-center">Attendance</Link>
                       <button onClick={() => handleEdit(cls)} className="btn-outline btn-sm flex-1">Edit</button>
                       <button onClick={() => handleManageStudents(cls)} className="btn-success btn-sm flex-1">Students</button>
                       <button onClick={() => openAddToTT(cls)} title="Add to Timetable" className="btn-outline btn-sm px-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50">
@@ -1533,7 +1534,8 @@ function ManageClasses() {
                           <td className="px-4 py-2.5 text-right font-semibold text-slate-700">{count !== undefined ? count : '…'}</td>
                           <td className="px-4 py-2.5 text-right">
                             <div className="inline-flex gap-1">
-                              <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-primary btn-sm">Attendance</Link>
+                              <Link href={`/admin/classes/${cls.id}`} className="btn-primary btn-sm" title="Manage assignments, exams, courses">📚 Manage</Link>
+                              <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-outline btn-sm">Attendance</Link>
                               <button onClick={() => handleManageStudents(cls)} className="btn-success btn-sm">Students</button>
                               <button onClick={() => handleEdit(cls)} className="btn-outline btn-sm">Edit</button>
                               <button onClick={() => handleDelete(cls.id)} className="btn-danger btn-sm" title="Delete">
