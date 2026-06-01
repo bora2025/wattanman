@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
 import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
@@ -72,7 +72,6 @@ function statusColor(s: string) {
 
 function ClassDetailContent() {
   const params = useParams<{ id: string }>()
-  const router = useRouter()
   const classId = params?.id as string
   const [tab, setTab] = useState<Tab>('assignments')
   const [cls, setCls] = useState<ClassDetail | null>(null)
@@ -96,9 +95,13 @@ function ClassDetailContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <button onClick={() => router.push('/admin/classes')} className="text-xs text-indigo-600 hover:underline mb-2">
-            ← Back to all classes
-          </button>
+          <nav className="flex items-center gap-1 text-xs text-slate-500 mb-2" aria-label="Breadcrumb">
+            <Link href="/admin" className="hover:text-indigo-600 hover:underline">🏠 Dashboard</Link>
+            <span className="text-slate-300">/</span>
+            <Link href="/admin/classes" className="hover:text-indigo-600 hover:underline">Classes</Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-700 font-medium truncate max-w-[200px]">{cls?.name ?? '…'}</span>
+          </nav>
           {loadingClass ? (
             <p className="text-sm text-slate-400">Loading class…</p>
           ) : !cls ? (
@@ -302,8 +305,8 @@ function AssignmentsPanel({ classId }: { classId: string }) {
                     </select>
                   </td>
                   <td className="px-4 py-2 text-right">
-                    <Link href={`/teacher/assignments/${r.id}`}
-                      className="text-xs text-indigo-600 hover:underline mr-3">Open</Link>
+                    <Link href={`/teacher/assignments/${r.id}`} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-indigo-600 hover:underline mr-3">Open ↗</Link>
                     <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
                   </td>
                 </tr>
@@ -469,8 +472,8 @@ function ExamsPanel({ classId }: { classId: string }) {
                     </select>
                   </td>
                   <td className="px-4 py-2 text-right">
-                    <Link href={`/teacher/exams/${r.id}/attempts`}
-                      className="text-xs text-indigo-600 hover:underline mr-3">Open</Link>
+                    <Link href={`/teacher/exams/${r.id}/attempts`} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-indigo-600 hover:underline mr-3">Open ↗</Link>
                     <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
                   </td>
                 </tr>
@@ -614,8 +617,8 @@ function CoursesPanel({ classId }: { classId: string }) {
                     </select>
                   </td>
                   <td className="px-4 py-2 text-right">
-                    <Link href={`/teacher/courses/${r.id}`}
-                      className="text-xs text-indigo-600 hover:underline mr-3">Open</Link>
+                    <Link href={`/teacher/courses/${r.id}`} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-indigo-600 hover:underline mr-3">Open ↗</Link>
                     <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
                   </td>
                 </tr>
