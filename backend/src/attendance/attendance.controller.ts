@@ -204,7 +204,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER')
   @Patch('update')
   async updateAttendance(
     @Request() req,
@@ -228,7 +228,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER')
   @Patch('edit-permission-type')
   async editPermissionType(
     @Request() req,
@@ -245,7 +245,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER')
   @Patch('staff/update')
   async updateStaffAttendance(
     @Request() req,
@@ -269,7 +269,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER')
   @Post('create-record')
   async createAttendanceRecord(
     @Request() req,
@@ -299,7 +299,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER')
   @Post('staff/create-record')
   async createStaffAttendanceRecord(
     @Request() req,
@@ -327,7 +327,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER')
   @Patch('staff/edit-permission-type')
   async editStaffPermissionType(
     @Request() req,
@@ -343,7 +343,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER')
   @Delete('record')
   async deleteAttendanceRecord(
     @Body() body: { attendanceId: string },
@@ -352,7 +352,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER')
   @Delete('staff/record')
   async deleteStaffAttendanceRecord(
     @Body() body: { staffAttendanceId: string },

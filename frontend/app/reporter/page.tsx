@@ -43,6 +43,20 @@ function ReporterDashboardContent() {
       icon: '📚',
       accent: 'sky',
     },
+    {
+      title: 'Edit Staff Attendance',
+      desc: 'Manually add, update, or clear daily attendance records for staff members.',
+      href: '/admin/staff-attendance/edit',
+      icon: '✏️',
+      accent: 'amber',
+    },
+    {
+      title: 'Edit Student Attendance',
+      desc: 'Manually add, update, or clear per-session attendance records for students by class.',
+      href: '/admin/attendance/edit',
+      icon: '📝',
+      accent: 'rose',
+    },
   ]
 
   return (

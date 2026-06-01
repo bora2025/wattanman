@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import AuthGuard from '../../../../components/AuthGuard'
 import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
+import { reporterNav } from '../../../../lib/reporter-nav'
 import { apiFetch } from '../../../../lib/api'
 import { useLanguage } from '../../../../lib/i18n'
 import { todayCambodia } from '../../../../lib/dateUtils'
@@ -35,6 +37,14 @@ const permissionScopeLabel = (type: string) => {
 }
 
 export default function EditStaffAttendance() {
+  return (
+    <AuthGuard allowedRoles={['ADMIN', 'WATTAMAN_REPORTER']}>
+      <EditStaffAttendanceContent />
+    </AuthGuard>
+  )
+}
+
+function EditStaffAttendanceContent() {
   const { t } = useLanguage()
   const [selectedDate, setSelectedDate] = useState(() => todayCambodia())
   const [rows, setRows] = useState<StaffRow[]>([])
@@ -301,9 +311,16 @@ export default function EditStaffAttendance() {
     return 'bg-sky-100 text-sky-700'
   }
 
+  const isReporter = typeof window !== 'undefined' && localStorage.getItem('role') === 'WATTAMAN_REPORTER'
+
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar
+        title={isReporter ? 'Reporter' : 'Admin Panel'}
+        subtitle="Wattaman"
+        navItems={isReporter ? reporterNav : adminNav}
+        accentColor={isReporter ? 'teal' : 'indigo'}
+      />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
