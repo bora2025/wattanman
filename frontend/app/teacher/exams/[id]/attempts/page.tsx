@@ -75,7 +75,7 @@ export default function ExamGradebookPage() {
   const nonMcq = useMemo(() => exam?.questions.filter(q => q.type !== 'MCQ') ?? [], [exam])
 
   return (
-    <AuthGuard requiredRole="TEACHER">
+    <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
       <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
         <main className="flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full">

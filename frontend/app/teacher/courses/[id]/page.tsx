@@ -144,21 +144,21 @@ export default function CourseDetailPage() {
 
   if (isLoading) {
     return (
-      <AuthGuard requiredRole="TEACHER">
+      <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
         <div className="p-8 text-center text-slate-500">Loading course…</div>
       </AuthGuard>
     )
   }
   if (!course) {
     return (
-      <AuthGuard requiredRole="TEACHER">
+      <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
         <div className="p-8 text-center text-rose-600">Course not found.</div>
       </AuthGuard>
     )
   }
 
   return (
-    <AuthGuard requiredRole="TEACHER">
+    <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
       <div className="min-h-screen bg-slate-50">
         <div className="mx-auto max-w-7xl px-4 py-6">
           {/* Header */}
