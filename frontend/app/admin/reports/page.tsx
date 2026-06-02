@@ -13,6 +13,7 @@ interface GridRow {
   studentId: string
   studentNumber: string
   studentName: string
+  address?: string | null
   checkInMorning: string | null
   checkOutMorning: string | null
   checkInAfternoon: string | null
@@ -621,6 +622,7 @@ export default function AdminReports() {
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold hidden sm:table-cell">{t('common.day')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.id')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.studentName')}</th>
+                          <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold hidden sm:table-cell">{t('common.address')}</th>
                           {activeSessions.map(sd => {
                             const cfg = sessionConfigs.find(c => c.session === sd.session)
                             return (
@@ -642,6 +644,7 @@ export default function AdminReports() {
                             </td>
                             <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 font-mono text-[10px] sm:text-xs">{row.studentNumber}</td>
                             <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 font-medium text-xs sm:text-sm">{row.studentName}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 text-[10px] sm:text-xs hidden sm:table-cell">{row.address || '—'}</td>
                             {activeSessions.map(sd => (
                               <SessionCell key={sd.session} time={(row as any)[sd.field]} status={(row as any)[sd.statusField]} />
                             ))}

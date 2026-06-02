@@ -1096,6 +1096,7 @@ export class ReportsService {
         studentId: s.id,
         studentNumber: s.studentNumber || String(idx + 1).padStart(4, '0'),
         studentName: s.user.name,
+        address: s.address || null,
         checkInMorning: s1 && s1.status !== 'ABSENT' && !isDayOffStatus(s1.status) ? toCambodiaTimeShort(s1.checkInTime) : null,
         checkOutMorning: s2IsCheckOut
           ? (s2 && s2.status && !isDayOffStatus(s2.status) && s2.status !== 'ABSENT'
@@ -1351,6 +1352,7 @@ export class ReportsService {
         studentId: s.id,
         studentNumber: s.studentNumber || String(idx + 1).padStart(4, '0'),
         studentName: s.user.name,
+        address: s.address || null,
         present: halfDayTotals.present,
         late: halfDayTotals.late,
         absent: halfDayTotals.absent + noRecordAbsent,

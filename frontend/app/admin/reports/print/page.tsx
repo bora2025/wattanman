@@ -10,6 +10,7 @@ interface PrintStudent {
   studentId: string
   studentNumber: string
   studentName: string
+  address?: string | null
   present: number
   late: number
   absent: number
@@ -30,6 +31,7 @@ interface StudentDailyRow {
   studentId: string
   studentNumber: string
   studentName: string
+  address?: string | null
   checkInMorning: string | null
   checkOutMorning: string | null
   checkInAfternoon: string | null
@@ -425,6 +427,9 @@ function PrintReportContent() {
                   <th className="border border-slate-600 px-2 py-1.5 text-left font-semibold" rowSpan={2}>
                     {t('common.name')}
                   </th>
+                  <th className="border border-slate-600 px-2 py-1.5 text-left font-semibold" rowSpan={2}>
+                    {t('common.address')}
+                  </th>
                   {showMorning && (
                     <th className="border border-slate-600 px-2 py-1.5 text-center font-semibold" colSpan={2}>
                       Morning
@@ -449,6 +454,9 @@ function PrintReportContent() {
                 </th>
                 <th className="border border-slate-400 px-3 py-2 text-left font-semibold text-slate-700">
                   {t('common.name')}
+                </th>
+                <th className="border border-slate-400 px-3 py-2 text-left font-semibold text-slate-700">
+                  {t('common.address')}
                 </th>
                 <th className="border border-slate-400 px-2 py-2 text-center font-semibold text-emerald-700 w-16">
                   {t('reports.colPresent')}
@@ -478,6 +486,7 @@ function PrintReportContent() {
                     <tr key={row.studentId} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}${isDayOffRow ? ' opacity-60' : ''}`}>
                       <td className="border border-slate-300 px-2 py-1.5 text-center font-mono">{row.studentNumber}</td>
                       <td className="border border-slate-300 px-2 py-1.5 text-slate-800">{row.studentName}</td>
+                      <td className="border border-slate-300 px-2 py-1.5 text-slate-600">{row.address || ''}</td>
                       {showMorning && (
                         <td className="border border-slate-300 px-2 py-1.5 text-center">
                           {(isHoliday || isDayOffRow) ? <span className="text-slate-400">{'\u2014'}</span> : <TimeCell time={row.checkInMorning} status={row.session1Status} />}
@@ -512,6 +521,9 @@ function PrintReportContent() {
                     </td>
                     <td className="border border-slate-300 px-3 py-1.5 text-slate-800">
                       {student.studentName}
+                    </td>
+                    <td className="border border-slate-300 px-3 py-1.5 text-slate-600">
+                      {student.address || ''}
                     </td>
                     <td className="border border-slate-300 px-2 py-1.5 text-center font-semibold text-emerald-700">
                       {student.present}
