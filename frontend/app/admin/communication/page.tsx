@@ -517,7 +517,7 @@ function PortalActivityTab() {
         <div>
           <p className="text-sm font-semibold text-slate-800">Portal Activity Monitor</p>
           <p className="text-xs text-slate-500 mt-0.5">
-            Live view of what teachers, students, parents, and class activities are doing across the platform.
+            Live view of what teachers, students, and parents are doing across the platform.
           </p>
         </div>
         <div className="ml-auto flex items-center gap-2">

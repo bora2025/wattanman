@@ -226,11 +226,6 @@ export class AuditController {
         roles: ['PARENT'],
         resources: ['FEES', 'PARENT', 'PARENTS', 'NOTIFICATION-PREFERENCE'],
       },
-      {
-        key: 'CLASS', label: 'Classes & Activities', icon: '🏫',
-        roles: [],
-        resources: ['CLASSES', 'ATTENDANCE', 'TIMETABLE', 'ANNOUNCEMENTS', 'HOLIDAYS'],
-      },
     ];
 
     const result = await Promise.all(
