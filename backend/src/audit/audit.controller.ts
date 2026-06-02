@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards, Res, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Query, Body, UseGuards, Res, HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -482,5 +482,68 @@ export class AuditController {
       const lbl = labels.get(`${r.resource}:${r.resourceId}`);
       return lbl ? { ...r, resourceLabel: lbl } : r;
     });
+  }
+
+  // ── Audit Log Cleanup Schedules ──────────────────────────────────────────
+
+  private static readonly VALID_FREQUENCIES = ['HOURLY', 'DAILY', 'WEEKLY', 'MONTHLY'];
+
+  /** List all cleanup schedules. */
+  @Get('cleanup-schedules')
+  listCleanupSchedules() {
+    return this.prisma.auditCleanupSchedule.findMany({ orderBy: { createdAt: 'desc' } });
+  }
+
+  /** Create a new cleanup schedule. */
+  @Post('cleanup-schedules')
+  async createCleanupSchedule(
+    @Body() body: { label?: string; frequency: string; retainDays: number; enabled?: boolean },
+  ) {
+    const freq = (body.frequency ?? '').toUpperCase();
+    if (!AuditController.VALID_FREQUENCIES.includes(freq)) {
+      throw new BadRequestException(`frequency must be one of: ${AuditController.VALID_FREQUENCIES.join(', ')}`);
+    }
+    const retain = Number(body.retainDays);
+    if (!retain || retain < 1) throw new BadRequestException('retainDays must be a positive integer');
+    return this.prisma.auditCleanupSchedule.create({
+      data: {
+        label: body.label?.trim() || `${freq} – keep ${retain} days`,
+        frequency: freq,
+        retainDays: retain,
+        enabled: body.enabled !== false,
+      },
+    });
+  }
+
+  /** Toggle enabled/disabled or update a schedule. */
+  @Post('cleanup-schedules/:id/toggle')
+  async toggleCleanupSchedule(@Param('id') id: string) {
+    const existing = await this.prisma.auditCleanupSchedule.findUnique({ where: { id } });
+    if (!existing) throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+    return this.prisma.auditCleanupSchedule.update({
+      where: { id },
+      data: { enabled: !existing.enabled },
+    });
+  }
+
+  /** Delete a cleanup schedule. */
+  @Delete('cleanup-schedules/:id')
+  async deleteCleanupSchedule(@Param('id') id: string) {
+    await this.prisma.auditCleanupSchedule.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  /** Manually trigger a cleanup run for a specific schedule now. */
+  @Post('cleanup-schedules/:id/run-now')
+  async runCleanupNow(@Param('id') id: string) {
+    const schedule = await this.prisma.auditCleanupSchedule.findUnique({ where: { id } });
+    if (!schedule) throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+    const cutoff = new Date(Date.now() - schedule.retainDays * 24 * 60 * 60 * 1000);
+    const result = await this.prisma.auditLog.deleteMany({ where: { createdAt: { lt: cutoff } } });
+    await this.prisma.auditCleanupSchedule.update({
+      where: { id },
+      data: { lastRunAt: new Date(), lastDeletedCount: result.count },
+    });
+    return { deleted: result.count, cutoff };
   }
 }

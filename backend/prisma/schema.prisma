@@ -339,6 +339,33 @@ model AuditLog {
   @@index([action, createdAt])
 }
 
+/// Stores admin-configured schedules for automatic audit log cleanup.
+model AuditCleanupSchedule {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Human-readable label, e.g. "Daily – keep 90 days"
+  label     String
+
+  /// How often to run: HOURLY | DAILY | WEEKLY | MONTHLY
+  frequency String
+
+  /// Number of days of logs to retain (older entries are deleted)
+  retainDays Int
+
+  /// Whether this schedule is active
+  enabled   Boolean  @default(true)
+
+  /// ISO timestamp of the last successful run (null = never ran)
+  lastRunAt DateTime?
+
+  /// Number of rows deleted in the last run
+  lastDeletedCount Int @default(0)
+
+  @@index([enabled])
+}
+
 model CardTemplate {
   id        String   @id @default(cuid())
   name      String

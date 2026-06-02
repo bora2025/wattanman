@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 
 export type AuditAction =
@@ -119,5 +120,57 @@ export class AuditService {
     }
     if (Object.keys(b).length === 0 && Object.keys(a).length === 0) return undefined;
     return { before: b, after: a };
+  }
+
+  // ── Scheduled cleanup ──────────────────────────────────────────────────
+
+  /**
+   * Runs every hour. Checks all enabled cleanup schedules and deletes
+   * audit logs older than the configured retainDays for those whose
+   * frequency period has elapsed since their last run.
+   */
+  @Cron('0 * * * *') // top of every hour
+  async runScheduledCleanup(): Promise<void> {
+    let schedules: any[];
+    try {
+      schedules = await this.prisma.auditCleanupSchedule.findMany({ where: { enabled: true } });
+    } catch (err: any) {
+      this.logger.warn(`Cleanup scheduler: failed to load schedules – ${err?.message}`);
+      return;
+    }
+
+    for (const s of schedules) {
+      if (!this.isDue(s)) continue;
+      try {
+        const cutoff = new Date(Date.now() - s.retainDays * 24 * 60 * 60 * 1000);
+        const result = await this.prisma.auditLog.deleteMany({ where: { createdAt: { lt: cutoff } } });
+        await this.prisma.auditCleanupSchedule.update({
+          where: { id: s.id },
+          data: { lastRunAt: new Date(), lastDeletedCount: result.count },
+        });
+        this.logger.log(`Cleanup schedule "${s.label}": deleted ${result.count} rows older than ${s.retainDays} days`);
+      } catch (err: any) {
+        this.logger.warn(`Cleanup schedule "${s.label}" failed: ${err?.message}`);
+      }
+    }
+  }
+
+  /**
+   * Returns true if the schedule is due to run based on its frequency
+   * and the last time it ran (null = never ran → always due).
+   */
+  private isDue(s: { frequency: string; lastRunAt: Date | null }): boolean {
+    if (!s.lastRunAt) return true;
+    const now = Date.now();
+    const last = s.lastRunAt.getTime();
+    const elapsed = now - last;
+    const HOUR = 60 * 60 * 1000;
+    switch (s.frequency) {
+      case 'HOURLY':  return elapsed >= HOUR;
+      case 'DAILY':   return elapsed >= 24 * HOUR;
+      case 'WEEKLY':  return elapsed >= 7 * 24 * HOUR;
+      case 'MONTHLY': return elapsed >= 30 * 24 * HOUR;
+      default:        return false;
+    }
   }
 }

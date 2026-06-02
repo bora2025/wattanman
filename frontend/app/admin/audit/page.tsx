@@ -5,6 +5,7 @@ import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
+import { formatCambodiaTime } from '../../../lib/dateUtils'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -73,6 +74,7 @@ function relativeTime(iso: string): string {
 }
 
 export default function AuditLogsPage() {
+  const [activeTab, setActiveTab] = useState<'logs' | 'cleanup'>('logs')
   const [page, setPage] = useState<Page<AuditLog>>({ items: [], total: 0, page: 1, pageSize: 50, pages: 0 })
   const [facets, setFacets] = useState<Facets>({ actions: [], resources: [], actors: [] })
   const [stats, setStats] = useState<Stats | null>(null)
@@ -170,14 +172,33 @@ export default function AuditLogsPage() {
               <h1 className="text-2xl font-bold text-slate-800">Audit Logs</h1>
               <p className="text-sm text-slate-500 mt-1">Append-only record of every admin action across the system.</p>
             </div>
-            <div className="flex gap-2">
-              <button onClick={fetchLogs} className="btn-outline btn-sm" disabled={loading}>
-                {loading ? '⏳' : '🔄'} Refresh
-              </button>
-              <button onClick={exportCsv} className="btn-primary btn-sm">📥 Export CSV</button>
-            </div>
+            {activeTab === 'logs' && (
+              <div className="flex gap-2">
+                <button onClick={fetchLogs} className="btn-outline btn-sm" disabled={loading}>
+                  {loading ? '⏳' : '🔄'} Refresh
+                </button>
+                <button onClick={exportCsv} className="btn-primary btn-sm">📥 Export CSV</button>
+              </div>
+            )}
           </div>
 
+          {/* Tab bar */}
+          <div className="flex gap-1 border-b border-slate-200 mt-2 -mb-2">
+            {([['logs', '📋 Logs'], ['cleanup', '🗑 Cleanup Schedules']] as const).map(([id, label]) => (
+              <button key={id} onClick={() => setActiveTab(id)}
+                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
+                  activeTab === id ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'
+                }`}>{label}</button>
+            ))}
+          </div>
+
+          {activeTab === 'cleanup' && (
+            <div className="page-body">
+              <CleanupSchedulePanel />
+            </div>
+          )}
+
+          {activeTab === 'logs' && (
           <div className="page-body space-y-6">
             {stats && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -353,6 +374,7 @@ export default function AuditLogsPage() {
               </div>
             </div>
           </div>
+          )} {/* end logs tab */}
         </div>
       </div>
     </AuthGuard>
@@ -390,6 +412,204 @@ function KV({ k, v, truncate }: { k: string; v: any; truncate?: boolean }) {
     <div className="flex gap-2">
       <span className="text-slate-500 min-w-[80px]">{k}:</span>
       <span className={`text-slate-800 font-mono ${truncate ? 'truncate max-w-md' : ''}`}>{String(v)}</span>
+    </div>
+  )
+}
+
+// ─── Cleanup Schedule Panel ───────────────────────────────────────────────
+
+interface CleanupSchedule {
+  id: string
+  label: string
+  frequency: string
+  retainDays: number
+  enabled: boolean
+  lastRunAt: string | null
+  lastDeletedCount: number
+  createdAt: string
+}
+
+const FREQUENCIES = ['HOURLY', 'DAILY', 'WEEKLY', 'MONTHLY']
+const FREQ_LABELS: Record<string, string> = {
+  HOURLY: 'Every hour',
+  DAILY: 'Daily',
+  WEEKLY: 'Weekly',
+  MONTHLY: 'Monthly (≈30 days)',
+}
+
+function CleanupSchedulePanel() {
+  const [schedules, setSchedules] = useState<CleanupSchedule[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [runningId, setRunningId] = useState<string | null>(null)
+  const [form, setForm] = useState({ label: '', frequency: 'DAILY', retainDays: 90 })
+
+  const load = useCallback(async () => {
+    setLoading(true); setError('')
+    try {
+      const r = await apiFetch('/api/audit/cleanup-schedules')
+      if (!r.ok) throw new Error()
+      setSchedules(await r.json())
+    } catch { setError('Failed to load cleanup schedules.') }
+    finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault(); setSaving(true); setError('')
+    try {
+      const r = await apiFetch('/api/audit/cleanup-schedules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, retainDays: Number(form.retainDays) }),
+      })
+      if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.message || 'Failed') }
+      setForm({ label: '', frequency: 'DAILY', retainDays: 90 })
+      setCreating(false)
+      await load()
+    } catch (err: any) { setError(err.message || 'Failed to create schedule.') }
+    finally { setSaving(false) }
+  }
+
+  const handleToggle = async (s: CleanupSchedule) => {
+    try {
+      const r = await apiFetch(`/api/audit/cleanup-schedules/${s.id}/toggle`, { method: 'POST' })
+      if (!r.ok) throw new Error()
+      await load()
+    } catch { setError('Failed to toggle schedule.') }
+  }
+
+  const handleDelete = async (s: CleanupSchedule) => {
+    if (!confirm(`Delete schedule "${s.label}"?`)) return
+    try {
+      const r = await apiFetch(`/api/audit/cleanup-schedules/${s.id}`, { method: 'DELETE' })
+      if (!r.ok) throw new Error()
+      await load()
+    } catch { setError('Failed to delete schedule.') }
+  }
+
+  const handleRunNow = async (s: CleanupSchedule) => {
+    if (!confirm(`Run cleanup now for "${s.label}"?\nThis will delete all audit logs older than ${s.retainDays} day(s).`)) return
+    setRunningId(s.id); setError('')
+    try {
+      const r = await apiFetch(`/api/audit/cleanup-schedules/${s.id}/run-now`, { method: 'POST' })
+      if (!r.ok) throw new Error()
+      const result = await r.json()
+      alert(`Done. Deleted ${result.deleted} log entries older than ${s.retainDays} day(s).`)
+      await load()
+    } catch { setError('Cleanup run failed.') }
+    finally { setRunningId(null) }
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="card p-4">
+        <p className="text-sm text-slate-700 font-semibold mb-1">Automatic Audit Log Cleanup</p>
+        <p className="text-xs text-slate-500">
+          Configure schedules to automatically delete audit logs older than a chosen number of days.
+          The scheduler checks every hour and runs any schedule whose interval has elapsed.
+          You can also trigger a schedule immediately with <strong>Run Now</strong>.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-slate-700">
+          {schedules.length} schedule{schedules.length === 1 ? '' : 's'} configured
+        </p>
+        <button onClick={() => setCreating(s => !s)} className="btn-primary btn-sm">
+          {creating ? '× Cancel' : '+ New Schedule'}
+        </button>
+      </div>
+
+      {creating && (
+        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-indigo-50/30 border-indigo-200">
+          <h3 className="text-sm font-semibold text-slate-800">New cleanup schedule</h3>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Label (optional)</label>
+              <input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
+                placeholder="e.g. Daily – keep 90 days"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Frequency *</label>
+              <select value={form.frequency} onChange={e => setForm(f => ({ ...f, frequency: e.target.value }))}
+                className="w-full border rounded-lg px-3 py-2 text-sm">
+                {FREQUENCIES.map(f => <option key={f} value={f}>{FREQ_LABELS[f]}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Retain last N days *</label>
+              <input type="number" min={1} value={form.retainDays}
+                onChange={e => setForm(f => ({ ...f, retainDays: Number(e.target.value) }))}
+                className="w-full border rounded-lg px-3 py-2 text-sm" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button type="submit" disabled={saving} className="btn-primary btn-sm disabled:opacity-60">
+              {saving ? 'Saving…' : 'Create'}
+            </button>
+            <button type="button" onClick={() => setCreating(false)} className="btn-outline btn-sm">Cancel</button>
+          </div>
+        </form>
+      )}
+
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-sm">{error}</div>}
+
+      {loading ? (
+        <div className="card p-8 text-center text-slate-400 text-sm">Loading…</div>
+      ) : schedules.length === 0 ? (
+        <div className="card p-8 text-center text-slate-400 text-sm">No cleanup schedules yet. Create one above.</div>
+      ) : (
+        <div className="card overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-4 py-2 text-left">Label</th>
+                <th className="px-4 py-2 text-left">Frequency</th>
+                <th className="px-4 py-2 text-left">Retain</th>
+                <th className="px-4 py-2 text-left">Last run</th>
+                <th className="px-4 py-2 text-left">Deleted</th>
+                <th className="px-4 py-2 text-left">Status</th>
+                <th className="px-4 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {schedules.map(s => (
+                <tr key={s.id} className="border-t border-slate-100">
+                  <td className="px-4 py-2 font-medium text-slate-800">{s.label}</td>
+                  <td className="px-4 py-2 text-slate-600">{FREQ_LABELS[s.frequency] ?? s.frequency}</td>
+                  <td className="px-4 py-2 text-slate-600">{s.retainDays} days</td>
+                  <td className="px-4 py-2 text-xs text-slate-500">
+                    {s.lastRunAt ? formatCambodiaTime(s.lastRunAt) : '—'}
+                  </td>
+                  <td className="px-4 py-2 text-slate-600">{s.lastDeletedCount.toLocaleString()}</td>
+                  <td className="px-4 py-2">
+                    <button onClick={() => handleToggle(s)}
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border transition ${
+                        s.enabled
+                          ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200'
+                          : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                      }`}>
+                      {s.enabled ? '✅ Active' : '⏸ Paused'}
+                    </button>
+                  </td>
+                  <td className="px-4 py-2 text-right space-x-2 whitespace-nowrap">
+                    <button onClick={() => handleRunNow(s)} disabled={runningId === s.id}
+                      className="text-xs text-indigo-600 hover:underline disabled:opacity-50">
+                      {runningId === s.id ? 'Running…' : 'Run Now'}
+                    </button>
+                    <button onClick={() => handleDelete(s)} className="text-xs text-red-600 hover:underline">Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
