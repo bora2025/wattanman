@@ -1184,7 +1184,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         <TopBtn icon={<Icons.Preview />} label={isPreviewMode ? 'Exit Preview' : 'Preview'} title="Toggle preview mode" onClick={() => { setIsPreviewMode((v) => !v); setSelectedId(null); }} active={isPreviewMode} variant={isPreviewMode ? 'violet' : 'default'} />
         <Divider />
 
-        {/* Spacer */
+        {/* Spacer */}
         <div className="flex-1" />
 
         {/* Right-side utility */}
