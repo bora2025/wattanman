@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import AuthGuard from '../../../../components/AuthGuard'
 import Sidebar from '../../../../components/Sidebar'
-import { adminNav } from '../../../../lib/admin-nav'
+import { adminNav, classAdminNav } from '../../../../lib/admin-nav'
 import { reporterNav } from '../../../../lib/reporter-nav'
 import { apiFetch } from '../../../../lib/api'
 import { useLanguage } from '../../../../lib/i18n'
@@ -332,13 +332,14 @@ function EditAttendanceContent() {
   }, { present: 0, late: 0, permission: 0, absent: 0 })
 
   const isReporter = typeof window !== 'undefined' && localStorage.getItem('role') === 'WATTAMAN_REPORTER'
+  const isClassAdmin = typeof window !== 'undefined' && localStorage.getItem('role') === 'CLASS_ADMIN'
 
   return (
     <div className="page-shell">
       <Sidebar
         title={isReporter ? 'Reporter' : 'Admin Panel'}
         subtitle="Wattaman"
-        navItems={isReporter ? reporterNav : adminNav}
+        navItems={isReporter ? reporterNav : isClassAdmin ? classAdminNav : adminNav}
         accentColor={isReporter ? 'teal' : 'indigo'}
       />
       <div className="page-content">

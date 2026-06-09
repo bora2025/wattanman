@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
-import { adminNav } from '../../../lib/admin-nav'
+import { adminNav, classAdminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
 
@@ -750,7 +750,7 @@ export default function ScoringPage() {
   return (
     <AuthGuard allowedRoles={['ADMIN', 'TEACHER', 'CLASS_ADMIN']}>
       <div className="flex min-h-screen lg:h-screen bg-gray-50 lg:overflow-hidden pt-14 lg:pt-0 pb-[72px] lg:pb-0" onClick={() => { setShowAddMenu(false); setShowPrintMenu(false) }}>
-        <Sidebar title="Wattaman" subtitle="Admin" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Wattaman" subtitle="Admin" navItems={typeof window !== 'undefined' && localStorage.getItem('role') === 'CLASS_ADMIN' ? classAdminNav : adminNav} accentColor="indigo" />
 
         {toast && (
           <div className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white text-sm shadow-lg ${toast.ok ? 'bg-green-600' : 'bg-red-600'}`}>

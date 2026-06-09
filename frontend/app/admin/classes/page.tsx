@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Sidebar from '../../../components/Sidebar';
-import { adminNav } from '../../../lib/admin-nav';
+import { adminNav, classAdminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../lib/i18n';
 
@@ -738,9 +738,11 @@ function ManageClasses() {
     }
   };
 
+  const isClassAdmin = typeof window !== 'undefined' && localStorage.getItem('role') === 'CLASS_ADMIN'
+
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={isClassAdmin ? classAdminNav : adminNav} accentColor="indigo" />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         {/* Header */}
