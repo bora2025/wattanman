@@ -57,6 +57,7 @@ function unitToPx(val: number, unit: Unit, dpi: DPI): number {
 const PURPOSE_OPTIONS: { id: CardType; icon: string; label: string; description: string; color: string }[] = [
   { id: 'student', icon: '🎓', label: 'Student ID Card', description: 'Photo card with student data', color: 'indigo' },
   { id: 'staff', icon: '👨‍🏫', label: 'Staff ID Card', description: 'Photo card with staff data', color: 'emerald' },
+  { id: 'teacher-part-time', icon: '⏰', label: 'TPT ID Card', description: 'Part-time teacher from timetable', color: 'orange' },
   { id: 'certificate-student', icon: '📜', label: 'Student Certificate', description: 'Certificate using student records', color: 'amber' },
   { id: 'certificate-staff', icon: '🏅', label: 'Staff Certificate', description: 'Certificate using staff records', color: 'rose' },
   { id: 'general', icon: '✏️', label: 'General / Custom', description: 'Free design, no linked data', color: 'slate' },

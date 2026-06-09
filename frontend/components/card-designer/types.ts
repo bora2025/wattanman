@@ -117,7 +117,7 @@ export interface QrPlaceholder {
 }
 
 export type CardSize = 'credit' | 'id-1' | 'a7' | 'custom';
-export type CardType = 'student' | 'staff' | 'certificate-student' | 'certificate-staff' | 'general';
+export type CardType = 'student' | 'staff' | 'certificate-student' | 'certificate-staff' | 'general' | 'teacher-part-time';
 
 // Placeholder fields available for each card type (from the App DB)
 export const CARD_TYPE_FIELDS: Record<CardType, { key: string; label: string; example: string }[]> = {
@@ -162,6 +162,15 @@ export const CARD_TYPE_FIELDS: Record<CardType, { key: string; label: string; ex
     { key: '{{email}}', label: 'Email', example: 'dara@school.edu' },
     { key: '{{certificateDate}}', label: 'Issue Date', example: '13/05/2026' },
     { key: '{{schoolName}}', label: 'School Name', example: 'Wattaman School' },
+  ],
+  'teacher-part-time': [
+    { key: '{{name}}', label: 'Full Name', example: 'Dara Sothea' },
+    { key: '{{khmerName}}', label: 'Khmer Name', example: 'ដារ៉ា សុទ្ធា' },
+    { key: '{{short}}', label: 'Short Code', example: 'DRS' },
+    { key: '{{timetableName}}', label: 'Timetable', example: 'Main 2026' },
+    { key: '{{subjects}}', label: 'Subjects', example: 'Math, Science' },
+    { key: '{{sex}}', label: 'Gender', example: 'Male' },
+    { key: '{{qrCode}}', label: 'QR Code', example: 'TPT-0001' },
   ],
   general: [],
 };

@@ -98,6 +98,7 @@ async function loadTemplateDesignCached(tpl: SavedTemplate): Promise<CardDesign 
 const TEMPLATES: Partial<Record<CardType, CardDesign>> = {
   student: STUDENT_TEMPLATE,
   staff: STAFF_TEMPLATE,
+  'teacher-part-time': STAFF_TEMPLATE,
   'certificate-student': BLANK_CERTIFICATE_STUDENT,
   'certificate-staff': BLANK_CERTIFICATE_STAFF,
 };
@@ -955,6 +956,12 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       '{{employeeId}}': subject.id,
       '{{studentNumber}}': subject.id,
       '{{qrCode}}': subject.id,
+      // TPT fields
+      '{{khmerName}}': '',
+      '{{short}}': subject.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 3),
+      '{{timetableName}}': subject.subtitle,
+      '{{subjects}}': '',
+      '{{sex}}': '',
     });
 
     const fetchSubject = async (): Promise<{ name: string; id: string; subtitle: string; phone?: string; email?: string; photo?: string | null } | null> => {
@@ -980,6 +987,20 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
             }
           }
           return null;
+        }
+        // Part-time teacher (timetable teacher)
+        if (design.cardType === 'teacher-part-time') {
+          const res = await apiFetch('/api/timetable/scheduled-teachers/all');
+          const all = res.ok ? await res.json() : [];
+          const tpt = all[0];
+          if (!tpt) return null;
+          const subjects = (tpt.lessons ?? []).map((l: { subjectName: string }) => l.subjectName).filter(Boolean).join(', ');
+          return {
+            name: tpt.name,
+            id: tpt.qrCode || tpt.id,
+            subtitle: tpt.timetableName || 'Part-Time Teacher',
+            photo: null,
+          };
         }
         // Staff
         const res = await apiFetch('/api/auth/users');
@@ -1050,11 +1071,13 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   const lockedType: CardType | null = initialCardType ?? null;
   const lockedTypeLabel = lockedType === 'student' ? 'Student ID Card'
     : lockedType === 'staff' ? 'Staff ID Card'
+    : lockedType === 'teacher-part-time' ? 'TPT ID Card'
     : lockedType === 'certificate-student' ? 'Student Certificate'
     : lockedType === 'certificate-staff' ? 'Staff Certificate'
     : null;
   const lockedTypeIcon = lockedType === 'student' ? '🎓'
     : lockedType === 'staff' ? '👨‍🏫'
+    : lockedType === 'teacher-part-time' ? '⏰'
     : lockedType === 'certificate-student' ? '📜'
     : lockedType === 'certificate-staff' ? '🏅'
     : null;
@@ -1068,6 +1091,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           savedTemplates={startTemplates}
           onNewStudent={() => router.push('/admin/card-designer/student')}
           onNewStaff={() => router.push('/admin/card-designer/staff')}
+          onNewTPT={() => router.push('/admin/card-designer/teacher-part-time')}
           onNewStudentCert={() => handleCardTypeChange('certificate-student')}
           onNewStaffCert={() => handleCardTypeChange('certificate-staff')}
           onOpen={(d) => handleApplyTemplate(d)}
@@ -1770,6 +1794,7 @@ const BUILTIN_START_ITEMS: { key: string; design: CardDesign; label: string; emo
   { key: '__builtin_blank', design: BLANK_TEMPLATE, label: 'Blank Card', emoji: '📄', type: 'student' },
   { key: '__builtin_student', design: STUDENT_TEMPLATE, label: 'Student ID', emoji: '🎓', type: 'student' },
   { key: '__builtin_staff', design: STAFF_TEMPLATE, label: 'Staff ID', emoji: '👨‍🏫', type: 'staff' },
+  { key: '__builtin_tpt', design: STAFF_TEMPLATE, label: 'TPT ID Card', emoji: '⏰', type: 'teacher-part-time' },
   { key: '__preset_st1', design: STUDENT_CLASSIC_BLUE, label: 'Classic Blue', emoji: '🔵', type: 'student' },
   { key: '__preset_st2', design: STUDENT_DARK_NAVY, label: 'Dark Navy', emoji: '🌌', type: 'student' },
   { key: '__preset_st3', design: STUDENT_SKY_WAVE, label: 'Sky Wave', emoji: '🌊', type: 'student' },
@@ -1789,6 +1814,7 @@ interface StartScreenProps {
   savedTemplates: SavedTemplate[];
   onNewStudent: () => void;
   onNewStaff: () => void;
+  onNewTPT: () => void;
   onNewStudentCert: () => void;
   onNewStaffCert: () => void;
   onOpen: (design: CardDesign) => void;
@@ -1796,7 +1822,7 @@ interface StartScreenProps {
   onOpenTemplate: (tpl: SavedTemplate) => void;
 }
 
-function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNewStudentCert, onNewStaffCert, onOpen, onOpenTemplate }: StartScreenProps) {
+function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNewTPT, onNewStudentCert, onNewStaffCert, onOpen, onOpenTemplate }: StartScreenProps) {
   const allLoaded = BUILTIN_START_ITEMS.every((i) => previews[i.key]);
   return (
     <div className="flex h-full bg-[#1a1b22] text-white overflow-hidden select-none">
@@ -1838,6 +1864,16 @@ function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNew
               <div>
                 <div className="text-[12px] font-semibold text-white group-hover:text-emerald-200 transition-colors">Staff ID Card</div>
                 <div className="text-[10px] text-slate-500 mt-0.5">Photo card with staff data</div>
+              </div>
+            </button>
+            <button
+              onClick={onNewTPT}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-orange-600/25 border border-white/[0.06] hover:border-orange-500/50 transition-all text-left group"
+            >
+              <span className="text-xl leading-none shrink-0">⏰</span>
+              <div>
+                <div className="text-[12px] font-semibold text-white group-hover:text-orange-200 transition-colors">TPT ID Card</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">Part-time teacher from timetable</div>
               </div>
             </button>
             {/* Certificate sub-section */}
@@ -1923,7 +1959,7 @@ function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNew
         {/* ID Card templates */}
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">🪪 ID Card Templates</h3>
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mb-6">
-          {BUILTIN_START_ITEMS.filter((i) => i.type === 'student' || i.type === 'staff').map(({ key, design, label, emoji }) => (
+          {BUILTIN_START_ITEMS.filter((i) => i.type === 'student' || i.type === 'staff' || i.type === 'teacher-part-time').map(({ key, design, label, emoji }) => (
             <button key={key} onClick={() => onOpen(design)}
               className="group rounded-xl overflow-hidden border border-white/[0.07] hover:border-indigo-400/60 bg-[#13141a] hover:bg-[#1e2035] transition-all text-left shadow-sm hover:shadow-indigo-900/30 hover:shadow-lg"
             >
