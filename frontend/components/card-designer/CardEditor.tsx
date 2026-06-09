@@ -1184,16 +1184,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         <TopBtn icon={<Icons.Preview />} label={isPreviewMode ? 'Exit Preview' : 'Preview'} title="Toggle preview mode" onClick={() => { setIsPreviewMode((v) => !v); setSelectedId(null); }} active={isPreviewMode} variant={isPreviewMode ? 'violet' : 'default'} />
         <Divider />
 
-        {/* Status indicators */}
-        <div className="flex items-center gap-1.5 px-1 shrink-0 min-w-[72px]">
-          {autoSaveStatus === 'saving' && <span className="flex items-center gap-1 text-[10px] text-[#777]"><Icons.Spinner />Saving…</span>}
-          {autoSaveStatus === 'saved' && <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Saved</span>}
-          {syncStatus === 'syncing' && <span className="flex items-center gap-1 text-[10px] text-indigo-400"><Icons.Sync />Syncing</span>}
-          {syncStatus === 'synced' && <span className="flex items-center gap-1 text-[10px] text-emerald-400"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Synced</span>}
-          {syncStatus === 'error' && <span className="flex items-center gap-1 text-[10px] text-red-400"><span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" /><button onClick={() => syncToServer(design)} className="underline">Retry</button></span>}
-        </div>
-
-        {/* Spacer */}
+        {/* Spacer */
         <div className="flex-1" />
 
         {/* Right-side utility */}
@@ -1522,6 +1513,13 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
             <button onClick={() => setZoom((z) => Math.min(200, z + 10))} title="Zoom In" className="w-6 h-6 flex items-center justify-center rounded text-[#777] hover:bg-[#333] hover:text-white text-sm font-bold transition-colors">+</button>
             <button onClick={() => setZoom(100)} className="text-xs text-[#666] hover:text-white font-mono min-w-[3rem] transition-colors" title="Reset Zoom">{zoom}%</button>
             <div className="flex-1" />
+            {/* Save / sync status */}
+            {autoSaveStatus === 'saving' && <span className="flex items-center gap-1 text-[10px] text-[#777]"><Icons.Spinner />Saving…</span>}
+            {autoSaveStatus === 'saved' && <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Saved</span>}
+            {syncStatus === 'syncing' && <span className="flex items-center gap-1 text-[10px] text-indigo-400"><Icons.Sync />Syncing</span>}
+            {syncStatus === 'synced' && <span className="flex items-center gap-1 text-[10px] text-emerald-400"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Synced</span>}
+            {syncStatus === 'error' && <span className="flex items-center gap-1 text-[10px] text-red-400"><span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" /><button onClick={() => syncToServer(design)} className="underline">Retry</button></span>}
+            {(autoSaveStatus !== 'idle' || syncStatus !== 'idle') && <span className="text-[#444]">·</span>}
             <span className="text-[10px] text-[#555] hidden md:inline tracking-wide">{design.width}×{design.height}px · {design.cardType}</span>
             {showGrid && <span className="text-[10px] text-indigo-400">Grid on</span>}
           </div>
