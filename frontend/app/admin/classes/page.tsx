@@ -402,7 +402,8 @@ function ManageClasses() {
 
   const fetchTeachers = async () => {
     try {
-      const res = await apiFetch('/api/auth/users?role=teacher');
+      // Fetch both TEACHER and CLASS_ADMIN so admins can assign either role to a class
+      const res = await apiFetch('/api/auth/users?roles=TEACHER,CLASS_ADMIN');
       if (res.ok) setTeachers(await res.json());
     } catch (err) { console.error('Failed to fetch teachers'); }
   };
