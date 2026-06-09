@@ -71,13 +71,16 @@ export async function renderDesignToCanvas(
       if (ctx2.photoUrl) {
         await drawImageInRect(ctx, ctx2.photoUrl, p.x, p.y, p.width, p.height, p.borderRadius, p.borderColor, p.borderWidth);
       } else {
-        ctx.fillStyle = '#e2e8f0';
-        ctx.beginPath();
-        ctx.roundRect(p.x, p.y, p.width, p.height, p.borderRadius);
-        ctx.fill();
-        ctx.strokeStyle = p.borderColor;
-        ctx.lineWidth = p.borderWidth;
-        ctx.stroke();
+        // No photo URL: draw canvas-native avatar (matches preview appearance)
+        drawPersonAvatar(ctx, p.x, p.y, p.width, p.height, p.borderRadius);
+        if (p.borderWidth > 0) {
+          ctx.strokeStyle = p.borderColor;
+          ctx.lineWidth = p.borderWidth;
+          ctx.beginPath();
+          ctx.roundRect(p.x, p.y, p.width, p.height, p.borderRadius);
+          ctx.stroke();
+        }
+      }
         ctx.fillStyle = '#94a3b8';
         ctx.font = 'normal normal 10px Inter, sans-serif';
         ctx.textAlign = 'center';
@@ -320,7 +323,10 @@ function drawImageInRect(
 ): Promise<void> {
   return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // Do NOT set crossOrigin for data: / blob: URLs — it causes SVG load failures
+    if (!src.startsWith('data:') && !src.startsWith('blob:')) {
+      img.crossOrigin = 'anonymous';
+    }
     const timer = setTimeout(() => { resolve(); }, 3000);
     img.onload = () => {
       clearTimeout(timer);
@@ -341,13 +347,46 @@ function drawImageInRect(
     };
     img.onerror = () => {
       clearTimeout(timer);
-      // fallback grey box
-      ctx.fillStyle = '#e2e8f0';
-      ctx.beginPath();
-      ctx.roundRect(x, y, w, h, radius);
-      ctx.fill();
+      // Fallback: canvas-drawn person avatar (purple gradient)
+      drawPersonAvatar(ctx, x, y, w, h, radius);
       resolve();
     };
     img.src = getProxiedUrl(src);
   });
+}
+
+/** Canvas-native person silhouette — used when no photo URL is available. */
+function drawPersonAvatar(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  radius: number,
+) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, radius);
+  ctx.clip();
+  // gradient background
+  const grad = ctx.createLinearGradient(x, y, x, y + h);
+  grad.addColorStop(0, '#6366f1');
+  grad.addColorStop(1, '#8b5cf6');
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, y, w, h);
+  // head circle
+  const headR = Math.min(w, h) * 0.18;
+  const headX = x + w / 2;
+  const headY = y + h * 0.35;
+  ctx.beginPath();
+  ctx.arc(headX, headY, headR, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.fill();
+  // body arc
+  const bodyR = Math.min(w, h) * 0.3;
+  ctx.beginPath();
+  ctx.arc(headX, y + h * 0.95, bodyR, Math.PI, 0);
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.fill();
+  ctx.restore();
 }

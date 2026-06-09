@@ -136,24 +136,6 @@ function applyPreviewData(text: string): string {
   });
 }
 
-// Inline SVG portrait silhouette used as the sample photo when preview mode is on.
-// Avoids any network request and looks neutral on light/dark cards.
-const PREVIEW_PHOTO_DATA_URL =
-  'data:image/svg+xml;utf8,' + encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#6366f1"/>
-          <stop offset="100%" stop-color="#8b5cf6"/>
-        </linearGradient>
-      </defs>
-      <rect width="200" height="240" fill="url(#bg)"/>
-      <circle cx="100" cy="92" r="38" fill="#ffffff" opacity="0.95"/>
-      <path d="M30 230 C30 170, 170 170, 170 230 Z" fill="#ffffff" opacity="0.95"/>
-      <text x="100" y="225" font-family="system-ui,sans-serif" font-size="14" font-weight="600" fill="#4f46e5" text-anchor="middle">Sample</text>
-    </svg>`
-  );
-
 // ── Compact top-bar icon button ──────────────────────────────────────────────
 /* ── SVG icon library for the top bar ──────────────────────────────────── */
 const Icons = {
@@ -1046,7 +1028,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       const subject = real ?? {
         name: PREVIEW_DATA.name, id: PREVIEW_DATA.studentNumber,
         subtitle: PREVIEW_DATA.class, phone: PREVIEW_DATA.phone, email: PREVIEW_DATA.email,
-        photo: PREVIEW_PHOTO_DATA_URL,
+        photo: null as string | null,
       };
       setPreviewSubject(real ? `${real.name} · ${real.subtitle}` : 'Sample data');
       try {
@@ -1054,7 +1036,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         const canvas = await renderDesignToCanvas(design, {
           fieldValues: buildSampleFieldValues(subject),
           qrDataUrl,
-          photoUrl: subject.photo || PREVIEW_PHOTO_DATA_URL,
+          photoUrl: subject.photo ?? null,
           scale: 2,
         });
         if (!cancelled) setPreviewImageUrl(canvas.toDataURL('image/png'));
