@@ -305,6 +305,12 @@ export function loadSavedDesign(type: CardType): CardDesign | null {
         design.qr.borderColor = design.qr.borderColor ?? '#cbd5e1';
         design.qr.borderWidth = design.qr.borderWidth ?? 1;
       }
+
+      // TPT migration: restore photo/qr defaults if both are null on a blank/stale design
+      if (type === 'teacher-part-time' && !design.photo && !design.qr && design.texts.length === 0) {
+        design.photo = { x: 15, y: 55, width: 70, height: 85, borderRadius: 6, borderColor: '#059669', borderWidth: 2, zIndex: 5 };
+        design.qr = { x: 250, y: 55, size: 80, width: 80, height: 80, borderRadius: 0, borderColor: '#cbd5e1', borderWidth: 1, zIndex: 5 };
+      }
     }
     return design;
   } catch {

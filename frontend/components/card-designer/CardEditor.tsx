@@ -95,10 +95,12 @@ async function loadTemplateDesignCached(tpl: SavedTemplate): Promise<CardDesign 
   return promise;
 }
 
+const TPT_TEMPLATE: CardDesign = { ...STAFF_TEMPLATE, cardType: 'teacher-part-time' as const };
+
 const TEMPLATES: Partial<Record<CardType, CardDesign>> = {
   student: STUDENT_TEMPLATE,
   staff: STAFF_TEMPLATE,
-  'teacher-part-time': STAFF_TEMPLATE,
+  'teacher-part-time': TPT_TEMPLATE,
   'certificate-student': BLANK_CERTIFICATE_STUDENT,
   'certificate-staff': BLANK_CERTIFICATE_STAFF,
 };
@@ -216,7 +218,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     }
     return initialCardType === 'staff' ? STAFF_TEMPLATE :
            initialCardType === 'student' ? STUDENT_TEMPLATE :
-           initialCardType === 'teacher-part-time' ? { ...STAFF_TEMPLATE, cardType: 'teacher-part-time' as const } :
+           initialCardType === 'teacher-part-time' ? TPT_TEMPLATE :
            BLANK_TEMPLATE;
   });
   // Only true once the server-side active design has been resolved (or we know there is none).
@@ -339,6 +341,12 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     if (localDesign) setDesign(localDesign);
     apiGetActiveDesign(cardType).then((apiDesign) => {
       if (apiDesign) {
+        // Migration: if a TPT design was saved before photo/qr defaults were set, restore them.
+        // Only applies when both are null AND the design has no texts (i.e. it's a blank/stale save).
+        if (cardType === 'teacher-part-time' && !apiDesign.photo && !apiDesign.qr && (apiDesign.texts?.length ?? 0) === 0) {
+          if (TPT_TEMPLATE.photo) apiDesign.photo = { ...TPT_TEMPLATE.photo };
+          if (TPT_TEMPLATE.qr) apiDesign.qr = { ...TPT_TEMPLATE.qr };
+        }
         // Server design always wins so every admin sees the same active template
         saveDesign(apiDesign);
         setDesign(apiDesign);
@@ -853,7 +861,14 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
   };
 
   // ── Reset / Clear ─────────────────────────────────────────────────────────
-  const handleReset = () => { setDesign(TEMPLATES[design.cardType] ?? BLANK_TEMPLATE); setSelectedId(null); };
+  const handleReset = () => {
+    const base = TEMPLATES[design.cardType] ?? TEMPLATES[initialCardType as CardType] ?? BLANK_TEMPLATE;
+    // For locked workspaces, ensure the reset design keeps the locked cardType
+    const resetDesign = initialCardType && base.cardType !== initialCardType
+      ? { ...base, cardType: initialCardType as CardType }
+      : base;
+    setDesign(resetDesign); setSelectedId(null);
+  };
   const handleClearCache = () => {
     clearAllCache();
     setDesign(STUDENT_TEMPLATE); setSelectedId(null); setSavedTemplates([]);
@@ -1805,7 +1820,7 @@ const BUILTIN_START_ITEMS: { key: string; design: CardDesign; label: string; emo
   { key: '__builtin_blank', design: BLANK_TEMPLATE, label: 'Blank Card', emoji: '📄', type: 'student' },
   { key: '__builtin_student', design: STUDENT_TEMPLATE, label: 'Student ID', emoji: '🎓', type: 'student' },
   { key: '__builtin_staff', design: STAFF_TEMPLATE, label: 'Staff ID', emoji: '👨‍🏫', type: 'staff' },
-  { key: '__builtin_tpt', design: STAFF_TEMPLATE, label: 'TPT ID Card', emoji: '⏰', type: 'teacher-part-time' },
+  { key: '__builtin_tpt', design: TPT_TEMPLATE, label: 'TPT ID Card', emoji: '⏰', type: 'teacher-part-time' },
   { key: '__preset_st1', design: STUDENT_CLASSIC_BLUE, label: 'Classic Blue', emoji: '🔵', type: 'student' },
   { key: '__preset_st2', design: STUDENT_DARK_NAVY, label: 'Dark Navy', emoji: '🌌', type: 'student' },
   { key: '__preset_st3', design: STUDENT_SKY_WAVE, label: 'Sky Wave', emoji: '🌊', type: 'student' },
