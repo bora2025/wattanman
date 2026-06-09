@@ -81,12 +81,6 @@ export async function renderDesignToCanvas(
           ctx.stroke();
         }
       }
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = 'normal normal 10px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Photo', p.x + p.width / 2, p.y + p.height / 2 + 4);
-        ctx.textAlign = 'start';
-      }
     } else if (item.kind === 'qr') {
       const q = item.data as QrPlaceholder;
       if (ctx2.qrDataUrl) {
