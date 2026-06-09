@@ -24,8 +24,9 @@ model User {
   updatedAt    DateTime    @updatedAt
 
   // Relations
-  classesAsTeacher  Class[]           @relation("TeacherClasses")
-  attendancesMarked Attendance[]      @relation("MarkedBy")
+  classesAsTeacher      Class[]           @relation("TeacherClasses")
+  classesAsClassAdmin   Class[]           @relation("ClassAdminClasses")
+  attendancesMarked     Attendance[]      @relation("MarkedBy")
   notifications     Notification[]
   staffAttendances  StaffAttendance[] @relation("StaffAttendances")
   staffMarkedBy     StaffAttendance[] @relation("StaffMarkedBy")
@@ -59,16 +60,18 @@ model User {
 }
 
 model Class {
-  id          String     @id @default(cuid())
-  name        String
-  subject     String?
-  teacherId   String?
-  teacher     User?      @relation("TeacherClasses", fields: [teacherId], references: [id])
-  studyYearId String?
-  studyYear   StudyYear? @relation(fields: [studyYearId], references: [id])
-  schedule    String? // e.g., "Mon 9:00-10:00"
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id           String     @id @default(cuid())
+  name         String
+  subject      String?
+  teacherId    String?
+  teacher      User?      @relation("TeacherClasses", fields: [teacherId], references: [id])
+  classAdminId String?
+  classAdmin   User?      @relation("ClassAdminClasses", fields: [classAdminId], references: [id])
+  studyYearId  String?
+  studyYear    StudyYear? @relation(fields: [studyYearId], references: [id])
+  schedule     String? // e.g., "Mon 9:00-10:00"
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   // Relations
   students       Student[]

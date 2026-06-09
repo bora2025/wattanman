@@ -6,30 +6,44 @@ import * as bcrypt from 'bcryptjs';
 export class ClassesService {
   constructor(private prisma: PrismaService) {}
 
-  async createClass(data: { name: string; subject?: string; teacherId: string; schedule?: string; studyYearId?: string }) {
-    // Validate that teacherId belongs to a user with TEACHER or CLASS_ADMIN role
+  async createClass(data: { name: string; subject?: string; teacherId: string; classAdminId?: string; schedule?: string; studyYearId?: string }) {
+    // Validate that teacherId belongs to a user with TEACHER role
     const teacher = await this.prisma.user.findUnique({ where: { id: data.teacherId } });
-    if (!teacher || (teacher.role !== 'TEACHER' && teacher.role !== 'CLASS_ADMIN')) {
-      throw new BadRequestException('Only users with TEACHER or CLASS_ADMIN role can be assigned to a class');
+    if (!teacher || teacher.role !== 'TEACHER') {
+      throw new BadRequestException('Only users with TEACHER role can be assigned as teacher');
+    }
+    // Validate classAdminId if provided
+    if (data.classAdminId) {
+      const ca = await this.prisma.user.findUnique({ where: { id: data.classAdminId } });
+      if (!ca || ca.role !== 'CLASS_ADMIN') {
+        throw new BadRequestException('Only users with CLASS_ADMIN role can be assigned as class admin');
+      }
     }
     return this.prisma.class.create({
       data,
-      include: { teacher: { select: { name: true } }, studyYear: true },
+      include: { teacher: { select: { name: true } }, classAdmin: { select: { name: true } }, studyYear: true },
     });
   }
 
-  async updateClass(id: string, data: { name?: string; subject?: string; teacherId?: string; schedule?: string; studyYearId?: string }) {
-    // Validate that teacherId belongs to a user with TEACHER or CLASS_ADMIN role
+  async updateClass(id: string, data: { name?: string; subject?: string; teacherId?: string; classAdminId?: string | null; schedule?: string; studyYearId?: string }) {
+    // Validate that teacherId belongs to a user with TEACHER role
     if (data.teacherId) {
       const teacher = await this.prisma.user.findUnique({ where: { id: data.teacherId } });
-      if (!teacher || (teacher.role !== 'TEACHER' && teacher.role !== 'CLASS_ADMIN')) {
-        throw new BadRequestException('Only users with TEACHER or CLASS_ADMIN role can be assigned to a class');
+      if (!teacher || teacher.role !== 'TEACHER') {
+        throw new BadRequestException('Only users with TEACHER role can be assigned as teacher');
+      }
+    }
+    // Validate classAdminId if provided (null = unset)
+    if (data.classAdminId) {
+      const ca = await this.prisma.user.findUnique({ where: { id: data.classAdminId } });
+      if (!ca || ca.role !== 'CLASS_ADMIN') {
+        throw new BadRequestException('Only users with CLASS_ADMIN role can be assigned as class admin');
       }
     }
     return this.prisma.class.update({
       where: { id },
       data,
-      include: { teacher: { select: { name: true } }, studyYear: true },
+      include: { teacher: { select: { name: true } }, classAdmin: { select: { name: true } }, studyYear: true },
     });
   }
 
@@ -39,7 +53,17 @@ export class ClassesService {
     if (studyYearId) where.studyYearId = studyYearId;
     return this.prisma.class.findMany({
       where,
-      include: { teacher: { select: { name: true } }, studyYear: true },
+      include: { teacher: { select: { name: true } }, classAdmin: { select: { name: true } }, studyYear: true },
+    });
+  }
+
+  /** Returns classes where the given user is assigned as classAdmin. */
+  async getClassesByAdmin(classAdminId: string, studyYearId?: string) {
+    const where: any = { classAdminId };
+    if (studyYearId) where.studyYearId = studyYearId;
+    return this.prisma.class.findMany({
+      where,
+      include: { teacher: { select: { name: true } }, classAdmin: { select: { name: true } }, studyYear: true },
     });
   }
 

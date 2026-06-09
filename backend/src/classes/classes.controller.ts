@@ -12,7 +12,7 @@ export class ClassesController {
 
   @Roles('ADMIN', 'CLASS_ADMIN')
   @Post()
-  async createClass(@Body() data: { name: string; subject?: string; teacherId: string; schedule?: string; studyYearId?: string }) {
+  async createClass(@Body() data: { name: string; subject?: string; teacherId: string; classAdminId?: string; schedule?: string; studyYearId?: string }) {
     return this.classesService.createClass(data);
   }
 
@@ -22,9 +22,9 @@ export class ClassesController {
     @Query('teacherId') teacherId?: string,
     @Query('studyYearId') studyYearId?: string,
   ) {
-    // CLASS_ADMIN always sees only their own classes
+    // CLASS_ADMIN always sees only classes assigned to them
     if (req?.user?.role === 'CLASS_ADMIN') {
-      return this.classesService.getClasses(req.user.userId, studyYearId);
+      return this.classesService.getClassesByAdmin(req.user.userId, studyYearId);
     }
     // Alias 'me' resolves to the current user's id (useful for teachers)
     const resolvedTeacherId = teacherId === 'me' ? req?.user?.userId : teacherId;
@@ -39,7 +39,7 @@ export class ClassesController {
 
   @Roles('ADMIN', 'CLASS_ADMIN')
   @Put(':id')
-  async updateClass(@Param('id') id: string, @Body() data: { name?: string; subject?: string; teacherId?: string; schedule?: string; studyYearId?: string }) {
+  async updateClass(@Param('id') id: string, @Body() data: { name?: string; subject?: string; teacherId?: string; classAdminId?: string | null; schedule?: string; studyYearId?: string }) {
     return this.classesService.updateClass(id, data);
   }
 

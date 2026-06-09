@@ -54,7 +54,7 @@ export class ScoringService {
   /** Returns sheets scoped to a CLASS_ADMIN user — only sheets for their assigned classes. */
   async getSheetsForClassAdmin(userId: string) {
     const myClasses = await this.prisma.class.findMany({
-      where: { teacherId: userId },
+      where: { classAdminId: userId },
       select: { id: true },
     });
     return this.getSheetsByClassIds(myClasses.map(c => c.id));
