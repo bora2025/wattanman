@@ -7,10 +7,10 @@ export class ClassesService {
   constructor(private prisma: PrismaService) {}
 
   async createClass(data: { name: string; subject?: string; teacherId: string; schedule?: string; studyYearId?: string }) {
-    // Validate that teacherId belongs to a user with TEACHER role
+    // Validate that teacherId belongs to a user with TEACHER or CLASS_ADMIN role
     const teacher = await this.prisma.user.findUnique({ where: { id: data.teacherId } });
-    if (!teacher || teacher.role !== 'TEACHER') {
-      throw new BadRequestException('Only users with TEACHER role can be assigned to a class');
+    if (!teacher || (teacher.role !== 'TEACHER' && teacher.role !== 'CLASS_ADMIN')) {
+      throw new BadRequestException('Only users with TEACHER or CLASS_ADMIN role can be assigned to a class');
     }
     return this.prisma.class.create({
       data,
@@ -19,11 +19,11 @@ export class ClassesService {
   }
 
   async updateClass(id: string, data: { name?: string; subject?: string; teacherId?: string; schedule?: string; studyYearId?: string }) {
-    // Validate that teacherId belongs to a user with TEACHER role
+    // Validate that teacherId belongs to a user with TEACHER or CLASS_ADMIN role
     if (data.teacherId) {
       const teacher = await this.prisma.user.findUnique({ where: { id: data.teacherId } });
-      if (!teacher || teacher.role !== 'TEACHER') {
-        throw new BadRequestException('Only users with TEACHER role can be assigned to a class');
+      if (!teacher || (teacher.role !== 'TEACHER' && teacher.role !== 'CLASS_ADMIN')) {
+        throw new BadRequestException('Only users with TEACHER or CLASS_ADMIN role can be assigned to a class');
       }
     }
     return this.prisma.class.update({

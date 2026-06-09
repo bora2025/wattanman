@@ -35,6 +35,31 @@ export class ScoringService {
     });
   }
 
+  /** Returns only sheets linked to at least one of the given class IDs (for CLASS_ADMIN scoping). */
+  async getSheetsByClassIds(classIds: string[]) {
+    if (!classIds.length) return [];
+    return this.prisma.scoreSheet.findMany({
+      where: {
+        classes: { some: { classId: { in: classIds } } },
+      },
+      include: {
+        subjects: { orderBy: { order: 'asc' } },
+        examTabs: { orderBy: { order: 'asc' } },
+        classes: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /** Returns sheets scoped to a CLASS_ADMIN user — only sheets for their assigned classes. */
+  async getSheetsForClassAdmin(userId: string) {
+    const myClasses = await this.prisma.class.findMany({
+      where: { teacherId: userId },
+      select: { id: true },
+    });
+    return this.getSheetsByClassIds(myClasses.map(c => c.id));
+  }
+
   async getSheet(id: string) {
     const sheet = await this.prisma.scoreSheet.findUnique({
       where: { id },

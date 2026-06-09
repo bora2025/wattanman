@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ScoringService } from './scoring.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -19,7 +19,10 @@ export class ScoringController {
 
   @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Get('sheets')
-  getSheets() {
+  getSheets(@Request() req: any) {
+    if (req?.user?.role === 'CLASS_ADMIN') {
+      return this.scoringService.getSheetsForClassAdmin(req.user.userId);
+    }
     return this.scoringService.getSheets();
   }
 

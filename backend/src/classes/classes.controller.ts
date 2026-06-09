@@ -22,6 +22,10 @@ export class ClassesController {
     @Query('teacherId') teacherId?: string,
     @Query('studyYearId') studyYearId?: string,
   ) {
+    // CLASS_ADMIN always sees only their own classes
+    if (req?.user?.role === 'CLASS_ADMIN') {
+      return this.classesService.getClasses(req.user.userId, studyYearId);
+    }
     // Alias 'me' resolves to the current user's id (useful for teachers)
     const resolvedTeacherId = teacherId === 'me' ? req?.user?.userId : teacherId;
     return this.classesService.getClasses(resolvedTeacherId, studyYearId);
