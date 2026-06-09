@@ -111,6 +111,9 @@ const PREVIEW_DATA: Record<string, string> = {
   'qrCode': 'STU-2024-001', 'studyYear': '2025–2026',
   'role': 'Senior Teacher', 'department': 'Mathematics',
   'schoolName': 'Wattaman School', 'certificateDate': '18/05/2026',
+  // TPT fields
+  'khmerName': 'ដារ៉ា សុទ្ធា', 'short': 'DRS', 'timetableName': 'Main 2026',
+  'subjects': 'Math, Science', 'weeklyLessons': '12',
   // Old-style keys (backward compat with saved templates using capitalized placeholder names)
   'Student Name': 'Sophea Chann', 'Name': 'Sophea Chann', 'ID': 'STU-2024-001',
   'Student ID': 'STU-2024-001', 'Class': 'Grade 10A', 'Class Name': 'Grade 10A',
@@ -942,7 +945,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     let cancelled = false;
     setPreviewLoading(true);
 
-    const buildSampleFieldValues = (subject: { name: string; id: string; subtitle: string; phone?: string; email?: string }): Record<string, string> => ({
+    const buildSampleFieldValues = (subject: { name: string; id: string; subtitle: string; phone?: string; email?: string; khmerName?: string; short?: string; subjects?: string; sex?: string; weeklyLessons?: number }): Record<string, string> => ({
       'Staff Name': subject.name, 'Student Name': subject.name,
       'Emp ID': subject.id, 'Student ID': subject.id, 'ID': subject.id,
       'Position': subject.subtitle, 'Class Name': subject.subtitle, 'Class': subject.subtitle,
@@ -956,15 +959,16 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
       '{{employeeId}}': subject.id,
       '{{studentNumber}}': subject.id,
       '{{qrCode}}': subject.id,
-      // TPT fields
-      '{{khmerName}}': '',
-      '{{short}}': subject.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 3),
+      // TPT fields — populated from timetable teacher data
+      '{{khmerName}}': subject.khmerName || '',
+      '{{short}}': subject.short || subject.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 3),
       '{{timetableName}}': subject.subtitle,
-      '{{subjects}}': '',
-      '{{sex}}': '',
+      '{{subjects}}': subject.subjects || '',
+      '{{sex}}': subject.sex || '',
+      '{{weeklyLessons}}': subject.weeklyLessons !== undefined ? String(subject.weeklyLessons) : '',
     });
 
-    const fetchSubject = async (): Promise<{ name: string; id: string; subtitle: string; phone?: string; email?: string; photo?: string | null } | null> => {
+    const fetchSubject = async (): Promise<{ name: string; id: string; subtitle: string; phone?: string; email?: string; photo?: string | null; khmerName?: string; short?: string; subjects?: string; sex?: string; weeklyLessons?: number } | null> => {
       try {
         const isStudent = design.cardType === 'student' || design.cardType === 'certificate-student';
         if (isStudent) {
@@ -994,12 +998,17 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           const all = res.ok ? await res.json() : [];
           const tpt = all[0];
           if (!tpt) return null;
-          const subjects = (tpt.lessons ?? []).map((l: { subjectName: string }) => l.subjectName).filter(Boolean).join(', ');
+          const subjects = [...new Set((tpt.lessons ?? []).map((l: { subjectName: string }) => l.subjectName).filter(Boolean))].join(', ');
           return {
             name: tpt.name,
             id: tpt.qrCode || tpt.id,
             subtitle: tpt.timetableName || 'Part-Time Teacher',
             photo: null,
+            khmerName: tpt.khmerName || '',
+            short: tpt.short || '',
+            subjects,
+            sex: tpt.sex || '',
+            weeklyLessons: tpt.weeklyLessons ?? 0,
           };
         }
         // Staff
