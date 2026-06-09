@@ -476,6 +476,19 @@ export class TimetableService {
         orderBy: { lastName: 'asc' },
       });
 
+      // Batch-lookup user photos by email for teachers who don't have a photo set
+      const emailsNeedingPhoto = teachers
+        .filter(t => !t.photo && t.email)
+        .map(t => t.email!);
+      const emailToPhoto = new Map<string, string | null>();
+      if (emailsNeedingPhoto.length > 0) {
+        const users = await this.prisma.user.findMany({
+          where: { email: { in: emailsNeedingPhoto } },
+          select: { email: true, photo: true },
+        });
+        for (const u of users) emailToPhoto.set(u.email, u.photo);
+      }
+
       const cambodiaDate = new Date(new Date().getTime() + 7 * 60 * 60 * 1000);
       const jsDay = cambodiaDate.getUTCDay();
       const todayDay = jsDay === 0 ? 7 : jsDay;
@@ -483,6 +496,8 @@ export class TimetableService {
       for (const t of teachers) {
         const weeklyLessons = t.lessons.reduce((s, l) => s + l.perWeek, 0);
         const todayEntries = t.entries.filter(e => e.day === todayDay);
+        // Use teacher's own photo first; fall back to system user photo by email
+        const photo = t.photo ?? (t.email ? (emailToPhoto.get(t.email) ?? null) : null);
         results.push({
           id: t.id,
           timetableId: tt.id,
@@ -492,7 +507,7 @@ export class TimetableService {
           short: t.short,
           sex: t.sex,
           color: t.color,
-          photo: t.photo ?? null,
+          photo,
           qrCode: t.qrCode,
           weeklyLessons,
           lessons: t.lessons.map(l => ({
