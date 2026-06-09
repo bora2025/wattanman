@@ -1003,7 +1003,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
             name: tpt.name,
             id: tpt.qrCode || tpt.id,
             subtitle: tpt.timetableName || 'Part-Time Teacher',
-            photo: null,
+            photo: tpt.photo ?? null,
             khmerName: tpt.khmerName || '',
             short: tpt.short || '',
             subjects,

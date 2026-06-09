@@ -520,6 +520,7 @@ model TimetableTeacher {
   sex            String? // MALE | FEMALE
   email          String?
   phone          String?
+  photo          String? // URL to teacher photo
   color          String?
   classTeacherId String? // FK to TimetableClass (no unique — multiple teachers can share a class)
   classTeacher   TimetableClass? @relation("ClassTeacherRel", fields: [classTeacherId], references: [id])

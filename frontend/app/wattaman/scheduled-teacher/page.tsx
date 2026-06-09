@@ -19,6 +19,7 @@ interface ScheduledTeacher {
   short: string
   sex: string | null
   color: string | null
+  photo?: string | null
   qrCode: string | null
   email?: string | null
   phone?: string | null

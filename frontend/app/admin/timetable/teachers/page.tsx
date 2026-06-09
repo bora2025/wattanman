@@ -18,7 +18,7 @@ interface TLesson {
 }
 interface TTeacher {
   id: string; lastName: string; firstName: string; khmerName?: string | null; short: string
-  sex: string | null; email: string | null; phone: string | null
+  sex: string | null; email: string | null; phone: string | null; photo?: string | null
   color: string | null; classTeacherId: string | null
   classTeacher: TClass | null
   lessons?: TLesson[]
@@ -50,6 +50,7 @@ export default function TeachersPage() {
   const [fEmail, setFEmail] = useState('')
   const [fPhone, setFPhone] = useState('')
   const [fColor, setFColor] = useState('#22c55e')
+  const [fPhoto, setFPhoto] = useState('')
   const [fClassTeacher, setFClassTeacher] = useState('')
   const [savingTeacher, setSavingTeacher] = useState(false)
   const [teacherError, setTeacherError] = useState('')
@@ -104,6 +105,7 @@ export default function TeachersPage() {
     setFShort(item?.short ?? ''); setFSex(item?.sex ?? '')
     setFEmail(item?.email ?? ''); setFPhone(item?.phone ?? '')
     setFColor(item?.color ?? '#22c55e'); setFClassTeacher(item?.classTeacherId ?? '')
+    setFPhoto(item?.photo ?? '')
     setTeacherError('')
     if (!item) {
       setSystemTeachers([])
@@ -129,8 +131,7 @@ export default function TeachersPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         lastName, firstName, khmerName: fKhmerName.trim() || null, short: fShort,
-        sex: fSex || null, email: fEmail || null, phone: fPhone || null,
-        color: fColor, classTeacherId: fClassTeacher || null,
+        sex: fSex || null, email: fEmail || null, phone: fPhone || null,        photo: fPhoto.trim() || null,        color: fColor, classTeacherId: fClassTeacher || null,
       }),
     })
     if (res.ok) {
@@ -233,7 +234,13 @@ export default function TeachersPage() {
                                 onClick={() => setSelectedTeacher(t)}>
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-2">
-                                    <span className="w-3 h-3 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: t.color ?? '#22c55e' }} />
+                                    {t.photo ? (
+                                      <img src={t.photo} alt={t.firstName} className="w-7 h-7 rounded-full object-cover flex-shrink-0 border border-gray-200" onError={e => { e.currentTarget.style.display = 'none' }} />
+                                    ) : (
+                                      <span className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: t.color ?? '#22c55e' }}>
+                                        {(t.firstName?.[0] ?? '').toUpperCase()}
+                                      </span>
+                                    )}
                                     <span className="font-medium text-gray-800">{[t.firstName, t.lastName].filter(Boolean).join(' ')}</span>
                                   </div>
                                 </td>
@@ -453,6 +460,30 @@ export default function TeachersPage() {
                       style={{ backgroundColor: c }} />
                   ))}
                   <input type="color" value={fColor} onChange={e => setFColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer border-0" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Photo URL <span className="font-normal text-gray-400">(optional)</span></label>
+                <div className="flex items-center gap-3">
+                  <input
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={fPhoto}
+                    onChange={e => setFPhoto(e.target.value)}
+                    placeholder="https://..."
+                  />
+                  {fPhoto ? (
+                    <img
+                      src={fPhoto}
+                      alt="preview"
+                      className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                      onError={e => { e.currentTarget.style.display = 'none' }}
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold"
+                      style={{ backgroundColor: fColor }}>
+                      {(fFullName?.[0] ?? '?').toUpperCase()}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

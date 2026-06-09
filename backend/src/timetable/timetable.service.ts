@@ -167,7 +167,7 @@ export class TimetableService {
 
   async createTeacher(timetableId: string, data: {
     lastName: string; firstName: string; khmerName?: string; short: string;
-    sex?: string; email?: string; phone?: string;
+    sex?: string; email?: string; phone?: string; photo?: string;
     color?: string; classTeacherId?: string;
   }) {
     const qrCode = crypto.randomBytes(16).toString('hex');
@@ -178,7 +178,7 @@ export class TimetableService {
 
   async updateTeacher(id: string, data: Partial<{
     lastName: string; firstName: string; khmerName: string | null; short: string;
-    sex: string; email: string; phone: string;
+    sex: string; email: string; phone: string; photo: string | null;
     color: string; classTeacherId: string | null;
   }>) {
     return this.prisma.timetableTeacher.update({ where: { id }, data });
@@ -492,6 +492,7 @@ export class TimetableService {
           short: t.short,
           sex: t.sex,
           color: t.color,
+          photo: t.photo ?? null,
           qrCode: t.qrCode,
           weeklyLessons,
           lessons: t.lessons.map(l => ({
