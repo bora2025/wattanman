@@ -633,7 +633,7 @@ function CoursesPanel({ classId }: { classId: string }) {
 
 export default function AdminClassDetailPage() {
   return (
-    <AuthGuard allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+    <AuthGuard allowedRoles={['ADMIN', 'SUPER_ADMIN', 'CLASS_ADMIN']}>
       <ClassDetailContent />
     </AuthGuard>
   )

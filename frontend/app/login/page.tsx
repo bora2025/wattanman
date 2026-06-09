@@ -46,8 +46,10 @@ function LoginContent() {
           const parentRoles = ['PARENT'];
           const wattamanRoles = ['WATTAMAN'];
           const reporterRoles = ['WATTAMAN_REPORTER'];
+          const classAdminRoles = ['CLASS_ADMIN'];
           let dest = '/employee';
           if (adminRoles.includes(role)) dest = '/admin';
+          else if (classAdminRoles.includes(role)) dest = '/admin/classes';
           else if (teacherRoles.includes(role)) dest = '/teacher';
           else if (studentRoles.includes(role)) dest = '/student';
           else if (parentRoles.includes(role)) dest = '/parent';

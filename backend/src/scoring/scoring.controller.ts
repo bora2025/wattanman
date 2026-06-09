@@ -11,31 +11,31 @@ export class ScoringController {
 
   // ─── Score Sheets ─────────────────────────────────────────────────────────
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Post('sheets')
   createSheet(@Body() data: { name: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
     return this.scoringService.createSheet(data);
   }
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Get('sheets')
   getSheets() {
     return this.scoringService.getSheets();
   }
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Get('sheets/:id')
   getSheet(@Param('id') id: string) {
     return this.scoringService.getSheet(id);
   }
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Put('sheets/:id')
   updateSheet(@Param('id') id: string, @Body() data: { name?: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
     return this.scoringService.updateSheet(id, data);
   }
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Delete('sheets/:id')
   deleteSheet(@Param('id') id: string) {
     return this.scoringService.deleteSheet(id);
@@ -43,7 +43,7 @@ export class ScoringController {
 
   // ─── Subjects ─────────────────────────────────────────────────────────────
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Post('sheets/:id/subjects')
   addSubject(
     @Param('id') scoreSheetId: string,
@@ -52,13 +52,13 @@ export class ScoringController {
     return this.scoringService.addSubject(scoreSheetId, data);
   }
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Put('subjects/:id')
   updateSubject(@Param('id') id: string, @Body() data: { name?: string; maxScore?: number; color?: string; order?: number }) {
     return this.scoringService.updateSubject(id, data);
   }
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Delete('subjects/:id')
   deleteSubject(@Param('id') id: string) {
     return this.scoringService.deleteSubject(id);
@@ -66,7 +66,7 @@ export class ScoringController {
 
   // ─── Timetable subjects (for import) ──────────────────────────────────────
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Get('timetable-subjects')
   getTimetableSubjects() {
     return this.scoringService.getTimetableSubjects();
@@ -74,13 +74,13 @@ export class ScoringController {
 
   // ─── Exam Tabs ────────────────────────────────────────────────────────────
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Post('sheets/:id/exam-tabs')
   addExamTab(@Param('id') scoreSheetId: string, @Body() data: { label: string; type: string; order?: number }) {
     return this.scoringService.addExamTab(scoreSheetId, data);
   }
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Delete('exam-tabs/:id')
   deleteExamTab(@Param('id') id: string) {
     return this.scoringService.deleteExamTab(id);
@@ -88,7 +88,7 @@ export class ScoringController {
 
   // ─── Score Entries ────────────────────────────────────────────────────────
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Get('exam-tabs/:id/scores')
   getTabScores(
     @Param('id') examTabId: string,
@@ -98,7 +98,7 @@ export class ScoringController {
     return this.scoringService.getTabScores(examTabId, ids);
   }
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Put('entries')
   upsertEntry(
     @Body() data: { examTabId: string; subjectId: string; studentId: string; score: number | null; formula?: string | null },
@@ -106,7 +106,7 @@ export class ScoringController {
     return this.scoringService.upsertEntry(data);
   }
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Post('entries/bulk')
   bulkUpsertEntries(
     @Body() body: {

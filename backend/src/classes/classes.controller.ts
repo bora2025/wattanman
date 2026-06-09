@@ -10,7 +10,7 @@ import { Roles } from '../auth/roles.decorator';
 export class ClassesController {
   constructor(private classesService: ClassesService) {}
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post()
   async createClass(@Body() data: { name: string; subject?: string; teacherId: string; schedule?: string; studyYearId?: string }) {
     return this.classesService.createClass(data);
@@ -27,13 +27,13 @@ export class ClassesController {
     return this.classesService.getClasses(resolvedTeacherId, studyYearId);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Get('parents')
   async listParents() {
     return this.classesService.listParents();
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Put(':id')
   async updateClass(@Param('id') id: string, @Body() data: { name?: string; subject?: string; teacherId?: string; schedule?: string; studyYearId?: string }) {
     return this.classesService.updateClass(id, data);
@@ -55,7 +55,7 @@ export class ClassesController {
     return this.classesService.getStudentsByClasses(classIds);
   }
 
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'CLASS_ADMIN', 'TEACHER')
   @Patch(':classId/students/:studentId')
   async updateStudent(
     @Param('classId') classId: string,
@@ -65,13 +65,13 @@ export class ClassesController {
     return this.classesService.updateStudent(studentId, data);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post(':id/students')
   async addStudentToClass(@Param('id') classId: string, @Body() data: { studentId: string }) {
     return this.classesService.addStudentToClass(classId, data.studentId);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post(':id/students/bulk-csv')
   @UseInterceptors(FileInterceptor('file'))
   async bulkAddStudentsFromCsv(@Param('id') classId: string, @UploadedFile() file: Express.Multer.File) {
@@ -81,19 +81,19 @@ export class ClassesController {
     return this.classesService.bulkAddStudentsFromCsv(classId, file.buffer);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Delete(':id')
   async deleteClass(@Param('id') id: string) {
     return this.classesService.deleteClass(id);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post('cleanup-orphaned-students')
   async cleanupOrphanedStudents() {
     return this.classesService.cleanupOrphanedStudents();
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Delete(':id/students/:studentId')
   async removeStudentFromClass(@Param('id') classId: string, @Param('studentId') studentId: string) {
     return this.classesService.removeStudentFromClass(classId, studentId);

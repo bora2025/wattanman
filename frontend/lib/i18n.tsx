@@ -122,6 +122,7 @@ const en: Record<string, string> = {
   'role.receptionist': 'Receptionist',
   'role.general_manager': 'General Manager',
   'role.wattaman_reporter': 'Wattaman Reporter',
+  'role.class_admin': 'Class Admin',
 
   // Login
   'login.welcome': 'Welcome back',
@@ -1048,6 +1049,7 @@ const kh: Record<string, string> = {
   'role.receptionist': 'អ្នកទទួលភ្ញៀវ',
   'role.general_manager': 'អ្នកគ្រប់គ្រងទូទៅ',
   'role.wattaman_reporter': 'Wattaman Reporter',
+  'role.class_admin': 'Class Admin',
 
   // Login
   'login.welcome': 'សូមស្វាគមន៍',

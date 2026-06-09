@@ -44,7 +44,7 @@ const permissionScopeLabel = (type: string) => {
 
 export default function EditAttendance() {
   return (
-    <AuthGuard allowedRoles={['ADMIN', 'WATTAMAN_REPORTER']}>
+    <AuthGuard allowedRoles={['ADMIN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN']}>
       <EditAttendanceContent />
     </AuthGuard>
   )

@@ -1,4 +1,4 @@
-﻿import {
+import {
   Controller, Get, Post, Put, Delete, Patch,
   Param, Body, Query, UseGuards, Request,
 } from '@nestjs/common';
@@ -20,125 +20,125 @@ export class TimetableController {
   @Get(':id')
   get(@Param('id') id: string) { return this.svc.getTimetable(id); }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post()
   create(@Body() body: any) { return this.svc.createTimetable(body); }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Put(':id')
   update(@Param('id') id: string, @Body() body: any) {
     return this.svc.updateTimetable(id, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Delete(':id')
   remove(@Param('id') id: string) { return this.svc.deleteTimetable(id); }
 
   // â”€â”€â”€ Generate (Test button) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post(':id/generate')
   generate(@Param('id') id: string) { return this.svc.generateTimetable(id); }
 
   // â”€â”€â”€ Subjects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post(':id/subjects')
   createSubject(@Param('id') timetableId: string, @Body() body: any) {
     return this.svc.createSubject(timetableId, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Put('subjects/:id')
   updateSubject(@Param('id') id: string, @Body() body: any) {
     return this.svc.updateSubject(id, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Delete('subjects/:id')
   deleteSubject(@Param('id') id: string) { return this.svc.deleteSubject(id); }
 
   // â”€â”€â”€ Classes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post(':id/classes')
   createClass(@Param('id') timetableId: string, @Body() body: any) {
     return this.svc.createClass(timetableId, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Put('classes/:id')
   updateClass(@Param('id') id: string, @Body() body: any) {
     return this.svc.updateClass(id, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Delete('classes/:id')
   deleteClass(@Param('id') id: string) { return this.svc.deleteClass(id); }
 
   // â”€â”€â”€ Classrooms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post(':id/classrooms')
   createClassroom(@Param('id') timetableId: string, @Body() body: any) {
     return this.svc.createClassroom(timetableId, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Put('classrooms/:id')
   updateClassroom(@Param('id') id: string, @Body() body: any) {
     return this.svc.updateClassroom(id, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Delete('classrooms/:id')
   deleteClassroom(@Param('id') id: string) { return this.svc.deleteClassroom(id); }
 
   // â”€â”€â”€ Teachers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post(':id/teachers')
   createTeacher(@Param('id') timetableId: string, @Body() body: any) {
     return this.svc.createTeacher(timetableId, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Put('teachers/:id')
   updateTeacher(@Param('id') id: string, @Body() body: any) {
     return this.svc.updateTeacher(id, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Delete('teachers/:id')
   deleteTeacher(@Param('id') id: string) { return this.svc.deleteTeacher(id); }
 
   // â”€â”€â”€ Lessons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post(':id/lessons')
   createLesson(@Param('id') timetableId: string, @Body() body: any) {
     return this.svc.createLesson(timetableId, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Put('lessons/:id')
   updateLesson(@Param('id') id: string, @Body() body: any) {
     return this.svc.updateLesson(id, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Delete('lessons/:id')
   deleteLesson(@Param('id') id: string) { return this.svc.deleteLesson(id); }
 
   // â”€â”€â”€ Entries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post(':id/entries')
   upsertEntry(@Param('id') timetableId: string, @Body() body: any) {
     return this.svc.upsertEntry(timetableId, body);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Delete('entries/:id')
   deleteEntry(@Param('id') id: string) { return this.svc.deleteEntry(id); }
 
@@ -169,13 +169,13 @@ export class TimetableController {
     return this.svc.getAllScheduledTeachers();
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Post('teacher-attendance/mark')
   markAttendance(@Body() body: { teacherId: string; date: string; period: number; status: string }) {
     return this.svc.markTeacherAttendance(body.teacherId, body.date, body.period, body.status);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Get(':id/teacher-attendance')
   getTeacherReport(
     @Param('id') timetableId: string,

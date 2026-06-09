@@ -9,7 +9,7 @@ export class AttendanceController {
   constructor(private attendanceService: AttendanceService) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('TEACHER', 'ADMIN')
+  @Roles('TEACHER', 'ADMIN', 'CLASS_ADMIN')
   @Post('record')
   async recordAttendance(
     @Request() req,
@@ -56,7 +56,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('TEACHER', 'ADMIN')
+  @Roles('TEACHER', 'ADMIN', 'CLASS_ADMIN')
   @Post('bulk')
   async recordBulkAttendance(
     @Request() req,
@@ -90,7 +90,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('TEACHER', 'ADMIN')
+  @Roles('TEACHER', 'ADMIN', 'CLASS_ADMIN')
   @Post('check-out')
   async recordCheckOut(
     @Request() req,
@@ -204,7 +204,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'WATTAMAN_REPORTER')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN')
   @Patch('update')
   async updateAttendance(
     @Request() req,
@@ -228,7 +228,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'WATTAMAN_REPORTER')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN')
   @Patch('edit-permission-type')
   async editPermissionType(
     @Request() req,
@@ -269,7 +269,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'WATTAMAN_REPORTER')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN')
   @Post('create-record')
   async createAttendanceRecord(
     @Request() req,
@@ -343,7 +343,7 @@ export class AttendanceController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'WATTAMAN_REPORTER')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN')
   @Delete('record')
   async deleteAttendanceRecord(
     @Body() body: { attendanceId: string },

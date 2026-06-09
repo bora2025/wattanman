@@ -748,7 +748,7 @@ export default function ScoringPage() {
   const yearClasses = classes.filter(c => !wStudyYearId || c.studyYearId === wStudyYearId)
 
   return (
-    <AuthGuard allowedRoles={['ADMIN', 'TEACHER']}>
+    <AuthGuard allowedRoles={['ADMIN', 'TEACHER', 'CLASS_ADMIN']}>
       <div className="flex min-h-screen lg:h-screen bg-gray-50 lg:overflow-hidden pt-14 lg:pt-0 pb-[72px] lg:pb-0" onClick={() => { setShowAddMenu(false); setShowPrintMenu(false) }}>
         <Sidebar title="Wattaman" subtitle="Admin" navItems={adminNav} accentColor="indigo" />
 

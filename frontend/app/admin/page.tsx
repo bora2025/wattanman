@@ -6,7 +6,7 @@ import { io, Socket } from 'socket.io-client'
 import { Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import Sidebar from '../../components/Sidebar'
 import AuthGuard from '../../components/AuthGuard'
-import { adminNav } from '../../lib/admin-nav'
+import { adminNav, classAdminNav } from '../../lib/admin-nav'
 import { apiFetch } from '../../lib/api'
 import { useLanguage } from '../../lib/i18n'
 import { todayCambodia } from '../../lib/dateUtils'
@@ -117,6 +117,8 @@ function DashboardContent() {
       if (saved === 'compact' || saved === 'comfortable') setDensity(saved)
     } catch {}
   }, [])
+
+  const currentNav = typeof window !== 'undefined' && localStorage.getItem('role') === 'CLASS_ADMIN' ? classAdminNav : adminNav
   useEffect(() => { if (selectedDate) fetchDashboard() }, [selectedDate])
   useEffect(() => { if (selectedDate) fetchClassProgress() }, [selectedDate])
   useEffect(() => { fetchTrend() }, [trendYear, trendMonth])
@@ -384,10 +386,7 @@ function DashboardContent() {
 
   if (!mounted || loading) return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo"/>
-      <div className="page-content">
-        <div className="h-14 lg:hidden"/>
-        <div className="flex flex-col items-center justify-center h-64 gap-3">
+      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={currentNav} accentColor="indigo"/>
           <div className="relative"><div className="w-10 h-10 rounded-full border-[3px] border-indigo-100"/><div className="absolute inset-0 w-10 h-10 rounded-full border-[3px] border-indigo-500 border-t-transparent animate-spin"/></div>
           <span className="text-sm text-gray-400">{t('common.loading') || 'Loading'}...</span>
         </div>
@@ -428,7 +427,7 @@ function DashboardContent() {
 
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo"/>
+      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={currentNav} accentColor="indigo"/>
       <div className="page-content">
         <div className="h-14 lg:hidden"/>
 
@@ -895,7 +894,7 @@ function DashboardContent() {
 
 export default function AdminPage() {
   return (
-    <AuthGuard requiredRole="ADMIN">
+    <AuthGuard allowedRoles={['ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN', 'CLASS_ADMIN']}>
       <DashboardContent/>
     </AuthGuard>
   )

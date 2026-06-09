@@ -9,7 +9,7 @@ interface AuthGuardProps {
   allowedRoles?: string[];
 }
 
-const EMPLOYEE_EXCLUDED_ROLES = ['ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN', 'DEPARTMENT_ADMIN', 'OFFICE_ADMIN', 'TEACHER', 'STUDENT', 'PARENT', 'WATTAMAN', 'WATTAMAN_REPORTER'];
+const EMPLOYEE_EXCLUDED_ROLES = ['ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN', 'DEPARTMENT_ADMIN', 'OFFICE_ADMIN', 'TEACHER', 'STUDENT', 'PARENT', 'WATTAMAN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN'];
 
 // ── Module-level auth cache ────────────────────────────────────────────────
 // `/api/auth/me` is called once per app session and cached here so subsequent
@@ -44,8 +44,11 @@ async function fetchMe(): Promise<{ role: string } | null> {
 
 function isRoleAllowed(userRole: string, requiredRole?: string, allowedRoles?: string[]): boolean {
   // SUPER_ADMIN is a superset of ADMIN — can access anything ADMIN can.
+  // ADMIN is a superset of CLASS_ADMIN — can access anything CLASS_ADMIN can.
   const effectiveAllows = (target: string) =>
-    userRole === target || (target === 'ADMIN' && userRole === 'SUPER_ADMIN');
+    userRole === target ||
+    (target === 'ADMIN' && (userRole === 'SUPER_ADMIN' || userRole === 'SCHOOL_ADMIN')) ||
+    (target === 'CLASS_ADMIN' && (userRole === 'SUPER_ADMIN' || userRole === 'SCHOOL_ADMIN' || userRole === 'ADMIN'));
 
   if (allowedRoles && allowedRoles.length > 0) {
     if (allowedRoles.some(r => effectiveAllows(r))) return true;
