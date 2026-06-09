@@ -387,6 +387,9 @@ function DashboardContent() {
   if (!mounted || loading) return (
     <div className="page-shell">
       <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={currentNav} accentColor="indigo"/>
+      <div className="page-content">
+        <div className="h-14 lg:hidden"/>
+        <div className="flex flex-col items-center justify-center h-64 gap-3">
           <div className="relative"><div className="w-10 h-10 rounded-full border-[3px] border-indigo-100"/><div className="absolute inset-0 w-10 h-10 rounded-full border-[3px] border-indigo-500 border-t-transparent animate-spin"/></div>
           <span className="text-sm text-gray-400">{t('common.loading') || 'Loading'}...</span>
         </div>
