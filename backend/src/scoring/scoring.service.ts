@@ -7,7 +7,7 @@ export class ScoringService {
 
   // ─── Score Sheets ─────────────────────────────────────────────────────────
 
-  async createSheet(data: { name: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
+  async createSheet(data: { name: string; degree?: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
     const { classIds, ...sheetData } = data;
     return this.prisma.scoreSheet.create({
       data: {
@@ -73,7 +73,7 @@ export class ScoringService {
     return sheet;
   }
 
-  async updateSheet(id: string, data: { name?: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
+  async updateSheet(id: string, data: { name?: string; degree?: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
     const { classIds, ...sheetData } = data;
 
     if (classIds !== undefined) {

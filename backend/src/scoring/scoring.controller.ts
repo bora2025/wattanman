@@ -13,7 +13,7 @@ export class ScoringController {
 
   @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Post('sheets')
-  createSheet(@Body() data: { name: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
+  createSheet(@Body() data: { name: string; degree?: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
     return this.scoringService.createSheet(data);
   }
 
@@ -34,7 +34,7 @@ export class ScoringController {
 
   @Roles('ADMIN', 'TEACHER', 'CLASS_ADMIN')
   @Put('sheets/:id')
-  updateSheet(@Param('id') id: string, @Body() data: { name?: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
+  updateSheet(@Param('id') id: string, @Body() data: { name?: string; degree?: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
     return this.scoringService.updateSheet(id, data);
   }
 

@@ -591,6 +591,7 @@ model TimetableTeacherAttendance {
 model ScoreSheet {
   id          String   @id @default(cuid())
   name        String // Gradebook label (e.g. "2026-2027")
+  degree      String? // Degree/level label (e.g. "Degree 1: Grade 7–9")
   logoUrl     String? // School logo URL
   studyYearId String? // Linked study year
   createdAt   DateTime @default(now())

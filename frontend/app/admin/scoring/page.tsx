@@ -19,7 +19,7 @@ interface ScoreSheetClass {
   id: string; classId: string
 }
 interface ScoreSheet {
-  id: string; name: string; logoUrl: string | null; studyYearId: string | null
+  id: string; name: string; degree: string | null; logoUrl: string | null; studyYearId: string | null
   classes: ScoreSheetClass[]; subjects: ScoreSubject[]; examTabs: ScoreExamTab[]
 }
 interface StudentRow {
@@ -270,6 +270,7 @@ export default function ScoringPage() {
   const [wNewYearLabel, setWNewYearLabel] = useState('')
   const [wShowNewYear, setWShowNewYear] = useState(false)
   const [wClassIds, setWClassIds] = useState<Set<string>>(new Set())
+  const [wDegree, setWDegree] = useState('')
   const [wLogoUrl, setWLogoUrl] = useState('')
   const [creatingSheet, setCreatingSheet] = useState<ScoreSheet | null>(null)
 
@@ -397,7 +398,7 @@ export default function ScoringPage() {
 
   const startWizard = () => {
     setWizardStep('year'); setWStudyYearId(''); setWNewYearLabel(''); setWShowNewYear(false)
-    setWClassIds(new Set()); setWLogoUrl(''); setCreatingSheet(null); setShowNewWizard(true)
+    setWClassIds(new Set()); setWDegree(''); setWLogoUrl(''); setCreatingSheet(null); setShowNewWizard(true)
     setWCalcOption(''); setScoreMode('numeric'); setFormulaColumns([]); setSubjectGradeScales({})
   }
 
@@ -422,7 +423,7 @@ export default function ScoringPage() {
       // Create sheet
       const res = await apiFetch('/api/scoring/sheets', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: label, logoUrl: wLogoUrl || undefined, studyYearId: syId }),
+        body: JSON.stringify({ name: label, degree: wDegree.trim() || undefined, logoUrl: wLogoUrl || undefined, studyYearId: syId }),
       })
       if (res.ok) {
         const sheet: ScoreSheet = await res.json()
@@ -847,6 +848,7 @@ export default function ScoringPage() {
                         {activeSheet.logoUrl && <img src={activeSheet.logoUrl} alt="logo" className="h-14 object-contain" />}
                         <div>
                           <h1 className="text-xl font-bold">{activeSheet.name}</h1>
+                          {activeSheet.degree && <p className="text-sm text-violet-700 font-medium">{activeSheet.degree}</p>}
                           <p className="text-sm text-gray-600">{activeSheet.examTabs.find(tab => tab.id === activeTabId)?.label}</p>
                         </div>
                       </div>
@@ -1101,6 +1103,16 @@ export default function ScoringPage() {
                   </>
                 )}
                 <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Degree <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    value={wDegree}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWDegree(e.target.value)}
+                    placeholder="e.g. Degree 1: Grade 7–9"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">Group this gradebook by education level or degree.</p>
+                </div>
+                <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">{t('scoring.schoolLogo')}</label>
                   <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
                     value={wLogoUrl} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWLogoUrl(e.target.value)} placeholder="https://..." />
@@ -1237,7 +1249,10 @@ export default function ScoringPage() {
                       className="w-full text-left px-4 py-3 rounded-lg border hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
                       <div className="flex items-center justify-between">
                         <p className="font-medium text-gray-800 text-sm">{sheet.name}</p>
-                        {sy && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{yearLabel(sy)}</span>}
+                        <div className="flex items-center gap-1.5">
+                          {sheet.degree && <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">{sheet.degree}</span>}
+                          {sy && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{yearLabel(sy)}</span>}
+                        </div>
                       </div>
                       <p className="text-xs text-gray-400 mt-0.5">{sc.map(c => c.name).join(', ') || t('scoring.noClasses')} · {sheet.subjects?.length ?? 0} {t('scoring.subject')} · {sheet.examTabs?.length ?? 0} tabs</p>
                     </button>
