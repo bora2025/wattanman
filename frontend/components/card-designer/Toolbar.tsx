@@ -14,6 +14,7 @@ interface ToolbarProps {
   onDesignChange: (design: CardDesign) => void;
   onSelect?: (id: string | null) => void;
   width?: number;
+  lockedType?: string | null;
 }
 
 type Tab = 'size' | 'colors' | 'text' | 'shapes' | 'images' | 'photo' | 'qr' | 'fields';
@@ -134,7 +135,7 @@ function TogglePill({ active, onToggle, label }: { active: boolean; onToggle: ()
 }
 
 /* ── Main component ──────────────────────────────────────────────────────── */
-export default function Toolbar({ design, selectedId, onDesignChange, onSelect }: ToolbarProps) {
+export default function Toolbar({ design, selectedId, onDesignChange, onSelect, lockedType }: ToolbarProps) {
   const [activeTab, setActiveTab] = useState<Tab>('text');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [removingBg, setRemovingBg] = useState<Record<string, boolean>>({});
@@ -758,28 +759,51 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
         {activeTab === 'fields' && (
           <div className="p-3 space-y-3">
             <PanelLabel>Data Source</PanelLabel>
-            {/* Purpose switcher — lets user link a Blank/General project to a data source after creation */}
-            <div className="grid grid-cols-2 gap-1.5">
-              {([
-                { id: 'student', label: 'Student', icon: '🎓' },
-                { id: 'staff', label: 'Staff', icon: '👨‍🏫' },
-                { id: 'certificate-student', label: 'Cert · Student', icon: '📜' },
-                { id: 'certificate-staff', label: 'Cert · Staff', icon: '🏅' },
-                { id: 'general', label: 'General', icon: '✏️' },
-              ] as const).map((p) => (
-                <button key={p.id}
-                  onClick={() => update({ cardType: p.id })}
-                  className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-all ${
-                    design.cardType === p.id
-                      ? 'border-indigo-500/60 bg-indigo-600/20 text-indigo-300'
-                      : 'border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800'
-                  }`}
-                >
-                  <span className="text-sm">{p.icon}</span>
-                  <span className="truncate">{p.label}</span>
-                </button>
-              ))}
-            </div>
+            {lockedType ? (
+              /* Locked workspace — show fixed source badge, no switcher */
+              <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-orange-500/40 bg-orange-600/10">
+                <span className="text-base">
+                  {lockedType === 'teacher-part-time' ? '⏰'
+                    : lockedType === 'student' ? '🎓'
+                    : lockedType === 'staff' ? '👨‍🏫'
+                    : lockedType === 'certificate-student' ? '📜'
+                    : lockedType === 'certificate-staff' ? '🏅' : '✏️'}
+                </span>
+                <div>
+                  <p className="text-[10px] font-semibold text-orange-300">
+                    {lockedType === 'teacher-part-time' ? 'TPT ID Card'
+                      : lockedType === 'student' ? 'Student ID Card'
+                      : lockedType === 'staff' ? 'Staff ID Card'
+                      : lockedType === 'certificate-student' ? 'Student Certificate'
+                      : lockedType === 'certificate-staff' ? 'Staff Certificate' : lockedType}
+                  </p>
+                  <p className="text-[9px] text-slate-500">Locked workspace</p>
+                </div>
+              </div>
+            ) : (
+              /* Free workspace — full type switcher */
+              <div className="grid grid-cols-2 gap-1.5">
+                {([
+                  { id: 'student', label: 'Student', icon: '🎓' },
+                  { id: 'staff', label: 'Staff', icon: '👨‍🏫' },
+                  { id: 'certificate-student', label: 'Cert · Student', icon: '📜' },
+                  { id: 'certificate-staff', label: 'Cert · Staff', icon: '🏅' },
+                  { id: 'general', label: 'General', icon: '✏️' },
+                ] as const).map((p) => (
+                  <button key={p.id}
+                    onClick={() => update({ cardType: p.id })}
+                    className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-all ${
+                      design.cardType === p.id
+                        ? 'border-indigo-500/60 bg-indigo-600/20 text-indigo-300'
+                        : 'border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className="text-sm">{p.icon}</span>
+                    <span className="truncate">{p.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             <PanelLabel>Data Fields</PanelLabel>
             {(() => {
               const fields = CARD_TYPE_FIELDS[design.cardType] ?? [];
@@ -792,7 +816,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect }
                   </div>
                 );
               }
-              const purposeLabel: Record<string, string> = { student: 'Student ID Card', staff: 'Staff ID Card', 'certificate-student': 'Student Certificate', 'certificate-staff': 'Staff Certificate' };
+              const purposeLabel: Record<string, string> = { student: 'Student ID Card', staff: 'Staff ID Card', 'certificate-student': 'Student Certificate', 'certificate-staff': 'Staff Certificate', 'teacher-part-time': 'TPT ID Card' };
               return (
                 <>
                   <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-indigo-600/20 border border-indigo-500/30">

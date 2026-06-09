@@ -216,6 +216,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
     }
     return initialCardType === 'staff' ? STAFF_TEMPLATE :
            initialCardType === 'student' ? STUDENT_TEMPLATE :
+           initialCardType === 'teacher-part-time' ? { ...STAFF_TEMPLATE, cardType: 'teacher-part-time' as const } :
            BLANK_TEMPLATE;
   });
   // Only true once the server-side active design has been resolved (or we know there is none).
@@ -1427,6 +1428,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                 selectedId={isPreviewMode ? null : selectedId}
                 onDesignChange={isPreviewMode ? () => {} : setDesign}
                 onSelect={isPreviewMode ? () => {} : setSelectedId}
+                lockedType={lockedType}
               />
             </div>
           </div>
