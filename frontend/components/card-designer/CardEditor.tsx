@@ -1176,7 +1176,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
             </div>
           )}
         </div>
-        <TopBtn icon={<Icons.Print />} label="Print" title="Print Certificates" onClick={() => router.push('/admin/card-designer/print')} variant="violet" />
+        <TopBtn icon={<Icons.Print />} label="Print" title="Print cards with real data" onClick={() => router.push(initialCardType === 'teacher-part-time' ? '/admin/card-designer/print?mode=teacher-part-time' : '/admin/card-designer/print')} variant="violet" />
         <Divider />
 
         {/* View */}

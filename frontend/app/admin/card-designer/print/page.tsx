@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import QRCode from 'qrcode';
 import AuthGuard from '../../../../components/AuthGuard';
 import Sidebar from '../../../../components/Sidebar';
@@ -54,6 +55,21 @@ interface StaffUser {
   department?: string | null;
 }
 
+interface TptTeacher {
+  id: string;
+  name: string;
+  khmerName: string | null;
+  short: string;
+  sex: string | null;
+  color: string | null;
+  photo: string | null;
+  qrCode: string | null;
+  timetableId: string;
+  timetableName: string;
+  weeklyLessons: number;
+  lessons: { subjectName: string; className: string; perWeek: number }[];
+}
+
 interface CertEntry {
   id: string;
   name: string;
@@ -63,7 +79,7 @@ interface CertEntry {
   photoUrl?: string | null;
 }
 
-type Mode = 'certificate-student' | 'certificate-staff';
+type Mode = 'certificate-student' | 'certificate-staff' | 'teacher-part-time';
 
 function normalizePhoto(url: string | null | undefined): string | null {
   if (!url) return null;
@@ -74,7 +90,9 @@ function normalizePhoto(url: string | null | undefined): string | null {
 
 /* ── Main page ──────────────────────────────────────────────────────────── */
 export default function CertificatePrintPage() {
-  const [mode, setMode] = useState<Mode>('certificate-student');
+  const searchParams = useSearchParams();
+  const initialMode = (searchParams.get('mode') as Mode | null) ?? 'certificate-student';
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [design, setDesign] = useState<CardDesign | null>(null);
   const [designLoading, setDesignLoading] = useState(true);
   const [schoolName, setSchoolName] = useState('Wattaman School');
@@ -88,6 +106,9 @@ export default function CertificatePrintPage() {
 
   // Staff data
   const [staff, setStaff] = useState<StaffUser[]>([]);
+
+  // TPT teacher data
+  const [tptTeachers, setTptTeachers] = useState<TptTeacher[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -117,6 +138,20 @@ export default function CertificatePrintPage() {
       setDesign(mode === 'certificate-student' ? STUDENT_TEMPLATE : STAFF_TEMPLATE);
     }).finally(() => setDesignLoading(false));
   }, [mode]);
+
+  // Load TPT teachers
+  const loadTptTeachers = useCallback(async () => {
+    setLoading(true); setTptTeachers([]); setEntries([]); setSelected(new Set());
+    try {
+      const r = await apiFetch('/api/timetable/scheduled-teachers/all');
+      const all: TptTeacher[] = r.ok ? await r.json() : [];
+      setTptTeachers(all);
+    } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    if (mode === 'teacher-part-time') loadTptTeachers();
+  }, [mode, loadTptTeachers]);
 
   // Load study years on mount
   useEffect(() => {
@@ -192,6 +227,17 @@ export default function CertificatePrintPage() {
     '{{certificateDate}}': todayFormatted,
   });
 
+  const tptFieldValues = (t: TptTeacher): Record<string, string> => ({
+    '{{name}}': t.name,
+    '{{khmerName}}': t.khmerName ?? '',
+    '{{short}}': t.short,
+    '{{timetableName}}': t.timetableName,
+    '{{subjects}}': [...new Set(t.lessons.map((l) => l.subjectName).filter(Boolean))].join(', '),
+    '{{sex}}': t.sex ?? '',
+    '{{weeklyLessons}}': String(t.weeklyLessons),
+    '{{qrCode}}': t.qrCode ?? t.id,
+  });
+
   // Generate QR data URL
   const genQR = async (data: string): Promise<string> => {
     try { return await QRCode.toDataURL(data, { width: 200, margin: 1 }); } catch { return ''; }
@@ -212,6 +258,14 @@ export default function CertificatePrintPage() {
           fieldValues: studentFieldValues(s, className),
           qrData: s.qrCode ?? s.id,
           photoUrl: normalizePhoto(s.photo),
+        }))
+      : mode === 'teacher-part-time'
+      ? filteredTpt.map((t) => ({
+          id: t.id,
+          name: t.name,
+          fieldValues: tptFieldValues(t),
+          qrData: t.qrCode ?? t.id,
+          photoUrl: normalizePhoto(t.photo),
         }))
       : filteredStaff.map((u) => ({
           id: u.id,
@@ -244,15 +298,20 @@ export default function CertificatePrintPage() {
     setSelected(new Set(built.map((e) => e.id)));
     setPreviewing(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [design, mode, students, staff, selectedClass, classes, studyYearLabel, search]);
+  }, [design, mode, students, staff, tptTeachers, selectedClass, classes, studyYearLabel, search]);
 
+  const filteredTpt = tptTeachers.filter((t) =>
+    !search || t.name.toLowerCase().includes(search.toLowerCase()) || (t.khmerName ?? '').includes(search)
+  );
   const filteredStudents = students.filter((s) =>
     !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.studentNumber?.includes(search)
   );
   const filteredStaff = staff.filter((u) =>
     !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
   );
-  const totalPeople = mode === 'certificate-student' ? filteredStudents.length : filteredStaff.length;
+  const totalPeople = mode === 'certificate-student' ? filteredStudents.length
+    : mode === 'teacher-part-time' ? filteredTpt.length
+    : filteredStaff.length;
   const selectedEntries = entries.filter((e) => selected.has(e.id));
 
   const toggleSelect = (id: string) => setSelected((prev) => {
@@ -273,7 +332,7 @@ export default function CertificatePrintPage() {
       if (selectedEntries.length === 1) {
         await downloadSingleCardPDF(design, selectedEntries[0]);
       } else {
-        await downloadA4CardsPDF(design, selectedEntries, `Certificates – ${mode === 'certificate-student' ? 'Students' : 'Staff'}`);
+        await downloadA4CardsPDF(design, selectedEntries, `Cards – ${mode === 'certificate-student' ? 'Students' : mode === 'teacher-part-time' ? 'TPT Teachers' : 'Staff'}`);
       }
     } finally { setExporting(false); }
   };
@@ -283,7 +342,9 @@ export default function CertificatePrintPage() {
     await downloadSingleCardPDF(design, entry);
   };
 
-  const canGenerate = mode === 'certificate-student' ? filteredStudents.length > 0 : filteredStaff.length > 0;
+  const canGenerate = mode === 'certificate-student' ? filteredStudents.length > 0
+    : mode === 'teacher-part-time' ? filteredTpt.length > 0
+    : filteredStaff.length > 0;
   const hasEntries = entries.length > 0;
 
   return (
@@ -326,11 +387,12 @@ export default function CertificatePrintPage() {
 
               {/* Mode toggle */}
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Certificate Type</p>
-                <div className="flex gap-2">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Card Type</p>
+                <div className="flex gap-2 flex-wrap">
                   {([
                     { v: 'certificate-student' as Mode, label: 'Student Certificates', icon: '🎓' },
-                    { v: 'certificate-staff' as Mode, label: 'Staff Certificates', icon: '👨‍🏫' },
+                    { v: 'certificate-staff' as Mode, label: 'Staff Certificates', icon: '👨\u200d🏫' },
+                    { v: 'teacher-part-time' as Mode, label: 'TPT ID Cards', icon: '⏰' },
                   ]).map(({ v, label, icon }) => (
                     <button key={v} onClick={() => { setMode(v); setEntries([]); setSelected(new Set()); setSearch(''); }}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${mode === v ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
@@ -339,6 +401,19 @@ export default function CertificatePrintPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Filters: TPT mode */}
+              {mode === 'teacher-part-time' && (
+                <div className="flex flex-wrap gap-3 items-end">
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Search Teacher</label>
+                    <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name or Khmer name…"
+                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                  </div>
+                  {loading && <p className="text-xs text-slate-400">Loading teachers…</p>}
+                  {!loading && tptTeachers.length === 0 && <p className="text-xs text-amber-600">No scheduled teachers found in any timetable.</p>}
+                </div>
+              )}
 
               {/* Filters: student mode */}
               {mode === 'certificate-student' && (
