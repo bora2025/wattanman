@@ -383,7 +383,7 @@ export default function SchedulePage() {
   // ─── Render ───────────────────────────────────────────────────────
 
   return (
-    <AuthGuard allowedRoles={['ADMIN', 'CLASS_ADMIN']}>
+    <AuthGuard allowedRoles={['ADMIN']}>
       <div className="flex h-screen bg-gray-100">
         <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
 

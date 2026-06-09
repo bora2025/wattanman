@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { io, Socket } from 'socket.io-client'
 import { Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import Sidebar from '../../components/Sidebar'
@@ -78,6 +79,7 @@ function CardIcon({ color }: { color: string }) {
 
 function DashboardContent() {
   const { t } = useLanguage()
+  const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
   const [prevData, setPrevData] = useState<DashboardData | null>(null) // previous day for delta
   const [loading, setLoading] = useState(true)
@@ -117,6 +119,13 @@ function DashboardContent() {
       if (saved === 'compact' || saved === 'comfortable') setDensity(saved)
     } catch {}
   }, [])
+
+  // CLASS_ADMIN has no dashboard — send straight to class management
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('role') === 'CLASS_ADMIN') {
+      router.replace('/admin/classes')
+    }
+  }, [router])
 
   const currentNav = typeof window !== 'undefined' && localStorage.getItem('role') === 'CLASS_ADMIN' ? classAdminNav : adminNav
   useEffect(() => { if (selectedDate) fetchDashboard() }, [selectedDate])

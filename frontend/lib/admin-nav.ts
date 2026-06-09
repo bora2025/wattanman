@@ -51,11 +51,10 @@ export const adminNav = [
   { label: 'nav.settings', href: '/admin/settings', icon: 'settings' },
 ]
 
-/** Navigation for CLASS_ADMIN — limited to classes, scoring, student attendance, and timetable only. */
+/** Navigation for CLASS_ADMIN — limited to classes, scoring, and student attendance only. */
 export const classAdminNav = [
   // ── Academics ──
   { label: 'nav.manageClasses', href: '/admin/classes', icon: 'book', section: 'nav.section.academics' },
-  { label: 'nav.timetable', href: '/admin/timetable', icon: 'calendar' },
   { label: 'nav.scoring', href: '/admin/scoring', icon: 'trophy' },
 
   // ── Attendance ──
