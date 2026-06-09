@@ -60,4 +60,5 @@ export const classAdminNav = [
   // ── Attendance ──
   { label: 'nav.takeAttendance', href: '/admin/attendance', icon: 'camera', section: 'nav.section.attendance' },
   { label: 'nav.editAttendance', href: '/admin/attendance/edit', icon: 'edit' },
+  { label: 'nav.selfScan', href: '/employee/scan', icon: 'camera' },
 ]

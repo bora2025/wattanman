@@ -5,7 +5,7 @@ import { BrowserMultiFormatReader } from '@zxing/library'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { employeeNav } from '../../../lib/employee-nav'
-import { adminNav } from '../../../lib/admin-nav'
+import { adminNav, classAdminNav } from '../../../lib/admin-nav'
 import { teacherNav } from '../../../lib/teacher-nav'
 import { reporterNav } from '../../../lib/reporter-nav'
 import { apiFetch } from '../../../lib/api'
@@ -241,13 +241,13 @@ export default function EmployeeScanPage() {
   const formatTime = (iso?: string) => formatCambodiaTime(iso)
 
   return (
-    <AuthGuard allowedRoles={['EMPLOYEE', 'ADMIN', 'TEACHER', 'WATTAMAN_REPORTER']}>
+    <AuthGuard allowedRoles={['EMPLOYEE', 'ADMIN', 'TEACHER', 'WATTAMAN_REPORTER', 'CLASS_ADMIN']}>
       <div className="flex min-h-screen bg-slate-50">
         <Sidebar
-          title={userRole === 'ADMIN' ? 'Admin' : userRole === 'TEACHER' ? 'Teacher' : userRole === 'WATTAMAN_REPORTER' ? 'Reporter' : 'Employee'}
+          title={userRole === 'ADMIN' ? 'Admin' : userRole === 'CLASS_ADMIN' ? 'Class Admin' : userRole === 'TEACHER' ? 'Teacher' : userRole === 'WATTAMAN_REPORTER' ? 'Reporter' : 'Employee'}
           subtitle={userName || 'Portal'}
-          navItems={userRole === 'ADMIN' ? adminNav : userRole === 'TEACHER' ? teacherNav : userRole === 'WATTAMAN_REPORTER' ? reporterNav : employeeNav}
-          accentColor={userRole === 'ADMIN' ? 'indigo' : userRole === 'TEACHER' ? 'sky' : userRole === 'WATTAMAN_REPORTER' ? 'teal' : 'emerald'}
+          navItems={userRole === 'ADMIN' ? adminNav : userRole === 'CLASS_ADMIN' ? classAdminNav : userRole === 'TEACHER' ? teacherNav : userRole === 'WATTAMAN_REPORTER' ? reporterNav : employeeNav}
+          accentColor={userRole === 'ADMIN' ? 'indigo' : userRole === 'CLASS_ADMIN' ? 'indigo' : userRole === 'TEACHER' ? 'sky' : userRole === 'WATTAMAN_REPORTER' ? 'teal' : 'emerald'}
         />
 
         <main className="flex-1 lg:ml-0">
