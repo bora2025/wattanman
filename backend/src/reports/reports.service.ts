@@ -540,6 +540,7 @@ export class ReportsService {
         select: {
           id: true,
           studentNumber: true,
+          address: true,
           user: { select: { name: true } },
           class: { select: { name: true } },
         },
@@ -588,7 +589,7 @@ export class ReportsService {
     const totalStaffAbsent = staffRecordedAbsent + staffNoRecord.length;
 
     // Build detail rows: unique students
-    const studentMap = new Map<string, { id: string; name: string; role: string; className: string; present: number; absent: number; late: number; permission: number }>();
+    const studentMap = new Map<string, { id: string; name: string; role: string; className: string; address: string; present: number; absent: number; late: number; permission: number }>();
     for (const a of studentAttendances) {
       const key = a.studentId;
       if (!studentMap.has(key)) {
@@ -597,6 +598,7 @@ export class ReportsService {
           name: a.student.user.name,
           role: 'Student',
           className: a.student.class?.name || a.class.name,
+          address: (a.student as any).address || '',
           present: 0, absent: 0, late: 0, permission: 0,
         });
       }
@@ -643,6 +645,7 @@ export class ReportsService {
         name: s.user.name,
         role: 'Student',
         className: s.class?.name || '',
+        address: (s as any).address || '',
         present: 0, absent: 1, late: 0, permission: 0,
       });
     }
