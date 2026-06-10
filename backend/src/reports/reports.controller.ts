@@ -38,7 +38,7 @@ export class ReportsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER')
   @Get('dashboard-summary')
   async getDashboardSummary(@Request() req, @Query('date') date?: string) {
     return this.reportsService.getDashboardSummary(
@@ -48,7 +48,7 @@ export class ReportsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'WATTAMAN_REPORTER')
   @Get('class-attendance-progress')
   async getClassAttendanceProgress(@Request() req, @Query('date') date?: string) {
     return this.reportsService.getClassAttendanceProgress(
