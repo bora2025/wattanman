@@ -1,6 +1,6 @@
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
-RUN apk add --no-cache libc6-compat
+# libc6-compat is Alpine-specific; not needed on Debian slim
 
 WORKDIR /app
 
@@ -18,15 +18,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # --- Production stage ---
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs
 
 # Copy public assets
 COPY --from=builder /app/public ./public

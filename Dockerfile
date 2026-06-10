@@ -1,6 +1,6 @@
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
-RUN apk add --no-cache openssl
+RUN apt-get update -qq && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -19,9 +19,9 @@ COPY backend/nest-cli.json backend/tsconfig.json backend/tsconfig.build.json bac
 RUN npm run build
 
 # --- Production stage ---
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 
-RUN apk add --no-cache openssl
+RUN apt-get update -qq && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
