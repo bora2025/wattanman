@@ -659,6 +659,7 @@ export class ReportsService {
     }
     for (const [studentId, row] of studentMap.entries()) {
       const recs = studentAttByPerson.get(studentId) || [];
+      if (recs.length === 0) continue; // already marked absent:1 above — do not overwrite
       const totals = countDailyHeadcount(recs as any, (a: any) => a.studentId, classRule.caseStudyABEnabled ?? true, classAbsentThreshold);
       row.present = totals.present;
       row.absent = totals.absent;
@@ -673,6 +674,7 @@ export class ReportsService {
     }
     for (const [userId, row] of staffMap.entries()) {
       const recs = staffAttByPerson.get(userId) || [];
+      if (recs.length === 0) continue; // already marked absent:1 above — do not overwrite
       const totals = countDailyHeadcount(recs as any, (a: any) => a.userId, staffRule.caseStudyABEnabled ?? true, staffAbsentThreshold);
       row.present = totals.present;
       row.absent = totals.absent;
