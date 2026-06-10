@@ -973,15 +973,23 @@ function DashboardContent() {
 
               {/* Filter bar */}
               <div className="px-5 py-3 border-b border-slate-100 flex flex-wrap gap-2 items-center">
-                <div className="relative flex-1 min-w-[160px]">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                {/* Address search — icon is outside the input so it never overlaps text */}
+                <div className="flex flex-1 min-w-[200px] items-center gap-0 rounded-xl border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-500/20 transition-all overflow-hidden">
+                  <span className="flex items-center justify-center w-10 h-10 shrink-0 text-slate-400">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  </span>
                   <input
                     type="text"
                     placeholder="Filter by address..."
                     value={absentAddressFilter}
                     onChange={e => setAbsentAddressFilter(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 focus:bg-white transition-all"
+                    className="flex-1 bg-transparent py-2 pr-3 text-sm text-slate-700 placeholder:text-slate-400 outline-none"
                   />
+                  {absentAddressFilter && (
+                    <button onClick={() => setAbsentAddressFilter('')} className="flex items-center justify-center w-8 h-8 mr-1 shrink-0 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                  )}
                 </div>
                 <div className="flex gap-1.5">
                   {(['Student', 'Staff'] as const).map(r => (
