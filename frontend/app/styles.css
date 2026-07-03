@@ -225,6 +225,12 @@
   .badge-gray {
     @apply badge bg-slate-100 text-slate-700;
   }
+  .badge-teal {
+    @apply badge bg-teal-100 text-teal-800;
+  }
+  .badge-purple {
+    @apply badge bg-purple-100 text-purple-800;
+  }
 
   /* ── Page shell — mobile: teal bg, bottom nav space ── */
   .page-shell {

@@ -54,6 +54,7 @@ const roleLabels: Record<string, string> = {
   GENERAL_MANAGER: 'អ្នកគ្រប់គ្រងទូទៅ',
   WATTAMAN: 'Wattaman',
   WATTAMAN_REPORTER: 'Wattaman Reporter',
+  ACCOUNTER: 'Accounter',
 }
 
 const roleBadge: Record<string, string> = {
@@ -67,6 +68,7 @@ const roleBadge: Record<string, string> = {
   PARENT: 'badge-gray',
   WATTAMAN: 'badge-teal',
   WATTAMAN_REPORTER: 'badge-teal',
+  ACCOUNTER: 'badge-purple',
 }
 
 // Roles considered admin-level for the Manage Users screen filter.
