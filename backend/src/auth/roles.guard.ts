@@ -21,9 +21,9 @@ import { ROLES_KEY } from './roles.decorator';
  * This avoids having to list every higher-tier role on every endpoint.
  */
 const ROLE_INHERITS: Record<string, string[]> = {
-  SUPER_ADMIN: ['ADMIN', 'SCHOOL_ADMIN', 'WATTAMAN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN'],
-  SCHOOL_ADMIN: ['ADMIN', 'WATTAMAN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN'],
-  ADMIN: ['WATTAMAN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN'],
+  SUPER_ADMIN: ['ADMIN', 'SCHOOL_ADMIN', 'WATTAMAN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN', 'ACCOUNTER'],
+  SCHOOL_ADMIN: ['ADMIN', 'WATTAMAN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN', 'ACCOUNTER'],
+  ADMIN: ['WATTAMAN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN', 'ACCOUNTER'],
 };
 
 @Injectable()

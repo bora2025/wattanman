@@ -22,7 +22,7 @@ export class FeesController {
 
   // ─── Students dropdown ────────────────────────────────────────────────────
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTER')
   @Get('students')
   getStudents() {
     return this.feesService.getStudents();
@@ -30,7 +30,7 @@ export class FeesController {
 
   // ─── Summary ──────────────────────────────────────────────────────────────
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTER')
   @Get('summary')
   getSummary() {
     return this.feesService.getSummary();
@@ -38,7 +38,7 @@ export class FeesController {
 
   // ─── Fee Records ──────────────────────────────────────────────────────────
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTER')
   @Get()
   getAll(
     @Query('status') status?: string,
@@ -47,7 +47,7 @@ export class FeesController {
     return this.feesService.getAll(status, search);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTER')
   @Get(':id')
   getOne(@Param('id') id: string) {
     return this.feesService.getOne(id);
@@ -59,6 +59,8 @@ export class FeesController {
     @Body() body: {
       studentId: string;
       totalAmount: number;
+      discount?: number;
+      discountReason?: string;
       dueDate: string;
       term?: string;
       notes?: string;
@@ -72,7 +74,7 @@ export class FeesController {
   @Put(':id')
   update(
     @Param('id') id: string,
-    @Body() body: { totalAmount?: number; dueDate?: string; term?: string; notes?: string },
+    @Body() body: { totalAmount?: number; discount?: number; discountReason?: string; dueDate?: string; term?: string; notes?: string },
   ) {
     return this.feesService.update(id, body);
   }
@@ -85,7 +87,7 @@ export class FeesController {
 
   // ─── Record a payment on a fee record ─────────────────────────────────────
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTER')
   @Post(':id/payments')
   recordPayment(
     @Param('id') id: string,

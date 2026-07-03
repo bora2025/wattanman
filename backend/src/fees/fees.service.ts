@@ -80,6 +80,8 @@ export class FeesService {
   async create(data: {
     studentId: string;
     totalAmount: number;
+    discount?: number;
+    discountReason?: string;
     dueDate: string;
     term?: string;
     notes?: string;
@@ -88,10 +90,16 @@ export class FeesService {
     const student = await this.prisma.student.findUnique({ where: { id: data.studentId } });
     if (!student) throw new BadRequestException('Student not found');
 
+    const discount = data.discount ?? 0;
+    if (discount < 0) throw new BadRequestException('Discount cannot be negative');
+    if (discount > data.totalAmount) throw new BadRequestException('Discount cannot exceed total amount');
+
     const record = await this.prisma.feeRecord.create({
       data: {
         studentId: data.studentId,
         totalAmount: data.totalAmount,
+        discount,
+        discountReason: data.discountReason ?? null,
         paidAmount: 0,
         dueDate: new Date(data.dueDate),
         term: data.term ?? null,
@@ -113,15 +121,22 @@ export class FeesService {
 
   async update(
     id: string,
-    data: { totalAmount?: number; dueDate?: string; term?: string; notes?: string },
+    data: { totalAmount?: number; discount?: number; discountReason?: string; dueDate?: string; term?: string; notes?: string },
   ) {
     const existing = await this.prisma.feeRecord.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Fee record not found');
+
+    const resolvedTotal = data.totalAmount ?? existing.totalAmount;
+    const resolvedDiscount = data.discount ?? existing.discount;
+    if (resolvedDiscount < 0) throw new BadRequestException('Discount cannot be negative');
+    if (resolvedDiscount > resolvedTotal) throw new BadRequestException('Discount cannot exceed total amount');
 
     const record = await this.prisma.feeRecord.update({
       where: { id },
       data: {
         ...(data.totalAmount !== undefined && { totalAmount: data.totalAmount }),
+        ...(data.discount !== undefined && { discount: data.discount }),
+        ...(data.discountReason !== undefined && { discountReason: data.discountReason }),
         ...(data.dueDate !== undefined && { dueDate: new Date(data.dueDate) }),
         ...(data.term !== undefined && { term: data.term }),
         ...(data.notes !== undefined && { notes: data.notes }),
@@ -155,7 +170,8 @@ export class FeesService {
     const record = await this.prisma.feeRecord.findUnique({ where: { id: feeRecordId } });
     if (!record) throw new NotFoundException('Fee record not found');
 
-    const balance = record.totalAmount - record.paidAmount;
+    const effective = record.totalAmount - (record.discount ?? 0);
+    const balance = effective - record.paidAmount;
     if (data.amount <= 0) throw new BadRequestException('Amount must be greater than 0');
     if (data.amount > balance) {
       throw new BadRequestException(`Amount exceeds outstanding balance ($${balance})`);
@@ -184,7 +200,7 @@ export class FeesService {
   async getSummary() {
     const records = await this.getAll();
     const totalRevenue = records.reduce((s, r) => s + r.paidAmount, 0);
-    const pendingAmount = records.reduce((s, r) => s + Math.max(0, r.totalAmount - r.paidAmount), 0);
+    const pendingAmount = records.reduce((s, r) => s + Math.max(0, (r.effectiveAmount ?? r.totalAmount) - r.paidAmount), 0);
     const paidCount = records.filter(r => this.computeStatus(r) === 'paid').length;
     const collectionRate =
       records.length > 0 ? Math.round((paidCount / records.length) * 100) : 0;
@@ -195,6 +211,7 @@ export class FeesService {
   // ─── Private helpers ──────────────────────────────────────────────────────
 
   private mapRecord(r: any) {
+    const discount = r.discount ?? 0;
     return {
       id: r.id,
       studentId: r.studentId,
@@ -202,6 +219,9 @@ export class FeesService {
       studentNumber: r.student.studentNumber ?? '',
       class: r.student.class?.name ?? '',
       totalAmount: r.totalAmount,
+      discount,
+      discountReason: r.discountReason ?? '',
+      effectiveAmount: r.totalAmount - discount,
       paidAmount: r.paidAmount,
       dueDate: r.dueDate instanceof Date
         ? r.dueDate.toISOString().split('T')[0]
@@ -220,8 +240,9 @@ export class FeesService {
     };
   }
 
-  private computeStatus(r: { totalAmount: number; paidAmount: number; dueDate: string }) {
-    const balance = r.totalAmount - r.paidAmount;
+  private computeStatus(r: { totalAmount: number; discount?: number; paidAmount: number; dueDate: string }) {
+    const effective = r.totalAmount - (r.discount ?? 0);
+    const balance = effective - r.paidAmount;
     if (balance <= 0) return 'paid';
     if (new Date(r.dueDate) < new Date()) return 'overdue';
     if (r.paidAmount > 0) return 'partial';

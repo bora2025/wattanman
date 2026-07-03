@@ -402,17 +402,19 @@ model AttendanceFormatRule {
 // ─── Fee Management ───────────────────────────────────────────────────────────
 
 model FeeRecord {
-  id          String   @id @default(cuid())
-  studentId   String
-  student     Student  @relation(fields: [studentId], references: [id])
-  totalAmount Float
-  paidAmount  Float    @default(0)
-  dueDate     DateTime
-  term        String?
-  notes       String?
-  createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(cuid())
+  studentId        String
+  student          Student  @relation(fields: [studentId], references: [id])
+  totalAmount      Float
+  discount         Float    @default(0)
+  discountReason   String?
+  paidAmount       Float    @default(0)
+  dueDate          DateTime
+  term             String?
+  notes            String?
+  createdById      String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   payments FeePayment[]
 

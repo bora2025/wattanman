@@ -47,6 +47,7 @@ function LoginContent() {
           const wattamanRoles = ['WATTAMAN'];
           const reporterRoles = ['WATTAMAN_REPORTER'];
           const classAdminRoles = ['CLASS_ADMIN'];
+          const accounterRoles = ['ACCOUNTER'];
           let dest = '/employee';
           if (adminRoles.includes(role)) dest = '/admin';
           else if (classAdminRoles.includes(role)) dest = '/admin/classes';
@@ -55,6 +56,7 @@ function LoginContent() {
           else if (parentRoles.includes(role)) dest = '/parent';
           else if (wattamanRoles.includes(role)) dest = '/wattaman';
           else if (reporterRoles.includes(role)) dest = '/reporter';
+          else if (accounterRoles.includes(role)) dest = '/accounter';
           router.push(dest);
         }
       } else {

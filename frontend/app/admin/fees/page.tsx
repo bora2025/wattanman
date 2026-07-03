@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { BrowserMultiFormatReader } from '@zxing/library'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
@@ -29,6 +30,9 @@ interface FeeRecord {
   studentName: string
   class: string
   totalAmount: number
+  discount: number
+  discountReason: string
+  effectiveAmount: number
   paidAmount: number
   dueDate: string
   term: string
@@ -41,7 +45,7 @@ type FeeStatus = 'all' | 'paid' | 'partial' | 'pending' | 'overdue'
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getStatus(record: FeeRecord): 'paid' | 'partial' | 'pending' | 'overdue' {
-  const balance = record.totalAmount - record.paidAmount
+  const balance = record.effectiveAmount - record.paidAmount
   const isOverdue = new Date(record.dueDate) < new Date() && balance > 0
   if (balance <= 0) return 'paid'
   if (isOverdue) return 'overdue'
@@ -73,32 +77,38 @@ function seedData(): FeeRecord[] {
   return [
     {
       id: '1', studentId: 's1', studentName: 'Emma Johnson', class: '10-A',
-      totalAmount: 2500, paidAmount: 2500, dueDate: '2025-09-01', term: '2025-T1',
+      totalAmount: 2500, discount: 0, discountReason: '', effectiveAmount: 2500,
+      paidAmount: 2500, dueDate: '2025-09-01', term: '2025-T1',
       payments: [{ id: 'p1', amount: 2500, date: '2025-08-20', createdBy: 'Admin' }],
     },
     {
       id: '2', studentId: 's2', studentName: 'Michael Chen', class: '10-B',
-      totalAmount: 2500, paidAmount: 2500, dueDate: '2025-09-01', term: '2025-T1',
-      payments: [{ id: 'p2', amount: 2500, date: '2025-08-22', createdBy: 'Admin' }],
+      totalAmount: 2500, discount: 250, discountReason: 'Academic Excellence', effectiveAmount: 2250,
+      paidAmount: 2250, dueDate: '2025-09-01', term: '2025-T1',
+      payments: [{ id: 'p2', amount: 2250, date: '2025-08-22', createdBy: 'Admin' }],
     },
     {
       id: '3', studentId: 's3', studentName: 'Sarah Williams', class: '9-A',
-      totalAmount: 2300, paidAmount: 1200, dueDate: '2025-09-15', term: '2025-T1',
+      totalAmount: 2300, discount: 0, discountReason: '', effectiveAmount: 2300,
+      paidAmount: 1200, dueDate: '2025-09-15', term: '2025-T1',
       payments: [{ id: 'p3', amount: 1200, date: '2025-09-01', createdBy: 'Admin' }],
     },
     {
       id: '4', studentId: 's4', studentName: 'James Brown', class: '11-C',
-      totalAmount: 2700, paidAmount: 0, dueDate: '2025-09-01', term: '2025-T1',
+      totalAmount: 2700, discount: 500, discountReason: 'Sports Day Promotion', effectiveAmount: 2200,
+      paidAmount: 0, dueDate: '2025-09-01', term: '2025-T1',
       payments: [],
     },
     {
       id: '5', studentId: 's5', studentName: 'Olivia Davis', class: '10-A',
-      totalAmount: 2500, paidAmount: 2500, dueDate: '2025-08-28', term: '2025-T1',
+      totalAmount: 2500, discount: 0, discountReason: '', effectiveAmount: 2500,
+      paidAmount: 2500, dueDate: '2025-08-28', term: '2025-T1',
       payments: [{ id: 'p5', amount: 2500, date: '2025-08-15', createdBy: 'Admin' }],
     },
     {
       id: '6', studentId: 's6', studentName: 'Noah Martinez', class: '9-B',
-      totalAmount: 2300, paidAmount: 0, dueDate: '2025-08-15', term: '2025-T1',
+      totalAmount: 2300, discount: 0, discountReason: '', effectiveAmount: 2300,
+      paidAmount: 0, dueDate: '2025-08-15', term: '2025-T1',
       payments: [],
     },
   ]
@@ -131,7 +141,7 @@ interface PaymentModalProps {
   onSave: (recordId: string, amount: number, note: string) => void
 }
 function PaymentModal({ record, onClose, onSave }: PaymentModalProps) {
-  const balance = record.totalAmount - record.paidAmount
+  const balance = record.effectiveAmount - record.paidAmount
   const [amount, setAmount] = useState(balance.toString())
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
@@ -231,10 +241,533 @@ function PaymentModal({ record, onClose, onSave }: PaymentModalProps) {
   )
 }
 
+// ─── QR Scanner Modal ─────────────────────────────────────────────────────────
+
+interface QRScannerModalProps {
+  records: FeeRecord[]
+  onClose: () => void
+  onPayRecord: (record: FeeRecord) => void
+}
+function QRScannerModal({ records, onClose, onPayRecord }: QRScannerModalProps) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const readerRef = useRef<BrowserMultiFormatReader | null>(null)
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([])
+  const [camIdx, setCamIdx] = useState(0)
+  const camIdxRef = useRef(0)
+  const [scanning, setScanning] = useState(false)
+  const [message, setMessage] = useState('Starting camera…')
+  const [matched, setMatched] = useState<FeeRecord[]>([])
+  const [scannedName, setScannedName] = useState('')
+  const cancelledRef = useRef(false)
+
+  const beep = useCallback((ok: boolean) => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain); gain.connect(ctx.destination)
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(ok ? 880 : 300, ctx.currentTime)
+      gain.gain.setValueAtTime(0.25, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25)
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.25)
+    } catch { /* audio not supported */ }
+  }, [])
+
+  const startCamera = useCallback(async () => {
+    const videoEl = videoRef.current
+    if (!videoEl || cancelledRef.current) return
+    try {
+      if (readerRef.current) { readerRef.current.reset(); readerRef.current = null }
+      videoEl.pause()
+      if (videoEl.srcObject) {
+        (videoEl.srcObject as MediaStream).getTracks().forEach(t => t.stop())
+        videoEl.srcObject = null
+      }
+      await new Promise(r => setTimeout(r, 300))
+      if (cancelledRef.current) return
+
+      const reader = new BrowserMultiFormatReader()
+      readerRef.current = reader
+      reader.timeBetweenDecodingAttempts = 150
+
+      let devs = cameras
+      if (devs.length === 0) {
+        devs = await reader.listVideoInputDevices()
+        devs.sort((a, b) => {
+          const aBack = /back|rear|environment/i.test(a.label) ? 0 : 1
+          const bBack = /back|rear|environment/i.test(b.label) ? 0 : 1
+          return aBack - bBack
+        })
+        if (!cancelledRef.current) setCameras(devs)
+      }
+      if (cancelledRef.current) return
+
+      const idx = camIdxRef.current
+      const deviceId = devs.length > 0 && idx < devs.length ? devs[idx].deviceId : undefined
+
+      await reader.decodeFromVideoDevice(deviceId || null, videoEl, (result) => {
+        if (cancelledRef.current || !result) return
+        handleScanned(result.getText())
+      })
+      if (!cancelledRef.current) {
+        setScanning(true)
+        setMessage('Camera ready — scan student ID card')
+      }
+    } catch (err: any) {
+      if (!cancelledRef.current) setMessage('Camera error: ' + (err?.message ?? 'Permission denied'))
+    }
+  }, [cameras]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    cancelledRef.current = false
+    startCamera()
+    return () => {
+      cancelledRef.current = true
+      if (readerRef.current) { readerRef.current.reset(); readerRef.current = null }
+      const video = videoRef.current
+      if (video?.srcObject) {
+        (video.srcObject as MediaStream).getTracks().forEach(t => t.stop())
+        video.srcObject = null
+      }
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleScanned(text: string) {
+    // Already showing results — don't re-trigger
+    if (matched.length > 0) return
+    let studentId: string | null = null
+    try {
+      const parsed = JSON.parse(text)
+      studentId = parsed.studentId ?? null
+    } catch {
+      studentId = text.trim() // fallback: raw student ID or student number
+    }
+    if (!studentId) {
+      beep(false)
+      setMessage('Invalid QR code — not a student card')
+      return
+    }
+
+    // Match by studentId or studentNumber
+    const hits = records.filter(r =>
+      r.studentId === studentId ||
+      (r as any).studentNumber === studentId
+    )
+
+    if (hits.length === 0) {
+      beep(false)
+      setMessage(`No fee records found for this student`)
+      return
+    }
+
+    beep(true)
+    setScannedName(hits[0].studentName)
+    setMatched(hits)
+    setMessage('')
+  }
+
+  function switchCamera() {
+    const next = (camIdxRef.current + 1) % Math.max(cameras.length, 1)
+    camIdxRef.current = next
+    setCamIdx(next)
+    setMatched([])
+    setScannedName('')
+    setMessage('Switching camera…')
+    startCamera()
+  }
+
+  function reset() {
+    setMatched([])
+    setScannedName('')
+    setMessage('Scan next student ID card')
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Scan Student ID Card</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Point camera at student QR code to record payment</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {cameras.length > 1 && (
+              <button
+                onClick={switchCamera}
+                className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                title="Switch camera"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Camera view */}
+        <div className="relative bg-black" style={{ aspectRatio: '4/3' }}>
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover"
+            autoPlay
+            muted
+            playsInline
+          />
+
+          {/* Scan overlay */}
+          {!matched.length && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="relative w-52 h-52">
+                {/* Corner brackets */}
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white rounded-tl-md" />
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white rounded-tr-md" />
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white rounded-bl-md" />
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white rounded-br-md" />
+                {scanning && (
+                  <div className="absolute inset-x-0 top-0 h-0.5 bg-blue-400 animate-[scan_2s_linear_infinite]"
+                    style={{ animation: 'scanLine 2s linear infinite' }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Status message */}
+          {message && (
+            <div className="absolute bottom-3 inset-x-3 flex justify-center">
+              <span className="bg-black/70 text-white text-xs px-4 py-2 rounded-full">
+                {message}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Results */}
+        {matched.length > 0 && (
+          <div className="p-4 space-y-3 overflow-y-auto">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{scannedName}</p>
+                <p className="text-xs text-gray-400">{matched.length} fee record{matched.length > 1 ? 's' : ''} found</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {matched.map(r => {
+                const status = getStatus(r)
+                const balance = r.effectiveAmount - r.paidAmount
+                return (
+                  <div key={r.id} className="border border-gray-200 rounded-xl p-3.5 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-gray-900">{r.term || 'No term'}</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_BADGE[status]}`}>
+                          {STATUS_LABEL[status]}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Due: {fmt(r.effectiveAmount)} &nbsp;·&nbsp; Paid: {fmt(r.paidAmount)}
+                        {balance > 0 && <span className="text-red-500"> &nbsp;·&nbsp; Balance: {fmt(balance)}</span>}
+                      </p>
+                    </div>
+                    {balance > 0 ? (
+                      <button
+                        onClick={() => { onPayRecord(r); onClose() }}
+                        className="shrink-0 px-3 py-1.5 bg-gray-900 text-white text-xs font-semibold rounded-lg hover:bg-gray-800 transition"
+                      >
+                        Pay
+                      </button>
+                    ) : (
+                      <span className="shrink-0 px-3 py-1.5 bg-gray-100 text-gray-400 text-xs font-semibold rounded-lg">
+                        Paid ✓
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <button
+              onClick={reset}
+              className="w-full py-2 text-xs font-medium text-gray-500 hover:text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50 transition"
+            >
+              Scan another student
+            </button>
+          </div>
+        )}
+
+        <style>{`
+          @keyframes scanLine {
+            0% { top: 0; }
+            50% { top: calc(100% - 2px); }
+            100% { top: 0; }
+          }
+        `}</style>
+      </div>
+    </div>
+  )
+}
+
+// ─── Invoice Modal ────────────────────────────────────────────────────────────
+
+interface InvoiceModalProps {
+  record: FeeRecord
+  onClose: () => void
+}
+function InvoiceModal({ record, onClose }: InvoiceModalProps) {
+  const status = getStatus(record)
+  const balance = record.effectiveAmount - record.paidAmount
+  const invoiceNo = record.id.slice(-8).toUpperCase()
+  const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+
+  function handlePrint() {
+    const printContent = document.getElementById('fee-invoice-content')
+    if (!printContent) return
+    const win = window.open('', '_blank', 'width=800,height=900')
+    if (!win) return
+    win.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fee Invoice – ${record.studentName}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111; background: #fff; padding: 48px 56px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+    .school-name { font-size: 22px; font-weight: 700; color: #111; }
+    .school-sub { font-size: 12px; color: #888; margin-top: 2px; }
+    .invoice-meta { text-align: right; }
+    .invoice-meta h2 { font-size: 26px; font-weight: 800; color: #111; letter-spacing: -0.5px; }
+    .invoice-meta p { font-size: 12px; color: #666; margin-top: 2px; }
+    .divider { border: none; border-top: 1px solid #e5e7eb; margin: 24px 0; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+    .info-box { background: #f9fafb; border-radius: 10px; padding: 14px 16px; }
+    .info-box label { font-size: 10px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+    .info-box span { font-size: 14px; font-weight: 600; color: #111; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    thead tr { background: #f3f4f6; }
+    th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; }
+    th.right, td.right { text-align: right; }
+    td { padding: 10px 12px; font-size: 13px; color: #374151; border-bottom: 1px solid #f3f4f6; }
+    .totals { margin-top: 12px; width: 280px; margin-left: auto; }
+    .totals-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: #374151; }
+    .totals-row.bold { font-weight: 700; font-size: 15px; border-top: 2px solid #111; padding-top: 10px; margin-top: 4px; }
+    .totals-row.green { color: #059669; }
+    .totals-row.red { color: #dc2626; }
+    .stamp { display: inline-block; border: 3px solid; border-radius: 8px; padding: 6px 18px; font-size: 18px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; transform: rotate(-5deg); margin-top: 24px; }
+    .stamp.paid { color: #059669; border-color: #059669; }
+    .stamp.partial { color: #d97706; border-color: #d97706; }
+    .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; text-align: center; }
+    @media print { body { padding: 24px 32px; } }
+  </style>
+</head>
+<body>
+  ${printContent.innerHTML}
+</body>
+</html>`)
+    win.document.close()
+    win.focus()
+    setTimeout(() => { win.print() }, 400)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Modal header */}
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Fee Invoice</h2>
+            <p className="text-sm text-gray-400">Preview before printing</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 transition"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Print
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition"
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Invoice preview */}
+        <div className="overflow-y-auto p-6">
+          <div id="fee-invoice-content" className="bg-white rounded-xl border border-gray-200 p-8 text-sm">
+
+            {/* Header */}
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <p className="text-xl font-bold text-gray-900">Wattaman School</p>
+                <p className="text-xs text-gray-400 mt-0.5">Student Fee Receipt</p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-extrabold text-gray-900 tracking-tight">INVOICE</p>
+                <p className="text-xs text-gray-500 mt-1">No: #{invoiceNo}</p>
+                <p className="text-xs text-gray-500">Date: {today}</p>
+              </div>
+            </div>
+
+            <hr className="border-gray-200 mb-5" />
+
+            {/* Student & fee info */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="bg-gray-50 rounded-xl p-3.5">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Bill To</p>
+                <p className="font-semibold text-gray-900">{record.studentName}</p>
+                <p className="text-xs text-gray-500">Class: {record.class}</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-3.5">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Fee Details</p>
+                <p className="text-xs text-gray-600">Term: <span className="font-medium text-gray-900">{record.term || '—'}</span></p>
+                <p className="text-xs text-gray-600">Due Date: <span className="font-medium text-gray-900">{record.dueDate}</span></p>
+                {record.notes && <p className="text-xs text-gray-600 mt-0.5">Note: {record.notes}</p>}
+              </div>
+            </div>
+
+            {/* Fee line */}
+            <table className="w-full text-xs mb-4 border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="text-left px-3 py-2 rounded-tl-lg text-gray-500 font-semibold uppercase tracking-wider">Description</th>
+                  <th className="text-right px-3 py-2 rounded-tr-lg text-gray-500 font-semibold uppercase tracking-wider">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-gray-100">
+                  <td className="px-3 py-2.5 text-gray-700">
+                    School Fee{record.term ? ` – ${record.term}` : ''}
+                  </td>
+                  <td className="px-3 py-2.5 text-right font-medium text-gray-900">{fmt(record.totalAmount)}</td>
+                </tr>
+                {record.discount > 0 && (
+                  <tr className="border-b border-gray-100">
+                    <td className="px-3 py-2.5 text-emerald-600 flex items-center gap-1">
+                      <span>Discount</span>
+                      {record.discountReason && <span className="text-gray-400">— {record.discountReason}</span>}
+                    </td>
+                    <td className="px-3 py-2.5 text-right font-medium text-emerald-600">−{fmt(record.discount)}</td>
+                  </tr>
+                )}
+                {record.discount > 0 && (
+                  <tr>
+                    <td className="px-3 py-2 text-gray-500 font-semibold text-[11px] uppercase tracking-wide">Net Amount Due</td>
+                    <td className="px-3 py-2 text-right font-bold text-gray-900">{fmt(record.effectiveAmount)}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Payment history */}
+            {record.payments.length > 0 && (
+              <div className="mb-4">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Payment History</p>
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="text-left px-3 py-2 text-gray-500 font-semibold">#</th>
+                      <th className="text-left px-3 py-2 text-gray-500 font-semibold">Date</th>
+                      <th className="text-left px-3 py-2 text-gray-500 font-semibold">Note</th>
+                      <th className="text-right px-3 py-2 text-gray-500 font-semibold">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {record.payments.map((p, i) => (
+                      <tr key={p.id} className="border-b border-gray-100">
+                        <td className="px-3 py-2 text-gray-400">{i + 1}</td>
+                        <td className="px-3 py-2 text-gray-700">{p.date}</td>
+                        <td className="px-3 py-2 text-gray-500">{p.note || '—'}</td>
+                        <td className="px-3 py-2 text-right font-medium text-emerald-600">{fmt(p.amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Totals */}
+            <div className="flex justify-end">
+              <div className="w-64 space-y-1.5">
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>Total Amount</span><span className="font-medium text-gray-900">{fmt(record.totalAmount)}</span>
+                </div>
+                {record.discount > 0 && (
+                  <div className="flex justify-between text-xs text-emerald-600">
+                    <span>Discount{record.discountReason ? ` (${record.discountReason})` : ''}</span>
+                    <span className="font-medium">−{fmt(record.discount)}</span>
+                  </div>
+                )}
+                {record.discount > 0 && (
+                  <div className="flex justify-between text-xs text-gray-700 border-t border-gray-100 pt-1.5">
+                    <span className="font-semibold">Net Due</span><span className="font-semibold">{fmt(record.effectiveAmount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-xs text-emerald-600">
+                  <span>Total Paid</span><span className="font-semibold">{fmt(record.paidAmount)}</span>
+                </div>
+                <div className={`flex justify-between text-sm font-bold border-t border-gray-200 pt-2 mt-1 ${balance === 0 ? 'text-gray-400' : 'text-red-500'}`}>
+                  <span>Balance Due</span><span>{fmt(balance)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Status stamp */}
+            <div className="mt-6 flex justify-end">
+              {status === 'paid' && (
+                <span className="inline-block border-2 border-emerald-500 text-emerald-500 font-extrabold text-base tracking-widest uppercase px-4 py-1.5 rounded-lg rotate-[-4deg]">
+                  PAID
+                </span>
+              )}
+              {(status === 'partial') && (
+                <span className="inline-block border-2 border-amber-500 text-amber-500 font-extrabold text-base tracking-widest uppercase px-4 py-1.5 rounded-lg rotate-[-4deg]">
+                  PARTIAL
+                </span>
+              )}
+            </div>
+
+            <hr className="border-gray-100 mt-6 mb-3" />
+            <p className="text-center text-[10px] text-gray-400">
+              This is a computer-generated invoice. No signature required. — Wattaman School
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Add/Edit Fee Modal ───────────────────────────────────────────────────────
+
 interface AddFeeModalProps {
   students: Student[]
   onClose: () => void
-  onSave: (record: Omit<FeeRecord, 'id' | 'paidAmount' | 'payments'>) => void
+  onSave: (record: Omit<FeeRecord, 'id' | 'paidAmount' | 'payments' | 'effectiveAmount'>) => void
   editRecord?: FeeRecord | null
 }
 function AddFeeModal({ students, onClose, onSave, editRecord }: AddFeeModalProps) {
@@ -244,10 +777,16 @@ function AddFeeModal({ students, onClose, onSave, editRecord }: AddFeeModalProps
   )
   const [showDropdown, setShowDropdown] = useState(false)
   const [totalAmount, setTotalAmount] = useState(editRecord?.totalAmount.toString() ?? '')
+  const [discount, setDiscount] = useState(editRecord?.discount.toString() ?? '0')
+  const [discountReason, setDiscountReason] = useState(editRecord?.discountReason ?? '')
   const [dueDate, setDueDate] = useState(editRecord?.dueDate ?? '')
   const [term, setTerm] = useState(editRecord?.term ?? '')
   const [notes, setNotes] = useState(editRecord?.notes ?? '')
   const [error, setError] = useState('')
+
+  const parsedTotal = parseFloat(totalAmount) || 0
+  const parsedDiscount = parseFloat(discount) || 0
+  const effectivePreview = Math.max(0, parsedTotal - parsedDiscount)
 
   const filteredStudents = useMemo(() => {
     const q = studentQuery.toLowerCase()
@@ -269,12 +808,17 @@ function AddFeeModal({ students, onClose, onSave, editRecord }: AddFeeModalProps
     if (!selected) { setError('Select a student'); return }
     const amt = parseFloat(totalAmount)
     if (isNaN(amt) || amt <= 0) { setError('Enter a valid amount'); return }
+    const disc = parseFloat(discount) || 0
+    if (disc < 0) { setError('Discount cannot be negative'); return }
+    if (disc > amt) { setError('Discount cannot exceed total amount'); return }
     if (!dueDate) { setError('Select a due date'); return }
     onSave({
       studentId,
       studentName: selected.name,
       class: selected.class,
       totalAmount: amt,
+      discount: disc,
+      discountReason,
       dueDate,
       term,
       notes,
@@ -349,6 +893,38 @@ function AddFeeModal({ students, onClose, onSave, editRecord }: AddFeeModalProps
             </div>
           </div>
 
+          {/* Discount */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Discount Amount</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                <input
+                  type="number" min="0" step="0.01"
+                  value={discount}
+                  onChange={e => { setDiscount(e.target.value); setError('') }}
+                  className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Discount Reason</label>
+              <input
+                type="text"
+                value={discountReason}
+                onChange={e => setDiscountReason(e.target.value)}
+                placeholder="e.g. Sports Day Promo"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              />
+            </div>
+          </div>
+          {parsedDiscount > 0 && parsedTotal > 0 && (
+            <div className="flex items-center justify-between bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2.5 text-sm">
+              <span className="text-emerald-700 font-medium">Net amount due after discount</span>
+              <span className="font-bold text-emerald-800">${effectivePreview.toLocaleString()}</span>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
@@ -412,6 +988,8 @@ function FeeManagementContent() {
   const [paymentTarget, setPaymentTarget] = useState<FeeRecord | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [editTarget, setEditTarget] = useState<FeeRecord | null>(null)
+  const [printTarget, setPrintTarget] = useState<FeeRecord | null>(null)
+  const [showQRScanner, setShowQRScanner] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
@@ -487,13 +1065,15 @@ function FeeManagementContent() {
     showToast('Payment recorded successfully')
   }
 
-  function handleAddFee(data: Omit<FeeRecord, 'id' | 'paidAmount' | 'payments'>) {
+  function handleAddFee(data: Omit<FeeRecord, 'id' | 'paidAmount' | 'payments' | 'effectiveAmount'>) {
     apiFetch('/api/fees', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         studentId: data.studentId,
         totalAmount: data.totalAmount,
+        discount: data.discount,
+        discountReason: data.discountReason,
         dueDate: data.dueDate,
         term: data.term,
         notes: data.notes,
@@ -502,24 +1082,25 @@ function FeeManagementContent() {
       if (res.ok) {
         res.json().then(created => setRecords(prev => [created, ...prev]))
       } else {
-        // Optimistic fallback
-        const newRecord: FeeRecord = { ...data, id: Date.now().toString(), paidAmount: 0, payments: [] }
+        const newRecord: FeeRecord = { ...data, id: Date.now().toString(), paidAmount: 0, effectiveAmount: data.totalAmount - (data.discount ?? 0), payments: [] }
         setRecords(prev => [newRecord, ...prev])
       }
     }).catch(() => {
-      const newRecord: FeeRecord = { ...data, id: Date.now().toString(), paidAmount: 0, payments: [] }
+      const newRecord: FeeRecord = { ...data, id: Date.now().toString(), paidAmount: 0, effectiveAmount: data.totalAmount - (data.discount ?? 0), payments: [] }
       setRecords(prev => [newRecord, ...prev])
     })
     showToast('Fee record added')
   }
 
-  function handleEditFee(data: Omit<FeeRecord, 'id' | 'paidAmount' | 'payments'>) {
+  function handleEditFee(data: Omit<FeeRecord, 'id' | 'paidAmount' | 'payments' | 'effectiveAmount'>) {
     if (!editTarget) return
     apiFetch(`/api/fees/${editTarget.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         totalAmount: data.totalAmount,
+        discount: data.discount,
+        discountReason: data.discountReason,
         dueDate: data.dueDate,
         term: data.term,
         notes: data.notes,
@@ -530,14 +1111,14 @@ function FeeManagementContent() {
       } else {
         setRecords(prev => prev.map(r =>
           r.id === editTarget.id
-            ? { ...r, totalAmount: data.totalAmount, dueDate: data.dueDate, term: data.term, notes: data.notes }
+            ? { ...r, totalAmount: data.totalAmount, discount: data.discount, discountReason: data.discountReason, effectiveAmount: data.totalAmount - data.discount, dueDate: data.dueDate, term: data.term, notes: data.notes }
             : r
         ))
       }
     }).catch(() => {
       setRecords(prev => prev.map(r =>
         r.id === editTarget.id
-          ? { ...r, totalAmount: data.totalAmount, dueDate: data.dueDate, term: data.term, notes: data.notes }
+          ? { ...r, totalAmount: data.totalAmount, discount: data.discount, discountReason: data.discountReason, effectiveAmount: data.totalAmount - data.discount, dueDate: data.dueDate, term: data.term, notes: data.notes }
           : r
       ))
     })
@@ -571,11 +1152,11 @@ function FeeManagementContent() {
         : s
     }
     const rows = [
-      ['Student Name', 'Class', 'Amount', 'Paid', 'Balance', 'Due Date', 'Status', 'Term'],
+      ['Student Name', 'Class', 'Amount', 'Discount', 'Discount Reason', 'Net Due', 'Paid', 'Balance', 'Due Date', 'Status', 'Term'],
       ...filtered.map(r => {
         const st = getStatus(r)
-        const bal = r.totalAmount - r.paidAmount
-        return [r.studentName, r.class, r.totalAmount, r.paidAmount, bal, r.dueDate, STATUS_LABEL[st], r.term]
+        const bal = r.effectiveAmount - r.paidAmount
+        return [r.studentName, r.class, r.totalAmount, r.discount, r.discountReason, r.effectiveAmount, r.paidAmount, bal, r.dueDate, STATUS_LABEL[st], r.term]
       }),
     ]
     const csv = '\uFEFF' + rows.map(row => row.map(escapeField).join(',')).join('\n')
@@ -590,7 +1171,7 @@ function FeeManagementContent() {
 
   // ─── Summary stats ─────────────────────────────────────────────────────────
   const totalRevenue = records.reduce((sum, r) => sum + r.paidAmount, 0)
-  const pendingAmount = records.reduce((sum, r) => sum + Math.max(0, r.totalAmount - r.paidAmount), 0)
+  const pendingAmount = records.reduce((sum, r) => sum + Math.max(0, r.effectiveAmount - r.paidAmount), 0)
   const paidCount = records.filter(r => getStatus(r) === 'paid').length
   const collectionRate = records.length > 0 ? Math.round((paidCount / records.length) * 100) : 0
 
@@ -605,6 +1186,15 @@ function FeeManagementContent() {
             <p className="text-sm text-gray-500 mt-0.5">Track and manage student fee payments</p>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => setShowQRScanner(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h6v6H3zm12 0h6v6h-6zM3 15h6v6H3zm9-9h.01M12 12h3m0 0v3m0-3h3M15 15h3m0 0v3m-3 0h3" />
+              </svg>
+              Scan QR
+            </button>
             <button
               onClick={() => setShowAddModal(true)}
               className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition"
@@ -734,12 +1324,19 @@ function FeeManagementContent() {
                 <tbody className="divide-y divide-gray-50">
                   {filtered.map(r => {
                     const status = getStatus(r)
-                    const balance = r.totalAmount - r.paidAmount
+                    const balance = r.effectiveAmount - r.paidAmount
                     return (
                       <tr key={r.id} className="hover:bg-gray-50/60 transition-colors">
                         <td className="px-6 py-4 font-medium text-gray-900">{r.studentName}</td>
                         <td className="px-4 py-4 text-gray-600">{r.class}</td>
-                        <td className="px-4 py-4 text-right text-gray-700">{fmt(r.totalAmount)}</td>
+                        <td className="px-4 py-4 text-right">
+                          <span className="text-gray-700">{fmt(r.effectiveAmount)}</span>
+                          {r.discount > 0 && (
+                            <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700" title={r.discountReason || 'Discount'}>
+                              -{fmt(r.discount)}
+                            </span>
+                          )}
+                        </td>
                         <td className="px-4 py-4 text-right text-emerald-600 font-medium">{fmt(r.paidAmount)}</td>
                         <td className={`px-4 py-4 text-right font-medium ${balance === 0 ? 'text-gray-400' : 'text-red-500'}`}>{fmt(balance)}</td>
                         <td className={`px-4 py-4 font-medium ${status === 'overdue' ? 'text-red-500' : 'text-gray-600'}`}>{r.dueDate}</td>
@@ -756,6 +1353,18 @@ function FeeManagementContent() {
                                 className="px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
                               >
                                 Record Payment
+                              </button>
+                            )}
+                            {r.paidAmount > 0 && (
+                              <button
+                                onClick={() => setPrintTarget(r)}
+                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                title="Print Invoice"
+                                aria-label={`Print invoice for ${r.studentName}`}
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
                               </button>
                             )}
                             <button
@@ -793,9 +1402,9 @@ function FeeManagementContent() {
             <div className="px-6 py-3 border-t border-gray-100 bg-gray-50/40 flex items-center justify-between text-xs text-gray-500">
               <span>Showing {filtered.length} of {records.length} records</span>
               <div className="flex gap-4">
-                <span>Total billed: <span className="font-semibold text-gray-700">{fmt(filtered.reduce((s, r) => s + r.totalAmount, 0))}</span></span>
+                <span>Total billed: <span className="font-semibold text-gray-700">{fmt(filtered.reduce((s, r) => s + r.effectiveAmount, 0))}</span></span>
                 <span>Total collected: <span className="font-semibold text-emerald-600">{fmt(filtered.reduce((s, r) => s + r.paidAmount, 0))}</span></span>
-                <span>Outstanding: <span className="font-semibold text-red-500">{fmt(filtered.reduce((s, r) => s + Math.max(0, r.totalAmount - r.paidAmount), 0))}</span></span>
+                <span>Outstanding: <span className="font-semibold text-red-500">{fmt(filtered.reduce((s, r) => s + Math.max(0, r.effectiveAmount - r.paidAmount), 0))}</span></span>
               </div>
             </div>
           )}
@@ -803,11 +1412,26 @@ function FeeManagementContent() {
       </div>
 
       {/* Modals */}
+      {showQRScanner && (
+        <QRScannerModal
+          records={records}
+          onClose={() => setShowQRScanner(false)}
+          onPayRecord={r => setPaymentTarget(r)}
+        />
+      )}
+
       {paymentTarget && (
         <PaymentModal
           record={paymentTarget}
           onClose={() => setPaymentTarget(null)}
           onSave={handleRecordPayment}
+        />
+      )}
+
+      {printTarget && (
+        <InvoiceModal
+          record={printTarget}
+          onClose={() => setPrintTarget(null)}
         />
       )}
 
