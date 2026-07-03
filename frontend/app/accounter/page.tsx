@@ -546,6 +546,7 @@ function StatCard({ label, value, sub, icon, accent }: { label: string; value: s
 function AccounterDashboard() {
   const [records, setRecords] = useState<FeeRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [authError, setAuthError] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<FeeStatus>('all')
   const [paymentTarget, setPaymentTarget] = useState<FeeRecord | null>(null)
@@ -557,13 +558,16 @@ function AccounterDashboard() {
 
   async function loadData() {
     setLoading(true)
+    setAuthError(false)
     try {
       const res = await apiFetch('/api/fees')
       if (res.ok) {
         const data = await res.json()
         setRecords(Array.isArray(data) ? data : data.records ?? [])
+      } else if (res.status === 401 || res.status === 403) {
+        setAuthError(true)
       }
-    } catch { /* show empty */ } finally { setLoading(false) }
+    } catch { /* network error — show empty */ } finally { setLoading(false) }
   }
 
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 3000) }
@@ -627,26 +631,43 @@ function AccounterDashboard() {
     <div className="flex-1 overflow-y-auto bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Fee Dashboard</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Record payments and print invoices</p>
+        {/* Auth error — session expired or no permission */}
+        {authError && (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+            </div>
+            <h2 className="text-lg font-bold text-gray-900 mb-1">Session Expired</h2>
+            <p className="text-sm text-gray-500 mb-6 max-w-sm">
+              Your login session has expired or you do not have permission to access fee data.<br />Please log in again.
+            </p>
+            <a href="/login" className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 transition">
+              Go to Login
+            </a>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setShowQR(true)}
-              disabled={loading}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 3h6v6H3zm12 0h6v6h-6zM3 15h6v6H3zm9-9h.01M12 12h3m0 0v3m0-3h3M15 15h3m0 0v3m-3 0h3" /></svg>
-              {loading ? 'Loading…' : 'Scan QR'}
-            </button>
-            <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 shadow-sm transition">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
-              Export CSV
-            </button>
+        )}
+
+        {!authError && (<>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Fee Dashboard</h1>
+              <p className="text-sm text-gray-500 mt-0.5">Record payments and print invoices</p>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => setShowQR(true)}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 3h6v6H3zm12 0h6v6h-6zM3 15h6v6H3zm9-9h.01M12 12h3m0 0v3m0-3h3M15 15h3m0 0v3m-3 0h3" /></svg>
+                {loading ? 'Loading…' : 'Scan QR'}
+              </button>
+              <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 shadow-sm transition">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+                Export CSV
+              </button>
+            </div>
           </div>
-        </div>
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -764,6 +785,7 @@ function AccounterDashboard() {
             </div>
           )}
         </div>
+        </>)}
       </div>
 
       {/* Modals */}
