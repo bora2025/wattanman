@@ -260,6 +260,12 @@ function QRScannerModal({ records, onClose, onPayRecord }: QRScannerModalProps) 
   const [scannedName, setScannedName] = useState('')
   const cancelledRef = useRef(false)
 
+  // Refs so stale closures inside decodeFromVideoDevice always see latest values
+  const recordsRef = useRef(records)
+  const matchedRef = useRef(matched)
+  useEffect(() => { recordsRef.current = records }, [records])
+  useEffect(() => { matchedRef.current = matched }, [matched])
+
   const beep = useCallback((ok: boolean) => {
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
@@ -308,7 +314,7 @@ function QRScannerModal({ records, onClose, onPayRecord }: QRScannerModalProps) 
 
       await reader.decodeFromVideoDevice(deviceId || null, videoEl, (result) => {
         if (cancelledRef.current || !result) return
-        handleScanned(result.getText())
+        handleScannedRef.current(result.getText())
       })
       if (!cancelledRef.current) {
         setScanning(true)
@@ -335,13 +341,13 @@ function QRScannerModal({ records, onClose, onPayRecord }: QRScannerModalProps) 
 
   function handleScanned(text: string) {
     // Already showing results — don't re-trigger
-    if (matched.length > 0) return
+    if (matchedRef.current.length > 0) return
     let studentId: string | null = null
     try {
       const parsed = JSON.parse(text)
       studentId = parsed.studentId ?? null
     } catch {
-      studentId = text.trim() // fallback: raw student ID or student number
+      studentId = text.trim()
     }
     if (!studentId) {
       beep(false)
@@ -349,8 +355,7 @@ function QRScannerModal({ records, onClose, onPayRecord }: QRScannerModalProps) 
       return
     }
 
-    // Match by studentId or studentNumber
-    const hits = records.filter(r =>
+    const hits = recordsRef.current.filter(r =>
       r.studentId === studentId ||
       (r as any).studentNumber === studentId
     )
@@ -366,6 +371,10 @@ function QRScannerModal({ records, onClose, onPayRecord }: QRScannerModalProps) 
     setMatched(hits)
     setMessage('')
   }
+
+  // Stable ref so the decodeFromVideoDevice callback always calls the latest handleScanned
+  const handleScannedRef = useRef(handleScanned)
+  useEffect(() => { handleScannedRef.current = handleScanned })
 
   function switchCamera() {
     const next = (camIdxRef.current + 1) % Math.max(cameras.length, 1)
