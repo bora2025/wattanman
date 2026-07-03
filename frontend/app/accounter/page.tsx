@@ -142,12 +142,28 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
 
   function handleScanned(text: string) {
     if (processingRef.current) return   // ignore while loading/transitioning
+
+    // Guard: records not yet loaded
+    if (recordsRef.current.length === 0) {
+      beep(false)
+      setMessage('Fee data is loading — please wait a moment and try again')
+      return
+    }
+
     let studentId: string | null = null
     try { const p = JSON.parse(text); studentId = p.studentId ?? null } catch { studentId = text.trim() }
     if (!studentId) { beep(false); setMessage('Invalid QR — not a student card'); return }
 
     const hits = recordsRef.current.filter(r => r.studentId === studentId || r.studentNumber === studentId)
-    if (hits.length === 0) { beep(false); setMessage('No fee records found for this student'); return }
+    if (hits.length === 0) {
+      beep(false)
+      // Help the admin know it's a student-without-records situation vs wrong QR
+      setMessage('This student has no fee records yet')
+      console.warn('[QR Scan] No fee records for studentId:', studentId,
+        '| total loaded records:', recordsRef.current.length,
+        '| sample IDs:', recordsRef.current.slice(0, 3).map(r => r.studentId))
+      return
+    }
 
     beep(true)
     processingRef.current = true
@@ -197,7 +213,9 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <div>
             <h2 className="text-base font-semibold text-gray-900">Scan Student ID Card</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Scan QR code to record payment</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {records.length > 0 ? `${records.length} fee record${records.length > 1 ? 's' : ''} loaded — scan to pay` : 'Loading fee data…'}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             {cameras.length > 1 && (
@@ -616,9 +634,12 @@ function AccounterDashboard() {
             <p className="text-sm text-gray-500 mt-0.5">Record payments and print invoices</p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <button onClick={() => setShowQR(true)} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition">
+            <button
+              onClick={() => setShowQR(true)}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 3h6v6H3zm12 0h6v6h-6zM3 15h6v6H3zm9-9h.01M12 12h3m0 0v3m0-3h3M15 15h3m0 0v3m-3 0h3" /></svg>
-              Scan QR
+              {loading ? 'Loading…' : 'Scan QR'}
             </button>
             <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 shadow-sm transition">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>

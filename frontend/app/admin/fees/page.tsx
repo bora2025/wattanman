@@ -339,6 +339,14 @@ function QRScannerModal({ records, onClose, onPayRecord }: QRScannerModalProps) 
 
   function handleScanned(text: string) {
     if (processingRef.current) return
+
+    // Guard: records not yet loaded
+    if (recordsRef.current.length === 0) {
+      beep(false)
+      setMessage('Fee data is loading — please wait a moment and try again')
+      return
+    }
+
     let studentId: string | null = null
     try {
       const parsed = JSON.parse(text)
@@ -351,7 +359,14 @@ function QRScannerModal({ records, onClose, onPayRecord }: QRScannerModalProps) 
     const hits = recordsRef.current.filter(r =>
       r.studentId === studentId || (r as any).studentNumber === studentId
     )
-    if (hits.length === 0) { beep(false); setMessage('No fee records found for this student'); return }
+    if (hits.length === 0) {
+      beep(false)
+      setMessage('This student has no fee records yet')
+      console.warn('[QR Scan] No fee records for studentId:', studentId,
+        '| total loaded records:', recordsRef.current.length,
+        '| sample IDs:', recordsRef.current.slice(0, 3).map((r: any) => r.studentId))
+      return
+    }
 
     beep(true)
     processingRef.current = true
@@ -401,7 +416,9 @@ function QRScannerModal({ records, onClose, onPayRecord }: QRScannerModalProps) 
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <div>
             <h2 className="text-base font-semibold text-gray-900">Scan Student ID Card</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Point camera at student QR code to record payment</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {records.length > 0 ? `${records.length} fee record${records.length > 1 ? 's' : ''} loaded — scan to pay` : 'Loading fee data…'}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             {cameras.length > 1 && (
@@ -1169,12 +1186,13 @@ function FeeManagementContent() {
           <div className="flex gap-2">
             <button
               onClick={() => setShowQRScanner(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition"
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h6v6H3zm12 0h6v6h-6zM3 15h6v6H3zm9-9h.01M12 12h3m0 0v3m0-3h3M15 15h3m0 0v3m-3 0h3" />
               </svg>
-              Scan QR
+              {loading ? 'Loading…' : 'Scan QR'}
             </button>
             <button
               onClick={() => setShowAddModal(true)}
