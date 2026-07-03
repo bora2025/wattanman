@@ -53,7 +53,7 @@ export class FeesController {
     return this.feesService.getOne(id);
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTER')
   @Post()
   create(
     @Body() body: {

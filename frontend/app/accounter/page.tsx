@@ -10,6 +10,13 @@ import { todayCambodia } from '../../lib/dateUtils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+interface StudentInfo {
+  id: string
+  name: string
+  class: string
+  studentNumber: string
+}
+
 interface FeePayment {
   id: string
   amount: number
@@ -61,10 +68,12 @@ const STATUS_LABEL: Record<string, string> = {
 
 // ─── QR Scanner Modal ─────────────────────────────────────────────────────────
 
-function QRScannerModal({ records, onClose, onPayRecord }: {
+function QRScannerModal({ records, students, onClose, onPayRecord, onStudentNotFound }: {
   records: FeeRecord[]
+  students: StudentInfo[]
   onClose: () => void
   onPayRecord: (r: FeeRecord) => void
+  onStudentNotFound: (student: StudentInfo) => void
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const readerRef = useRef<BrowserMultiFormatReader | null>(null)
@@ -79,7 +88,9 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
   // Keep ref current so stale closures inside decodeFromVideoDevice always
   // read the latest props/state values.
   const recordsRef = useRef(records)
+  const studentsRef = useRef(students)
   useEffect(() => { recordsRef.current = records }, [records])
+  useEffect(() => { studentsRef.current = students }, [students])
 
   const beep = useCallback((ok: boolean) => {
     try {
@@ -143,8 +154,8 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
   function handleScanned(text: string) {
     if (processingRef.current) return   // ignore while loading/transitioning
 
-    // Guard: records not yet loaded
-    if (recordsRef.current.length === 0) {
+    // Guard: data not yet loaded
+    if (recordsRef.current.length === 0 && studentsRef.current.length === 0) {
       beep(false)
       setMessage('Fee data is loading — please wait a moment and try again')
       return
@@ -156,12 +167,25 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
 
     const hits = recordsRef.current.filter(r => r.studentId === studentId || r.studentNumber === studentId)
     if (hits.length === 0) {
-      beep(false)
-      // Help the admin know it's a student-without-records situation vs wrong QR
-      setMessage('This student has no fee records yet')
-      console.warn('[QR Scan] No fee records for studentId:', studentId,
-        '| total loaded records:', recordsRef.current.length,
-        '| sample IDs:', recordsRef.current.slice(0, 3).map(r => r.studentId))
+      // No fee records — look up student to offer quick-create
+      const student = studentsRef.current.find(s => s.id === studentId || s.studentNumber === studentId)
+      if (student) {
+        beep(true)
+        processingRef.current = true
+        setLoadingStudent({ name: student.name, allPaid: false })
+        setMessage('')
+        setTimeout(() => {
+          if (cancelledRef.current) return
+          processingRef.current = false
+          onStudentNotFound(student)
+          onClose()
+        }, 600)
+      } else {
+        beep(false)
+        setMessage('Student not found — check card or register student first')
+        console.warn('[QR Scan] studentId not in records or students:', studentId,
+          '| records:', recordsRef.current.length, '| students:', studentsRef.current.length)
+      }
       return
     }
 
@@ -526,6 +550,125 @@ table{width:100%;border-collapse:collapse;margin-bottom:16px}thead tr{background
   )
 }
 
+// ─── Quick Fee Modal ──────────────────────────────────────────────────────────
+// Shown when a QR scan finds no existing fee record for the student.
+// Creates a new fee record then auto-opens the payment form.
+
+function QuickFeeModal({ student, onClose, onCreated }: {
+  student: StudentInfo
+  onClose: () => void
+  onCreated: (record: FeeRecord) => void
+}) {
+  const today = todayCambodia()
+  const [totalAmount, setTotalAmount] = useState('')
+  const [dueDate, setDueDate] = useState(today)
+  const [term, setTerm] = useState('')
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const n = parseFloat(totalAmount)
+    if (isNaN(n) || n <= 0) { setError('Enter a valid amount'); return }
+    setSaving(true); setError('')
+    try {
+      const res = await apiFetch('/api/fees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: student.id,
+          totalAmount: n,
+          dueDate,
+          term: term.trim() || undefined,
+          notes: notes.trim() || undefined,
+        }),
+      })
+      if (res.ok) {
+        const created = await res.json()
+        onCreated(created)
+      } else {
+        const body = await res.json().catch(() => ({}))
+        setError(body.message ?? 'Failed to create fee record')
+      }
+    } catch { setError('Network error — please try again') }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900">Create Fee Record</h2>
+          <p className="text-sm text-gray-500 mt-0.5">No existing fee for this student — create one to proceed</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          {/* Student info (read-only) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Student</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">{student.name}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Class</p>
+              <p className="text-sm font-semibold text-gray-900">{student.class || '—'}</p>
+            </div>
+          </div>
+
+          {/* Fee amount */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Total Fee Amount <span className="text-red-500">*</span></label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+              <input
+                type="number" min="1" step="0.01" value={totalAmount} autoFocus
+                onChange={e => { setTotalAmount(e.target.value); setError('') }}
+                placeholder="0.00"
+                className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Due date + term row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Due Date <span className="text-red-500">*</span></label>
+              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Term</label>
+              <input type="text" value={term} onChange={e => setTerm(e.target.value)} placeholder="e.g. 2025-26"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+            <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. Tuition fee"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+          </div>
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
+
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 transition disabled:opacity-60">
+              {saving ? 'Creating…' : 'Create & Pay'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 
 function StatCard({ label, value, sub, icon, accent }: { label: string; value: string; sub: string; icon: React.ReactNode; accent: string }) {
@@ -545,6 +688,7 @@ function StatCard({ label, value, sub, icon, accent }: { label: string; value: s
 
 function AccounterDashboard() {
   const [records, setRecords] = useState<FeeRecord[]>([])
+  const [students, setStudents] = useState<StudentInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [authError, setAuthError] = useState(false)
   const [search, setSearch] = useState('')
@@ -552,6 +696,7 @@ function AccounterDashboard() {
   const [paymentTarget, setPaymentTarget] = useState<FeeRecord | null>(null)
   const [printTarget, setPrintTarget] = useState<FeeRecord | null>(null)
   const [showQR, setShowQR] = useState(false)
+  const [quickFeeStudent, setQuickFeeStudent] = useState<StudentInfo | null>(null)
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => { loadData() }, [])
@@ -560,12 +705,19 @@ function AccounterDashboard() {
     setLoading(true)
     setAuthError(false)
     try {
-      const res = await apiFetch('/api/fees')
-      if (res.ok) {
-        const data = await res.json()
+      const [feeRes, studentsRes] = await Promise.all([
+        apiFetch('/api/fees'),
+        apiFetch('/api/fees/students'),
+      ])
+      if (feeRes.ok) {
+        const data = await feeRes.json()
         setRecords(Array.isArray(data) ? data : data.records ?? [])
-      } else if (res.status === 401 || res.status === 403) {
+      } else if (feeRes.status === 401 || feeRes.status === 403) {
         setAuthError(true)
+      }
+      if (studentsRes.ok) {
+        const data = await studentsRes.json()
+        setStudents(Array.isArray(data) ? data : [])
       }
     } catch { /* network error — show empty */ } finally { setLoading(false) }
   }
@@ -789,7 +941,27 @@ function AccounterDashboard() {
       </div>
 
       {/* Modals */}
-      {showQR && <QRScannerModal records={records} onClose={() => setShowQR(false)} onPayRecord={r => setPaymentTarget(r)} />}
+      {showQR && (
+        <QRScannerModal
+          records={records}
+          students={students}
+          onClose={() => setShowQR(false)}
+          onPayRecord={r => setPaymentTarget(r)}
+          onStudentNotFound={student => { setQuickFeeStudent(student); setShowQR(false) }}
+        />
+      )}
+      {quickFeeStudent && (
+        <QuickFeeModal
+          student={quickFeeStudent}
+          onClose={() => setQuickFeeStudent(null)}
+          onCreated={record => {
+            setRecords(prev => [record, ...prev])
+            setQuickFeeStudent(null)
+            setPaymentTarget(record)
+            showToast('Fee record created — record payment below')
+          }}
+        />
+      )}
       {paymentTarget && <PaymentModal record={paymentTarget} onClose={() => setPaymentTarget(null)} onSave={handleRecordPayment} />}
       {printTarget && <InvoiceModal record={printTarget} onClose={() => setPrintTarget(null)} />}
 
