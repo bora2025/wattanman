@@ -561,11 +561,16 @@ function QuickFeeModal({ student, onClose, onCreated }: {
 }) {
   const today = todayCambodia()
   const [totalAmount, setTotalAmount] = useState('')
+  const [discount, setDiscount] = useState('')
   const [dueDate, setDueDate] = useState(today)
   const [term, setTerm] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  const total = parseFloat(totalAmount) || 0
+  const disc = Math.min(100, Math.max(0, parseFloat(discount) || 0))
+  const effective = total * (1 - disc / 100)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -579,6 +584,7 @@ function QuickFeeModal({ student, onClose, onCreated }: {
         body: JSON.stringify({
           studentId: student.id,
           totalAmount: n,
+          discount: disc || undefined,
           dueDate,
           term: term.trim() || undefined,
           notes: notes.trim() || undefined,
@@ -616,20 +622,41 @@ function QuickFeeModal({ student, onClose, onCreated }: {
             </div>
           </div>
 
-          {/* Fee amount */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Total Fee Amount <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
-              <input
-                type="number" min="1" step="0.01" value={totalAmount} autoFocus
-                onChange={e => { setTotalAmount(e.target.value); setError('') }}
-                placeholder="0.00"
-                className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                required
-              />
+          {/* Fee amount + discount row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Fee Amount <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                <input
+                  type="number" min="1" step="0.01" value={totalAmount} autoFocus
+                  onChange={e => { setTotalAmount(e.target.value); setError('') }}
+                  placeholder="0.00"
+                  className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Discount %</label>
+              <div className="relative">
+                <input
+                  type="number" min="0" max="100" step="0.1" value={discount}
+                  onChange={e => setDiscount(e.target.value)}
+                  placeholder="0"
+                  className="w-full pr-7 pl-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">%</span>
+              </div>
             </div>
           </div>
+          {/* Effective amount preview */}
+          {disc > 0 && total > 0 && (
+            <div className="flex items-center justify-between bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2.5 text-sm">
+              <span className="text-emerald-700 font-medium">After {disc}% discount</span>
+              <span className="font-bold text-emerald-800">${effective.toFixed(2)}</span>
+            </div>
+          )}
 
           {/* Due date + term row */}
           <div className="grid grid-cols-2 gap-3">
@@ -698,6 +725,7 @@ function AccounterDashboard() {
   const [showQR, setShowQR] = useState(false)
   const [quickFeeStudent, setQuickFeeStudent] = useState<StudentInfo | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const autoPrintRef = useRef(false)
 
   useEffect(() => { loadData() }, [])
 
@@ -730,7 +758,10 @@ function AccounterDashboard() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount, note: note || undefined }),
     }).then(res => {
-      if (res.ok) res.json().then(updated => setRecords(prev => prev.map(r => r.id === updated.id ? updated : r)))
+      if (res.ok) res.json().then(updated => {
+        setRecords(prev => prev.map(r => r.id === updated.id ? updated : r))
+        if (autoPrintRef.current) { autoPrintRef.current = false; setPrintTarget(updated) }
+      })
       else {
         setRecords(prev => prev.map(r => {
           if (r.id !== recordId) return r
@@ -957,8 +988,8 @@ function AccounterDashboard() {
           onCreated={record => {
             setRecords(prev => [record, ...prev])
             setQuickFeeStudent(null)
+            autoPrintRef.current = true
             setPaymentTarget(record)
-            showToast('Fee record created — record payment below')
           }}
         />
       )}
