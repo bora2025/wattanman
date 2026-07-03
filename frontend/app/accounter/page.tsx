@@ -72,16 +72,14 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
   const camIdxRef = useRef(0)
   const [scanning, setScanning] = useState(false)
   const [message, setMessage] = useState('Starting camera…')
-  const [matched, setMatched] = useState<FeeRecord[]>([])
-  const [scannedName, setScannedName] = useState('')
+  const [loadingStudent, setLoadingStudent] = useState<{ name: string; allPaid: boolean } | null>(null)
   const cancelledRef = useRef(false)
+  const processingRef = useRef(false)
 
-  // Keep refs current so stale closures inside decodeFromVideoDevice always
+  // Keep ref current so stale closures inside decodeFromVideoDevice always
   // read the latest props/state values.
   const recordsRef = useRef(records)
-  const matchedRef = useRef(matched)
   useEffect(() => { recordsRef.current = records }, [records])
-  useEffect(() => { matchedRef.current = matched }, [matched])
 
   const beep = useCallback((ok: boolean) => {
     try {
@@ -143,7 +141,7 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
   }, [])
 
   function handleScanned(text: string) {
-    if (matchedRef.current.length > 0) return
+    if (processingRef.current) return   // ignore while loading/transitioning
     let studentId: string | null = null
     try { const p = JSON.parse(text); studentId = p.studentId ?? null } catch { studentId = text.trim() }
     if (!studentId) { beep(false); setMessage('Invalid QR — not a student card'); return }
@@ -152,19 +150,32 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
     if (hits.length === 0) { beep(false); setMessage('No fee records found for this student'); return }
 
     beep(true)
+    processingRef.current = true
 
-    // If exactly one record has an outstanding balance → go straight to payment
-    const unpaid = hits.filter(r => r.effectiveAmount - r.paidAmount > 0)
-    if (unpaid.length === 1 && hits.length === 1) {
-      onPayRecord(unpaid[0])
-      onClose()
-      return
-    }
+    const unpaid = hits
+      .filter(r => r.effectiveAmount - r.paidAmount > 0)
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
 
-    // Multiple records or already fully paid → show selection screen
-    setScannedName(hits[0].studentName)
-    setMatched(hits)
+    setLoadingStudent({ name: hits[0].studentName, allPaid: unpaid.length === 0 })
     setMessage('')
+
+    if (unpaid.length > 0) {
+      // Show "loading" overlay → open payment form after brief delay
+      setTimeout(() => {
+        if (cancelledRef.current) return
+        processingRef.current = false
+        onPayRecord(unpaid[0])
+        onClose()
+      }, 700)
+    } else {
+      // All fees already paid — show confirmation then reset
+      setTimeout(() => {
+        if (cancelledRef.current) return
+        setLoadingStudent(null)
+        processingRef.current = false
+        setMessage('All fees paid ✓ — scan next student')
+      }, 2000)
+    }
   }
 
   // Stable ref so the decodeFromVideoDevice callback always calls the latest handleScanned
@@ -173,7 +184,10 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
 
   function switchCamera() {
     const next = (camIdxRef.current + 1) % Math.max(cameras.length, 1)
-    camIdxRef.current = next; setMatched([]); setScannedName(''); setMessage('Switching camera…')
+    camIdxRef.current = next
+    setLoadingStudent(null)
+    processingRef.current = false
+    setMessage('Switching camera…')
     startCamera(cameras)
   }
 
@@ -197,85 +211,63 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
           </div>
         </div>
 
+        {/* Camera viewport */}
         <div className="relative bg-black" style={{ aspectRatio: '4/3' }}>
           <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
-          {!matched.length && (
+
+          {/* Scan guide corners — hidden while loading overlay is shown */}
+          {!loadingStudent && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="relative w-52 h-52">
                 <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white rounded-tl-md" />
                 <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white rounded-tr-md" />
                 <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white rounded-bl-md" />
                 <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white rounded-br-md" />
-                {scanning && <div className="absolute inset-x-0 top-0 h-0.5 bg-blue-400" style={{ animation: 'scanLine 2s linear infinite' }} />}
+                {scanning && <div className="absolute inset-x-0 top-0 h-0.5 bg-emerald-400" style={{ animation: 'scanLine 2s linear infinite' }} />}
               </div>
             </div>
           )}
-          {message && (
+
+          {/* Loading / success overlay — shown after successful scan */}
+          {loadingStudent && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/75">
+              {loadingStudent.allPaid ? (
+                /* All-paid state */
+                <>
+                  <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
+                    <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-white font-semibold text-base">{loadingStudent.name}</p>
+                    <p className="text-emerald-400 text-sm mt-1">All fees paid ✓</p>
+                  </div>
+                </>
+              ) : (
+                /* Loading-payment state */
+                <>
+                  <div className="relative w-16 h-16">
+                    <div className="w-16 h-16 rounded-full border-4 border-white/20 border-t-emerald-400 animate-spin" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" /></svg>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-white font-semibold text-base">{loadingStudent.name}</p>
+                    <p className="text-gray-300 text-sm mt-1">Opening fee form…</p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Status message bar */}
+          {message && !loadingStudent && (
             <div className="absolute bottom-3 inset-x-3 flex justify-center">
               <span className="bg-black/70 text-white text-xs px-4 py-2 rounded-full">{message}</span>
             </div>
           )}
         </div>
 
-        {matched.length > 0 && (
-          <div className="p-4 space-y-3 overflow-y-auto">
-            {/* Student header */}
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{scannedName}</p>
-                <p className="text-xs text-gray-400">
-                  {matched.filter(r => r.effectiveAmount - r.paidAmount > 0).length > 0
-                    ? `${matched.filter(r => r.effectiveAmount - r.paidAmount > 0).length} outstanding fee${matched.filter(r => r.effectiveAmount - r.paidAmount > 0).length > 1 ? 's' : ''} — select one to pay`
-                    : 'All fees paid ✓'}
-                </p>
-              </div>
-            </div>
-
-            {/* Records — unpaid first */}
-            {[...matched].sort((a, b) => {
-              const aBalance = a.effectiveAmount - a.paidAmount
-              const bBalance = b.effectiveAmount - b.paidAmount
-              return bBalance - aBalance // unpaid first
-            }).map(r => {
-              const status = getStatus(r)
-              const balance = r.effectiveAmount - r.paidAmount
-              const hasDue = balance > 0
-              return (
-                <div key={r.id} className={`rounded-xl p-3.5 flex items-center justify-between gap-3 border ${hasDue ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-gray-900">{r.term || 'No term'}</span>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Net due: {fmt(r.effectiveAmount)}
-                      {r.discount > 0 && <span className="text-emerald-600"> (disc. {fmt(r.discount)})</span>}
-                      {' '}· Paid: {fmt(r.paidAmount)}
-                      {hasDue && <span className="text-red-500 font-medium"> · Balance: {fmt(balance)}</span>}
-                    </p>
-                  </div>
-                  {hasDue
-                    ? <button onClick={() => { onPayRecord(r); onClose() }}
-                        className="shrink-0 px-4 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-700 transition">
-                        Pay
-                      </button>
-                    : <span className="shrink-0 text-emerald-600 text-xs font-semibold">Paid ✓</span>
-                  }
-                </div>
-              )
-            })}
-
-            <button
-              onClick={() => { setMatched([]); setScannedName(''); setMessage('Ready — scan next student') }}
-              className="w-full py-2 text-xs font-medium text-gray-500 hover:text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50 transition"
-            >
-              Scan another student
-            </button>
-          </div>
-        )}
         <style>{`@keyframes scanLine { 0%,100% { top:0 } 50% { top:calc(100% - 2px) } }`}</style>
       </div>
     </div>
