@@ -367,6 +367,15 @@ function QRScannerModal({ records, onClose, onPayRecord }: QRScannerModalProps) 
     }
 
     beep(true)
+
+    // Exactly one record with a balance → jump straight to PaymentModal
+    const unpaid = hits.filter(r => r.effectiveAmount - r.paidAmount > 0)
+    if (unpaid.length === 1 && hits.length === 1) {
+      onPayRecord(unpaid[0])
+      onClose()
+      return
+    }
+
     setScannedName(hits[0].studentName)
     setMatched(hits)
     setMessage('')

@@ -147,9 +147,24 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
     let studentId: string | null = null
     try { const p = JSON.parse(text); studentId = p.studentId ?? null } catch { studentId = text.trim() }
     if (!studentId) { beep(false); setMessage('Invalid QR — not a student card'); return }
+
     const hits = recordsRef.current.filter(r => r.studentId === studentId || r.studentNumber === studentId)
-    if (hits.length === 0) { beep(false); setMessage('No fee records for this student'); return }
-    beep(true); setScannedName(hits[0].studentName); setMatched(hits); setMessage('')
+    if (hits.length === 0) { beep(false); setMessage('No fee records found for this student'); return }
+
+    beep(true)
+
+    // If exactly one record has an outstanding balance → go straight to payment
+    const unpaid = hits.filter(r => r.effectiveAmount - r.paidAmount > 0)
+    if (unpaid.length === 1 && hits.length === 1) {
+      onPayRecord(unpaid[0])
+      onClose()
+      return
+    }
+
+    // Multiple records or already fully paid → show selection screen
+    setScannedName(hits[0].studentName)
+    setMatched(hits)
+    setMessage('')
   }
 
   // Stable ref so the decodeFromVideoDevice callback always calls the latest handleScanned
@@ -204,37 +219,59 @@ function QRScannerModal({ records, onClose, onPayRecord }: {
 
         {matched.length > 0 && (
           <div className="p-4 space-y-3 overflow-y-auto">
+            {/* Student header */}
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                 <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900">{scannedName}</p>
-                <p className="text-xs text-gray-400">{matched.length} record{matched.length > 1 ? 's' : ''} found</p>
+                <p className="text-xs text-gray-400">
+                  {matched.filter(r => r.effectiveAmount - r.paidAmount > 0).length > 0
+                    ? `${matched.filter(r => r.effectiveAmount - r.paidAmount > 0).length} outstanding fee${matched.filter(r => r.effectiveAmount - r.paidAmount > 0).length > 1 ? 's' : ''} — select one to pay`
+                    : 'All fees paid ✓'}
+                </p>
               </div>
             </div>
-            {matched.map(r => {
-              const status = getStatus(r); const balance = r.effectiveAmount - r.paidAmount
+
+            {/* Records — unpaid first */}
+            {[...matched].sort((a, b) => {
+              const aBalance = a.effectiveAmount - a.paidAmount
+              const bBalance = b.effectiveAmount - b.paidAmount
+              return bBalance - aBalance // unpaid first
+            }).map(r => {
+              const status = getStatus(r)
+              const balance = r.effectiveAmount - r.paidAmount
+              const hasDue = balance > 0
               return (
-                <div key={r.id} className="border border-gray-200 rounded-xl p-3.5 flex items-center justify-between gap-3">
+                <div key={r.id} className={`rounded-xl p-3.5 flex items-center justify-between gap-3 border ${hasDue ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-gray-900">{r.term || 'No term'}</span>
+                      <span className="text-sm font-semibold text-gray-900">{r.term || 'No term'}</span>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      Due: {fmt(r.effectiveAmount)} · Paid: {fmt(r.paidAmount)}
-                      {balance > 0 && <span className="text-red-500"> · Balance: {fmt(balance)}</span>}
+                      Net due: {fmt(r.effectiveAmount)}
+                      {r.discount > 0 && <span className="text-emerald-600"> (disc. {fmt(r.discount)})</span>}
+                      {' '}· Paid: {fmt(r.paidAmount)}
+                      {hasDue && <span className="text-red-500 font-medium"> · Balance: {fmt(balance)}</span>}
                     </p>
                   </div>
-                  {balance > 0
-                    ? <button onClick={() => { onPayRecord(r); onClose() }} className="shrink-0 px-3 py-1.5 bg-gray-900 text-white text-xs font-semibold rounded-lg hover:bg-gray-800 transition">Pay</button>
-                    : <span className="shrink-0 px-3 py-1.5 bg-gray-100 text-gray-400 text-xs font-semibold rounded-lg">Paid ✓</span>
+                  {hasDue
+                    ? <button onClick={() => { onPayRecord(r); onClose() }}
+                        className="shrink-0 px-4 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-700 transition">
+                        Pay
+                      </button>
+                    : <span className="shrink-0 text-emerald-600 text-xs font-semibold">Paid ✓</span>
                   }
                 </div>
               )
             })}
-            <button onClick={() => { setMatched([]); setScannedName(''); setMessage('Scan next student') }} className="w-full py-2 text-xs font-medium text-gray-500 hover:text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+
+            <button
+              onClick={() => { setMatched([]); setScannedName(''); setMessage('Ready — scan next student') }}
+              className="w-full py-2 text-xs font-medium text-gray-500 hover:text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50 transition"
+            >
               Scan another student
             </button>
           </div>
