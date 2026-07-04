@@ -208,6 +208,33 @@ export class FeesService {
     return { totalRevenue, pendingAmount, paidCount, collectionRate, total: records.length };
   }
 
+  // ─── Settings (singleton) ─────────────────────────────────────────────────
+
+  async getSettings() {
+    const s = await this.prisma.feeSettings.upsert({
+      where:  { id: 'singleton' },
+      create: { id: 'singleton' },
+      update: {},
+    });
+    return { ...s, discountPresets: JSON.parse(s.discountPresets), promotions: JSON.parse(s.promotions) };
+  }
+
+  async updateSettings(data: {
+    schoolName?: string; schoolAddress?: string; schoolPhone?: string; schoolEmail?: string;
+    invoiceTitle?: string; invoiceSubtitle?: string; invoiceFooter?: string;
+    discountPresets?: any[]; promotions?: any[];
+  }) {
+    const payload: Record<string, any> = { ...data };
+    if (data.discountPresets !== undefined) payload.discountPresets = JSON.stringify(data.discountPresets);
+    if (data.promotions     !== undefined) payload.promotions      = JSON.stringify(data.promotions);
+    const s = await this.prisma.feeSettings.upsert({
+      where:  { id: 'singleton' },
+      create: { id: 'singleton', ...payload },
+      update: payload,
+    });
+    return { ...s, discountPresets: JSON.parse(s.discountPresets), promotions: JSON.parse(s.promotions) };
+  }
+
   // ─── Budget Report ────────────────────────────────────────────────────────
 
   async getBudgetReport(period: string, anchorDate: Date) {

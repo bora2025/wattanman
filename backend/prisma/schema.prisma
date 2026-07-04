@@ -1158,3 +1158,20 @@ model LessonView {
   @@index([lessonId])
   @@index([studentId])
 }
+
+// ─── Fee Settings (singleton) ─────────────────────────────────────────────────
+
+model FeeSettings {
+  id              String   @id @default("singleton")
+  schoolName      String   @default("Wattaman School")
+  schoolAddress   String   @default("")
+  schoolPhone     String   @default("")
+  schoolEmail     String   @default("")
+  invoiceTitle    String   @default("INVOICE")
+  invoiceSubtitle String   @default("Student Fee Receipt")
+  invoiceFooter   String   @default("This is a computer-generated invoice. No signature required.")
+  // JSON arrays stored as strings
+  discountPresets String   @default("[]")
+  promotions      String   @default("[]")
+  updatedAt       DateTime @updatedAt
+}

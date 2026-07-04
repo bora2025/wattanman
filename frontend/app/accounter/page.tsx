@@ -402,6 +402,20 @@ function InvoiceModal({ record, onClose }: { record: FeeRecord; onClose: () => v
   const invoiceNo = record.id.slice(-8).toUpperCase()
   const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
+  // Load invoice settings
+  const [inv, setInv] = useState({
+    schoolName: 'Wattaman School',
+    schoolAddress: '',
+    schoolPhone: '',
+    schoolEmail: '',
+    invoiceTitle: 'INVOICE',
+    invoiceSubtitle: 'Student Fee Receipt',
+    invoiceFooter: 'This is a computer-generated invoice. No signature required.',
+  })
+  useEffect(() => {
+    apiFetch('/api/fees/settings').then(r => r.ok ? r.json() : null).then(s => { if (s) setInv(s) }).catch(() => {})
+  }, [])
+
   function handlePrint() {
     const content = document.getElementById('accounter-invoice-content')
     if (!content) return
@@ -443,11 +457,13 @@ table{width:100%;border-collapse:collapse;margin-bottom:16px}thead tr{background
           <div id="accounter-invoice-content" className="bg-white rounded-xl border border-gray-200 p-8 text-sm">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <p className="text-xl font-bold text-gray-900">Wattaman School</p>
-                <p className="text-xs text-gray-400 mt-0.5">Student Fee Receipt</p>
+                <p className="text-xl font-bold text-gray-900">{inv.schoolName}</p>
+                {inv.schoolAddress && <p className="text-[11px] text-gray-400 mt-0.5">{inv.schoolAddress}</p>}
+                {(inv.schoolPhone || inv.schoolEmail) && <p className="text-[11px] text-gray-400">{[inv.schoolPhone, inv.schoolEmail].filter(Boolean).join(' · ')}</p>}
+                <p className="text-xs text-gray-400 mt-0.5">{inv.invoiceSubtitle}</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-extrabold text-gray-900 tracking-tight">INVOICE</p>
+                <p className="text-2xl font-extrabold text-gray-900 tracking-tight">{inv.invoiceTitle}</p>
                 <p className="text-xs text-gray-500 mt-1">No: #{invoiceNo}</p>
                 <p className="text-xs text-gray-500">Date: {today}</p>
               </div>
@@ -542,7 +558,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:16px}thead tr{background
               {status === 'partial' && <span className="inline-block border-2 border-amber-500 text-amber-500 font-extrabold text-base tracking-widest uppercase px-4 py-1.5 rounded-lg rotate-[-4deg]">PARTIAL</span>}
             </div>
             <hr className="border-gray-100 mt-6 mb-3" />
-            <p className="text-center text-[10px] text-gray-400">This is a computer-generated invoice. No signature required. — Wattaman School</p>
+            <p className="text-center text-[10px] text-gray-400">{inv.invoiceFooter}</p>
           </div>
         </div>
       </div>

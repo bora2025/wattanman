@@ -534,6 +534,20 @@ function InvoiceModal({ record, onClose }: InvoiceModalProps) {
   const invoiceNo = record.id.slice(-8).toUpperCase()
   const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
+  // Load invoice settings
+  const [inv, setInv] = useState({
+    schoolName: 'Wattaman School',
+    schoolAddress: '',
+    schoolPhone: '',
+    schoolEmail: '',
+    invoiceTitle: 'INVOICE',
+    invoiceSubtitle: 'Student Fee Receipt',
+    invoiceFooter: 'This is a computer-generated invoice. No signature required.',
+  })
+  useEffect(() => {
+    apiFetch('/api/fees/settings').then(r => r.ok ? r.json() : null).then(s => { if (s) setInv(s) }).catch(() => {})
+  }, [])
+
   function handlePrint() {
     const printContent = document.getElementById('fee-invoice-content')
     if (!printContent) return
@@ -622,11 +636,13 @@ function InvoiceModal({ record, onClose }: InvoiceModalProps) {
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
-                <p className="text-xl font-bold text-gray-900">Wattaman School</p>
-                <p className="text-xs text-gray-400 mt-0.5">Student Fee Receipt</p>
+                <p className="text-xl font-bold text-gray-900">{inv.schoolName}</p>
+                {inv.schoolAddress && <p className="text-[11px] text-gray-400 mt-0.5">{inv.schoolAddress}</p>}
+                {(inv.schoolPhone || inv.schoolEmail) && <p className="text-[11px] text-gray-400">{[inv.schoolPhone, inv.schoolEmail].filter(Boolean).join(' · ')}</p>}
+                <p className="text-xs text-gray-400 mt-0.5">{inv.invoiceSubtitle}</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-extrabold text-gray-900 tracking-tight">INVOICE</p>
+                <p className="text-2xl font-extrabold text-gray-900 tracking-tight">{inv.invoiceTitle}</p>
                 <p className="text-xs text-gray-500 mt-1">No: #{invoiceNo}</p>
                 <p className="text-xs text-gray-500">Date: {today}</p>
               </div>
@@ -750,9 +766,7 @@ function InvoiceModal({ record, onClose }: InvoiceModalProps) {
             </div>
 
             <hr className="border-gray-100 mt-6 mb-3" />
-            <p className="text-center text-[10px] text-gray-400">
-              This is a computer-generated invoice. No signature required. — Wattaman School
-            </p>
+            <p className="text-center text-[10px] text-gray-400">{inv.invoiceFooter}</p>
           </div>
         </div>
       </div>
@@ -1217,6 +1231,15 @@ function FeeManagementContent() {
               </svg>
               Export Report
             </button>
+            <a href="/admin/fees/settings"
+              className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+              title="Fee Settings">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Settings
+            </a>
           </div>
         </div>
 

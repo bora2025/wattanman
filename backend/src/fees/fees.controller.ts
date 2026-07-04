@@ -46,6 +46,18 @@ export class FeesController {
     return this.feesService.getBudgetReport(period || 'daily', d);
   }
 
+  @Roles('ADMIN', 'ACCOUNTER')
+  @Get('settings')
+  getSettings() {
+    return this.feesService.getSettings();
+  }
+
+  @Roles('ADMIN')
+  @Put('settings')
+  updateSettings(@Body() body: any) {
+    return this.feesService.updateSettings(body);
+  }
+
   // ─── Fee Records ──────────────────────────────────────────────────────────
 
   @Roles('ADMIN', 'ACCOUNTER')
