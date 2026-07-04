@@ -1177,3 +1177,27 @@ model FeeSettings {
   promotions      String   @default("[]")
   updatedAt       DateTime @updatedAt
 }
+
+model SiteSetting {
+  id        String   @id @default("singleton")
+  // Header
+  siteName    String   @default("Wattaman")
+  siteTagline String   @default("Smart School Management")
+  logoUrl     String   @default("")
+  // Hero banner slides — JSON array of { id, imageUrl, title, subtitle, ctaLabel, ctaHref }
+  heroSlides  String   @default("[]")
+  // Footer
+  footerAddress String @default("")
+  footerPhone   String @default("")
+  footerEmail   String @default("")
+  footerFacebook String @default("")
+  footerInstagram String @default("")
+  footerTwitter  String @default("")
+  footerYoutube  String @default("")
+  footerCopyright String @default("")
+  // Theme
+  primaryColor  String @default("#4f46e5")
+  // Custom CSS
+  customCss     String @default("")
+  updatedAt     DateTime @updatedAt
+}

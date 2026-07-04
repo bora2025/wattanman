@@ -28,6 +28,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { NotificationPreferenceModule } from './notification-preference/notification-preference.module';
 import { AuditModule } from './audit/audit.module';
 import { CardAliasesModule } from './card-aliases/card-aliases.module';
+import { SiteSettingsModule } from './site-settings/site-settings.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { CardAliasesModule } from './card-aliases/card-aliases.module';
     AnnouncementsModule,
     NotificationPreferenceModule,
     CardAliasesModule,
+    SiteSettingsModule,
   ],
   controllers: [AppController],
   providers: [

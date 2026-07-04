@@ -260,6 +260,15 @@ export const IconDocScanner = ({ size = 24, className }: IconProps) => (
 );
 IconDocScanner.displayName = 'IconDocScanner';
 
+/** Paint brush / appearance icon */
+export const IconPaint = multi([
+  'M12 3a9 9 0 0 0-9 9 9 9 0 0 0 9 9 4 4 0 0 0 4-4c0-1-.5-2-1-2.5-1-1-.5-2.5 1-2.5h2a4 4 0 0 0 4-4 7 7 0 0 0-7-7',
+  'M7.5 10.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+  'M10.5 7.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+  'M14.5 7.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+  'M17 10.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+]);
+
 // Icon name → component map for easy lookup
 export const iconMap: Record<string, React.FC<IconProps>> = {
   dashboard: IconDashboard,
@@ -293,4 +302,5 @@ export const iconMap: Record<string, React.FC<IconProps>> = {
   layers: IconLayers,
   certificate: IconCertificate,
   'doc-scanner': IconDocScanner,
+  paint: IconPaint,
 };
