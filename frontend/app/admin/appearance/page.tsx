@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
@@ -55,6 +55,256 @@ const DEFAULT: SiteSettings = {
 
 function uid() {
   return Math.random().toString(36).slice(2, 10)
+}
+
+/**
+ * Compress an image File to a JPEG data URL using <canvas>.
+ * `maxW` / `maxH` are the maximum output dimensions (aspect ratio is preserved).
+ * `quality` is the JPEG quality 0–1.
+ */
+function compressImage(
+  file: File,
+  maxW: number,
+  maxH: number,
+  quality = 0.82,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        // Scale down to fit within maxW × maxH
+        let w = img.width
+        let h = img.height
+        if (w > maxW) { h = Math.round((h * maxW) / w); w = maxW }
+        if (h > maxH) { w = Math.round((w * maxH) / h); h = maxH }
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, w, h)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.onerror = reject
+      img.src = e.target!.result as string
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+/* ─── ImageUploader ──────────────────────────────────────── */
+
+/**
+ * Drag-and-drop / click-to-upload image picker.
+ * Compresses the chosen image and returns a JPEG data URL via `onChange`.
+ * Also accepts a direct URL as a fallback.
+ */
+function ImageUploader({
+  value,
+  onChange,
+  aspectLabel = '1920×600 px recommended',
+  maxW = 1920,
+  maxH = 800,
+}: {
+  value: string
+  onChange: (dataUrl: string) => void
+  aspectLabel?: string
+  maxW?: number
+  maxH?: number
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
+  const [compressing, setCompressing] = useState(false)
+  const [urlMode, setUrlMode] = useState(!value.startsWith('data:') && value.startsWith('http'))
+  const [urlInput, setUrlInput] = useState(value.startsWith('http') ? value : '')
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleFile(file: File) {
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file (JPEG, PNG, WebP, GIF).')
+      return
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      setError('File is too large. Maximum 15 MB.')
+      return
+    }
+    setError(null)
+    setCompressing(true)
+    try {
+      const dataUrl = await compressImage(file, maxW, maxH)
+      onChange(dataUrl)
+      setUrlMode(false)
+    } catch {
+      setError('Could not process image. Try a different file.')
+    } finally {
+      setCompressing(false)
+    }
+  }
+
+  function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) handleFile(file)
+    e.target.value = ''
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) handleFile(file)
+  }
+
+  function applyUrl() {
+    if (urlInput.trim()) {
+      onChange(urlInput.trim())
+    }
+  }
+
+  const hasImage = !!value
+
+  return (
+    <div className="space-y-3">
+      {/* Current image preview */}
+      {hasImage && (
+        <div className="relative rounded-xl overflow-hidden border border-gray-200 group">
+          <img
+            src={value}
+            alt="preview"
+            className="w-full h-44 object-cover"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          />
+          {/* Overlay actions */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-800 text-xs font-semibold rounded-lg shadow hover:bg-gray-100 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+              </svg>
+              Replace
+            </button>
+            <button
+              type="button"
+              onClick={() => { onChange(''); setUrlInput('') }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white text-xs font-semibold rounded-lg shadow hover:bg-red-600 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              Remove
+            </button>
+          </div>
+          {/* Size badge */}
+          <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/50 rounded text-white text-[10px] font-medium">
+            {value.startsWith('data:') ? 'Uploaded' : 'URL'}
+          </div>
+        </div>
+      )}
+
+      {/* Upload zone (shown when no image OR compressing) */}
+      {!hasImage && (
+        <div
+          className={`relative border-2 border-dashed rounded-xl transition-all cursor-pointer ${
+            dragging
+              ? 'border-indigo-400 bg-indigo-50'
+              : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'
+          }`}
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+        >
+          <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-2">
+            {compressing ? (
+              <>
+                <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-indigo-600 font-medium">Compressing image…</p>
+              </>
+            ) : (
+              <>
+                <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">
+                    Click to upload or drag & drop
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    JPEG, PNG, WebP, GIF — max 15 MB · {aspectLabel}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* URL fallback toggle */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setUrlMode((m) => !m)}
+          className="text-xs text-indigo-500 hover:text-indigo-700 underline transition-colors"
+        >
+          {urlMode ? 'Hide URL input' : 'Or paste an image URL instead'}
+        </button>
+        {hasImage && (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="text-xs text-gray-500 hover:text-gray-700 underline transition-colors"
+          >
+            Upload different image
+          </button>
+        )}
+      </div>
+
+      {/* URL input */}
+      {urlMode && (
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyUrl() } }}
+            placeholder="https://example.com/banner.jpg"
+            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          />
+          <button
+            type="button"
+            onClick={applyUrl}
+            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Apply
+          </button>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <p className="text-xs text-red-500 flex items-center gap-1">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+          </svg>
+          {error}
+        </p>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={onInputChange}
+      />
+    </div>
+  )
 }
 
 /* ─── Sub-components ─────────────────────────────────────── */
@@ -210,21 +460,15 @@ function SlideCard({
               <Input value={slide.subtitle} onChange={(v) => set('subtitle', v)} placeholder="Supporting text" />
             </Field>
           </div>
-          <Field label="Image URL" hint="Paste a direct image URL (https://…). Recommended size: 1920×600 px.">
-            <Input value={slide.imageUrl} onChange={(v) => set('imageUrl', v)} placeholder="https://example.com/banner.jpg" />
+          <Field label="Banner Image" hint="Upload a photo or paste a URL. Compressed automatically to JPEG for fast loading.">
+            <ImageUploader
+              value={slide.imageUrl}
+              onChange={(v) => set('imageUrl', v)}
+              aspectLabel="1920×600 px recommended"
+              maxW={1920}
+              maxH={800}
+            />
           </Field>
-          {slide.imageUrl && (
-            <div className="rounded-lg overflow-hidden border border-gray-200 max-h-40">
-              <img
-                src={slide.imageUrl}
-                alt="preview"
-                className="w-full h-40 object-cover"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = 'none'
-                }}
-              />
-            </div>
-          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Button Label">
               <Input value={slide.ctaLabel} onChange={(v) => set('ctaLabel', v)} placeholder="Learn More" />
@@ -508,11 +752,13 @@ function AppearanceContent() {
               />
             </Field>
           </div>
-          <Field label="Logo URL" hint="Paste a direct URL to your logo image (PNG/SVG recommended). Leave blank to use the default.">
-            <Input
+          <Field label="Logo" hint="Upload your school logo or paste a URL. Displayed in the header and footer.">
+            <ImageUploader
               value={settings.logoUrl}
               onChange={(v) => patch('logoUrl', v)}
-              placeholder="https://example.com/logo.png"
+              aspectLabel="Square PNG/WebP recommended (e.g. 200×200 px)"
+              maxW={400}
+              maxH={400}
             />
           </Field>
           {settings.logoUrl && (
