@@ -566,6 +566,231 @@ table{width:100%;border-collapse:collapse;margin-bottom:16px}thead tr{background
   )
 }
 
+// ─── Add Fee Modal ────────────────────────────────────────────────────────────
+// Standalone "Add Fee" form — lets the accounter create a fee record without
+// needing to go through the QR scan flow.
+
+function AddFeeModal({ students, onClose, onCreated }: {
+  students: StudentInfo[]
+  onClose: () => void
+  onCreated: (record: FeeRecord) => void
+}) {
+  const today = todayCambodia()
+  const [query, setQuery] = useState('')
+  const [studentId, setStudentId] = useState('')
+  const [showDrop, setShowDrop] = useState(false)
+  const [totalAmount, setTotalAmount] = useState('')
+  const [discount, setDiscount] = useState('')
+  const [discountReason, setDiscountReason] = useState('')
+  const [dueDate, setDueDate] = useState(today)
+  const [term, setTerm] = useState('')
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  // Discount presets from settings
+  const [presets, setPresets] = useState<{ id: string; name: string; type: 'percent' | 'fixed'; value: number }[]>([])
+  useEffect(() => {
+    apiFetch('/api/fees/settings').then(r => r.ok ? r.json() : null).then(s => { if (s?.discountPresets?.length) setPresets(s.discountPresets) }).catch(() => {})
+  }, [])
+
+  const total = parseFloat(totalAmount) || 0
+  const disc = parseFloat(discount) || 0
+  const effective = Math.max(0, total - disc)
+
+  const filtered = query.trim()
+    ? students.filter(s =>
+        s.name.toLowerCase().includes(query.toLowerCase()) ||
+        s.class.toLowerCase().includes(query.toLowerCase())
+      )
+    : students.slice(0, 80)
+
+  function applyPreset(p: { type: 'percent' | 'fixed'; value: number; name: string }) {
+    const flat = p.type === 'percent' ? Math.round(total * p.value / 100 * 100) / 100 : p.value
+    setDiscount(flat.toString())
+    setDiscountReason(p.name)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!studentId) { setError('Select a student first'); return }
+    const n = parseFloat(totalAmount)
+    if (isNaN(n) || n <= 0) { setError('Enter a valid amount'); return }
+    if (disc < 0) { setError('Discount cannot be negative'); return }
+    if (disc > n) { setError('Discount cannot exceed total amount'); return }
+    setSaving(true); setError('')
+    try {
+      const res = await apiFetch('/api/fees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId,
+          totalAmount: n,
+          discount: disc || undefined,
+          discountReason: discountReason.trim() || undefined,
+          dueDate,
+          term: term.trim() || undefined,
+          notes: notes.trim() || undefined,
+        }),
+      })
+      if (res.ok) {
+        const created = await res.json()
+        onCreated(created)
+      } else {
+        const body = await res.json().catch(() => ({}))
+        setError(body.message ?? 'Failed to create fee record')
+      }
+    } catch { setError('Network error — please try again') }
+    finally { setSaving(false) }
+  }
+
+  const selectedStudent = students.find(s => s.id === studentId)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="px-6 py-5 border-b border-gray-100 shrink-0">
+          <h2 className="text-lg font-semibold text-gray-900">Add Fee Record</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Create a new student fee record</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4 overflow-y-auto">
+          {/* Student search */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Student <span className="text-red-500">*</span></label>
+            {selectedStudent ? (
+              <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5">
+                <div>
+                  <p className="text-sm font-semibold text-emerald-900">{selectedStudent.name}</p>
+                  <p className="text-xs text-emerald-700">{selectedStudent.class}</p>
+                </div>
+                <button type="button" onClick={() => { setStudentId(''); setQuery('') }}
+                  className="text-emerald-500 hover:text-emerald-700 text-xs underline">Change</button>
+              </div>
+            ) : (
+              <>
+                <div className="relative">
+                  <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                  </svg>
+                  <input type="text" value={query} autoFocus
+                    onChange={e => { setQuery(e.target.value); setShowDrop(true); setError('') }}
+                    onFocus={() => setShowDrop(true)}
+                    onBlur={() => setTimeout(() => setShowDrop(false), 150)}
+                    placeholder="Search by name or class…"
+                    autoComplete="off"
+                    className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  />
+                </div>
+                {showDrop && (
+                  <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-44 overflow-y-auto">
+                    {filtered.length === 0 ? (
+                      <li className="px-4 py-3 text-sm text-gray-400">No students found</li>
+                    ) : filtered.map(s => (
+                      <li key={s.id} onMouseDown={() => { setStudentId(s.id); setQuery(''); setShowDrop(false) }}
+                        className="flex items-center justify-between px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition">
+                        <span className="font-medium text-gray-900">{s.name}</span>
+                        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{s.class}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Amount */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount <span className="text-red-500">*</span></label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+              <input type="number" min="1" step="0.01" value={totalAmount}
+                onChange={e => { setTotalAmount(e.target.value); setError('') }}
+                placeholder="0.00"
+                className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                required />
+            </div>
+          </div>
+
+          {/* Discount */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Discount ($)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                <input type="number" min="0" step="0.01" value={discount}
+                  onChange={e => setDiscount(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+              <input type="text" value={discountReason} onChange={e => setDiscountReason(e.target.value)}
+                placeholder="e.g. Scholarship"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+            </div>
+          </div>
+
+          {/* Preset quick-apply */}
+          {presets.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {presets.map(p => (
+                <button type="button" key={p.id}
+                  onClick={() => applyPreset(p)}
+                  className="px-2.5 py-1 text-xs font-medium border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 transition">
+                  {p.name} ({p.type === 'percent' ? `${p.value}%` : `$${p.value}`})
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Effective amount preview */}
+          {disc > 0 && total > 0 && (
+            <div className="flex items-center justify-between bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2.5 text-sm">
+              <span className="text-emerald-700 font-medium">Net due after discount</span>
+              <span className="font-bold text-emerald-800">${effective.toFixed(2)}</span>
+            </div>
+          )}
+
+          {/* Due date + term */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Due Date <span className="text-red-500">*</span></label>
+              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Term</label>
+              <input type="text" value={term} onChange={e => setTerm(e.target.value)} placeholder="e.g. 2025-26"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+            <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. Tuition fee"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+          </div>
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
+
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 transition disabled:opacity-60">
+              {saving ? 'Creating…' : 'Create Fee Record'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ─── Quick Fee Modal ──────────────────────────────────────────────────────────
 // Shown when a QR scan finds no existing fee record for the student.
 // Creates a new fee record then auto-opens the payment form.
@@ -740,6 +965,7 @@ function AccounterDashboard() {
   const [printTarget, setPrintTarget] = useState<FeeRecord | null>(null)
   const [showQR, setShowQR] = useState(false)
   const [quickFeeStudent, setQuickFeeStudent] = useState<StudentInfo | null>(null)
+  const [showAddFee, setShowAddFee] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [alertExpanded, setAlertExpanded] = useState(true)
   const autoPrintRef = useRef(false)
@@ -865,6 +1091,13 @@ function AccounterDashboard() {
                 className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 3h6v6H3zm12 0h6v6h-6zM3 15h6v6H3zm9-9h.01M12 12h3m0 0v3m0-3h3M15 15h3m0 0v3m-3 0h3" /></svg>
                 {loading ? 'Loading…' : 'Scan QR'}
+              </button>
+              <button
+                onClick={() => setShowAddFee(true)}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition disabled:opacity-50">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                Add Fee
               </button>
               <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 shadow-sm transition">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
@@ -1077,6 +1310,17 @@ function AccounterDashboard() {
       </div>
 
       {/* Modals */}
+      {showAddFee && (
+        <AddFeeModal
+          students={students}
+          onClose={() => setShowAddFee(false)}
+          onCreated={record => {
+            setRecords(prev => [record, ...prev])
+            setShowAddFee(false)
+            setPaymentTarget(record)
+          }}
+        />
+      )}
       {showQR && (
         <QRScannerModal
           records={records}

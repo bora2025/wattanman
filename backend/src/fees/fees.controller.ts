@@ -52,7 +52,7 @@ export class FeesController {
     return this.feesService.getSettings();
   }
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'ACCOUNTER')
   @Put('settings')
   updateSettings(@Body() body: any) {
     return this.feesService.updateSettings(body);
