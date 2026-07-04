@@ -376,10 +376,7 @@ export default function Home() {
           <nav className="hidden md:flex items-center gap-1">
             {[
               { label: 'Home', href: '/' },
-              { label: 'Admin', href: '/admin' },
-              { label: 'Teacher', href: '/teacher' },
-              { label: 'Student', href: '/student' },
-              { label: 'Parent', href: '/parent' },
+              { label: 'Sign In', href: '/login' },
             ].map((item) => (
               <Link
                 key={item.href}
@@ -425,10 +422,7 @@ export default function Home() {
           <div className="md:hidden border-t border-gray-100 bg-white px-6 py-4 space-y-1">
             {[
               { label: 'Home', href: '/' },
-              { label: 'Admin', href: '/admin' },
-              { label: 'Teacher', href: '/teacher' },
-              { label: 'Student', href: '/student' },
-              { label: 'Parent', href: '/parent' },
+              { label: 'Sign In', href: '/login' },
             ].map((item) => (
               <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}
                 className="block px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
@@ -710,10 +704,6 @@ export default function Home() {
             <ul className="space-y-2.5">
               {[
                 { label: 'Home', href: '/' },
-                { label: 'Admin Portal', href: '/admin' },
-                { label: 'Teacher Portal', href: '/teacher' },
-                { label: 'Student Portal', href: '/student' },
-                { label: 'Parent Portal', href: '/parent' },
                 { label: 'Sign In', href: '/login' },
               ].map((item) => (
                 <li key={item.href}>
@@ -722,25 +712,40 @@ export default function Home() {
                   </Link>
                 </li>
               ))}
+              {/* Portal sign-in links */}
+              {[
+                { label: 'Admin Portal', role: 'admin' },
+                { label: 'Teacher Portal', role: 'teacher' },
+                { label: 'Student Portal', role: 'student' },
+                { label: 'Parent Portal', role: 'parent' },
+                { label: 'Employee Portal', role: 'employee' },
+              ].map((item) => (
+                <li key={item.role}>
+                  <Link
+                    href="/login"
+                    className="text-gray-400 hover:text-white text-sm transition-colors flex items-center gap-1.5"
+                  >
+                    <span style={{ color: primary }}>›</span> {item.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Portals */}
+          {/* Features — public info only, no protected links */}
           <div>
-            <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wider">Management</h4>
+            <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wider">Our Features</h4>
             <ul className="space-y-2.5">
               {[
-                { label: 'Attendance Tracking', href: '/admin/attendance' },
-                { label: 'Fee Management', href: '/admin/fees' },
-                { label: 'Exam & Scoring', href: '/admin/exams' },
-                { label: 'Timetables', href: '/admin/timetable' },
-                { label: 'Reports & Analytics', href: '/admin/reports' },
-                { label: 'Settings', href: '/admin/settings' },
-              ].map((item) => (
-                <li key={item.href}>
-                  <Link href={item.href} className="text-gray-400 hover:text-white text-sm transition-colors flex items-center gap-1.5">
-                    <span style={{ color: primary }}>›</span> {item.label}
-                  </Link>
+                'Smart QR Attendance',
+                'Fee & Payment Tracking',
+                'Exam & Scoring',
+                'Live Timetables',
+                'Reports & Analytics',
+                'Parent Notifications',
+              ].map((label) => (
+                <li key={label} className="text-gray-400 text-sm flex items-center gap-1.5">
+                  <span style={{ color: primary }}>›</span> {label}
                 </li>
               ))}
             </ul>
