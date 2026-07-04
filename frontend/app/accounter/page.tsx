@@ -584,7 +584,7 @@ function QuickFeeModal({ student, onClose, onCreated }: {
         body: JSON.stringify({
           studentId: student.id,
           totalAmount: n,
-          discount: disc || undefined,
+          discount: disc > 0 ? Math.round(n * disc / 100 * 100) / 100 : undefined,
           dueDate,
           term: term.trim() || undefined,
           notes: notes.trim() || undefined,

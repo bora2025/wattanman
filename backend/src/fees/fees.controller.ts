@@ -36,6 +36,16 @@ export class FeesController {
     return this.feesService.getSummary();
   }
 
+  @Roles('ADMIN', 'ACCOUNTER')
+  @Get('budget-report')
+  getBudgetReport(
+    @Query('period') period: string,
+    @Query('date') date?: string,
+  ) {
+    const d = date ? new Date(date) : new Date();
+    return this.feesService.getBudgetReport(period || 'daily', d);
+  }
+
   // ─── Fee Records ──────────────────────────────────────────────────────────
 
   @Roles('ADMIN', 'ACCOUNTER')

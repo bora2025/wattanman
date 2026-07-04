@@ -208,6 +208,121 @@ export class FeesService {
     return { totalRevenue, pendingAmount, paidCount, collectionRate, total: records.length };
   }
 
+  // ─── Budget Report ────────────────────────────────────────────────────────
+
+  async getBudgetReport(period: string, anchorDate: Date) {
+    const y = anchorDate.getUTCFullYear();
+    const m = anchorDate.getUTCMonth();
+    const d = anchorDate.getUTCDate();
+
+    let rangeStart: Date;
+    let rangeEnd: Date;
+
+    if (period === 'weekly') {
+      const dow = anchorDate.getUTCDay();
+      const daysToMon = (dow + 6) % 7;
+      rangeStart = new Date(Date.UTC(y, m, d - daysToMon, 0, 0, 0));
+      rangeEnd   = new Date(Date.UTC(y, m, d - daysToMon + 6, 23, 59, 59, 999));
+    } else if (period === 'monthly') {
+      rangeStart = new Date(Date.UTC(y, m, 1, 0, 0, 0));
+      rangeEnd   = new Date(Date.UTC(y, m + 1, 0, 23, 59, 59, 999));
+    } else if (period === 'yearly') {
+      rangeStart = new Date(Date.UTC(y, 0, 1, 0, 0, 0));
+      rangeEnd   = new Date(Date.UTC(y, 11, 31, 23, 59, 59, 999));
+    } else {
+      // daily
+      rangeStart = new Date(Date.UTC(y, m, d, 0, 0, 0));
+      rangeEnd   = new Date(Date.UTC(y, m, d, 23, 59, 59, 999));
+    }
+
+    const [payments, feesCreated] = await Promise.all([
+      this.prisma.feePayment.findMany({
+        where: { createdAt: { gte: rangeStart, lte: rangeEnd } },
+        include: {
+          feeRecord: {
+            include: {
+              student: {
+                include: {
+                  user:  { select: { name: true } },
+                  class: { select: { name: true } },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.feeRecord.findMany({
+        where: { createdAt: { gte: rangeStart, lte: rangeEnd } },
+      }),
+    ]);
+
+    const totalCollected  = payments.reduce((s, p) => s + p.amount, 0);
+    const totalFees       = feesCreated.reduce((s, r) => s + r.totalAmount, 0);
+    const discountGiven   = feesCreated.reduce((s, r) => s + (r.discount ?? 0), 0);
+    const outstanding     = feesCreated.reduce((s, r) => s + Math.max(0, r.totalAmount - (r.discount ?? 0) - r.paidAmount), 0);
+    const effective       = totalFees - discountGiven;
+    const collectionRate  = effective > 0 ? Math.round((totalCollected / effective) * 100) : 0;
+
+    // Build per-bucket breakdown
+    const breakdown: { label: string; collected: number; fees: number }[] = [];
+
+    const sumPayments = (from: Date, to: Date) =>
+      payments.filter(p => p.createdAt >= from && p.createdAt <= to).reduce((s, p) => s + p.amount, 0);
+    const sumFees = (from: Date, to: Date) =>
+      feesCreated.filter(r => r.createdAt >= from && r.createdAt <= to).reduce((s, r) => s + r.totalAmount, 0);
+
+    if (period === 'daily') {
+      for (let h = 0; h < 24; h++) {
+        const hStart = new Date(Date.UTC(y, m, d, h, 0, 0));
+        const hEnd   = new Date(Date.UTC(y, m, d, h, 59, 59, 999));
+        breakdown.push({ label: `${String(h).padStart(2, '0')}:00`, collected: sumPayments(hStart, hEnd), fees: sumFees(hStart, hEnd) });
+      }
+    } else if (period === 'weekly') {
+      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      for (let i = 0; i < 7; i++) {
+        const rs = rangeStart;
+        const ds = new Date(Date.UTC(rs.getUTCFullYear(), rs.getUTCMonth(), rs.getUTCDate() + i, 0, 0, 0));
+        const de = new Date(Date.UTC(ds.getUTCFullYear(), ds.getUTCMonth(), ds.getUTCDate(), 23, 59, 59, 999));
+        breakdown.push({ label: dayNames[i], collected: sumPayments(ds, de), fees: sumFees(ds, de) });
+      }
+    } else if (period === 'monthly') {
+      const daysInMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const ds = new Date(Date.UTC(y, m, day, 0, 0, 0));
+        const de = new Date(Date.UTC(y, m, day, 23, 59, 59, 999));
+        breakdown.push({ label: String(day), collected: sumPayments(ds, de), fees: sumFees(ds, de) });
+      }
+    } else {
+      // yearly
+      const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      for (let mo = 0; mo < 12; mo++) {
+        const ds = new Date(Date.UTC(y, mo, 1, 0, 0, 0));
+        const de = new Date(Date.UTC(y, mo + 1, 0, 23, 59, 59, 999));
+        breakdown.push({ label: monthLabels[mo], collected: sumPayments(ds, de), fees: sumFees(ds, de) });
+      }
+    }
+
+    return {
+      period,
+      dateRange: {
+        start: rangeStart.toISOString().split('T')[0],
+        end:   rangeEnd.toISOString().split('T')[0],
+      },
+      summary: { totalCollected, totalFees, discountGiven, outstanding, collectionRate, feeRecordsCreated: feesCreated.length, paymentsCount: payments.length },
+      breakdown,
+      payments: payments.map(p => ({
+        id:          p.id,
+        studentName: p.feeRecord.student.user.name,
+        class:       p.feeRecord.student.class?.name ?? '',
+        amount:      p.amount,
+        note:        p.note ?? '',
+        date:        p.createdAt.toISOString().split('T')[0],
+        time:        p.createdAt.toISOString().split('T')[1].slice(0, 5),
+      })),
+    };
+  }
+
   // ─── Private helpers ──────────────────────────────────────────────────────
 
   private mapRecord(r: any) {
