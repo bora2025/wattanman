@@ -725,6 +725,7 @@ function AccounterDashboard() {
   const [showQR, setShowQR] = useState(false)
   const [quickFeeStudent, setQuickFeeStudent] = useState<StudentInfo | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [alertExpanded, setAlertExpanded] = useState(true)
   const autoPrintRef = useRef(false)
 
   useEffect(() => { loadData() }, [])
@@ -805,10 +806,14 @@ function AccounterDashboard() {
   }
 
   // Stats
-  const totalRevenue = records.reduce((s, r) => s + r.paidAmount, 0)
-  const pendingAmount = records.reduce((s, r) => s + Math.max(0, r.effectiveAmount - r.paidAmount), 0)
-  const paidCount = records.filter(r => getStatus(r) === 'paid').length
+  const totalRevenue   = records.reduce((s, r) => s + r.paidAmount, 0)
+  const pendingAmount  = records.reduce((s, r) => s + Math.max(0, r.effectiveAmount - r.paidAmount), 0)
+  const paidCount      = records.filter(r => getStatus(r) === 'paid').length
   const collectionRate = records.length > 0 ? Math.round((paidCount / records.length) * 100) : 0
+  const overdueRecords = records.filter(r => getStatus(r) === 'overdue').sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+  const partialRecords = records.filter(r => getStatus(r) === 'partial')
+  const pendingRecords = records.filter(r => getStatus(r) === 'pending')
+  const unpaidCount    = overdueRecords.length + partialRecords.length + pendingRecords.length
 
   return (
     <div className="flex-1 overflow-y-auto bg-gray-50 min-h-screen">
@@ -863,6 +868,90 @@ function AccounterDashboard() {
           <StatCard label="Collection Rate" value={`${collectionRate}%`} sub="Payment completion" accent="bg-purple-50"
             icon={<svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>} />
         </div>
+
+        {/* Unpaid Alert */}
+        {!loading && unpaidCount > 0 && (
+          <div className={`rounded-2xl border bg-white shadow-sm overflow-hidden border-l-4 ${
+            overdueRecords.length > 0 ? 'border-l-red-500 border-red-100' : 'border-l-amber-400 border-amber-100'
+          }`}>
+            {/* Header row */}
+            <button
+              onClick={() => setAlertExpanded(x => !x)}
+              className="w-full px-6 py-4 flex items-center gap-3 hover:bg-gray-50/60 transition text-left">
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                overdueRecords.length > 0 ? 'bg-red-100' : 'bg-amber-100'
+              }`}>
+                <svg className={`w-4 h-4 ${overdueRecords.length > 0 ? 'text-red-500' : 'text-amber-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </span>
+              <div className="flex items-center gap-3 flex-1 flex-wrap">
+                <span className="text-sm font-semibold text-gray-800">
+                  {unpaidCount} student{unpaidCount !== 1 ? 's' : ''} with unpaid fees
+                </span>
+                <span className="flex gap-2 text-xs">
+                  {overdueRecords.length > 0 && <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-semibold">{overdueRecords.length} Overdue</span>}
+                  {partialRecords.length > 0 && <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-semibold">{partialRecords.length} Partial</span>}
+                  {pendingRecords.length > 0 && <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full font-semibold">{pendingRecords.length} Pending</span>}
+                </span>
+                <span className="ml-auto text-xs text-gray-400 hidden sm:block">{fmt(pendingAmount)} outstanding</span>
+              </div>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${alertExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Expanded list — overdue students */}
+            {alertExpanded && (
+              <div className="border-t border-gray-100">
+                {overdueRecords.length > 0 && (
+                  <div>
+                    <div className="px-6 py-2 bg-red-50 flex items-center justify-between">
+                      <span className="text-xs font-bold text-red-600 uppercase tracking-wider">Overdue</span>
+                      <button onClick={() => setStatusFilter('overdue')} className="text-xs text-red-500 hover:underline">Filter table →</button>
+                    </div>
+                    <div className="divide-y divide-gray-50">
+                      {overdueRecords.map(r => {
+                        const daysLate = Math.floor((Date.now() - new Date(r.dueDate).getTime()) / 86400000)
+                        const balance  = r.effectiveAmount - r.paidAmount
+                        return (
+                          <div key={r.id} className="px-6 py-3 flex items-center gap-3 hover:bg-red-50/40 transition">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{r.studentName}</p>
+                              <p className="text-xs text-gray-400">{r.class} · {daysLate}d overdue</p>
+                            </div>
+                            <span className="text-sm font-bold text-red-600 shrink-0">{fmt(balance)}</span>
+                            <button onClick={() => setPaymentTarget(r)}
+                              className="px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition shrink-0">
+                              Pay
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+                {(partialRecords.length > 0 || pendingRecords.length > 0) && (
+                  <div className="px-6 py-3 bg-gray-50 flex items-center gap-4 border-t border-gray-100">
+                    {partialRecords.length > 0 && (
+                      <button onClick={() => setStatusFilter('partial')} className="text-xs text-amber-700 font-medium hover:underline">
+                        View {partialRecords.length} partial →
+                      </button>
+                    )}
+                    {pendingRecords.length > 0 && (
+                      <button onClick={() => setStatusFilter('pending')} className="text-xs text-gray-600 font-medium hover:underline">
+                        View {pendingRecords.length} pending →
+                      </button>
+                    )}
+                    <button onClick={() => setStatusFilter('all')} className="text-xs text-gray-400 hover:underline ml-auto">
+                      Show all
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Fee Records Table */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
