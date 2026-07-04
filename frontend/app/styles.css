@@ -32,15 +32,12 @@
 @layer base {
   body {
     @apply text-slate-800 antialiased;
-    background:
-      radial-gradient(900px 280px at -8% -12%, rgba(0, 201, 167, 0.1), transparent 60%),
-      radial-gradient(700px 220px at 108% -18%, rgba(56, 189, 248, 0.1), transparent 60%),
-      radial-gradient(600px 180px at 50% 110%, rgba(99, 102, 241, 0.06), transparent 60%),
-      linear-gradient(170deg, var(--color-bg-mobile) 0%, var(--color-bg-mobile-2) 100%);
+    /* Default body bg — individual pages override via their wrapper */
+    background: #ffffff;
   }
   @screen lg {
     body {
-      background: linear-gradient(135deg, #F8FAFF 0%, #F0FDF9 50%, #F8FAFF 100%);
+      background: #ffffff;
     }
   }
 
