@@ -84,6 +84,8 @@ export class FeesService {
     discountReason?: string;
     dueDate: string;
     term?: string;
+    subject?: string;
+    feeClass?: string;
     notes?: string;
     createdById: string;
   }) {
@@ -103,6 +105,8 @@ export class FeesService {
         paidAmount: 0,
         dueDate: new Date(data.dueDate),
         term: data.term ?? null,
+        subject: data.subject ?? null,
+        feeClass: data.feeClass ?? null,
         notes: data.notes ?? null,
         createdById: data.createdById,
       },
@@ -121,7 +125,7 @@ export class FeesService {
 
   async update(
     id: string,
-    data: { totalAmount?: number; discount?: number; discountReason?: string; dueDate?: string; term?: string; notes?: string },
+    data: { totalAmount?: number; discount?: number; discountReason?: string; dueDate?: string; term?: string; subject?: string; feeClass?: string; notes?: string },
   ) {
     const existing = await this.prisma.feeRecord.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Fee record not found');
@@ -139,6 +143,8 @@ export class FeesService {
         ...(data.discountReason !== undefined && { discountReason: data.discountReason }),
         ...(data.dueDate !== undefined && { dueDate: new Date(data.dueDate) }),
         ...(data.term !== undefined && { term: data.term }),
+        ...(data.subject !== undefined && { subject: data.subject }),
+        ...(data.feeClass !== undefined && { feeClass: data.feeClass }),
         ...(data.notes !== undefined && { notes: data.notes }),
       },
       include: {
@@ -369,6 +375,8 @@ export class FeesService {
         ? r.dueDate.toISOString().split('T')[0]
         : String(r.dueDate).split('T')[0],
       term: r.term ?? '',
+      subject: r.subject ?? '',
+      feeClass: r.feeClass ?? '',
       notes: r.notes ?? '',
       payments: (r.payments ?? []).map((p: any) => ({
         id: p.id,

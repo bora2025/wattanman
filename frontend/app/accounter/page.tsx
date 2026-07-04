@@ -38,6 +38,8 @@ interface FeeRecord {
   paidAmount: number
   dueDate: string
   term: string
+  subject: string
+  feeClass: string
   notes?: string
   payments: FeePayment[]
 }
@@ -473,10 +475,11 @@ table{width:100%;border-collapse:collapse;margin-bottom:16px}thead tr{background
               <div className="bg-gray-50 rounded-xl p-3.5">
                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Bill To</p>
                 <p className="font-semibold text-gray-900">{record.studentName}</p>
-                <p className="text-xs text-gray-500">Class: {record.class}</p>
+                <p className="text-xs text-gray-500">Class: {record.feeClass || record.class}</p>
               </div>
               <div className="bg-gray-50 rounded-xl p-3.5">
                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Fee Details</p>
+                {record.subject && <p className="text-xs text-gray-600">Subject: <span className="font-medium text-gray-900">{record.subject}</span></p>}
                 <p className="text-xs text-gray-600">Term: <span className="font-medium text-gray-900">{record.term || '—'}</span></p>
                 <p className="text-xs text-gray-600">Due Date: <span className="font-medium text-gray-900">{record.dueDate}</span></p>
                 {record.notes && <p className="text-xs text-gray-600 mt-0.5">Note: {record.notes}</p>}
@@ -491,7 +494,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:16px}thead tr{background
               </thead>
               <tbody>
                 <tr className="border-b border-gray-100">
-                  <td className="px-3 py-2.5 text-gray-700">School Fee{record.term ? ` – ${record.term}` : ''}</td>
+                  <td className="px-3 py-2.5 text-gray-700">{record.subject ? record.subject : 'School Fee'}{record.term ? ` – ${record.term}` : ''}</td>
                   <td className="px-3 py-2.5 text-right font-medium text-gray-900">{fmt(record.totalAmount)}</td>
                 </tr>
                 {record.discount > 0 && (
@@ -582,6 +585,8 @@ function AddFeeModal({ students, onClose, onCreated }: {
   const [totalAmount, setTotalAmount] = useState('')
   const [discount, setDiscount] = useState('')
   const [discountReason, setDiscountReason] = useState('')
+  const [subject, setSubject] = useState('')
+  const [feeClass, setFeeClass] = useState('')
   const [dueDate, setDueDate] = useState(today)
   const [term, setTerm] = useState('')
   const [notes, setNotes] = useState('')
@@ -627,6 +632,8 @@ function AddFeeModal({ students, onClose, onCreated }: {
           totalAmount: n,
           discount: disc || undefined,
           discountReason: discountReason.trim() || undefined,
+          subject: subject.trim() || undefined,
+          feeClass: feeClass.trim() || undefined,
           dueDate,
           term: term.trim() || undefined,
           notes: notes.trim() || undefined,
@@ -696,6 +703,22 @@ function AddFeeModal({ students, onClose, onCreated }: {
                 )}
               </>
             )}
+          </div>
+
+          {/* Subject + Class row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Subject / Lesson</label>
+              <input type="text" value={subject} onChange={e => setSubject(e.target.value)}
+                placeholder="e.g. Math, English"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Class (optional)</label>
+              <input type="text" value={feeClass} onChange={e => setFeeClass(e.target.value)}
+                placeholder="e.g. Class A"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+            </div>
           </div>
 
           {/* Amount */}
@@ -1034,10 +1057,10 @@ function AccounterDashboard() {
   function handleExport() {
     const escape = (v: string | number) => { const s = String(v); return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s }
     const rows = [
-      ['Student Name', 'Class', 'Amount', 'Discount', 'Discount Reason', 'Net Due', 'Paid', 'Balance', 'Due Date', 'Status', 'Term'],
+      ['Student Name', 'Class', 'Subject', 'Amount', 'Discount', 'Discount Reason', 'Net Due', 'Paid', 'Balance', 'Due Date', 'Status', 'Term'],
       ...filtered.map(r => {
         const st = getStatus(r); const bal = r.effectiveAmount - r.paidAmount
-        return [r.studentName, r.class, r.totalAmount, r.discount, r.discountReason, r.effectiveAmount, r.paidAmount, bal, r.dueDate, STATUS_LABEL[st], r.term]
+        return [r.studentName, r.feeClass || r.class, r.subject, r.totalAmount, r.discount, r.discountReason, r.effectiveAmount, r.paidAmount, bal, r.dueDate, STATUS_LABEL[st], r.term]
       }),
     ]
     const csv = '\uFEFF' + rows.map(row => row.map(escape).join(',')).join('\n')
@@ -1237,6 +1260,7 @@ function AccounterDashboard() {
                   <tr className="border-b border-gray-100 bg-gray-50/60">
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Student</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Class</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Subject</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Term</th>
                     <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Net Due</th>
                     <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Paid</th>
@@ -1253,7 +1277,8 @@ function AccounterDashboard() {
                     return (
                       <tr key={r.id} className="hover:bg-gray-50/60 transition-colors">
                         <td className="px-6 py-4 font-medium text-gray-900">{r.studentName}</td>
-                        <td className="px-4 py-4 text-gray-600">{r.class}</td>
+                        <td className="px-4 py-4 text-gray-600">{r.feeClass || r.class || '—'}</td>
+                        <td className="px-4 py-4 text-gray-600">{r.subject || '—'}</td>
                         <td className="px-4 py-4 text-gray-500">{r.term || '—'}</td>
                         <td className="px-4 py-4 text-right">
                           <span className="text-gray-700">{fmt(r.effectiveAmount)}</span>

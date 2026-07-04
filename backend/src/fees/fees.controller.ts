@@ -85,6 +85,8 @@ export class FeesController {
       discountReason?: string;
       dueDate: string;
       term?: string;
+      subject?: string;
+      feeClass?: string;
       notes?: string;
     },
     @Request() req: any,
@@ -96,7 +98,7 @@ export class FeesController {
   @Put(':id')
   update(
     @Param('id') id: string,
-    @Body() body: { totalAmount?: number; discount?: number; discountReason?: string; dueDate?: string; term?: string; notes?: string },
+    @Body() body: { totalAmount?: number; discount?: number; discountReason?: string; dueDate?: string; term?: string; subject?: string; feeClass?: string; notes?: string },
   ) {
     return this.feesService.update(id, body);
   }
