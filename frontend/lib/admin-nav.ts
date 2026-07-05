@@ -48,10 +48,10 @@ export const adminNav = [
   { label: 'nav.holidays', href: '/admin/holidays', icon: 'holiday' },
   { label: 'Backup & Restore', href: '/admin/backup', icon: 'briefcase' },
   { label: 'Audit Logs', href: '/admin/audit', icon: 'clipboard' },
+  { label: 'nav.settings', href: '/admin/settings', icon: 'settings' },
   { label: 'Appearance', href: '/admin/appearance', icon: 'paint', section: 'Appearance' },
   { label: 'Posts', href: '/admin/appearance/posts', icon: 'edit' },
   { label: 'About', href: '/admin/appearance/about', icon: 'users' },
-  { label: 'nav.settings', href: '/admin/settings', icon: 'settings' },
 ]
 
 /** Navigation for CLASS_ADMIN — limited to classes, scoring, and student attendance only. */
