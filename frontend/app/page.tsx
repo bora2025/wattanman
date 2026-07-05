@@ -163,6 +163,153 @@ const stats = [
   { value: '24/7', label: 'Support', icon: '🛡️' },
 ]
 
+/* ─── Latest Posts section ───────────────────────────────── */
+
+interface PublicPost {
+  id: string
+  title: string
+  excerpt: string
+  body: string
+  type: 'text' | 'image' | 'video'
+  imageUrl: string
+  videoUrl: string
+  pinned: boolean
+  tags: string[]
+  createdAt: string
+}
+
+function VideoEmbed({ url }: { url: string }) {
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
+  if (ytMatch) return (
+    <div className="relative rounded-xl overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+      <iframe src={`https://www.youtube.com/embed/${ytMatch[1]}`}
+        className="absolute inset-0 w-full h-full" allowFullScreen title="video" />
+    </div>
+  )
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/)
+  if (vimeoMatch) return (
+    <div className="relative rounded-xl overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+      <iframe src={`https://player.vimeo.com/video/${vimeoMatch[1]}`}
+        className="absolute inset-0 w-full h-full" allowFullScreen title="video" />
+    </div>
+  )
+  return <video src={url} controls className="w-full rounded-xl max-h-52" />
+}
+
+function LatestPosts({ primaryColor }: { primaryColor: string }) {
+  const [posts, setPosts] = useState<PublicPost[]>([])
+  const [expanded, setExpanded] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/posts/published?limit=6')
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setPosts)
+      .catch(() => {})
+  }, [])
+
+  if (posts.length === 0) return null
+
+  const typeLabel = { text: '📝 Article', image: '🖼️ Photo', video: '🎬 Video' }
+
+  return (
+    <section className="py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="text-center mb-12">
+          <span
+            className="inline-block px-4 py-1.5 rounded-full text-sm font-bold mb-3"
+            style={{ backgroundColor: `${primaryColor}18`, color: primaryColor }}
+          >
+            Latest from the School
+          </span>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">News & Updates</h2>
+          <p className="text-gray-500 max-w-xl mx-auto">Stay informed with the latest announcements, events, and stories.</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posts.map((post) => (
+            <article
+              key={post.id}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden group"
+            >
+              {/* Image */}
+              {post.imageUrl && (
+                <div className="h-44 overflow-hidden">
+                  <img
+                    src={post.imageUrl}
+                    alt={post.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+              )}
+              {/* Video */}
+              {post.type === 'video' && post.videoUrl && !post.imageUrl && (
+                <div className="p-4 pb-0">
+                  <VideoEmbed url={post.videoUrl} />
+                </div>
+              )}
+
+              <div className="p-5 space-y-3">
+                {/* Type badge + date */}
+                <div className="flex items-center justify-between">
+                  <span
+                    className="px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
+                  >
+                    {typeLabel[post.type]}
+                  </span>
+                  {post.pinned && <span className="text-xs text-amber-600 font-medium">📌 Pinned</span>}
+                  <span className="text-xs text-gray-400 ml-auto">
+                    {new Date(post.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+
+                <h3 className="text-base font-bold text-gray-900 leading-snug">{post.title}</h3>
+
+                {post.excerpt && (
+                  <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">{post.excerpt}</p>
+                )}
+
+                {/* Expanded body */}
+                {expanded === post.id && post.body && (
+                  <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-line border-t border-gray-100 pt-3">
+                    {post.body}
+                  </div>
+                )}
+                {/* Video in expanded */}
+                {expanded === post.id && post.type === 'video' && post.videoUrl && post.imageUrl && (
+                  <div className="border-t border-gray-100 pt-3">
+                    <VideoEmbed url={post.videoUrl} />
+                  </div>
+                )}
+
+                {/* Tags */}
+                {post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {post.tags.slice(0, 3).map((t) => (
+                      <span key={t} className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[11px] rounded-full">{t}</span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Read more toggle */}
+                {(post.body || (post.type === 'video' && post.imageUrl && post.videoUrl)) && (
+                  <button
+                    onClick={() => setExpanded(expanded === post.id ? null : post.id)}
+                    className="text-xs font-semibold flex items-center gap-1 transition-colors"
+                    style={{ color: primaryColor }}
+                  >
+                    {expanded === post.id ? 'Show less ↑' : 'Read more →'}
+                  </button>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ─── Hero Slider component ──────────────────────────────── */
 
 function HeroSlider({ slides, primaryColor }: { slides: HeroSlide[]; primaryColor: string }) {
@@ -612,6 +759,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ══════════════ LATEST POSTS ══════════════ */}
+      <LatestPosts primaryColor={primary} />
 
       {/* ══════════════ CTA BANNER ══════════════ */}
       <section

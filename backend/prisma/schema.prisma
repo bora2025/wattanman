@@ -1201,3 +1201,20 @@ model SiteSetting {
   customCss     String @default("")
   updatedAt     DateTime @updatedAt
 }
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  excerpt     String   @default("")
+  body        String   @default("")
+  // 'text' | 'image' | 'video'
+  type        String   @default("text")
+  imageUrl    String   @default("")
+  videoUrl    String   @default("")
+  published   Boolean  @default(false)
+  pinned      Boolean  @default(false)
+  tags        String   @default("[]")  // JSON array of strings
+  authorId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

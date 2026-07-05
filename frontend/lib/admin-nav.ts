@@ -48,7 +48,8 @@ export const adminNav = [
   { label: 'nav.holidays', href: '/admin/holidays', icon: 'holiday' },
   { label: 'Backup & Restore', href: '/admin/backup', icon: 'briefcase' },
   { label: 'Audit Logs', href: '/admin/audit', icon: 'clipboard' },
-  { label: 'Appearance', href: '/admin/appearance', icon: 'paint' },
+  { label: 'Appearance', href: '/admin/appearance', icon: 'paint', section: 'Appearance' },
+  { label: 'Posts', href: '/admin/appearance/posts', icon: 'edit' },
   { label: 'nav.settings', href: '/admin/settings', icon: 'settings' },
 ]
 
