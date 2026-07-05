@@ -218,16 +218,24 @@ function VideoEmbed({ url }: { url: string }) {
 
 function LatestPosts({ primaryColor }: { primaryColor: string }) {
   const [posts, setPosts] = useState<PublicPost[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/posts/published?limit=6')
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setPosts)
-      .catch(() => {})
+    fetch('/api/posts/published?limit=6', { credentials: 'include' })
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
+      .then((data: unknown) => {
+        setPosts(Array.isArray(data) ? data : [])
+        setLoaded(true)
+      })
+      .catch(() => setLoaded(true))
   }, [])
 
-  if (posts.length === 0) return null
+  // Hide section only after loading is complete and there are no posts
+  if (!loaded || posts.length === 0) return null
 
   const typeLabel = { text: '📝 Article', image: '🖼️ Photo', video: '🎬 Video' }
 

@@ -25,7 +25,7 @@ export class PostsService {
     const posts = await this.prisma.post.findMany({
       orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
     });
-    return posts.map(this.deserialize);
+    return posts.map((p) => this.deserialize(p));
   }
 
   /** Public: list published posts only. */
@@ -35,7 +35,7 @@ export class PostsService {
       orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
       take: limit,
     });
-    return posts.map(this.deserialize);
+    return posts.map((p) => this.deserialize(p));
   }
 
   /** Get single post by id. */
