@@ -29,6 +29,14 @@ interface SiteSettings {
   footerYoutube: string
   footerCopyright: string
   primaryColor: string
+  // About
+  aboutBadge: string
+  aboutTitle: string
+  aboutDescription: string
+  aboutImageUrl: string
+  aboutFeatures: string[]
+  aboutCtaLabel: string
+  aboutCtaHref: string
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -45,6 +53,18 @@ const DEFAULT_SETTINGS: SiteSettings = {
   footerYoutube: '',
   footerCopyright: `© ${new Date().getFullYear()} Wattaman School. All rights reserved.`,
   primaryColor: '#FF6B2C',
+  aboutBadge: 'About Us',
+  aboutTitle: 'A Smarter Way to Manage Your School',
+  aboutDescription: 'Wattaman is an all-in-one school management platform designed for modern educational institutions. From QR-code attendance to fee management, timetables, and parent communication — everything runs seamlessly in one place.',
+  aboutImageUrl: '',
+  aboutFeatures: [
+    'Full-day & session attendance tracking',
+    'Automated reports & CSV exports',
+    'Parent portal with push notifications',
+    'Role-based access for every user type',
+  ],
+  aboutCtaLabel: 'Get Started Today',
+  aboutCtaHref: '/login',
 }
 
 /* ─── Portal definitions ─────────────────────────────────── */
@@ -654,21 +674,25 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
           {/* Left: image / illustration */}
           <div className="relative order-2 md:order-1">
-            <div
-              className="absolute -left-8 -top-8 w-64 h-64 rounded-full opacity-15"
-              style={{ backgroundColor: primary }}
-            />
-            <div
-              className="absolute -right-4 -bottom-4 w-48 h-48 rounded-full opacity-10"
-              style={{ backgroundColor: '#7C3AED' }}
-            />
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 flex items-center justify-center"
-              style={{ minHeight: 340 }}>
-              <div className="text-center p-10">
-                <div className="text-8xl mb-4">🏫</div>
-                <p className="text-2xl font-bold text-gray-700">{settings.siteName}</p>
-                <p className="text-gray-500 mt-2">{settings.siteTagline}</p>
-              </div>
+            <div className="absolute -left-8 -top-8 w-64 h-64 rounded-full opacity-15" style={{ backgroundColor: primary }} />
+            <div className="absolute -right-4 -bottom-4 w-48 h-48 rounded-full opacity-10" style={{ backgroundColor: '#7C3AED' }} />
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-orange-100" style={{ minHeight: 340 }}>
+              {settings.aboutImageUrl ? (
+                <img
+                  src={settings.aboutImageUrl}
+                  alt="About"
+                  className="w-full h-full object-cover"
+                  style={{ minHeight: 340 }}
+                />
+              ) : (
+                <div className="flex items-center justify-center text-center p-10 h-full bg-gradient-to-br from-orange-50 to-amber-50" style={{ minHeight: 340 }}>
+                  <div>
+                    <div className="text-8xl mb-4">🏫</div>
+                    <p className="text-2xl font-bold text-gray-700">{settings.siteName}</p>
+                    <p className="text-gray-500 mt-2">{settings.siteTagline}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -679,46 +703,43 @@ export default function Home() {
                 className="inline-block px-4 py-1.5 rounded-full text-sm font-bold mb-3"
                 style={{ backgroundColor: `${primary}18`, color: primary }}
               >
-                About Wattaman
+                {settings.aboutBadge}
               </span>
               <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
-                A Smarter Way to <span style={{ color: primary }}>Manage Your School</span>
+                {settings.aboutTitle}
               </h2>
-              <p className="text-gray-500 leading-relaxed mb-4">
-                Wattaman is an all-in-one school management platform designed for modern educational institutions.
-                From QR-code attendance to fee management, timetables, and parent communication — everything runs
-                seamlessly in one place.
-              </p>
-              <p className="text-gray-500 leading-relaxed">
-                Our platform empowers administrators, teachers, students, and parents with real-time data and
-                smart tools so that everyone stays informed and connected.
-              </p>
+              {settings.aboutDescription && (
+                <p className="text-gray-500 leading-relaxed whitespace-pre-line">
+                  {settings.aboutDescription}
+                </p>
+              )}
             </div>
-            <ul className="space-y-3">
-              {['Full-day & session attendance tracking', 'Automated reports & CSV exports', 'Parent portal with push notifications', 'Role-based access for every user type'].map((item) => (
-                <li key={item} className="flex items-center gap-3 text-sm text-gray-700">
-                  <span
-                    className="w-6 h-6 rounded-full flex items-center justify-center flex-none"
-                    style={{ backgroundColor: primary }}
-                  >
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-white transition-all hover:shadow-lg hover:-translate-y-0.5"
-              style={{ background: `linear-gradient(135deg, ${primary}, ${primary}bb)`, boxShadow: `0 6px 20px ${primary}44` }}
-            >
-              Get Started Today
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-              </svg>
-            </Link>
+            {settings.aboutFeatures.length > 0 && (
+              <ul className="space-y-3">
+                {settings.aboutFeatures.map((item) => (
+                  <li key={item} className="flex items-center gap-3 text-sm text-gray-700">
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center flex-none" style={{ backgroundColor: primary }}>
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {settings.aboutCtaLabel && (
+              <Link
+                href={settings.aboutCtaHref || '/login'}
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-white transition-all hover:shadow-lg hover:-translate-y-0.5"
+                style={{ background: `linear-gradient(135deg, ${primary}, ${primary}bb)`, boxShadow: `0 6px 20px ${primary}44` }}
+              >
+                {settings.aboutCtaLabel}
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+            )}
           </div>
         </div>
       </section>

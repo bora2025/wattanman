@@ -25,6 +25,14 @@ export interface SiteSettingDto {
   footerCopyright?: string;
   primaryColor?: string;
   customCss?: string;
+  // About section
+  aboutBadge?: string;
+  aboutTitle?: string;
+  aboutDescription?: string;
+  aboutImageUrl?: string;
+  aboutFeatures?: string[];
+  aboutCtaLabel?: string;
+  aboutCtaHref?: string;
 }
 
 @Injectable()
@@ -44,6 +52,7 @@ export class SiteSettingsService {
     return {
       ...settings,
       heroSlides: this.parseJson(settings.heroSlides, []),
+      aboutFeatures: this.parseJson(settings.aboutFeatures, []),
     };
   }
 
@@ -53,6 +62,9 @@ export class SiteSettingsService {
     if (dto.heroSlides !== undefined) {
       data.heroSlides = JSON.stringify(dto.heroSlides);
     }
+    if (dto.aboutFeatures !== undefined) {
+      data.aboutFeatures = JSON.stringify(dto.aboutFeatures);
+    }
     const settings = await this.prisma.siteSetting.upsert({
       where: { id: 'singleton' },
       create: { id: 'singleton', ...data } as any,
@@ -61,6 +73,7 @@ export class SiteSettingsService {
     return {
       ...settings,
       heroSlides: this.parseJson(settings.heroSlides, []),
+      aboutFeatures: this.parseJson(settings.aboutFeatures, []),
     };
   }
 

@@ -1199,6 +1199,14 @@ model SiteSetting {
   primaryColor  String @default("#4f46e5")
   // Custom CSS
   customCss     String @default("")
+  // About section
+  aboutBadge       String @default("About Us")
+  aboutTitle       String @default("A Smarter Way to Manage Your School")
+  aboutDescription String @default("")
+  aboutImageUrl    String @default("")
+  aboutFeatures    String @default("[]")   // JSON string[]
+  aboutCtaLabel    String @default("Get Started Today")
+  aboutCtaHref     String @default("/login")
   updatedAt     DateTime @updatedAt
 }
 
