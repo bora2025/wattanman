@@ -263,7 +263,12 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
             </div>
             <nav className="px-3 py-3">
               {navItems.filter(item => !tabs.some(t => t.href === item.href)).map((item) => {
-                const isActive = pathname === item.href;
+                const isExact = pathname === item.href;
+                const isParent = !isExact && item.href !== '/' && item.href.length > 1
+                  && navItems.some(n => n.href !== item.href && n.href.startsWith(item.href + '/'))
+                  && pathname.startsWith(item.href + '/');
+                const isActive = isExact || isParent;
+                const isChild = navItems.some(n => n.href !== item.href && n.href.length > 1 && item.href.startsWith(n.href + '/'));
                 return (
                   <div key={item.href}>
                     {item.section && (
@@ -275,15 +280,24 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
                     <Link
                       href={item.href}
                       onClick={() => { setCollapsed(false); setShowMore(false); }}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all"
+                      className={`relative flex items-center gap-3 py-2.5 rounded-xl text-sm transition-all ${isChild ? 'ml-3 pl-5 pr-4' : 'px-4'}`}
                       style={{
-                        background: isActive ? 'var(--color-primary-light)' : 'transparent',
+                        background: isExact
+                          ? 'var(--color-primary-light)'
+                          : isParent
+                            ? 'rgba(var(--color-primary-rgb, 79 70 229) / 0.08)'
+                            : 'transparent',
                         color: isActive ? 'var(--color-primary-dark)' : 'var(--color-text)',
-                        fontWeight: isActive ? 600 : 400,
+                        fontWeight: isExact ? 600 : isParent ? 500 : 400,
                       }}
                     >
-                      <NavIcon icon={item.icon} size={22} />
-                      <span>{t(item.label)}</span>
+                      {isActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-1/2 rounded-r-full"
+                          style={{ background: 'var(--color-primary)' }} />
+                      )}
+                      {isChild && <span className="absolute left-3 top-0 bottom-0 w-px bg-gray-200" />}
+                      <NavIcon icon={item.icon} size={isChild ? 18 : 22} />
+                      <span className={isChild ? 'text-[13px]' : ''}>{t(item.label)}</span>
                     </Link>
                   </div>
                 );
@@ -355,8 +369,25 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
           </Link>
           <div className={`border-t border-white/10 mb-2 ${sidebarOpen ? 'mx-1' : 'mx-0'}`} />
           {navItems.map((item, idx) => {
-            const isActive = pathname === item.href;
+            // ── Active state detection ──────────────────────────────────
+            // isExact: user is on exactly this page
+            const isExact = pathname === item.href;
+            // isParent: this item is a parent and a child page is currently open
+            const isParent = !isExact
+              && item.href !== '/'
+              && item.href.length > 1
+              && navItems.some(n => n.href !== item.href && n.href.startsWith(item.href + '/'))
+              && pathname.startsWith(item.href + '/');
+            const isActive = isExact || isParent;
+
+            // isChild: this item lives under a parent that exists in navItems
+            const parentHref = navItems.find(
+              n => n.href !== item.href && n.href.length > 1 && item.href.startsWith(n.href + '/')
+            )?.href;
+            const isChild = !!parentHref;
+
             const badgeCount = item.badgeKey ? unread[item.badgeKey] : 0;
+
             return (
               <div key={item.href}>
                 {sidebarOpen && item.section && (
@@ -367,25 +398,45 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
                 <Link
                   href={item.href}
                   title={sidebarOpen ? undefined : t(item.label)}
-                  className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm transition-all duration-150 ${
-                    isActive
-                      ? colors.active
-                      : `${colors.text} ${colors.hover}`
-                  } ${sidebarOpen ? '' : 'justify-center'}`}
+                  className={`relative flex items-center gap-3 rounded-xl text-sm transition-all duration-150
+                    ${isChild && sidebarOpen ? 'ml-3 pl-5 pr-2.5 py-1.5' : 'px-2.5 py-2'}
+                    ${isExact
+                      ? 'bg-white/20 text-white font-semibold shadow-sm'
+                      : isParent
+                        ? 'bg-white/10 text-white font-medium'
+                        : `${colors.text} ${colors.hover}`
+                    }
+                    ${sidebarOpen ? '' : 'justify-center'}
+                  `}
                 >
-                  <span className="relative inline-flex">
-                    <NavIcon icon={item.icon} size={17} />
+                  {/* Left accent bar for active items */}
+                  {sidebarOpen && isActive && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-white"
+                      style={{ height: isExact ? '60%' : '40%', opacity: isExact ? 1 : 0.6 }} />
+                  )}
+                  {/* Tree connector line for child items */}
+                  {isChild && sidebarOpen && (
+                    <span className="absolute left-3 top-0 bottom-0 w-px bg-white/20" />
+                  )}
+                  <span className="relative inline-flex flex-none">
+                    <NavIcon icon={item.icon} size={isChild ? 15 : 17} className={isActive ? 'opacity-100' : 'opacity-80'} />
                     {badgeCount > 0 && !sidebarOpen && (
                       <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
                         {badgeCount > 9 ? '9+' : badgeCount}
                       </span>
                     )}
                   </span>
-                  {sidebarOpen && <span className="truncate flex-1">{t(item.label)}</span>}
+                  {sidebarOpen && (
+                    <span className={`truncate flex-1 ${isChild ? 'text-[13px]' : ''}`}>{t(item.label)}</span>
+                  )}
                   {sidebarOpen && badgeCount > 0 && (
                     <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
                       {badgeCount > 99 ? '99+' : badgeCount}
                     </span>
+                  )}
+                  {/* Active dot for collapsed mode */}
+                  {!sidebarOpen && isActive && (
+                    <span className="absolute right-0.5 top-0.5 w-2 h-2 rounded-full bg-white" />
                   )}
                 </Link>
               </div>
