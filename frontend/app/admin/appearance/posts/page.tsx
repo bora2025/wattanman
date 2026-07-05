@@ -33,7 +33,7 @@ const EMPTY_POST: Omit<Post, 'id' | 'createdAt' | 'updatedAt'> = {
   type: 'text',
   imageUrl: '',
   videoUrl: '',
-  published: false,
+  published: true,   // new posts are published by default
   pinned: false,
   tags: [],
 }
@@ -156,6 +156,8 @@ function PostEditor({
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.title.trim()) { setError('Title is required.'); return }
+    // When clicking "Publish Post" on a new post, always publish
+    const payload = isNew ? { ...form, published: true } : form
     setSaving(true); setError(null)
     try {
       const res = await apiFetch(
@@ -163,7 +165,7 @@ function PostEditor({
         {
           method: isNew ? 'POST' : 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         }
       )
       if (!res.ok) throw new Error(await res.text())
@@ -577,6 +579,33 @@ function PostsContent() {
           New Post
         </button>
       </div>
+
+      {/* Warning banner if there are draft posts */}
+      {posts.length > 0 && counts.draft > 0 && counts.published === 0 && (
+        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+          <span className="text-amber-500 text-lg flex-none">⚠️</span>
+          <div className="flex-1">
+            <p className="font-semibold text-amber-800">
+              {counts.draft} post{counts.draft > 1 ? 's are' : ' is'} saved as Draft — not visible on the website.
+            </p>
+            <p className="text-amber-600 mt-0.5">Toggle "Published" on each post, or use the Publish button below.</p>
+          </div>
+          <button
+            onClick={async () => {
+              const drafts = posts.filter((p) => !p.published)
+              await Promise.all(drafts.map((p) => apiFetch(`/api/posts/${p.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ published: true }),
+              })))
+              load()
+            }}
+            className="flex-none px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors"
+          >
+            Publish All Drafts
+          </button>
+        </div>
+      )}
 
       {/* Filter + search bar */}
       <div className="flex flex-col sm:flex-row gap-3">

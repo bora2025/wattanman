@@ -11,6 +11,14 @@ import { Roles } from '../auth/roles.decorator';
 export class PostsController {
   constructor(private readonly svc: PostsService) {}
 
+  /** Admin: all posts (including drafts) — defined first so @Get() doesn't clash */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get()
+  listAll() {
+    return this.svc.listAll();
+  }
+
   /** Public: published posts feed (homepage, etc.) */
   @Get('published')
   listPublished(@Query('limit') limit?: string) {
@@ -21,14 +29,6 @@ export class PostsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.svc.findOne(id);
-  }
-
-  /** Admin: all posts (including drafts) */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
-  @Get()
-  listAll() {
-    return this.svc.listAll();
   }
 
   /** Admin: create */
