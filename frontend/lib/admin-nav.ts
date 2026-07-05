@@ -34,11 +34,13 @@ export const adminNav = [
   { label: 'Salary Management', href: '/admin/salary', icon: 'money' },
   { label: 'Budget Report', href: '/admin/budget-report', icon: 'bar-chart' },
 
-  // ── Reports & Cards ──
+  // ── Reports ──
   { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', section: 'nav.section.reports' },
   { label: 'nav.officerReport', href: '/admin/staff-reports', icon: 'bar-chart' },
   { label: 'nav.teacherReports', href: '/wattaman/teacher-reports', icon: 'clipboard' },
-  { label: 'nav.cardDesigner', href: '/admin/card-designer', icon: 'design' },
+
+  // ── Designer ──
+  { label: 'nav.cardDesigner', href: '/admin/card-designer', icon: 'design', section: 'Designer' },
   { label: 'nav.studentCards', href: '/admin/student-cards', icon: 'id-card' },
   { label: 'nav.staffCards', href: '/admin/staff-cards', icon: 'id-card' },
   { label: 'Certificate', href: '/admin/certificate', icon: 'certificate' },
