@@ -32,6 +32,7 @@ export const adminNav = [
   // ── Finance ──
   { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money', section: 'Finance' },
   { label: 'Salary Management', href: '/admin/salary', icon: 'money' },
+  { label: 'Budget Report', href: '/admin/budget-report', icon: 'bar-chart' },
 
   // ── Reports & Cards ──
   { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', section: 'nav.section.reports' },
