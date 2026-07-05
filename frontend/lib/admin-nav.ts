@@ -8,7 +8,7 @@ export const adminNav = [
   { label: 'nav.studyYears', href: '/admin/study-years', icon: 'layers' },
   { label: 'nav.timetable', href: '/admin/timetable', icon: 'calendar' },
   { label: 'nav.scoring', href: '/admin/scoring', icon: 'trophy' },
-  { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money' },
+  { label: 'Examinations', href: '/admin/exams', icon: 'book' },
 
   // ── Attendance ──
   { label: 'nav.takeAttendance', href: '/admin/camera', icon: 'camera', section: 'nav.section.attendance' },
@@ -29,6 +29,10 @@ export const adminNav = [
   { label: 'Communication Hub', href: '/admin/communication', icon: 'clipboard', section: 'Communication', badgeKey: 'messages' as const },
   { label: 'Parent Link Requests', href: '/admin/parent-requests', icon: 'users' },
 
+  // ── Finance ──
+  { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money', section: 'Finance' },
+  { label: 'Salary Management', href: '/admin/salary', icon: 'money' },
+
   // ── Reports & Cards ──
   { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', section: 'nav.section.reports' },
   { label: 'nav.officerReport', href: '/admin/staff-reports', icon: 'bar-chart' },
@@ -38,10 +42,8 @@ export const adminNav = [
   { label: 'nav.staffCards', href: '/admin/staff-cards', icon: 'id-card' },
   { label: 'Certificate', href: '/admin/certificate', icon: 'certificate' },
 
-  // ── New Modules ──
-  { label: 'Salary Management', href: '/admin/salary', icon: 'money', section: 'Modules' },
-  { label: 'School Bus', href: '/admin/bus', icon: 'calendar' },
-  { label: 'Examinations', href: '/admin/exams', icon: 'book' },
+  // ── Modules ──
+  { label: 'School Bus', href: '/admin/bus', icon: 'calendar', section: 'Modules' },
 
   // ── Settings ──
   { label: 'nav.sessionSettings', href: '/admin/session-settings', icon: 'clock', section: 'nav.section.settings' },
