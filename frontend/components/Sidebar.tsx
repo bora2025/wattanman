@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../lib/i18n';
 import { iconMap, IconGlobe, IconLogout } from './Icons';
 import InstallAppButton from './InstallAppButton';
@@ -131,6 +131,17 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
   const [showMore, setShowMore] = useState(false);
   const colors = colorMap[accentColor] || colorMap.indigo;
   const { lang, setLang, t } = useLanguage();
+  const navRef = useRef<HTMLElement>(null);
+
+  // Scroll the active nav item into view whenever the page changes
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const activeEl = nav.querySelector<HTMLElement>('[data-active="true"]');
+    if (activeEl) {
+      activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [pathname]);
 
   const tabs = pickBottomTabs(navItems, bottomTabs);
   const hasMore = tabs.some(t => t.href === '__more__');
@@ -355,7 +366,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-3 overflow-y-auto overscroll-contain">
+        <nav ref={navRef} className="flex-1 px-2 py-3 overflow-y-auto overscroll-contain scroll-smooth">
           {/* Back to Home */}
           <Link
             href="/"
@@ -397,6 +408,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
                 )}
                 <Link
                   href={item.href}
+                  data-active={isActive ? 'true' : undefined}
                   title={sidebarOpen ? undefined : t(item.label)}
                   className={`relative flex items-center gap-3 rounded-xl text-sm transition-all duration-150
                     ${isChild && sidebarOpen ? 'ml-3 pl-5 pr-2.5 py-1.5' : 'px-2.5 py-2'}
