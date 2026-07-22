@@ -19,8 +19,14 @@ export class ClassesService {
         throw new BadRequestException('Only users with CLASS_ADMIN role can be assigned as class admin');
       }
     }
+    // Optional FK fields arrive as '' from "None" dropdown options — Prisma/Postgres
+    // rejects '' as a foreign key value, so normalize to undefined (omit from insert).
     return this.prisma.class.create({
-      data,
+      data: {
+        ...data,
+        classAdminId: data.classAdminId || undefined,
+        studyYearId: data.studyYearId || undefined,
+      },
       include: { teacher: { select: { name: true } }, classAdmin: { select: { name: true } }, studyYear: true },
     });
   }
@@ -40,9 +46,15 @@ export class ClassesService {
         throw new BadRequestException('Only users with CLASS_ADMIN role can be assigned as class admin');
       }
     }
+    // '' from "None"/"No study year" dropdowns must clear the FK (null), not be sent as '' —
+    // Postgres rejects '' as a foreign key value with an unhandled constraint error.
     return this.prisma.class.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        classAdminId: data.classAdminId === '' ? null : data.classAdminId,
+        studyYearId: data.studyYearId === '' ? null : data.studyYearId,
+      },
       include: { teacher: { select: { name: true } }, classAdmin: { select: { name: true } }, studyYear: true },
     });
   }
