@@ -28,6 +28,7 @@ export const adminNav = [
   // ── Communication ──
   { label: 'Communication Hub', href: '/admin/communication', icon: 'clipboard', section: 'Communication', badgeKey: 'messages' as const },
   { label: 'Parent Link Requests', href: '/admin/parent-requests', icon: 'users' },
+  { label: 'Class Registrations', href: '/admin/class-registrations', icon: 'clipboard' },
 
   // ── Finance ──
   { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money', section: 'Finance' },
@@ -64,6 +65,7 @@ export const classAdminNav = [
   // ── Academics ──
   { label: 'nav.manageClasses', href: '/admin/classes', icon: 'book', section: 'nav.section.academics' },
   { label: 'nav.scoring', href: '/admin/scoring', icon: 'trophy' },
+  { label: 'Class Registrations', href: '/admin/class-registrations', icon: 'clipboard' },
 
   // ── Attendance ──
   { label: 'nav.takeAttendance', href: '/admin/attendance', icon: 'camera', section: 'nav.section.attendance' },

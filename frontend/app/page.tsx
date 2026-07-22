@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useLanguage } from '../lib/i18n'
-import { IconShield, IconBook, IconGraduation, IconBriefcase, IconCamera, IconBarChart } from '../components/Icons'
+import { IconShield, IconBook, IconGraduation, IconBriefcase, IconCamera, IconBarChart, IconEdit } from '../components/Icons'
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface HeroSlide {
@@ -98,6 +98,16 @@ const portals = [
     bg: 'from-sky-500 to-blue-600',
     light: '#E0F2FE',
     emoji: '🎓',
+  },
+  {
+    titleKey: 'home.registerPortal',
+    descKey: 'home.registerDesc',
+    href: '/register',
+    IconComp: IconEdit,
+    color: '#9333EA',
+    bg: 'from-fuchsia-500 to-purple-600',
+    light: '#F5F3FF',
+    emoji: '📝',
   },
   {
     titleKey: 'home.employeePortal',

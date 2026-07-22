@@ -2,11 +2,19 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import * as bcrypt from 'bcryptjs';
 
+const REGISTRATION_STATUSES = ['AVAILABLE', 'UNAVAILABLE', 'HIDDEN'];
+
 @Injectable()
 export class ClassesService {
   constructor(private prisma: PrismaService) {}
 
-  async createClass(data: { name: string; subject?: string; teacherId: string; classAdminId?: string; schedule?: string; studyYearId?: string }) {
+  private assertValidRegistrationStatus(status?: string) {
+    if (status !== undefined && !REGISTRATION_STATUSES.includes(status)) {
+      throw new BadRequestException('registrationStatus must be one of AVAILABLE, UNAVAILABLE, HIDDEN');
+    }
+  }
+
+  async createClass(data: { name: string; subject?: string; teacherId: string; classAdminId?: string; schedule?: string; studyYearId?: string; registrationStatus?: string }) {
     // Validate that teacherId belongs to a user with TEACHER role
     const teacher = await this.prisma.user.findUnique({ where: { id: data.teacherId } });
     if (!teacher || teacher.role !== 'TEACHER') {
@@ -19,6 +27,7 @@ export class ClassesService {
         throw new BadRequestException('Only users with CLASS_ADMIN role can be assigned as class admin');
       }
     }
+    this.assertValidRegistrationStatus(data.registrationStatus);
     // Optional FK fields arrive as '' from "None" dropdown options — Prisma/Postgres
     // rejects '' as a foreign key value, so normalize to undefined (omit from insert).
     return this.prisma.class.create({
@@ -31,7 +40,7 @@ export class ClassesService {
     });
   }
 
-  async updateClass(id: string, data: { name?: string; subject?: string; teacherId?: string; classAdminId?: string | null; schedule?: string; studyYearId?: string }) {
+  async updateClass(id: string, data: { name?: string; subject?: string; teacherId?: string; classAdminId?: string | null; schedule?: string; studyYearId?: string; registrationStatus?: string }) {
     // Validate that teacherId belongs to a user with TEACHER role
     if (data.teacherId) {
       const teacher = await this.prisma.user.findUnique({ where: { id: data.teacherId } });
@@ -46,6 +55,7 @@ export class ClassesService {
         throw new BadRequestException('Only users with CLASS_ADMIN role can be assigned as class admin');
       }
     }
+    this.assertValidRegistrationStatus(data.registrationStatus);
     // '' from "None"/"No study year" dropdowns must clear the FK (null), not be sent as '' —
     // Postgres rejects '' as a foreign key value with an unhandled constraint error.
     return this.prisma.class.update({
@@ -282,6 +292,12 @@ export class ClassesService {
 
     // Delete attendance records for this class (in case any remain)
     await this.prisma.attendance.deleteMany({
+      where: { classId: id },
+    });
+
+    // Delete self-registration requests for this class — classId is a required
+    // FK with no cascade, so leaving these would block the delete below.
+    await this.prisma.classRegistration.deleteMany({
       where: { classId: id },
     });
 

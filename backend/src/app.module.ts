@@ -30,6 +30,7 @@ import { AuditModule } from './audit/audit.module';
 import { CardAliasesModule } from './card-aliases/card-aliases.module';
 import { SiteSettingsModule } from './site-settings/site-settings.module';
 import { PostsModule } from './posts/posts.module';
+import { ClassRegistrationsModule } from './class-registrations/class-registrations.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { PostsModule } from './posts/posts.module';
     CardAliasesModule,
     SiteSettingsModule,
     PostsModule,
+    ClassRegistrationsModule,
   ],
   controllers: [AppController],
   providers: [

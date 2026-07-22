@@ -70,6 +70,8 @@ model Class {
   studyYearId  String?
   studyYear    StudyYear? @relation(fields: [studyYearId], references: [id])
   schedule     String? // e.g., "Mon 9:00-10:00"
+  // Public student self-registration visibility: AVAILABLE | UNAVAILABLE | HIDDEN
+  registrationStatus String @default("HIDDEN")
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -81,6 +83,7 @@ model Class {
   assignments    Assignment[]    @relation("ClassAssignments")
   announcements  Announcement[]  @relation("ClassAnnouncements")
   courses        Course[]        @relation("ClassCourses")
+  registrations  ClassRegistration[]
 }
 
 model Student {
@@ -98,6 +101,7 @@ model Student {
   dateOfBirth   DateTime? // Date of birth
   address       String? // Home address
   generation    String? // Nth generation (ជំនាន់)
+  nameKh        String? // Khmer name — captured at self-registration; User.name stays the English name used for display
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -191,6 +195,43 @@ model ParentLinkRequest {
 
   @@index([status])
   @@index([studentId])
+}
+
+// Public, unauthenticated student self-registration request for a class.
+// Reviewed by admin; approval creates the User + Student records.
+model ClassRegistration {
+  id           String    @id @default(cuid())
+  classId      String
+  class        Class     @relation(fields: [classId], references: [id])
+  nameKh       String
+  nameEn       String
+  email        String
+  phone        String
+  photo        String? // base64 data URL, same convention as Student.photo
+  status       String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  rejectReason String?
+  studentId    String? // set once approved
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+  resolvedBy   String? // admin user id
+
+  @@index([status])
+  @@index([classId])
+}
+
+// Short-lived email verification codes, used to confirm a real mailbox
+// before accepting a public ClassRegistration submission.
+model EmailVerificationCode {
+  id         String    @id @default(cuid())
+  email      String
+  codeHash   String
+  purpose    String    @default("CLASS_REGISTRATION")
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email, purpose])
 }
 
 model StaffAttendance {
