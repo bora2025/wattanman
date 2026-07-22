@@ -348,6 +348,75 @@ function LatestPosts({ primaryColor }: { primaryColor: string }) {
   )
 }
 
+/* ─── Open Class Registrations ───────────────────────────── */
+
+interface PublicClass {
+  id: string
+  name: string
+  subject: string | null
+  registrationStatus: 'AVAILABLE' | 'UNAVAILABLE' | 'HIDDEN'
+  studyYear: { label: string | null; year: number } | null
+}
+
+function OpenClassRegistrations({ primaryColor }: { primaryColor: string }) {
+  const [classes, setClasses] = useState<PublicClass[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/class-registrations/public/classes')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: unknown) => {
+        const list = Array.isArray(data) ? data : []
+        setClasses(list.filter((c: PublicClass) => c.registrationStatus === 'AVAILABLE'))
+        setLoaded(true)
+      })
+      .catch(() => setLoaded(true))
+  }, [])
+
+  // Hide section entirely until loaded, and if nothing is open for registration
+  if (!loaded || classes.length === 0) return null
+
+  return (
+    <section className="py-20 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="text-center mb-12">
+          <span
+            className="inline-block px-4 py-1.5 rounded-full text-sm font-bold mb-3"
+            style={{ backgroundColor: `${primaryColor}18`, color: primaryColor }}
+          >
+            Now Enrolling
+          </span>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Open for Registration</h2>
+          <p className="text-gray-500 max-w-xl mx-auto">These classes are currently accepting new students. Register online — your request is reviewed by our admin team.</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {classes.map((cls) => (
+            <div key={cls.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all p-6 flex flex-col">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Open</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">{cls.name}</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {cls.subject}
+                {cls.studyYear && <span className="text-gray-400"> · {cls.studyYear.label || cls.studyYear.year}</span>}
+              </p>
+              <Link
+                href={`/register?classId=${cls.id}`}
+                className="mt-5 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:shadow-lg hover:-translate-y-px"
+                style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)` }}
+              >
+                Register Now →
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ─── Hero Slider component ──────────────────────────────── */
 
 function HeroSlider({ slides, primaryColor }: { slides: HeroSlide[]; primaryColor: string }) {
@@ -686,6 +755,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ══════════════ OPEN CLASS REGISTRATIONS ══════════════ */}
+      <OpenClassRegistrations primaryColor={primary} />
 
       {/* ══════════════ ABOUT / INTRO SECTION ══════════════ */}
       <section className="py-20 bg-white overflow-hidden">

@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { apiFetch } from '../../lib/api'
 
 interface PublicClass {
@@ -16,10 +17,21 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024 // 3MB source file cap
 
 export default function StudentRegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
+  )
+}
+
+function RegisterForm() {
+  const searchParams = useSearchParams()
+  const urlClassId = searchParams.get('classId') || ''
+
   const [classes, setClasses] = useState<PublicClass[]>([])
   const [loadingClasses, setLoadingClasses] = useState(true)
 
-  const [classId, setClassId] = useState('')
+  const [classId, setClassId] = useState(urlClassId)
   const [nameKh, setNameKh] = useState('')
   const [nameEn, setNameEn] = useState('')
   const [email, setEmail] = useState('')
