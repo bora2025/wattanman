@@ -35,14 +35,22 @@ export default function StudentRegisterPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [classesLoadError, setClassesLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     (async () => {
       try {
         const res = await apiFetch('/api/class-registrations/public/classes')
-        if (res.ok) setClasses(await res.json())
-      } catch {}
-      finally { setLoadingClasses(false) }
+        if (res.ok) {
+          setClasses(await res.json())
+        } else {
+          setClassesLoadError(`Failed to load classes (${res.status}). Please try again later.`)
+        }
+      } catch {
+        setClassesLoadError('Failed to load classes. Please check your connection and try again.')
+      } finally {
+        setLoadingClasses(false)
+      }
     })()
   }, [])
 
@@ -152,7 +160,10 @@ export default function StudentRegisterPage() {
                   </option>
                 ))}
               </select>
-              {!loadingClasses && classes.length === 0 && (
+              {!loadingClasses && classesLoadError && (
+                <p className="text-xs text-red-600 mt-1">{classesLoadError}</p>
+              )}
+              {!loadingClasses && !classesLoadError && classes.length === 0 && (
                 <p className="text-xs text-slate-400 mt-1">No classes are currently open for registration.</p>
               )}
             </div>
