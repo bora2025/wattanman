@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useLanguage } from '../lib/i18n'
-import { IconShield, IconBook, IconGraduation, IconBriefcase, IconCamera, IconBarChart, IconEdit } from '../components/Icons'
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface HeroSlide {
@@ -66,80 +65,6 @@ const DEFAULT_SETTINGS: SiteSettings = {
   aboutCtaLabel: 'Get Started Today',
   aboutCtaHref: '/login',
 }
-
-/* ─── Portal definitions ─────────────────────────────────── */
-const portals = [
-  {
-    titleKey: 'home.adminPortal',
-    descKey: 'home.adminDesc',
-    href: '/admin',
-    IconComp: IconShield,
-    color: '#7C3AED',
-    bg: 'from-violet-500 to-indigo-600',
-    light: '#EDE9FE',
-    emoji: '🛡️',
-  },
-  {
-    titleKey: 'home.teacherPortal',
-    descKey: 'home.teacherDesc',
-    href: '/teacher',
-    IconComp: IconBook,
-    color: '#059669',
-    bg: 'from-emerald-500 to-teal-600',
-    light: '#D1FAE5',
-    emoji: '📚',
-  },
-  {
-    titleKey: 'home.studentPortal',
-    descKey: 'home.studentDesc',
-    href: '/student',
-    IconComp: IconGraduation,
-    color: '#0284C7',
-    bg: 'from-sky-500 to-blue-600',
-    light: '#E0F2FE',
-    emoji: '🎓',
-  },
-  {
-    titleKey: 'home.registerPortal',
-    descKey: 'home.registerDesc',
-    href: '/register',
-    IconComp: IconEdit,
-    color: '#9333EA',
-    bg: 'from-fuchsia-500 to-purple-600',
-    light: '#F5F3FF',
-    emoji: '📝',
-  },
-  {
-    titleKey: 'home.employeePortal',
-    descKey: 'home.employeeDesc',
-    href: '/employee',
-    IconComp: IconBriefcase,
-    color: '#D97706',
-    bg: 'from-amber-400 to-orange-500',
-    light: '#FEF3C7',
-    emoji: '💼',
-  },
-  {
-    titleKey: 'home.wattamanPortal',
-    descKey: 'home.wattamanDesc',
-    href: '/wattaman',
-    IconComp: IconCamera,
-    color: '#0F766E',
-    bg: 'from-teal-500 to-cyan-500',
-    light: '#CCFBF1',
-    emoji: '📷',
-  },
-  {
-    titleKey: 'home.reporterPortal',
-    descKey: 'home.reporterDesc',
-    href: '/reporter',
-    IconComp: IconBarChart,
-    color: '#DB2777',
-    bg: 'from-pink-500 to-rose-600',
-    light: '#FCE7F3',
-    emoji: '📊',
-  },
-]
 
 /* ─── Default hero slides (shown before settings load) ───── */
 const DEFAULT_SLIDES: HeroSlide[] = [
@@ -358,7 +283,22 @@ interface PublicClass {
   studyYear: { label: string | null; year: number } | null
 }
 
-function OpenClassRegistrations({ primaryColor }: { primaryColor: string }) {
+const CLASS_THEMES = [
+  { grad: 'from-indigo-500 to-violet-600', chip: 'bg-indigo-50 text-indigo-600', emoji: '📘' },
+  { grad: 'from-emerald-500 to-teal-600', chip: 'bg-emerald-50 text-emerald-600', emoji: '📗' },
+  { grad: 'from-rose-500 to-pink-600', chip: 'bg-rose-50 text-rose-600', emoji: '📕' },
+  { grad: 'from-amber-500 to-orange-600', chip: 'bg-amber-50 text-amber-600', emoji: '📙' },
+  { grad: 'from-sky-500 to-blue-600', chip: 'bg-sky-50 text-sky-600', emoji: '📓' },
+  { grad: 'from-fuchsia-500 to-purple-600', chip: 'bg-fuchsia-50 text-fuchsia-600', emoji: '📔' },
+]
+
+function themeForClass(key: string) {
+  let hash = 0
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0
+  return CLASS_THEMES[hash % CLASS_THEMES.length]
+}
+
+function OpenClassRegistrations() {
   const [classes, setClasses] = useState<PublicClass[]>([])
   const [loaded, setLoaded] = useState(false)
 
@@ -377,40 +317,71 @@ function OpenClassRegistrations({ primaryColor }: { primaryColor: string }) {
   if (!loaded || classes.length === 0) return null
 
   return (
-    <section className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-12">
-          <span
-            className="inline-block px-4 py-1.5 rounded-full text-sm font-bold mb-3"
-            style={{ backgroundColor: `${primaryColor}18`, color: primaryColor }}
-          >
-            Now Enrolling
+    <section className="relative py-24 bg-gradient-to-b from-gray-900 to-gray-800 overflow-hidden">
+      {/* Decorative glow blobs */}
+      <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-indigo-600/20 blur-3xl" />
+      <div className="absolute -bottom-32 -right-24 w-96 h-96 rounded-full bg-fuchsia-600/20 blur-3xl" />
+
+      <div className="relative max-w-7xl mx-auto px-6">
+        <div className="text-center mb-14">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-4 bg-white/10 text-white backdrop-blur-sm border border-white/10">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-dot" />
+            Now Enrolling · {classes.length} class{classes.length !== 1 ? 'es' : ''} open
           </span>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Open for Registration</h2>
-          <p className="text-gray-500 max-w-xl mx-auto">These classes are currently accepting new students. Register online — your request is reviewed by our admin team.</p>
+          <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
+            Find Your Class. <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-fuchsia-400">Register Today.</span>
+          </h2>
+          <p className="text-gray-400 max-w-xl mx-auto">These classes are accepting new students right now. Submit your info online — our admin team reviews every request.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {classes.map((cls) => (
-            <div key={cls.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all p-6 flex flex-col">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Open</span>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900">{cls.name}</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                {cls.subject}
-                {cls.studyYear && <span className="text-gray-400"> · {cls.studyYear.label || cls.studyYear.year}</span>}
-              </p>
-              <Link
-                href={`/register?classId=${cls.id}`}
-                className="mt-5 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:shadow-lg hover:-translate-y-px"
-                style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)` }}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+          {classes.map((cls) => {
+            const theme = themeForClass(cls.subject || cls.name)
+            return (
+              <div
+                key={cls.id}
+                className="group relative bg-gray-900/60 rounded-3xl border border-white/10 shadow-xl hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden backdrop-blur-sm"
               >
-                Register Now →
-              </Link>
-            </div>
-          ))}
+                {/* Gradient header */}
+                <div className={`h-20 bg-gradient-to-br ${theme.grad} relative overflow-hidden`}>
+                  <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10" />
+                  <div className="absolute -left-4 -bottom-10 w-20 h-20 rounded-full bg-white/10" />
+                  <div className="absolute top-3.5 left-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wide">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-dot" />
+                    Open
+                  </div>
+                </div>
+
+                {/* Icon badge overlapping header */}
+                <div className="absolute top-10 left-5 w-16 h-16 rounded-2xl bg-white shadow-lg flex items-center justify-center text-3xl group-hover:scale-110 group-hover:-rotate-3 transition-transform">
+                  {theme.emoji}
+                </div>
+
+                <div className="pt-10 px-6 pb-6">
+                  <h3 className="text-lg font-extrabold text-white leading-snug">{cls.name}</h3>
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {cls.subject && (
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${theme.chip}`}>{cls.subject}</span>
+                    )}
+                    {cls.studyYear && (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/10 text-gray-300">
+                        📅 {cls.studyYear.label || cls.studyYear.year}
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    href={`/register?classId=${cls.id}`}
+                    className={`mt-6 w-full inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl text-sm font-bold text-white bg-gradient-to-r ${theme.grad} shadow-md group-hover:shadow-xl transition-all`}
+                  >
+                    Register Now
+                    <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </section>
@@ -708,56 +679,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ══════════════ PORTALS / PROGRAMS ══════════════ */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          {/* Section header */}
-          <div className="text-center mb-12">
-            <span
-              className="inline-block px-4 py-1.5 rounded-full text-sm font-bold mb-3"
-              style={{ backgroundColor: `${primary}18`, color: primary }}
-            >
-              Access Your Portal
-            </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
-              All Portals in One Place
-            </h2>
-            <p className="text-gray-500 max-w-xl mx-auto">
-              Sign in to your role-specific portal for attendance, grades, reports, and more.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
-            {portals.map((portal) => (
-              <Link
-                key={portal.href}
-                href={portal.href}
-                className="group flex flex-col items-center text-center gap-3 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
-              >
-                {/* Circle icon */}
-                <div
-                  className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white bg-gradient-to-br ${portal.bg} shadow-md group-hover:scale-110 transition-transform`}
-                >
-                  <portal.IconComp size={24} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-800 leading-snug">{t(portal.titleKey)}</p>
-                  <p className="text-xs text-gray-400 mt-0.5 leading-snug">{t(portal.descKey)}</p>
-                </div>
-                <span
-                  className="text-xs font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ color: portal.color }}
-                >
-                  Enter →
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ══════════════ OPEN CLASS REGISTRATIONS ══════════════ */}
-      <OpenClassRegistrations primaryColor={primary} />
+      <OpenClassRegistrations />
 
       {/* ══════════════ ABOUT / INTRO SECTION ══════════════ */}
       <section className="py-20 bg-white overflow-hidden">
