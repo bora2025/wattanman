@@ -24,7 +24,9 @@ interface Student {
   sex: string | null;
   dateOfBirth: string | null;
   address: string;
+  customFieldValues?: Record<string, string>;
 }
+interface CustomFieldDef { id: string; key: string; label: string; required: boolean }
 
 export default function MyClasses() {
   const { t } = useLanguage();
@@ -35,8 +37,21 @@ export default function MyClasses() {
   const [availableStudents, setAvailableStudents] = useState<Student[]>([]);
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
   const [editStudentData, setEditStudentData] = useState({ sex: '', photo: '', phone: '', dateOfBirth: '', address: '' });
+  const [editStudentCustomFields, setEditStudentCustomFields] = useState<Record<string, string>>({});
+  const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([]);
 
   useEffect(() => { fetchMyClasses(); }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // Public endpoint — reused here purely to read the currently enabled
+        // custom fields, regardless of the viewer's admin/teacher role.
+        const res = await apiFetch('/api/class-registrations/public/form-config');
+        if (res.ok) { const d = await res.json(); setCustomFieldDefs(d.fields || []); }
+      } catch {}
+    })();
+  }, []);
 
   const fetchMyClasses = async () => {
     try {
@@ -97,6 +112,7 @@ export default function MyClasses() {
   const handleEditStudent = (student: Student) => {
     setEditingStudent(student.id);
     setEditStudentData({ sex: student.sex || '', photo: student.photo || '', phone: student.phone || '', dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '', address: student.address || '' });
+    setEditStudentCustomFields(student.customFieldValues || {});
   };
 
   const handleSaveStudent = async (studentId: string) => {
@@ -105,7 +121,7 @@ export default function MyClasses() {
       const res = await apiFetch(`/api/classes/${selectedClass.id}/students/${studentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editStudentData),
+        body: JSON.stringify({ ...editStudentData, customFieldValues: editStudentCustomFields }),
       });
       if (res.ok) {
         setEditingStudent(null);
@@ -216,6 +232,16 @@ export default function MyClasses() {
                                       <label className="form-label text-xs">Photo URL</label>
                                       <input type="text" value={editStudentData.photo} onChange={(e) => setEditStudentData({ ...editStudentData, photo: e.target.value })} placeholder="https://..." />
                                     </div>
+                                    {customFieldDefs.map(f => (
+                                      <div key={f.id} className="col-span-2">
+                                        <label className="form-label text-xs">{f.label}{f.required && ' *'}</label>
+                                        <input
+                                          type="text"
+                                          value={editStudentCustomFields[f.key] || ''}
+                                          onChange={(e) => setEditStudentCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
+                                        />
+                                      </div>
+                                    ))}
                                   </div>
                                   <div className="flex gap-2">
                                     <button onClick={() => handleSaveStudent(s.id)} className="btn-success btn-sm">Save</button>

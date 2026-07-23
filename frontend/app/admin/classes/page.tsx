@@ -55,7 +55,9 @@ interface Student {
   generation?: string;
   parentId?: string | null;
   parent?: { id: string; name: string; email: string; phone: string | null } | null;
+  customFieldValues?: Record<string, string>;
 }
+interface CustomFieldDef { id: string; key: string; label: string; required: boolean }
 
 interface ParentOption {
   id: string;
@@ -238,6 +240,8 @@ function ManageClasses() {
   const [showAddStudentForm, setShowAddStudentForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
   const [editStudentData, setEditStudentData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '', parentId: '' });
+  const [editStudentCustomFields, setEditStudentCustomFields] = useState<Record<string, string>>({});
+  const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([]);
   const [parents, setParents] = useState<ParentOption[]>([]);
   const [savingStudent, setSavingStudent] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -267,6 +271,17 @@ function ManageClasses() {
   const [addToTTExisting, setAddToTTExisting] = useState<TTClass[]>([]);
 
   useEffect(() => { fetchStudyYears(); fetchTeachers(); fetchClassAdmins(); fetchTimetableList(); }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // Public endpoint — reused here purely to read the currently enabled
+        // custom fields, regardless of the viewer's admin/teacher role.
+        const res = await apiFetch('/api/class-registrations/public/form-config');
+        if (res.ok) { const d = await res.json(); setCustomFieldDefs(d.fields || []); }
+      } catch {}
+    })();
+  }, []);
 
   // Load classes when study year changes
   useEffect(() => {
@@ -657,6 +672,7 @@ function ManageClasses() {
     setSaveError(null);
     setPhotoPreviewError(false);
     setEditStudentData({ name: student.name || '', sex: student.sex || '', phone: student.phone || '', photo: student.photo || '', dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '', address: student.address || '', generation: student.generation || '', studentNumber: student.studentNumber || '', parentId: student.parentId || '' });
+    setEditStudentCustomFields(student.customFieldValues || {});
     // Lazy-load parent list once
     if (parents.length === 0) {
       apiFetch('/api/classes/parents')
@@ -674,7 +690,7 @@ function ManageClasses() {
       const res = await apiFetch(`/api/classes/${selectedClass.id}/students/${studentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...editStudentData, parentId: editStudentData.parentId || null }),
+        body: JSON.stringify({ ...editStudentData, parentId: editStudentData.parentId || null, customFieldValues: editStudentCustomFields }),
       });
       if (res.ok) {
         await fetchClassStudents(selectedClass.id);
@@ -1474,6 +1490,16 @@ function ManageClasses() {
                           <label className="form-label text-xs">Photo URL <span className="text-slate-400">(Google Drive share links auto-converted)</span></label>
                           <input type="text" value={editStudentData.photo} onChange={(e) => { setEditStudentData({ ...editStudentData, photo: e.target.value }); setPhotoPreviewError(false); }} placeholder="https://... or Google Drive share link" />
                         </div>
+                        {customFieldDefs.map(f => (
+                          <div key={f.id} className="sm:col-span-2 lg:col-span-3">
+                            <label className="form-label text-xs">{f.label}{f.required && ' *'}</label>
+                            <input
+                              type="text"
+                              value={editStudentCustomFields[f.key] || ''}
+                              onChange={(e) => setEditStudentCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
+                            />
+                          </div>
+                        ))}
                       </div>
                       {editStudentData.photo && (
                         <div className="flex items-center gap-3">
