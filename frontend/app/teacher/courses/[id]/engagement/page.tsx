@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import AuthGuard from '../../../../../components/AuthGuard'
+import StatCard from '../../../../../components/StatCard'
+import ProgressBar from '../../../../../components/ProgressBar'
+import EmptyState from '../../../../../components/EmptyState'
 import { apiFetch } from '../../../../../lib/api'
 
 interface LessonRow {
@@ -79,40 +82,34 @@ export default function CourseEngagementPage() {
             </Link>
           </div>
 
-          <h1 className="text-2xl font-bold text-slate-800">
+          <h1 className="text-2xl font-bold text-gray-900">
             Lesson engagement
           </h1>
 
           {isLoading && (
-            <div className="rounded-md border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
-              Loading…
-            </div>
+            <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white h-16 rounded-2xl animate-pulse border border-gray-100" />)}</div>
           )}
           {error && (
-            <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
               {(error as Error).message}
             </div>
           )}
 
           {data && (
             <>
-              <div className="rounded-md border border-slate-200 bg-white p-4 text-sm text-slate-600 flex flex-wrap gap-x-6 gap-y-1">
-                <span>
-                  Published lessons:{' '}
-                  <strong>{data.course.lessonCount}</strong>
-                </span>
-                <span>
-                  Sessions: <strong>{data.course.sessionCount}</strong>
-                </span>
-                <span>
-                  Students: <strong>{data.students.length}</strong>
-                </span>
+              <div className="grid grid-cols-3 gap-4">
+                <StatCard label="Published Lessons" value={data.course.lessonCount} decimals={0} prefix="" color="bg-sky-100"
+                  icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.332.477 5.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>} />
+                <StatCard label="Sessions" value={data.course.sessionCount} decimals={0} prefix="" color="bg-violet-100"
+                  icon={<svg className="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>} />
+                <StatCard label="Students" value={data.students.length} decimals={0} prefix="" color="bg-emerald-100"
+                  icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>} />
               </div>
 
               {/* Summary table */}
-              <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
+              <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white shadow-sm">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                  <thead className="bg-gray-50 text-xs uppercase text-gray-500">
                     <tr>
                       <th className="px-3 py-2 text-left">Student</th>
                       <th className="px-3 py-2 text-left">Progress</th>
@@ -124,33 +121,27 @@ export default function CourseEngagementPage() {
                   <tbody>
                     {data.students.length === 0 && (
                       <tr>
-                        <td
-                          className="px-3 py-6 text-center text-slate-500"
-                          colSpan={5}
-                        >
-                          No enrolled students yet.
+                        <td className="px-3 py-2" colSpan={5}>
+                          <EmptyState icon="🧑‍🎓" message="No enrolled students yet." />
                         </td>
                       </tr>
                     )}
                     {data.students.map((s) => (
-                      <tr key={s.studentId} className="border-t border-slate-100">
+                      <tr key={s.studentId} className="border-t border-gray-100">
                         <td className="px-3 py-2">
-                          <div className="font-medium text-slate-800">{s.name}</div>
-                          <div className="text-xs text-slate-500">
+                          <div className="font-medium text-gray-800">{s.name}</div>
+                          <div className="text-xs text-gray-500">
                             {s.studentNumber || s.email}
                           </div>
                         </td>
-                        <td className="px-3 py-2">{Math.round(s.progressPct)}%</td>
+                        <td className="px-3 py-2 w-32"><ProgressBar pct={s.progressPct} showPercent color="bg-emerald-500" /></td>
                         <td className="px-3 py-2">
                           {s.lessonsOpened} / {data.course.lessonCount}
                         </td>
                         <td className="px-3 py-2">
                           {s.lessonsCompleted} / {data.course.lessonCount}
                         </td>
-                        <td className="px-3 py-2">
-                          {s.sessionsAttended} / {data.course.sessionCount} (
-                          {s.attendancePct}%)
-                        </td>
+                        <td className="px-3 py-2 w-32"><ProgressBar pct={s.attendancePct} label={`${s.sessionsAttended}/${data.course.sessionCount}`} color="bg-violet-500" /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -159,9 +150,9 @@ export default function CourseEngagementPage() {
 
               {/* Per-lesson matrix */}
               {data.students.length > 0 && data.lessons.length > 0 && (
-                <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
+                <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white shadow-sm">
                   <table className="min-w-full text-xs">
-                    <thead className="bg-slate-50 uppercase text-slate-500">
+                    <thead className="bg-gray-50 uppercase text-gray-500">
                       <tr>
                         <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left">
                           Student

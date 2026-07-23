@@ -48,16 +48,16 @@ export default function CourseGradingPage() {
           <p className="text-xs text-slate-500 mb-6">Essay (and other manually-graded) questions awaiting review.</p>
 
           {isLoading ? (
-            <div className="space-y-3">{[1, 2].map(i => <div key={i} className="bg-white h-24 rounded-xl animate-pulse" />)}</div>
+            <div className="space-y-3">{[1, 2].map(i => <div key={i} className="bg-white h-24 rounded-2xl animate-pulse border border-gray-100" />)}</div>
           ) : attempts.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-sm">
+            <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
               <p className="text-4xl mb-3">✅</p>
               <p className="text-slate-400">Nothing pending grading right now.</p>
             </div>
           ) : (
             <div className="space-y-4">
               {attempts.map(att => (
-                <div key={att.id} className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
+                <div key={att.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
                   <p className="font-semibold text-slate-800 mb-3">{att.student?.user?.name ?? 'Unknown student'}</p>
                   <div className="space-y-3">
                     {att.responses.map(resp => (

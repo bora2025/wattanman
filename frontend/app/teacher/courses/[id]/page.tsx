@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import AuthGuard from '../../../../components/AuthGuard'
+import ConfirmModal from '../../../../components/ConfirmModal'
+import EmptyState from '../../../../components/EmptyState'
 import { apiFetch } from '../../../../lib/api'
 import { type H5PType, isH5PType, H5P_TYPE_LABEL, h5pDefaultData } from '../../../../lib/h5pQuestionLogic'
 import { EssayEditor } from '../../../../components/questions/EssayField'
@@ -87,6 +89,7 @@ export default function CourseDetailPage() {
   const qc = useQueryClient()
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null)
   const [showNewLesson, setShowNewLesson] = useState(false)
+  const [confirmDeleteLesson, setConfirmDeleteLesson] = useState(false)
 
   const { data: course, isLoading } = useQuery({
     queryKey: ['course', courseId],
@@ -225,15 +228,15 @@ export default function CourseDetailPage() {
           <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
             {/* Lesson list */}
             <div
-              className={`rounded-xl bg-white p-4 shadow-sm lg:block ${
+              className={`rounded-2xl bg-white border border-gray-100 p-4 shadow-sm lg:block ${
                 selectedLessonId ? 'hidden' : 'block'
               }`}
             >
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-700">Lessons</h2>
+                <h2 className="text-sm font-semibold text-gray-700">Lessons</h2>
                 <button
                   onClick={() => setShowNewLesson(true)}
-                  className="rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                  className="rounded-lg bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700"
                 >
                   + Add
                 </button>
@@ -248,8 +251,8 @@ export default function CourseDetailPage() {
               )}
 
               {course.lessons.length === 0 ? (
-                <div className="rounded-md bg-slate-50 p-4 text-center text-xs text-slate-500">
-                  No lessons yet. Add the first one to get started.
+                <div className="bg-gray-50 rounded-xl">
+                  <EmptyState icon="📚" message="No lessons yet. Add the first one to get started." />
                 </div>
               ) : (
                 <ul className="space-y-1">
@@ -289,12 +292,12 @@ export default function CourseDetailPage() {
 
             {/* Lesson editor */}
             <div
-              className={`rounded-xl bg-white p-5 shadow-sm lg:block ${
+              className={`rounded-2xl bg-white border border-gray-100 p-5 shadow-sm lg:block ${
                 selectedLessonId ? 'block' : 'hidden lg:block'
               }`}
             >
               {!selectedLesson ? (
-                <div className="flex h-full min-h-[200px] items-center justify-center text-sm text-slate-400">
+                <div className="flex h-full min-h-[200px] items-center justify-center text-sm text-gray-400">
                   Select a lesson on the left to edit its pages.
                 </div>
               ) : (
@@ -312,15 +315,7 @@ export default function CourseDetailPage() {
                   onSaveLesson={(body) =>
                     updateLessonMutation.mutate({ id: selectedLesson.id, body })
                   }
-                  onDeleteLesson={() => {
-                    if (
-                      confirm(
-                        `Delete lesson "${selectedLesson.title}"? All pages inside will be removed.`,
-                      )
-                    ) {
-                      deleteLessonMutation.mutate(selectedLesson.id)
-                    }
-                  }}
+                  onDeleteLesson={() => setConfirmDeleteLesson(true)}
                 />
                 </>
               )}
@@ -328,6 +323,18 @@ export default function CourseDetailPage() {
           </div>
         </div>
       </div>
+
+      {confirmDeleteLesson && selectedLesson && (
+        <ConfirmModal
+          title="Delete lesson?"
+          message={`Delete lesson "${selectedLesson.title}"? All pages inside will be removed. This cannot be undone.`}
+          confirmLabel="Delete lesson"
+          danger
+          pending={deleteLessonMutation.isPending}
+          onCancel={() => setConfirmDeleteLesson(false)}
+          onConfirm={() => { deleteLessonMutation.mutate(selectedLesson.id); setConfirmDeleteLesson(false) }}
+        />
+      )}
     </AuthGuard>
   )
 }
@@ -408,6 +415,8 @@ function LessonEditor({
   const [videoWatchPct, setVideoWatchPct] = useState<string>(
     String(lesson.videoWatchPct ?? 90),
   )
+  const [newPageType, setNewPageType] = useState<PageType | null>(null)
+  const [confirmDeletePage, setConfirmDeletePage] = useState<LessonPage | null>(null)
 
   const { data: pages = [], isLoading: pagesLoading } = useQuery({
     queryKey: ['lesson-pages', lesson.id],
@@ -476,8 +485,7 @@ function LessonEditor({
     })
   }
 
-  function addPage(pageType: PageType) {
-    const title = prompt(`Title for new ${pageType.toLowerCase()} page:`)
+  function addPage(pageType: PageType, title: string) {
     if (!title?.trim()) return
     const baseContent =
       pageType === 'CONTENT'
@@ -506,134 +514,152 @@ function LessonEditor({
   return (
     <div className="space-y-5">
       {/* Lesson settings */}
-      <section>
-        <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+      <section className="rounded-2xl border border-gray-100 bg-white p-4 space-y-5">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
           Lesson settings
         </h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-slate-600">Title</label>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-slate-600">
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Status</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as LessonStatus)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            >
-              <option value="DRAFT">Draft</option>
-              <option value="PUBLISHED">Published</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
-              Grading mode
-            </label>
-            <select
-              value={gradingMode}
-              onChange={(e) => setGradingMode(e.target.value as GradingMode)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            >
-              <option value="GRADED">Graded</option>
-              <option value="PRACTICE">Practice</option>
-              <option value="UNGRADED">Ungraded</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
-              Passing score
-            </label>
-            <input
-              type="number"
-              min={0}
-              value={passingScore}
-              onChange={(e) => setPassingScore(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-              placeholder="Optional"
-            />
-          </div>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={showProgressBar}
-              onChange={(e) => setShowProgressBar(e.target.checked)}
-            />
-            Show progress bar
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={branchingEnabled}
-              onChange={(e) => setBranchingEnabled(e.target.checked)}
-            />
-            Allow branching pages
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
-            <input
-              type="checkbox"
-              checked={requireVideoWatch}
-              onChange={(e) => setRequireVideoWatch(e.target.checked)}
-            />
-            Require watching video before finishing
-          </label>
-          {requireVideoWatch && (
+
+        {/* Basics */}
+        <div>
+          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gray-400">Basics</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-medium text-gray-600">Title</label>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-medium text-gray-600">
+                Description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={2}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">
-                Minimum watched %
+              <label className="mb-1 block text-xs font-medium text-gray-600">Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as LessonStatus)}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white"
+              >
+                <option value="DRAFT">Draft</option>
+                <option value="PUBLISHED">Published</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Grading */}
+        <div className="pt-4 border-t border-gray-100">
+          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gray-400">Grading</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-600">
+                Grading mode
+              </label>
+              <select
+                value={gradingMode}
+                onChange={(e) => setGradingMode(e.target.value as GradingMode)}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white"
+              >
+                <option value="GRADED">Graded</option>
+                <option value="PRACTICE">Practice</option>
+                <option value="UNGRADED">Ungraded</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-600">
+                Passing score
               </label>
               <input
                 type="number"
-                min={1}
-                max={100}
-                value={videoWatchPct}
-                onChange={(e) => setVideoWatchPct(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                min={0}
+                value={passingScore}
+                onChange={(e) => setPassingScore(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                placeholder="Optional"
               />
-              <p className="mt-1 text-[11px] text-slate-500">
-                Tracked for uploaded videos (HTML5). YouTube/Vimeo embeds cannot be
-                tracked automatically.
-              </p>
             </div>
-          )}
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={showProgressBar}
+                onChange={(e) => setShowProgressBar(e.target.checked)}
+              />
+              Show progress bar
+            </label>
+          </div>
         </div>
-        <div className="mt-3 flex justify-between">
+
+        {/* Branching & video */}
+        <div className="pt-4 border-t border-gray-100">
+          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gray-400">Branching & video</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={branchingEnabled}
+                onChange={(e) => setBranchingEnabled(e.target.checked)}
+              />
+              Allow branching pages
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={requireVideoWatch}
+                onChange={(e) => setRequireVideoWatch(e.target.checked)}
+              />
+              Require watching video before finishing
+            </label>
+            {requireVideoWatch && (
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-xs font-medium text-gray-600">
+                  Minimum watched %
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={videoWatchPct}
+                  onChange={(e) => setVideoWatchPct(e.target.value)}
+                  className="w-full sm:w-40 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+                <p className="mt-1 text-[11px] text-gray-500">
+                  Tracked for uploaded videos (HTML5). YouTube/Vimeo embeds cannot be
+                  tracked automatically.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-gray-100 flex justify-between">
           <button
             onClick={onDeleteLesson}
-            className="rounded-md px-3 py-1.5 text-sm font-medium text-rose-600 hover:bg-rose-50"
+            className="rounded-xl px-3 py-1.5 text-sm font-medium text-rose-600 hover:bg-rose-50"
           >
             Delete lesson
           </button>
           <button
             onClick={saveSettings}
-            className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
+            className="rounded-xl bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 shadow-sm"
           >
             Save settings
           </button>
         </div>
       </section>
 
-      <hr className="border-slate-200" />
-
       {/* Pages */}
-      <section>
+      <section className="rounded-2xl border border-gray-100 bg-white p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
             Pages
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -644,19 +670,19 @@ function LessonEditor({
               📝 Grade pending
             </Link>
             <button
-              onClick={() => addPage('CONTENT')}
+              onClick={() => setNewPageType('CONTENT')}
               className="rounded-md bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
             >
               + Content
             </button>
             <button
-              onClick={() => addPage('QUESTION')}
+              onClick={() => setNewPageType('QUESTION')}
               className="rounded-md bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700 hover:bg-violet-200"
             >
               + Question
             </button>
             <button
-              onClick={() => addPage('BRANCH')}
+              onClick={() => setNewPageType('BRANCH')}
               disabled={!branchingEnabled}
               className="rounded-md bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-200 disabled:opacity-40"
               title={branchingEnabled ? '' : 'Enable branching in lesson settings first'}
@@ -667,12 +693,10 @@ function LessonEditor({
         </div>
 
         {pagesLoading ? (
-          <div className="rounded-md bg-slate-50 p-3 text-center text-sm text-slate-500">
-            Loading pages…
-          </div>
+          <div className="space-y-2">{[1,2].map(i => <div key={i} className="bg-gray-50 h-14 rounded-xl animate-pulse" />)}</div>
         ) : pages.length === 0 ? (
-          <div className="rounded-md bg-slate-50 p-4 text-center text-sm text-slate-500">
-            No pages yet. Add a Content, Question or Branch page above.
+          <div className="bg-gray-50 rounded-xl">
+            <EmptyState icon="📄" message="No pages yet. Add a Content, Question or Branch page above." />
           </div>
         ) : (
           <ul className="space-y-2">
@@ -682,11 +706,7 @@ function LessonEditor({
                 page={p}
                 allPages={pages}
                 onSave={(body) => updatePageMutation.mutate({ id: p.id, body })}
-                onDelete={() => {
-                  if (confirm(`Delete page "${p.title}"?`)) {
-                    deletePageMutation.mutate(p.id)
-                  }
-                }}
+                onDelete={() => setConfirmDeletePage(p)}
                 saving={
                   updatePageMutation.isPending &&
                   updatePageMutation.variables?.id === p.id
@@ -696,6 +716,64 @@ function LessonEditor({
           </ul>
         )}
       </section>
+
+      {newPageType && (
+        <NewPageModal
+          pageType={newPageType}
+          onCancel={() => setNewPageType(null)}
+          onCreate={(title) => { addPage(newPageType, title); setNewPageType(null) }}
+          pending={createPageMutation.isPending}
+        />
+      )}
+      {confirmDeletePage && (
+        <ConfirmModal
+          title="Delete page?"
+          message={`Delete page "${confirmDeletePage.title}"? This cannot be undone.`}
+          confirmLabel="Delete page"
+          danger
+          pending={deletePageMutation.isPending}
+          onCancel={() => setConfirmDeletePage(null)}
+          onConfirm={() => { deletePageMutation.mutate(confirmDeletePage.id); setConfirmDeletePage(null) }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── New page title modal (replaces window.prompt) ────────────────────
+function NewPageModal({
+  pageType, onCancel, onCreate, pending,
+}: {
+  pageType: PageType
+  onCancel: () => void
+  onCreate: (title: string) => void
+  pending: boolean
+}) {
+  const [title, setTitle] = useState('')
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) onCancel() }}>
+      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+        <h2 className="text-lg font-bold text-gray-900 mb-1">New {PAGE_TYPE_LABEL[pageType]} page</h2>
+        <p className="text-sm text-gray-500 mb-4">Give this page a title students will see in the lesson outline.</p>
+        <input
+          autoFocus
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && title.trim()) onCreate(title.trim()) }}
+          placeholder="Page title"
+          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 mb-4"
+        />
+        <div className="flex gap-2 justify-end">
+          <button onClick={onCancel} className="px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button
+            onClick={() => title.trim() && onCreate(title.trim())}
+            disabled={!title.trim() || pending}
+            className="px-4 py-2 text-sm font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 shadow-sm"
+          >
+            {pending ? 'Creating…' : 'Create page'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

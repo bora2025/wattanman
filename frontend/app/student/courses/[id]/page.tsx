@@ -3,8 +3,9 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueries } from '@tanstack/react-query'
 import AuthGuard from '../../../../components/AuthGuard'
+import EmptyState from '../../../../components/EmptyState'
 import { apiFetch } from '../../../../lib/api'
 
 type LessonStatus = 'DRAFT' | 'PUBLISHED'
@@ -90,6 +91,25 @@ export default function StudentCourseDetailPage() {
     [course],
   )
 
+  // Fetch each visible lesson's attempt status in parallel so the list can show
+  // at-a-glance completion — reuses the same endpoint the lesson player itself
+  // calls, no new backend work needed.
+  const attemptQueries = useQueries({
+    queries: visibleLessons.map((l) => ({
+      queryKey: ['lesson-attempt-status', l.id],
+      queryFn: async () => {
+        const r = await apiFetch(`/api/courses/lessons/${l.id}/my-attempt`)
+        if (!r.ok) return null
+        return r.json() as Promise<{ status: string; passed: boolean | null } | null>
+      },
+    })),
+  })
+  const attemptByLessonId = useMemo(() => {
+    const map = new Map<string, { status: string; passed: boolean | null } | null>()
+    visibleLessons.forEach((l, i) => map.set(l.id, attemptQueries[i]?.data ?? null))
+    return map
+  }, [visibleLessons, attemptQueries])
+
   const selectedLesson = useMemo(
     () => visibleLessons.find((l) => l.id === selectedLessonId) || null,
     [visibleLessons, selectedLessonId],
@@ -124,20 +144,18 @@ export default function StudentCourseDetailPage() {
         </div>
 
         {isLoading && (
-          <div className="rounded-md border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
-            Loading course…
-          </div>
+          <div className="bg-white h-40 rounded-2xl animate-pulse border border-gray-100" />
         )}
 
         {isError && (
-          <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             {(error as Error)?.message || 'Failed to load course.'}
           </div>
         )}
 
         {course && (
           <>
-            <header className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            <header className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
               {course.coverImageUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -191,28 +209,42 @@ export default function StudentCourseDetailPage() {
                   Lessons ({visibleLessons.length})
                 </h2>
                 {visibleLessons.length === 0 && (
-                  <div className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
-                    No lessons published yet.
+                  <div className="rounded-2xl border border-dashed border-gray-200 bg-white">
+                    <EmptyState message="No lessons published yet." />
                   </div>
                 )}
-                <ul className="space-y-1">
+                <ul className="space-y-1.5">
                   {visibleLessons.map((l) => {
                     const active = l.id === selectedLessonId
+                    const attempt = attemptByLessonId.get(l.id)
+                    const badge =
+                      attempt?.status === 'COMPLETED'
+                        ? { label: attempt.passed === false ? 'Completed' : '✓ Completed', color: 'bg-emerald-100 text-emerald-700' }
+                        : attempt?.status === 'AWAITING_GRADE'
+                          ? { label: '⏱ Awaiting grade', color: 'bg-amber-100 text-amber-700' }
+                          : attempt?.status === 'IN_PROGRESS'
+                            ? { label: '● In progress', color: 'bg-sky-100 text-sky-700' }
+                            : null
                     return (
                       <li key={l.id}>
                         <button
                           type="button"
                           onClick={() => setSelectedLessonId(l.id)}
-                          className={`w-full rounded-md border px-3 py-2 text-left text-sm transition ${
+                          className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
                             active
                               ? 'border-sky-400 bg-sky-50 text-sky-800'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                           }`}
                         >
-                          <div className="font-medium">
-                            {l.order}. {l.title}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="font-medium truncate">
+                              {l.order}. {l.title}
+                            </div>
+                            {badge && (
+                              <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${badge.color}`}>{badge.label}</span>
+                            )}
                           </div>
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-gray-500">
                             {l._count.pages} page{l._count.pages === 1 ? '' : 's'} ·{' '}
                             {l.totalPoints} pts
                           </div>
@@ -224,7 +256,7 @@ export default function StudentCourseDetailPage() {
               </aside>
 
               <section
-                className={`rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 lg:block ${
+                className={`rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:col-span-2 lg:block ${
                   selectedLessonId ? 'block' : 'hidden lg:block'
                 }`}
               >
@@ -271,7 +303,7 @@ export default function StudentCourseDetailPage() {
                     )}
 
                     {!pagesLoading && pages.length === 0 && (
-                      <div className="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+                      <div className="rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-500">
                         This lesson has no pages yet.
                       </div>
                     )}
@@ -280,7 +312,7 @@ export default function StudentCourseDetailPage() {
                       {pages.map((p) => (
                         <li
                           key={p.id}
-                          className="rounded-md border border-slate-200 bg-slate-50 p-3"
+                          className="rounded-xl border border-gray-200 bg-gray-50 p-3"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="font-medium text-slate-800">

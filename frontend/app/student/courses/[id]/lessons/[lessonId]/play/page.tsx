@@ -15,6 +15,8 @@ import { SpeakWordsInput } from '../../../../../../../components/questions/Speak
 import { SpeakWordsSetInput } from '../../../../../../../components/questions/SpeakWordsSetField'
 import { DictationInput } from '../../../../../../../components/questions/DictationField'
 import MathText from '../../../../../../../components/MathText'
+import ProgressBar from '../../../../../../../components/ProgressBar'
+import EmptyState from '../../../../../../../components/EmptyState'
 
 type PageType = 'CONTENT' | 'QUESTION' | 'BRANCH'
 type AttemptStatus = 'IN_PROGRESS' | 'COMPLETED' | 'AWAITING_GRADE' | 'ABANDONED'
@@ -224,35 +226,29 @@ export default function LessonPlayPage() {
         </div>
 
         {startMutation.isPending && (
-          <div className="rounded-md border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
-            Starting lesson…
-          </div>
+          <div className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />
         )}
         {startMutation.isError && (
-          <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             {(startMutation.error as Error)?.message || 'Could not start lesson.'}
           </div>
         )}
 
         {attempt && pagesLoading && (
-          <div className="rounded-md border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
-            Loading lesson pages…
-          </div>
+          <div className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />
         )}
         {attempt && pagesError && (
-          <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             {(pagesErrorObj as Error)?.message || 'Failed to load lesson pages.'}
           </div>
         )}
         {attempt && !pagesLoading && !pagesError && pages.length === 0 && (
-          <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            This lesson has no pages yet. Please contact your teacher.
+          <div className="rounded-2xl border border-amber-200 bg-amber-50">
+            <EmptyState icon="📄" message="This lesson has no pages yet. Please contact your teacher." />
           </div>
         )}
         {attempt && pages.length > 0 && !currentPage && !finished && (
-          <div className="rounded-md border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
-            Preparing lesson…
-          </div>
+          <div className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />
         )}
 
         {teacherMsg && (
@@ -286,9 +282,12 @@ export default function LessonPlayPage() {
         )}
 
         {!finished && attempt && currentPage && (
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-            <Progress pages={pages} currentPageId={currentPage.id} />
-            <h2 className="text-lg font-semibold text-slate-800">
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-4">
+            <ProgressBar
+              pct={pages.length > 0 ? ((pages.findIndex((p) => p.id === currentPage.id) + 1) / pages.length) * 100 : 0}
+              label={`Page ${pages.findIndex((p) => p.id === currentPage.id) + 1} of ${pages.length}`}
+            />
+            <h2 className="text-lg font-semibold text-gray-900">
               {currentPage.title}
             </h2>
 
@@ -351,33 +350,6 @@ export default function LessonPlayPage() {
 
 // ─── Sub-views ────────────────────────────────────────────────────────
 
-function Progress({
-  pages,
-  currentPageId,
-}: {
-  pages: LessonPage[]
-  currentPageId: string
-}) {
-  const idx = pages.findIndex((p) => p.id === currentPageId)
-  const pct = pages.length > 0 ? Math.round(((idx + 1) / pages.length) * 100) : 0
-  return (
-    <div>
-      <div className="mb-1 flex justify-between text-[11px] text-slate-500">
-        <span>
-          Page {idx + 1} of {pages.length}
-        </span>
-        <span>{pct}%</span>
-      </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-        <div
-          className="h-full bg-sky-500 transition-all"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  )
-}
-
 function TeacherSaysModal({
   message,
   onClose,
@@ -419,22 +391,12 @@ function TeacherSaysModal({
           <p className="text-sm text-slate-700">{message}</p>
 
           {required != null && current != null && (
-            <div>
-              <div className="mb-1 flex justify-between text-[11px] text-slate-500">
-                <span>Watched</span>
-                <span>
-                  {current}% / {required}%
-                </span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full bg-amber-500 transition-all"
-                  style={{
-                    width: `${Math.min(100, Math.round((current / required) * 100))}%`,
-                  }}
-                />
-              </div>
-            </div>
+            <ProgressBar
+              pct={(current / required) * 100}
+              label={`Watched — ${current}% / ${required}%`}
+              showPercent={false}
+              color="bg-amber-500"
+            />
           )}
 
           <ul className="space-y-1 text-xs text-slate-600">

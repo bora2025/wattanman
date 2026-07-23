@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import AuthGuard from '../../../../../components/AuthGuard'
+import StatCard from '../../../../../components/StatCard'
+import EmptyState from '../../../../../components/EmptyState'
 import { apiFetch } from '../../../../../lib/api'
 
 type AttendanceStatus = 'PRESENT' | 'LATE' | 'ABSENT' | 'EXCUSED'
@@ -100,23 +102,28 @@ export default function StudentCourseAttendancePage() {
           </Link>
         </div>
 
-        <h1 className="text-2xl font-bold text-slate-800">
+        <h1 className="text-2xl font-bold text-gray-900">
           My Attendance · {course?.title || ''}
         </h1>
 
-        <div className="grid gap-3 sm:grid-cols-5">
-          <Stat label="Sessions" value={stats.total} />
-          <Stat label="Present" value={stats.present} tone="emerald" />
-          <Stat label="Late" value={stats.late} tone="amber" />
-          <Stat label="Absent" value={stats.absent} tone="rose" />
-          <Stat label="Attendance %" value={`${stats.pct}%`} tone="sky" />
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <StatCard label="Sessions" value={stats.total} decimals={0} prefix="" color="bg-slate-100"
+            icon={<svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>} />
+          <StatCard label="Present" value={stats.present} decimals={0} prefix="" color="bg-emerald-100"
+            icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+          <StatCard label="Late" value={stats.late} decimals={0} prefix="" color="bg-amber-100"
+            icon={<svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+          <StatCard label="Absent" value={stats.absent} decimals={0} prefix="" color="bg-rose-100"
+            icon={<svg className="w-5 h-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>} />
+          <StatCard label="Attendance %" value={`${stats.pct}%`} prefix="" color="bg-sky-100"
+            icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>} />
         </div>
 
-        {isLoading && <div className="text-sm text-slate-500">Loading…</div>}
+        {isLoading && <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white h-16 rounded-2xl animate-pulse border border-gray-100" />)}</div>}
 
         {!isLoading && rows.length === 0 && (
-          <div className="rounded-md border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
-            No sessions scheduled yet.
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <EmptyState icon="🗓️" message="No sessions scheduled yet." />
           </div>
         )}
 
@@ -124,7 +131,7 @@ export default function StudentCourseAttendancePage() {
           {rows.map((row) => (
             <li
               key={row.id}
-              className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+              className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -174,33 +181,6 @@ export default function StudentCourseAttendancePage() {
         </ul>
       </div>
     </AuthGuard>
-  )
-}
-
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string
-  value: number | string
-  tone?: 'emerald' | 'amber' | 'rose' | 'sky'
-}) {
-  const toneClass =
-    tone === 'emerald'
-      ? 'text-emerald-700'
-      : tone === 'amber'
-        ? 'text-amber-700'
-        : tone === 'rose'
-          ? 'text-rose-700'
-          : tone === 'sky'
-            ? 'text-sky-700'
-            : 'text-slate-800'
-  return (
-    <div className="rounded-md border border-slate-200 bg-white p-3 text-center shadow-sm">
-      <div className={`text-xl font-bold ${toneClass}`}>{value}</div>
-      <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
-    </div>
   )
 }
 

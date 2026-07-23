@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import AuthGuard from '../../../components/AuthGuard'
+import StatCard from '../../../components/StatCard'
+import EmptyState from '../../../components/EmptyState'
 import { apiFetch } from '../../../lib/api'
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -68,6 +70,23 @@ const STATUS_LABEL: Record<CourseStatus, string> = {
   ACTIVE: '4. Active',
   COMPLETED: '5. Completed',
   ARCHIVED: '6. Archived',
+}
+
+const STATUS_TILE_COLOR: Record<CourseStatus, string> = {
+  DRAFT: 'bg-slate-100', PUBLISHED: 'bg-emerald-100', ENROLLMENT: 'bg-sky-100',
+  ACTIVE: 'bg-violet-100', COMPLETED: 'bg-amber-100', ARCHIVED: 'bg-rose-100',
+}
+const STATUS_ICON_COLOR: Record<CourseStatus, string> = {
+  DRAFT: 'text-slate-600', PUBLISHED: 'text-emerald-600', ENROLLMENT: 'text-sky-600',
+  ACTIVE: 'text-violet-600', COMPLETED: 'text-amber-600', ARCHIVED: 'text-rose-600',
+}
+const STATUS_ICON_PATH: Record<CourseStatus, string> = {
+  DRAFT: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
+  PUBLISHED: 'M13 10V3L4 14h7v7l9-11h-7z',
+  ENROLLMENT: 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z',
+  ACTIVE: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  COMPLETED: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+  ARCHIVED: 'M5 8h14M5 8a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v1a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4',
 }
 
 const STATUS_ACTION_LABEL: Record<CourseStatus, string> = {
@@ -287,35 +306,34 @@ export default function TeacherCoursesPage() {
           </div>
 
           {/* Lifecycle summary strip */}
-          <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {(Object.keys(STATUS_LABEL) as CourseStatus[]).map((s) => (
-              <button
+              <StatCard
                 key={s}
+                label={STATUS_LABEL[s]}
+                value={byStatus[s]}
+                decimals={0}
+                prefix=""
+                color={STATUS_TILE_COLOR[s]}
+                active={filterStatus === s}
                 onClick={() => setFilterStatus(filterStatus === s ? 'ALL' : s)}
-                className={`rounded-lg border px-3 py-2 text-left text-xs font-medium transition ${
-                  filterStatus === s
-                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}
-              >
-                <div className="text-slate-500">{STATUS_LABEL[s]}</div>
-                <div className="text-lg font-bold text-slate-800">{byStatus[s]}</div>
-              </button>
+                icon={<svg className={`w-5 h-5 ${STATUS_ICON_COLOR[s]}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d={STATUS_ICON_PATH[s]}/></svg>}
+              />
             ))}
           </div>
 
           {/* Filters */}
-          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-white p-3 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by title…"
-              className="flex-1 min-w-[180px] rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="flex-1 min-w-[180px] rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
             <select
               value={filterClass}
               onChange={(e) => setFilterClass(e.target.value)}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white"
             >
               <option value="ALL">All Classes</option>
               {classes.map((c) => (
@@ -327,7 +345,7 @@ export default function TeacherCoursesPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as any)}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white"
             >
               <option value="ALL">All Statuses</option>
               {(Object.keys(STATUS_LABEL) as CourseStatus[]).map((s) => (
@@ -340,16 +358,14 @@ export default function TeacherCoursesPage() {
 
           {/* List */}
           {isLoading ? (
-            <div className="rounded-lg bg-white p-8 text-center text-slate-500">
-              Loading courses…
-            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <div key={i} className="bg-white h-40 rounded-2xl animate-pulse border border-gray-100" />)}</div>
           ) : isError ? (
-            <div className="rounded-lg bg-rose-50 p-6 text-rose-700">
+            <div className="rounded-2xl bg-rose-50 border border-rose-200 p-6 text-rose-700">
               Failed to load courses.
             </div>
           ) : filtered.length === 0 ? (
-            <div className="rounded-lg bg-white p-8 text-center text-slate-500">
-              No courses match your filters. Click <b>+ New Course</b> to get started.
+            <div className="rounded-2xl bg-white border border-gray-100 shadow-sm">
+              <EmptyState icon="📖" message="No courses match your filters. Click + New Course to get started." />
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -533,13 +549,13 @@ function CourseCard({
 }) {
   const nextStates = NEXT_BY_STATUS[course.status] || []
   return (
-    <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold text-slate-800">
+          <h3 className="truncate text-base font-semibold text-gray-900">
             {course.title}
           </h3>
-          <p className="truncate text-xs text-slate-500">
+          <p className="truncate text-xs text-gray-500">
             {course.class.name}
             {course.class.subject ? ` • ${course.class.subject}` : ''}
           </p>
@@ -552,10 +568,10 @@ function CourseCard({
       </div>
 
       {course.description && (
-        <p className="mb-3 line-clamp-2 text-sm text-slate-600">{course.description}</p>
+        <p className="mb-3 line-clamp-2 text-sm text-gray-600">{course.description}</p>
       )}
 
-      <div className="mb-3 flex items-center gap-3 text-xs text-slate-500">
+      <div className="mb-3 flex items-center gap-3 text-xs text-gray-500">
         <span>📚 {course._count.lessons} lessons</span>
         <span>👥 {course._count.enrollments} enrolled</span>
         {course.enrollmentOpen && (
@@ -565,16 +581,16 @@ function CourseCard({
         )}
       </div>
 
-      <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+      <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
         <Link
           href={`/teacher/courses/${course.id}`}
-          className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200"
+          className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200"
         >
           Open
         </Link>
         <button
           onClick={onEdit}
-          className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200"
+          className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200"
         >
           Edit
         </button>
@@ -583,14 +599,14 @@ function CourseCard({
             key={next}
             onClick={() => onTransition(next)}
             disabled={transitioning}
-            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {STATUS_ACTION_LABEL[next]}
           </button>
         ))}
         <button
           onClick={onDelete}
-          className="ml-auto rounded-md px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50"
+          className="ml-auto rounded-lg px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50"
         >
           Delete
         </button>

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import AuthGuard from '../../../components/AuthGuard'
+import EmptyState from '../../../components/EmptyState'
 import { apiFetch } from '../../../lib/api'
 
 type CourseStatus =
@@ -123,20 +124,18 @@ export default function StudentCoursesPage() {
         </div>
 
         {isLoading && (
-          <div className="rounded-md border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
-            Loading courses…
-          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <div key={i} className="bg-white h-64 rounded-2xl animate-pulse border border-gray-100" />)}</div>
         )}
 
         {isError && (
-          <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             {(error as Error)?.message || 'Failed to load courses.'}
           </div>
         )}
 
         {!isLoading && !isError && filtered.length === 0 && (
-          <div className="rounded-md border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-            No courses to show yet.
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <EmptyState icon="📖" message="No courses to show yet." />
           </div>
         )}
 
@@ -147,7 +146,7 @@ export default function StudentCoursesPage() {
               <Link
                 key={c.id}
                 href={`/student/courses/${c.id}`}
-                className="group flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
+                className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
               >
                 {c.coverImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
