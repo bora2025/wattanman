@@ -59,6 +59,12 @@ const ASSIGNMENT_TYPES = ['HOMEWORK', 'QUIZ', 'PROJECT', 'LAB', 'ESSAY']
 const EXAM_STATUSES = ['DRAFT', 'PUBLISHED', 'ACTIVE', 'COMPLETED']
 const COURSE_STATUSES = ['DRAFT', 'PUBLISHED', 'ARCHIVED']
 
+function toDatetimeLocal(iso: string): string {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 function statusColor(s: string) {
   switch (s) {
     case 'PUBLISHED':
@@ -159,6 +165,8 @@ function AssignmentsPanel({ classId }: { classId: string }) {
   const [form, setForm] = useState({ title: '', type: 'HOMEWORK', totalMarks: 100, dueDate: '', description: '' })
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState<AssignmentRow | null>(null)
+  const [editForm, setEditForm] = useState({ title: '', type: 'HOMEWORK', totalMarks: 100, dueDate: '', description: '' })
+  const [editSaving, setEditSaving] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -216,13 +224,47 @@ function AssignmentsPanel({ classId }: { classId: string }) {
     } catch { setError('Failed to delete assignment.') }
   }
 
+  const openEdit = (row: AssignmentRow) => {
+    setCreating(false)
+    setEditing(row)
+    setEditForm({
+      title: row.title,
+      type: row.type,
+      totalMarks: row.totalMarks,
+      dueDate: row.dueDate ? toDatetimeLocal(row.dueDate) : '',
+      description: row.description || '',
+    })
+  }
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editing || !editForm.title.trim()) return
+    setEditSaving(true); setError('')
+    try {
+      const body: any = {
+        title: editForm.title.trim(),
+        type: editForm.type,
+        totalMarks: Number(editForm.totalMarks) || 100,
+        description: editForm.description.trim() || undefined,
+        dueDate: editForm.dueDate ? new Date(editForm.dueDate).toISOString() : null,
+      }
+      const r = await apiFetch(`/api/assignments/${editing.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      })
+      if (!r.ok) throw new Error()
+      setEditing(null)
+      await load()
+    } catch { setError('Failed to update assignment.') }
+    finally { setEditSaving(false) }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-slate-600">
           <span className="font-semibold text-slate-800">{rows.length}</span> assignment{rows.length === 1 ? '' : 's'} in this class
         </p>
-        <button onClick={() => setCreating(s => !s)} className="btn-primary btn-sm">
+        <button onClick={() => { setEditing(null); setCreating(s => !s) }} className="btn-primary btn-sm">
           {creating ? '× Cancel' : '+ New Assignment'}
         </button>
       </div>
@@ -268,6 +310,47 @@ function AssignmentsPanel({ classId }: { classId: string }) {
         </form>
       )}
 
+      {editing && (
+        <form onSubmit={handleSaveEdit} className="card p-4 space-y-3 bg-emerald-50/30 border-emerald-200">
+          <h3 className="text-sm font-semibold text-slate-800">Edit assignment</h3>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Title *</label>
+              <input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} required
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Type</label>
+              <select value={editForm.type} onChange={e => setEditForm(f => ({ ...f, type: e.target.value }))}
+                className="w-full border rounded-lg px-3 py-2 text-sm">
+                {ASSIGNMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Total marks</label>
+              <input type="number" value={editForm.totalMarks} onChange={e => setEditForm(f => ({ ...f, totalMarks: Number(e.target.value) }))}
+                className="w-full border rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Due date</label>
+              <input type="datetime-local" value={editForm.dueDate} onChange={e => setEditForm(f => ({ ...f, dueDate: e.target.value }))}
+                className="w-full border rounded-lg px-3 py-2 text-sm" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
+            <textarea rows={2} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+              className="w-full border rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div className="flex gap-2">
+            <button type="submit" disabled={editSaving} className="btn-primary btn-sm disabled:opacity-60">
+              {editSaving ? 'Saving…' : 'Save Changes'}
+            </button>
+            <button type="button" onClick={() => setEditing(null)} className="btn-outline btn-sm">Cancel</button>
+          </div>
+        </form>
+      )}
+
       {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-sm">{error}</div>}
 
       {loading ? (
@@ -305,9 +388,14 @@ function AssignmentsPanel({ classId }: { classId: string }) {
                       {ASSIGNMENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-4 py-2 text-right whitespace-nowrap">
+                    <button onClick={() => openEdit(r)} className="text-xs text-emerald-700 hover:underline mr-3">Edit</button>
+                    {r.type === 'QUIZ' && (
+                      <Link href={`/teacher/assignments/${r.id}/quiz`} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-violet-600 hover:underline mr-3">Quiz Questions ↗</Link>
+                    )}
                     <Link href={`/teacher/assignments/${r.id}`} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-indigo-600 hover:underline mr-3">Open ↗</Link>
+                      className="text-xs text-indigo-600 hover:underline mr-3">Grade ↗</Link>
                     <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
                   </td>
                 </tr>
