@@ -1,12 +1,10 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import * as crypto from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 
-const CODE_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const MAX_CODE_ATTEMPTS = 5;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 6;
 
 @Injectable()
 export class ClassRegistrationsService {
@@ -30,36 +28,6 @@ export class ClassRegistrationsService {
     });
   }
 
-  // ─── Public: email verification ───────────────────────────────────────
-  async sendVerificationCode(rawEmail: string) {
-    const email = (rawEmail || '').trim().toLowerCase();
-    if (!email || !EMAIL_RE.test(email)) {
-      throw new BadRequestException('Invalid email address');
-    }
-
-    const code = crypto.randomInt(100000, 1000000).toString();
-    const codeHash = await bcrypt.hash(code, 10);
-    const expiresAt = new Date(Date.now() + CODE_TTL_MS);
-
-    await this.prisma.emailVerificationCode.create({
-      data: { email, codeHash, purpose: 'CLASS_REGISTRATION', expiresAt },
-    });
-
-    const result = await this.notificationService.sendEmail(
-      email,
-      'Your verification code',
-      `Your class registration verification code is ${code}. It expires in 10 minutes.`,
-    );
-
-    // No SendGrid configured locally — surface the code in server logs so the
-    // flow is still testable without real email delivery.
-    if (process.env.NODE_ENV !== 'production' && (result as any)?.skipped) {
-      console.log(`[class-registrations] Verification code for ${email}: ${code}`);
-    }
-
-    return { sent: true };
-  }
-
   // ─── Public: submit a registration ────────────────────────────────────
   async createRegistration(body: {
     classId: string;
@@ -67,42 +35,23 @@ export class ClassRegistrationsService {
     nameEn: string;
     email: string;
     phone: string;
+    password: string;
     photo?: string;
-    code: string;
   }) {
     const email = (body?.email || '').trim().toLowerCase();
     const nameKh = (body?.nameKh || '').trim();
     const nameEn = (body?.nameEn || '').trim();
     const phone = (body?.phone || '').trim();
-    const code = (body?.code || '').trim();
+    const password = body?.password || '';
 
     if (!body?.classId) throw new BadRequestException('classId is required');
     if (!nameKh) throw new BadRequestException('Khmer name is required');
     if (!nameEn) throw new BadRequestException('English name is required');
     if (!email || !EMAIL_RE.test(email)) throw new BadRequestException('Invalid email address');
     if (!phone) throw new BadRequestException('Phone number is required');
-    if (!code) throw new BadRequestException('Verification code is required');
-
-    // Verify the code
-    const record = await this.prisma.emailVerificationCode.findFirst({
-      where: { email, purpose: 'CLASS_REGISTRATION', consumedAt: null, expiresAt: { gt: new Date() } },
-      orderBy: { createdAt: 'desc' },
-    });
-    if (!record || record.attempts >= MAX_CODE_ATTEMPTS) {
-      throw new BadRequestException('Verification code expired or not requested. Please request a new code.');
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      throw new BadRequestException(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
     }
-    const matches = await bcrypt.compare(code, record.codeHash);
-    if (!matches) {
-      await this.prisma.emailVerificationCode.update({
-        where: { id: record.id },
-        data: { attempts: { increment: 1 } },
-      });
-      throw new BadRequestException('Invalid verification code');
-    }
-    await this.prisma.emailVerificationCode.update({
-      where: { id: record.id },
-      data: { consumedAt: new Date() },
-    });
 
     // Re-validate the class server-side — don't trust the client's cached status
     const cls = await this.prisma.class.findUnique({ where: { id: body.classId } });
@@ -117,8 +66,9 @@ export class ClassRegistrationsService {
     });
     if (existing) return existing;
 
+    const passwordHash = await bcrypt.hash(password, 12);
     const created = await this.prisma.classRegistration.create({
-      data: { classId: body.classId, nameKh, nameEn, email, phone, photo: body.photo || undefined },
+      data: { classId: body.classId, nameKh, nameEn, email, phone, passwordHash, photo: body.photo || undefined },
     });
 
     try {
@@ -184,17 +134,14 @@ export class ClassRegistrationsService {
       return updated;
     }
 
-    // APPROVE — create the User + Student accounts
+    // APPROVE — create the User + Student accounts using the password the student set at registration
     const existingUser = await this.prisma.user.findUnique({ where: { email: reg.email } });
     if (existingUser) {
       throw new BadRequestException('A user with this email already exists. Link the student manually instead.');
     }
 
-    const tempPassword = crypto.randomBytes(6).toString('hex');
-    const hashedPassword = await bcrypt.hash(tempPassword, 12);
-
     const user = await this.prisma.user.create({
-      data: { email: reg.email, password: hashedPassword, name: reg.nameEn, phone: reg.phone, role: 'STUDENT' },
+      data: { email: reg.email, password: reg.passwordHash, name: reg.nameEn, phone: reg.phone, role: 'STUDENT' },
     });
 
     const count = await this.prisma.student.count({ where: { classId: reg.classId } });
@@ -219,7 +166,7 @@ export class ClassRegistrationsService {
       await this.notificationService.sendEmail(
         reg.email,
         'Your class registration is approved',
-        `Hi ${reg.nameEn}, welcome to ${reg.class.name}! Your login email is ${reg.email} and your temporary password is ${tempPassword}. Please log in and change your password.`,
+        `Hi ${reg.nameEn}, welcome to ${reg.class.name}! Your registration has been approved — log in at your school portal with the email and password you registered with.`,
       );
     } catch {}
 

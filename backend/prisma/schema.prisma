@@ -207,6 +207,7 @@ model ClassRegistration {
   nameEn       String
   email        String
   phone        String
+  passwordHash String // bcrypt hash of the password the student chose at registration
   photo        String? // base64 data URL, same convention as Student.photo
   status       String    @default("PENDING") // PENDING | APPROVED | REJECTED
   rejectReason String?
@@ -217,21 +218,6 @@ model ClassRegistration {
 
   @@index([status])
   @@index([classId])
-}
-
-// Short-lived email verification codes, used to confirm a real mailbox
-// before accepting a public ClassRegistration submission.
-model EmailVerificationCode {
-  id         String    @id @default(cuid())
-  email      String
-  codeHash   String
-  purpose    String    @default("CLASS_REGISTRATION")
-  attempts   Int       @default(0)
-  expiresAt  DateTime
-  consumedAt DateTime?
-  createdAt  DateTime  @default(now())
-
-  @@index([email, purpose])
 }
 
 model StaffAttendance {

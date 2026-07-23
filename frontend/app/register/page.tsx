@@ -15,6 +15,7 @@ interface PublicClass {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024 // 3MB source file cap
+const MIN_PASSWORD_LENGTH = 6
 
 export default function StudentRegisterPage() {
   return (
@@ -36,13 +37,10 @@ function RegisterForm() {
   const [nameEn, setNameEn] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [photo, setPhoto] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
-
-  const [codeSent, setCodeSent] = useState(false)
-  const [sendingCode, setSendingCode] = useState(false)
-  const [code, setCode] = useState('')
-  const [codeNotice, setCodeNotice] = useState<string | null>(null)
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,31 +65,8 @@ function RegisterForm() {
   }, [])
 
   const emailValid = EMAIL_RE.test(email.trim())
-
-  const handleSendCode = async () => {
-    if (!emailValid) return
-    setSendingCode(true)
-    setCodeNotice(null)
-    setError(null)
-    try {
-      const res = await apiFetch('/api/class-registrations/public/send-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
-      })
-      if (res.ok) {
-        setCodeSent(true)
-        setCodeNotice('A 6-digit code has been sent to your email. It expires in 10 minutes.')
-      } else {
-        const j = await res.json().catch(() => ({}))
-        setError(j.message || 'Failed to send verification code')
-      }
-    } catch {
-      setError('Failed to send verification code')
-    } finally {
-      setSendingCode(false)
-    }
-  }
+  const passwordValid = password.length >= MIN_PASSWORD_LENGTH
+  const passwordsMatch = password === confirmPassword
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -108,7 +83,7 @@ function RegisterForm() {
   }
 
   const canSubmit =
-    classId && nameKh.trim() && nameEn.trim() && emailValid && phone.trim() && codeSent && /^\d{6}$/.test(code)
+    classId && nameKh.trim() && nameEn.trim() && emailValid && phone.trim() && passwordValid && passwordsMatch
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,8 +100,8 @@ function RegisterForm() {
           nameEn: nameEn.trim(),
           email: email.trim(),
           phone: phone.trim(),
+          password,
           photo: photo || undefined,
-          code: code.trim(),
         }),
       })
       if (res.ok) {
@@ -156,7 +131,7 @@ function RegisterForm() {
             <div className="text-4xl mb-3">✅</div>
             <h2 className="text-lg font-semibold text-slate-800">Registration submitted</h2>
             <p className="text-sm text-slate-500 mt-2">
-              Your registration is pending review. We'll email you at <span className="font-medium text-slate-700">{email}</span> once an admin approves or rejects it.
+              Your registration is pending review. We'll email you at <span className="font-medium text-slate-700">{email}</span> once an admin approves or rejects it — once approved, log in with the email and password you just set.
             </p>
             <Link href="/" className="btn-primary inline-flex mt-6">Back to home</Link>
           </div>
@@ -206,41 +181,46 @@ function RegisterForm() {
 
             <div className="pt-2 border-t border-slate-100">
               <label className="form-label">Email</label>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setCodeSent(false); setCode('') }}
-                  required
-                  placeholder="you@example.com"
-                  className="flex-1"
-                />
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  disabled={!emailValid || sendingCode}
-                  className="btn-outline whitespace-nowrap disabled:opacity-50"
-                >
-                  {sendingCode ? 'Sending…' : codeSent ? 'Resend' : 'Send Code'}
-                </button>
-              </div>
-              {codeNotice && <p className="text-xs text-emerald-600 mt-1">{codeNotice}</p>}
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="you@example.com"
+              />
+              {email.length > 0 && !emailValid && (
+                <p className="text-xs text-red-600 mt-1">Enter a valid email address</p>
+              )}
             </div>
 
-            {codeSent && (
-              <div>
-                <label className="form-label">Verification Code</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  required
-                  placeholder="123456"
-                />
-              </div>
-            )}
+            <div>
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={MIN_PASSWORD_LENGTH}
+                placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+              />
+              {password.length > 0 && !passwordValid && (
+                <p className="text-xs text-red-600 mt-1">Password must be at least {MIN_PASSWORD_LENGTH} characters</p>
+              )}
+            </div>
+
+            <div>
+              <label className="form-label">Confirm Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="Re-enter your password"
+              />
+              {confirmPassword.length > 0 && !passwordsMatch && (
+                <p className="text-xs text-red-600 mt-1">Passwords do not match</p>
+              )}
+            </div>
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 

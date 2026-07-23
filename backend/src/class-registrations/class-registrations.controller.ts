@@ -16,16 +16,10 @@ export class ClassRegistrationsController {
   }
 
   @Throttle({ default: { ttl: 60000, limit: 5 } })
-  @Post('public/send-code')
-  async sendCode(@Body() body: { email: string }) {
-    return this.svc.sendVerificationCode(body?.email);
-  }
-
-  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('public')
   async submit(
     @Body()
-    body: { classId: string; nameKh: string; nameEn: string; email: string; phone: string; photo?: string; code: string },
+    body: { classId: string; nameKh: string; nameEn: string; email: string; phone: string; password: string; photo?: string },
   ) {
     return this.svc.createRegistration(body);
   }
