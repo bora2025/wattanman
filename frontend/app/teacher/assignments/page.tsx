@@ -6,6 +6,10 @@ import { useForm } from 'react-hook-form'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import AuthGuard from '../../../components/AuthGuard'
+import Sidebar from '../../../components/Sidebar'
+import StatCard from '../../../components/StatCard'
+import EmptyState from '../../../components/EmptyState'
+import { teacherNav } from '../../../lib/teacher-nav'
 import { apiFetch } from '../../../lib/api'
 
 interface Assignment {
@@ -226,24 +230,49 @@ export default function TeacherAssignmentsPage() {
     return sorted
   }, [assignments, filterStatus, filterType, filterClass, search, sortBy])
 
+  const counts = useMemo(() => ({
+    total: assignments.length,
+    draft: assignments.filter(a => a.status === 'DRAFT').length,
+    published: assignments.filter(a => a.status === 'PUBLISHED').length,
+    submissions: assignments.reduce((s, a) => s + (a._count?.submissions ?? 0), 0),
+  }), [assignments])
+
   return (
     <AuthGuard requiredRole="TEACHER">
-      <div className="min-h-screen bg-slate-50 px-4 sm:px-6 pt-16 sm:pt-6 pb-[88px] lg:pb-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">📚 My Assignments</h1>
-            <button onClick={openCreate} className="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-700">+ New Assignment</button>
+      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+        <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
+        <main className="flex-1 overflow-y-auto">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">📚 My Assignments</h1>
+              <p className="text-sm text-gray-500 mt-0.5">Homework, quizzes, projects, and more</p>
+            </div>
+            <button onClick={openCreate} className="bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-sky-700 shadow-sm">+ New Assignment</button>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-3 mb-4 flex flex-wrap items-center gap-2 border border-slate-100">
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title…" className="flex-1 min-w-[160px] border rounded-lg px-3 py-1.5 text-sm" />
-            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border rounded-lg px-2 py-1.5 text-sm">
+          {!isLoading && !isError && assignments.length > 0 && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard label="Total" value={counts.total} decimals={0} prefix="" color="bg-sky-100"
+                icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
+              <StatCard label="Draft" value={counts.draft} decimals={0} prefix="" color="bg-slate-100"
+                icon={<svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>} />
+              <StatCard label="Published" value={counts.published} decimals={0} prefix="" color="bg-emerald-100"
+                icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>} />
+              <StatCard label="Submissions" value={counts.submissions} decimals={0} prefix="" color="bg-amber-100"
+                icon={<svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+            </div>
+          )}
+
+          <div className="bg-white rounded-2xl shadow-sm p-3 flex flex-wrap items-center gap-2 border border-gray-100">
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title…" className="flex-1 min-w-[160px] border border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
               <option value="ALL">All status</option>
               <option value="DRAFT">Draft</option>
               <option value="PUBLISHED">Published</option>
               <option value="CLOSED">Closed</option>
             </select>
-            <select value={filterType} onChange={e => setFilterType(e.target.value)} className="border rounded-lg px-2 py-1.5 text-sm">
+            <select value={filterType} onChange={e => setFilterType(e.target.value)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
               <option value="ALL">All types</option>
               <option value="HOMEWORK">Homework</option>
               <option value="QUIZ">Quiz</option>
@@ -251,11 +280,11 @@ export default function TeacherAssignmentsPage() {
               <option value="LAB">Lab</option>
               <option value="ESSAY">Essay</option>
             </select>
-            <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="border rounded-lg px-2 py-1.5 text-sm">
+            <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
               <option value="ALL">All classes</option>
               {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="border rounded-lg px-2 py-1.5 text-sm">
+            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
               <option value="createdAt">Newest</option>
               <option value="dueDate">Due date</option>
               <option value="title">Title</option>
@@ -263,37 +292,36 @@ export default function TeacherAssignmentsPage() {
           </div>
 
           {isLoading ? (
-            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-20 rounded-xl animate-pulse" />)}</div>
+            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />)}</div>
           ) : isError ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
               <p className="text-red-600 mb-2">Failed to load assignments</p>
               <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-              <p className="text-4xl mb-3">📚</p>
-              <p className="text-slate-400">{assignments.length === 0 ? 'No assignments created yet' : 'No assignments match your filters'}</p>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <EmptyState icon="📚" message={assignments.length === 0 ? 'No assignments created yet' : 'No assignments match your filters'} />
             </div>
           ) : (
             <div className="space-y-3">
               {filtered.map(a => (
-                <div key={a.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100 flex items-center justify-between gap-4">
+                <div key={a.id} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex items-center justify-between gap-4 hover:shadow-md transition-shadow">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <p className="font-semibold text-slate-800 truncate">{a.title}</p>
+                      <p className="font-semibold text-gray-900 truncate">{a.title}</p>
                       <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${STATUS_BADGES[a.status] || 'bg-slate-100 text-slate-600'}`}>{a.status}</span>
                       <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${TYPE_BADGES[a.type] || 'bg-slate-100 text-slate-600'}`}>{a.type}</span>
                       {a.weight !== 1 && <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-indigo-100 text-indigo-700">×{a.weight}</span>}
                     </div>
-                    <p className="text-xs text-slate-500">{a.class?.name} · {a.class?.subject} · {a.totalMarks} marks{a.maxAttempts > 1 ? ` · up to ${a.maxAttempts} attempts` : ''}</p>
-                    {a.dueDate && <p className="text-xs text-slate-400">Due: {new Date(a.dueDate).toLocaleString()}</p>}
+                    <p className="text-xs text-gray-500">{a.class?.name} · {a.class?.subject} · {a.totalMarks} marks{a.maxAttempts > 1 ? ` · up to ${a.maxAttempts} attempts` : ''}</p>
+                    {a.dueDate && <p className="text-xs text-gray-400">Due: {new Date(a.dueDate).toLocaleString()}</p>}
                     <p className="text-xs text-amber-600 mt-0.5">{a._count?.submissions ?? 0} submission(s){a.latePenaltyPct > 0 ? ` · ${a.latePenaltyPct}% late penalty` : ''}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {a.type === 'QUIZ' && (
                       <Link href={`/teacher/assignments/${a.id}/quiz`} className="text-xs bg-violet-100 text-violet-700 px-3 py-1.5 rounded-lg font-medium hover:bg-violet-200">📝 Questions</Link>
                     )}
-                    <Link href={`/teacher/assignments/${a.id}`} className="text-xs bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-medium hover:bg-slate-200">Grade</Link>
+                    <Link href={`/teacher/assignments/${a.id}`} className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200">Grade</Link>
                     <button onClick={() => openEdit(a)} className="text-xs bg-sky-50 text-sky-700 px-3 py-1.5 rounded-lg font-medium hover:bg-sky-100">Edit</button>
                     <button onClick={() => { if (confirm(`Delete "${a.title}"?`)) deleteMutation.mutate(a.id) }} className="text-xs text-red-500 hover:underline">Delete</button>
                   </div>
@@ -302,6 +330,7 @@ export default function TeacherAssignmentsPage() {
             </div>
           )}
         </div>
+        </main>
 
         {showForm && (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 overflow-y-auto">

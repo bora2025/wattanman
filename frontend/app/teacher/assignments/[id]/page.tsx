@@ -6,6 +6,10 @@ import { useForm } from 'react-hook-form'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
+import Sidebar from '../../../../components/Sidebar'
+import StatCard from '../../../../components/StatCard'
+import EmptyState from '../../../../components/EmptyState'
+import { teacherNav } from '../../../../lib/teacher-nav'
 import { apiFetch } from '../../../../lib/api'
 import { H5P_TYPE_LABEL, parseDragWordsText, diffWords } from '../../../../lib/h5pQuestionLogic'
 import MathText from '../../../../components/MathText'
@@ -66,46 +70,63 @@ export default function TeacherGradingPage() {
     gradeMutation.mutate({ submissionId: gradingId, marks: Number(data.marks), feedback: data.feedback })
   }
 
+  const gradedCount = submissions.filter(s => s.marks !== null).length
+  const lateCount = submissions.filter(s => s.status === 'LATE').length
+
   return (
     <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
-      <div className="min-h-screen bg-slate-50 px-4 sm:px-6 pt-6 pb-[88px] lg:pb-6">
-        <div className="max-w-3xl mx-auto">
-          <Link href="/teacher/assignments" className="text-sm text-sky-600 mb-4 block">← Back to Assignments</Link>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">Grade Submissions</h1>
-          {assignment && (
-            <div className="mb-6">
-              <p className="text-sm text-slate-500">{assignment.title} · {assignment.class?.name} · {assignment.totalMarks} marks · {assignment.type}</p>
-              {assignment.dueDate && <p className="text-xs text-slate-400 mt-0.5">Due: {new Date(assignment.dueDate).toLocaleString()}</p>}
-              {assignment.latePenaltyPct > 0 && <p className="text-xs text-orange-600 mt-0.5">Late penalty: {assignment.latePenaltyPct}% off final score</p>}
-              {assignment.attachmentUrl && (
-                <a href={assignment.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 underline mt-1">📎 Reference attachment</a>
-              )}
-              {assignment.type === 'QUIZ' && (
-                <Link href={`/teacher/assignments/${assignmentId}/quiz`} className="inline-block mt-3 bg-violet-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-violet-700">📝 Manage Quiz Questions</Link>
-              )}
+      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+        <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
+        <main className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+          <div>
+            <Link href="/teacher/assignments" className="text-sm text-gray-500 hover:text-gray-800 mb-2 block">← Back to Assignments</Link>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Grade Submissions</h1>
+            {assignment && (
+              <div className="mt-1">
+                <p className="text-sm text-gray-500">{assignment.title} · {assignment.class?.name} · {assignment.totalMarks} marks · {assignment.type}</p>
+                {assignment.dueDate && <p className="text-xs text-gray-400 mt-0.5">Due: {new Date(assignment.dueDate).toLocaleString()}</p>}
+                {assignment.latePenaltyPct > 0 && <p className="text-xs text-orange-600 mt-0.5">Late penalty: {assignment.latePenaltyPct}% off final score</p>}
+                {assignment.attachmentUrl && (
+                  <a href={assignment.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 underline mt-1">📎 Reference attachment</a>
+                )}
+                {assignment.type === 'QUIZ' && (
+                  <Link href={`/teacher/assignments/${assignmentId}/quiz`} className="inline-block mt-3 bg-violet-600 text-white text-xs font-semibold px-3 py-1.5 rounded-xl hover:bg-violet-700">📝 Manage Quiz Questions</Link>
+                )}
+              </div>
+            )}
+          </div>
+
+          {!isLoading && !isError && submissions.length > 0 && (
+            <div className="grid grid-cols-3 gap-4">
+              <StatCard label="Submissions" value={submissions.length} decimals={0} prefix="" color="bg-sky-100"
+                icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
+              <StatCard label="Graded" value={gradedCount} decimals={0} prefix="" color="bg-emerald-100"
+                icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+              <StatCard label="Late" value={lateCount} decimals={0} prefix="" color="bg-orange-100"
+                icon={<svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
             </div>
           )}
 
           {isLoading ? (
-            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-24 rounded-xl animate-pulse" />)}</div>
+            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-24 rounded-2xl animate-pulse border border-gray-100" />)}</div>
           ) : isError ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
               <p className="text-red-600 mb-2">Failed to load submissions</p>
               <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
             </div>
           ) : submissions.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-              <p className="text-4xl mb-3">📭</p>
-              <p className="text-slate-400">No submissions yet</p>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <EmptyState icon="📭" message="No submissions yet" />
             </div>
           ) : (
             <div className="space-y-3">
               {submissions.map(sub => (
-                <div key={sub.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
+                <div key={sub.id} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <p className="font-semibold text-slate-800">{sub.student?.user?.name}</p>
+                        <p className="font-semibold text-gray-900">{sub.student?.user?.name}</p>
                         {sub.status === 'LATE' && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">Late</span>}
                         {sub.attemptNumber > 1 && <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-semibold">Attempt {sub.attemptNumber}</span>}
                         {sub.marks !== null && <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Graded: {sub.marks}/{assignment?.totalMarks}</span>}
@@ -113,12 +134,12 @@ export default function TeacherGradingPage() {
                           <span className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full font-semibold">−{sub.latePenaltyApplied}% applied</span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-400 mb-2">Submitted: {new Date(sub.submittedAt).toLocaleString()}</p>
-                      {sub.content && <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 whitespace-pre-wrap line-clamp-4">{sub.content}</p>}
+                      <p className="text-xs text-gray-400 mb-2">Submitted: {new Date(sub.submittedAt).toLocaleString()}</p>
+                      {sub.content && <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3 whitespace-pre-wrap line-clamp-4">{sub.content}</p>}
                       {sub.attachmentUrl && (
                         <a href={sub.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 underline mt-1">📎 View attachment</a>
                       )}
-                      {sub.feedback && <p className="text-xs text-slate-500 italic mt-1">Feedback: "{sub.feedback}"</p>}
+                      {sub.feedback && <p className="text-xs text-gray-500 italic mt-1">Feedback: "{sub.feedback}"</p>}
                     </div>
                     <div className="flex flex-col gap-2 flex-shrink-0">
                       <button onClick={() => setGradingId(sub.id === gradingId ? null : sub.id)}
@@ -139,16 +160,16 @@ export default function TeacherGradingPage() {
                   )}
 
                   {gradingId === sub.id && (
-                    <form onSubmit={handleSubmit(onGrade)} className="mt-4 border-t border-slate-100 pt-4 flex gap-3 items-end">
+                    <form onSubmit={handleSubmit(onGrade)} className="mt-4 border-t border-gray-100 pt-4 flex gap-3 items-end">
                       <div className="flex-1">
                         <input type="number" {...register('marks', { required: true, min: 0, max: assignment?.totalMarks })}
                           placeholder={`Marks (0–${assignment?.totalMarks})`}
-                          className="w-full border rounded-lg px-3 py-2 text-sm mb-2" />
-                        <input {...register('feedback')} placeholder="Feedback (optional)" className="w-full border rounded-lg px-3 py-2 text-sm" />
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                        <input {...register('feedback')} placeholder="Feedback (optional)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
                       </div>
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => setGradingId(null)} className="text-xs border rounded-lg px-3 py-2">Cancel</button>
-                        <button type="submit" disabled={isSubmitting} className="text-xs bg-emerald-600 text-white px-3 py-2 rounded-lg font-medium disabled:opacity-60">Save</button>
+                        <button type="button" onClick={() => setGradingId(null)} className="text-xs border border-gray-200 rounded-xl px-3 py-2">Cancel</button>
+                        <button type="submit" disabled={isSubmitting} className="text-xs bg-emerald-600 text-white px-3 py-2 rounded-xl font-medium disabled:opacity-60">Save</button>
                       </div>
                     </form>
                   )}
@@ -157,6 +178,7 @@ export default function TeacherGradingPage() {
             </div>
           )}
         </div>
+        </main>
       </div>
     </AuthGuard>
   )

@@ -5,6 +5,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import AuthGuard from '../../../../../components/AuthGuard'
+import Sidebar from '../../../../../components/Sidebar'
+import EmptyState from '../../../../../components/EmptyState'
+import { teacherNav } from '../../../../../lib/teacher-nav'
 import { apiFetch } from '../../../../../lib/api'
 import { type H5PType, isH5PType, H5P_TYPE_LABEL, h5pDefaultData, uid, parseDragWordsText } from '../../../../../lib/h5pQuestionLogic'
 import { EssayEditor } from '../../../../../components/questions/EssayField'
@@ -126,15 +129,17 @@ export default function TeacherQuizEditorPage() {
 
   return (
     <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
-      <div className="min-h-screen bg-slate-50 px-4 sm:px-6 pt-6 pb-[88px] lg:pb-6">
-        <div className="max-w-3xl mx-auto">
-          <Link href={`/teacher/assignments/${assignmentId}`} className="text-sm text-sky-600 mb-4 block">← Back to assignment</Link>
+      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+        <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
+        <main className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <Link href={`/teacher/assignments/${assignmentId}`} className="text-sm text-gray-500 hover:text-gray-800 mb-4 block">← Back to assignment</Link>
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-800">📝 Quiz Questions</h1>
-              {assignment && <p className="text-xs text-slate-500 mt-1">{assignment.title} · {questions.length} question(s) · {totalPoints} total points</p>}
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">📝 Quiz Questions</h1>
+              {assignment && <p className="text-xs text-gray-500 mt-1">{assignment.title} · {questions.length} question(s) · {totalPoints} total points</p>}
             </div>
-            <button onClick={openNew} className="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-700">+ Add Question</button>
+            <button onClick={openNew} className="bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-sky-700 shadow-sm">+ Add Question</button>
           </div>
 
           <div className="flex flex-wrap gap-2 mb-4">
@@ -151,10 +156,10 @@ export default function TeacherQuizEditorPage() {
                 a.click()
                 URL.revokeObjectURL(url)
               }}
-              className="text-xs border border-slate-300 px-3 py-1.5 rounded-lg hover:bg-slate-100"
+              className="text-xs border border-gray-200 px-3 py-1.5 rounded-xl hover:bg-gray-100 bg-white"
               disabled={!questions.length}
             >⬇️ Export JSON</button>
-            <label className="text-xs border border-slate-300 px-3 py-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+            <label className="text-xs border border-gray-200 px-3 py-1.5 rounded-xl hover:bg-gray-100 bg-white cursor-pointer">
               ⬆️ Import JSON
               <input
                 type="file"
@@ -190,16 +195,15 @@ export default function TeacherQuizEditorPage() {
           </div>
 
           {isLoading ? (
-            <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white h-20 rounded-xl animate-pulse" />)}</div>
+            <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />)}</div>
           ) : questions.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-              <p className="text-4xl mb-3">📝</p>
-              <p className="text-slate-400">No questions yet. Click "Add Question" to start.</p>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <EmptyState icon="📝" message='No questions yet. Click "Add Question" to start.' />
             </div>
           ) : (
             <div className="space-y-3">
               {questions.map((q, i) => (
-                <div key={q.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
+                <div key={q.id} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -249,6 +253,7 @@ export default function TeacherQuizEditorPage() {
             </div>
           )}
         </div>
+        </main>
 
         {draft && (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 overflow-y-auto">

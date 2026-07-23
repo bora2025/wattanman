@@ -15,6 +15,8 @@ import { SpeakWordsInput } from '../../../../../components/questions/SpeakWordsF
 import { SpeakWordsSetInput } from '../../../../../components/questions/SpeakWordsSetField'
 import { DictationInput } from '../../../../../components/questions/DictationField'
 import MathText from '../../../../../components/MathText'
+import ProgressBar from '../../../../../components/ProgressBar'
+import EmptyState from '../../../../../components/EmptyState'
 
 type QType = 'MCQ' | 'TF' | 'MATCHING' | 'NUMERICAL' | H5PType
 interface Question {
@@ -109,10 +111,10 @@ export default function StudentQuizPage() {
   }, [deadline?.getTime()])
 
   if (isLoading) {
-    return <AuthGuard requiredRole="STUDENT"><div className="min-h-screen bg-slate-50 p-6"><div className="max-w-3xl mx-auto space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-24 rounded-xl animate-pulse" />)}</div></div></AuthGuard>
+    return <AuthGuard requiredRole="STUDENT"><div className="min-h-screen bg-gray-50 p-6"><div className="max-w-3xl mx-auto space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-24 rounded-2xl animate-pulse border border-gray-100" />)}</div></div></AuthGuard>
   }
   if (isError || !data) {
-    return <AuthGuard requiredRole="STUDENT"><div className="min-h-screen bg-slate-50 p-6"><div className="max-w-3xl mx-auto"><div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center"><p className="text-red-600 mb-2">Failed to load quiz</p><Link href="/student/assignments" className="text-sm text-sky-600 underline">Back to assignments</Link></div></div></div></AuthGuard>
+    return <AuthGuard requiredRole="STUDENT"><div className="min-h-screen bg-gray-50 p-6"><div className="max-w-3xl mx-auto"><div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center"><p className="text-red-600 mb-2">Failed to load quiz</p><Link href="/student/assignments" className="text-sm text-sky-600 underline">Back to assignments</Link></div></div></div></AuthGuard>
   }
 
   const { assignment, questions, submission } = data
@@ -124,28 +126,34 @@ export default function StudentQuizPage() {
   const revealAnswers = !!data.revealAnswers
   const answerByQ = new Map<string, { response: any; pointsAwarded: number | null; feedback: string | null }>()
   for (const a of submission?.answers ?? []) answerByQ.set(a.questionId, a)
+  const answeredCount = questions.filter(q => answers[q.id] != null).length
 
   return (
     <AuthGuard requiredRole="STUDENT">
-      <div className="min-h-screen bg-slate-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-3xl mx-auto">
-          <Link href="/student/assignments" className="text-sm text-sky-600 mb-4 block">← Back to my assignments</Link>
-          <div className="bg-white rounded-xl shadow-sm p-5 border border-slate-100 mb-4">
-            <h1 className="text-xl font-bold text-slate-800 mb-1">📝 {assignment.title}</h1>
-            <p className="text-xs text-slate-500">{questions.length} question(s) · {totalPoints} points total{assignment.dueDate ? ` · Due ${new Date(assignment.dueDate).toLocaleString()}` : ''}</p>
-            {assignment.instructions && <p className="text-sm text-slate-600 mt-3 whitespace-pre-wrap">{assignment.instructions}</p>}
-            {assignment.maxAttempts > 1 && <p className="text-xs text-slate-400 mt-2">Attempts: {attemptsUsed}/{assignment.maxAttempts}</p>}
+          <Link href="/student/assignments" className="text-sm text-gray-500 hover:text-gray-800 mb-4 block">← Back to my assignments</Link>
+          <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 mb-4">
+            <h1 className="text-xl font-bold text-gray-900 mb-1">📝 {assignment.title}</h1>
+            <p className="text-xs text-gray-500">{questions.length} question(s) · {totalPoints} points total{assignment.dueDate ? ` · Due ${new Date(assignment.dueDate).toLocaleString()}` : ''}</p>
+            {assignment.instructions && <p className="text-sm text-gray-600 mt-3 whitespace-pre-wrap">{assignment.instructions}</p>}
+            {assignment.maxAttempts > 1 && <p className="text-xs text-gray-400 mt-2">Attempts: {attemptsUsed}/{assignment.maxAttempts}</p>}
             {timeLimit && remainingSec != null && isTakeable && (
-              <div className={`mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold ${remainingSec < 60 ? 'bg-red-100 text-red-700' : remainingSec < 300 ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700'}`}>
+              <div className={`mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold ${remainingSec < 60 ? 'bg-red-100 text-red-700' : remainingSec < 300 ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700'}`}>
                 ⏱ Time remaining: {Math.floor(remainingSec / 60)}:{String(remainingSec % 60).padStart(2, '0')}
               </div>
             )}
-            {timeLimit && !remainingSec && isTakeable && <p className="text-xs text-slate-400 mt-2">Time limit: {timeLimit} minutes — timer will start.</p>}
+            {timeLimit && !remainingSec && isTakeable && <p className="text-xs text-gray-400 mt-2">Time limit: {timeLimit} minutes — timer will start.</p>}
             {autoSubmittedReason && <p className="mt-2 text-xs text-red-600 font-semibold">{autoSubmittedReason}</p>}
+            {isTakeable && questions.length > 0 && (
+              <div className="mt-3">
+                <ProgressBar pct={(answeredCount / (questions.length || 1)) * 100} label={`${answeredCount} of ${questions.length} answered`} color="bg-emerald-500" />
+              </div>
+            )}
           </div>
 
           {(result || alreadyGraded) && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-4">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 mb-4">
               <p className="font-semibold text-emerald-800 mb-1">{alreadyGraded ? 'Graded' : 'Submitted'}{canRetake ? ' — you may retake below' : ''}</p>
               {result && (
                 <p className="text-sm text-emerald-700">
@@ -160,33 +168,32 @@ export default function StudentQuizPage() {
             </div>
           )}
 
-          {submitError && <div className="mb-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{submitError}</div>}
+          {submitError && <div className="mb-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-3 py-2">{submitError}</div>}
 
           <div className="space-y-3">
             {questions.length === 0 && (
-              <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-                <p className="text-4xl mb-3">⏳</p>
-                <p className="text-slate-400">This quiz has no questions yet.</p>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <EmptyState icon="⏳" message="This quiz has no questions yet." />
               </div>
             )}
             {questions.map((q, i) => {
               const ans = answerByQ.get(q.id)
               return (
-              <div key={q.id} className="bg-white rounded-xl shadow-sm p-5 border border-slate-100">
+              <div key={q.id} className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold">Q{i + 1}</span>
+                  <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center">{i + 1}</span>
                   <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">{q.points} pt</span>
                   {revealAnswers && ans && ans.pointsAwarded != null && (
                     <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${ans.pointsAwarded >= q.points ? 'bg-emerald-100 text-emerald-700' : ans.pointsAwarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>You: {ans.pointsAwarded}/{q.points}</span>
                   )}
                 </div>
-                <MathText as="p" className="text-sm text-slate-800 whitespace-pre-wrap mb-3" text={q.prompt} />
+                <MathText as="p" className="text-sm text-gray-800 whitespace-pre-wrap mb-3" text={q.prompt} />
                 <QuestionInput q={q} value={answers[q.id]} onChange={(v) => setAnswer(q.id, v)} disabled={(exhausted && !!submission) || revealAnswers} />
                 {revealAnswers && q.correctData && (
                   <CorrectAnswerPanel q={q} />
                 )}
                 {revealAnswers && ans?.feedback && (
-                  <p className="text-xs text-slate-600 italic mt-2">Teacher feedback: “{ans.feedback}”</p>
+                  <p className="text-xs text-gray-600 italic mt-2">Teacher feedback: “{ans.feedback}”</p>
                 )}
               </div>
               )

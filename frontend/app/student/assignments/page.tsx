@@ -6,6 +6,8 @@ import { useForm } from 'react-hook-form'
 import Link from 'next/link'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
+import StatCard from '../../../components/StatCard'
+import EmptyState from '../../../components/EmptyState'
 import { apiFetch } from '../../../lib/api'
 
 const studentNav = [
@@ -129,13 +131,27 @@ export default function StudentAssignmentsPage() {
       <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
         <Sidebar title="Student" subtitle="Portal" navItems={studentNav} accentColor="emerald" />
         <div className="h-14 lg:hidden" />
-        <main className="flex-1 p-4 sm:p-6">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-4">📚 My Assignments</h1>
+        <main className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">📚 My Assignments</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Homework, quizzes, and projects for your classes</p>
+          </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-3 mb-4 flex flex-wrap items-center gap-2 border border-slate-100">
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title…" className="flex-1 min-w-[160px] border rounded-lg px-3 py-1.5 text-sm" />
-            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)} className="border rounded-lg px-2 py-1.5 text-sm">
+          {!isLoading && !isError && assignments.length > 0 && (
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard label="Pending" value={assignments.filter(a => getStatus(a) === 'pending').length} decimals={0} prefix="" color="bg-amber-100"
+                icon={<svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+              <StatCard label="Submitted" value={assignments.filter(a => ['submitted','late'].includes(getStatus(a))).length} decimals={0} prefix="" color="bg-sky-100"
+                icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
+              <StatCard label="Graded" value={assignments.filter(a => getStatus(a) === 'graded').length} decimals={0} prefix="" color="bg-emerald-100"
+                icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+            </div>
+          )}
+
+          <div className="bg-white rounded-2xl shadow-sm p-3 flex flex-wrap items-center gap-2 border border-gray-100">
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title…" className="flex-1 min-w-[160px] border border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
               <option value="ALL">All</option>
               <option value="pending">Pending</option>
               <option value="submitted">Submitted</option>
@@ -144,23 +160,22 @@ export default function StudentAssignmentsPage() {
               <option value="missing">Missing</option>
               <option value="closed">Closed</option>
             </select>
-            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="border rounded-lg px-2 py-1.5 text-sm">
+            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
               <option value="dueDate">Due date</option>
               <option value="title">Title</option>
             </select>
           </div>
 
           {isLoading ? (
-            <div className="space-y-3">{[1,2,3,4].map(i => <div key={i} className="bg-white h-20 rounded-xl animate-pulse" />)}</div>
+            <div className="space-y-3">{[1,2,3,4].map(i => <div key={i} className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />)}</div>
           ) : isError ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
               <p className="text-red-600 mb-2">Failed to load assignments</p>
               <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
             </div>
           ) : visible.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-              <p className="text-4xl mb-3">📚</p>
-              <p className="text-slate-400">{assignments.length === 0 ? 'No assignments assigned yet' : 'Nothing matches your filters'}</p>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <EmptyState icon="📚" message={assignments.length === 0 ? 'No assignments assigned yet' : 'Nothing matches your filters'} />
             </div>
           ) : (
             <div className="space-y-3">
@@ -172,29 +187,29 @@ export default function StudentAssignmentsPage() {
                 const canResubmit = !!a.submission && a.status !== 'CLOSED' && attemptsRemain && (a.type === 'QUIZ' || a.submission.marks === null)
                 const canSubmit = !a.submission && a.status !== 'CLOSED'
                 return (
-                  <div key={a.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
+                  <div key={a.id} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <p className="font-semibold text-slate-800">{a.title}</p>
+                          <p className="font-semibold text-gray-900">{a.title}</p>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${meta.color}`}>{meta.label}</span>
                           <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-600">{a.type}</span>
                         </div>
-                        <p className="text-xs text-slate-500">{[a.class?.name, a.class?.subject, a.createdBy?.name && `by ${a.createdBy.name}`].filter(Boolean).join(' · ')}</p>
-                        {a.dueDate && <p className="text-xs text-slate-400 mt-0.5">Due: {new Date(a.dueDate).toLocaleString()}</p>}
-                        {a.instructions && <p className="text-xs text-slate-600 mt-1 whitespace-pre-wrap line-clamp-3">{a.instructions}</p>}
+                        <p className="text-xs text-gray-500">{[a.class?.name, a.class?.subject, a.createdBy?.name && `by ${a.createdBy.name}`].filter(Boolean).join(' · ')}</p>
+                        {a.dueDate && <p className="text-xs text-gray-400 mt-0.5">Due: {new Date(a.dueDate).toLocaleString()}</p>}
+                        {a.instructions && <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap line-clamp-3">{a.instructions}</p>}
                         {a.attachmentUrl && (
                           <a href={a.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-emerald-600 underline mt-1">📎 Resource link</a>
                         )}
-                        {a.maxAttempts > 1 && <p className="text-xs text-slate-400 mt-1">Attempts: {attemptsUsed}/{a.maxAttempts}</p>}
+                        {a.maxAttempts > 1 && <p className="text-xs text-gray-400 mt-1">Attempts: {attemptsUsed}/{a.maxAttempts}</p>}
                         {a.latePenaltyPct > 0 && <p className="text-xs text-orange-600 mt-0.5">Late penalty: {a.latePenaltyPct}%</p>}
                         {a.submission?.marks !== null && a.submission && (
-                          <p className="text-xs font-semibold text-emerald-600 mt-1">
+                          <p className="text-xs font-semibold text-emerald-600 mt-1 bg-emerald-50 inline-block px-2 py-0.5 rounded-lg">
                             Score: {a.submission.marks}/{a.totalMarks}
                             {a.submission.latePenaltyApplied ? ` (after −${a.submission.latePenaltyApplied}% late)` : ''}
                           </p>
                         )}
-                        {a.submission?.feedback && <p className="text-xs text-slate-500 italic mt-1">Feedback: "{a.submission.feedback}"</p>}
+                        {a.submission?.feedback && <p className="text-xs text-gray-500 italic mt-1">Feedback: "{a.submission.feedback}"</p>}
                         {a.submission?.attachmentUrl && (
                           <a href={a.submission.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-emerald-600 underline mt-1">📎 My submission link</a>
                         )}
@@ -202,12 +217,12 @@ export default function StudentAssignmentsPage() {
                       {(canSubmit || canResubmit) && (
                         a.type === 'QUIZ' ? (
                           <Link href={`/student/assignments/${a.id}/quiz`}
-                            className="text-xs bg-violet-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-violet-700 flex-shrink-0">
+                            className="text-xs bg-violet-600 text-white px-3 py-1.5 rounded-xl font-semibold hover:bg-violet-700 flex-shrink-0 shadow-sm">
                             {canResubmit ? 'Retake quiz' : 'Take quiz'}
                           </Link>
                         ) : (
                           <button onClick={() => { setSubmitFor(a); setSubmitError(null); reset({ content: a.submission?.content ?? '', attachmentUrl: a.submission?.attachmentUrl ?? '' }) }}
-                            className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-700 flex-shrink-0">
+                            className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-xl font-semibold hover:bg-emerald-700 flex-shrink-0 shadow-sm">
                             {canResubmit ? 'Resubmit' : 'Submit'}
                           </button>
                         )
