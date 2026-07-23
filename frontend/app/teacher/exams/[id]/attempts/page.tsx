@@ -38,20 +38,52 @@ interface Attempt {
   student: { id: string; user: { name: string } }
 }
 
-function isAutoGraded(type: string) { return type === 'MCQ' || type === 'TF' }
+function isAutoGraded(type: string) {
+  return type === 'MCQ' || type === 'TF' || type === 'SORT_PARAGRAPHS' || type === 'DRAG_WORDS'
+}
 
-// Mirrors backend/src/exam/exam.service.ts's gradeExamQuestion for MCQ/TF, so the
-// gradebook can show correctness without a round-trip.
-function gradeMcqOrTf(q: ExamQuestion, response: any): { correct: boolean; awarded: number } {
+// Mirrors backend/src/exam/exam.service.ts's parseDragWordsText, so the gradebook
+// can derive blanks+answers from the same *word*-marked-up text without a round trip.
+function parseDragWordsBlanks(text: string): { id: string; answer: string }[] {
+  const parts = (text || '').split(/(\*[^*]+\*)/g).filter((p) => p.length > 0)
+  let i = 0
+  const blanks: { id: string; answer: string }[] = []
+  for (const p of parts) {
+    if (p.startsWith('*') && p.endsWith('*') && p.length > 2) {
+      blanks.push({ id: `b${i++}`, answer: p.slice(1, -1).trim() })
+    }
+  }
+  return blanks
+}
+
+// Mirrors backend/src/exam/exam.service.ts's gradeExamQuestion for the auto-graded
+// types, so the gradebook can show the score without a round-trip.
+function gradeAutoQuestion(q: ExamQuestion, response: any): number {
   const d = q.data || {}
   if (q.type === 'MCQ') {
     const correctIds = new Set((d.choices || []).filter((c: any) => c.isCorrect).map((c: any) => c.id))
     const chosen = new Set(Array.isArray(response) ? response.map(String) : response != null ? [String(response)] : [])
     const equal = chosen.size === correctIds.size && [...chosen].every(id => correctIds.has(id))
-    return { correct: equal, awarded: equal ? q.marks : 0 }
+    return equal ? q.marks : 0
   }
-  const correct = response != null && !!response === !!d.correct
-  return { correct, awarded: correct ? q.marks : 0 }
+  if (q.type === 'TF') {
+    return response != null && !!response === !!d.correct ? q.marks : 0
+  }
+  if (q.type === 'SORT_PARAGRAPHS') {
+    const correctOrder: string[] = (d.paragraphs || []).map((p: any) => p.id)
+    const given: string[] = Array.isArray(response) ? response.map(String) : []
+    let correct = 0
+    for (let i = 0; i < correctOrder.length; i++) if (given[i] === correctOrder[i]) correct++
+    return (q.marks * correct) / (correctOrder.length || 1)
+  }
+  if (q.type === 'DRAG_WORDS') {
+    const blanks = parseDragWordsBlanks(d.text || '')
+    const given: Record<string, string> = response && typeof response === 'object' ? response : {}
+    let correct = 0
+    for (const b of blanks) if ((given[b.id] || '').trim().toLowerCase() === b.answer.trim().toLowerCase()) correct++
+    return (q.marks * correct) / (blanks.length || 1)
+  }
+  return 0
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -213,9 +245,11 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
       {exam.questions.map((q, idx) => {
         const studentAnswer = answers[q.id]
         const autoGraded = isAutoGraded(q.type)
-        const { correct, awarded } = autoGraded ? gradeMcqOrTf(q, studentAnswer) : { correct: false, awarded: 0 }
+        const awarded = autoGraded ? gradeAutoQuestion(q, studentAnswer) : 0
         const choices: { id: string; text: string; isCorrect: boolean }[] = q.data?.choices ?? []
         const chosenIds = new Set(Array.isArray(studentAnswer) ? studentAnswer.map(String) : studentAnswer != null ? [String(studentAnswer)] : [])
+        const paragraphs: { id: string; text: string }[] = q.data?.paragraphs ?? []
+        const dragBlanks = q.type === 'DRAG_WORDS' ? parseDragWordsBlanks(q.data?.text || '') : []
         return (
           <div key={q.id} className="bg-white rounded-lg border border-slate-200 p-3">
             <div className="flex items-start justify-between gap-3 mb-2">
@@ -224,8 +258,8 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                 <span className="ml-2 text-xs text-slate-400 font-normal">({q.type} · {q.marks} marks)</span>
               </p>
               {autoGraded && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${correct ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                  {correct ? `+${awarded}` : '0'} (auto)
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${awarded === q.marks ? 'bg-emerald-100 text-emerald-700' : awarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                  +{Math.round(awarded * 100) / 100} (auto)
                 </span>
               )}
             </div>
@@ -243,12 +277,42 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                 Correct answer: <span className="font-semibold text-emerald-700">{q.data?.correct ? 'True' : 'False'}</span>
               </div>
             )}
+            {q.type === 'SORT_PARAGRAPHS' && paragraphs.length > 0 && (
+              <ol className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4 list-decimal list-inside">
+                {paragraphs.map((p) => <li key={p.id} className="text-emerald-700 font-semibold">{p.text}</li>)}
+              </ol>
+            )}
+            {q.type === 'DRAG_WORDS' && dragBlanks.length > 0 && (
+              <div className="text-xs text-slate-600 mb-2 ml-4">
+                Correct words: {dragBlanks.map((b) => <span key={b.id} className="text-emerald-700 font-semibold mr-2">[{b.answer}]</span>)}
+              </div>
+            )}
             <div className="text-xs text-slate-500 mb-1">Student answer:</div>
             <div className="text-sm bg-slate-50 border border-slate-200 rounded p-2 whitespace-pre-wrap">
               {q.type === 'MCQ' ? (
                 choices.filter(c => chosenIds.has(c.id)).map(c => c.text).join(', ') || <span className="text-slate-400 italic">(no answer)</span>
               ) : q.type === 'TF' ? (
                 studentAnswer == null ? <span className="text-slate-400 italic">(no answer)</span> : (studentAnswer ? 'True' : 'False')
+              ) : q.type === 'SORT_PARAGRAPHS' ? (
+                Array.isArray(studentAnswer) && studentAnswer.length > 0 ? (
+                  <ol className="list-decimal list-inside space-y-0.5">
+                    {studentAnswer.map((id: string, i: number) => {
+                      const p = paragraphs.find(x => x.id === id)
+                      const rightSpot = paragraphs[i]?.id === id
+                      return <li key={id} className={rightSpot ? 'text-emerald-700' : 'text-red-600'}>{p?.text ?? '(unknown)'}</li>
+                    })}
+                  </ol>
+                ) : <span className="text-slate-400 italic">(no answer)</span>
+              ) : q.type === 'DRAG_WORDS' ? (
+                dragBlanks.length > 0 ? (
+                  <div className="space-y-0.5">
+                    {dragBlanks.map((b) => {
+                      const given = studentAnswer && typeof studentAnswer === 'object' ? studentAnswer[b.id] : undefined
+                      const ok = (given || '').trim().toLowerCase() === b.answer.trim().toLowerCase()
+                      return <div key={b.id}>Blank &quot;{b.answer}&quot;: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{given || '(blank)'}</span></div>
+                    })}
+                  </div>
+                ) : <span className="text-slate-400 italic">(no answer)</span>
               ) : (
                 studentAnswer || <span className="text-slate-400 italic">(no answer)</span>
               )}

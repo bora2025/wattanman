@@ -1,7 +1,30 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
-const ALLOWED_EXAM_QUESTION_TYPES = ['MCQ', 'TF'];
+const ALLOWED_EXAM_QUESTION_TYPES = ['MCQ', 'TF', 'ESSAY', 'SORT_PARAGRAPHS', 'DRAG_WORDS'];
+
+// Drag the Words uses a *word*-delimited markup as the single source of truth for
+// both the correct answers (grading) and the student-facing blanked-out segments —
+// avoids storing two things that could drift out of sync.
+function parseDragWordsText(text: string): Array<{ type: 'text'; value: string } | { type: 'blank'; id: string; answer: string }> {
+  const parts = text.split(/(\*[^*]+\*)/g).filter((p) => p.length > 0);
+  let i = 0;
+  return parts.map((p) => {
+    if (p.startsWith('*') && p.endsWith('*') && p.length > 2) {
+      return { type: 'blank' as const, id: `b${i++}`, answer: p.slice(1, -1).trim() };
+    }
+    return { type: 'text' as const, value: p };
+  });
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 function sanitizeExamQuestionInput(body: any) {
   const type = String(body.type || '').toUpperCase();
@@ -28,6 +51,27 @@ function sanitizeExamQuestionInput(body: any) {
       data = { choices: cleanedChoices, multiple: !!raw.multiple };
       break;
     }
+    case 'ESSAY': {
+      data = { minWords: Math.max(0, Number(raw.minWords) || 0) };
+      break;
+    }
+    case 'SORT_PARAGRAPHS': {
+      const paragraphs = Array.isArray(raw.paragraphs) ? raw.paragraphs : [];
+      const cleaned = paragraphs
+        .filter((p: any) => (p?.text ?? '').toString().trim())
+        .map((p: any, i: number) => ({ id: String(p.id || `p${i}`), text: String(p.text).trim() }));
+      if (cleaned.length < 2) throw new BadRequestException('Sort the Paragraphs needs at least 2 paragraphs');
+      data = { paragraphs: cleaned };
+      break;
+    }
+    case 'DRAG_WORDS': {
+      const dragText = String(raw.text || '').trim();
+      if (!dragText) throw new BadRequestException('Drag the Words needs body text');
+      const blanks = parseDragWordsText(dragText).filter((s) => s.type === 'blank');
+      if (blanks.length < 1) throw new BadRequestException('Drag the Words needs at least one *word* marked as a blank');
+      data = { text: dragText };
+      break;
+    }
     case 'TF':
     default: {
       data = { correct: !!raw.correct };
@@ -44,6 +88,19 @@ function sanitizeExamQuestionForStudent(q: { id: string; type: string; text: str
     case 'MCQ':
       safe = { choices: (d.choices || []).map((c: any) => ({ id: c.id, text: c.text })), multiple: !!d.multiple };
       break;
+    case 'ESSAY':
+      safe = { minWords: d.minWords || 0 };
+      break;
+    case 'SORT_PARAGRAPHS':
+      safe = { paragraphs: shuffle((d.paragraphs || []).map((p: any) => ({ id: p.id, text: p.text }))) };
+      break;
+    case 'DRAG_WORDS': {
+      const parsed = parseDragWordsText(d.text || '');
+      const segments = parsed.map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id } : s));
+      const wordBank = shuffle(parsed.filter((s) => s.type === 'blank').map((s: any) => s.answer));
+      safe = { segments, wordBank };
+      break;
+    }
     case 'TF':
     default:
       safe = {};
@@ -54,7 +111,8 @@ function sanitizeExamQuestionForStudent(q: { id: string; type: string; text: str
 
 function gradeExamQuestion(q: { type: string; marks: number; data: any }, response: any): { awarded: number | null; autoGraded: boolean } {
   if (response == null) {
-    return { awarded: 0, autoGraded: true }; // no manually-graded types yet in this phase
+    if (q.type === 'ESSAY') return { awarded: null, autoGraded: false };
+    return { awarded: 0, autoGraded: true };
   }
   const d = q.data || {};
   switch (q.type) {
@@ -66,6 +124,28 @@ function gradeExamQuestion(q: { type: string; marks: number; data: any }, respon
     }
     case 'TF':
       return { awarded: !!response === !!d.correct ? q.marks : 0, autoGraded: true };
+    case 'SORT_PARAGRAPHS': {
+      const correctOrder: string[] = (d.paragraphs || []).map((p: any) => p.id);
+      const given: string[] = Array.isArray(response) ? response.map(String) : [];
+      let correct = 0;
+      for (let i = 0; i < correctOrder.length; i++) {
+        if (given[i] === correctOrder[i]) correct++;
+      }
+      const total = correctOrder.length || 1;
+      return { awarded: (q.marks * correct) / total, autoGraded: true };
+    }
+    case 'DRAG_WORDS': {
+      const blanks = parseDragWordsText(d.text || '').filter((s) => s.type === 'blank') as { id: string; answer: string }[];
+      const given: Record<string, string> = response && typeof response === 'object' ? response : {};
+      let correct = 0;
+      for (const b of blanks) {
+        if ((given[b.id] || '').trim().toLowerCase() === b.answer.trim().toLowerCase()) correct++;
+      }
+      const total = blanks.length || 1;
+      return { awarded: (q.marks * correct) / total, autoGraded: true };
+    }
+    case 'ESSAY':
+      return { awarded: null, autoGraded: false };
     default:
       return { awarded: null, autoGraded: false };
   }
