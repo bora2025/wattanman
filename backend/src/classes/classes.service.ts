@@ -402,7 +402,7 @@ export class ClassesService {
     }
 
     const results: { row: number; id: string; name: string; email: string; status: string; error?: string }[] = [];
-    const usedEmails = new Set<string>();
+    const usedIds = new Set<string>();
 
     for (let i = 1; i < lines.length; i++) {
       const cols = this.parseCsvLine(lines[i]);
@@ -432,40 +432,45 @@ export class ClassesService {
         sex = 'FEMALE';
       }
 
-      // Always generate a unique email per student for CSV bulk upload
-      // This prevents duplicate email collisions when many rows share the same contact
-      const email = `student${studentId}@school.local`;
       const phone = contact && !contact.includes('@') ? contact : '';
 
-      // Track used emails to detect duplicates within the batch
-      if (usedEmails.has(email)) {
-        results.push({ row: i + 1, id: studentId, name, email, status: 'error', error: 'Duplicate student ID in CSV' });
+      // Track student IDs to detect duplicates within this batch
+      if (usedIds.has(studentId)) {
+        results.push({ row: i + 1, id: studentId, name, email: '', status: 'error', error: 'Duplicate student ID in CSV' });
         continue;
       }
-      usedEmails.add(email);
+      usedIds.add(studentId);
 
       // Use provided password or default
       const finalPassword = password || `student${studentId}`;
 
       try {
-        // Check if user with this email already exists
-        let user = await this.prisma.user.findUnique({ where: { email } });
+        // Match against an existing roster entry for THIS class + student ID only —
+        // never by a globally-derived synthetic email. Row-position-based IDs reset
+        // to 0001 on every upload with no "ID" column, so matching by email alone
+        // let a later CSV (even for a different class) silently rename and re-parent
+        // an earlier, unrelated student into itself.
+        let student = await this.prisma.student.findFirst({ where: { classId, studentNumber: studentId } });
+        let user;
 
-        if (!user) {
+        if (student) {
+          user = await this.prisma.user.update({
+            where: { id: student.userId },
+            data: { name, ...(phone ? { phone } : {}) },
+          });
+        } else {
+          // Build a synthetic email, avoiding collision with any unrelated existing account
+          let email = `student${studentId}@school.local`;
+          let suffix = 1;
+          while (await this.prisma.user.findUnique({ where: { email } })) {
+            suffix++;
+            email = `student${studentId}-${suffix}@school.local`;
+          }
           const hashedPassword = await bcrypt.hash(finalPassword, 10);
           user = await this.prisma.user.create({
             data: { email, password: hashedPassword, name, role: 'STUDENT', ...(phone ? { phone } : {}) },
           });
-        } else {
-          // Update name and phone if user exists
-          user = await this.prisma.user.update({
-            where: { id: user.id },
-            data: { name, ...(phone ? { phone } : {}) },
-          });
         }
-
-        // Check if student profile exists
-        let student = await this.prisma.student.findUnique({ where: { userId: user.id } });
 
         const studentData: any = {
           classId,
@@ -488,9 +493,9 @@ export class ClassesService {
           });
         }
 
-        results.push({ row: i + 1, id: studentId, name, email, status: 'success' });
+        results.push({ row: i + 1, id: studentId, name, email: user.email, status: 'success' });
       } catch (err: any) {
-        results.push({ row: i + 1, id: studentId, name, email, status: 'error', error: err.message || 'Unknown error' });
+        results.push({ row: i + 1, id: studentId, name, email: '', status: 'error', error: err.message || 'Unknown error' });
       }
     }
 
