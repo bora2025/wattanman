@@ -6,8 +6,16 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import AuthGuard from '../../../../../components/AuthGuard'
 import { apiFetch } from '../../../../../lib/api'
+import { type H5PType, isH5PType, H5P_TYPE_LABEL, h5pDefaultData, uid, parseDragWordsText } from '../../../../../lib/h5pQuestionLogic'
+import { EssayEditor } from '../../../../../components/questions/EssayField'
+import { SortParagraphsEditor } from '../../../../../components/questions/SortParagraphsField'
+import { DragWordsEditor } from '../../../../../components/questions/DragWordsField'
+import { DragDropEditor } from '../../../../../components/questions/DragDropField'
+import { SpeakWordsEditor } from '../../../../../components/questions/SpeakWordsField'
+import { SpeakWordsSetEditor } from '../../../../../components/questions/SpeakWordsSetField'
+import { DictationEditor } from '../../../../../components/questions/DictationField'
 
-type QType = 'MCQ' | 'TF' | 'MATCHING' | 'ESSAY' | 'NUMERICAL'
+type QType = 'MCQ' | 'TF' | 'MATCHING' | 'NUMERICAL' | H5PType
 
 interface Choice { id: string; text: string; isCorrect: boolean }
 interface MatchItem { id: string; text: string }
@@ -25,24 +33,21 @@ const TYPE_LABEL: Record<QType, string> = {
   MCQ: 'Multiple Choice',
   TF: 'True / False',
   MATCHING: 'Matching',
-  ESSAY: 'Essay',
   NUMERICAL: 'Numerical',
+  ...H5P_TYPE_LABEL,
 }
 
-function uid(prefix: string) { return `${prefix}_${Math.random().toString(36).slice(2, 8)}` }
-
 function defaultData(type: QType): any {
+  if (isH5PType(type)) return h5pDefaultData(type)
   switch (type) {
     case 'MCQ': return { choices: [{ id: uid('c'), text: '', isCorrect: false }, { id: uid('c'), text: '', isCorrect: false }], multiple: false }
-    case 'TF': return { correct: true }
     case 'MATCHING': return {
       left: [{ id: uid('l'), text: '' }, { id: uid('l'), text: '' }],
       right: [{ id: uid('r'), text: '' }, { id: uid('r'), text: '' }],
       pairs: [],
     }
     case 'NUMERICAL': return { correct: 0, tolerance: 0 }
-    case 'ESSAY':
-    default: return { minWords: 0 }
+    default: return { correct: true }
   }
 }
 
@@ -214,6 +219,24 @@ export default function TeacherQuizEditorPage() {
                       {q.type === 'MATCHING' && (
                         <p className="mt-2 text-xs text-slate-500">{(q.data?.left || []).length} × {(q.data?.right || []).length} items, {(q.data?.pairs || []).length} correct pair(s)</p>
                       )}
+                      {q.type === 'SORT_PARAGRAPHS' && (
+                        <p className="mt-2 text-xs text-slate-500">{(q.data?.paragraphs || []).length} paragraph(s) to order</p>
+                      )}
+                      {q.type === 'DRAG_WORDS' && (
+                        <p className="mt-2 text-xs text-slate-500">{parseDragWordsText(q.data?.text || '').filter(s => s.type === 'blank').length} blank(s)</p>
+                      )}
+                      {q.type === 'DRAG_DROP' && (
+                        <p className="mt-2 text-xs text-slate-500">{(q.data?.items || []).length} item(s), {(q.data?.zones || []).length} zone(s)</p>
+                      )}
+                      {q.type === 'SPEAK_WORDS' && (
+                        <p className="mt-2 text-xs text-slate-500">Prompt: {q.data?.prompt}</p>
+                      )}
+                      {q.type === 'SPEAK_WORDS_SET' && (
+                        <p className="mt-2 text-xs text-slate-500">{(q.data?.items || []).length} prompt(s)</p>
+                      )}
+                      {q.type === 'DICTATION' && (
+                        <p className="mt-2 text-xs text-slate-500">{q.data?.audioUrl ? 'Audio URL set' : 'Text-to-speech'}</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button onClick={() => openEdit(q)} className="text-xs bg-sky-50 text-sky-700 px-3 py-1.5 rounded-lg font-medium hover:bg-sky-100">Edit</button>
@@ -269,10 +292,25 @@ export default function TeacherQuizEditorPage() {
                   <MatchingEditor data={draft.data} onChange={d => setDraft({ ...draft, data: d })} />
                 )}
                 {draftType === 'ESSAY' && (
-                  <label className="text-xs text-slate-500 block">Minimum words (optional)
-                    <input type="number" min={0} value={draft.data.minWords ?? 0} onChange={e => setDraft({ ...draft, data: { minWords: Number(e.target.value) || 0 } })} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
-                    <p className="text-[11px] text-slate-400 mt-1">Essay answers must be graded manually.</p>
-                  </label>
+                  <EssayEditor data={draft.data} onChange={d => setDraft({ ...draft, data: d })} />
+                )}
+                {draftType === 'SORT_PARAGRAPHS' && (
+                  <SortParagraphsEditor data={draft.data} onChange={d => setDraft({ ...draft, data: d })} />
+                )}
+                {draftType === 'DRAG_WORDS' && (
+                  <DragWordsEditor data={draft.data} onChange={d => setDraft({ ...draft, data: d })} />
+                )}
+                {draftType === 'DRAG_DROP' && (
+                  <DragDropEditor data={draft.data} onChange={d => setDraft({ ...draft, data: d })} />
+                )}
+                {draftType === 'SPEAK_WORDS' && (
+                  <SpeakWordsEditor data={draft.data} onChange={d => setDraft({ ...draft, data: d })} />
+                )}
+                {draftType === 'SPEAK_WORDS_SET' && (
+                  <SpeakWordsSetEditor data={draft.data} onChange={d => setDraft({ ...draft, data: d })} />
+                )}
+                {draftType === 'DICTATION' && (
+                  <DictationEditor data={draft.data} onChange={d => setDraft({ ...draft, data: d })} />
                 )}
 
                 <div className="flex gap-2 justify-end pt-2">

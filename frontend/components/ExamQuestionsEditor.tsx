@@ -1,16 +1,19 @@
 "use client"
 
 import { useState } from 'react'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { type QType, type ExamQuestionDraft, TYPE_LABEL, uid, defaultData, defaultQuestion } from '../lib/examQuestionLogic'
+import { EssayEditor } from './questions/EssayField'
+import { SortParagraphsEditor } from './questions/SortParagraphsField'
+import { DragWordsEditor } from './questions/DragWordsField'
+import { DragDropEditor } from './questions/DragDropField'
+import { SpeakWordsEditor } from './questions/SpeakWordsField'
+import { SpeakWordsSetEditor } from './questions/SpeakWordsSetField'
+import { DictationEditor } from './questions/DictationField'
 import ExamPreviewModal from './ExamPreviewModal'
 
 export type { QType, ExamQuestionDraft }
 export { TYPE_LABEL, uid, defaultData, defaultQuestion }
 export interface Choice { id: string; text: string; isCorrect: boolean }
-export interface Paragraph { id: string; text: string }
 
 /** Renders the full "Questions" section: type-switching list + add/remove, for authoring an exam.
  * `durationMinutes` (the exam's own duration field) is optional and only used to simulate the
@@ -58,16 +61,25 @@ export function ExamQuestionsEditor({ questions, onChange, durationMinutes }: { 
               </div>
             )}
             {q.type === 'ESSAY' && (
-              <label className="text-xs text-slate-500 block">Minimum words (optional)
-                <input type="number" min={0} value={q.data?.minWords ?? 0} onChange={e => updateQuestion(i, { data: { minWords: Number(e.target.value) || 0 } })} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
-                <p className="text-[11px] text-slate-400 mt-1">Essay answers must be graded manually.</p>
-              </label>
+              <EssayEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
             )}
             {q.type === 'SORT_PARAGRAPHS' && (
-              <ParagraphSortEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
+              <SortParagraphsEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
             )}
             {q.type === 'DRAG_WORDS' && (
               <DragWordsEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
+            )}
+            {q.type === 'DRAG_DROP' && (
+              <DragDropEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
+            )}
+            {q.type === 'SPEAK_WORDS' && (
+              <SpeakWordsEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
+            )}
+            {q.type === 'SPEAK_WORDS_SET' && (
+              <SpeakWordsSetEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
+            )}
+            {q.type === 'DICTATION' && (
+              <DictationEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
             )}
           </div>
         ))}
@@ -111,71 +123,3 @@ function McqEditor({ data, onChange }: { data: any; onChange: (d: any) => void }
   )
 }
 
-function SortableRow({ id, children }: { id: string; children: (opts: { listeners: any; attributes: any }) => React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }
-  return <div ref={setNodeRef} style={style}>{children({ listeners, attributes })}</div>
-}
-
-function ParagraphSortEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
-  const paragraphs: Paragraph[] = data?.paragraphs ?? []
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
-
-  function updateText(i: number, text: string) {
-    onChange({ ...data, paragraphs: paragraphs.map((p, idx) => idx === i ? { ...p, text } : p) })
-  }
-  function addParagraph() { onChange({ ...data, paragraphs: [...paragraphs, { id: uid('p'), text: '' }] }) }
-  function removeParagraph(i: number) { onChange({ ...data, paragraphs: paragraphs.filter((_, idx) => idx !== i) }) }
-  function handleDragEnd(e: DragEndEvent) {
-    const { active, over } = e
-    if (!over || active.id === over.id) return
-    const oldIndex = paragraphs.findIndex(p => p.id === active.id)
-    const newIndex = paragraphs.findIndex(p => p.id === over.id)
-    onChange({ ...data, paragraphs: arrayMove(paragraphs, oldIndex, newIndex) })
-  }
-
-  return (
-    <div className="space-y-2">
-      <p className="text-xs text-slate-500">Enter paragraphs in the correct order — students see them shuffled and must drag to reorder.</p>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={paragraphs.map(p => p.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-1.5">
-            {paragraphs.map((p, i) => (
-              <SortableRow key={p.id} id={p.id}>
-                {({ listeners, attributes }) => (
-                  <div className="flex items-start gap-2 bg-white border rounded-lg p-2">
-                    <span {...listeners} {...attributes} className="text-slate-400 cursor-grab active:cursor-grabbing pt-1.5 select-none touch-none" title="Drag to reorder">⠿</span>
-                    <span className="text-xs text-slate-400 pt-1.5">{i + 1}.</span>
-                    <textarea value={p.text} onChange={e => updateText(i, e.target.value)} rows={1} placeholder={`Paragraph ${i + 1}`} className="flex-1 border rounded px-2 py-1 text-sm resize-none" />
-                    <button type="button" onClick={() => removeParagraph(i)} disabled={paragraphs.length <= 2} className="text-xs text-red-500 disabled:opacity-30 pt-1.5">✕</button>
-                  </div>
-                )}
-              </SortableRow>
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-      <button type="button" onClick={addParagraph} className="text-xs text-sky-600 hover:underline">+ Add paragraph</button>
-    </div>
-  )
-}
-
-function DragWordsEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
-  const text: string = data?.text ?? ''
-  const preview = text.split(/(\*[^*]+\*)/g).filter((s: string) => s.length > 0)
-  return (
-    <div className="space-y-2">
-      <p className="text-xs text-slate-500">Wrap each draggable word in *asterisks*, e.g. &quot;The *cat* sat on the *mat*.&quot;</p>
-      <textarea value={text} onChange={e => onChange({ text: e.target.value })} rows={3} placeholder="The *cat* sat on the *mat*." className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
-      {text && (
-        <div className="text-sm bg-white border rounded-lg p-2 leading-relaxed">
-          {preview.map((seg, i) => (
-            seg.startsWith('*') && seg.endsWith('*') && seg.length > 2
-              ? <span key={i} className="inline-block bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded mx-0.5 font-medium">{seg.slice(1, -1)}</span>
-              : <span key={i}>{seg}</span>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}

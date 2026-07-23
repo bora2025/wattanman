@@ -6,9 +6,17 @@ import { useParams, useRouter } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import AuthGuard from '../../../../../../../components/AuthGuard'
 import { apiFetch } from '../../../../../../../lib/api'
+import { type H5PType, isH5PType, sanitizeH5PForPreview } from '../../../../../../../lib/h5pQuestionLogic'
+import { EssayInput } from '../../../../../../../components/questions/EssayField'
+import { SortParagraphsInput } from '../../../../../../../components/questions/SortParagraphsField'
+import { DragWordsInput } from '../../../../../../../components/questions/DragWordsField'
+import { DragDropInput } from '../../../../../../../components/questions/DragDropField'
+import { SpeakWordsInput } from '../../../../../../../components/questions/SpeakWordsField'
+import { SpeakWordsSetInput } from '../../../../../../../components/questions/SpeakWordsSetField'
+import { DictationInput } from '../../../../../../../components/questions/DictationField'
 
 type PageType = 'CONTENT' | 'QUESTION' | 'BRANCH'
-type AttemptStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED'
+type AttemptStatus = 'IN_PROGRESS' | 'COMPLETED' | 'AWAITING_GRADE' | 'ABANDONED'
 
 interface LessonPage {
   id: string
@@ -35,7 +43,7 @@ interface Attempt {
 
 interface SubmitResult {
   correct: boolean | null
-  pointsAwarded: number
+  pointsAwarded: number | null
   nextPageId: string | null
   done: boolean
 }
@@ -631,16 +639,30 @@ function QuestionView({
     | 'TRUE_FALSE'
     | 'SHORT_ANSWER'
     | 'NUMERIC'
+    | H5PType
 
   const [choiceId, setChoiceId] = useState<string | null>(null)
   const [choiceIds, setChoiceIds] = useState<string[]>([])
   const [bool, setBool] = useState<boolean | null>(null)
   const [text, setText] = useState('')
   const [num, setNum] = useState('')
+  const [h5pValue, setH5pValue] = useState<any>(null)
+
+  // Courses doesn't sanitize page.content server-side (pre-existing convention —
+  // same as its other question types), but the drag/sort/drag-drop shared Input
+  // components expect the same shuffled/blanked-out shape sanitizeH5PForPreview
+  // produces for the exam preview modal. Memoized per page so the shuffle order
+  // stays stable across re-renders while the student is answering.
+  const safeH5PData = useMemo(
+    () => (isH5PType(qt) ? sanitizeH5PForPreview(qt, c.data) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [page.id, qt],
+  )
 
   const disabled = submitting || !!lastResult
 
   function buildAnswer(): any {
+    if (isH5PType(qt)) return { h5pResponse: h5pValue }
     switch (qt) {
       case 'MCQ_SINGLE':
         return { choiceId }
@@ -658,6 +680,10 @@ function QuestionView({
   }
 
   const ready = (() => {
+    if (qt === 'ESSAY' || qt === 'SPEAK_WORDS' || qt === 'DICTATION') {
+      return String(h5pValue || '').trim().length > 0
+    }
+    if (isH5PType(qt)) return true // SORT_PARAGRAPHS / DRAG_WORDS / DRAG_DROP / SPEAK_WORDS_SET support partial credit
     switch (qt) {
       case 'MCQ_SINGLE':
         return !!choiceId
@@ -762,6 +788,28 @@ function QuestionView({
         />
       )}
 
+      {qt === 'ESSAY' && (
+        <EssayInput data={c.data} value={h5pValue} onChange={setH5pValue} disabled={disabled} />
+      )}
+      {qt === 'SORT_PARAGRAPHS' && (
+        <SortParagraphsInput data={safeH5PData} value={h5pValue} onChange={setH5pValue} disabled={disabled} />
+      )}
+      {qt === 'DRAG_WORDS' && (
+        <DragWordsInput data={safeH5PData} value={h5pValue} onChange={setH5pValue} disabled={disabled} />
+      )}
+      {qt === 'DRAG_DROP' && (
+        <DragDropInput data={safeH5PData} value={h5pValue} onChange={setH5pValue} disabled={disabled} />
+      )}
+      {qt === 'SPEAK_WORDS' && (
+        <SpeakWordsInput data={c.data} value={h5pValue} onChange={setH5pValue} disabled={disabled} />
+      )}
+      {qt === 'SPEAK_WORDS_SET' && (
+        <SpeakWordsSetInput data={c.data} value={h5pValue} onChange={setH5pValue} disabled={disabled} />
+      )}
+      {qt === 'DICTATION' && (
+        <DictationInput data={c.data} value={h5pValue} onChange={setH5pValue} disabled={disabled} revealFeedback={disabled} />
+      )}
+
       {!lastResult && (
         <button
           onClick={() => onSubmit(buildAnswer())}
@@ -819,7 +867,16 @@ function Feedback({
   result: SubmitResult
   explanation?: string
 }) {
-  if (result.correct === null) return null
+  if (result.correct === null) {
+    if (result.pointsAwarded === null) {
+      return (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <div className="font-semibold">Submitted — graded manually by your teacher</div>
+        </div>
+      )
+    }
+    return null
+  }
   return (
     <div
       className={`rounded-md border p-3 text-sm ${
@@ -851,11 +908,19 @@ function ResultScreen({
     attempt.maxScore > 0
       ? Math.round((attempt.score / attempt.maxScore) * 100)
       : 0
-  const ungraded = lesson?.gradingMode === 'UNGRADED' || attempt.passed === null
+  const awaitingGrade = attempt.status === 'AWAITING_GRADE'
+  const ungraded = !awaitingGrade && (lesson?.gradingMode === 'UNGRADED' || attempt.passed === null)
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-4 text-center">
-      <h2 className="text-2xl font-bold text-slate-800">Lesson complete</h2>
-      {!ungraded && (
+      <h2 className="text-2xl font-bold text-slate-800">
+        {awaitingGrade ? 'Submitted' : 'Lesson complete'}
+      </h2>
+      {awaitingGrade && (
+        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+          One or more of your answers need to be graded by your teacher before this lesson counts as complete.
+        </div>
+      )}
+      {!awaitingGrade && !ungraded && (
         <>
           <div className="text-4xl font-extrabold text-slate-900">
             {attempt.score} / {attempt.maxScore}

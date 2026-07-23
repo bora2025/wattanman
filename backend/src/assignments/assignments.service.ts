@@ -1,9 +1,10 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { H5P_TYPES, isH5PType, sanitizeH5PInput, sanitizeH5PForStudent, gradeH5PQuestion } from '../h5p/h5p-questions';
 
 const ALLOWED_TYPES = ['HOMEWORK', 'QUIZ', 'PROJECT', 'LAB', 'ESSAY'];
 const ALLOWED_STATUS = ['DRAFT', 'PUBLISHED', 'CLOSED'];
-const ALLOWED_QUESTION_TYPES = ['MCQ', 'TF', 'MATCHING', 'ESSAY', 'NUMERICAL'];
+const ALLOWED_QUESTION_TYPES = ['MCQ', 'TF', 'MATCHING', 'NUMERICAL', ...H5P_TYPES];
 
 function sanitizeQuestionInput(body: any) {
   const type = String(body.type || '').toUpperCase();
@@ -15,50 +16,49 @@ function sanitizeQuestionInput(body: any) {
   const points = Math.max(0, Number(body.points) || 1);
   const raw = body.data ?? {};
   let data: any;
-  switch (type) {
-    case 'MCQ': {
-      const choices = Array.isArray(raw.choices) ? raw.choices : [];
-      const cleanedChoices = choices
-        .filter((c: any) => c && (c.text ?? '').toString().trim())
-        .map((c: any, i: number) => ({
-          id: String(c.id || `c${i}`),
-          text: String(c.text).trim(),
-          isCorrect: !!c.isCorrect,
-        }));
-      if (cleanedChoices.length < 2) throw new BadRequestException('MCQ needs at least 2 choices');
-      if (!cleanedChoices.some(c => c.isCorrect)) throw new BadRequestException('MCQ needs at least 1 correct choice');
-      data = { choices: cleanedChoices, multiple: !!raw.multiple };
-      break;
+  if (isH5PType(type)) {
+    data = sanitizeH5PInput(type, raw);
+  } else {
+    switch (type) {
+      case 'MCQ': {
+        const choices = Array.isArray(raw.choices) ? raw.choices : [];
+        const cleanedChoices = choices
+          .filter((c: any) => c && (c.text ?? '').toString().trim())
+          .map((c: any, i: number) => ({
+            id: String(c.id || `c${i}`),
+            text: String(c.text).trim(),
+            isCorrect: !!c.isCorrect,
+          }));
+        if (cleanedChoices.length < 2) throw new BadRequestException('MCQ needs at least 2 choices');
+        if (!cleanedChoices.some(c => c.isCorrect)) throw new BadRequestException('MCQ needs at least 1 correct choice');
+        data = { choices: cleanedChoices, multiple: !!raw.multiple };
+        break;
+      }
+      case 'MATCHING': {
+        const left = Array.isArray(raw.left) ? raw.left : [];
+        const right = Array.isArray(raw.right) ? raw.right : [];
+        const cleanedLeft = left.filter((x: any) => (x?.text ?? '').toString().trim()).map((x: any, i: number) => ({ id: String(x.id || `l${i}`), text: String(x.text).trim() }));
+        const cleanedRight = right.filter((x: any) => (x?.text ?? '').toString().trim()).map((x: any, i: number) => ({ id: String(x.id || `r${i}`), text: String(x.text).trim() }));
+        if (cleanedLeft.length < 2 || cleanedRight.length < 2) throw new BadRequestException('Matching needs at least 2 items on each side');
+        const pairs = Array.isArray(raw.pairs) ? raw.pairs : [];
+        const cleanedPairs = pairs
+          .filter((p: any) => p && cleanedLeft.some(l => l.id === p.leftId) && cleanedRight.some(r => r.id === p.rightId))
+          .map((p: any) => ({ leftId: String(p.leftId), rightId: String(p.rightId) }));
+        if (!cleanedPairs.length) throw new BadRequestException('Matching needs at least one correct pair');
+        data = { left: cleanedLeft, right: cleanedRight, pairs: cleanedPairs };
+        break;
+      }
+      case 'NUMERICAL': {
+        const correct = Number(raw.correct);
+        if (isNaN(correct)) throw new BadRequestException('Numerical question needs a numeric correct answer');
+        const tolerance = Math.max(0, Number(raw.tolerance) || 0);
+        data = { correct, tolerance };
+        break;
+      }
+      default:
+        data = { correct: !!raw.correct };
+        break;
     }
-    case 'TF': {
-      data = { correct: !!raw.correct };
-      break;
-    }
-    case 'MATCHING': {
-      const left = Array.isArray(raw.left) ? raw.left : [];
-      const right = Array.isArray(raw.right) ? raw.right : [];
-      const cleanedLeft = left.filter((x: any) => (x?.text ?? '').toString().trim()).map((x: any, i: number) => ({ id: String(x.id || `l${i}`), text: String(x.text).trim() }));
-      const cleanedRight = right.filter((x: any) => (x?.text ?? '').toString().trim()).map((x: any, i: number) => ({ id: String(x.id || `r${i}`), text: String(x.text).trim() }));
-      if (cleanedLeft.length < 2 || cleanedRight.length < 2) throw new BadRequestException('Matching needs at least 2 items on each side');
-      const pairs = Array.isArray(raw.pairs) ? raw.pairs : [];
-      const cleanedPairs = pairs
-        .filter((p: any) => p && cleanedLeft.some(l => l.id === p.leftId) && cleanedRight.some(r => r.id === p.rightId))
-        .map((p: any) => ({ leftId: String(p.leftId), rightId: String(p.rightId) }));
-      if (!cleanedPairs.length) throw new BadRequestException('Matching needs at least one correct pair');
-      data = { left: cleanedLeft, right: cleanedRight, pairs: cleanedPairs };
-      break;
-    }
-    case 'NUMERICAL': {
-      const correct = Number(raw.correct);
-      if (isNaN(correct)) throw new BadRequestException('Numerical question needs a numeric correct answer');
-      const tolerance = Math.max(0, Number(raw.tolerance) || 0);
-      data = { correct, tolerance };
-      break;
-    }
-    case 'ESSAY':
-    default:
-      data = { minWords: Math.max(0, Number(raw.minWords) || 0) };
-      break;
   }
   return { type, prompt, points, data };
 }
@@ -66,26 +66,25 @@ function sanitizeQuestionInput(body: any) {
 function sanitizeQuestionForStudent(q: { id: string; type: string; prompt: string; points: number; order: number; data: any }) {
   const d = q.data || {};
   let safe: any;
-  switch (q.type) {
-    case 'MCQ':
-      safe = {
-        choices: (d.choices || []).map((c: any) => ({ id: c.id, text: c.text })),
-        multiple: !!d.multiple,
-      };
-      break;
-    case 'TF':
-      safe = {};
-      break;
-    case 'MATCHING':
-      safe = { left: d.left || [], right: d.right || [] };
-      break;
-    case 'NUMERICAL':
-      safe = {};
-      break;
-    case 'ESSAY':
-    default:
-      safe = { minWords: d.minWords || 0 };
-      break;
+  if (isH5PType(q.type)) {
+    safe = sanitizeH5PForStudent(q.type, d);
+  } else {
+    switch (q.type) {
+      case 'MCQ':
+        safe = {
+          choices: (d.choices || []).map((c: any) => ({ id: c.id, text: c.text })),
+          multiple: !!d.multiple,
+        };
+        break;
+      case 'MATCHING':
+        safe = { left: d.left || [], right: d.right || [] };
+        break;
+      case 'NUMERICAL':
+      case 'TF':
+      default:
+        safe = {};
+        break;
+    }
   }
   return { id: q.id, type: q.type, prompt: q.prompt, points: q.points, order: q.order, data: safe };
 }
@@ -96,6 +95,10 @@ function gradeQuestion(q: { type: string; points: number; data: any }, response:
     return { pointsAwarded: 0, autoGraded: true };
   }
   const d = q.data || {};
+  if (isH5PType(q.type)) {
+    const { awarded, autoGraded } = gradeH5PQuestion(q.type, d, response, q.points);
+    return { pointsAwarded: awarded, autoGraded };
+  }
   switch (q.type) {
     case 'MCQ': {
       const correctIds = new Set((d.choices || []).filter((c: any) => c.isCorrect).map((c: any) => c.id));
@@ -121,7 +124,6 @@ function gradeQuestion(q: { type: string; points: number; data: any }, response:
       const ok = Math.abs(num - Number(d.correct)) <= Number(d.tolerance || 0);
       return { pointsAwarded: ok ? q.points : 0, autoGraded: true };
     }
-    case 'ESSAY':
     default:
       return { pointsAwarded: null, autoGraded: false };
   }
@@ -525,6 +527,24 @@ export class AssignmentsService {
             break;
           case 'MATCHING':
             correct = { pairs: d.pairs || [] };
+            break;
+          case 'SORT_PARAGRAPHS':
+            correct = { paragraphs: d.paragraphs || [] };
+            break;
+          case 'DRAG_WORDS':
+            correct = { text: d.text || '' };
+            break;
+          case 'DRAG_DROP':
+            correct = { items: d.items || [] };
+            break;
+          case 'SPEAK_WORDS':
+            correct = { acceptedAnswers: d.acceptedAnswers || [] };
+            break;
+          case 'SPEAK_WORDS_SET':
+            correct = { items: d.items || [] };
+            break;
+          case 'DICTATION':
+            correct = { script: d.script || '' };
             break;
           default:
             correct = null;

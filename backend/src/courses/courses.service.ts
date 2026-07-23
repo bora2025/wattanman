@@ -782,7 +782,7 @@ export class CoursesService {
     }
 
     let correct: boolean | null = null;
-    let pointsAwarded = 0;
+    let pointsAwarded: number | null = 0;
     if (page.pageType === 'QUESTION') {
       const grading = gradeQuestion(page.content as QuestionPagePayload, answer);
       correct = grading.correct;
@@ -819,7 +819,7 @@ export class CoursesService {
       },
     });
 
-    const scoreDelta = pointsAwarded - (prior?.pointsAwarded ?? 0);
+    const scoreDelta = (pointsAwarded ?? 0) - (prior?.pointsAwarded ?? 0);
     await this.prisma.lessonAttempt.update({
       where: { id: attemptId },
       data: {
@@ -881,6 +881,20 @@ export class CoursesService {
       }
     }
 
+    // Essay (and any future manually-graded H5P type) leaves its PageResponse
+    // with pointsAwarded: null until a teacher grades it — hold the attempt
+    // open rather than finalizing pass/fail on an incomplete score.
+    const pendingCount = await this.prisma.pageResponse.count({
+      where: { attemptId, pointsAwarded: null },
+    });
+
+    if (pendingCount > 0) {
+      return this.prisma.lessonAttempt.update({
+        where: { id: attemptId },
+        data: { status: 'AWAITING_GRADE', completedAt: new Date() },
+      });
+    }
+
     const passing = attempt.lesson.passingScore;
     const passed =
       attempt.lesson.gradingMode === 'UNGRADED'
@@ -906,6 +920,108 @@ export class CoursesService {
     );
 
     return finished;
+  }
+
+  // ── Manual grading (Essay / H5P questions pending review) ────────────
+
+  /** Teacher/Admin: list attempts awaiting manual grading for a lesson, with
+   * only the still-pending responses included (already-graded ones omitted). */
+  async listPendingGrading(lessonId: string, userId: string, role: string) {
+    const lesson = await this.prisma.courseLesson.findUnique({
+      where: { id: lessonId },
+      select: { courseId: true },
+    });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    await this.assertCanManageCourse(lesson.courseId, userId, role);
+
+    const attempts = await this.prisma.lessonAttempt.findMany({
+      where: { lessonId, status: 'AWAITING_GRADE' },
+      include: {
+        responses: {
+          where: { pointsAwarded: null },
+          include: { page: { select: { id: true, title: true, content: true } } },
+        },
+      },
+      orderBy: { completedAt: 'desc' },
+    });
+    // LessonAttempt has no `student` relation (only a scalar studentId) — join manually.
+    const studentIds = [...new Set(attempts.map((a) => a.studentId))];
+    const students = await this.prisma.student.findMany({
+      where: { id: { in: studentIds } },
+      include: { user: { select: { name: true } } },
+    });
+    const studentById = new Map(students.map((s) => [s.id, s]));
+    return attempts.map((a) => ({ ...a, student: studentById.get(a.studentId) ?? null }));
+  }
+
+  /** Teacher/Admin: grade a single pending PageResponse (Essay). Recomputes the
+   * attempt's total score, and finalizes it (COMPLETED + pass/fail) once no
+   * pending responses remain. */
+  async gradePageResponse(
+    responseId: string,
+    pointsAwarded: number,
+    userId: string,
+    role: string,
+  ) {
+    const resp = await this.prisma.pageResponse.findUnique({
+      where: { id: responseId },
+      include: {
+        page: { select: { content: true } },
+        attempt: {
+          include: {
+            lesson: {
+              select: { courseId: true, passingScore: true, gradingMode: true },
+            },
+          },
+        },
+      },
+    });
+    if (!resp) throw new NotFoundException('Response not found');
+    await this.assertCanManageCourse(resp.attempt.lesson.courseId, userId, role);
+
+    const content = resp.page.content as unknown as QuestionPagePayload;
+    const maxPoints = Math.max(0, Number(content.points) || 1);
+    const clamped = Math.max(0, Math.min(maxPoints, Number(pointsAwarded) || 0));
+
+    await this.prisma.pageResponse.update({
+      where: { id: responseId },
+      data: { pointsAwarded: clamped },
+    });
+
+    const allResponses = await this.prisma.pageResponse.findMany({
+      where: { attemptId: resp.attemptId },
+    });
+    const anyPending = allResponses.some((r) => r.pointsAwarded == null);
+    const total = allResponses.reduce((sum, r) => sum + (r.pointsAwarded ?? 0), 0);
+
+    let passed = resp.attempt.passed;
+    let status = resp.attempt.status;
+    if (!anyPending) {
+      const passing = resp.attempt.lesson.passingScore;
+      passed =
+        resp.attempt.lesson.gradingMode === 'UNGRADED'
+          ? null
+          : passing != null
+            ? total >= passing
+            : resp.attempt.maxScore === 0
+              ? true
+              : total >= resp.attempt.maxScore / 2;
+      status = 'COMPLETED';
+    }
+
+    const updatedAttempt = await this.prisma.lessonAttempt.update({
+      where: { id: resp.attemptId },
+      data: { score: total, passed, status },
+    });
+
+    if (!anyPending) {
+      await this.recomputeEnrollmentProgress(
+        resp.attempt.lesson.courseId,
+        resp.attempt.studentId,
+      );
+    }
+
+    return updatedAttempt;
   }
 
   /** Recompute progressPct = completed lessons / published lessons * 100. */

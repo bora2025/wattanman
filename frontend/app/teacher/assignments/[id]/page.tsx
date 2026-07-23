@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
 import { apiFetch } from '../../../../lib/api'
+import { H5P_TYPE_LABEL, parseDragWordsText, diffWords } from '../../../../lib/h5pQuestionLogic'
 interface Submission {
   id: string
   content: string | null
@@ -161,7 +162,8 @@ export default function TeacherGradingPage() {
 }
 
 const Q_TYPE_LABEL: Record<string, string> = {
-  MCQ: 'Multiple Choice', TF: 'True/False', MATCHING: 'Matching', ESSAY: 'Essay', NUMERICAL: 'Numerical',
+  MCQ: 'Multiple Choice', TF: 'True/False', MATCHING: 'Matching', NUMERICAL: 'Numerical',
+  ...H5P_TYPE_LABEL,
 }
 
 function PerQuestionGrader({ submissionId, totalMarks, onGraded }: { submissionId: string; totalMarks: number; onGraded: () => void }) {
@@ -248,10 +250,70 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
       return <ul className="text-xs space-y-0.5">{pairs.map((p: any, i: number) => <li key={i}>{leftMap[p.leftId] ?? '?'} → {rightMap[p.rightId] ?? '(none)'}</li>)}</ul>
     }
     if (question.type === 'ESSAY') return <div className="text-xs bg-slate-50 rounded p-2 whitespace-pre-wrap max-h-40 overflow-auto">{String(r)}</div>
+    if (question.type === 'SORT_PARAGRAPHS') {
+      const correctOrder: string[] = (question.data?.paragraphs ?? []).map((p: any) => p.id)
+      const byId = Object.fromEntries((question.data?.paragraphs ?? []).map((p: any) => [p.id, p.text]))
+      const given: string[] = Array.isArray(r) ? r : []
+      return (
+        <ol className="text-xs space-y-0.5 list-decimal list-inside">
+          {given.map((id, i) => {
+            const rightSpot = correctOrder[i] === id
+            return <li key={id} className={rightSpot ? 'text-emerald-700' : 'text-red-600'}>{byId[id] ?? '(unknown)'}</li>
+          })}
+        </ol>
+      )
+    }
+    if (question.type === 'DRAG_WORDS') {
+      const blanks = parseDragWordsText(question.data?.text || '').filter((s): s is { type: 'blank'; id: string; answer: string } => s.type === 'blank')
+      const given: Record<string, string> = r && typeof r === 'object' ? r : {}
+      return (
+        <div className="text-xs space-y-0.5">
+          {blanks.map(b => {
+            const val = given[b.id]
+            const ok = (val || '').trim().toLowerCase() === b.answer.trim().toLowerCase()
+            return <div key={b.id}>Blank &quot;{b.answer}&quot;: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{val || '(blank)'}</span></div>
+          })}
+        </div>
+      )
+    }
+    if (question.type === 'DRAG_DROP') {
+      const items: Array<{ id: string; label: string; correctZoneId: string }> = question.data?.items ?? []
+      const zones: Array<{ id: string }> = question.data?.zones ?? []
+      const given: Record<string, string> = r && typeof r === 'object' ? r : {}
+      return (
+        <div className="text-xs space-y-0.5">
+          {items.map(it => {
+            const zoneId = given[it.id]
+            const ok = zoneId === it.correctZoneId
+            const zoneIdx = zones.findIndex(z => z.id === zoneId)
+            return <div key={it.id}>{it.label}: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{zoneId ? `Zone ${zoneIdx + 1}` : '(not placed)'}</span></div>
+          })}
+        </div>
+      )
+    }
+    if (question.type === 'SPEAK_WORDS') return <span>{String(r)}</span>
+    if (question.type === 'SPEAK_WORDS_SET') {
+      const items: Array<{ id: string; prompt: string }> = question.data?.items ?? []
+      const given: Record<string, string> = r && typeof r === 'object' ? r : {}
+      return (
+        <div className="text-xs space-y-0.5">
+          {items.map(it => <div key={it.id}>{it.prompt}: <span className="text-slate-700">{given[it.id] || '(no answer)'}</span></div>)}
+        </div>
+      )
+    }
+    if (question.type === 'DICTATION') {
+      return (
+        <div className="text-xs space-y-0.5">
+          {diffWords(question.data?.script || '', String(r)).map((d, i) => (
+            <span key={i} className={`mr-1 ${d.match ? 'text-emerald-700' : 'text-red-600 line-through'}`}>{d.word}</span>
+          ))}
+        </div>
+      )
+    }
     return <span>{JSON.stringify(r)}</span>
   }
 
-  const isEssay = question.type === 'ESSAY'
+  const needsManualGrading = !answer?.autoGraded
   return (
     <div className="border border-slate-200 rounded-lg p-3">
       <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -269,7 +331,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
           value={pts}
           onChange={e => setPts(e.target.value)}
           placeholder={`/ ${question.points}`}
-          className={`w-20 border rounded-lg px-2 py-1 text-xs ${isEssay ? 'border-amber-300' : ''}`}
+          className={`w-20 border rounded-lg px-2 py-1 text-xs ${needsManualGrading ? 'border-amber-300' : ''}`}
         />
         <span className="text-xs text-slate-400">/ {question.points}</span>
         <input

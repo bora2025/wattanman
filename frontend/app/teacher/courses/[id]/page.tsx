@@ -6,6 +6,14 @@ import { useParams } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import AuthGuard from '../../../../components/AuthGuard'
 import { apiFetch } from '../../../../lib/api'
+import { type H5PType, isH5PType, H5P_TYPE_LABEL, h5pDefaultData } from '../../../../lib/h5pQuestionLogic'
+import { EssayEditor } from '../../../../components/questions/EssayField'
+import { SortParagraphsEditor } from '../../../../components/questions/SortParagraphsField'
+import { DragWordsEditor } from '../../../../components/questions/DragWordsField'
+import { DragDropEditor } from '../../../../components/questions/DragDropField'
+import { SpeakWordsEditor } from '../../../../components/questions/SpeakWordsField'
+import { SpeakWordsSetEditor } from '../../../../components/questions/SpeakWordsSetField'
+import { DictationEditor } from '../../../../components/questions/DictationField'
 
 type LessonStatus = 'DRAFT' | 'PUBLISHED'
 type GradingMode = 'GRADED' | 'PRACTICE' | 'UNGRADED'
@@ -16,6 +24,7 @@ type QuestionType =
   | 'TRUE_FALSE'
   | 'SHORT_ANSWER'
   | 'NUMERIC'
+  | H5PType
 
 interface Lesson {
   id: string
@@ -628,6 +637,12 @@ function LessonEditor({
             Pages
           </h3>
           <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/teacher/courses/${lesson.courseId}/lessons/${lesson.id}/grading`}
+              className="rounded-md bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-200"
+            >
+              📝 Grade pending
+            </Link>
             <button
               onClick={() => addPage('CONTENT')}
               className="rounded-md bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
@@ -776,9 +791,9 @@ function normalizeContent(page: LessonPage): any {
   }
   if (page.pageType === 'QUESTION') {
     const qt = String(c.questionType || 'MCQ_SINGLE').toUpperCase()
-    const allowed = ['MCQ_SINGLE', 'MCQ_MULTI', 'TRUE_FALSE', 'SHORT_ANSWER', 'NUMERIC']
+    const allowed = ['MCQ_SINGLE', 'MCQ_MULTI', 'TRUE_FALSE', 'SHORT_ANSWER', 'NUMERIC', 'ESSAY', 'SORT_PARAGRAPHS', 'DRAG_WORDS', 'DRAG_DROP', 'SPEAK_WORDS', 'SPEAK_WORDS_SET', 'DICTATION']
     const questionType = allowed.includes(qt) ? qt : 'MCQ_SINGLE'
-    return {
+    const base = {
       questionType,
       prompt: typeof c.prompt === 'string' ? c.prompt : '',
       explanation: c.explanation ?? '',
@@ -804,6 +819,10 @@ function normalizeContent(page: LessonPage): any {
       correctValue: Number.isFinite(Number(c.correctValue)) ? Number(c.correctValue) : 0,
       tolerance: Number.isFinite(Number(c.tolerance)) ? Number(c.tolerance) : 0,
     }
+    if (isH5PType(questionType)) {
+      return { ...base, data: c.data && typeof c.data === 'object' ? c.data : h5pDefaultData(questionType) }
+    }
+    return base
   }
   // BRANCH
   return {
@@ -918,7 +937,14 @@ function QuestionEditor({
           </label>
           <select
             value={qt}
-            onChange={(e) => onChange({ ...value, questionType: e.target.value })}
+            onChange={(e) => {
+              const nextType = e.target.value as QuestionType
+              onChange(
+                isH5PType(nextType)
+                  ? { ...value, questionType: nextType, data: h5pDefaultData(nextType) }
+                  : { ...value, questionType: nextType },
+              )
+            }}
             className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           >
             <option value="MCQ_SINGLE">Multiple choice (single)</option>
@@ -926,6 +952,9 @@ function QuestionEditor({
             <option value="TRUE_FALSE">True / False</option>
             <option value="SHORT_ANSWER">Short answer</option>
             <option value="NUMERIC">Numeric</option>
+            {(Object.keys(H5P_TYPE_LABEL) as H5PType[]).map((t) => (
+              <option key={t} value={t}>{H5P_TYPE_LABEL[t]}</option>
+            ))}
           </select>
         </div>
         <div>
@@ -1095,6 +1124,28 @@ function QuestionEditor({
             />
           </div>
         </div>
+      )}
+
+      {qt === 'ESSAY' && (
+        <EssayEditor data={value.data} onChange={(d) => onChange({ ...value, data: d })} />
+      )}
+      {qt === 'SORT_PARAGRAPHS' && (
+        <SortParagraphsEditor data={value.data} onChange={(d) => onChange({ ...value, data: d })} />
+      )}
+      {qt === 'DRAG_WORDS' && (
+        <DragWordsEditor data={value.data} onChange={(d) => onChange({ ...value, data: d })} />
+      )}
+      {qt === 'DRAG_DROP' && (
+        <DragDropEditor data={value.data} onChange={(d) => onChange({ ...value, data: d })} />
+      )}
+      {qt === 'SPEAK_WORDS' && (
+        <SpeakWordsEditor data={value.data} onChange={(d) => onChange({ ...value, data: d })} />
+      )}
+      {qt === 'SPEAK_WORDS_SET' && (
+        <SpeakWordsSetEditor data={value.data} onChange={(d) => onChange({ ...value, data: d })} />
+      )}
+      {qt === 'DICTATION' && (
+        <DictationEditor data={value.data} onChange={(d) => onChange({ ...value, data: d })} />
       )}
 
       <div>

@@ -208,6 +208,28 @@ export class CoursesController {
     return this.svc.finishLessonAttempt(attemptId, req.user.userId);
   }
 
+  // ── Manual grading (Essay / H5P questions pending review) ───────────
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER')
+  @Get('lessons/:lessonId/pending-grading')
+  pendingGrading(@Param('lessonId') lessonId: string, @Request() req: any) {
+    return this.svc.listPendingGrading(lessonId, req.user.userId, req.user.role);
+  }
+
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER')
+  @Patch('responses/:responseId/grade')
+  gradeResponse(
+    @Param('responseId') responseId: string,
+    @Body() body: { pointsAwarded: number },
+    @Request() req: any,
+  ) {
+    return this.svc.gradePageResponse(
+      responseId,
+      body?.pointsAwarded,
+      req.user.userId,
+      req.user.role,
+    );
+  }
+
   // ── Course attendance: sessions ─────────────────────────────────────
   @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER', 'STUDENT')
   @Get(':id/sessions')

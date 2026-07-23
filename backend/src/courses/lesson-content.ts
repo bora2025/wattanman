@@ -7,6 +7,7 @@
  */
 
 import { BadRequestException } from '@nestjs/common';
+import { H5P_TYPES, type H5PType, isH5PType, sanitizeH5PInput, gradeH5PQuestion } from '../h5p/h5p-questions';
 
 // ─── Page-type shapes ─────────────────────────────────────────────────
 export type QuestionType =
@@ -14,7 +15,8 @@ export type QuestionType =
   | 'MCQ_MULTI'
   | 'TRUE_FALSE'
   | 'SHORT_ANSWER'
-  | 'NUMERIC';
+  | 'NUMERIC'
+  | H5PType;
 
 export interface ContentPagePayload {
   body: string; // markdown / plain text / html (renderer's choice)
@@ -41,6 +43,7 @@ export interface QuestionPagePayload {
   caseSensitive?: boolean; // SHORT_ANSWER
   correctValue?: number; // NUMERIC
   tolerance?: number; // NUMERIC (absolute)
+  data?: any; // H5P types (ESSAY, SORT_PARAGRAPHS, DRAG_WORDS, DRAG_DROP, SPEAK_WORDS, SPEAK_WORDS_SET, DICTATION) — see backend/src/h5p/h5p-questions.ts
 }
 
 export interface BranchPagePayload {
@@ -60,12 +63,13 @@ export interface SubmittedAnswer {
   boolean?: boolean; // TRUE_FALSE
   text?: string; // SHORT_ANSWER
   number?: number; // NUMERIC
+  h5pResponse?: any; // H5P types — shape depends on questionType, see backend/src/h5p/h5p-questions.ts
 }
 
 // ─── Grading result ───────────────────────────────────────────────────
 export interface GradingResult {
-  correct: boolean | null; // null = not auto-gradable (e.g. branch / content)
-  pointsAwarded: number;
+  correct: boolean | null; // null = not auto-gradable (e.g. branch / content, or Essay pending manual grade)
+  pointsAwarded: number | null; // null = pending manual grade (only ESSAY today)
   maxPoints: number;
 }
 
@@ -108,6 +112,7 @@ export function validatePageContent(
         'TRUE_FALSE',
         'SHORT_ANSWER',
         'NUMERIC',
+        ...H5P_TYPES,
       ];
       if (!allowed.includes(qt)) {
         throw new BadRequestException(
@@ -120,6 +125,10 @@ export function validatePageContent(
         explanation: c.explanation ? String(c.explanation) : null,
         points: Math.max(0, asNumber(c.points, 1)),
       };
+      if (isH5PType(qt)) {
+        base.data = sanitizeH5PInput(qt, c.data ?? {});
+        return base;
+      }
       if (qt === 'MCQ_SINGLE' || qt === 'MCQ_MULTI') {
         const choices: QuestionChoice[] = Array.isArray(c.choices)
           ? c.choices.map((ch: any, i: number) => ({
@@ -192,6 +201,17 @@ export function gradeQuestion(
     pointsAwarded: correct ? maxPoints : 0,
     maxPoints,
   });
+
+  if (isH5PType(payload.questionType)) {
+    const { awarded, autoGraded } = gradeH5PQuestion(
+      payload.questionType,
+      payload.data,
+      answer.h5pResponse,
+      maxPoints,
+    );
+    if (!autoGraded) return { correct: null, pointsAwarded: null, maxPoints };
+    return { correct: awarded >= maxPoints, pointsAwarded: awarded ?? 0, maxPoints };
+  }
 
   switch (payload.questionType) {
     case 'MCQ_SINGLE': {

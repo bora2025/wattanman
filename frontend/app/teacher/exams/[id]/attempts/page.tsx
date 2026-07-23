@@ -8,6 +8,8 @@ import AuthGuard from '../../../../../components/AuthGuard'
 import Sidebar from '../../../../../components/Sidebar'
 import { teacherNav } from '../../../../../lib/teacher-nav'
 import { apiFetch } from '../../../../../lib/api'
+import { gradeQuestion } from '../../../../../lib/examQuestionLogic'
+import { parseDragWordsText, diffWords } from '../../../../../lib/h5pQuestionLogic'
 
 interface ExamQuestion {
   id: string
@@ -38,52 +40,23 @@ interface Attempt {
   student: { id: string; user: { name: string } }
 }
 
+// Every exam type except ESSAY is auto-graded (the only one exercising the
+// mixed-exam "wait for manual grading" path — see exam.service.ts's submitAttempt).
 function isAutoGraded(type: string) {
-  return type === 'MCQ' || type === 'TF' || type === 'SORT_PARAGRAPHS' || type === 'DRAG_WORDS'
+  return type !== 'ESSAY'
 }
 
-// Mirrors backend/src/exam/exam.service.ts's parseDragWordsText, so the gradebook
+// Mirrors backend/src/h5p/h5p-questions.ts's parseDragWordsText, so the gradebook
 // can derive blanks+answers from the same *word*-marked-up text without a round trip.
 function parseDragWordsBlanks(text: string): { id: string; answer: string }[] {
-  const parts = (text || '').split(/(\*[^*]+\*)/g).filter((p) => p.length > 0)
-  let i = 0
-  const blanks: { id: string; answer: string }[] = []
-  for (const p of parts) {
-    if (p.startsWith('*') && p.endsWith('*') && p.length > 2) {
-      blanks.push({ id: `b${i++}`, answer: p.slice(1, -1).trim() })
-    }
-  }
-  return blanks
+  return parseDragWordsText(text).filter((s): s is { type: 'blank'; id: string; answer: string } => s.type === 'blank')
 }
 
-// Mirrors backend/src/exam/exam.service.ts's gradeExamQuestion for the auto-graded
-// types, so the gradebook can show the score without a round-trip.
+// Delegates to lib/examQuestionLogic.ts's gradeQuestion (which mirrors the backend
+// exactly, including the shared H5P grading for the 6 auto-graded H5P types), so the
+// gradebook can show the score without a round-trip.
 function gradeAutoQuestion(q: ExamQuestion, response: any): number {
-  const d = q.data || {}
-  if (q.type === 'MCQ') {
-    const correctIds = new Set((d.choices || []).filter((c: any) => c.isCorrect).map((c: any) => c.id))
-    const chosen = new Set(Array.isArray(response) ? response.map(String) : response != null ? [String(response)] : [])
-    const equal = chosen.size === correctIds.size && [...chosen].every(id => correctIds.has(id))
-    return equal ? q.marks : 0
-  }
-  if (q.type === 'TF') {
-    return response != null && !!response === !!d.correct ? q.marks : 0
-  }
-  if (q.type === 'SORT_PARAGRAPHS') {
-    const correctOrder: string[] = (d.paragraphs || []).map((p: any) => p.id)
-    const given: string[] = Array.isArray(response) ? response.map(String) : []
-    let correct = 0
-    for (let i = 0; i < correctOrder.length; i++) if (given[i] === correctOrder[i]) correct++
-    return (q.marks * correct) / (correctOrder.length || 1)
-  }
-  if (q.type === 'DRAG_WORDS') {
-    const blanks = parseDragWordsBlanks(d.text || '')
-    const given: Record<string, string> = response && typeof response === 'object' ? response : {}
-    let correct = 0
-    for (const b of blanks) if ((given[b.id] || '').trim().toLowerCase() === b.answer.trim().toLowerCase()) correct++
-    return (q.marks * correct) / (blanks.length || 1)
-  }
-  return 0
+  return gradeQuestion({ type: q.type, marks: q.marks, data: q.data }, response).awarded ?? 0
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -157,27 +130,29 @@ export default function ExamGradebookPage() {
                 <div className="space-y-3">
                   {attempts.map(att => (
                     <div key={att.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                      <div className="p-4 flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
+                      <div className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                        <div className="min-w-0">
                           <p className="font-semibold text-slate-800 truncate">{att.student.user.name}</p>
                           <p className="text-xs text-slate-500">
                             Submitted: {att.submittedAt ? new Date(att.submittedAt).toLocaleString() : '—'}
                             {att.gradedAt && <> · Graded: {new Date(att.gradedAt).toLocaleString()}</>}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm font-semibold text-slate-800">
-                            {att.score ?? 0} / {exam.totalMarks}
-                            {att.grade && <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${att.grade === 'PASS' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{att.grade}</span>}
+                        <div className="flex items-center justify-between gap-3 sm:flex-shrink-0">
+                          <div className="text-left sm:text-right">
+                            <div className="text-sm font-semibold text-slate-800">
+                              {att.score ?? 0} / {exam.totalMarks}
+                              {att.grade && <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${att.grade === 'PASS' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{att.grade}</span>}
+                            </div>
+                            <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLOR[att.status] ?? 'bg-slate-100 text-slate-600'}`}>{att.status}</span>
                           </div>
-                          <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLOR[att.status] ?? 'bg-slate-100 text-slate-600'}`}>{att.status}</span>
+                          <button
+                            onClick={() => setOpenAttemptId(openAttemptId === att.id ? null : att.id)}
+                            className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md border border-sky-200 text-sky-700 hover:bg-sky-50 font-medium"
+                          >
+                            {openAttemptId === att.id ? 'Close' : att.status === 'GRADED' ? 'Review' : 'Grade'}
+                          </button>
                         </div>
-                        <button
-                          onClick={() => setOpenAttemptId(openAttemptId === att.id ? null : att.id)}
-                          className="text-xs px-3 py-1.5 rounded-md border border-sky-200 text-sky-700 hover:bg-sky-50 font-medium"
-                        >
-                          {openAttemptId === att.id ? 'Close' : att.status === 'GRADED' ? 'Review' : 'Grade'}
-                        </button>
                       </div>
 
                       {openAttemptId === att.id && (
@@ -250,15 +225,18 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
         const chosenIds = new Set(Array.isArray(studentAnswer) ? studentAnswer.map(String) : studentAnswer != null ? [String(studentAnswer)] : [])
         const paragraphs: { id: string; text: string }[] = q.data?.paragraphs ?? []
         const dragBlanks = q.type === 'DRAG_WORDS' ? parseDragWordsBlanks(q.data?.text || '') : []
+        const dropItems: { id: string; label: string; correctZoneId: string }[] = q.data?.items ?? []
+        const dropZones: { id: string }[] = q.data?.zones ?? []
+        const swSetItems: { id: string; prompt: string; acceptedAnswers: string[] }[] = q.data?.items ?? []
         return (
           <div key={q.id} className="bg-white rounded-lg border border-slate-200 p-3">
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <p className="text-sm font-semibold text-slate-800">
+            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5 mb-2">
+              <p className="text-sm font-semibold text-slate-800 min-w-0 break-words">
                 Q{idx + 1}. {q.text}
                 <span className="ml-2 text-xs text-slate-400 font-normal">({q.type} · {q.marks} marks)</span>
               </p>
               {autoGraded && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${awarded === q.marks ? 'bg-emerald-100 text-emerald-700' : awarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold ${awarded === q.marks ? 'bg-emerald-100 text-emerald-700' : awarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
                   +{Math.round(awarded * 100) / 100} (auto)
                 </span>
               )}
@@ -287,6 +265,32 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                 Correct words: {dragBlanks.map((b) => <span key={b.id} className="text-emerald-700 font-semibold mr-2">[{b.answer}]</span>)}
               </div>
             )}
+            {q.type === 'DRAG_DROP' && dropItems.length > 0 && (
+              <ul className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4">
+                {dropItems.map((it) => (
+                  <li key={it.id} className="text-emerald-700 font-semibold">
+                    {it.label} → Zone {dropZones.findIndex(z => z.id === it.correctZoneId) + 1}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {q.type === 'SPEAK_WORDS' && (q.data?.acceptedAnswers ?? []).length > 0 && (
+              <div className="text-xs text-slate-600 mb-2 ml-4">
+                Accepted answers: {(q.data.acceptedAnswers as string[]).map((a, i) => <span key={i} className="text-emerald-700 font-semibold mr-2">[{a}]</span>)}
+              </div>
+            )}
+            {q.type === 'SPEAK_WORDS_SET' && swSetItems.length > 0 && (
+              <ul className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4">
+                {swSetItems.map((it) => (
+                  <li key={it.id}>{it.prompt}: <span className="text-emerald-700 font-semibold">{it.acceptedAnswers.join(' / ')}</span></li>
+                ))}
+              </ul>
+            )}
+            {q.type === 'DICTATION' && q.data?.script && (
+              <div className="text-xs text-slate-600 mb-2 ml-4">
+                Script: <span className="text-emerald-700 font-semibold">{q.data.script}</span>
+              </div>
+            )}
             <div className="text-xs text-slate-500 mb-1">Student answer:</div>
             <div className="text-sm bg-slate-50 border border-slate-200 rounded p-2 whitespace-pre-wrap">
               {q.type === 'MCQ' ? (
@@ -313,12 +317,41 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                     })}
                   </div>
                 ) : <span className="text-slate-400 italic">(no answer)</span>
+              ) : q.type === 'DRAG_DROP' ? (
+                dropItems.length > 0 ? (
+                  <div className="space-y-0.5">
+                    {dropItems.map((it) => {
+                      const given = studentAnswer && typeof studentAnswer === 'object' ? studentAnswer[it.id] : undefined
+                      const ok = given === it.correctZoneId
+                      const zoneIdx = dropZones.findIndex(z => z.id === given)
+                      return <div key={it.id}>{it.label}: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{given ? `Zone ${zoneIdx + 1}` : '(not placed)'}</span></div>
+                    })}
+                  </div>
+                ) : <span className="text-slate-400 italic">(no answer)</span>
+              ) : q.type === 'SPEAK_WORDS' ? (
+                studentAnswer || <span className="text-slate-400 italic">(no answer)</span>
+              ) : q.type === 'SPEAK_WORDS_SET' ? (
+                swSetItems.length > 0 ? (
+                  <div className="space-y-0.5">
+                    {swSetItems.map((it) => {
+                      const given = studentAnswer && typeof studentAnswer === 'object' ? studentAnswer[it.id] : undefined
+                      return <div key={it.id}>{it.prompt}: <span className="text-slate-700">{given || '(no answer)'}</span></div>
+                    })}
+                  </div>
+                ) : <span className="text-slate-400 italic">(no answer)</span>
+              ) : q.type === 'DICTATION' ? (
+                <div className="space-y-1">
+                  {diffWords(q.data?.script || '', studentAnswer || '').map((d, i) => (
+                    <span key={i} className={`mr-1.5 ${d.match ? 'text-emerald-700' : 'text-red-600 line-through'}`}>{d.word}</span>
+                  ))}
+                  {!studentAnswer && <span className="text-slate-400 italic block">(no answer)</span>}
+                </div>
               ) : (
                 studentAnswer || <span className="text-slate-400 italic">(no answer)</span>
               )}
             </div>
             {!autoGraded && (
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <label className="text-xs text-slate-600">Marks:</label>
                 <input
                   type="number"
@@ -327,7 +360,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                   step="0.5"
                   value={marks[q.id] ?? ''}
                   onChange={e => setMarks({ ...marks, [q.id]: e.target.value })}
-                  className="w-24 text-sm border border-slate-300 rounded-md px-2 py-1"
+                  className="w-24 text-sm border border-slate-300 rounded-md px-2 py-1.5"
                   placeholder="0"
                 />
                 <span className="text-xs text-slate-400">/ {q.marks}</span>
@@ -350,11 +383,11 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
 
       {error && <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</div>}
 
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
         <button
           onClick={() => saveMutation.mutate()}
           disabled={saveMutation.isPending}
-          className="bg-emerald-600 text-white text-sm font-medium px-4 py-1.5 rounded-md hover:bg-emerald-700 disabled:opacity-60"
+          className="w-full sm:w-auto bg-emerald-600 text-white text-sm font-medium px-4 py-2 sm:py-1.5 rounded-md hover:bg-emerald-700 disabled:opacity-60"
         >
           {saveMutation.isPending ? 'Saving…' : 'Save & Finalize Grade'}
         </button>

@@ -6,8 +6,16 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import AuthGuard from '../../../../../components/AuthGuard'
 import { apiFetch } from '../../../../../lib/api'
+import { type H5PType } from '../../../../../lib/h5pQuestionLogic'
+import { EssayInput } from '../../../../../components/questions/EssayField'
+import { SortParagraphsInput } from '../../../../../components/questions/SortParagraphsField'
+import { DragWordsInput } from '../../../../../components/questions/DragWordsField'
+import { DragDropInput } from '../../../../../components/questions/DragDropField'
+import { SpeakWordsInput } from '../../../../../components/questions/SpeakWordsField'
+import { SpeakWordsSetInput } from '../../../../../components/questions/SpeakWordsSetField'
+import { DictationInput } from '../../../../../components/questions/DictationField'
 
-type QType = 'MCQ' | 'TF' | 'MATCHING' | 'ESSAY' | 'NUMERICAL'
+type QType = 'MCQ' | 'TF' | 'MATCHING' | 'NUMERICAL' | H5PType
 interface Question {
   id: string; type: QType; prompt: string; points: number; order: number
   data: any
@@ -253,16 +261,20 @@ function QuestionInput({ q, value, onChange, disabled }: { q: Question; value: a
       )
     case 'NUMERICAL':
       return <input type="number" step="any" value={value ?? ''} onChange={e => onChange(e.target.value === '' ? null : Number(e.target.value))} disabled={disabled} className="w-full border rounded-lg px-3 py-2 text-sm" />
-    case 'ESSAY': {
-      const minWords = q.data?.minWords ?? 0
-      const words = String(value || '').trim().split(/\s+/).filter(Boolean).length
-      return (
-        <div>
-          <textarea value={value ?? ''} onChange={e => onChange(e.target.value)} disabled={disabled} rows={6} className="w-full border rounded-lg px-3 py-2 text-sm resize-none" placeholder="Write your answer here…" />
-          {minWords > 0 && <p className={`text-[11px] mt-1 ${words >= minWords ? 'text-emerald-600' : 'text-slate-400'}`}>{words} / {minWords} words minimum</p>}
-        </div>
-      )
-    }
+    case 'ESSAY':
+      return <EssayInput data={q.data} value={value} onChange={onChange} disabled={disabled} />
+    case 'SORT_PARAGRAPHS':
+      return <SortParagraphsInput data={q.data} value={value} onChange={onChange} disabled={disabled} />
+    case 'DRAG_WORDS':
+      return <DragWordsInput data={q.data} value={value} onChange={onChange} disabled={disabled} />
+    case 'DRAG_DROP':
+      return <DragDropInput data={q.data} value={value} onChange={onChange} disabled={disabled} />
+    case 'SPEAK_WORDS':
+      return <SpeakWordsInput data={q.data} value={value} onChange={onChange} disabled={disabled} />
+    case 'SPEAK_WORDS_SET':
+      return <SpeakWordsSetInput data={q.data} value={value} onChange={onChange} disabled={disabled} />
+    case 'DICTATION':
+      return <DictationInput data={q.data} value={value} onChange={onChange} disabled={disabled} revealFeedback={disabled} />
     case 'MATCHING': {
       const left: Array<{ id: string; text: string }> = q.data?.left ?? []
       const right: Array<{ id: string; text: string }> = q.data?.right ?? []
@@ -324,6 +336,47 @@ function CorrectAnswerPanel({ q }: { q: Question }) {
           {pairs.map((p, i) => <li key={i}>{leftMap.get(p.leftId) ?? p.leftId} → {rightMap.get(p.rightId) ?? p.rightId}</li>)}
         </ul>
       )
+      break
+    }
+    case 'SORT_PARAGRAPHS': {
+      const paragraphs: Array<{ id: string; text: string }> = cd.paragraphs ?? []
+      content = (
+        <ol className="list-decimal list-inside text-sm text-emerald-700 space-y-0.5">
+          {paragraphs.map(p => <li key={p.id}>{p.text}</li>)}
+        </ol>
+      )
+      break
+    }
+    case 'DRAG_WORDS': {
+      content = <p className="text-sm text-emerald-700 whitespace-pre-wrap">{cd.text}</p>
+      break
+    }
+    case 'DRAG_DROP': {
+      const zones: Array<{ id: string }> = q.data?.zones ?? []
+      const items: Array<{ id: string; label: string; correctZoneId: string }> = cd.items ?? []
+      content = (
+        <ul className="text-sm text-emerald-700 space-y-0.5">
+          {items.map(it => <li key={it.id}>{it.label} → Zone {zones.findIndex(z => z.id === it.correctZoneId) + 1}</li>)}
+        </ul>
+      )
+      break
+    }
+    case 'SPEAK_WORDS': {
+      const accepted: string[] = cd.acceptedAnswers ?? []
+      content = <p className="text-sm text-emerald-700">{accepted.join(' / ')}</p>
+      break
+    }
+    case 'SPEAK_WORDS_SET': {
+      const items: Array<{ id: string; prompt: string; acceptedAnswers: string[] }> = cd.items ?? []
+      content = (
+        <ul className="text-sm text-emerald-700 space-y-0.5">
+          {items.map(it => <li key={it.id}>{it.prompt}: {it.acceptedAnswers.join(' / ')}</li>)}
+        </ul>
+      )
+      break
+    }
+    case 'DICTATION': {
+      content = <p className="text-sm text-emerald-700 whitespace-pre-wrap">{cd.script}</p>
       break
     }
     default:
