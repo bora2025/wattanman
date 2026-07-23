@@ -1,6 +1,76 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
+const ALLOWED_EXAM_QUESTION_TYPES = ['MCQ', 'TF'];
+
+function sanitizeExamQuestionInput(body: any) {
+  const type = String(body.type || '').toUpperCase();
+  if (!ALLOWED_EXAM_QUESTION_TYPES.includes(type)) {
+    throw new BadRequestException(`Question type must be one of ${ALLOWED_EXAM_QUESTION_TYPES.join(', ')}`);
+  }
+  const text = String(body.text || '').trim();
+  if (!text) throw new BadRequestException('Question text is required');
+  const marks = Math.max(0, Number(body.marks) || 1);
+  const raw = body.data ?? {};
+  let data: any;
+  switch (type) {
+    case 'MCQ': {
+      const choices = Array.isArray(raw.choices) ? raw.choices : [];
+      const cleanedChoices = choices
+        .filter((c: any) => c && (c.text ?? '').toString().trim())
+        .map((c: any, i: number) => ({
+          id: String(c.id || `c${i}`),
+          text: String(c.text).trim(),
+          isCorrect: !!c.isCorrect,
+        }));
+      if (cleanedChoices.length < 2) throw new BadRequestException('Multi-choice needs at least 2 choices');
+      if (!cleanedChoices.some((c) => c.isCorrect)) throw new BadRequestException('Multi-choice needs at least 1 correct choice');
+      data = { choices: cleanedChoices, multiple: !!raw.multiple };
+      break;
+    }
+    case 'TF':
+    default: {
+      data = { correct: !!raw.correct };
+      break;
+    }
+  }
+  return { type, text, marks, data };
+}
+
+function sanitizeExamQuestionForStudent(q: { id: string; type: string; text: string; marks: number; order: number; data: any }) {
+  const d = q.data || {};
+  let safe: any;
+  switch (q.type) {
+    case 'MCQ':
+      safe = { choices: (d.choices || []).map((c: any) => ({ id: c.id, text: c.text })), multiple: !!d.multiple };
+      break;
+    case 'TF':
+    default:
+      safe = {};
+      break;
+  }
+  return { id: q.id, type: q.type, text: q.text, marks: q.marks, order: q.order, data: safe };
+}
+
+function gradeExamQuestion(q: { type: string; marks: number; data: any }, response: any): { awarded: number | null; autoGraded: boolean } {
+  if (response == null) {
+    return { awarded: 0, autoGraded: true }; // no manually-graded types yet in this phase
+  }
+  const d = q.data || {};
+  switch (q.type) {
+    case 'MCQ': {
+      const correctIds = new Set((d.choices || []).filter((c: any) => c.isCorrect).map((c: any) => c.id));
+      const chosen = new Set(Array.isArray(response) ? response.map(String) : [String(response)]);
+      const equal = chosen.size === correctIds.size && [...chosen].every((id) => correctIds.has(id));
+      return { awarded: equal ? q.marks : 0, autoGraded: true };
+    }
+    case 'TF':
+      return { awarded: !!response === !!d.correct ? q.marks : 0, autoGraded: true };
+    default:
+      return { awarded: null, autoGraded: false };
+  }
+}
+
 @Injectable()
 export class ExamService {
   constructor(private prisma: PrismaService) {}
@@ -36,14 +106,28 @@ export class ExamService {
     return exam;
   }
 
+  // Student-safe view: same as getOne but strips correct-answer keys from questions.
+  async getOneForStudent(id: string) {
+    const exam = await this.prisma.exam.findUnique({
+      where: { id },
+      include: {
+        class: { select: { id: true, name: true } },
+        questions: { orderBy: { order: 'asc' } },
+      },
+    });
+    if (!exam) throw new NotFoundException('Exam not found');
+    return { ...exam, questions: exam.questions.map(sanitizeExamQuestionForStudent) };
+  }
+
   async create(data: any, createdById: string) {
     const { questions, ...examData } = data;
+    const sanitizedQuestions = Array.isArray(questions) ? questions.map(sanitizeExamQuestionInput) : [];
     return this.prisma.exam.create({
       data: {
         ...examData,
         createdById,
-        questions: questions?.length
-          ? { create: questions.map((q: any, i: number) => ({ ...q, order: i })) }
+        questions: sanitizedQuestions.length
+          ? { create: sanitizedQuestions.map((q: any, i: number) => ({ ...q, order: i })) }
           : undefined,
       },
       include: { questions: true },
@@ -52,14 +136,15 @@ export class ExamService {
 
   async update(id: string, data: any) {
     const { questions, ...examData } = data;
-    const exam = await this.prisma.exam.update({
+    await this.prisma.exam.update({
       where: { id },
       data: examData,
     });
     if (questions) {
+      const sanitizedQuestions = questions.map(sanitizeExamQuestionInput);
       await this.prisma.examQuestion.deleteMany({ where: { examId: id } });
       await this.prisma.examQuestion.createMany({
-        data: questions.map((q: any, i: number) => ({ ...q, examId: id, order: i })),
+        data: sanitizedQuestions.map((q: any, i: number) => ({ ...q, examId: id, order: i })),
       });
     }
     return this.getOne(id);
@@ -110,7 +195,7 @@ export class ExamService {
     });
   }
 
-  async saveAnswers(attemptId: string, answers: Record<string, string>) {
+  async saveAnswers(attemptId: string, answers: Record<string, any>) {
     return this.prisma.examAttempt.update({
       where: { id: attemptId },
       data: { answers },
@@ -124,48 +209,44 @@ export class ExamService {
     });
     if (!attempt) throw new NotFoundException('Attempt not found');
 
-    // Auto-grade MCQ questions only.
-    const answers = (attempt.answers as Record<string, string>) ?? {};
-    let mcqScore = 0;
-    let hasNonMcq = false;
+    const answers = (attempt.answers as Record<string, any>) ?? {};
+    let total = 0;
+    let hasManual = false;
     for (const q of attempt.exam.questions) {
-      if (q.type === 'MCQ') {
-        if (q.answer && answers[q.id] === q.answer) {
-          mcqScore += q.marks;
-        }
-      } else {
-        hasNonMcq = true;
-      }
+      const { awarded, autoGraded } = gradeExamQuestion(q, answers[q.id]);
+      if (!autoGraded) { hasManual = true; continue; }
+      total += awarded ?? 0;
     }
 
-    // If the exam is MCQ-only, fully grade now. Otherwise leave for teacher.
-    if (!hasNonMcq) {
-      const passed = mcqScore >= attempt.exam.passMark;
+    // If every question auto-grades, fully grade now. Otherwise leave for teacher.
+    if (!hasManual) {
+      const passed = total >= attempt.exam.passMark;
       return this.prisma.examAttempt.update({
         where: { id: attemptId },
         data: {
           status: 'GRADED',
           submittedAt: new Date(),
           gradedAt: new Date(),
-          score: mcqScore,
+          score: total,
           grade: passed ? 'PASS' : 'FAIL',
         },
       });
     }
 
-    // Mixed/essay exam — wait for manual grading. Store partial MCQ score for visibility.
+    // Mixed exam (once manually-graded types exist) — wait for manual grading.
+    // Store the auto-gradable partial score for visibility.
     return this.prisma.examAttempt.update({
       where: { id: attemptId },
       data: {
         status: 'SUBMITTED',
         submittedAt: new Date(),
-        score: mcqScore,
+        score: total,
         grade: null,
       },
     });
   }
 
-  // Teacher manually grades non-MCQ questions for a submitted attempt.
+  // Teacher manually grades any non-auto-gradable questions for a submitted attempt.
   async gradeAttempt(
     attemptId: string,
     perQuestionMarks: Record<string, number>,
@@ -177,13 +258,13 @@ export class ExamService {
     });
     if (!attempt) throw new NotFoundException('Attempt not found');
 
-    const answers = (attempt.answers as Record<string, string>) ?? {};
+    const answers = (attempt.answers as Record<string, any>) ?? {};
     let total = 0;
     const sanitizedManual: Record<string, number> = {};
     for (const q of attempt.exam.questions) {
-      if (q.type === 'MCQ') {
-        // Always auto-grade MCQ; teachers cannot override here.
-        if (q.answer && answers[q.id] === q.answer) total += q.marks;
+      const { awarded, autoGraded } = gradeExamQuestion(q, answers[q.id]);
+      if (autoGraded) {
+        total += awarded ?? 0;
         continue;
       }
       const raw = perQuestionMarks?.[q.id];

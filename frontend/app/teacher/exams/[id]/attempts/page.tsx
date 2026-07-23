@@ -13,8 +13,7 @@ interface ExamQuestion {
   id: string
   text: string
   type: string
-  options: string[] | null
-  answer: string | null
+  data: any
   marks: number
   order: number
 }
@@ -33,10 +32,26 @@ interface Attempt {
   grade: string | null
   submittedAt: string | null
   gradedAt: string | null
-  answers: Record<string, string> | null
+  answers: Record<string, any> | null
   manualMarks: Record<string, number> | null
   feedback: string | null
   student: { id: string; user: { name: string } }
+}
+
+function isAutoGraded(type: string) { return type === 'MCQ' || type === 'TF' }
+
+// Mirrors backend/src/exam/exam.service.ts's gradeExamQuestion for MCQ/TF, so the
+// gradebook can show correctness without a round-trip.
+function gradeMcqOrTf(q: ExamQuestion, response: any): { correct: boolean; awarded: number } {
+  const d = q.data || {}
+  if (q.type === 'MCQ') {
+    const correctIds = new Set((d.choices || []).filter((c: any) => c.isCorrect).map((c: any) => c.id))
+    const chosen = new Set(Array.isArray(response) ? response.map(String) : response != null ? [String(response)] : [])
+    const equal = chosen.size === correctIds.size && [...chosen].every(id => correctIds.has(id))
+    return { correct: equal, awarded: equal ? q.marks : 0 }
+  }
+  const correct = response != null && !!response === !!d.correct
+  return { correct, awarded: correct ? q.marks : 0 }
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -72,7 +87,7 @@ export default function ExamGradebookPage() {
     },
   })
 
-  const nonMcq = useMemo(() => exam?.questions.filter(q => q.type !== 'MCQ') ?? [], [exam])
+  const manualQuestions = useMemo(() => exam?.questions.filter(q => !isAutoGraded(q.type)) ?? [], [exam])
 
   return (
     <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
@@ -96,8 +111,8 @@ export default function ExamGradebookPage() {
                 <p>
                   Total marks: <strong>{exam.totalMarks}</strong> · Pass mark: <strong>{exam.passMark}</strong> ·
                   Questions: <strong>{exam.questions.length}</strong>
-                  {nonMcq.length > 0 && (
-                    <> · <span className="text-amber-700">{nonMcq.length} essay/short-answer requires manual grading</span></>
+                  {manualQuestions.length > 0 && (
+                    <> · <span className="text-amber-700">{manualQuestions.length} question(s) require manual grading</span></>
                   )}
                 </p>
               </div>
@@ -161,7 +176,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
   const [marks, setMarks] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {}
     for (const q of exam.questions) {
-      if (q.type !== 'MCQ') {
+      if (!isAutoGraded(q.type)) {
         init[q.id] = existingMarks[q.id] !== undefined ? String(existingMarks[q.id]) : ''
       }
     }
@@ -196,9 +211,11 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
   return (
     <div className="border-t border-slate-100 bg-slate-50/60 p-4 space-y-4">
       {exam.questions.map((q, idx) => {
-        const studentAnswer = answers[q.id] ?? ''
-        const isMcq = q.type === 'MCQ'
-        const correctMcq = isMcq && q.answer && studentAnswer === q.answer
+        const studentAnswer = answers[q.id]
+        const autoGraded = isAutoGraded(q.type)
+        const { correct, awarded } = autoGraded ? gradeMcqOrTf(q, studentAnswer) : { correct: false, awarded: 0 }
+        const choices: { id: string; text: string; isCorrect: boolean }[] = q.data?.choices ?? []
+        const chosenIds = new Set(Array.isArray(studentAnswer) ? studentAnswer.map(String) : studentAnswer != null ? [String(studentAnswer)] : [])
         return (
           <div key={q.id} className="bg-white rounded-lg border border-slate-200 p-3">
             <div className="flex items-start justify-between gap-3 mb-2">
@@ -206,26 +223,37 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                 Q{idx + 1}. {q.text}
                 <span className="ml-2 text-xs text-slate-400 font-normal">({q.type} · {q.marks} marks)</span>
               </p>
-              {isMcq && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${correctMcq ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                  {correctMcq ? `+${q.marks}` : '0'} (auto)
+              {autoGraded && (
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${correct ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                  {correct ? `+${awarded}` : '0'} (auto)
                 </span>
               )}
             </div>
-            {isMcq && q.options && (
+            {q.type === 'MCQ' && choices.length > 0 && (
               <ul className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4">
-                {q.options.map((opt, i) => (
-                  <li key={i} className={opt === q.answer ? 'text-emerald-700 font-semibold' : ''}>
-                    {String.fromCharCode(65 + i)}. {opt}
+                {choices.map((c) => (
+                  <li key={c.id} className={c.isCorrect ? 'text-emerald-700 font-semibold' : ''}>
+                    {chosenIds.has(c.id) ? '☑' : '☐'} {c.text}{c.isCorrect ? ' (correct)' : ''}
                   </li>
                 ))}
               </ul>
             )}
+            {q.type === 'TF' && (
+              <div className="text-xs text-slate-600 mb-2 ml-4">
+                Correct answer: <span className="font-semibold text-emerald-700">{q.data?.correct ? 'True' : 'False'}</span>
+              </div>
+            )}
             <div className="text-xs text-slate-500 mb-1">Student answer:</div>
             <div className="text-sm bg-slate-50 border border-slate-200 rounded p-2 whitespace-pre-wrap">
-              {studentAnswer || <span className="text-slate-400 italic">(no answer)</span>}
+              {q.type === 'MCQ' ? (
+                choices.filter(c => chosenIds.has(c.id)).map(c => c.text).join(', ') || <span className="text-slate-400 italic">(no answer)</span>
+              ) : q.type === 'TF' ? (
+                studentAnswer == null ? <span className="text-slate-400 italic">(no answer)</span> : (studentAnswer ? 'True' : 'False')
+              ) : (
+                studentAnswer || <span className="text-slate-400 italic">(no answer)</span>
+              )}
             </div>
-            {!isMcq && (
+            {!autoGraded && (
               <div className="mt-2 flex items-center gap-2">
                 <label className="text-xs text-slate-600">Marks:</label>
                 <input

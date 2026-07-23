@@ -794,9 +794,8 @@ model ExamQuestion {
   examId    String
   exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   text      String
-  type      String   @default("MCQ") // MCQ, SHORT_ANSWER, ESSAY
-  options   Json? // string[] for MCQ choices
-  answer    String? // correct answer key
+  type      String   @default("MCQ") // MCQ | TF (more H5P-style types planned)
+  data      Json? // type-specific config, e.g. MCQ: { choices:[{id,text,isCorrect}], multiple }, TF: { correct }
   marks     Float    @default(1)
   order     Int      @default(0)
   createdAt DateTime @default(now())

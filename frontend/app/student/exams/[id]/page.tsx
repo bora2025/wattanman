@@ -6,7 +6,8 @@ import { useRouter, useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
 import { apiFetch } from '../../../../lib/api'
 
-interface Question { id: string; text: string; type: string; options: string[] | null; marks: number }
+type QType = 'MCQ' | 'TF'
+interface Question { id: string; text: string; type: QType; marks: number; order: number; data: any }
 interface ExamDetail { id: string; title: string; duration: number; totalMarks: number; passMark: number; questions: Question[] }
 interface Attempt { id: string; status: string; startedAt: string }
 
@@ -15,13 +16,13 @@ export default function StudentExamTakingPage() {
   const router = useRouter()
   const examId = params?.id as string
   const [attempt, setAttempt] = useState<Attempt | null>(null)
-  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [answers, setAnswers] = useState<Record<string, any>>({})
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
   const [submitted, setSubmitted] = useState(false)
 
   const { data: exam, isLoading } = useQuery({
     queryKey: ['exam-detail', examId],
-    queryFn: async () => { const r = await apiFetch(`/api/exams/${examId}`); if (!r.ok) throw new Error(); return r.json() as Promise<ExamDetail> },
+    queryFn: async () => { const r = await apiFetch(`/api/exams/${examId}/take`); if (!r.ok) throw new Error(); return r.json() as Promise<ExamDetail> },
     enabled: !!examId,
   })
 
@@ -104,23 +105,7 @@ export default function StudentExamTakingPage() {
               {exam?.questions.map((q, i) => (
                 <div key={q.id} className="bg-white rounded-xl shadow-sm p-5 border border-slate-100">
                   <p className="font-semibold text-slate-800 mb-3">Q{i + 1}. {q.text} <span className="text-xs font-normal text-slate-400">({q.marks} mark{q.marks !== 1 ? 's' : ''})</span></p>
-                  {q.type === 'MCQ' && q.options ? (
-                    <div className="space-y-2">
-                      {q.options.map((opt, j) => (
-                        <label key={j} className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${answers[q.id] === opt ? 'border-sky-500 bg-sky-50' : 'border-slate-200 hover:border-slate-300'}`}>
-                          <input type="radio" name={q.id} value={opt} checked={answers[q.id] === opt} onChange={() => setAnswers(a => ({ ...a, [q.id]: opt }))} className="sr-only" />
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${answers[q.id] === opt ? 'border-sky-500' : 'border-slate-300'}`}>
-                            {answers[q.id] === opt && <div className="w-2.5 h-2.5 rounded-full bg-sky-500" />}
-                          </div>
-                          <span className="text-sm text-slate-700">{opt}</span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    <textarea value={answers[q.id] ?? ''} onChange={e => setAnswers(a => ({ ...a, [q.id]: e.target.value }))}
-                      rows={3} placeholder="Write your answer here..."
-                      className="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-sky-300" />
-                  )}
+                  <QuestionInput q={q} value={answers[q.id]} onChange={v => setAnswers(a => ({ ...a, [q.id]: v }))} />
                 </div>
               ))}
 
@@ -137,4 +122,50 @@ export default function StudentExamTakingPage() {
       </div>
     </AuthGuard>
   )
+}
+
+function QuestionInput({ q, value, onChange }: { q: Question; value: any; onChange: (v: any) => void }) {
+  if (q.type === 'MCQ') {
+    const choices: { id: string; text: string }[] = q.data?.choices ?? []
+    const multiple = !!q.data?.multiple
+    const selected: string[] = Array.isArray(value) ? value : []
+    const toggle = (id: string) => {
+      if (multiple) {
+        onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id])
+      } else {
+        onChange([id])
+      }
+    }
+    return (
+      <div className="space-y-2">
+        {choices.map((c) => {
+          const isSelected = selected.includes(c.id)
+          return (
+            <label key={c.id} className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${isSelected ? 'border-sky-500 bg-sky-50' : 'border-slate-200 hover:border-slate-300'}`}>
+              <input type={multiple ? 'checkbox' : 'radio'} name={q.id} checked={isSelected} onChange={() => toggle(c.id)} className="sr-only" />
+              <div className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 ${multiple ? 'rounded' : 'rounded-full'} ${isSelected ? 'border-sky-500' : 'border-slate-300'}`}>
+                {isSelected && <div className={`bg-sky-500 ${multiple ? 'w-2.5 h-2.5 rounded-sm' : 'w-2.5 h-2.5 rounded-full'}`} />}
+              </div>
+              <span className="text-sm text-slate-700">{c.text}</span>
+            </label>
+          )
+        })}
+      </div>
+    )
+  }
+
+  if (q.type === 'TF') {
+    return (
+      <div className="flex gap-3">
+        {[true, false].map((v) => (
+          <label key={String(v)} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-colors ${value === v ? 'border-sky-500 bg-sky-50' : 'border-slate-200 hover:border-slate-300'}`}>
+            <input type="radio" name={q.id} checked={value === v} onChange={() => onChange(v)} className="sr-only" />
+            <span className="text-sm font-medium text-slate-700">{v ? 'True' : 'False'}</span>
+          </label>
+        ))}
+      </div>
+    )
+  }
+
+  return <p className="text-xs text-red-500">Unsupported question type</p>
 }

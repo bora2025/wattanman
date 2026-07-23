@@ -22,6 +22,11 @@ export class ExamController {
   @Get(':id')
   getOne(@Param('id') id: string) { return this.examService.getOne(id); }
 
+  // Student-safe view — strips correct-answer keys before the exam reaches a student.
+  @Roles('STUDENT', 'ADMIN')
+  @Get(':id/take')
+  getOneForStudent(@Param('id') id: string) { return this.examService.getOneForStudent(id); }
+
   @Roles('ADMIN', 'TEACHER')
   @Post()
   create(@Body() body: any, @Request() req: any) {
@@ -59,7 +64,7 @@ export class ExamController {
 
   @Roles('STUDENT', 'ADMIN')
   @Patch('attempts/:attemptId/answers')
-  saveAnswers(@Param('attemptId') attemptId: string, @Body() body: { answers: Record<string, string> }) {
+  saveAnswers(@Param('attemptId') attemptId: string, @Body() body: { answers: Record<string, any> }) {
     return this.examService.saveAnswers(attemptId, body.answers);
   }
 

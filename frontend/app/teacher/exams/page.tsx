@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { teacherNav } from '../../../lib/teacher-nav'
@@ -17,6 +17,33 @@ interface Exam {
   _count: { questions: number; attempts: number }
 }
 interface ClassItem { id: string; name: string; subject: string }
+
+type QType = 'MCQ' | 'TF'
+interface Choice { id: string; text: string; isCorrect: boolean }
+interface ExamQuestionDraft {
+  text: string
+  type: QType
+  marks: number
+  data: any
+}
+
+const TYPE_LABEL: Record<QType, string> = { MCQ: 'Multi-Choice', TF: 'True / False' }
+
+function uid(prefix: string) { return `${prefix}_${Math.random().toString(36).slice(2, 8)}` }
+
+function defaultData(type: QType): any {
+  switch (type) {
+    case 'MCQ':
+      return { choices: [{ id: uid('c'), text: '', isCorrect: false }, { id: uid('c'), text: '', isCorrect: false }], multiple: false }
+    case 'TF':
+    default:
+      return { correct: true }
+  }
+}
+
+function defaultQuestion(): ExamQuestionDraft {
+  return { text: '', type: 'MCQ', marks: 1, data: defaultData('MCQ') }
+}
 
 const STATUS_COLOR: Record<string, string> = {
   DRAFT: 'bg-slate-100 text-slate-600',
@@ -122,21 +149,34 @@ export default function TeacherExamsPage() {
 }
 
 function ExamFormModal({ classes, onClose, onSuccess }: { classes: ClassItem[]; onClose: () => void; onSuccess: () => void }) {
-  const { register, control, handleSubmit, formState: { isSubmitting } } = useForm({
-    defaultValues: {
-      title: '', description: '', classId: '', duration: 60, totalMarks: 100, passMark: 50,
-      questions: [{ text: '', type: 'MCQ', options: ['','','',''], answer: '', marks: 1 }]
-    },
+  const { register, handleSubmit, formState: { isSubmitting } } = useForm({
+    defaultValues: { title: '', description: '', classId: '', duration: 60, totalMarks: 100, passMark: 50 },
   })
-  const { fields, append, remove } = useFieldArray({ control, name: 'questions' })
+  const [questions, setQuestions] = useState<ExamQuestionDraft[]>([defaultQuestion()])
+  const [formError, setFormError] = useState<string | null>(null)
+
+  function updateQuestion(i: number, patch: Partial<ExamQuestionDraft>) {
+    setQuestions(qs => qs.map((q, idx) => idx === i ? { ...q, ...patch } : q))
+  }
+  function changeType(i: number, type: QType) {
+    updateQuestion(i, { type, data: defaultData(type) })
+  }
+  function addQuestion() { setQuestions(qs => [...qs, defaultQuestion()]) }
+  function removeQuestion(i: number) { setQuestions(qs => qs.filter((_, idx) => idx !== i)) }
 
   const onSubmit = async (data: any) => {
+    setFormError(null)
     const res = await apiFetch('/api/exams', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...data, status: 'DRAFT' }),
+      body: JSON.stringify({ ...data, status: 'DRAFT', questions }),
     })
-    if (res.ok) onSuccess()
+    if (res.ok) {
+      onSuccess()
+    } else {
+      const e = await res.json().catch(() => ({}))
+      setFormError(Array.isArray(e?.message) ? e.message.join(', ') : (e?.message || 'Failed to create exam'))
+    }
   }
 
   return (
@@ -158,22 +198,35 @@ function ExamFormModal({ classes, onClose, onSuccess }: { classes: ClassItem[]; 
 
           <div>
             <p className="text-sm font-semibold text-slate-700 mb-2">Questions</p>
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-              {fields.map((field, i) => (
-                <div key={field.id} className="border rounded-lg p-3 bg-slate-50 relative">
-                  <button type="button" onClick={() => remove(i)} className="absolute top-2 right-2 text-red-400 text-xs">✕</button>
-                  <input {...register(`questions.${i}.text`)} placeholder={`Q${i+1}: Question text`} className="w-full border rounded px-2 py-1 text-sm mb-2" />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input {...register(`questions.${i}.answer`)} placeholder="Correct answer" className="border rounded px-2 py-1 text-sm" />
-                    <input type="number" {...register(`questions.${i}.marks`)} placeholder="Marks" className="border rounded px-2 py-1 text-sm" />
+            <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+              {questions.map((q, i) => (
+                <div key={i} className="border rounded-lg p-3 bg-slate-50 relative">
+                  <button type="button" onClick={() => removeQuestion(i)} disabled={questions.length <= 1} className="absolute top-2 right-2 text-red-400 text-xs disabled:opacity-30">✕</button>
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    <select value={q.type} onChange={e => changeType(i, e.target.value as QType)} className="col-span-2 border rounded px-2 py-1 text-sm">
+                      {(Object.keys(TYPE_LABEL) as QType[]).map(t => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
+                    </select>
+                    <input type="number" step="any" min={0} value={q.marks} onChange={e => updateQuestion(i, { marks: Number(e.target.value) || 0 })} placeholder="Marks" className="border rounded px-2 py-1 text-sm" />
                   </div>
+                  <textarea value={q.text} onChange={e => updateQuestion(i, { text: e.target.value })} placeholder={`Q${i + 1}: Question text`} rows={2} className="w-full border rounded px-2 py-1 text-sm mb-2 resize-none" />
+
+                  {q.type === 'MCQ' && (
+                    <McqEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
+                  )}
+                  {q.type === 'TF' && (
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-slate-500">Correct answer:</span>
+                      <label className="flex items-center gap-1"><input type="radio" checked={q.data?.correct === true} onChange={() => updateQuestion(i, { data: { correct: true } })} /> True</label>
+                      <label className="flex items-center gap-1"><input type="radio" checked={q.data?.correct === false} onChange={() => updateQuestion(i, { data: { correct: false } })} /> False</label>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-            <button type="button"
-              onClick={() => append({ text: '', type: 'MCQ', options: ['','','',''], answer: '', marks: 1 })}
-              className="mt-2 text-sm text-sky-600 hover:underline">+ Add Question</button>
+            <button type="button" onClick={addQuestion} className="mt-2 text-sm text-sky-600 hover:underline">+ Add Question</button>
           </div>
+
+          {formError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{formError}</div>}
 
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>
@@ -184,6 +237,39 @@ function ExamFormModal({ classes, onClose, onSuccess }: { classes: ClassItem[]; 
           </div>
         </form>
       </div>
+    </div>
+  )
+}
+
+function McqEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
+  const choices: Choice[] = data?.choices ?? []
+  const multiple = !!data?.multiple
+  function setChoice(i: number, patch: Partial<Choice>) {
+    const next = choices.map((c, idx) => idx === i ? { ...c, ...patch } : c)
+    onChange({ ...data, choices: next })
+  }
+  function addChoice() { onChange({ ...data, choices: [...choices, { id: uid('c'), text: '', isCorrect: false }] }) }
+  function removeChoice(i: number) { onChange({ ...data, choices: choices.filter((_, idx) => idx !== i) }) }
+  function toggleCorrect(i: number) {
+    if (multiple) {
+      setChoice(i, { isCorrect: !choices[i].isCorrect })
+    } else {
+      onChange({ ...data, choices: choices.map((c, idx) => ({ ...c, isCorrect: idx === i })) })
+    }
+  }
+  return (
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 text-xs text-slate-500">
+        <input type="checkbox" checked={multiple} onChange={e => onChange({ ...data, multiple: e.target.checked })} /> Allow multiple correct answers
+      </label>
+      {choices.map((c, i) => (
+        <div key={c.id} className="flex items-center gap-2">
+          <input type={multiple ? 'checkbox' : 'radio'} checked={c.isCorrect} onChange={() => toggleCorrect(i)} title="Mark as correct" />
+          <input value={c.text} onChange={e => setChoice(i, { text: e.target.value })} placeholder={`Choice ${i + 1}`} className="flex-1 border rounded-lg px-3 py-1.5 text-sm" />
+          <button type="button" onClick={() => removeChoice(i)} disabled={choices.length <= 2} className="text-xs text-red-500 disabled:opacity-30">✕</button>
+        </div>
+      ))}
+      <button type="button" onClick={addChoice} className="text-xs text-sky-600 hover:underline">+ Add choice</button>
     </div>
   )
 }
