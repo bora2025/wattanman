@@ -166,11 +166,12 @@ function ExamFormModal({ classes, examId, initialData, onClose, onSuccess }: {
   onClose: () => void
   onSuccess: () => void
 }) {
-  const { register, handleSubmit, formState: { isSubmitting } } = useForm({
+  const { register, handleSubmit, watch, formState: { isSubmitting } } = useForm({
     defaultValues: initialData
       ? { title: initialData.title, description: initialData.description, classId: initialData.classId, duration: initialData.duration, totalMarks: initialData.totalMarks, passMark: initialData.passMark }
       : { title: '', description: '', classId: '', duration: 60, totalMarks: 100, passMark: 50 },
   })
+  const watchedDuration = Number(watch('duration')) || undefined
   const [questions, setQuestions] = useState<ExamQuestionDraft[]>(initialData?.questions?.length ? initialData.questions : [defaultQuestion()])
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -209,7 +210,7 @@ function ExamFormModal({ classes, examId, initialData, onClose, onSuccess }: {
             <input type="number" {...register('passMark')} placeholder="Pass mark" className="border rounded-lg px-3 py-2 text-sm" />
           </div>
 
-          <ExamQuestionsEditor questions={questions} onChange={setQuestions} />
+          <ExamQuestionsEditor questions={questions} onChange={setQuestions} durationMinutes={watchedDuration} />
 
           {formError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{formError}</div>}
 

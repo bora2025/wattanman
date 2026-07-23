@@ -1,19 +1,28 @@
 "use client"
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { QuestionInput } from './ExamQuestionInput'
 import { sanitizeForPreview, gradeQuestion, TYPE_LABEL, type ExamQuestionDraft } from '../lib/examQuestionLogic'
+
+function formatTime(secs: number) {
+  const s = Math.max(0, secs)
+  return `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`
+}
 
 /**
  * Lets a teacher/admin try an exam exactly as a student would, before publishing it.
  * Nothing here touches the backend — no attempt is created, nothing is persisted.
  * Correct-answer data is stripped via sanitizeForPreview before it reaches the
  * interactive input, and scoring is computed locally via gradeQuestion, mirroring
- * exactly what the real exam-taking flow and backend grader do.
+ * exactly what the real exam-taking flow and backend grader do. If durationMinutes
+ * is provided, a countdown runs the same way the real exam's does — checking
+ * answers automatically when it reaches zero (there's no real submission to send).
  */
-export default function ExamPreviewModal({ questions, onClose }: { questions: ExamQuestionDraft[]; onClose: () => void }) {
+export default function ExamPreviewModal({ questions, durationMinutes, onClose }: { questions: ExamQuestionDraft[]; durationMinutes?: number; onClose: () => void }) {
   const [answers, setAnswers] = useState<Record<number, any>>({})
   const [checked, setChecked] = useState(false)
+  const [autoChecked, setAutoChecked] = useState(false)
+  const [timeLeft, setTimeLeft] = useState<number | null>(durationMinutes ? durationMinutes * 60 : null)
 
   // Computed once per modal open — re-deriving on every keystroke would reshuffle
   // Sort the Paragraphs / rebuild the Drag the Words word bank mid-interaction.
@@ -24,9 +33,18 @@ export default function ExamPreviewModal({ questions, onClose }: { questions: Ex
   const autoTotal = results.reduce((s, r) => s + (r.autoGraded ? (r.awarded ?? 0) : 0), 0)
   const hasManual = results.some(r => !r.autoGraded)
 
+  useEffect(() => {
+    if (timeLeft === null || checked) return
+    if (timeLeft <= 0) { setChecked(true); setAutoChecked(true); return }
+    const tick = setTimeout(() => setTimeLeft(t => (t ?? 1) - 1), 1000)
+    return () => clearTimeout(tick)
+  }, [timeLeft, checked])
+
   function reset() {
     setAnswers({})
     setChecked(false)
+    setAutoChecked(false)
+    setTimeLeft(durationMinutes ? durationMinutes * 60 : null)
   }
 
   return (
@@ -37,10 +55,22 @@ export default function ExamPreviewModal({ questions, onClose }: { questions: Ex
             <h2 className="text-lg font-bold text-slate-800">👁 Exam Preview</h2>
             <p className="text-xs text-amber-600 mt-0.5">Preview mode — nothing here is saved or counted as a real attempt.</p>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none flex-shrink-0">✕</button>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {timeLeft !== null && (
+              <div className={`text-sm font-mono font-bold ${timeLeft < 300 ? 'text-red-600' : 'text-slate-600'}`}>
+                ⏱ {formatTime(timeLeft)}
+              </div>
+            )}
+            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
+          </div>
         </div>
 
         <div className="p-5 overflow-y-auto space-y-4 flex-1">
+          {autoChecked && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2">
+              ⏰ Time's up — answers were checked automatically, same as a real exam would auto-submit.
+            </div>
+          )}
           {questions.length === 0 ? (
             <p className="text-sm text-slate-400 text-center py-8">No questions to preview yet.</p>
           ) : questions.map((q, i) => {

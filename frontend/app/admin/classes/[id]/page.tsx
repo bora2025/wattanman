@@ -568,7 +568,7 @@ function ExamsPanel({ classId }: { classId: string }) {
             <textarea rows={2} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className="w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
-          <ExamQuestionsEditor questions={questions} onChange={setQuestions} />
+          <ExamQuestionsEditor questions={questions} onChange={setQuestions} durationMinutes={form.duration} />
           <div className="flex gap-2">
             <button type="submit" disabled={saving} className="btn-primary btn-sm disabled:opacity-60">
               {saving ? 'Saving…' : 'Create'}
@@ -656,7 +656,7 @@ function ExamsPanel({ classId }: { classId: string }) {
                               className="w-full border rounded-lg px-3 py-2 text-sm" />
                           </div>
                         </div>
-                        <ExamQuestionsEditor questions={editQuestions} onChange={setEditQuestions} />
+                        <ExamQuestionsEditor questions={editQuestions} onChange={setEditQuestions} durationMinutes={editMetaForm.duration} />
                         <div className="flex gap-2 justify-end mt-3">
                           <button onClick={() => setEditingId(null)} className="btn-outline btn-sm">Cancel</button>
                           <button onClick={() => saveEditQuestions(r.id)} disabled={editSaving} className="btn-primary btn-sm disabled:opacity-60">

@@ -12,8 +12,10 @@ export { TYPE_LABEL, uid, defaultData, defaultQuestion }
 export interface Choice { id: string; text: string; isCorrect: boolean }
 export interface Paragraph { id: string; text: string }
 
-/** Renders the full "Questions" section: type-switching list + add/remove, for authoring an exam. */
-export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQuestionDraft[]; onChange: (qs: ExamQuestionDraft[]) => void }) {
+/** Renders the full "Questions" section: type-switching list + add/remove, for authoring an exam.
+ * `durationMinutes` (the exam's own duration field) is optional and only used to simulate the
+ * countdown timer in the Preview modal — pass it from whatever form holds the exam's metadata. */
+export function ExamQuestionsEditor({ questions, onChange, durationMinutes }: { questions: ExamQuestionDraft[]; onChange: (qs: ExamQuestionDraft[]) => void; durationMinutes?: number }) {
   const [previewOpen, setPreviewOpen] = useState(false)
 
   function updateQuestion(i: number, patch: Partial<ExamQuestionDraft>) {
@@ -71,7 +73,7 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
         ))}
       </div>
       <button type="button" onClick={addQuestion} className="mt-2 text-sm text-sky-600 hover:underline">+ Add Question</button>
-      {previewOpen && <ExamPreviewModal questions={questions} onClose={() => setPreviewOpen(false)} />}
+      {previewOpen && <ExamPreviewModal questions={questions} durationMinutes={durationMinutes} onClose={() => setPreviewOpen(false)} />}
     </div>
   )
 }
