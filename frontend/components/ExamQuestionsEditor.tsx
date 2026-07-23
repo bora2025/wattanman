@@ -1,51 +1,21 @@
 "use client"
 
+import { useState } from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { type QType, type ExamQuestionDraft, TYPE_LABEL, uid, defaultData, defaultQuestion } from '../lib/examQuestionLogic'
+import ExamPreviewModal from './ExamPreviewModal'
 
-export type QType = 'MCQ' | 'TF' | 'ESSAY' | 'SORT_PARAGRAPHS' | 'DRAG_WORDS'
+export type { QType, ExamQuestionDraft }
+export { TYPE_LABEL, uid, defaultData, defaultQuestion }
 export interface Choice { id: string; text: string; isCorrect: boolean }
 export interface Paragraph { id: string; text: string }
-export interface ExamQuestionDraft {
-  text: string
-  type: QType
-  marks: number
-  data: any
-}
-
-export const TYPE_LABEL: Record<QType, string> = {
-  MCQ: 'Multi-Choice',
-  TF: 'True / False',
-  ESSAY: 'Essay',
-  SORT_PARAGRAPHS: 'Sort the Paragraphs',
-  DRAG_WORDS: 'Drag the Words',
-}
-
-export function uid(prefix: string) { return `${prefix}_${Math.random().toString(36).slice(2, 8)}` }
-
-export function defaultData(type: QType): any {
-  switch (type) {
-    case 'MCQ':
-      return { choices: [{ id: uid('c'), text: '', isCorrect: false }, { id: uid('c'), text: '', isCorrect: false }], multiple: false }
-    case 'ESSAY':
-      return { minWords: 0 }
-    case 'SORT_PARAGRAPHS':
-      return { paragraphs: [{ id: uid('p'), text: '' }, { id: uid('p'), text: '' }] }
-    case 'DRAG_WORDS':
-      return { text: '' }
-    case 'TF':
-    default:
-      return { correct: true }
-  }
-}
-
-export function defaultQuestion(): ExamQuestionDraft {
-  return { text: '', type: 'MCQ', marks: 1, data: defaultData('MCQ') }
-}
 
 /** Renders the full "Questions" section: type-switching list + add/remove, for authoring an exam. */
 export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQuestionDraft[]; onChange: (qs: ExamQuestionDraft[]) => void }) {
+  const [previewOpen, setPreviewOpen] = useState(false)
+
   function updateQuestion(i: number, patch: Partial<ExamQuestionDraft>) {
     onChange(questions.map((q, idx) => idx === i ? { ...q, ...patch } : q))
   }
@@ -57,7 +27,12 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
 
   return (
     <div>
-      <p className="text-sm font-semibold text-slate-700 mb-2">Questions</p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-semibold text-slate-700">Questions</p>
+        <button type="button" onClick={() => setPreviewOpen(true)} disabled={questions.length === 0} className="text-xs text-emerald-700 hover:underline disabled:opacity-40">
+          👁 Preview
+        </button>
+      </div>
       <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
         {questions.map((q, i) => (
           <div key={i} className="border rounded-lg p-3 bg-slate-50 relative">
@@ -96,6 +71,7 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
         ))}
       </div>
       <button type="button" onClick={addQuestion} className="mt-2 text-sm text-sky-600 hover:underline">+ Add Question</button>
+      {previewOpen && <ExamPreviewModal questions={questions} onClose={() => setPreviewOpen(false)} />}
     </div>
   )
 }
