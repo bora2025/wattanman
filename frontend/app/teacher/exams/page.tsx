@@ -4,13 +4,11 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { teacherNav } from '../../../lib/teacher-nav'
 import { apiFetch } from '../../../lib/api'
+import { ExamQuestionsEditor, defaultQuestion, type ExamQuestionDraft } from '../../../components/ExamQuestionsEditor'
 
 interface Exam {
   id: string; title: string; description: string | null; status: string
@@ -21,44 +19,10 @@ interface Exam {
 }
 interface ClassItem { id: string; name: string; subject: string }
 
-type QType = 'MCQ' | 'TF' | 'ESSAY' | 'SORT_PARAGRAPHS' | 'DRAG_WORDS'
-interface Choice { id: string; text: string; isCorrect: boolean }
-interface Paragraph { id: string; text: string }
-interface ExamQuestionDraft {
-  text: string
-  type: QType
-  marks: number
-  data: any
-}
-
-const TYPE_LABEL: Record<QType, string> = {
-  MCQ: 'Multi-Choice',
-  TF: 'True / False',
-  ESSAY: 'Essay',
-  SORT_PARAGRAPHS: 'Sort the Paragraphs',
-  DRAG_WORDS: 'Drag the Words',
-}
-
-function uid(prefix: string) { return `${prefix}_${Math.random().toString(36).slice(2, 8)}` }
-
-function defaultData(type: QType): any {
-  switch (type) {
-    case 'MCQ':
-      return { choices: [{ id: uid('c'), text: '', isCorrect: false }, { id: uid('c'), text: '', isCorrect: false }], multiple: false }
-    case 'ESSAY':
-      return { minWords: 0 }
-    case 'SORT_PARAGRAPHS':
-      return { paragraphs: [{ id: uid('p'), text: '' }, { id: uid('p'), text: '' }] }
-    case 'DRAG_WORDS':
-      return { text: '' }
-    case 'TF':
-    default:
-      return { correct: true }
-  }
-}
-
-function defaultQuestion(): ExamQuestionDraft {
-  return { text: '', type: 'MCQ', marks: 1, data: defaultData('MCQ') }
+interface EditInitialData {
+  title: string; description: string; classId: string
+  duration: number; totalMarks: number; passMark: number
+  questions: ExamQuestionDraft[]
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -70,6 +34,9 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default function TeacherExamsPage() {
   const [showForm, setShowForm] = useState(false)
+  const [editingExamId, setEditingExamId] = useState<string | null>(null)
+  const [editInitialData, setEditInitialData] = useState<EditInitialData | null>(null)
+  const [editLoadingId, setEditLoadingId] = useState<string | null>(null)
   const qc = useQueryClient()
 
   const { data: exams = [] as Exam[], isLoading, isError, refetch } = useQuery<Exam[]>({
@@ -90,6 +57,31 @@ export default function TeacherExamsPage() {
     mutationFn: (id: string) => apiFetch(`/api/exams/${id}`, { method: 'DELETE' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['teacher-exams'] }),
   })
+
+  async function openEdit(examId: string) {
+    setEditLoadingId(examId)
+    try {
+      const r = await apiFetch(`/api/exams/${examId}`)
+      if (!r.ok) throw new Error()
+      const full = await r.json()
+      setEditInitialData({
+        title: full.title || '',
+        description: full.description || '',
+        classId: full.classId || full.class?.id || '',
+        duration: full.duration ?? 60,
+        totalMarks: full.totalMarks ?? 100,
+        passMark: full.passMark ?? 50,
+        questions: (full.questions || []).length
+          ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data }))
+          : [defaultQuestion()],
+      })
+      setEditingExamId(examId)
+    } catch {
+      alert('Failed to load exam for editing')
+    } finally {
+      setEditLoadingId(null)
+    }
+  }
 
   return (
     <AuthGuard requiredRole="TEACHER">
@@ -133,6 +125,9 @@ export default function TeacherExamsPage() {
                     <p className="text-xs text-amber-600 mt-0.5">{exam._count.attempts} attempt(s)</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    <button onClick={() => openEdit(exam.id)} disabled={editLoadingId === exam.id} className="text-xs text-sky-600 hover:underline disabled:opacity-50">
+                      {editLoadingId === exam.id ? 'Loading…' : 'Edit'}
+                    </button>
                     <Link
                       href={`/teacher/exams/${exam.id}/attempts`}
                       className="text-xs px-2.5 py-1 rounded-md border border-sky-200 text-sky-700 hover:bg-sky-50 font-medium"
@@ -159,46 +154,57 @@ export default function TeacherExamsPage() {
             onSuccess={() => { setShowForm(false); qc.invalidateQueries({ queryKey: ['teacher-exams'] }) }}
           />
         )}
+        {editingExamId && editInitialData && (
+          <ExamFormModal
+            classes={classes}
+            examId={editingExamId}
+            initialData={editInitialData}
+            onClose={() => { setEditingExamId(null); setEditInitialData(null) }}
+            onSuccess={() => { setEditingExamId(null); setEditInitialData(null); qc.invalidateQueries({ queryKey: ['teacher-exams'] }) }}
+          />
+        )}
       </div>
     </AuthGuard>
   )
 }
 
-function ExamFormModal({ classes, onClose, onSuccess }: { classes: ClassItem[]; onClose: () => void; onSuccess: () => void }) {
+function ExamFormModal({ classes, examId, initialData, onClose, onSuccess }: {
+  classes: ClassItem[]
+  examId?: string
+  initialData?: EditInitialData
+  onClose: () => void
+  onSuccess: () => void
+}) {
   const { register, handleSubmit, formState: { isSubmitting } } = useForm({
-    defaultValues: { title: '', description: '', classId: '', duration: 60, totalMarks: 100, passMark: 50 },
+    defaultValues: initialData
+      ? { title: initialData.title, description: initialData.description, classId: initialData.classId, duration: initialData.duration, totalMarks: initialData.totalMarks, passMark: initialData.passMark }
+      : { title: '', description: '', classId: '', duration: 60, totalMarks: 100, passMark: 50 },
   })
-  const [questions, setQuestions] = useState<ExamQuestionDraft[]>([defaultQuestion()])
+  const [questions, setQuestions] = useState<ExamQuestionDraft[]>(initialData?.questions?.length ? initialData.questions : [defaultQuestion()])
   const [formError, setFormError] = useState<string | null>(null)
-
-  function updateQuestion(i: number, patch: Partial<ExamQuestionDraft>) {
-    setQuestions(qs => qs.map((q, idx) => idx === i ? { ...q, ...patch } : q))
-  }
-  function changeType(i: number, type: QType) {
-    updateQuestion(i, { type, data: defaultData(type) })
-  }
-  function addQuestion() { setQuestions(qs => [...qs, defaultQuestion()]) }
-  function removeQuestion(i: number) { setQuestions(qs => qs.filter((_, idx) => idx !== i)) }
 
   const onSubmit = async (data: any) => {
     setFormError(null)
-    const res = await apiFetch('/api/exams', {
-      method: 'POST',
+    const url = examId ? `/api/exams/${examId}` : '/api/exams'
+    const method = examId ? 'PUT' : 'POST'
+    const body = examId ? { ...data, questions } : { ...data, status: 'DRAFT', questions }
+    const res = await apiFetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...data, status: 'DRAFT', questions }),
+      body: JSON.stringify(body),
     })
     if (res.ok) {
       onSuccess()
     } else {
       const e = await res.json().catch(() => ({}))
-      setFormError(Array.isArray(e?.message) ? e.message.join(', ') : (e?.message || 'Failed to create exam'))
+      setFormError(Array.isArray(e?.message) ? e.message.join(', ') : (e?.message || `Failed to ${examId ? 'update' : 'create'} exam`))
     }
   }
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl my-4">
-        <h2 className="text-lg font-bold mb-4">Create Exam</h2>
+        <h2 className="text-lg font-bold mb-4">{examId ? 'Edit Exam' : 'Create Exam'}</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <input {...register('title', { required: true })} placeholder="Exam title *" className="w-full border rounded-lg px-3 py-2 text-sm" />
           <input {...register('description')} placeholder="Description" className="w-full border rounded-lg px-3 py-2 text-sm" />
@@ -212,47 +218,7 @@ function ExamFormModal({ classes, onClose, onSuccess }: { classes: ClassItem[]; 
             <input type="number" {...register('passMark')} placeholder="Pass mark" className="border rounded-lg px-3 py-2 text-sm" />
           </div>
 
-          <div>
-            <p className="text-sm font-semibold text-slate-700 mb-2">Questions</p>
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-              {questions.map((q, i) => (
-                <div key={i} className="border rounded-lg p-3 bg-slate-50 relative">
-                  <button type="button" onClick={() => removeQuestion(i)} disabled={questions.length <= 1} className="absolute top-2 right-2 text-red-400 text-xs disabled:opacity-30">✕</button>
-                  <div className="grid grid-cols-3 gap-2 mb-2">
-                    <select value={q.type} onChange={e => changeType(i, e.target.value as QType)} className="col-span-2 border rounded px-2 py-1 text-sm">
-                      {(Object.keys(TYPE_LABEL) as QType[]).map(t => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
-                    </select>
-                    <input type="number" step="any" min={0} value={q.marks} onChange={e => updateQuestion(i, { marks: Number(e.target.value) || 0 })} placeholder="Marks" className="border rounded px-2 py-1 text-sm" />
-                  </div>
-                  <textarea value={q.text} onChange={e => updateQuestion(i, { text: e.target.value })} placeholder={`Q${i + 1}: Question text`} rows={2} className="w-full border rounded px-2 py-1 text-sm mb-2 resize-none" />
-
-                  {q.type === 'MCQ' && (
-                    <McqEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
-                  )}
-                  {q.type === 'TF' && (
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="text-slate-500">Correct answer:</span>
-                      <label className="flex items-center gap-1"><input type="radio" checked={q.data?.correct === true} onChange={() => updateQuestion(i, { data: { correct: true } })} /> True</label>
-                      <label className="flex items-center gap-1"><input type="radio" checked={q.data?.correct === false} onChange={() => updateQuestion(i, { data: { correct: false } })} /> False</label>
-                    </div>
-                  )}
-                  {q.type === 'ESSAY' && (
-                    <label className="text-xs text-slate-500 block">Minimum words (optional)
-                      <input type="number" min={0} value={q.data?.minWords ?? 0} onChange={e => updateQuestion(i, { data: { minWords: Number(e.target.value) || 0 } })} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
-                      <p className="text-[11px] text-slate-400 mt-1">Essay answers must be graded manually.</p>
-                    </label>
-                  )}
-                  {q.type === 'SORT_PARAGRAPHS' && (
-                    <ParagraphSortEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
-                  )}
-                  {q.type === 'DRAG_WORDS' && (
-                    <DragWordsEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
-                  )}
-                </div>
-              ))}
-            </div>
-            <button type="button" onClick={addQuestion} className="mt-2 text-sm text-sky-600 hover:underline">+ Add Question</button>
-          </div>
+          <ExamQuestionsEditor questions={questions} onChange={setQuestions} />
 
           {formError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{formError}</div>}
 
@@ -260,113 +226,11 @@ function ExamFormModal({ classes, onClose, onSuccess }: { classes: ClassItem[]; 
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>
             <button type="submit" disabled={isSubmitting}
               className="px-4 py-2 text-sm bg-sky-600 text-white rounded-lg font-medium disabled:opacity-60">
-              {isSubmitting ? 'Creating...' : 'Create Exam'}
+              {isSubmitting ? 'Saving...' : (examId ? 'Save Changes' : 'Create Exam')}
             </button>
           </div>
         </form>
       </div>
-    </div>
-  )
-}
-
-function McqEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
-  const choices: Choice[] = data?.choices ?? []
-  const multiple = !!data?.multiple
-  function setChoice(i: number, patch: Partial<Choice>) {
-    const next = choices.map((c, idx) => idx === i ? { ...c, ...patch } : c)
-    onChange({ ...data, choices: next })
-  }
-  function addChoice() { onChange({ ...data, choices: [...choices, { id: uid('c'), text: '', isCorrect: false }] }) }
-  function removeChoice(i: number) { onChange({ ...data, choices: choices.filter((_, idx) => idx !== i) }) }
-  function toggleCorrect(i: number) {
-    if (multiple) {
-      setChoice(i, { isCorrect: !choices[i].isCorrect })
-    } else {
-      onChange({ ...data, choices: choices.map((c, idx) => ({ ...c, isCorrect: idx === i })) })
-    }
-  }
-  return (
-    <div className="space-y-2">
-      <label className="flex items-center gap-2 text-xs text-slate-500">
-        <input type="checkbox" checked={multiple} onChange={e => onChange({ ...data, multiple: e.target.checked })} /> Allow multiple correct answers
-      </label>
-      {choices.map((c, i) => (
-        <div key={c.id} className="flex items-center gap-2">
-          <input type={multiple ? 'checkbox' : 'radio'} checked={c.isCorrect} onChange={() => toggleCorrect(i)} title="Mark as correct" />
-          <input value={c.text} onChange={e => setChoice(i, { text: e.target.value })} placeholder={`Choice ${i + 1}`} className="flex-1 border rounded-lg px-3 py-1.5 text-sm" />
-          <button type="button" onClick={() => removeChoice(i)} disabled={choices.length <= 2} className="text-xs text-red-500 disabled:opacity-30">✕</button>
-        </div>
-      ))}
-      <button type="button" onClick={addChoice} className="text-xs text-sky-600 hover:underline">+ Add choice</button>
-    </div>
-  )
-}
-
-function SortableRow({ id, children }: { id: string; children: (opts: { listeners: any; attributes: any }) => React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }
-  return <div ref={setNodeRef} style={style}>{children({ listeners, attributes })}</div>
-}
-
-function ParagraphSortEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
-  const paragraphs: Paragraph[] = data?.paragraphs ?? []
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
-
-  function updateText(i: number, text: string) {
-    onChange({ ...data, paragraphs: paragraphs.map((p, idx) => idx === i ? { ...p, text } : p) })
-  }
-  function addParagraph() { onChange({ ...data, paragraphs: [...paragraphs, { id: uid('p'), text: '' }] }) }
-  function removeParagraph(i: number) { onChange({ ...data, paragraphs: paragraphs.filter((_, idx) => idx !== i) }) }
-  function handleDragEnd(e: DragEndEvent) {
-    const { active, over } = e
-    if (!over || active.id === over.id) return
-    const oldIndex = paragraphs.findIndex(p => p.id === active.id)
-    const newIndex = paragraphs.findIndex(p => p.id === over.id)
-    onChange({ ...data, paragraphs: arrayMove(paragraphs, oldIndex, newIndex) })
-  }
-
-  return (
-    <div className="space-y-2">
-      <p className="text-xs text-slate-500">Enter paragraphs in the correct order — students see them shuffled and must drag to reorder.</p>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={paragraphs.map(p => p.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-1.5">
-            {paragraphs.map((p, i) => (
-              <SortableRow key={p.id} id={p.id}>
-                {({ listeners, attributes }) => (
-                  <div className="flex items-start gap-2 bg-white border rounded-lg p-2">
-                    <span {...listeners} {...attributes} className="text-slate-400 cursor-grab active:cursor-grabbing pt-1.5 select-none touch-none" title="Drag to reorder">⠿</span>
-                    <span className="text-xs text-slate-400 pt-1.5">{i + 1}.</span>
-                    <textarea value={p.text} onChange={e => updateText(i, e.target.value)} rows={1} placeholder={`Paragraph ${i + 1}`} className="flex-1 border rounded px-2 py-1 text-sm resize-none" />
-                    <button type="button" onClick={() => removeParagraph(i)} disabled={paragraphs.length <= 2} className="text-xs text-red-500 disabled:opacity-30 pt-1.5">✕</button>
-                  </div>
-                )}
-              </SortableRow>
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-      <button type="button" onClick={addParagraph} className="text-xs text-sky-600 hover:underline">+ Add paragraph</button>
-    </div>
-  )
-}
-
-function DragWordsEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
-  const text: string = data?.text ?? ''
-  const preview = text.split(/(\*[^*]+\*)/g).filter((s: string) => s.length > 0)
-  return (
-    <div className="space-y-2">
-      <p className="text-xs text-slate-500">Wrap each draggable word in *asterisks*, e.g. &quot;The *cat* sat on the *mat*.&quot;</p>
-      <textarea value={text} onChange={e => onChange({ text: e.target.value })} rows={3} placeholder="The *cat* sat on the *mat*." className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
-      {text && (
-        <div className="text-sm bg-white border rounded-lg p-2 leading-relaxed">
-          {preview.map((seg, i) => (
-            seg.startsWith('*') && seg.endsWith('*') && seg.length > 2
-              ? <span key={i} className="inline-block bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded mx-0.5 font-medium">{seg.slice(1, -1)}</span>
-              : <span key={i}>{seg}</span>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

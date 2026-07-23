@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { Fragment, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
@@ -8,6 +8,7 @@ import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
 import { formatCambodiaTime } from '../../../../lib/dateUtils'
+import { ExamQuestionsEditor, defaultQuestion, type ExamQuestionDraft } from '../../../../components/ExamQuestionsEditor'
 
 type Tab = 'assignments' | 'exams' | 'courses'
 
@@ -326,7 +327,12 @@ function ExamsPanel({ classId }: { classId: string }) {
   const [error, setError] = useState('')
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50 })
+  const [questions, setQuestions] = useState<ExamQuestionDraft[]>([defaultQuestion()])
   const [saving, setSaving] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editQuestions, setEditQuestions] = useState<ExamQuestionDraft[]>([])
+  const [editLoadingId, setEditLoadingId] = useState<string | null>(null)
+  const [editSaving, setEditSaving] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -352,12 +358,14 @@ function ExamsPanel({ classId }: { classId: string }) {
         duration: Number(form.duration) || 60,
         totalMarks: Number(form.totalMarks) || 100,
         passMark: Number(form.passMark) || 50,
+        questions,
       }
       const r = await apiFetch('/api/exams', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       })
       if (!r.ok) throw new Error()
       setForm({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50 })
+      setQuestions([defaultQuestion()])
       setCreating(false)
       await load()
     } catch { setError('Failed to create exam.') }
@@ -382,6 +390,35 @@ function ExamsPanel({ classId }: { classId: string }) {
       if (!r.ok) throw new Error()
       await load()
     } catch { setError('Failed to delete exam.') }
+  }
+
+  const toggleEditQuestions = async (row: ExamRow) => {
+    if (editingId === row.id) { setEditingId(null); return }
+    setEditLoadingId(row.id); setError('')
+    try {
+      const r = await apiFetch(`/api/exams/${row.id}`)
+      if (!r.ok) throw new Error()
+      const full = await r.json()
+      setEditQuestions((full.questions || []).length
+        ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data }))
+        : [defaultQuestion()])
+      setEditingId(row.id)
+    } catch { setError('Failed to load exam questions.') }
+    finally { setEditLoadingId(null) }
+  }
+
+  const saveEditQuestions = async (examId: string) => {
+    setEditSaving(true); setError('')
+    try {
+      const r = await apiFetch(`/api/exams/${examId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions: editQuestions }),
+      })
+      if (!r.ok) throw new Error()
+      setEditingId(null)
+      await load()
+    } catch { setError('Failed to save questions.') }
+    finally { setEditSaving(false) }
   }
 
   return (
@@ -425,6 +462,7 @@ function ExamsPanel({ classId }: { classId: string }) {
             <textarea rows={2} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className="w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
+          <ExamQuestionsEditor questions={questions} onChange={setQuestions} />
           <div className="flex gap-2">
             <button type="submit" disabled={saving} className="btn-primary btn-sm disabled:opacity-60">
               {saving ? 'Saving…' : 'Create'}
@@ -456,27 +494,46 @@ function ExamsPanel({ classId }: { classId: string }) {
             </thead>
             <tbody>
               {rows.map(r => (
-                <tr key={r.id} className="border-t border-slate-100">
-                  <td className="px-4 py-2 font-medium text-slate-800">
-                    {r.title}
-                    {r.createdBy && <p className="text-xs text-slate-400">by {r.createdBy.name}</p>}
-                  </td>
-                  <td className="px-4 py-2 text-slate-600">{r.duration} min</td>
-                  <td className="px-4 py-2 text-slate-600">{r.totalMarks} · {r.passMark}</td>
-                  <td className="px-4 py-2 text-slate-600">{r._count?.questions ?? 0}</td>
-                  <td className="px-4 py-2 text-slate-600">{r._count?.attempts ?? 0}</td>
-                  <td className="px-4 py-2">
-                    <select value={r.status} onChange={e => handleStatusChange(r, e.target.value)}
-                      className={`text-xs font-semibold px-2 py-1 rounded-full border outline-none ${statusColor(r.status)}`}>
-                      {EXAM_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <Link href={`/teacher/exams/${r.id}/attempts`} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-indigo-600 hover:underline mr-3">Open ↗</Link>
-                    <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
-                  </td>
-                </tr>
+                <Fragment key={r.id}>
+                  <tr className="border-t border-slate-100">
+                    <td className="px-4 py-2 font-medium text-slate-800">
+                      {r.title}
+                      {r.createdBy && <p className="text-xs text-slate-400">by {r.createdBy.name}</p>}
+                    </td>
+                    <td className="px-4 py-2 text-slate-600">{r.duration} min</td>
+                    <td className="px-4 py-2 text-slate-600">{r.totalMarks} · {r.passMark}</td>
+                    <td className="px-4 py-2 text-slate-600">{r._count?.questions ?? 0}</td>
+                    <td className="px-4 py-2 text-slate-600">{r._count?.attempts ?? 0}</td>
+                    <td className="px-4 py-2">
+                      <select value={r.status} onChange={e => handleStatusChange(r, e.target.value)}
+                        className={`text-xs font-semibold px-2 py-1 rounded-full border outline-none ${statusColor(r.status)}`}>
+                        {EXAM_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-4 py-2 text-right whitespace-nowrap">
+                      <button onClick={() => toggleEditQuestions(r)} disabled={editLoadingId === r.id}
+                        className="text-xs text-emerald-700 hover:underline mr-3 disabled:opacity-50">
+                        {editingId === r.id ? 'Close' : editLoadingId === r.id ? 'Loading…' : 'Questions'}
+                      </button>
+                      <Link href={`/teacher/exams/${r.id}/attempts`} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-indigo-600 hover:underline mr-3">Grade ↗</Link>
+                      <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
+                    </td>
+                  </tr>
+                  {editingId === r.id && (
+                    <tr className="border-t border-slate-100 bg-slate-50/60">
+                      <td colSpan={7} className="px-4 py-4">
+                        <ExamQuestionsEditor questions={editQuestions} onChange={setEditQuestions} />
+                        <div className="flex gap-2 justify-end mt-3">
+                          <button onClick={() => setEditingId(null)} className="btn-outline btn-sm">Cancel</button>
+                          <button onClick={() => saveEditQuestions(r.id)} disabled={editSaving} className="btn-primary btn-sm disabled:opacity-60">
+                            {editSaving ? 'Saving…' : 'Save Questions'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
