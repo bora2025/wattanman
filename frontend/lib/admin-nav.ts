@@ -49,6 +49,9 @@ export const adminNav = [
   // ── Modules ──
   { label: 'School Bus', href: '/admin/bus', icon: 'calendar', section: 'Modules' },
 
+  // ── Tools ──
+  { label: 'LaTeX Editor', href: '/tools/latex-editor', icon: '∑', section: 'Tools' },
+
   // ── Settings ──
   { label: 'nav.sessionSettings', href: '/admin/session-settings', icon: 'clock', section: 'nav.section.settings' },
   { label: 'nav.holidays', href: '/admin/holidays', icon: 'holiday' },

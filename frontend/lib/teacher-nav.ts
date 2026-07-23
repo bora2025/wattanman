@@ -10,4 +10,5 @@ export const teacherNav = [
   { label: 'Gradebook', href: '/teacher/gradebook', icon: 'chart' },
   { label: 'Messages', href: '/teacher/messages', icon: '💬', badgeKey: 'messages' as const },
   { label: 'Announcements', href: '/teacher/announcements', icon: '📣', badgeKey: 'announcements' as const },
+  { label: 'LaTeX Editor', href: '/tools/latex-editor', icon: '∑' },
 ]
