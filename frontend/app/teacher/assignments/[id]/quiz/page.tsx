@@ -14,6 +14,7 @@ import { DragDropEditor } from '../../../../../components/questions/DragDropFiel
 import { SpeakWordsEditor } from '../../../../../components/questions/SpeakWordsField'
 import { SpeakWordsSetEditor } from '../../../../../components/questions/SpeakWordsSetField'
 import { DictationEditor } from '../../../../../components/questions/DictationField'
+import MathText from '../../../../../components/MathText'
 
 type QType = 'MCQ' | 'TF' | 'MATCHING' | 'NUMERICAL' | H5PType
 
@@ -206,11 +207,11 @@ export default function TeacherQuizEditorPage() {
                         <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-violet-100 text-violet-700">{TYPE_LABEL[q.type] ?? q.type}</span>
                         <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">{q.points} pt</span>
                       </div>
-                      <p className="text-sm text-slate-800 whitespace-pre-wrap">{q.prompt}</p>
+                      <MathText as="p" className="text-sm text-slate-800 whitespace-pre-wrap" text={q.prompt} />
                       {q.type === 'MCQ' && Array.isArray(q.data?.choices) && (
                         <ul className="mt-2 space-y-1">
                           {q.data.choices.map((c: Choice) => (
-                            <li key={c.id} className={`text-xs ${c.isCorrect ? 'text-emerald-700 font-semibold' : 'text-slate-500'}`}>{c.isCorrect ? '✔' : '○'} {c.text}</li>
+                            <li key={c.id} className={`text-xs ${c.isCorrect ? 'text-emerald-700 font-semibold' : 'text-slate-500'}`}>{c.isCorrect ? '✔' : '○'} <MathText as="span" text={c.text} /></li>
                           ))}
                         </ul>
                       )}
@@ -229,7 +230,7 @@ export default function TeacherQuizEditorPage() {
                         <p className="mt-2 text-xs text-slate-500">{(q.data?.items || []).length} item(s), {(q.data?.zones || []).length} zone(s)</p>
                       )}
                       {q.type === 'SPEAK_WORDS' && (
-                        <p className="mt-2 text-xs text-slate-500">Prompt: {q.data?.prompt}</p>
+                        <p className="mt-2 text-xs text-slate-500">Prompt: <MathText as="span" text={q.data?.prompt} /></p>
                       )}
                       {q.type === 'SPEAK_WORDS_SET' && (
                         <p className="mt-2 text-xs text-slate-500">{(q.data?.items || []).length} prompt(s)</p>

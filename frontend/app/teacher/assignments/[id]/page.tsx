@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
 import { apiFetch } from '../../../../lib/api'
 import { H5P_TYPE_LABEL, parseDragWordsText, diffWords } from '../../../../lib/h5pQuestionLogic'
+import MathText from '../../../../components/MathText'
 interface Submission {
   id: string
   content: string | null
@@ -236,7 +237,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
           {choices.map((c: any) => {
             const chosen = sel.includes(c.id)
             const correct = isCorrect?.includes(c.id)
-            return <li key={c.id} className={`text-xs ${chosen ? (correct ? 'text-emerald-700 font-semibold' : 'text-red-600 font-semibold') : (correct ? 'text-emerald-600' : 'text-slate-400')}`}>{chosen ? '●' : '○'} {c.text} {correct && !chosen ? '(correct)' : ''}</li>
+            return <li key={c.id} className={`text-xs ${chosen ? (correct ? 'text-emerald-700 font-semibold' : 'text-red-600 font-semibold') : (correct ? 'text-emerald-600' : 'text-slate-400')}`}>{chosen ? '●' : '○'} <MathText as="span" text={c.text} /> {correct && !chosen ? '(correct)' : ''}</li>
           })}
         </ul>
       )
@@ -258,7 +259,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
         <ol className="text-xs space-y-0.5 list-decimal list-inside">
           {given.map((id, i) => {
             const rightSpot = correctOrder[i] === id
-            return <li key={id} className={rightSpot ? 'text-emerald-700' : 'text-red-600'}>{byId[id] ?? '(unknown)'}</li>
+            return <li key={id} className={rightSpot ? 'text-emerald-700' : 'text-red-600'}>{byId[id] ? <MathText as="span" text={byId[id]} /> : '(unknown)'}</li>
           })}
         </ol>
       )
@@ -286,7 +287,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
             const zoneId = given[it.id]
             const ok = zoneId === it.correctZoneId
             const zoneIdx = zones.findIndex(z => z.id === zoneId)
-            return <div key={it.id}>{it.label}: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{zoneId ? `Zone ${zoneIdx + 1}` : '(not placed)'}</span></div>
+            return <div key={it.id}><MathText as="span" text={it.label} />: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{zoneId ? `Zone ${zoneIdx + 1}` : '(not placed)'}</span></div>
           })}
         </div>
       )
@@ -297,7 +298,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
       const given: Record<string, string> = r && typeof r === 'object' ? r : {}
       return (
         <div className="text-xs space-y-0.5">
-          {items.map(it => <div key={it.id}>{it.prompt}: <span className="text-slate-700">{given[it.id] || '(no answer)'}</span></div>)}
+          {items.map(it => <div key={it.id}><MathText as="span" text={it.prompt} />: <span className="text-slate-700">{given[it.id] || '(no answer)'}</span></div>)}
         </div>
       )
     }
@@ -323,7 +324,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
         {answer?.autoGraded && <span className="text-[10px] uppercase font-semibold bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded">auto</span>}
         {answer?.pointsAwarded == null && <span className="text-[10px] uppercase font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">needs grading</span>}
       </div>
-      <p className="text-sm text-slate-800 mb-2 whitespace-pre-wrap">{question.prompt}</p>
+      <MathText as="p" className="text-sm text-slate-800 mb-2 whitespace-pre-wrap" text={question.prompt} />
       <div className="mb-2">{renderResponse()}</div>
       <div className="flex gap-2 items-center mt-2">
         <input

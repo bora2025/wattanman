@@ -1,12 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-
-declare global {
-  interface Window {
-    MathJax?: any
-  }
-}
+import { useMathJax } from '../../../lib/useMathJax'
 
 const EXAMPLES = [
   { label: 'Inline: √16 = 4', value: String.raw`\(\sqrt{16} = 4\)` },
@@ -29,34 +24,11 @@ const DEFAULT_INPUT = String.raw`\(\sqrt{16} = 4\)`
 
 export default function LatexEditorPage() {
   const [input, setInput] = useState(DEFAULT_INPUT)
-  const [mathJaxReady, setMathJaxReady] = useState(false)
+  const mathJaxReady = useMathJax()
   const [renderError, setRenderError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const outputRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  // Load MathJax v3 from CDN once (tex input + SVG output — clean, scalable,
-  // and directly exportable as vector/raster images without extra deps).
-  useEffect(() => {
-    if (window.MathJax) {
-      setMathJaxReady(true)
-      return
-    }
-    window.MathJax = {
-      tex: {
-        inlineMath: [['\\(', '\\)']],
-        displayMath: [['\\[', '\\]']],
-      },
-      svg: { fontCache: 'global' },
-      startup: { typeset: false },
-    }
-    const script = document.createElement('script')
-    script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js'
-    script.async = true
-    script.onload = () => setMathJaxReady(true)
-    script.onerror = () => setRenderError('Failed to load MathJax from CDN. Check your internet connection.')
-    document.head.appendChild(script)
-  }, [])
 
   // Live preview — debounced re-typeset on every input change.
   useEffect(() => {

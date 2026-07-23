@@ -14,6 +14,7 @@ import { DragDropInput } from '../../../../../components/questions/DragDropField
 import { SpeakWordsInput } from '../../../../../components/questions/SpeakWordsField'
 import { SpeakWordsSetInput } from '../../../../../components/questions/SpeakWordsSetField'
 import { DictationInput } from '../../../../../components/questions/DictationField'
+import MathText from '../../../../../components/MathText'
 
 type QType = 'MCQ' | 'TF' | 'MATCHING' | 'NUMERICAL' | H5PType
 interface Question {
@@ -179,7 +180,7 @@ export default function StudentQuizPage() {
                     <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${ans.pointsAwarded >= q.points ? 'bg-emerald-100 text-emerald-700' : ans.pointsAwarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>You: {ans.pointsAwarded}/{q.points}</span>
                   )}
                 </div>
-                <p className="text-sm text-slate-800 whitespace-pre-wrap mb-3">{q.prompt}</p>
+                <MathText as="p" className="text-sm text-slate-800 whitespace-pre-wrap mb-3" text={q.prompt} />
                 <QuestionInput q={q} value={answers[q.id]} onChange={(v) => setAnswer(q.id, v)} disabled={(exhausted && !!submission) || revealAnswers} />
                 {revealAnswers && q.correctData && (
                   <CorrectAnswerPanel q={q} />
@@ -242,7 +243,7 @@ function QuestionInput({ q, value, onChange, disabled }: { q: Question; value: a
           {choices.map(c => (
             <label key={c.id} className={`flex items-center gap-2 text-sm cursor-pointer ${disabled ? 'opacity-60' : ''}`}>
               <input type={multiple ? 'checkbox' : 'radio'} name={q.id} checked={selected.includes(c.id)} onChange={() => toggle(c.id)} disabled={disabled} />
-              {c.text}
+              <MathText as="span" text={c.text} />
             </label>
           ))}
         </div>
@@ -290,7 +291,7 @@ function QuestionInput({ q, value, onChange, disabled }: { q: Question; value: a
         <div className="space-y-2">
           {left.map(l => (
             <div key={l.id} className="flex items-center gap-2">
-              <span className="text-sm text-slate-700 w-1/2 truncate">{l.text}</span>
+              <MathText as="span" className="text-sm text-slate-700 w-1/2 truncate" text={l.text} />
               <select value={pairFor(l.id)} onChange={e => setPair(l.id, e.target.value)} disabled={disabled} className="flex-1 border rounded-lg px-2 py-1 text-sm">
                 <option value="">— choose —</option>
                 {right.map(r => <option key={r.id} value={r.id}>{r.text}</option>)}
@@ -314,7 +315,7 @@ function CorrectAnswerPanel({ q }: { q: Question }) {
       const correctIds: string[] = cd.correctIds ?? []
       content = (
         <ul className="list-disc list-inside text-sm text-emerald-700">
-          {choices.filter(c => correctIds.includes(c.id)).map(c => <li key={c.id}>{c.text}</li>)}
+          {choices.filter(c => correctIds.includes(c.id)).map(c => <li key={c.id}><MathText as="span" text={c.text} /></li>)}
         </ul>
       )
       break
@@ -342,7 +343,7 @@ function CorrectAnswerPanel({ q }: { q: Question }) {
       const paragraphs: Array<{ id: string; text: string }> = cd.paragraphs ?? []
       content = (
         <ol className="list-decimal list-inside text-sm text-emerald-700 space-y-0.5">
-          {paragraphs.map(p => <li key={p.id}>{p.text}</li>)}
+          {paragraphs.map(p => <li key={p.id}><MathText as="span" text={p.text} /></li>)}
         </ol>
       )
       break
@@ -356,7 +357,7 @@ function CorrectAnswerPanel({ q }: { q: Question }) {
       const items: Array<{ id: string; label: string; correctZoneId: string }> = cd.items ?? []
       content = (
         <ul className="text-sm text-emerald-700 space-y-0.5">
-          {items.map(it => <li key={it.id}>{it.label} → Zone {zones.findIndex(z => z.id === it.correctZoneId) + 1}</li>)}
+          {items.map(it => <li key={it.id}><MathText as="span" text={it.label} /> → Zone {zones.findIndex(z => z.id === it.correctZoneId) + 1}</li>)}
         </ul>
       )
       break
@@ -370,7 +371,7 @@ function CorrectAnswerPanel({ q }: { q: Question }) {
       const items: Array<{ id: string; prompt: string; acceptedAnswers: string[] }> = cd.items ?? []
       content = (
         <ul className="text-sm text-emerald-700 space-y-0.5">
-          {items.map(it => <li key={it.id}>{it.prompt}: {it.acceptedAnswers.join(' / ')}</li>)}
+          {items.map(it => <li key={it.id}><MathText as="span" text={it.prompt} />: {it.acceptedAnswers.join(' / ')}</li>)}
         </ul>
       )
       break

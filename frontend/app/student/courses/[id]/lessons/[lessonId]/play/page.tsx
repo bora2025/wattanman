@@ -14,6 +14,7 @@ import { DragDropInput } from '../../../../../../../components/questions/DragDro
 import { SpeakWordsInput } from '../../../../../../../components/questions/SpeakWordsField'
 import { SpeakWordsSetInput } from '../../../../../../../components/questions/SpeakWordsSetField'
 import { DictationInput } from '../../../../../../../components/questions/DictationField'
+import MathText from '../../../../../../../components/MathText'
 
 type PageType = 'CONTENT' | 'QUESTION' | 'BRANCH'
 type AttemptStatus = 'IN_PROGRESS' | 'COMPLETED' | 'AWAITING_GRADE' | 'ABANDONED'
@@ -552,7 +553,7 @@ function ContentView({ content, lessonId }: { content: any; lessonId: string }) 
           allowFullScreen
         />
       )}
-      <div className="whitespace-pre-wrap text-sm text-slate-700">{body}</div>
+      <MathText as="div" className="whitespace-pre-wrap text-sm text-slate-700" text={body} />
     </div>
   )
 }
@@ -702,7 +703,7 @@ function QuestionView({
 
   return (
     <div className="space-y-3">
-      <div className="whitespace-pre-wrap text-sm text-slate-700">{c.prompt}</div>
+      <MathText as="div" className="whitespace-pre-wrap text-sm text-slate-700" text={c.prompt} />
 
       {(qt === 'MCQ_SINGLE' || qt === 'MCQ_MULTI') && (
         <div className="space-y-1.5">
@@ -736,7 +737,7 @@ function QuestionView({
                     }
                   }}
                 />
-                <span>{ch.text}</span>
+                <MathText as="span" text={ch.text} />
               </label>
             )
           })}
@@ -842,7 +843,7 @@ function BranchView({
   const disabled = submitting || !!lastResult
   return (
     <div className="space-y-3">
-      <div className="whitespace-pre-wrap text-sm text-slate-700">{c.prompt}</div>
+      <MathText as="div" className="whitespace-pre-wrap text-sm text-slate-700" text={c.prompt} />
       <div className="space-y-2">
         {(c.choices || []).map((ch: any) => (
           <button
@@ -852,7 +853,7 @@ function BranchView({
             onClick={() => onSubmit({ choiceId: ch.id })}
             className="block w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-700 hover:border-sky-400 hover:bg-sky-50 disabled:opacity-60"
           >
-            {ch.text || '(unnamed choice)'}
+            {ch.text ? <MathText as="span" text={ch.text} /> : '(unnamed choice)'}
           </button>
         ))}
       </div>
@@ -889,7 +890,7 @@ function Feedback({
         {result.correct ? '✓ Correct' : '✗ Incorrect'} · {result.pointsAwarded} pts
       </div>
       {explanation && (
-        <div className="mt-1 whitespace-pre-wrap text-xs">{explanation}</div>
+        <MathText as="div" className="mt-1 whitespace-pre-wrap text-xs" text={explanation} />
       )}
     </div>
   )

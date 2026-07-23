@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { QuestionInput } from './ExamQuestionInput'
+import MathText from './MathText'
 import { sanitizeForPreview, gradeQuestion, TYPE_LABEL, type ExamQuestionDraft } from '../lib/examQuestionLogic'
 
 function formatTime(secs: number) {
@@ -85,7 +86,7 @@ export default function ExamPreviewModal({ questions, durationMinutes, onClose }
               <div key={i} className={`rounded-xl border p-4 ${cardClass}`}>
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <p className="font-semibold text-slate-800 text-sm">
-                    Q{i + 1}. {q.text || <span className="text-slate-400 italic font-normal">(no question text yet)</span>}
+                    Q{i + 1}. {q.text ? <MathText as="span" text={q.text} /> : <span className="text-slate-400 italic font-normal">(no question text yet)</span>}
                     <span className="ml-2 text-xs font-normal text-slate-400">{TYPE_LABEL[q.type]} · {q.marks} mark{q.marks !== 1 ? 's' : ''}</span>
                   </p>
                   {checked && result && (

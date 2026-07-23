@@ -4,6 +4,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type D
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { uid } from '../../lib/h5pQuestionLogic'
+import MathText from '../MathText'
 
 interface Paragraph { id: string; text: string }
 
@@ -69,7 +70,7 @@ function SortableParagraphRow({ id, index, text }: { id: string; index: number; 
       className="flex items-start gap-3 p-3 rounded-lg border-2 border-slate-200 bg-white cursor-grab active:cursor-grabbing touch-none"
     >
       <span className="text-slate-400 font-mono text-sm pt-0.5">{index + 1}</span>
-      <span className="text-sm text-slate-700 flex-1">{text}</span>
+      <MathText as="span" className="text-sm text-slate-700 flex-1" text={text} />
       <span className="text-slate-300">⠿</span>
     </div>
   )

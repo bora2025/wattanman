@@ -10,6 +10,7 @@ import { teacherNav } from '../../../../../lib/teacher-nav'
 import { apiFetch } from '../../../../../lib/api'
 import { gradeQuestion } from '../../../../../lib/examQuestionLogic'
 import { parseDragWordsText, diffWords } from '../../../../../lib/h5pQuestionLogic'
+import MathText from '../../../../../components/MathText'
 
 interface ExamQuestion {
   id: string
@@ -232,7 +233,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
           <div key={q.id} className="bg-white rounded-lg border border-slate-200 p-3">
             <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5 mb-2">
               <p className="text-sm font-semibold text-slate-800 min-w-0 break-words">
-                Q{idx + 1}. {q.text}
+                Q{idx + 1}. <MathText as="span" text={q.text} />
                 <span className="ml-2 text-xs text-slate-400 font-normal">({q.type} · {q.marks} marks)</span>
               </p>
               {autoGraded && (
@@ -245,7 +246,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
               <ul className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4">
                 {choices.map((c) => (
                   <li key={c.id} className={c.isCorrect ? 'text-emerald-700 font-semibold' : ''}>
-                    {chosenIds.has(c.id) ? '☑' : '☐'} {c.text}{c.isCorrect ? ' (correct)' : ''}
+                    {chosenIds.has(c.id) ? '☑' : '☐'} <MathText as="span" text={c.text} />{c.isCorrect ? ' (correct)' : ''}
                   </li>
                 ))}
               </ul>
@@ -257,7 +258,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
             )}
             {q.type === 'SORT_PARAGRAPHS' && paragraphs.length > 0 && (
               <ol className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4 list-decimal list-inside">
-                {paragraphs.map((p) => <li key={p.id} className="text-emerald-700 font-semibold">{p.text}</li>)}
+                {paragraphs.map((p) => <li key={p.id} className="text-emerald-700 font-semibold"><MathText as="span" text={p.text} /></li>)}
               </ol>
             )}
             {q.type === 'DRAG_WORDS' && dragBlanks.length > 0 && (
@@ -269,7 +270,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
               <ul className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4">
                 {dropItems.map((it) => (
                   <li key={it.id} className="text-emerald-700 font-semibold">
-                    {it.label} → Zone {dropZones.findIndex(z => z.id === it.correctZoneId) + 1}
+                    <MathText as="span" text={it.label} /> → Zone {dropZones.findIndex(z => z.id === it.correctZoneId) + 1}
                   </li>
                 ))}
               </ul>
@@ -282,19 +283,21 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
             {q.type === 'SPEAK_WORDS_SET' && swSetItems.length > 0 && (
               <ul className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4">
                 {swSetItems.map((it) => (
-                  <li key={it.id}>{it.prompt}: <span className="text-emerald-700 font-semibold">{it.acceptedAnswers.join(' / ')}</span></li>
+                  <li key={it.id}><MathText as="span" text={it.prompt} />: <span className="text-emerald-700 font-semibold">{it.acceptedAnswers.join(' / ')}</span></li>
                 ))}
               </ul>
             )}
             {q.type === 'DICTATION' && q.data?.script && (
               <div className="text-xs text-slate-600 mb-2 ml-4">
-                Script: <span className="text-emerald-700 font-semibold">{q.data.script}</span>
+                Script: <MathText as="span" className="text-emerald-700 font-semibold" text={q.data.script} />
               </div>
             )}
             <div className="text-xs text-slate-500 mb-1">Student answer:</div>
             <div className="text-sm bg-slate-50 border border-slate-200 rounded p-2 whitespace-pre-wrap">
               {q.type === 'MCQ' ? (
-                choices.filter(c => chosenIds.has(c.id)).map(c => c.text).join(', ') || <span className="text-slate-400 italic">(no answer)</span>
+                choices.filter(c => chosenIds.has(c.id)).length > 0
+                  ? <MathText as="span" text={choices.filter(c => chosenIds.has(c.id)).map(c => c.text).join(', ')} />
+                  : <span className="text-slate-400 italic">(no answer)</span>
               ) : q.type === 'TF' ? (
                 studentAnswer == null ? <span className="text-slate-400 italic">(no answer)</span> : (studentAnswer ? 'True' : 'False')
               ) : q.type === 'SORT_PARAGRAPHS' ? (
@@ -303,7 +306,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                     {studentAnswer.map((id: string, i: number) => {
                       const p = paragraphs.find(x => x.id === id)
                       const rightSpot = paragraphs[i]?.id === id
-                      return <li key={id} className={rightSpot ? 'text-emerald-700' : 'text-red-600'}>{p?.text ?? '(unknown)'}</li>
+                      return <li key={id} className={rightSpot ? 'text-emerald-700' : 'text-red-600'}>{p ? <MathText as="span" text={p.text} /> : '(unknown)'}</li>
                     })}
                   </ol>
                 ) : <span className="text-slate-400 italic">(no answer)</span>
@@ -324,18 +327,18 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                       const given = studentAnswer && typeof studentAnswer === 'object' ? studentAnswer[it.id] : undefined
                       const ok = given === it.correctZoneId
                       const zoneIdx = dropZones.findIndex(z => z.id === given)
-                      return <div key={it.id}>{it.label}: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{given ? `Zone ${zoneIdx + 1}` : '(not placed)'}</span></div>
+                      return <div key={it.id}><MathText as="span" text={it.label} />: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{given ? `Zone ${zoneIdx + 1}` : '(not placed)'}</span></div>
                     })}
                   </div>
                 ) : <span className="text-slate-400 italic">(no answer)</span>
               ) : q.type === 'SPEAK_WORDS' ? (
-                studentAnswer || <span className="text-slate-400 italic">(no answer)</span>
+                studentAnswer ? <MathText as="span" text={studentAnswer} /> : <span className="text-slate-400 italic">(no answer)</span>
               ) : q.type === 'SPEAK_WORDS_SET' ? (
                 swSetItems.length > 0 ? (
                   <div className="space-y-0.5">
                     {swSetItems.map((it) => {
                       const given = studentAnswer && typeof studentAnswer === 'object' ? studentAnswer[it.id] : undefined
-                      return <div key={it.id}>{it.prompt}: <span className="text-slate-700">{given || '(no answer)'}</span></div>
+                      return <div key={it.id}><MathText as="span" text={it.prompt} />: <span className="text-slate-700">{given || '(no answer)'}</span></div>
                     })}
                   </div>
                 ) : <span className="text-slate-400 italic">(no answer)</span>

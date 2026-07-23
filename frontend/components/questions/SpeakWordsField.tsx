@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useSpeechRecognition } from '../../lib/useSpeechRecognition'
+import MathText from '../MathText'
 
 /** Repeatable "accepted answers" list, shared by the Speak the Words editor and
  * (per-item) by the Speak the Words Set editor. */
@@ -85,7 +86,7 @@ export function SpeechCaptureInput({ value, onChange, disabled }: { value: strin
 export function SpeakWordsInput({ data, value, onChange, disabled }: { data: any; value: any; onChange: (v: any) => void; disabled?: boolean }) {
   return (
     <div>
-      <p className="text-sm font-medium text-slate-800 mb-2">{data?.prompt}</p>
+      <MathText as="p" className="text-sm font-medium text-slate-800 mb-2" text={data?.prompt} />
       <SpeechCaptureInput value={typeof value === 'string' ? value : ''} onChange={onChange} disabled={disabled} />
     </div>
   )

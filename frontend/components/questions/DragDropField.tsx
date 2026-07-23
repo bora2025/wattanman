@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import { DndContext, useDraggable, useDroppable, type DragEndEvent } from '@dnd-kit/core'
 import { uid } from '../../lib/h5pQuestionLogic'
+import MathText from '../MathText'
 
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024
 
@@ -206,7 +207,7 @@ function DroppableZone({ zone, item, onClear }: { zone: Zone; item?: { id: strin
       style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%` }}
       title={item ? 'Click to remove' : 'Drop here'}
     >
-      {item && <span className="text-xs font-medium text-emerald-700 truncate">{item.label}</span>}
+      {item && <MathText as="span" className="text-xs font-medium text-emerald-700 truncate" text={item.label} />}
     </div>
   )
 }
@@ -223,7 +224,7 @@ function DraggableItem({ id, label }: { id: string; label: string }) {
       {...attributes}
       className={`px-3 py-1.5 rounded-lg border-2 border-sky-300 bg-sky-50 text-sky-700 text-sm font-medium cursor-grab active:cursor-grabbing touch-none select-none ${isDragging ? 'opacity-50 z-50 relative' : ''}`}
     >
-      {label}
+      <MathText as="span" text={label} />
     </button>
   )
 }

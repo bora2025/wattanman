@@ -2,6 +2,7 @@
 
 import { uid } from '../../lib/h5pQuestionLogic'
 import { AcceptedAnswersEditor, SpeechCaptureInput } from './SpeakWordsField'
+import MathText from '../MathText'
 
 interface SetItem { id: string; prompt: string; acceptedAnswers: string[] }
 
@@ -40,7 +41,7 @@ export function SpeakWordsSetInput({ data, value, onChange, disabled }: { data: 
     <div className="space-y-4">
       {items.map((it, i) => (
         <div key={it.id} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-          <p className="text-sm font-medium text-slate-800 mb-2">{i + 1}. {it.prompt}</p>
+          <p className="text-sm font-medium text-slate-800 mb-2">{i + 1}. <MathText as="span" text={it.prompt} /></p>
           <SpeechCaptureInput
             value={answers[it.id] || ''}
             onChange={v => onChange({ ...answers, [it.id]: v })}

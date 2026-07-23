@@ -1,6 +1,7 @@
 "use client"
 
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, type DragEndEvent } from '@dnd-kit/core'
+import MathText from '../MathText'
 
 /** Authoring editor for Drag the Words. `data: { text: string }` using *word* markup. */
 export function DragWordsEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
@@ -54,7 +55,7 @@ export function DragWordsInput({ data, value, onChange, disabled }: { data: any;
         <div className="text-base leading-loose mb-4">
           {segments.map((seg, i) =>
             seg.type === 'text'
-              ? <span key={i}>{seg.value}</span>
+              ? <MathText key={i} as="span" text={seg.value} />
               : <DroppableBlank key={seg.id} id={seg.id} word={filled[seg.id]} onClear={() => clearBlank(seg.id)} />
           )}
         </div>

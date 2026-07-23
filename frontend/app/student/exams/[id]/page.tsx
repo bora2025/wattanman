@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
 import { apiFetch } from '../../../../lib/api'
 import { QuestionInput } from '../../../../components/ExamQuestionInput'
+import MathText from '../../../../components/MathText'
 import type { QType } from '../../../../lib/examQuestionLogic'
 
 interface Question { id: string; text: string; type: QType; marks: number; order: number; data: any }
@@ -105,7 +106,7 @@ export default function StudentExamTakingPage() {
             <div className="space-y-6">
               {exam?.questions.map((q, i) => (
                 <div key={q.id} className="bg-white rounded-xl shadow-sm p-5 border border-slate-100">
-                  <p className="font-semibold text-slate-800 mb-3">Q{i + 1}. {q.text} <span className="text-xs font-normal text-slate-400">({q.marks} mark{q.marks !== 1 ? 's' : ''})</span></p>
+                  <p className="font-semibold text-slate-800 mb-3">Q{i + 1}. <MathText as="span" text={q.text} /> <span className="text-xs font-normal text-slate-400">({q.marks} mark{q.marks !== 1 ? 's' : ''})</span></p>
                   <QuestionInput q={q} value={answers[q.id]} onChange={v => setAnswers(a => ({ ...a, [q.id]: v }))} />
                 </div>
               ))}

@@ -1,6 +1,7 @@
 "use client"
 
 import type { QType } from '../lib/examQuestionLogic'
+import MathText from './MathText'
 import { EssayInput } from './questions/EssayField'
 import { SortParagraphsInput } from './questions/SortParagraphsField'
 import { DragWordsInput } from './questions/DragWordsField'
@@ -40,7 +41,7 @@ export function QuestionInput({ q, value, onChange }: { q: QuestionInputQuestion
               <div className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 ${multiple ? 'rounded' : 'rounded-full'} ${isSelected ? 'border-sky-500' : 'border-slate-300'}`}>
                 {isSelected && <div className={`bg-sky-500 ${multiple ? 'w-2.5 h-2.5 rounded-sm' : 'w-2.5 h-2.5 rounded-full'}`} />}
               </div>
-              <span className="text-sm text-slate-700">{c.text}</span>
+              <MathText as="span" className="text-sm text-slate-700" text={c.text} />
             </label>
           )
         })}
