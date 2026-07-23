@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import AuthGuard from '../../../../../components/AuthGuard'
 import Sidebar from '../../../../../components/Sidebar'
+import StatCard from '../../../../../components/StatCard'
+import EmptyState from '../../../../../components/EmptyState'
 import { teacherNav } from '../../../../../lib/teacher-nav'
 import { apiFetch } from '../../../../../lib/api'
 import { gradeQuestion } from '../../../../../lib/examQuestionLogic'
@@ -99,38 +101,40 @@ export default function ExamGradebookPage() {
     <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
       <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
-        <main className="flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full">
-          <div className="mb-4 sm:mb-6 flex items-center gap-3 flex-wrap">
-            <button onClick={() => router.push('/teacher/exams')} className="text-sm text-slate-500 hover:text-slate-800">← Back</button>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button onClick={() => router.push('/teacher/exams')} className="text-sm text-gray-500 hover:text-gray-800">← Back</button>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
               📊 Gradebook {exam ? `· ${exam.title}` : ''}
             </h1>
           </div>
 
           {examLoading || attemptsLoading ? (
-            <div className="text-slate-500">Loading…</div>
+            <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />)}</div>
           ) : !exam ? (
             <div className="text-red-600">Exam not found.</div>
           ) : (
             <>
-              <div className="bg-white border border-slate-100 rounded-xl p-4 mb-4 text-sm text-slate-600">
-                <p>
-                  Total marks: <strong>{exam.totalMarks}</strong> · Pass mark: <strong>{exam.passMark}</strong> ·
-                  Questions: <strong>{exam.questions.length}</strong>
-                  {manualQuestions.length > 0 && (
-                    <> · <span className="text-amber-700">{manualQuestions.length} question(s) require manual grading</span></>
-                  )}
-                </p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard label="Total Marks" value={exam.totalMarks} decimals={0} prefix="" color="bg-indigo-100"
+                  icon={<svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>} />
+                <StatCard label="Pass Mark" value={exam.passMark} decimals={0} prefix="" color="bg-emerald-100"
+                  icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+                <StatCard label="Questions" value={exam.questions.length} decimals={0} prefix="" color="bg-sky-100"
+                  icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+                <StatCard label="Need Manual Grading" value={manualQuestions.length} decimals={0} prefix="" color="bg-amber-100"
+                  icon={<svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>} />
               </div>
 
               {attempts.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-sm p-8 text-center text-slate-500 border border-slate-100">
-                  No student has attempted this exam yet.
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+                  <EmptyState icon="🧑‍🎓" message="No student has attempted this exam yet." />
                 </div>
               ) : (
                 <div className="space-y-3">
                   {attempts.map(att => (
-                    <div key={att.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div key={att.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                       <div className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                         <div className="min-w-0">
                           <p className="font-semibold text-slate-800 truncate">{att.student.user.name}</p>
@@ -172,6 +176,7 @@ export default function ExamGradebookPage() {
               )}
             </>
           )}
+          </div>
         </main>
       </div>
     </AuthGuard>
@@ -230,7 +235,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
         const dropZones: { id: string }[] = q.data?.zones ?? []
         const swSetItems: { id: string; prompt: string; acceptedAnswers: string[] }[] = q.data?.items ?? []
         return (
-          <div key={q.id} className="bg-white rounded-lg border border-slate-200 p-3">
+          <div key={q.id} className={`bg-white rounded-xl border-l-4 border border-slate-200 p-3 ${autoGraded ? 'border-l-emerald-400' : 'border-l-amber-400'}`}>
             <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5 mb-2">
               <p className="text-sm font-semibold text-slate-800 min-w-0 break-words">
                 Q{idx + 1}. <MathText as="span" text={q.text} />

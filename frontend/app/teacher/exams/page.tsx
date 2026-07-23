@@ -1,14 +1,16 @@
 "use client"
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
+import StatCard from '../../../components/StatCard'
+import EmptyState from '../../../components/EmptyState'
+import ExamFormModal, { type ExamEditInitialData } from '../../../components/ExamFormModal'
 import { teacherNav } from '../../../lib/teacher-nav'
 import { apiFetch } from '../../../lib/api'
-import { ExamQuestionsEditor, defaultQuestion, type ExamQuestionDraft } from '../../../components/ExamQuestionsEditor'
+import { defaultQuestion } from '../../../components/ExamQuestionsEditor'
 
 interface Exam {
   id: string; title: string; description: string | null; status: string
@@ -18,12 +20,6 @@ interface Exam {
   _count: { questions: number; attempts: number }
 }
 interface ClassItem { id: string; name: string; subject: string }
-
-interface EditInitialData {
-  title: string; description: string; classId: string
-  duration: number; totalMarks: number; passMark: number
-  questions: ExamQuestionDraft[]
-}
 
 const STATUS_COLOR: Record<string, string> = {
   DRAFT: 'bg-slate-100 text-slate-600',
@@ -35,7 +31,7 @@ const STATUS_COLOR: Record<string, string> = {
 export default function TeacherExamsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingExamId, setEditingExamId] = useState<string | null>(null)
-  const [editInitialData, setEditInitialData] = useState<EditInitialData | null>(null)
+  const [editInitialData, setEditInitialData] = useState<ExamEditInitialData | null>(null)
   const [editLoadingId, setEditLoadingId] = useState<string | null>(null)
   const qc = useQueryClient()
 
@@ -83,68 +79,93 @@ export default function TeacherExamsPage() {
     }
   }
 
+  const counts = useMemo(() => ({
+    total: exams.length,
+    draft: exams.filter(e => e.status === 'DRAFT').length,
+    live: exams.filter(e => e.status === 'PUBLISHED' || e.status === 'ACTIVE').length,
+    attempts: exams.reduce((s, e) => s + e._count.attempts, 0),
+  }), [exams])
+
   return (
     <AuthGuard requiredRole="TEACHER">
       <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
 
-        <main className="flex-1 p-4 sm:p-6 max-w-4xl mx-auto w-full">
-          <div className="flex items-center justify-between mb-4 sm:mb-6 gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">📝 My Exams</h1>
-            <button onClick={() => setShowForm(true)}
-              className="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-700">
-              + Create Exam
-            </button>
-          </div>
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">📝 My Exams</h1>
+                <p className="text-sm text-gray-500 mt-0.5">Author exams and grade student attempts</p>
+              </div>
+              <button onClick={() => setShowForm(true)}
+                className="bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-sky-700 shadow-sm">
+                + Create Exam
+              </button>
+            </div>
 
-          {isLoading ? (
-            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-20 rounded-xl animate-pulse" />)}</div>
-          ) : isError ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-              <p className="text-red-600 mb-2">Failed to load exams</p>
-              <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
-            </div>
-          ) : exams.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-              <p className="text-5xl mb-4">📝</p>
-              <p className="text-slate-400 text-lg">No exams created yet</p>
-              <button onClick={() => setShowForm(true)} className="mt-4 text-sky-600 text-sm underline">Create first exam</button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {exams.map(exam => (
-                <div key={exam.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100 flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-slate-800 truncate">{exam.title}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLOR[exam.status]}`}>{exam.status}</span>
+            {!isLoading && !isError && exams.length > 0 && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard label="Total Exams" value={counts.total} decimals={0} prefix="" color="bg-sky-100"
+                  icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
+                <StatCard label="Draft" value={counts.draft} decimals={0} prefix="" color="bg-slate-100"
+                  icon={<svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>} />
+                <StatCard label="Live" value={counts.live} decimals={0} prefix="" color="bg-emerald-100" sub="published or active"
+                  icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>} />
+                <StatCard label="Total Attempts" value={counts.attempts} decimals={0} prefix="" color="bg-amber-100" sub="awaiting or done"
+                  icon={<svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+              </div>
+            )}
+
+            {isLoading ? (
+              <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />)}</div>
+            ) : isError ? (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+                <p className="text-red-600 mb-2">Failed to load exams</p>
+                <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
+              </div>
+            ) : exams.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <EmptyState icon="📝" message="No exams created yet" action={
+                  <button onClick={() => setShowForm(true)} className="text-sm text-sky-600 font-medium hover:underline">Create your first exam</button>
+                } />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {exams.map(exam => (
+                  <div key={exam.id} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="font-semibold text-gray-900 truncate">{exam.title}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLOR[exam.status]}`}>{exam.status}</span>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {exam.class?.name ?? 'All classes'} · {exam._count.questions} questions · {exam.duration} min · Pass: {exam.passMark}/{exam.totalMarks}
+                      </p>
+                      <p className="text-xs text-amber-600 mt-0.5">{exam._count.attempts} attempt(s)</p>
                     </div>
-                    <p className="text-xs text-slate-500">
-                      {exam.class?.name ?? 'All classes'} · {exam._count.questions} questions · {exam.duration} min · Pass: {exam.passMark}/{exam.totalMarks}
-                    </p>
-                    <p className="text-xs text-amber-600 mt-0.5">{exam._count.attempts} attempt(s)</p>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button onClick={() => openEdit(exam.id)} disabled={editLoadingId === exam.id} className="text-xs text-sky-600 hover:underline disabled:opacity-50 font-medium">
+                        {editLoadingId === exam.id ? 'Loading…' : 'Edit'}
+                      </button>
+                      <Link
+                        href={`/teacher/exams/${exam.id}/attempts`}
+                        className="text-xs px-2.5 py-1.5 rounded-lg border border-sky-200 text-sky-700 hover:bg-sky-50 font-medium"
+                      >
+                        Grade ({exam._count.attempts})
+                      </Link>
+                      <select value={exam.status}
+                        onChange={e => statusMutation.mutate({ id: exam.id, status: e.target.value })}
+                        className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300">
+                        {['DRAFT','PUBLISHED','ACTIVE','COMPLETED'].map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <button onClick={() => deleteMutation.mutate(exam.id)} className="text-xs text-red-500 hover:underline font-medium">Delete</button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button onClick={() => openEdit(exam.id)} disabled={editLoadingId === exam.id} className="text-xs text-sky-600 hover:underline disabled:opacity-50">
-                      {editLoadingId === exam.id ? 'Loading…' : 'Edit'}
-                    </button>
-                    <Link
-                      href={`/teacher/exams/${exam.id}/attempts`}
-                      className="text-xs px-2.5 py-1 rounded-md border border-sky-200 text-sky-700 hover:bg-sky-50 font-medium"
-                    >
-                      Grade ({exam._count.attempts})
-                    </Link>
-                    <select value={exam.status}
-                      onChange={e => statusMutation.mutate({ id: exam.id, status: e.target.value })}
-                      className="text-xs border rounded-lg px-2 py-1 bg-white">
-                      {['DRAFT','PUBLISHED','ACTIVE','COMPLETED'].map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                    <button onClick={() => deleteMutation.mutate(exam.id)} className="text-xs text-red-500 hover:underline">Delete</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </main>
 
         {showForm && (
@@ -165,73 +186,5 @@ export default function TeacherExamsPage() {
         )}
       </div>
     </AuthGuard>
-  )
-}
-
-function ExamFormModal({ classes, examId, initialData, onClose, onSuccess }: {
-  classes: ClassItem[]
-  examId?: string
-  initialData?: EditInitialData
-  onClose: () => void
-  onSuccess: () => void
-}) {
-  const { register, handleSubmit, watch, formState: { isSubmitting } } = useForm({
-    defaultValues: initialData
-      ? { title: initialData.title, description: initialData.description, classId: initialData.classId, duration: initialData.duration, totalMarks: initialData.totalMarks, passMark: initialData.passMark }
-      : { title: '', description: '', classId: '', duration: 60, totalMarks: 100, passMark: 50 },
-  })
-  const watchedDuration = Number(watch('duration')) || undefined
-  const [questions, setQuestions] = useState<ExamQuestionDraft[]>(initialData?.questions?.length ? initialData.questions : [defaultQuestion()])
-  const [formError, setFormError] = useState<string | null>(null)
-
-  const onSubmit = async (data: any) => {
-    setFormError(null)
-    const url = examId ? `/api/exams/${examId}` : '/api/exams'
-    const method = examId ? 'PUT' : 'POST'
-    const body = examId ? { ...data, questions } : { ...data, status: 'DRAFT', questions }
-    const res = await apiFetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (res.ok) {
-      onSuccess()
-    } else {
-      const e = await res.json().catch(() => ({}))
-      setFormError(Array.isArray(e?.message) ? e.message.join(', ') : (e?.message || `Failed to ${examId ? 'update' : 'create'} exam`))
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl my-4">
-        <h2 className="text-lg font-bold mb-4">{examId ? 'Edit Exam' : 'Create Exam'}</h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <input {...register('title', { required: true })} placeholder="Exam title *" className="w-full border rounded-lg px-3 py-2 text-sm" />
-          <input {...register('description')} placeholder="Description" className="w-full border rounded-lg px-3 py-2 text-sm" />
-          <div className="grid grid-cols-2 gap-3">
-            <select {...register('classId')} className="border rounded-lg px-3 py-2 text-sm">
-              <option value="">All classes</option>
-              {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            <input type="number" {...register('duration')} placeholder="Duration (min)" className="border rounded-lg px-3 py-2 text-sm" />
-            <input type="number" {...register('totalMarks')} placeholder="Total marks" className="border rounded-lg px-3 py-2 text-sm" />
-            <input type="number" {...register('passMark')} placeholder="Pass mark" className="border rounded-lg px-3 py-2 text-sm" />
-          </div>
-
-          <ExamQuestionsEditor questions={questions} onChange={setQuestions} durationMinutes={watchedDuration} />
-
-          {formError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{formError}</div>}
-
-          <div className="flex gap-2 justify-end">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>
-            <button type="submit" disabled={isSubmitting}
-              className="px-4 py-2 text-sm bg-sky-600 text-white rounded-lg font-medium disabled:opacity-60">
-              {isSubmitting ? 'Saving...' : (examId ? 'Save Changes' : 'Create Exam')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
   )
 }

@@ -36,7 +36,7 @@ export function QuestionInput({ q, value, onChange }: { q: QuestionInputQuestion
         {choices.map((c) => {
           const isSelected = selected.includes(c.id)
           return (
-            <label key={c.id} className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${isSelected ? 'border-sky-500 bg-sky-50' : 'border-slate-200 hover:border-slate-300'}`}>
+            <label key={c.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${isSelected ? 'border-sky-500 bg-sky-50' : 'border-slate-200 hover:border-slate-300'}`}>
               <input type={multiple ? 'checkbox' : 'radio'} name={q.id} checked={isSelected} onChange={() => toggle(c.id)} className="sr-only" />
               <div className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 ${multiple ? 'rounded' : 'rounded-full'} ${isSelected ? 'border-sky-500' : 'border-slate-300'}`}>
                 {isSelected && <div className={`bg-sky-500 ${multiple ? 'w-2.5 h-2.5 rounded-sm' : 'w-2.5 h-2.5 rounded-full'}`} />}
@@ -53,7 +53,7 @@ export function QuestionInput({ q, value, onChange }: { q: QuestionInputQuestion
     return (
       <div className="flex gap-3">
         {[true, false].map((v) => (
-          <label key={String(v)} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-colors ${value === v ? 'border-sky-500 bg-sky-50' : 'border-slate-200 hover:border-slate-300'}`}>
+          <label key={String(v)} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${value === v ? 'border-sky-500 bg-sky-50' : 'border-slate-200 hover:border-slate-300'}`}>
             <input type="radio" name={q.id} checked={value === v} onChange={() => onChange(v)} className="sr-only" />
             <span className="text-sm font-medium text-slate-700">{v ? 'True' : 'False'}</span>
           </label>

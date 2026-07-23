@@ -40,7 +40,7 @@ export function ExamQuestionsEditor({ questions, onChange, durationMinutes }: { 
       </div>
       <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
         {questions.map((q, i) => (
-          <div key={i} className="border rounded-lg p-3 bg-slate-50 relative">
+          <div key={i} className="border border-slate-200 rounded-xl p-3 bg-slate-50 relative">
             <button type="button" onClick={() => removeQuestion(i)} disabled={questions.length <= 1} className="absolute top-2 right-2 text-red-400 text-xs disabled:opacity-30">✕</button>
             <div className="grid grid-cols-3 gap-2 mb-2">
               <select value={q.type} onChange={e => changeType(i, e.target.value as QType)} className="col-span-2 border rounded px-2 py-1 text-sm">
