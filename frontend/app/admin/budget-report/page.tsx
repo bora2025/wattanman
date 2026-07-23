@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import Link from 'next/link'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, LineChart, Line,
 } from 'recharts'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
+import StatCard from '../../../components/StatCard'
+import QuickNavCard from '../../../components/QuickNavCard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 
@@ -92,57 +93,6 @@ function CustomTooltip({ active, payload, label }: any) {
           <span className="font-semibold text-gray-800">${fmt(p.value)}</span>
         </p>
       ))}
-    </div>
-  )
-}
-
-/* ─── Quick Nav Card ────────────────────────────────────── */
-
-function QuickNavCard({
-  href, title, sub, icon, color, iconColor,
-}: {
-  href: string; title: string; sub: string
-  icon: React.ReactNode; color: string; iconColor: string
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all"
-    >
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-none ${color}`}>
-        <span className={iconColor}>{icon}</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-bold text-gray-900">{title}</p>
-        <p className="text-xs text-gray-500 mt-0.5">{sub}</p>
-      </div>
-      <svg className="w-5 h-5 text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-      </svg>
-    </Link>
-  )
-}
-
-/* ─── Stat Card ─────────────────────────────────────────── */
-
-function StatCard({
-  label, value, sub, icon, color, prefix = '$',
-}: {
-  label: string; value: string | number; sub?: string
-  icon: React.ReactNode; color: string; prefix?: string
-}) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-start gap-4">
-      <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-none ${color}`}>
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs text-gray-500 font-medium">{label}</p>
-        <p className="text-xl font-extrabold text-gray-900 mt-0.5 truncate">
-          {typeof value === 'number' ? `${prefix}${fmt(value)}` : value}
-        </p>
-        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-      </div>
     </div>
   )
 }
