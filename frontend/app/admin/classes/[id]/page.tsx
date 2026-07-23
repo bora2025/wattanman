@@ -418,6 +418,7 @@ function ExamsPanel({ classId }: { classId: string }) {
   const [questions, setQuestions] = useState<ExamQuestionDraft[]>([defaultQuestion()])
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editMetaForm, setEditMetaForm] = useState({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50 })
   const [editQuestions, setEditQuestions] = useState<ExamQuestionDraft[]>([])
   const [editLoadingId, setEditLoadingId] = useState<string | null>(null)
   const [editSaving, setEditSaving] = useState(false)
@@ -482,30 +483,47 @@ function ExamsPanel({ classId }: { classId: string }) {
 
   const toggleEditQuestions = async (row: ExamRow) => {
     if (editingId === row.id) { setEditingId(null); return }
+    setCreating(false)
     setEditLoadingId(row.id); setError('')
     try {
       const r = await apiFetch(`/api/exams/${row.id}`)
       if (!r.ok) throw new Error()
       const full = await r.json()
+      setEditMetaForm({
+        title: full.title || '',
+        description: full.description || '',
+        duration: full.duration ?? 60,
+        totalMarks: full.totalMarks ?? 100,
+        passMark: full.passMark ?? 50,
+      })
       setEditQuestions((full.questions || []).length
         ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data }))
         : [defaultQuestion()])
       setEditingId(row.id)
-    } catch { setError('Failed to load exam questions.') }
+    } catch { setError('Failed to load exam.') }
     finally { setEditLoadingId(null) }
   }
 
   const saveEditQuestions = async (examId: string) => {
+    if (!editMetaForm.title.trim()) { setError('Title is required.'); return }
     setEditSaving(true); setError('')
     try {
+      const body = {
+        title: editMetaForm.title.trim(),
+        description: editMetaForm.description.trim() || undefined,
+        duration: Number(editMetaForm.duration) || 60,
+        totalMarks: Number(editMetaForm.totalMarks) || 100,
+        passMark: Number(editMetaForm.passMark) || 50,
+        questions: editQuestions,
+      }
       const r = await apiFetch(`/api/exams/${examId}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questions: editQuestions }),
+        body: JSON.stringify(body),
       })
       if (!r.ok) throw new Error()
       setEditingId(null)
       await load()
-    } catch { setError('Failed to save questions.') }
+    } catch { setError('Failed to save exam.') }
     finally { setEditSaving(false) }
   }
 
@@ -515,7 +533,7 @@ function ExamsPanel({ classId }: { classId: string }) {
         <p className="text-sm text-slate-600">
           <span className="font-semibold text-slate-800">{rows.length}</span> exam{rows.length === 1 ? '' : 's'} in this class
         </p>
-        <button onClick={() => setCreating(s => !s)} className="btn-primary btn-sm">
+        <button onClick={() => { setEditingId(null); setCreating(s => !s) }} className="btn-primary btn-sm">
           {creating ? '× Cancel' : '+ New Exam'}
         </button>
       </div>
@@ -601,7 +619,7 @@ function ExamsPanel({ classId }: { classId: string }) {
                     <td className="px-4 py-2 text-right whitespace-nowrap">
                       <button onClick={() => toggleEditQuestions(r)} disabled={editLoadingId === r.id}
                         className="text-xs text-emerald-700 hover:underline mr-3 disabled:opacity-50">
-                        {editingId === r.id ? 'Close' : editLoadingId === r.id ? 'Loading…' : 'Questions'}
+                        {editingId === r.id ? 'Close' : editLoadingId === r.id ? 'Loading…' : 'Edit'}
                       </button>
                       <Link href={`/teacher/exams/${r.id}/attempts`} target="_blank" rel="noopener noreferrer"
                         className="text-xs text-indigo-600 hover:underline mr-3">Grade ↗</Link>
@@ -610,12 +628,39 @@ function ExamsPanel({ classId }: { classId: string }) {
                   </tr>
                   {editingId === r.id && (
                     <tr className="border-t border-slate-100 bg-slate-50/60">
-                      <td colSpan={7} className="px-4 py-4">
+                      <td colSpan={7} className="px-4 py-4 space-y-3">
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Title *</label>
+                            <input value={editMetaForm.title} onChange={e => setEditMetaForm(f => ({ ...f, title: e.target.value }))} required
+                              className="w-full border rounded-lg px-3 py-2 text-sm" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Duration (min)</label>
+                            <input type="number" value={editMetaForm.duration} onChange={e => setEditMetaForm(f => ({ ...f, duration: Number(e.target.value) }))}
+                              className="w-full border rounded-lg px-3 py-2 text-sm" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Total marks</label>
+                            <input type="number" value={editMetaForm.totalMarks} onChange={e => setEditMetaForm(f => ({ ...f, totalMarks: Number(e.target.value) }))}
+                              className="w-full border rounded-lg px-3 py-2 text-sm" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Pass mark</label>
+                            <input type="number" value={editMetaForm.passMark} onChange={e => setEditMetaForm(f => ({ ...f, passMark: Number(e.target.value) }))}
+                              className="w-full border rounded-lg px-3 py-2 text-sm" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
+                            <input value={editMetaForm.description} onChange={e => setEditMetaForm(f => ({ ...f, description: e.target.value }))}
+                              className="w-full border rounded-lg px-3 py-2 text-sm" />
+                          </div>
+                        </div>
                         <ExamQuestionsEditor questions={editQuestions} onChange={setEditQuestions} />
                         <div className="flex gap-2 justify-end mt-3">
                           <button onClick={() => setEditingId(null)} className="btn-outline btn-sm">Cancel</button>
                           <button onClick={() => saveEditQuestions(r.id)} disabled={editSaving} className="btn-primary btn-sm disabled:opacity-60">
-                            {editSaving ? 'Saving…' : 'Save Questions'}
+                            {editSaving ? 'Saving…' : 'Save Exam'}
                           </button>
                         </div>
                       </td>
@@ -639,6 +684,9 @@ function CoursesPanel({ classId }: { classId: string }) {
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState({ title: '', description: '' })
   const [saving, setSaving] = useState(false)
+  const [editing, setEditing] = useState<CourseRow | null>(null)
+  const [editForm, setEditForm] = useState({ title: '', description: '' })
+  const [editSaving, setEditSaving] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -693,13 +741,38 @@ function CoursesPanel({ classId }: { classId: string }) {
     } catch { setError('Failed to delete course.') }
   }
 
+  const openEdit = (row: CourseRow) => {
+    setCreating(false)
+    setEditing(row)
+    setEditForm({ title: row.title, description: row.description || '' })
+  }
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editing || !editForm.title.trim()) return
+    setEditSaving(true); setError('')
+    try {
+      const body = {
+        title: editForm.title.trim(),
+        description: editForm.description.trim() || undefined,
+      }
+      const r = await apiFetch(`/api/courses/${editing.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      })
+      if (!r.ok) throw new Error()
+      setEditing(null)
+      await load()
+    } catch { setError('Failed to update course.') }
+    finally { setEditSaving(false) }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-slate-600">
           <span className="font-semibold text-slate-800">{rows.length}</span> course{rows.length === 1 ? '' : 's'} in this class
         </p>
-        <button onClick={() => setCreating(s => !s)} className="btn-primary btn-sm">
+        <button onClick={() => { setEditing(null); setCreating(s => !s) }} className="btn-primary btn-sm">
           {creating ? '× Cancel' : '+ New Course'}
         </button>
       </div>
@@ -722,6 +795,28 @@ function CoursesPanel({ classId }: { classId: string }) {
               {saving ? 'Saving…' : 'Create'}
             </button>
             <button type="button" onClick={() => setCreating(false)} className="btn-outline btn-sm">Cancel</button>
+          </div>
+        </form>
+      )}
+
+      {editing && (
+        <form onSubmit={handleSaveEdit} className="card p-4 space-y-3 bg-emerald-50/30 border-emerald-200">
+          <h3 className="text-sm font-semibold text-slate-800">Edit course</h3>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Title *</label>
+            <input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} required
+              className="w-full border rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
+            <textarea rows={2} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+              className="w-full border rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div className="flex gap-2">
+            <button type="submit" disabled={editSaving} className="btn-primary btn-sm disabled:opacity-60">
+              {editSaving ? 'Saving…' : 'Save Changes'}
+            </button>
+            <button type="button" onClick={() => setEditing(null)} className="btn-outline btn-sm">Cancel</button>
           </div>
         </form>
       )}
@@ -761,9 +856,10 @@ function CoursesPanel({ classId }: { classId: string }) {
                       {COURSE_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-4 py-2 text-right whitespace-nowrap">
+                    <button onClick={() => openEdit(r)} className="text-xs text-emerald-700 hover:underline mr-3">Edit</button>
                     <Link href={`/teacher/courses/${r.id}`} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-indigo-600 hover:underline mr-3">Open ↗</Link>
+                      className="text-xs text-indigo-600 hover:underline mr-3">Lessons ↗</Link>
                     <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
                   </td>
                 </tr>
