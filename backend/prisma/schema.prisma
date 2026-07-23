@@ -107,6 +107,7 @@ model Student {
   address       String? // Home address
   generation    String? // Nth generation (ជំនាន់)
   nameKh        String? // Khmer name — captured at self-registration; User.name stays the English name used for display
+  customFieldValues Json? // { [ClassRegistrationField.key]: string } — copied over from ClassRegistration on approval
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

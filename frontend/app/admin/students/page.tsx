@@ -14,8 +14,10 @@ interface Student {
   id: string; userId: string; studentNumber: string; name: string; email: string; phone: string;
   photo: string | null; sex: string | null; dateOfBirth: string | null;
   address: string; generation?: string; parentId?: string | null;
+  customFieldValues?: Record<string, string>;
 }
 interface ParentOption { id: string; name: string; email: string; phone: string | null }
+interface CustomFieldDef { id: string; key: string; label: string; required: boolean }
 
 export default function ManageStudentsPage() {
   return <Suspense><ManageStudents /></Suspense>;
@@ -49,8 +51,12 @@ function ManageStudents() {
   /* â”€â”€ edit â”€â”€ */
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '', parentId: '' });
+  const [editCustomFields, setEditCustomFields] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  /* â”€â”€ custom fields (registration form) â”€â”€ */
+  const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([]);
 
   /* â”€â”€ add new student â”€â”€ */
   const [showAddForm, setShowAddForm] = useState(false);
@@ -125,6 +131,17 @@ function ManageStudents() {
   useEffect(() => { fetchStudyYears(); }, []);
 
   useEffect(() => {
+    (async () => {
+      try {
+        // Public endpoint — reused here purely to read the currently enabled
+        // custom fields, regardless of the viewer's admin/teacher role.
+        const res = await apiFetch('/api/class-registrations/public/form-config');
+        if (res.ok) { const d = await res.json(); setCustomFieldDefs(d.fields || []); }
+      } catch {}
+    })();
+  }, []);
+
+  useEffect(() => {
     if (studyYears.length > 0 && !selectedStudyYearId) {
       const cur = studyYears.find(s => s.isCurrent);
       setSelectedStudyYearId(cur?.id ?? studyYears[0]?.id ?? '');
@@ -162,6 +179,7 @@ function ManageStudents() {
       address: s.address || '', generation: s.generation || '',
       studentNumber: s.studentNumber || '', parentId: s.parentId || '',
     });
+    setEditCustomFields(s.customFieldValues || {});
     setEditModalOpen(true);
     fetchParents();
   };
@@ -172,7 +190,7 @@ function ManageStudents() {
     try {
       const res = await apiFetch(`/api/classes/${selectedGrade.id}/students/${editingId}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...editData, parentId: editData.parentId || null }),
+        body: JSON.stringify({ ...editData, parentId: editData.parentId || null, customFieldValues: editCustomFields }),
       });
       if (res.ok) { setEditingId(null); setEditModalOpen(false); await fetchStudents(selectedGrade.id); }
       else {
@@ -791,6 +809,16 @@ function ManageStudents() {
                     ))}
                   </select>
                 </div>
+                {customFieldDefs.map(f => (
+                  <div key={f.id} className="sm:col-span-2">
+                    <label className="form-label text-xs">{f.label}{f.required && ' *'}</label>
+                    <input
+                      type="text"
+                      value={editCustomFields[f.key] || ''}
+                      onChange={e => setEditCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 

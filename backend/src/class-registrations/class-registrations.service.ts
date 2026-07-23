@@ -296,6 +296,7 @@ export class ClassRegistrationsService {
         studentNumber,
         nameKh: reg.nameKh || undefined,
         photo: reg.photo || undefined,
+        customFieldValues: reg.customFieldValues ?? undefined,
       },
     });
 

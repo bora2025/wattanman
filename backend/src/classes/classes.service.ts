@@ -119,6 +119,7 @@ export class ClassesService {
       dateOfBirth: s.dateOfBirth,
       address: s.address || '',
       generation: s.generation || '',
+      customFieldValues: s.customFieldValues || {},
       className: s.class?.name || null,
       parentId: s.parentId,
       parent: s.parent,
@@ -155,6 +156,7 @@ export class ClassesService {
         dateOfBirth: s.dateOfBirth,
         address: s.address || '',
         generation: s.generation || '',
+        customFieldValues: s.customFieldValues || {},
         className: s.class?.name || null,
         parentId: s.parentId,
         parent: s.parent,
@@ -539,7 +541,7 @@ export class ClassesService {
     return url;
   }
 
-  async updateStudent(studentId: string, data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string; studentNumber?: string; parentId?: string | null }) {
+  async updateStudent(studentId: string, data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string; studentNumber?: string; parentId?: string | null; customFieldValues?: Record<string, string> }) {
     // Update student fields (sex, photo, dateOfBirth, address, generation, studentNumber, parentId)
     const studentData: any = {};
     if (data.sex !== undefined) studentData.sex = data.sex;
@@ -548,6 +550,7 @@ export class ClassesService {
     if (data.address !== undefined) studentData.address = data.address;
     if (data.generation !== undefined) studentData.generation = data.generation;
     if (data.studentNumber !== undefined) studentData.studentNumber = data.studentNumber.trim() || null;
+    if (data.customFieldValues !== undefined) studentData.customFieldValues = data.customFieldValues;
     if (data.parentId !== undefined) {
       if (data.parentId) {
         const parent = await this.prisma.user.findUnique({

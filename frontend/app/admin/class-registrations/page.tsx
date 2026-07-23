@@ -232,6 +232,17 @@ function ModeToggle({ label, value, onChange }: { label: string; value: FieldMod
   )
 }
 
+function LockedFieldRow({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-3 border-b border-slate-100 last:border-0">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-400">
+        Always required
+      </span>
+    </div>
+  )
+}
+
 function FormSettingsView() {
   const qc = useQueryClient()
   const [newLabel, setNewLabel] = useState('')
@@ -336,14 +347,18 @@ function FormSettingsView() {
     <div className="space-y-6 max-w-2xl">
       <div className="bg-white border border-slate-100 rounded-xl p-4">
         <h2 className="text-sm font-semibold text-slate-800 mb-1">Built-in fields</h2>
-        <p className="text-xs text-slate-500 mb-2">Email, English Name, and Password are always required to create a student's account and can't be changed.</p>
+        <p className="text-xs text-slate-500 mb-2">Listed in the same order students see them. Class, English Name, Email, and Password are always required to create a student's account and can't be changed.</p>
         {settingsLoading || !settings ? (
           <div className="text-sm text-slate-400 py-4">Loading…</div>
         ) : (
           <div>
+            <LockedFieldRow label="Class" />
             <ModeToggle label="Khmer Name" value={settings.khmerNameMode} onChange={(m) => updateSettings.mutate({ khmerNameMode: m })} />
+            <LockedFieldRow label="English Name" />
             <ModeToggle label="Phone" value={settings.phoneMode} onChange={(m) => updateSettings.mutate({ phoneMode: m })} />
             <ModeToggle label="Photo" value={settings.photoMode} onChange={(m) => updateSettings.mutate({ photoMode: m })} />
+            <LockedFieldRow label="Email" />
+            <LockedFieldRow label="Password" />
           </div>
         )}
       </div>
