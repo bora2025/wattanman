@@ -73,6 +73,17 @@ const nextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(self)' },
         ],
       },
+      {
+        // The LaTeX editor is a public, session-less tool meant to be embedded
+        // in third-party LMS quiz editors (e.g. Moodle) via <iframe>. CSP's
+        // frame-ancestors takes precedence over X-Frame-Options in every
+        // modern browser, so this narrowly re-allows framing for this one
+        // route without weakening the site-wide X-Frame-Options: DENY above.
+        source: '/tools/latex-editor',
+        headers: [
+          { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
+        ],
+      },
     ];
   },
 }
