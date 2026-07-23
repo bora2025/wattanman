@@ -157,6 +157,7 @@ function BudgetContent() {
   const [allTime, setAllTime] = useState<FeeSummaryAll | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'chart' | 'payments'>('chart')
+  const [showPrintModal, setShowPrintModal] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -240,8 +241,21 @@ function BudgetContent() {
             )}
             Refresh
           </button>
+          <button
+            onClick={() => setShowPrintModal(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-xl transition-colors"
+          >
+            🖨️ Print
+          </button>
         </div>
       </div>
+
+      <PrintBudgetReportModal
+        show={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        defaultPeriod={period}
+        defaultDate={date}
+      />
 
       {/* ── Quick Nav ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -475,6 +489,296 @@ function BudgetContent() {
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+/* ─── Print Modal ────────────────────────────────────────── */
+
+function PrintBudgetReportModal({
+  show, onClose, defaultPeriod, defaultDate,
+}: {
+  show: boolean; onClose: () => void
+  defaultPeriod: Period; defaultDate: string
+}) {
+  const [printPeriod, setPrintPeriod] = useState<Period>(defaultPeriod)
+  const [printDate, setPrintDate] = useState(defaultDate)
+  const [paperSize, setPaperSize] = useState('A4')
+  const [orgName, setOrgName] = useState('Wattaman School')
+  const [logoUrl, setLogoUrl] = useState('')
+  const [logoTextLines, setLogoTextLines] = useState<string[]>([''])
+  const [headerLines, setHeaderLines] = useState<string[]>(['ព្រះរាជាណាចក្រកម្ពុជា', 'ជាតិ សាសនា ព្រះមហាក្សត្រ'])
+  const [logoGap, setLogoGap] = useState('4')
+  const [logoTextGap, setLogoTextGap] = useState('4')
+  const [headerGap, setHeaderGap] = useState('6')
+  const [signers, setSigners] = useState<string[]>(['Accountant', 'Director'])
+
+  // Prefill business identity from Fee Settings / Site Settings
+  useEffect(() => {
+    apiFetch('/api/fees/settings').then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.schoolName) setOrgName(d.schoolName) }).catch(() => {})
+    apiFetch('/api/site-settings').then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.logoUrl) setLogoUrl(d.logoUrl) }).catch(() => {})
+  }, [])
+
+  // Sync defaults when modal opens
+  useEffect(() => {
+    if (show) {
+      setPrintPeriod(defaultPeriod)
+      setPrintDate(defaultDate)
+    }
+  }, [show, defaultPeriod, defaultDate])
+
+  if (!show) return null
+
+  const handlePrint = () => {
+    const params = new URLSearchParams({
+      period: printPeriod,
+      date: printDate,
+      paper: paperSize,
+      orgName,
+      logoUrl,
+      logoTextLines: JSON.stringify(logoTextLines.filter(l => l.trim())),
+      headerLines: JSON.stringify(headerLines.filter(l => l.trim())),
+      logoGap,
+      logoTextGap,
+      headerGap,
+      signers: JSON.stringify(signers.filter(s => s.trim())),
+    })
+    window.open(`/admin/budget-report/print?${params.toString()}`, '_blank')
+    onClose()
+  }
+
+  const periodOptions: { value: Period; label: string; icon: string }[] = [
+    { value: 'daily', label: 'Daily', icon: '📅' },
+    { value: 'weekly', label: 'Weekly', icon: '📆' },
+    { value: 'monthly', label: 'Monthly', icon: '🗓️' },
+    { value: 'yearly', label: 'Yearly', icon: '📊' },
+  ]
+
+  const paperOptions = [
+    { value: 'A4', label: 'A4', desc: '210 × 297 mm' },
+    { value: 'Letter', label: 'Letter', desc: '8.5 × 11 in' },
+    { value: 'Legal', label: 'Legal', desc: '8.5 × 14 in' },
+  ]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-white rounded-t-2xl">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">🖨️ Print Budget Report</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Customize the letterhead and print</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm">✕</button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Period Selector */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📋 Report Period</label>
+            <div className="grid grid-cols-4 gap-2">
+              {periodOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setPrintPeriod(opt.value)}
+                  className={`flex items-center gap-1.5 p-2.5 rounded-xl border text-left transition-all text-sm ${
+                    printPeriod === opt.value
+                      ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>{opt.icon}</span>
+                  <span className={`font-semibold ${printPeriod === opt.value ? 'text-indigo-700' : 'text-slate-700'}`}>{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Date Picker */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📆 Date</label>
+            <input
+              type="date"
+              value={printDate}
+              onChange={e => setPrintDate(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            />
+          </div>
+
+          {/* Paper Size */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📄 Paper Size</label>
+            <div className="flex gap-2">
+              {paperOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setPaperSize(opt.value)}
+                  className={`flex-1 p-2.5 rounded-xl border text-center transition-all ${
+                    paperSize === opt.value
+                      ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className={`text-sm font-semibold ${paperSize === opt.value ? 'text-indigo-700' : 'text-slate-700'}`}>{opt.label}</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Letter Header Customization */}
+          <div className="space-y-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200">
+            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">📜 Letter Header</h3>
+
+            {/* Logo URL */}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Business Logo URL</label>
+              <input
+                type="text"
+                value={logoUrl}
+                onChange={e => setLogoUrl(e.target.value)}
+                placeholder="https://example.com/logo.png"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              />
+            </div>
+
+            {/* Spacing below logo */}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo (px)</label>
+              <div className="flex items-center gap-2">
+                <input type="range" min="0" max="20" step="1" value={logoGap} onChange={e => setLogoGap(e.target.value)} className="flex-1 accent-indigo-500" />
+                <span className="text-xs text-slate-500 w-8 text-center">{logoGap}</span>
+              </div>
+            </div>
+
+            {/* Logo Text Lines (below logo) */}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Text Below Logo</label>
+              <div className="space-y-1.5">
+                {logoTextLines.map((line, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={line}
+                      onChange={e => { const l = [...logoTextLines]; l[idx] = e.target.value; setLogoTextLines(l) }}
+                      className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                      placeholder={`Line ${idx + 1}`}
+                    />
+                    {logoTextLines.length > 1 && (
+                      <button onClick={() => setLogoTextLines(logoTextLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-xs">✕</button>
+                    )}
+                  </div>
+                ))}
+                <button onClick={() => setLogoTextLines([...logoTextLines, ''])} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">+ Add line</button>
+              </div>
+            </div>
+
+            {/* Spacing below logo text */}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo Text (px)</label>
+              <div className="flex items-center gap-2">
+                <input type="range" min="0" max="20" step="1" value={logoTextGap} onChange={e => setLogoTextGap(e.target.value)} className="flex-1 accent-indigo-500" />
+                <span className="text-xs text-slate-500 w-8 text-center">{logoTextGap}</span>
+              </div>
+            </div>
+
+            {/* Header Lines */}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Header Lines (top → bottom)</label>
+              <div className="space-y-1.5">
+                {headerLines.map((line, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={line}
+                      onChange={e => { const h = [...headerLines]; h[idx] = e.target.value; setHeaderLines(h) }}
+                      className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-center"
+                      placeholder={`Line ${idx + 1}`}
+                    />
+                    {headerLines.length > 1 && (
+                      <button onClick={() => setHeaderLines(headerLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-xs">✕</button>
+                    )}
+                  </div>
+                ))}
+                <button onClick={() => setHeaderLines([...headerLines, ''])} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">+ Add line</button>
+              </div>
+            </div>
+
+            {/* Spacing below header lines */}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Header Lines (px)</label>
+              <div className="flex items-center gap-2">
+                <input type="range" min="0" max="20" step="1" value={headerGap} onChange={e => setHeaderGap(e.target.value)} className="flex-1 accent-indigo-500" />
+                <span className="text-xs text-slate-500 w-8 text-center">{headerGap}</span>
+              </div>
+            </div>
+
+            {/* Organization Name */}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Business / Organization Name</label>
+              <input
+                type="text"
+                value={orgName}
+                onChange={e => setOrgName(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Signers */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">✍️ Signers</label>
+            <div className="space-y-2">
+              {signers.map((signer, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={signer}
+                    onChange={e => { const s = [...signers]; s[idx] = e.target.value; setSigners(s) }}
+                    className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    placeholder={`Signer ${idx + 1}`}
+                  />
+                  {signers.length > 1 && (
+                    <button onClick={() => setSigners(signers.filter((_, i) => i !== idx))} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-sm">✕</button>
+                  )}
+                </div>
+              ))}
+              <button
+                onClick={() => setSigners([...signers, ''])}
+                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
+              >
+                + Add signer
+              </button>
+            </div>
+          </div>
+
+          {/* Preview/Summary */}
+          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-2">
+            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400">Preview</h4>
+            <div className="grid grid-cols-2 gap-y-1.5 text-sm">
+              <span className="text-slate-500">Period:</span>
+              <span className="font-medium text-slate-800 capitalize">{printPeriod} — {printDate}</span>
+              <span className="text-slate-500">Paper Size:</span>
+              <span className="font-medium text-indigo-600">{paperSize}</span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-1">
+            <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+              Cancel
+            </button>
+            <button
+              onClick={handlePrint}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+            >
+              🖨️ Preview
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
