@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, LineChart, Line,
@@ -95,6 +96,33 @@ function CustomTooltip({ active, payload, label }: any) {
   )
 }
 
+/* ─── Quick Nav Card ────────────────────────────────────── */
+
+function QuickNavCard({
+  href, title, sub, icon, color, iconColor,
+}: {
+  href: string; title: string; sub: string
+  icon: React.ReactNode; color: string; iconColor: string
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all"
+    >
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-none ${color}`}>
+        <span className={iconColor}>{icon}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-gray-900">{title}</p>
+        <p className="text-xs text-gray-500 mt-0.5">{sub}</p>
+      </div>
+      <svg className="w-5 h-5 text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+      </svg>
+    </Link>
+  )
+}
+
 /* ─── Stat Card ─────────────────────────────────────────── */
 
 function StatCard({
@@ -171,7 +199,7 @@ function BudgetContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Budget Report</h1>
+          <h1 className="text-2xl font-bold text-gray-900">💰 Finance Dashboard</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             {report ? periodLabel(period, report.dateRange) : '—'}
           </p>
@@ -213,6 +241,26 @@ function BudgetContent() {
             Refresh
           </button>
         </div>
+      </div>
+
+      {/* ── Quick Nav ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <QuickNavCard
+          href="/admin/fees"
+          title="Fee Management"
+          sub="Student fees, discounts & payments"
+          color="bg-emerald-100"
+          iconColor="text-emerald-600"
+          icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
+        />
+        <QuickNavCard
+          href="/admin/salary"
+          title="Salary Management"
+          sub="Staff salaries & disbursements"
+          color="bg-orange-100"
+          iconColor="text-orange-600"
+          icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>}
+        />
       </div>
 
       {loading ? (

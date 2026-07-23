@@ -31,9 +31,9 @@ export const adminNav = [
   { label: 'Class Registrations', href: '/admin/class-registrations', icon: 'clipboard' },
 
   // ── Finance ──
-  { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money', section: 'Finance' },
+  { label: 'Finance Dashboard', href: '/admin/budget-report', icon: 'bar-chart', section: 'Finance' },
+  { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money' },
   { label: 'Salary Management', href: '/admin/salary', icon: 'money' },
-  { label: 'Budget Report', href: '/admin/budget-report', icon: 'bar-chart' },
 
   // ── Reports ──
   { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', section: 'nav.section.reports' },
