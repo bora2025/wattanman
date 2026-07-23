@@ -1457,7 +1457,7 @@ function ManageClasses() {
                   <div key={cls.id} className={`group relative overflow-hidden card-hover p-5 hover:ring-2 ${theme.ring} transition-all`}>
                     <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${theme.from} ${theme.to}`} />
                     <div className="flex items-start justify-between mb-3">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${theme.from} ${theme.to} flex items-center justify-center text-white text-2xl shadow-md group-hover:scale-110 transition-transform`}>
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${theme.from} ${theme.to} flex items-center justify-center text-white text-2xl shadow-md group-hover:scale-110 group-hover:-rotate-3 transition-transform`}>
                         {theme.emoji}
                       </div>
                       {count !== undefined && (
@@ -1467,7 +1467,7 @@ function ManageClasses() {
                         </div>
                       )}
                     </div>
-                    <h3 className="font-semibold text-slate-800 text-lg leading-tight">{cls.name}</h3>
+                    <h3 className="font-bold text-slate-800 text-lg leading-tight">{cls.name}</h3>
                     <p className={`inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${theme.chip}`}>{cls.subject}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {cls.studyYear && (
@@ -1528,17 +1528,23 @@ function ManageClasses() {
                         );
                       } catch { return null; }
                     })()}
-                    <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
-                      <Link href={`/admin/classes/${cls.id}`} className="btn-primary btn-sm flex-1 text-center" title="Manage assignments, exams, courses">📚 Manage</Link>
-                      <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-outline btn-sm flex-1 text-center">Attendance</Link>
-                      <button onClick={() => handleEdit(cls)} className="btn-outline btn-sm flex-1">Edit</button>
-                      <button onClick={() => handleManageStudents(cls)} className="btn-success btn-sm flex-1">Students</button>
-                      <button onClick={() => openAddToTT(cls)} title="Add to Timetable" className="btn-outline btn-sm px-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50">
-                        🗓
-                      </button>
-                      <button onClick={() => handleDelete(cls.id)} title="Delete class" className="btn-danger btn-sm">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      </button>
+                    <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-slate-100">
+                      <div className="flex gap-2">
+                        <Link href={`/admin/classes/${cls.id}`} className={`btn-sm flex-1 text-center text-white bg-gradient-to-r ${theme.from} ${theme.to} shadow-sm hover:shadow-md transition-shadow`} title="Manage assignments, exams, courses">
+                          📚 Manage
+                        </Link>
+                        <button onClick={() => handleManageStudents(cls)} className="btn-success btn-sm flex-1">🧑‍🎓 Students</button>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-outline btn-sm flex-1 text-center">Attendance</Link>
+                        <button onClick={() => handleEdit(cls)} className="btn-outline btn-sm flex-1">Edit</button>
+                        <button onClick={() => openAddToTT(cls)} title="Add to Timetable" className="btn-outline btn-sm px-2.5 text-indigo-600 border-indigo-200 hover:bg-indigo-50 flex-shrink-0">
+                          🗓
+                        </button>
+                        <button onClick={() => handleDelete(cls.id)} title="Delete class" className="btn-outline btn-sm px-2.5 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 flex-shrink-0">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
