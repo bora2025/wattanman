@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Query, Param, UseGuards, Request, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Query, Param, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ClassRegistrationsService } from './class-registrations.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -15,13 +15,77 @@ export class ClassRegistrationsController {
     return this.svc.listPublicClasses();
   }
 
+  @Get('public/form-config')
+  getFormConfig() {
+    return this.svc.getFormConfig();
+  }
+
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('public')
   async submit(
     @Body()
-    body: { classId: string; nameKh: string; nameEn: string; email: string; phone: string; password: string; photo?: string },
+    body: {
+      classId: string;
+      nameKh?: string;
+      nameEn: string;
+      email: string;
+      phone?: string;
+      password: string;
+      photo?: string;
+      customFieldValues?: Record<string, string>;
+    },
   ) {
     return this.svc.createRegistration(body);
+  }
+
+  // ─── Admin: form settings & custom fields ───────────────────────────────
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get('settings')
+  getSettings() {
+    return this.svc.getSettings();
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Patch('settings')
+  updateSettings(@Body() body: { khmerNameMode?: string; phoneMode?: string; photoMode?: string }) {
+    return this.svc.updateSettings(body);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get('fields')
+  listFields() {
+    return this.svc.listFields();
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Post('fields')
+  createField(@Body() body: { label: string; required?: boolean }) {
+    return this.svc.createField(body);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Patch('fields/reorder')
+  reorderFields(@Body() body: { ids: string[] }) {
+    return this.svc.reorderFields(body?.ids);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Patch('fields/:id')
+  updateField(@Param('id') id: string, @Body() body: { label?: string; required?: boolean; enabled?: boolean }) {
+    return this.svc.updateField(id, body);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Delete('fields/:id')
+  deleteField(@Param('id') id: string) {
+    return this.svc.deleteField(id);
   }
 
   // ─── Admin: list & resolve ──────────────────────────────────────────────

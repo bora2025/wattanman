@@ -205,24 +205,47 @@ model ParentLinkRequest {
 // Public, unauthenticated student self-registration request for a class.
 // Reviewed by admin; approval creates the User + Student records.
 model ClassRegistration {
-  id           String    @id @default(cuid())
-  classId      String
-  class        Class     @relation(fields: [classId], references: [id])
-  nameKh       String
-  nameEn       String
-  email        String
-  phone        String
-  passwordHash String // bcrypt hash of the password the student chose at registration
-  photo        String? // base64 data URL, same convention as Student.photo
-  status       String    @default("PENDING") // PENDING | APPROVED | REJECTED
-  rejectReason String?
-  studentId    String? // set once approved
-  createdAt    DateTime  @default(now())
-  resolvedAt   DateTime?
-  resolvedBy   String? // admin user id
+  id                String    @id @default(cuid())
+  classId           String
+  class             Class     @relation(fields: [classId], references: [id])
+  nameKh            String? // required unless hidden/optional via ClassRegistrationSettings.khmerNameMode
+  nameEn            String
+  email             String
+  phone             String? // required unless hidden/optional via ClassRegistrationSettings.phoneMode
+  passwordHash      String // bcrypt hash of the password the student chose at registration
+  photo             String? // base64 data URL, same convention as Student.photo
+  customFieldValues Json? // { [ClassRegistrationField.key]: string }
+  status            String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  rejectReason      String?
+  studentId         String? // set once approved
+  createdAt         DateTime  @default(now())
+  resolvedAt        DateTime?
+  resolvedBy        String? // admin user id
 
   @@index([status])
   @@index([classId])
+}
+
+// Site-wide toggle for which built-in fields the public registration form shows/requires.
+model ClassRegistrationSettings {
+  id            String   @id @default("singleton")
+  khmerNameMode String   @default("REQUIRED") // REQUIRED | OPTIONAL | HIDDEN
+  phoneMode     String   @default("REQUIRED") // REQUIRED | OPTIONAL | HIDDEN
+  photoMode     String   @default("OPTIONAL") // REQUIRED | OPTIONAL | HIDDEN
+  updatedAt     DateTime @updatedAt
+}
+
+// Admin-defined extra fields rendered on the public registration form, global across all classes.
+model ClassRegistrationField {
+  id        String   @id @default(cuid())
+  key       String   @unique // slug used as the JSON key in ClassRegistration.customFieldValues
+  label     String
+  fieldType String   @default("TEXT") // TEXT only for v1
+  required  Boolean  @default(false)
+  order     Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model StaffAttendance {

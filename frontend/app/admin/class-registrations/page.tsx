@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
+import ConfirmModal from '../../../components/ConfirmModal'
 import { adminNav, classAdminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 
@@ -23,10 +24,29 @@ interface ClassRegistrationItem {
 }
 
 type Tab = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ALL'
+type View = 'requests' | 'form'
+
+type FieldMode = 'REQUIRED' | 'OPTIONAL' | 'HIDDEN'
+
+interface ClassRegistrationSettings {
+  khmerNameMode: FieldMode
+  phoneMode: FieldMode
+  photoMode: FieldMode
+}
+
+interface ClassRegistrationField {
+  id: string
+  key: string
+  label: string
+  required: boolean
+  enabled: boolean
+  order: number
+}
 
 export default function AdminClassRegistrationsPage() {
   const qc = useQueryClient()
   const [tab, setTab] = useState<Tab>('PENDING')
+  const [view, setView] = useState<View>('requests')
   const [errorMap, setErrorMap] = useState<Record<string, string>>({})
   const isClassAdmin = typeof window !== 'undefined' && localStorage.getItem('role') === 'CLASS_ADMIN'
 
@@ -81,6 +101,24 @@ export default function AdminClassRegistrationsPage() {
             <p className="text-sm text-slate-500 mt-1">Approve or reject student self-registration requests submitted from the public registration page.</p>
           </div>
 
+          {!isClassAdmin && (
+            <div className="flex gap-2 mb-4 border-b border-slate-200">
+              {([{ id: 'requests', label: 'Requests' }, { id: 'form', label: 'Form Settings' }] as { id: View; label: string }[]).map(v => (
+                <button
+                  key={v.id}
+                  onClick={() => setView(v.id)}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${view === v.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {view === 'form' && !isClassAdmin ? (
+            <FormSettingsView />
+          ) : (
+          <>
           <div className="flex gap-2 mb-4">
             {(['PENDING', 'APPROVED', 'REJECTED', 'ALL'] as Tab[]).map(t => (
               <button
@@ -165,8 +203,218 @@ export default function AdminClassRegistrationsPage() {
               </table>
             </div>
           )}
+          </>
+          )}
         </main>
       </div>
     </AuthGuard>
+  )
+}
+
+const MODE_LABELS: Record<FieldMode, string> = { REQUIRED: 'Required', OPTIONAL: 'Optional', HIDDEN: 'Hidden' }
+
+function ModeToggle({ label, value, onChange }: { label: string; value: FieldMode; onChange: (m: FieldMode) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-3 border-b border-slate-100 last:border-0">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+        {(['REQUIRED', 'OPTIONAL', 'HIDDEN'] as FieldMode[]).map(m => (
+          <button
+            key={m}
+            onClick={() => onChange(m)}
+            className={`px-3 py-1.5 text-xs font-medium ${value === m ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+          >
+            {MODE_LABELS[m]}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FormSettingsView() {
+  const qc = useQueryClient()
+  const [newLabel, setNewLabel] = useState('')
+  const [newRequired, setNewRequired] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<ClassRegistrationField | null>(null)
+
+  const { data: settings, isLoading: settingsLoading } = useQuery<ClassRegistrationSettings>({
+    queryKey: ['admin-registration-settings'],
+    queryFn: async () => {
+      const r = await apiFetch('/api/class-registrations/settings')
+      if (!r.ok) throw new Error('Failed to load settings')
+      return r.json()
+    },
+  })
+
+  const { data: fields = [], isLoading: fieldsLoading } = useQuery<ClassRegistrationField[]>({
+    queryKey: ['admin-registration-fields'],
+    queryFn: async () => {
+      const r = await apiFetch('/api/class-registrations/fields')
+      if (!r.ok) throw new Error('Failed to load fields')
+      return r.json()
+    },
+  })
+
+  const updateSettings = useMutation({
+    mutationFn: async (patch: Partial<ClassRegistrationSettings>) => {
+      const r = await apiFetch('/api/class-registrations/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      })
+      if (!r.ok) throw new Error('Failed to save')
+      return r.json()
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-registration-settings'] }),
+  })
+
+  const createField = useMutation({
+    mutationFn: async () => {
+      const r = await apiFetch('/api/class-registrations/fields', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: newLabel.trim(), required: newRequired }),
+      })
+      if (!r.ok) throw new Error('Failed to add field')
+      return r.json()
+    },
+    onSuccess: () => {
+      setNewLabel('')
+      setNewRequired(false)
+      qc.invalidateQueries({ queryKey: ['admin-registration-fields'] })
+    },
+  })
+
+  const updateField = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<ClassRegistrationField> }) => {
+      const r = await apiFetch(`/api/class-registrations/fields/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      })
+      if (!r.ok) throw new Error('Failed to save field')
+      return r.json()
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-registration-fields'] }),
+  })
+
+  const deleteField = useMutation({
+    mutationFn: async (id: string) => {
+      const r = await apiFetch(`/api/class-registrations/fields/${id}`, { method: 'DELETE' })
+      if (!r.ok) throw new Error('Failed to delete field')
+      return r.json()
+    },
+    onSuccess: () => {
+      setDeleteTarget(null)
+      qc.invalidateQueries({ queryKey: ['admin-registration-fields'] })
+    },
+  })
+
+  const reorderFields = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const r = await apiFetch('/api/class-registrations/fields/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      })
+      if (!r.ok) throw new Error('Failed to reorder')
+      return r.json()
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-registration-fields'] }),
+  })
+
+  const move = (index: number, dir: -1 | 1) => {
+    const target = index + dir
+    if (target < 0 || target >= fields.length) return
+    const ids = fields.map(f => f.id)
+    ;[ids[index], ids[target]] = [ids[target], ids[index]]
+    reorderFields.mutate(ids)
+  }
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <div className="bg-white border border-slate-100 rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-slate-800 mb-1">Built-in fields</h2>
+        <p className="text-xs text-slate-500 mb-2">Email, English Name, and Password are always required to create a student's account and can't be changed.</p>
+        {settingsLoading || !settings ? (
+          <div className="text-sm text-slate-400 py-4">Loading…</div>
+        ) : (
+          <div>
+            <ModeToggle label="Khmer Name" value={settings.khmerNameMode} onChange={(m) => updateSettings.mutate({ khmerNameMode: m })} />
+            <ModeToggle label="Phone" value={settings.phoneMode} onChange={(m) => updateSettings.mutate({ phoneMode: m })} />
+            <ModeToggle label="Photo" value={settings.photoMode} onChange={(m) => updateSettings.mutate({ photoMode: m })} />
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white border border-slate-100 rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-slate-800 mb-1">Custom fields</h2>
+        <p className="text-xs text-slate-500 mb-3">Extra short-text fields shown on the registration form, in this order.</p>
+
+        {fieldsLoading ? (
+          <div className="text-sm text-slate-400 py-4">Loading…</div>
+        ) : fields.length === 0 ? (
+          <div className="text-sm text-slate-400 py-2">No custom fields yet.</div>
+        ) : (
+          <ul className="space-y-2 mb-4">
+            {fields.map((f, i) => (
+              <li key={f.id} className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2">
+                <div className="flex flex-col">
+                  <button onClick={() => move(i, -1)} disabled={i === 0} className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none">▲</button>
+                  <button onClick={() => move(i, 1)} disabled={i === fields.length - 1} className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none">▼</button>
+                </div>
+                <span className="flex-1 text-sm text-slate-800">{f.label}</span>
+                <label className="flex items-center gap-1 text-xs text-slate-500">
+                  <input type="checkbox" checked={f.required} onChange={(e) => updateField.mutate({ id: f.id, patch: { required: e.target.checked } })} />
+                  Required
+                </label>
+                <label className="flex items-center gap-1 text-xs text-slate-500">
+                  <input type="checkbox" checked={f.enabled} onChange={(e) => updateField.mutate({ id: f.id, patch: { enabled: e.target.checked } })} />
+                  Enabled
+                </label>
+                <button onClick={() => setDeleteTarget(f)} className="text-xs text-red-600 hover:underline">Delete</button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <form
+          onSubmit={(e) => { e.preventDefault(); if (newLabel.trim()) createField.mutate() }}
+          className="flex items-center gap-2 pt-3 border-t border-slate-100"
+        >
+          <input
+            type="text"
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            placeholder="New field label, e.g. Parent's Name"
+            className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+          />
+          <label className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
+            <input type="checkbox" checked={newRequired} onChange={(e) => setNewRequired(e.target.checked)} />
+            Required
+          </label>
+          <button
+            type="submit"
+            disabled={!newLabel.trim() || createField.isPending}
+            className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg disabled:opacity-60"
+          >
+            + Add field
+          </button>
+        </form>
+      </div>
+
+      {deleteTarget && (
+        <ConfirmModal
+          title="Delete custom field?"
+          message={`"${deleteTarget.label}" will be removed from the registration form. Past submissions keep their stored value.`}
+          confirmLabel="Delete"
+          danger
+          pending={deleteField.isPending}
+          onConfirm={() => deleteField.mutate(deleteTarget.id)}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+    </div>
   )
 }

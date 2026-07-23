@@ -13,6 +13,18 @@ interface PublicClass {
   studyYear: { label: string | null; year: number } | null
 }
 
+type FieldMode = 'REQUIRED' | 'OPTIONAL' | 'HIDDEN'
+
+interface FormConfig {
+  settings: { khmerNameMode: FieldMode; phoneMode: FieldMode; photoMode: FieldMode }
+  fields: { id: string; key: string; label: string; required: boolean }[]
+}
+
+const DEFAULT_FORM_CONFIG: FormConfig = {
+  settings: { khmerNameMode: 'REQUIRED', phoneMode: 'REQUIRED', photoMode: 'OPTIONAL' },
+  fields: [],
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024 // 3MB source file cap
 const MIN_PASSWORD_LENGTH = 6
@@ -31,6 +43,7 @@ function RegisterForm() {
 
   const [classes, setClasses] = useState<PublicClass[]>([])
   const [loadingClasses, setLoadingClasses] = useState(true)
+  const [formConfig, setFormConfig] = useState<FormConfig>(DEFAULT_FORM_CONFIG)
 
   const [classId, setClassId] = useState(urlClassId)
   const [nameKh, setNameKh] = useState('')
@@ -41,6 +54,7 @@ function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [photo, setPhoto] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({})
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -64,6 +78,19 @@ function RegisterForm() {
     })()
   }, [])
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiFetch('/api/class-registrations/public/form-config')
+        if (res.ok) setFormConfig(await res.json())
+      } catch {
+        // Fall back to the default (all built-in fields required, no custom fields)
+      }
+    })()
+  }, [])
+
+  const { khmerNameMode, phoneMode, photoMode } = formConfig.settings
+
   const emailValid = EMAIL_RE.test(email.trim())
   const passwordValid = password.length >= MIN_PASSWORD_LENGTH
   const passwordsMatch = password === confirmPassword
@@ -83,7 +110,15 @@ function RegisterForm() {
   }
 
   const canSubmit =
-    classId && nameKh.trim() && nameEn.trim() && emailValid && phone.trim() && passwordValid && passwordsMatch
+    classId &&
+    (khmerNameMode !== 'REQUIRED' || nameKh.trim()) &&
+    nameEn.trim() &&
+    emailValid &&
+    (phoneMode !== 'REQUIRED' || phone.trim()) &&
+    (photoMode !== 'REQUIRED' || photo) &&
+    passwordValid &&
+    passwordsMatch &&
+    formConfig.fields.every((f) => !f.required || customFieldValues[f.key]?.trim())
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -96,12 +131,13 @@ function RegisterForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           classId,
-          nameKh: nameKh.trim(),
+          nameKh: khmerNameMode === 'HIDDEN' ? undefined : nameKh.trim(),
           nameEn: nameEn.trim(),
           email: email.trim(),
-          phone: phone.trim(),
+          phone: phoneMode === 'HIDDEN' ? undefined : phone.trim(),
           password,
-          photo: photo || undefined,
+          photo: photoMode === 'HIDDEN' ? undefined : photo || undefined,
+          customFieldValues,
         }),
       })
       if (res.ok) {
@@ -155,29 +191,58 @@ function RegisterForm() {
               )}
             </div>
 
-            <div>
-              <label className="form-label">Full Name (Khmer) — ឈ្មោះពេញជាភាសាខ្មែរ</label>
-              <input type="text" value={nameKh} onChange={(e) => setNameKh(e.target.value)} required placeholder="សុខ សុភា" />
-            </div>
+            {khmerNameMode !== 'HIDDEN' && (
+              <div>
+                <label className="form-label">
+                  Full Name (Khmer) — ឈ្មោះពេញជាភាសាខ្មែរ
+                  {khmerNameMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs"> (optional)</span>}
+                </label>
+                <input type="text" value={nameKh} onChange={(e) => setNameKh(e.target.value)} required={khmerNameMode === 'REQUIRED'} placeholder="សុខ សុភា" />
+              </div>
+            )}
 
             <div>
               <label className="form-label">Full Name (English)</label>
               <input type="text" value={nameEn} onChange={(e) => setNameEn(e.target.value)} required placeholder="Sok Sophea" />
             </div>
 
-            <div>
-              <label className="form-label">Phone Number</label>
-              <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="012 345 678" />
-            </div>
+            {phoneMode !== 'HIDDEN' && (
+              <div>
+                <label className="form-label">
+                  Phone Number
+                  {phoneMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs"> (optional)</span>}
+                </label>
+                <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} required={phoneMode === 'REQUIRED'} placeholder="012 345 678" />
+              </div>
+            )}
 
-            <div>
-              <label className="form-label">Photo <span className="text-slate-400 font-normal text-xs">(optional)</span></label>
-              <input type="file" accept="image/*" onChange={handlePhotoChange} className="text-sm" />
-              {photoError && <p className="text-xs text-red-600 mt-1">{photoError}</p>}
-              {photo && (
-                <img src={photo} alt="Preview" className="mt-2 w-20 h-20 rounded-lg object-cover border border-slate-200" />
-              )}
-            </div>
+            {photoMode !== 'HIDDEN' && (
+              <div>
+                <label className="form-label">
+                  Photo {photoMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
+                </label>
+                <input type="file" accept="image/*" onChange={handlePhotoChange} className="text-sm" required={photoMode === 'REQUIRED'} />
+                {photoError && <p className="text-xs text-red-600 mt-1">{photoError}</p>}
+                {photo && (
+                  <img src={photo} alt="Preview" className="mt-2 w-20 h-20 rounded-lg object-cover border border-slate-200" />
+                )}
+              </div>
+            )}
+
+            {formConfig.fields.map((f) => (
+              <div key={f.id}>
+                <label className="form-label">
+                  {f.label}
+                  {!f.required && <span className="text-slate-400 font-normal text-xs"> (optional)</span>}
+                </label>
+                <input
+                  type="text"
+                  value={customFieldValues[f.key] || ''}
+                  onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                  required={f.required}
+                />
+              </div>
+            ))}
 
             <div className="pt-2 border-t border-slate-100">
               <label className="form-label">Email</label>
