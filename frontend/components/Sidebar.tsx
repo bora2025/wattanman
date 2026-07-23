@@ -456,36 +456,29 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
           })}
         </nav>
 
-        {/* Bottom */}
-        <div className="px-2 py-3 border-t border-white/10 space-y-0.5">
-          {sidebarOpen && (
-            <div className="px-1 pb-2">
-              <InstallAppButton variant="row" />
-            </div>
-          )}
+        {/* Bottom — compact, icon-only regardless of expand state */}
+        <div className={`px-2 py-2 border-t border-white/10 flex items-center gap-0.5 ${sidebarOpen ? 'justify-center' : 'flex-col'}`}>
+          <InstallAppButton variant="icon" className={`${colors.text} hover:bg-white/10`} />
           <button
             onClick={() => setLang(lang === 'en' ? 'kh' : 'en')}
-            title={sidebarOpen ? undefined : (lang === 'en' ? 'ភាសាខ្មែរ' : 'English')}
-            className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm w-full text-left ${colors.text} hover:bg-white/10 transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
+            title={lang === 'en' ? 'ភាសាខ្មែរ' : 'English'}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center ${colors.text} hover:bg-white/10 transition-colors`}
           >
-            <IconGlobe size={17} />
-            {sidebarOpen && <span className="truncate">{lang === 'en' ? 'ភាសាខ្មែរ' : 'English'}</span>}
+            <IconGlobe size={16} />
           </button>
           <Link
             href="/settings/notifications"
-            title={sidebarOpen ? undefined : 'Notification settings'}
-            className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm ${colors.text} hover:bg-white/10 transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
+            title="Notification settings"
+            className={`w-9 h-9 rounded-xl flex items-center justify-center ${colors.text} hover:bg-white/10 transition-colors`}
           >
-            <NavIcon icon="settings" size={17} />
-            {sidebarOpen && <span className="truncate">Notifications</span>}
+            <NavIcon icon="settings" size={16} />
           </Link>
           <button
             onClick={handleLogout}
-            title={sidebarOpen ? undefined : t('common.logout')}
-            className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm w-full text-left text-red-300/90 hover:bg-white/10 transition-colors ${sidebarOpen ? '' : 'justify-center'}`}
+            title={t('common.logout')}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-red-300/90 hover:bg-white/10 transition-colors"
           >
-            <IconLogout size={17} />
-            {sidebarOpen && <span className="truncate">{t('common.logout')}</span>}
+            <IconLogout size={16} />
           </button>
         </div>
       </aside>

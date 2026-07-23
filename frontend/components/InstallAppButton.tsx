@@ -15,8 +15,9 @@ type BIPEvent = Event & {
  *
  * `variant="compact"` renders a small pill suitable for the sidebar.
  * `variant="row"` renders a full-width row suitable for menus.
+ * `variant="icon"` renders a bare icon button suitable for a compact toolbar.
  */
-export default function InstallAppButton({ variant = 'row', className = '' }: { variant?: 'compact' | 'row'; className?: string }) {
+export default function InstallAppButton({ variant = 'row', className = '' }: { variant?: 'compact' | 'row' | 'icon'; className?: string }) {
   const [deferred, setDeferred] = useState<BIPEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -54,6 +55,18 @@ export default function InstallAppButton({ variant = 'row', className = '' }: { 
   }
 
   const label = '📲 Install app';
+  if (variant === 'icon') {
+    return (
+      <button
+        onClick={handleClick}
+        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${className}`}
+        aria-label="Install Wattaman app"
+        title="Install Wattaman app"
+      >
+        <span className="text-base leading-none">📲</span>
+      </button>
+    );
+  }
   if (variant === 'compact') {
     return (
       <button
