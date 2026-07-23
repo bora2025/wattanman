@@ -12,7 +12,7 @@ export class ClassesController {
 
   @Roles('ADMIN', 'CLASS_ADMIN')
   @Post()
-  async createClass(@Body() data: { name: string; subject?: string; teacherId: string; classAdminId?: string; schedule?: string; studyYearId?: string; registrationStatus?: string }) {
+  async createClass(@Body() data: { name: string; subject?: string; teacherId: string; classAdminId?: string; schedule?: string; studyYearId?: string; registrationStatus?: string; thumbnail?: string; description?: string; price?: number | null; showPrice?: boolean }) {
     return this.classesService.createClass(data);
   }
 
@@ -39,7 +39,7 @@ export class ClassesController {
 
   @Roles('ADMIN', 'CLASS_ADMIN')
   @Put(':id')
-  async updateClass(@Param('id') id: string, @Body() data: { name?: string; subject?: string; teacherId?: string; classAdminId?: string | null; schedule?: string; studyYearId?: string; registrationStatus?: string }) {
+  async updateClass(@Param('id') id: string, @Body() data: { name?: string; subject?: string; teacherId?: string; classAdminId?: string | null; schedule?: string; studyYearId?: string; registrationStatus?: string; thumbnail?: string; description?: string; price?: number | null; showPrice?: boolean }) {
     return this.classesService.updateClass(id, data);
   }
 

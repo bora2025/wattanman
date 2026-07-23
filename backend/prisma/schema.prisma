@@ -72,6 +72,11 @@ model Class {
   schedule     String? // e.g., "Mon 9:00-10:00"
   // Public student self-registration visibility: AVAILABLE | UNAVAILABLE | HIDDEN
   registrationStatus String @default("HIDDEN")
+  // Public marketing card fields (shown on the home page registration listing)
+  thumbnail    String? // base64 data URL or external URL
+  description  String?
+  price        Float?
+  showPrice    Boolean    @default(false)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 

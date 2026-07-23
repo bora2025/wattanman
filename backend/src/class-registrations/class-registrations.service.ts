@@ -15,17 +15,23 @@ export class ClassRegistrationsService {
 
   // ─── Public: browse open classes ──────────────────────────────────────
   async listPublicClasses() {
-    return this.prisma.class.findMany({
+    const classes = await this.prisma.class.findMany({
       where: { registrationStatus: { not: 'HIDDEN' } },
       select: {
         id: true,
         name: true,
         subject: true,
         registrationStatus: true,
+        thumbnail: true,
+        description: true,
+        price: true,
+        showPrice: true,
         studyYear: { select: { label: true, year: true } },
       },
       orderBy: { name: 'asc' },
     });
+    // Never leak a price the admin chose to hide, even though the UI wouldn't render it.
+    return classes.map(c => ({ ...c, price: c.showPrice ? c.price : null }));
   }
 
   // ─── Public: submit a registration ────────────────────────────────────

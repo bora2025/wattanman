@@ -280,6 +280,10 @@ interface PublicClass {
   name: string
   subject: string | null
   registrationStatus: 'AVAILABLE' | 'UNAVAILABLE' | 'HIDDEN'
+  thumbnail: string | null
+  description: string | null
+  price: number | null
+  showPrice: boolean
   studyYear: { label: string | null; year: number } | null
 }
 
@@ -317,69 +321,80 @@ function OpenClassRegistrations() {
   if (!loaded || classes.length === 0) return null
 
   return (
-    <section className="relative py-24 bg-gradient-to-b from-gray-900 to-gray-800 overflow-hidden">
-      {/* Decorative glow blobs */}
-      <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-indigo-600/20 blur-3xl" />
-      <div className="absolute -bottom-32 -right-24 w-96 h-96 rounded-full bg-fuchsia-600/20 blur-3xl" />
-
-      <div className="relative max-w-7xl mx-auto px-6">
-        <div className="text-center mb-14">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-4 bg-white/10 text-white backdrop-blur-sm border border-white/10">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-dot" />
-            Now Enrolling · {classes.length} class{classes.length !== 1 ? 'es' : ''} open
-          </span>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
-            Find Your Class. <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-fuchsia-400">Register Today.</span>
-          </h2>
-          <p className="text-gray-400 max-w-xl mx-auto">These classes are accepting new students right now. Submit your info online — our admin team reviews every request.</p>
+    <section className="py-20 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex items-end justify-between mb-10 gap-4 flex-wrap">
+          <div>
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-3 bg-emerald-50 text-emerald-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-dot" />
+              Now Enrolling
+            </span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Trending Classes</h2>
+            <p className="text-gray-500 mt-2 max-w-xl">These classes are accepting new students right now — register online and our admin team will review your request.</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {classes.map((cls) => {
             const theme = themeForClass(cls.subject || cls.name)
             return (
-              <div
+              <Link
                 key={cls.id}
-                className="group relative bg-gray-900/60 rounded-3xl border border-white/10 shadow-xl hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden backdrop-blur-sm"
+                href={`/register?classId=${cls.id}`}
+                className="group bg-white rounded-2xl border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
               >
-                {/* Gradient header */}
-                <div className={`h-20 bg-gradient-to-br ${theme.grad} relative overflow-hidden`}>
-                  <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10" />
-                  <div className="absolute -left-4 -bottom-10 w-20 h-20 rounded-full bg-white/10" />
-                  <div className="absolute top-3.5 left-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wide">
+                {/* Thumbnail */}
+                <div className="relative aspect-video overflow-hidden bg-gray-100">
+                  {cls.thumbnail ? (
+                    <img
+                      src={cls.thumbnail}
+                      alt={cls.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className={`w-full h-full bg-gradient-to-br ${theme.grad} flex items-center justify-center text-5xl`}>
+                      {theme.emoji}
+                    </div>
+                  )}
+                  <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[11px] font-bold shadow-sm">
                     <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-dot" />
-                    Open
-                  </div>
+                    OPEN
+                  </span>
                 </div>
 
-                {/* Icon badge overlapping header */}
-                <div className="absolute top-10 left-5 w-16 h-16 rounded-2xl bg-white shadow-lg flex items-center justify-center text-3xl group-hover:scale-110 group-hover:-rotate-3 transition-transform">
-                  {theme.emoji}
-                </div>
-
-                <div className="pt-10 px-6 pb-6">
-                  <h3 className="text-lg font-extrabold text-white leading-snug">{cls.name}</h3>
+                <div className="p-5 flex flex-col flex-1">
+                  <h3 className="font-bold text-gray-900 text-base leading-snug line-clamp-2">{cls.name}</h3>
+                  {cls.description && (
+                    <p className="text-sm text-gray-500 mt-1.5 line-clamp-2">{cls.description}</p>
+                  )}
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {cls.subject && (
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${theme.chip}`}>{cls.subject}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${theme.chip}`}>{cls.subject}</span>
                     )}
                     {cls.studyYear && (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/10 text-gray-300">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-500">
                         📅 {cls.studyYear.label || cls.studyYear.year}
                       </span>
                     )}
                   </div>
-                  <Link
-                    href={`/register?classId=${cls.id}`}
-                    className={`mt-6 w-full inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl text-sm font-bold text-white bg-gradient-to-r ${theme.grad} shadow-md group-hover:shadow-xl transition-all`}
-                  >
-                    Register Now
-                    <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                    </svg>
-                  </Link>
+
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                    {cls.showPrice && cls.price != null ? (
+                      <span className="text-lg font-extrabold text-gray-900">${cls.price.toFixed(2)}</span>
+                    ) : (
+                      <span className="text-sm font-semibold text-gray-400">Free to apply</span>
+                    )}
+                    <span
+                      className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl text-white bg-gradient-to-r ${theme.grad} shadow-sm group-hover:shadow-md transition-all`}
+                    >
+                      Register
+                      <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                      </svg>
+                    </span>
+                  </div>
                 </div>
-              </div>
+              </Link>
             )
           })}
         </div>

@@ -14,7 +14,13 @@ export class ClassesService {
     }
   }
 
-  async createClass(data: { name: string; subject?: string; teacherId: string; classAdminId?: string; schedule?: string; studyYearId?: string; registrationStatus?: string }) {
+  private assertValidPrice(price?: number | null) {
+    if (price !== undefined && price !== null && (typeof price !== 'number' || isNaN(price) || price < 0)) {
+      throw new BadRequestException('price must be a non-negative number');
+    }
+  }
+
+  async createClass(data: { name: string; subject?: string; teacherId: string; classAdminId?: string; schedule?: string; studyYearId?: string; registrationStatus?: string; thumbnail?: string; description?: string; price?: number | null; showPrice?: boolean }) {
     // Validate that teacherId belongs to a user with TEACHER role
     const teacher = await this.prisma.user.findUnique({ where: { id: data.teacherId } });
     if (!teacher || teacher.role !== 'TEACHER') {
@@ -28,6 +34,7 @@ export class ClassesService {
       }
     }
     this.assertValidRegistrationStatus(data.registrationStatus);
+    this.assertValidPrice(data.price);
     // Optional FK fields arrive as '' from "None" dropdown options — Prisma/Postgres
     // rejects '' as a foreign key value, so normalize to undefined (omit from insert).
     return this.prisma.class.create({
@@ -40,7 +47,7 @@ export class ClassesService {
     });
   }
 
-  async updateClass(id: string, data: { name?: string; subject?: string; teacherId?: string; classAdminId?: string | null; schedule?: string; studyYearId?: string; registrationStatus?: string }) {
+  async updateClass(id: string, data: { name?: string; subject?: string; teacherId?: string; classAdminId?: string | null; schedule?: string; studyYearId?: string; registrationStatus?: string; thumbnail?: string; description?: string; price?: number | null; showPrice?: boolean }) {
     // Validate that teacherId belongs to a user with TEACHER role
     if (data.teacherId) {
       const teacher = await this.prisma.user.findUnique({ where: { id: data.teacherId } });
@@ -56,6 +63,7 @@ export class ClassesService {
       }
     }
     this.assertValidRegistrationStatus(data.registrationStatus);
+    this.assertValidPrice(data.price);
     // '' from "None"/"No study year" dropdowns must clear the FK (null), not be sent as '' —
     // Postgres rejects '' as a foreign key value with an unhandled constraint error.
     return this.prisma.class.update({

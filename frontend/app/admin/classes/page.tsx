@@ -27,6 +27,10 @@ interface Class {
   studyYear?: StudyYear | null;
   schedule?: string;
   registrationStatus?: 'AVAILABLE' | 'UNAVAILABLE' | 'HIDDEN';
+  thumbnail?: string | null;
+  description?: string | null;
+  price?: number | null;
+  showPrice?: boolean;
 }
 
 interface TimetableListItem { id: string; name: string; academicYear: string }
@@ -197,6 +201,8 @@ const DAY_COLORS: Record<string, string> = {
   'night-shift': 'bg-slate-100 text-slate-600 border-slate-300',
 };
 
+const MAX_THUMBNAIL_BYTES = 3 * 1024 * 1024; // 3MB source file cap
+
 const REGISTRATION_STATUS_META: Record<string, { label: string; className: string }> = {
   AVAILABLE: { label: '🟢 Open for Registration', className: 'bg-emerald-100 text-emerald-700' },
   UNAVAILABLE: { label: '🟡 Registration Closed', className: 'bg-amber-100 text-amber-700' },
@@ -222,7 +228,8 @@ function ManageClasses() {
   const [selectedStudyYearId, setSelectedStudyYearId] = useState<string>('');
   const [showForm, setShowForm] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
-  const [formData, setFormData] = useState({ name: '', subject: '', teacherId: '', classAdminId: '', studyYearId: '', registrationStatus: 'HIDDEN' });
+  const [formData, setFormData] = useState({ name: '', subject: '', teacherId: '', classAdminId: '', studyYearId: '', registrationStatus: 'HIDDEN', thumbnail: '', description: '', price: '', showPrice: false });
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [classStudents, setClassStudents] = useState<Student[]>([]);
@@ -280,7 +287,7 @@ function ManageClasses() {
 
   useEffect(() => {
     if (!formData || typeof formData.name === 'undefined') {
-      setFormData({ name: '', subject: '', teacherId: '', classAdminId: '', studyYearId: '', registrationStatus: 'HIDDEN' });
+      setFormData({ name: '', subject: '', teacherId: '', classAdminId: '', studyYearId: '', registrationStatus: 'HIDDEN', thumbnail: '', description: '', price: '', showPrice: false });
     }
   }, [formData]);
 
@@ -475,10 +482,14 @@ function ManageClasses() {
     try {
       const method = editingClass ? 'PUT' : 'POST';
       const url = editingClass ? `/api/classes/${editingClass.id}` : '/api/classes';
+      const payload = {
+        ...formData,
+        price: formData.price.trim() === '' ? null : parseFloat(formData.price),
+      };
       const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         const savedClass = await res.json();
@@ -512,7 +523,7 @@ function ManageClasses() {
         fetchClasses();
         setShowForm(false);
         setEditingClass(null);
-        setFormData({ name: '', subject: '', teacherId: '', classAdminId: '', studyYearId: '', registrationStatus: 'HIDDEN' });
+        setFormData({ name: '', subject: '', teacherId: '', classAdminId: '', studyYearId: '', registrationStatus: 'HIDDEN', thumbnail: '', description: '', price: '', showPrice: false });
         setSelectedPreset('global-default');
         setCustomConfigs([]);
         setWeeklySchedule({ ...DEFAULT_SCHEDULE });
@@ -526,7 +537,7 @@ function ManageClasses() {
 
   const handleEdit = async (cls: Class) => {
     setEditingClass(cls);
-    setFormData({ name: cls.name || '', subject: cls.subject || '', teacherId: cls.teacherId || '', classAdminId: cls.classAdminId || '', studyYearId: cls.studyYearId || '', registrationStatus: cls.registrationStatus || 'HIDDEN' });
+    setFormData({ name: cls.name || '', subject: cls.subject || '', teacherId: cls.teacherId || '', classAdminId: cls.classAdminId || '', studyYearId: cls.studyYearId || '', registrationStatus: cls.registrationStatus || 'HIDDEN', thumbnail: cls.thumbnail || '', description: cls.description || '', price: cls.price != null ? String(cls.price) : '', showPrice: cls.showPrice || false });
     setShowForm(true);
     // Load weekly schedule
     if (cls.schedule) {
@@ -560,6 +571,20 @@ function ManageClasses() {
       setSelectedPreset('global-default');
       setCustomConfigs([]);
     }
+  };
+
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setThumbnailError(null);
+    if (!file) return;
+    if (file.size > MAX_THUMBNAIL_BYTES) {
+      setThumbnailError('Thumbnail must be smaller than 3MB');
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setFormData(prev => ({ ...prev, thumbnail: reader.result as string }));
+    reader.readAsDataURL(file);
   };
 
   const handleDelete = async (id: string) => {
@@ -830,7 +855,7 @@ function ManageClasses() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                 </button>
               </div>
-              <button onClick={() => { setShowForm(true); setEditingClass(null); setFormData({ name: '', subject: '', teacherId: '', classAdminId: '', studyYearId: selectedStudyYearId, registrationStatus: 'HIDDEN' }); setSelectedPreset('global-default'); setCustomConfigs([]); setWeeklySchedule({ ...DEFAULT_SCHEDULE }); setShowWeekly(false); }} className="btn-primary inline-flex items-center gap-1.5 shadow-sm">
+              <button onClick={() => { setShowForm(true); setEditingClass(null); setFormData({ name: '', subject: '', teacherId: '', classAdminId: '', studyYearId: selectedStudyYearId, registrationStatus: 'HIDDEN', thumbnail: '', description: '', price: '', showPrice: false }); setSelectedPreset('global-default'); setCustomConfigs([]); setWeeklySchedule({ ...DEFAULT_SCHEDULE }); setShowWeekly(false); }} className="btn-primary inline-flex items-center gap-1.5 shadow-sm">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                 {t('classes.addClass')}
               </button>
@@ -890,6 +915,62 @@ function ManageClasses() {
                     <option value="UNAVAILABLE">Unavailable — visible, closed</option>
                     <option value="AVAILABLE">Available — open for registration</option>
                   </select>
+                </div>
+
+                {/* Public Class Card */}
+                <div className="sm:col-span-5 border-t border-slate-100 pt-4 mt-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Public Class Card <span className="text-slate-400 font-normal normal-case">(shown on the home page when open for registration)</span></p>
+                  <div className="grid sm:grid-cols-5 gap-4">
+                    <div className="sm:col-span-2">
+                      <label className="form-label">Thumbnail <span className="text-slate-400 font-normal text-xs">(optional)</span></label>
+                      <input type="file" accept="image/*" onChange={handleThumbnailChange} className="text-sm" />
+                      {thumbnailError && <p className="text-xs text-red-600 mt-1">{thumbnailError}</p>}
+                      {formData.thumbnail && (
+                        <div className="mt-2 relative w-full max-w-[220px] aspect-video rounded-lg overflow-hidden border border-slate-200">
+                          <img src={formData.thumbnail} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, thumbnail: '' })}
+                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-black/80"
+                            title="Remove thumbnail"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="form-label">Description <span className="text-slate-400 font-normal text-xs">(optional)</span></label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        rows={3}
+                        placeholder="A short blurb shown on the public registration card…"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="form-label">Price (USD) <span className="text-slate-400 font-normal text-xs">(optional)</span></label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        placeholder="e.g. 39.99"
+                      />
+                    </div>
+                    <div className="sm:col-span-3 flex items-end pb-2.5">
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.showPrice}
+                          onChange={(e) => setFormData({ ...formData, showPrice: e.target.checked })}
+                          className="rounded border-slate-300"
+                        />
+                        <span className="text-sm text-slate-600">Show price publicly on the card</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 {/* Attendance Format */}
                 <div className="sm:col-span-4">
@@ -1618,7 +1699,7 @@ function ManageClasses() {
               <div className="text-6xl mb-3">📖</div>
               <p className="text-lg font-semibold text-slate-700">{t('classes.noClasses')}</p>
               <p className="text-sm text-slate-500 mt-1 mb-4">Get started by creating your first class.</p>
-              <button onClick={() => { setShowForm(true); setEditingClass(null); setFormData({ name: '', subject: '', teacherId: '', classAdminId: '', studyYearId: selectedStudyYearId, registrationStatus: 'HIDDEN' }); setSelectedPreset('global-default'); setCustomConfigs([]); setWeeklySchedule({ ...DEFAULT_SCHEDULE }); setShowWeekly(false); }} className="btn-primary inline-flex items-center gap-1.5">
+              <button onClick={() => { setShowForm(true); setEditingClass(null); setFormData({ name: '', subject: '', teacherId: '', classAdminId: '', studyYearId: selectedStudyYearId, registrationStatus: 'HIDDEN', thumbnail: '', description: '', price: '', showPrice: false }); setSelectedPreset('global-default'); setCustomConfigs([]); setWeeklySchedule({ ...DEFAULT_SCHEDULE }); setShowWeekly(false); }} className="btn-primary inline-flex items-center gap-1.5">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                 Create First Class
               </button>
