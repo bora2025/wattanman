@@ -80,7 +80,7 @@ export class ClassRegistrationsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post('fields')
-  createField(@Body() body: { label: string; required?: boolean }) {
+  createField(@Body() body: { label: string; required?: boolean; fieldType?: string; options?: string[] }) {
     return this.svc.createField(body);
   }
 
@@ -94,7 +94,7 @@ export class ClassRegistrationsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Patch('fields/:id')
-  updateField(@Param('id') id: string, @Body() body: { label?: string; required?: boolean; enabled?: boolean }) {
+  updateField(@Param('id') id: string, @Body() body: { label?: string; required?: boolean; enabled?: boolean; fieldType?: string; options?: string[] }) {
     return this.svc.updateField(id, body);
   }
 

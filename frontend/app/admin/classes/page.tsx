@@ -58,7 +58,7 @@ interface Student {
   parent?: { id: string; name: string; email: string; phone: string | null } | null;
   customFieldValues?: Record<string, string>;
 }
-interface CustomFieldDef { id: string; key: string; label: string; required: boolean }
+interface CustomFieldDef { id: string; key: string; label: string; required: boolean; fieldType: 'TEXT' | 'SELECT'; options: string[] | null }
 
 interface ParentOption {
   id: string;
@@ -1506,11 +1506,21 @@ function ManageClasses() {
                         {customFieldDefs.map(f => (
                           <div key={f.id} className="sm:col-span-2 lg:col-span-3">
                             <label className="form-label text-xs">{f.label}{f.required && ' *'}</label>
-                            <input
-                              type="text"
-                              value={editStudentCustomFields[f.key] || ''}
-                              onChange={(e) => setEditStudentCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
-                            />
+                            {f.fieldType === 'SELECT' ? (
+                              <select
+                                value={editStudentCustomFields[f.key] || ''}
+                                onChange={(e) => setEditStudentCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
+                              >
+                                <option value="">-- Select --</option>
+                                {(f.options || []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                value={editStudentCustomFields[f.key] || ''}
+                                onChange={(e) => setEditStudentCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
+                              />
+                            )}
                           </div>
                         ))}
                       </div>

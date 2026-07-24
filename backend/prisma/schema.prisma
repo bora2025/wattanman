@@ -253,7 +253,8 @@ model ClassRegistrationField {
   id        String   @id @default(cuid())
   key       String   @unique // slug used as the JSON key in ClassRegistration.customFieldValues
   label     String
-  fieldType String   @default("TEXT") // TEXT only for v1
+  fieldType String   @default("TEXT") // TEXT | SELECT
+  options   Json?    // string[] — choices shown when fieldType is SELECT, ignored otherwise
   required  Boolean  @default(false)
   order     Int      @default(0)
   enabled   Boolean  @default(true)

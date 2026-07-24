@@ -18,7 +18,7 @@ interface Student {
   customFieldValues?: Record<string, string>;
 }
 interface ParentOption { id: string; name: string; email: string; phone: string | null }
-interface CustomFieldDef { id: string; key: string; label: string; required: boolean }
+interface CustomFieldDef { id: string; key: string; label: string; required: boolean; fieldType: 'TEXT' | 'SELECT'; options: string[] | null }
 
 export default function ManageStudentsPage() {
   return <Suspense><ManageStudents /></Suspense>;
@@ -833,11 +833,21 @@ function ManageStudents() {
                 {customFieldDefs.map(f => (
                   <div key={f.id} className="sm:col-span-2">
                     <label className="form-label text-xs">{f.label}{f.required && ' *'}</label>
-                    <input
-                      type="text"
-                      value={editCustomFields[f.key] || ''}
-                      onChange={e => setEditCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
-                    />
+                    {f.fieldType === 'SELECT' ? (
+                      <select
+                        value={editCustomFields[f.key] || ''}
+                        onChange={e => setEditCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
+                      >
+                        <option value="">-- Select --</option>
+                        {(f.options || []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={editCustomFields[f.key] || ''}
+                        onChange={e => setEditCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
+                      />
+                    )}
                   </div>
                 ))}
               </div>

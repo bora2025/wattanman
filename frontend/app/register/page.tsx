@@ -27,7 +27,7 @@ interface FormConfig {
     addressMode: FieldMode
     generationMode: FieldMode
   }
-  fields: { id: string; key: string; label: string; required: boolean }[]
+  fields: { id: string; key: string; label: string; required: boolean; fieldType: 'TEXT' | 'SELECT'; options: string[] | null }[]
 }
 
 const DEFAULT_FORM_CONFIG: FormConfig = {
@@ -451,12 +451,23 @@ function RegisterForm() {
                       {f.label}
                       {!f.required && <span className="text-slate-400 font-normal text-xs"> (optional)</span>}
                     </label>
-                    <input
-                      type="text"
-                      value={customFieldValues[f.key] || ''}
-                      onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                      required={f.required}
-                    />
+                    {f.fieldType === 'SELECT' ? (
+                      <select
+                        value={customFieldValues[f.key] || ''}
+                        onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                        required={f.required}
+                      >
+                        <option value="">Select…</option>
+                        {(f.options || []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={customFieldValues[f.key] || ''}
+                        onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                        required={f.required}
+                      />
+                    )}
                   </div>
                 ))}
               </div>

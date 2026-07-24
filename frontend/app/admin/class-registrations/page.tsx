@@ -45,6 +45,8 @@ interface ClassRegistrationField {
   id: string
   key: string
   label: string
+  fieldType: 'TEXT' | 'SELECT'
+  options: string[] | null
   required: boolean
   enabled: boolean
   order: number
@@ -265,12 +267,24 @@ function LockedFieldRow({ label, note }: { label: string; note?: string }) {
   )
 }
 
+// "Online, Class" -> ["Online", "Class"] — trims, dedupes, drops blanks.
+function parseOptions(raw: string): string[] {
+  return Array.from(new Set(raw.split(',').map((s) => s.trim()).filter(Boolean)))
+}
+
 function FormSettingsView() {
   const qc = useQueryClient()
   const [newLabel, setNewLabel] = useState('')
   const [newRequired, setNewRequired] = useState(false)
+  const [newFieldType, setNewFieldType] = useState<'TEXT' | 'SELECT'>('TEXT')
+  const [newOptions, setNewOptions] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<ClassRegistrationField | null>(null)
   const [settingsError, setSettingsError] = useState<string | null>(null)
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null)
+  const [editLabel, setEditLabel] = useState('')
+  const [editFieldType, setEditFieldType] = useState<'TEXT' | 'SELECT'>('TEXT')
+  const [editOptions, setEditOptions] = useState('')
+  const [editError, setEditError] = useState<string | null>(null)
 
   const { data: settings, isLoading: settingsLoading } = useQuery<ClassRegistrationSettings>({
     queryKey: ['admin-registration-settings'],
@@ -308,21 +322,36 @@ function FormSettingsView() {
     onError: (e: any) => setSettingsError(e?.message || 'Failed to save'),
   })
 
+  const [createFieldError, setCreateFieldError] = useState<string | null>(null)
+
   const createField = useMutation({
     mutationFn: async () => {
       const r = await apiFetch('/api/class-registrations/fields', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ label: newLabel.trim(), required: newRequired }),
+        body: JSON.stringify({
+          label: newLabel.trim(),
+          required: newRequired,
+          fieldType: newFieldType,
+          options: newFieldType === 'SELECT' ? parseOptions(newOptions) : undefined,
+        }),
       })
-      if (!r.ok) throw new Error('Failed to add field')
+      if (!r.ok) {
+        let msg = 'Failed to add field'
+        try { const j = await r.json(); if (j?.message) msg = Array.isArray(j.message) ? j.message.join(', ') : j.message } catch {}
+        throw new Error(msg)
+      }
       return r.json()
     },
     onSuccess: () => {
       setNewLabel('')
       setNewRequired(false)
+      setNewFieldType('TEXT')
+      setNewOptions('')
+      setCreateFieldError(null)
       qc.invalidateQueries({ queryKey: ['admin-registration-fields'] })
     },
+    onError: (e: any) => setCreateFieldError(e?.message || 'Failed to add field'),
   })
 
   const updateField = useMutation({
@@ -332,11 +361,41 @@ function FormSettingsView() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch),
       })
-      if (!r.ok) throw new Error('Failed to save field')
+      if (!r.ok) {
+        let msg = 'Failed to save field'
+        try { const j = await r.json(); if (j?.message) msg = Array.isArray(j.message) ? j.message.join(', ') : j.message } catch {}
+        throw new Error(msg)
+      }
       return r.json()
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-registration-fields'] }),
   })
+
+  const startEdit = (f: ClassRegistrationField) => {
+    setEditingFieldId(f.id)
+    setEditLabel(f.label)
+    setEditFieldType(f.fieldType)
+    setEditOptions((f.options || []).join(', '))
+    setEditError(null)
+  }
+
+  const saveEdit = (id: string) => {
+    setEditError(null)
+    updateField.mutate(
+      {
+        id,
+        patch: {
+          label: editLabel.trim(),
+          fieldType: editFieldType,
+          options: editFieldType === 'SELECT' ? (parseOptions(editOptions) as any) : undefined,
+        },
+      },
+      {
+        onSuccess: () => setEditingFieldId(null),
+        onError: (e: any) => setEditError(e?.message || 'Failed to save field'),
+      },
+    )
+  }
 
   const deleteField = useMutation({
     mutationFn: async (id: string) => {
@@ -398,7 +457,7 @@ function FormSettingsView() {
 
       <div className="bg-white border border-slate-100 rounded-xl p-4">
         <h2 className="text-sm font-semibold text-slate-800 mb-1">Custom fields</h2>
-        <p className="text-xs text-slate-500 mb-3">Extra short-text fields shown on the registration form, in this order.</p>
+        <p className="text-xs text-slate-500 mb-3">Extra fields shown on the registration form, in this order — free text or a choose box with fixed options.</p>
 
         {fieldsLoading ? (
           <div className="text-sm text-slate-400 py-4">Loading…</div>
@@ -407,21 +466,76 @@ function FormSettingsView() {
         ) : (
           <ul className="space-y-2 mb-4">
             {fields.map((f, i) => (
-              <li key={f.id} className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2">
-                <div className="flex flex-col">
-                  <button onClick={() => move(i, -1)} disabled={i === 0} className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none">▲</button>
-                  <button onClick={() => move(i, 1)} disabled={i === fields.length - 1} className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none">▼</button>
-                </div>
-                <span className="flex-1 text-sm text-slate-800">{f.label}</span>
-                <label className="flex items-center gap-1 text-xs text-slate-500">
-                  <input type="checkbox" checked={f.required} onChange={(e) => updateField.mutate({ id: f.id, patch: { required: e.target.checked } })} />
-                  Required
-                </label>
-                <label className="flex items-center gap-1 text-xs text-slate-500">
-                  <input type="checkbox" checked={f.enabled} onChange={(e) => updateField.mutate({ id: f.id, patch: { enabled: e.target.checked } })} />
-                  Enabled
-                </label>
-                <button onClick={() => setDeleteTarget(f)} className="text-xs text-red-600 hover:underline">Delete</button>
+              <li key={f.id} className="border border-slate-200 rounded-lg px-3 py-2">
+                {editingFieldId === f.id ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editLabel}
+                        onChange={(e) => setEditLabel(e.target.value)}
+                        placeholder="Field label"
+                        className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+                      />
+                      <select
+                        value={editFieldType}
+                        onChange={(e) => setEditFieldType(e.target.value as 'TEXT' | 'SELECT')}
+                        className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white"
+                      >
+                        <option value="TEXT">Text</option>
+                        <option value="SELECT">Choose box</option>
+                      </select>
+                    </div>
+                    {editFieldType === 'SELECT' && (
+                      <input
+                        type="text"
+                        value={editOptions}
+                        onChange={(e) => setEditOptions(e.target.value)}
+                        placeholder="Options, comma-separated — e.g. Online, Class"
+                        className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+                      />
+                    )}
+                    {editError && <p className="text-xs text-red-600">{editError}</p>}
+                    <div className="flex gap-2 justify-end">
+                      <button onClick={() => setEditingFieldId(null)} className="text-xs px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600">Cancel</button>
+                      <button
+                        onClick={() => saveEdit(f.id)}
+                        disabled={!editLabel.trim() || updateField.isPending}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium disabled:opacity-60"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col">
+                      <button onClick={() => move(i, -1)} disabled={i === 0} className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none">▲</button>
+                      <button onClick={() => move(i, 1)} disabled={i === fields.length - 1} className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none">▼</button>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-sm text-slate-800">{f.label}</span>
+                        {f.fieldType === 'SELECT' && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">Choose box</span>
+                        )}
+                      </div>
+                      {f.fieldType === 'SELECT' && (f.options?.length ?? 0) > 0 && (
+                        <p className="text-[11px] text-slate-400 mt-0.5">{f.options!.join(' · ')}</p>
+                      )}
+                    </div>
+                    <label className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
+                      <input type="checkbox" checked={f.required} onChange={(e) => updateField.mutate({ id: f.id, patch: { required: e.target.checked } })} />
+                      Required
+                    </label>
+                    <label className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
+                      <input type="checkbox" checked={f.enabled} onChange={(e) => updateField.mutate({ id: f.id, patch: { enabled: e.target.checked } })} />
+                      Enabled
+                    </label>
+                    <button onClick={() => startEdit(f)} className="text-xs text-indigo-600 hover:underline shrink-0">Edit</button>
+                    <button onClick={() => setDeleteTarget(f)} className="text-xs text-red-600 hover:underline shrink-0">Delete</button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -429,26 +543,46 @@ function FormSettingsView() {
 
         <form
           onSubmit={(e) => { e.preventDefault(); if (newLabel.trim()) createField.mutate() }}
-          className="flex items-center gap-2 pt-3 border-t border-slate-100"
+          className="space-y-2 pt-3 border-t border-slate-100"
         >
-          <input
-            type="text"
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            placeholder="New field label, e.g. Parent's Name"
-            className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
-          />
-          <label className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
-            <input type="checkbox" checked={newRequired} onChange={(e) => setNewRequired(e.target.checked)} />
-            Required
-          </label>
-          <button
-            type="submit"
-            disabled={!newLabel.trim() || createField.isPending}
-            className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg disabled:opacity-60"
-          >
-            + Add field
-          </button>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+              placeholder="New field label, e.g. Course Study Mode"
+              className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+            />
+            <select
+              value={newFieldType}
+              onChange={(e) => setNewFieldType(e.target.value as 'TEXT' | 'SELECT')}
+              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white shrink-0"
+            >
+              <option value="TEXT">Text</option>
+              <option value="SELECT">Choose box</option>
+            </select>
+            <label className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
+              <input type="checkbox" checked={newRequired} onChange={(e) => setNewRequired(e.target.checked)} />
+              Required
+            </label>
+            <button
+              type="submit"
+              disabled={!newLabel.trim() || createField.isPending}
+              className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg disabled:opacity-60"
+            >
+              + Add field
+            </button>
+          </div>
+          {newFieldType === 'SELECT' && (
+            <input
+              type="text"
+              value={newOptions}
+              onChange={(e) => setNewOptions(e.target.value)}
+              placeholder="Options, comma-separated — e.g. Online, Class"
+              className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+            />
+          )}
+          {createFieldError && <p className="text-xs text-red-600">{createFieldError}</p>}
         </form>
       </div>
 

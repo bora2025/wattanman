@@ -7,6 +7,7 @@ import { isValidEmail, normalizePhone, generatePassword } from '../common/identi
 const MIN_PASSWORD_LENGTH = 6;
 const FIELD_MODES = ['REQUIRED', 'OPTIONAL', 'HIDDEN'] as const;
 type FieldMode = (typeof FIELD_MODES)[number];
+const CUSTOM_FIELD_TYPES = ['TEXT', 'SELECT'] as const;
 
 function slugify(label: string): string {
   return (
@@ -16,6 +17,23 @@ function slugify(label: string): string {
       .replace(/[^a-z0-9]+/g, '_')
       .replace(/^_+|_+$/g, '') || 'field'
   );
+}
+
+// Shared by createField/updateField — validates fieldType and, when SELECT,
+// cleans the options list (trim/dedupe/drop blanks, require at least 2).
+function sanitizeFieldTypeAndOptions(fieldType: string | undefined, options: unknown): { fieldType?: string; options?: string[] | null } {
+  if (fieldType === undefined) return {};
+  const type = String(fieldType).toUpperCase();
+  if (!CUSTOM_FIELD_TYPES.includes(type as any)) {
+    throw new BadRequestException(`fieldType must be one of ${CUSTOM_FIELD_TYPES.join(', ')}`);
+  }
+  if (type !== 'SELECT') return { fieldType: type, options: null };
+
+  const cleaned = Array.from(
+    new Set((Array.isArray(options) ? options : []).map((o) => String(o).trim()).filter(Boolean)),
+  );
+  if (cleaned.length < 2) throw new BadRequestException('A choose-box field needs at least 2 options');
+  return { fieldType: type, options: cleaned };
 }
 
 @Injectable()
@@ -92,9 +110,10 @@ export class ClassRegistrationsService {
     return this.prisma.classRegistrationField.findMany({ orderBy: { order: 'asc' } });
   }
 
-  async createField(body: { label: string; required?: boolean }) {
+  async createField(body: { label: string; required?: boolean; fieldType?: string; options?: string[] }) {
     const label = (body?.label || '').trim();
     if (!label) throw new BadRequestException('label is required');
+    const { fieldType, options } = sanitizeFieldTypeAndOptions(body.fieldType ?? 'TEXT', body.options);
 
     const base = slugify(label);
     let key = base;
@@ -108,13 +127,15 @@ export class ClassRegistrationsService {
       data: {
         key,
         label,
+        fieldType,
+        options: options ?? undefined,
         required: !!body.required,
         order: (maxOrder._max.order ?? -1) + 1,
       },
     });
   }
 
-  async updateField(id: string, body: { label?: string; required?: boolean; enabled?: boolean }) {
+  async updateField(id: string, body: { label?: string; required?: boolean; enabled?: boolean; fieldType?: string; options?: string[] }) {
     const field = await this.prisma.classRegistrationField.findUnique({ where: { id } });
     if (!field) throw new NotFoundException('Field not found');
     const data: Record<string, any> = {};
@@ -125,6 +146,14 @@ export class ClassRegistrationsService {
     }
     if (body.required !== undefined) data.required = !!body.required;
     if (body.enabled !== undefined) data.enabled = !!body.enabled;
+    if (body.fieldType !== undefined) {
+      const { fieldType, options } = sanitizeFieldTypeAndOptions(body.fieldType, body.options ?? field.options);
+      data.fieldType = fieldType;
+      data.options = options;
+    } else if (body.options !== undefined && field.fieldType === 'SELECT') {
+      const { options } = sanitizeFieldTypeAndOptions(field.fieldType, body.options);
+      data.options = options;
+    }
     return this.prisma.classRegistrationField.update({ where: { id }, data });
   }
 
@@ -241,6 +270,10 @@ export class ClassRegistrationsService {
     for (const f of enabledFields) {
       const v = (submitted[f.key] ?? '').toString().trim();
       if (f.required && !v) throw new BadRequestException(`${f.label} is required`);
+      if (v && f.fieldType === 'SELECT') {
+        const options = Array.isArray(f.options) ? (f.options as string[]) : [];
+        if (!options.includes(v)) throw new BadRequestException(`${f.label} must be one of the listed options`);
+      }
       if (v) customFieldValues[f.key] = v;
     }
 
