@@ -8,14 +8,46 @@ import MathText from './MathText'
 const HTML_TAG_RE = /<([a-z][a-z0-9]*)\b[^>]*>/i
 const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
+/** Multi-megabyte base64 data: URIs are unreliable as a media element's `src`
+ * when the element was parsed out of a huge dangerouslySetInnerHTML string —
+ * some browsers stall or silently fail to decode rather than erroring, even
+ * though the underlying audio is completely valid (confirmed by re-verifying
+ * a real failing file byte-for-byte with a dedicated MP3 parser — it decoded
+ * cleanly, so the data itself wasn't the problem). Converting to a real Blob
+ * URL up front is the standard, more robust pattern for large embedded media.
+ * Returns the object URL so the caller can revoke it when the content changes. */
+function dataUriToBlobUrl(dataUri: string): string | null {
+  const match = dataUri.match(/^data:([^;]+);base64,([\s\S]*)$/)
+  if (!match) return null
+  try {
+    const [, mime, base64] = match
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    return URL.createObjectURL(new Blob([bytes], { type: mime }))
+  } catch {
+    return null
+  }
+}
+
 /** Adds a speed selector next to every <audio> in the container (idempotent —
  * safe to call again after re-renders). Plain DOM manipulation rather than React
  * since this runs over a dangerouslySetInnerHTML subtree React doesn't manage. */
-function enhanceAudioPlayers(container: HTMLElement) {
+function enhanceAudioPlayers(container: HTMLElement): () => void {
+  const blobUrls: string[] = []
   container.querySelectorAll('audio').forEach((audio) => {
     if (audio.dataset.enhanced) return
     audio.dataset.enhanced = '1'
     audio.className = `${audio.className} max-w-full`.trim()
+
+    const src = audio.getAttribute('src')
+    if (src?.startsWith('data:')) {
+      const blobUrl = dataUriToBlobUrl(src)
+      if (blobUrl) {
+        blobUrls.push(blobUrl)
+        audio.src = blobUrl
+      }
+    }
 
     const wrap = document.createElement('div')
     wrap.className = 'flex items-center gap-1.5 mt-1'
@@ -52,6 +84,7 @@ function enhanceAudioPlayers(container: HTMLElement) {
       wrap.insertAdjacentElement('afterend', notice)
     })
   })
+  return () => { blobUrls.forEach((url) => URL.revokeObjectURL(url)) }
 }
 
 /** Renders a question's rich text (authored via RichTextEditor). Content authored
@@ -71,7 +104,7 @@ export default function RichText({
 
   useEffect(() => {
     if (!looksLikeHtml || !ref.current) return
-    enhanceAudioPlayers(ref.current)
+    return enhanceAudioPlayers(ref.current)
   }, [value, looksLikeHtml])
 
   useEffect(() => {

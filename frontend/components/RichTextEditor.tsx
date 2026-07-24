@@ -36,9 +36,10 @@ function verifyAudioPlayable(src: string): Promise<boolean> {
     probe.addEventListener('loadeddata', () => finish(true), { once: true })
     probe.addEventListener('error', () => finish(false), { once: true })
     // A data URI decodes locally with no network latency, so a real failure
-    // surfaces almost immediately — this timeout only guards against an unusually
-    // slow decode being mistaken for a hang, not a real verification signal.
-    setTimeout(() => finish(true), 4000)
+    // surfaces almost immediately. Neither event firing within the timeout is
+    // itself a strong signal something is wrong, so treat it as a failure
+    // rather than fail-open — a large file just makes for a slower rejection.
+    setTimeout(() => finish(false), 6000)
     probe.src = src
     probe.load()
   })
