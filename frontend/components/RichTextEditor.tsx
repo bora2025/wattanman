@@ -1,12 +1,18 @@
 "use client"
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { Node, mergeAttributes } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
+
+// Same base64-in-database convention used for student/class photos and the Drag
+// and Drop question's background image (frontend/components/questions/DragDropField.tsx)
+// — this app has no real object-storage backend, so uploads are embedded directly.
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024
+const MAX_AUDIO_BYTES = 8 * 1024 * 1024
 
 /** Renders as a plain <audio controls src="..."> — RichText.tsx adds a speed
  * selector next to it at render time (see enhanceAudioPlayers there). Kept as a
@@ -47,7 +53,7 @@ export default function RichTextEditor({
     content: value || '',
     immediatelyRender: false,
     editorProps: {
-      attributes: { class: 'prose-sm max-w-none focus:outline-none min-h-[4.5rem] px-3 py-2 text-sm' },
+      attributes: { class: 'prose-sm max-w-none focus:outline-none h-full px-3 py-2 text-sm' },
     },
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
   })
@@ -63,6 +69,10 @@ export default function RichTextEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, editor])
 
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const audioInputRef = useRef<HTMLInputElement>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
   if (!editor) return null
 
   const setLink = () => {
@@ -73,16 +83,34 @@ export default function RichTextEditor({
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
   }
 
-  const addImage = () => {
-    const url = window.prompt('Image URL')
-    if (!url) return
-    editor.chain().focus().setImage({ src: url }).run()
+  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    setUploadError(null)
+    if (!file) return
+    if (file.size > MAX_IMAGE_BYTES) {
+      setUploadError('Image must be smaller than 3MB')
+      e.target.value = ''
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => editor.chain().focus().setImage({ src: reader.result as string }).run()
+    reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
-  const addAudio = () => {
-    const url = window.prompt('Audio URL (e.g. a link to an .mp3 file)')
-    if (!url) return
-    editor.chain().focus().insertContent({ type: 'audio', attrs: { src: url } }).run()
+  const handleAudioFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    setUploadError(null)
+    if (!file) return
+    if (file.size > MAX_AUDIO_BYTES) {
+      setUploadError('Audio must be smaller than 8MB')
+      e.target.value = ''
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => editor.chain().focus().insertContent({ type: 'audio', attrs: { src: reader.result as string } }).run()
+    reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
   const btn = (active: boolean) =>
@@ -98,12 +126,15 @@ export default function RichTextEditor({
         <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={btn(editor.isActive('orderedList'))} title="Numbered list">1. ―</button>
         <span className="w-px h-4 bg-slate-200 mx-0.5" />
         <button type="button" onClick={setLink} className={btn(editor.isActive('link'))} title="Link">🔗</button>
-        <button type="button" onClick={addImage} className={btn(false)} title="Image">🖼</button>
-        <button type="button" onClick={addAudio} className={btn(false)} title="Audio">🔊</button>
+        <button type="button" onClick={() => imageInputRef.current?.click()} className={btn(false)} title="Upload image">🖼</button>
+        <button type="button" onClick={() => audioInputRef.current?.click()} className={btn(false)} title="Upload audio">🔊</button>
+        <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageFile} className="hidden" />
+        <input ref={audioInputRef} type="file" accept="audio/*" onChange={handleAudioFile} className="hidden" />
         <span className="w-px h-4 bg-slate-200 mx-0.5" />
         <button type="button" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} className={btn(false)} title="Clear formatting">✕ Format</button>
+        {uploadError && <span className="text-xs text-red-600 ml-1">{uploadError}</span>}
       </div>
-      <EditorContent editor={editor} />
+      <EditorContent editor={editor} className="resize-y overflow-y-auto min-h-[4.5rem] max-h-[32rem]" />
     </div>
   )
 }
