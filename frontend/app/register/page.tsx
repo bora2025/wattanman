@@ -5,6 +5,11 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch } from '../../lib/api'
 
+// A MULTI_SELECT value is string[] (needs length > 0); everything else is a plain string.
+function customFieldHasValue(v: string | string[] | undefined): boolean {
+  return Array.isArray(v) ? v.length > 0 : !!(v && v.trim())
+}
+
 interface PublicClass {
   id: string
   name: string
@@ -27,7 +32,7 @@ interface FormConfig {
     addressMode: FieldMode
     generationMode: FieldMode
   }
-  fields: { id: string; key: string; label: string; required: boolean; fieldType: 'TEXT' | 'SELECT'; options: string[] | null }[]
+  fields: { id: string; key: string; label: string; required: boolean; fieldType: 'TEXT' | 'SELECT' | 'MULTI_SELECT'; options: string[] | null }[]
 }
 
 const DEFAULT_FORM_CONFIG: FormConfig = {
@@ -91,7 +96,7 @@ function RegisterForm() {
   const [dobYear, setDobYear] = useState('')
   const [address, setAddress] = useState('')
   const [generation, setGeneration] = useState('')
-  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({})
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string | string[]>>({})
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -188,7 +193,7 @@ function RegisterForm() {
     (generationMode !== 'REQUIRED' || generation.trim()) &&
     passwordValid &&
     passwordsMatch &&
-    formConfig.fields.every((f) => !f.required || customFieldValues[f.key]?.trim())
+    formConfig.fields.every((f) => !f.required || customFieldHasValue(customFieldValues[f.key]))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -451,9 +456,29 @@ function RegisterForm() {
                       {f.label}
                       {!f.required && <span className="text-slate-400 font-normal text-xs"> (optional)</span>}
                     </label>
-                    {f.fieldType === 'SELECT' ? (
+                    {f.fieldType === 'MULTI_SELECT' ? (
+                      <div className="flex flex-wrap gap-3 pt-1">
+                        {(f.options || []).map((opt) => {
+                          const selected = Array.isArray(customFieldValues[f.key]) ? (customFieldValues[f.key] as string[]) : []
+                          return (
+                            <label key={opt} className="flex items-center gap-1.5 text-sm text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={selected.includes(opt)}
+                                onChange={(e) => setCustomFieldValues((prev) => {
+                                  const cur = Array.isArray(prev[f.key]) ? (prev[f.key] as string[]) : []
+                                  const next = e.target.checked ? [...cur, opt] : cur.filter((o) => o !== opt)
+                                  return { ...prev, [f.key]: next }
+                                })}
+                              />
+                              {opt}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    ) : f.fieldType === 'SELECT' ? (
                       <select
-                        value={customFieldValues[f.key] || ''}
+                        value={(customFieldValues[f.key] as string) || ''}
                         onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
                         required={f.required}
                       >
@@ -463,7 +488,7 @@ function RegisterForm() {
                     ) : (
                       <input
                         type="text"
-                        value={customFieldValues[f.key] || ''}
+                        value={(customFieldValues[f.key] as string) || ''}
                         onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
                         required={f.required}
                       />

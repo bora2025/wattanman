@@ -7,7 +7,8 @@ import { isValidEmail, normalizePhone, generatePassword } from '../common/identi
 const MIN_PASSWORD_LENGTH = 6;
 const FIELD_MODES = ['REQUIRED', 'OPTIONAL', 'HIDDEN'] as const;
 type FieldMode = (typeof FIELD_MODES)[number];
-const CUSTOM_FIELD_TYPES = ['TEXT', 'SELECT'] as const;
+const CUSTOM_FIELD_TYPES = ['TEXT', 'SELECT', 'MULTI_SELECT'] as const;
+const CUSTOM_FIELD_TYPES_WITH_OPTIONS = ['SELECT', 'MULTI_SELECT'];
 
 function slugify(label: string): string {
   return (
@@ -19,20 +20,20 @@ function slugify(label: string): string {
   );
 }
 
-// Shared by createField/updateField — validates fieldType and, when SELECT,
-// cleans the options list (trim/dedupe/drop blanks, require at least 2).
+// Shared by createField/updateField — validates fieldType and, when SELECT or
+// MULTI_SELECT, cleans the options list (trim/dedupe/drop blanks, require at least 2).
 function sanitizeFieldTypeAndOptions(fieldType: string | undefined, options: unknown): { fieldType?: string; options?: string[] | null } {
   if (fieldType === undefined) return {};
   const type = String(fieldType).toUpperCase();
   if (!CUSTOM_FIELD_TYPES.includes(type as any)) {
     throw new BadRequestException(`fieldType must be one of ${CUSTOM_FIELD_TYPES.join(', ')}`);
   }
-  if (type !== 'SELECT') return { fieldType: type, options: null };
+  if (!CUSTOM_FIELD_TYPES_WITH_OPTIONS.includes(type)) return { fieldType: type, options: null };
 
   const cleaned = Array.from(
     new Set((Array.isArray(options) ? options : []).map((o) => String(o).trim()).filter(Boolean)),
   );
-  if (cleaned.length < 2) throw new BadRequestException('A choose-box field needs at least 2 options');
+  if (cleaned.length < 2) throw new BadRequestException('This field needs at least 2 options');
   return { fieldType: type, options: cleaned };
 }
 
@@ -150,7 +151,7 @@ export class ClassRegistrationsService {
       const { fieldType, options } = sanitizeFieldTypeAndOptions(body.fieldType, body.options ?? field.options);
       data.fieldType = fieldType;
       data.options = options;
-    } else if (body.options !== undefined && field.fieldType === 'SELECT') {
+    } else if (body.options !== undefined && CUSTOM_FIELD_TYPES_WITH_OPTIONS.includes(field.fieldType)) {
       const { options } = sanitizeFieldTypeAndOptions(field.fieldType, body.options);
       data.options = options;
     }
@@ -208,7 +209,7 @@ export class ClassRegistrationsService {
     dateOfBirth?: string;
     address?: string;
     generation?: string;
-    customFieldValues?: Record<string, string>;
+    customFieldValues?: Record<string, string | string[]>;
   }) {
     const email = (body?.email || '').trim().toLowerCase();
     const nameKh = (body?.nameKh || '').trim();
@@ -265,14 +266,24 @@ export class ClassRegistrationsService {
 
     // Custom fields: reject unknown keys, enforce required, drop values for disabled/removed fields
     const enabledFields = await this.prisma.classRegistrationField.findMany({ where: { enabled: true } });
-    const customFieldValues: Record<string, string> = {};
+    const customFieldValues: Record<string, string | string[]> = {};
     const submitted = body.customFieldValues || {};
     for (const f of enabledFields) {
+      const options = Array.isArray(f.options) ? (f.options as string[]) : [];
+      if (f.fieldType === 'MULTI_SELECT') {
+        const raw = submitted[f.key];
+        const arr = Array.from(new Set((Array.isArray(raw) ? raw : []).map((s) => String(s).trim()).filter(Boolean)));
+        if (f.required && arr.length === 0) throw new BadRequestException(`${f.label} is required`);
+        for (const v of arr) {
+          if (!options.includes(v)) throw new BadRequestException(`${f.label} must be one of the listed options`);
+        }
+        if (arr.length) customFieldValues[f.key] = arr;
+        continue;
+      }
       const v = (submitted[f.key] ?? '').toString().trim();
       if (f.required && !v) throw new BadRequestException(`${f.label} is required`);
-      if (v && f.fieldType === 'SELECT') {
-        const options = Array.isArray(f.options) ? (f.options as string[]) : [];
-        if (!options.includes(v)) throw new BadRequestException(`${f.label} must be one of the listed options`);
+      if (v && f.fieldType === 'SELECT' && !options.includes(v)) {
+        throw new BadRequestException(`${f.label} must be one of the listed options`);
       }
       if (v) customFieldValues[f.key] = v;
     }

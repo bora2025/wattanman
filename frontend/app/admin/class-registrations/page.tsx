@@ -45,7 +45,7 @@ interface ClassRegistrationField {
   id: string
   key: string
   label: string
-  fieldType: 'TEXT' | 'SELECT'
+  fieldType: 'TEXT' | 'SELECT' | 'MULTI_SELECT'
   options: string[] | null
   required: boolean
   enabled: boolean
@@ -276,13 +276,13 @@ function FormSettingsView() {
   const qc = useQueryClient()
   const [newLabel, setNewLabel] = useState('')
   const [newRequired, setNewRequired] = useState(false)
-  const [newFieldType, setNewFieldType] = useState<'TEXT' | 'SELECT'>('TEXT')
+  const [newFieldType, setNewFieldType] = useState<'TEXT' | 'SELECT' | 'MULTI_SELECT'>('TEXT')
   const [newOptions, setNewOptions] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<ClassRegistrationField | null>(null)
   const [settingsError, setSettingsError] = useState<string | null>(null)
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null)
   const [editLabel, setEditLabel] = useState('')
-  const [editFieldType, setEditFieldType] = useState<'TEXT' | 'SELECT'>('TEXT')
+  const [editFieldType, setEditFieldType] = useState<'TEXT' | 'SELECT' | 'MULTI_SELECT'>('TEXT')
   const [editOptions, setEditOptions] = useState('')
   const [editError, setEditError] = useState<string | null>(null)
 
@@ -333,7 +333,7 @@ function FormSettingsView() {
           label: newLabel.trim(),
           required: newRequired,
           fieldType: newFieldType,
-          options: newFieldType === 'SELECT' ? parseOptions(newOptions) : undefined,
+          options: (newFieldType === 'SELECT' || newFieldType === 'MULTI_SELECT') ? parseOptions(newOptions) : undefined,
         }),
       })
       if (!r.ok) {
@@ -387,7 +387,7 @@ function FormSettingsView() {
         patch: {
           label: editLabel.trim(),
           fieldType: editFieldType,
-          options: editFieldType === 'SELECT' ? (parseOptions(editOptions) as any) : undefined,
+          options: (editFieldType === 'SELECT' || editFieldType === 'MULTI_SELECT') ? (parseOptions(editOptions) as any) : undefined,
         },
       },
       {
@@ -479,14 +479,15 @@ function FormSettingsView() {
                       />
                       <select
                         value={editFieldType}
-                        onChange={(e) => setEditFieldType(e.target.value as 'TEXT' | 'SELECT')}
+                        onChange={(e) => setEditFieldType(e.target.value as 'TEXT' | 'SELECT' | 'MULTI_SELECT')}
                         className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white"
                       >
                         <option value="TEXT">Text</option>
-                        <option value="SELECT">Choose box</option>
+                        <option value="SELECT">Choose box (single)</option>
+                        <option value="MULTI_SELECT">Multi-choice</option>
                       </select>
                     </div>
-                    {editFieldType === 'SELECT' && (
+                    {(editFieldType === 'SELECT' || editFieldType === 'MULTI_SELECT') && (
                       <input
                         type="text"
                         value={editOptions}
@@ -519,8 +520,11 @@ function FormSettingsView() {
                         {f.fieldType === 'SELECT' && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">Choose box</span>
                         )}
+                        {f.fieldType === 'MULTI_SELECT' && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-700 font-medium">Multi-choice</span>
+                        )}
                       </div>
-                      {f.fieldType === 'SELECT' && (f.options?.length ?? 0) > 0 && (
+                      {(f.fieldType === 'SELECT' || f.fieldType === 'MULTI_SELECT') && (f.options?.length ?? 0) > 0 && (
                         <p className="text-[11px] text-slate-400 mt-0.5">{f.options!.join(' · ')}</p>
                       )}
                     </div>
@@ -555,11 +559,12 @@ function FormSettingsView() {
             />
             <select
               value={newFieldType}
-              onChange={(e) => setNewFieldType(e.target.value as 'TEXT' | 'SELECT')}
+              onChange={(e) => setNewFieldType(e.target.value as 'TEXT' | 'SELECT' | 'MULTI_SELECT')}
               className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white shrink-0"
             >
               <option value="TEXT">Text</option>
-              <option value="SELECT">Choose box</option>
+              <option value="SELECT">Choose box (single)</option>
+              <option value="MULTI_SELECT">Multi-choice</option>
             </select>
             <label className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
               <input type="checkbox" checked={newRequired} onChange={(e) => setNewRequired(e.target.checked)} />
@@ -573,7 +578,7 @@ function FormSettingsView() {
               + Add field
             </button>
           </div>
-          {newFieldType === 'SELECT' && (
+          {(newFieldType === 'SELECT' || newFieldType === 'MULTI_SELECT') && (
             <input
               type="text"
               value={newOptions}

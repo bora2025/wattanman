@@ -36,7 +36,7 @@ export class ClassRegistrationsController {
       dateOfBirth?: string;
       address?: string;
       generation?: string;
-      customFieldValues?: Record<string, string>;
+      customFieldValues?: Record<string, string | string[]>;
     },
   ) {
     return this.svc.createRegistration(body);

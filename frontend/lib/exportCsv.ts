@@ -12,7 +12,11 @@ interface ExportableStudent {
   address?: string | null;
   generation?: string | null;
   className?: string | null;
-  customFieldValues?: Record<string, string> | null;
+  customFieldValues?: Record<string, string | string[]> | null;
+}
+
+function formatCustomFieldValue(v: string | string[] | undefined): string {
+  return Array.isArray(v) ? v.join('; ') : (v || '');
 }
 
 function escapeCsvCell(value: string): string {
@@ -42,7 +46,7 @@ export function downloadStudentsCsv(
     s.address || '',
     s.generation || '',
     ...(includeClassColumn ? [s.className || ''] : []),
-    ...customFieldDefs.map(f => s.customFieldValues?.[f.key] || ''),
+    ...customFieldDefs.map(f => formatCustomFieldValue(s.customFieldValues?.[f.key])),
   ]);
 
   const csv = [headers, ...rows]

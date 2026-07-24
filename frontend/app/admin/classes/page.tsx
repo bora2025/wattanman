@@ -56,9 +56,9 @@ interface Student {
   generation?: string;
   parentId?: string | null;
   parent?: { id: string; name: string; email: string; phone: string | null } | null;
-  customFieldValues?: Record<string, string>;
+  customFieldValues?: Record<string, string | string[]>;
 }
-interface CustomFieldDef { id: string; key: string; label: string; required: boolean; fieldType: 'TEXT' | 'SELECT'; options: string[] | null }
+interface CustomFieldDef { id: string; key: string; label: string; required: boolean; fieldType: 'TEXT' | 'SELECT' | 'MULTI_SELECT'; options: string[] | null }
 
 interface ParentOption {
   id: string;
@@ -241,7 +241,7 @@ function ManageClasses() {
   const [showAddStudentForm, setShowAddStudentForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
   const [editStudentData, setEditStudentData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '', parentId: '' });
-  const [editStudentCustomFields, setEditStudentCustomFields] = useState<Record<string, string>>({});
+  const [editStudentCustomFields, setEditStudentCustomFields] = useState<Record<string, string | string[]>>({});
   const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([]);
   const [parents, setParents] = useState<ParentOption[]>([]);
   const [savingStudent, setSavingStudent] = useState(false);
@@ -1506,9 +1506,29 @@ function ManageClasses() {
                         {customFieldDefs.map(f => (
                           <div key={f.id} className="sm:col-span-2 lg:col-span-3">
                             <label className="form-label text-xs">{f.label}{f.required && ' *'}</label>
-                            {f.fieldType === 'SELECT' ? (
+                            {f.fieldType === 'MULTI_SELECT' ? (
+                              <div className="flex flex-wrap gap-3 pt-1">
+                                {(f.options || []).map(opt => {
+                                  const selected = Array.isArray(editStudentCustomFields[f.key]) ? (editStudentCustomFields[f.key] as string[]) : []
+                                  return (
+                                    <label key={opt} className="flex items-center gap-1.5 text-sm text-slate-700">
+                                      <input
+                                        type="checkbox"
+                                        checked={selected.includes(opt)}
+                                        onChange={(e) => setEditStudentCustomFields(prev => {
+                                          const cur = Array.isArray(prev[f.key]) ? (prev[f.key] as string[]) : []
+                                          const next = e.target.checked ? [...cur, opt] : cur.filter(o => o !== opt)
+                                          return { ...prev, [f.key]: next }
+                                        })}
+                                      />
+                                      {opt}
+                                    </label>
+                                  )
+                                })}
+                              </div>
+                            ) : f.fieldType === 'SELECT' ? (
                               <select
-                                value={editStudentCustomFields[f.key] || ''}
+                                value={(editStudentCustomFields[f.key] as string) || ''}
                                 onChange={(e) => setEditStudentCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
                               >
                                 <option value="">-- Select --</option>
@@ -1517,7 +1537,7 @@ function ManageClasses() {
                             ) : (
                               <input
                                 type="text"
-                                value={editStudentCustomFields[f.key] || ''}
+                                value={(editStudentCustomFields[f.key] as string) || ''}
                                 onChange={(e) => setEditStudentCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
                               />
                             )}

@@ -15,10 +15,10 @@ interface Student {
   id: string; userId: string; studentNumber: string; name: string; email: string; phone: string;
   photo: string | null; sex: string | null; dateOfBirth: string | null;
   address: string; generation?: string; parentId?: string | null;
-  customFieldValues?: Record<string, string>;
+  customFieldValues?: Record<string, string | string[]>;
 }
 interface ParentOption { id: string; name: string; email: string; phone: string | null }
-interface CustomFieldDef { id: string; key: string; label: string; required: boolean; fieldType: 'TEXT' | 'SELECT'; options: string[] | null }
+interface CustomFieldDef { id: string; key: string; label: string; required: boolean; fieldType: 'TEXT' | 'SELECT' | 'MULTI_SELECT'; options: string[] | null }
 
 export default function ManageStudentsPage() {
   return <Suspense><ManageStudents /></Suspense>;
@@ -52,7 +52,7 @@ function ManageStudents() {
   /* â”€â”€ edit â”€â”€ */
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '', parentId: '' });
-  const [editCustomFields, setEditCustomFields] = useState<Record<string, string>>({});
+  const [editCustomFields, setEditCustomFields] = useState<Record<string, string | string[]>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -833,9 +833,29 @@ function ManageStudents() {
                 {customFieldDefs.map(f => (
                   <div key={f.id} className="sm:col-span-2">
                     <label className="form-label text-xs">{f.label}{f.required && ' *'}</label>
-                    {f.fieldType === 'SELECT' ? (
+                    {f.fieldType === 'MULTI_SELECT' ? (
+                      <div className="flex flex-wrap gap-3 pt-1">
+                        {(f.options || []).map(opt => {
+                          const selected = Array.isArray(editCustomFields[f.key]) ? (editCustomFields[f.key] as string[]) : []
+                          return (
+                            <label key={opt} className="flex items-center gap-1.5 text-sm text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={selected.includes(opt)}
+                                onChange={e => setEditCustomFields(prev => {
+                                  const cur = Array.isArray(prev[f.key]) ? (prev[f.key] as string[]) : []
+                                  const next = e.target.checked ? [...cur, opt] : cur.filter(o => o !== opt)
+                                  return { ...prev, [f.key]: next }
+                                })}
+                              />
+                              {opt}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    ) : f.fieldType === 'SELECT' ? (
                       <select
-                        value={editCustomFields[f.key] || ''}
+                        value={(editCustomFields[f.key] as string) || ''}
                         onChange={e => setEditCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
                       >
                         <option value="">-- Select --</option>
@@ -844,7 +864,7 @@ function ManageStudents() {
                     ) : (
                       <input
                         type="text"
-                        value={editCustomFields[f.key] || ''}
+                        value={(editCustomFields[f.key] as string) || ''}
                         onChange={e => setEditCustomFields(prev => ({ ...prev, [f.key]: e.target.value }))}
                       />
                     )}
