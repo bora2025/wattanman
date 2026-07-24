@@ -1,6 +1,6 @@
 "use client"
 
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, type DragEndEvent } from '@dnd-kit/core'
 import MathText from '../MathText'
 import { parseDragWordsText } from '../../lib/h5pQuestionLogic'
@@ -43,19 +43,50 @@ function toText(sentence: string, answers: Answer[]): string {
  * Each answer can be tagged group A (blue) or B (orange) — a purely visual hint so students
  * can tell blank types apart; both are graded identically. */
 export function DragWordsEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
-  const text: string = data?.text ?? ''
   const distractors: string[] = data?.distractors ?? []
-  const { sentence, answers } = toSentenceAndAnswers(text)
+
+  // sentence/answers are real local state, not re-derived from data.text on every
+  // render: an in-progress blank with no answer yet can't round-trip through the
+  // *word*/#word# markup (there's no valid way to encode "blank with an empty
+  // answer"), so re-parsing after every keystroke would make a freshly-added blank's
+  // row disappear before the teacher had a chance to type into it. We only resync
+  // from data.text when the parent hands us a genuinely different question's data
+  // (e.g. switching selection in an index-keyed list) — never in response to our
+  // own edits echoing back through onChange.
+  const initial = toSentenceAndAnswers(data?.text ?? '')
+  const [sentence, setSentenceState] = useState(initial.sentence)
+  const [answers, setAnswersState] = useState<Answer[]>(initial.answers)
+  const lastEmitted = useRef<string>(data?.text ?? '')
+
+  useEffect(() => {
+    const incoming = data?.text ?? ''
+    if (incoming !== lastEmitted.current) {
+      const parsed = toSentenceAndAnswers(incoming)
+      setSentenceState(parsed.sentence)
+      setAnswersState(parsed.answers)
+      lastEmitted.current = incoming
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.text])
+
+  function emit(newSentence: string, newAnswers: Answer[]) {
+    const nextText = toText(newSentence, newAnswers)
+    lastEmitted.current = nextText
+    onChange({ ...data, text: nextText })
+  }
 
   function setSentence(newSentence: string) {
     const blankCount = (newSentence.match(BLANK_RE) || []).length
     const newAnswers = Array.from({ length: blankCount }, (_, i) => answers[i] || { word: '', group: 'a' as Group })
-    onChange({ ...data, text: toText(newSentence, newAnswers) })
+    setSentenceState(newSentence)
+    setAnswersState(newAnswers)
+    emit(newSentence, newAnswers)
   }
 
   function updateAnswer(i: number, patch: Partial<Answer>) {
     const newAnswers = answers.map((a, idx) => (idx === i ? { ...a, ...patch } : a))
-    onChange({ ...data, text: toText(sentence, newAnswers) })
+    setAnswersState(newAnswers)
+    emit(sentence, newAnswers)
   }
 
   return (
@@ -77,10 +108,6 @@ export function DragWordsEditor({ data, onChange }: { data: any; onChange: (d: a
                 placeholder="Correct word"
                 className="flex-1 border rounded-lg px-3 py-1.5 text-sm"
               />
-              <div className="flex rounded-lg border border-slate-200 overflow-hidden shrink-0">
-                <button type="button" onClick={() => updateAnswer(i, { group: 'a' })} title="Color group A" className={`px-2.5 py-1.5 text-xs font-semibold ${a.group !== 'b' ? 'bg-sky-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>A</button>
-                <button type="button" onClick={() => updateAnswer(i, { group: 'b' })} title="Color group B" className={`px-2.5 py-1.5 text-xs font-semibold ${a.group === 'b' ? 'bg-amber-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>B</button>
-              </div>
             </div>
           ))}
         </div>
