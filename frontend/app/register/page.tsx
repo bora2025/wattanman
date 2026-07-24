@@ -244,7 +244,7 @@ function RegisterForm() {
           <form onSubmit={handleSubmit} className="card p-6 sm:p-8 space-y-6">
             <div>
               <label className="form-label">Class</label>
-              <select value={classId} onChange={(e) => setClassId(e.target.value)} required disabled={loadingClasses}>
+              <select value={classId} onChange={(e) => setClassId(e.target.value)} required disabled={loadingClasses} className="truncate">
                 <option value="">{loadingClasses ? 'Loading classes…' : 'Select a class…'}</option>
                 {classes.map((c) => (
                   <option key={c.id} value={c.id} disabled={c.registrationStatus !== 'AVAILABLE'}>
@@ -340,8 +340,8 @@ function RegisterForm() {
 
                 {photoMode !== 'HIDDEN' && (
                   <div className="flex flex-col items-center gap-2 py-1">
-                    <label className="relative cursor-pointer group">
-                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center group-hover:border-indigo-400 transition-colors">
+                    <label className="relative cursor-pointer group inline-block">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center group-hover:border-indigo-400 group-active:border-indigo-400 transition-colors">
                         {photo ? (
                           <img src={photo} alt="Preview" className="w-full h-full object-cover" />
                         ) : (
@@ -351,16 +351,16 @@ function RegisterForm() {
                           </svg>
                         )}
                       </div>
-                      <span className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md group-hover:bg-indigo-700 transition-colors">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      <span className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md ring-2 ring-white group-hover:bg-indigo-700 transition-colors">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                       </span>
-                      <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+                      <input type="file" accept="image/*" onChange={handlePhotoChange} className="sr-only" />
                     </label>
                     <span className="text-xs font-medium text-slate-500">
                       Photo {photoMode === 'OPTIONAL' && <span className="font-normal text-slate-400">(optional)</span>}
                     </span>
                     {photo && (
-                      <button type="button" onClick={() => setPhoto(null)} className="text-xs text-red-500 hover:underline">Remove photo</button>
+                      <button type="button" onClick={() => setPhoto(null)} className="text-xs text-red-500 hover:underline px-2 py-1 -my-1">Remove photo</button>
                     )}
                     {photoError && <p className="text-xs text-red-600">{photoError}</p>}
                   </div>

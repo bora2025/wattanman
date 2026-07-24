@@ -68,6 +68,9 @@
   input[type="password"],
   input[type="search"],
   input[type="url"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="number"],
   textarea,
   select {
     @apply w-full px-5 py-3 rounded-full text-base bg-white transition-colors duration-150
@@ -82,6 +85,9 @@
   input[type="password"]:focus,
   input[type="search"]:focus,
   input[type="url"]:focus,
+  input[type="tel"]:focus,
+  input[type="date"]:focus,
+  input[type="number"]:focus,
   textarea:focus,
   select:focus {
     border-color: var(--color-primary);
@@ -93,6 +99,9 @@
     input[type="password"],
     input[type="search"],
     input[type="url"],
+    input[type="tel"],
+    input[type="date"],
+    input[type="number"],
     textarea,
     select {
       @apply py-2 px-3 rounded-lg border-slate-300;
@@ -103,11 +112,26 @@
     input[type="password"]:focus,
     input[type="search"]:focus,
     input[type="url"]:focus,
+    input[type="tel"]:focus,
+    input[type="date"]:focus,
+    input[type="number"]:focus,
     textarea:focus,
     select:focus {
       @apply ring-indigo-500 border-indigo-500;
       box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
     }
+  }
+
+  /* Hide the spin buttons so number inputs match the pill styling above instead
+     of having the browser's up/down arrows crowd the rounded corner. */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
   }
 }
 
