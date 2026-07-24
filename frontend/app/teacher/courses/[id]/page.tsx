@@ -16,6 +16,7 @@ import { DragDropEditor } from '../../../../components/questions/DragDropField'
 import { SpeakWordsEditor } from '../../../../components/questions/SpeakWordsField'
 import { SpeakWordsSetEditor } from '../../../../components/questions/SpeakWordsSetField'
 import { DictationEditor } from '../../../../components/questions/DictationField'
+import RichTextEditor from '../../../../components/RichTextEditor'
 
 type LessonStatus = 'DRAFT' | 'PUBLISHED'
 type GradingMode = 'GRADED' | 'PRACTICE' | 'UNGRADED'
@@ -1049,11 +1050,10 @@ function QuestionEditor({
 
       <div>
         <label className="mb-1 block text-xs font-medium text-slate-600">Prompt</label>
-        <textarea
+        <RichTextEditor
           value={value.prompt ?? ''}
-          onChange={(e) => onChange({ ...value, prompt: e.target.value })}
-          rows={2}
-          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          onChange={(prompt) => onChange({ ...value, prompt })}
+          placeholder="Question prompt"
         />
       </div>
 
@@ -1271,11 +1271,10 @@ function BranchEditor({
     <div className="space-y-2">
       <div>
         <label className="mb-1 block text-xs font-medium text-slate-600">Prompt</label>
-        <textarea
+        <RichTextEditor
           value={value.prompt ?? ''}
-          onChange={(e) => onChange({ ...value, prompt: e.target.value })}
-          rows={2}
-          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          onChange={(prompt) => onChange({ ...value, prompt })}
+          placeholder="Question prompt"
         />
       </div>
       <label className="block text-xs font-medium text-slate-600">

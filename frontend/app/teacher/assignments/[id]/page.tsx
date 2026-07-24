@@ -13,6 +13,7 @@ import { teacherNav } from '../../../../lib/teacher-nav'
 import { apiFetch } from '../../../../lib/api'
 import { H5P_TYPE_LABEL, parseDragWordsText, diffWords } from '../../../../lib/h5pQuestionLogic'
 import MathText from '../../../../components/MathText'
+import RichText from '../../../../components/RichText'
 interface Submission {
   id: string
   content: string | null
@@ -346,7 +347,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
         {answer?.autoGraded && <span className="text-[10px] uppercase font-semibold bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded">auto</span>}
         {answer?.pointsAwarded == null && <span className="text-[10px] uppercase font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">needs grading</span>}
       </div>
-      <MathText as="p" className="text-sm text-slate-800 mb-2 whitespace-pre-wrap" text={question.prompt} />
+      <RichText as="div" className="text-sm text-slate-800 mb-2 whitespace-pre-wrap" html={question.prompt} />
       <div className="mb-2">{renderResponse()}</div>
       <div className="flex gap-2 items-center mt-2">
         <input

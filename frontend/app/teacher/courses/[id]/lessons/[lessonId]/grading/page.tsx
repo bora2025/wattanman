@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import AuthGuard from '../../../../../../../components/AuthGuard'
 import { apiFetch } from '../../../../../../../lib/api'
 import MathText from '../../../../../../../components/MathText'
+import RichText from '../../../../../../../components/RichText'
 
 interface PendingResponse {
   id: string
@@ -101,7 +102,7 @@ function ResponseRow({ response, onGraded }: { response: PendingResponse; onGrad
   return (
     <div className="border border-slate-200 rounded-lg p-3">
       <p className="text-sm font-semibold text-slate-800 mb-1">{response.page.title}</p>
-      <MathText as="p" className="text-xs text-slate-500 mb-2 whitespace-pre-wrap" text={response.page.content?.prompt} />
+      <RichText as="div" className="text-xs text-slate-500 mb-2 whitespace-pre-wrap" html={response.page.content?.prompt} />
       <div className="text-sm bg-slate-50 border border-slate-200 rounded p-2 whitespace-pre-wrap mb-2">{answerText ? <MathText as="span" text={answerText} /> : <span className="text-slate-400 italic">(no answer)</span>}</div>
       <div className="flex items-center gap-2">
         <input

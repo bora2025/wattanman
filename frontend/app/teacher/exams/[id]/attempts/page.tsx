@@ -13,6 +13,7 @@ import { apiFetch } from '../../../../../lib/api'
 import { gradeQuestion } from '../../../../../lib/examQuestionLogic'
 import { parseDragWordsText, diffWords } from '../../../../../lib/h5pQuestionLogic'
 import MathText from '../../../../../components/MathText'
+import RichText from '../../../../../components/RichText'
 
 interface ExamQuestion {
   id: string
@@ -237,10 +238,11 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
         return (
           <div key={q.id} className={`bg-white rounded-xl border-l-4 border border-slate-200 p-3 ${autoGraded ? 'border-l-emerald-400' : 'border-l-amber-400'}`}>
             <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5 mb-2">
-              <p className="text-sm font-semibold text-slate-800 min-w-0 break-words">
-                Q{idx + 1}. <MathText as="span" text={q.text} />
-                <span className="ml-2 text-xs text-slate-400 font-normal">({q.type} · {q.marks} marks)</span>
-              </p>
+              <div className="text-sm font-semibold text-slate-800 min-w-0 break-words">
+                <span>Q{idx + 1}.</span>
+                <RichText as="div" html={q.text} />
+                <span className="text-xs text-slate-400 font-normal">({q.type} · {q.marks} marks)</span>
+              </div>
               {autoGraded && (
                 <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold ${awarded === q.marks ? 'bg-emerald-100 text-emerald-700' : awarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
                   +{Math.round(awarded * 100) / 100} (auto)

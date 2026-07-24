@@ -15,6 +15,7 @@ import { SpeakWordsInput } from '../../../../../components/questions/SpeakWordsF
 import { SpeakWordsSetInput } from '../../../../../components/questions/SpeakWordsSetField'
 import { DictationInput } from '../../../../../components/questions/DictationField'
 import MathText from '../../../../../components/MathText'
+import RichText from '../../../../../components/RichText'
 import ProgressBar from '../../../../../components/ProgressBar'
 import EmptyState from '../../../../../components/EmptyState'
 
@@ -187,7 +188,7 @@ export default function StudentQuizPage() {
                     <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${ans.pointsAwarded >= q.points ? 'bg-emerald-100 text-emerald-700' : ans.pointsAwarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>You: {ans.pointsAwarded}/{q.points}</span>
                   )}
                 </div>
-                <MathText as="p" className="text-sm text-gray-800 whitespace-pre-wrap mb-3" text={q.prompt} />
+                <RichText as="div" className="text-sm text-gray-800 whitespace-pre-wrap mb-3" html={q.prompt} />
                 <QuestionInput q={q} value={answers[q.id]} onChange={(v) => setAnswer(q.id, v)} disabled={(exhausted && !!submission) || revealAnswers} />
                 {revealAnswers && q.correctData && (
                   <CorrectAnswerPanel q={q} />

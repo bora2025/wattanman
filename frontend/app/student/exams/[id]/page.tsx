@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
 import { apiFetch } from '../../../../lib/api'
 import { QuestionInput } from '../../../../components/ExamQuestionInput'
-import MathText from '../../../../components/MathText'
+import RichText from '../../../../components/RichText'
 import ProgressBar from '../../../../components/ProgressBar'
 import type { QType } from '../../../../lib/examQuestionLogic'
 
@@ -118,7 +118,10 @@ export default function StudentExamTakingPage() {
                 <div key={q.id} className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
                   <div className="flex items-start gap-2 mb-3">
                     <span className="flex-none w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
-                    <p className="font-semibold text-gray-900"><MathText as="span" text={q.text} /> <span className="text-xs font-normal text-gray-400">({q.marks} mark{q.marks !== 1 ? 's' : ''})</span></p>
+                    <div className="font-semibold text-gray-900">
+                      <RichText as="div" html={q.text} />
+                      <span className="text-xs font-normal text-gray-400">({q.marks} mark{q.marks !== 1 ? 's' : ''})</span>
+                    </div>
                   </div>
                   <QuestionInput q={q} value={answers[q.id]} onChange={v => setAnswers(a => ({ ...a, [q.id]: v }))} />
                 </div>

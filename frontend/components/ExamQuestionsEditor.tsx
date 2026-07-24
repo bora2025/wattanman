@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { type QType, type ExamQuestionDraft, TYPE_LABEL, uid, defaultData, defaultQuestion } from '../lib/examQuestionLogic'
+import RichTextEditor from './RichTextEditor'
 import { EssayEditor } from './questions/EssayField'
 import { SortParagraphsEditor } from './questions/SortParagraphsField'
 import { DragWordsEditor } from './questions/DragWordsField'
@@ -48,7 +49,7 @@ export function ExamQuestionsEditor({ questions, onChange, durationMinutes }: { 
               </select>
               <input type="number" step="any" min={0} value={q.marks} onChange={e => updateQuestion(i, { marks: Number(e.target.value) || 0 })} placeholder="Marks" className="border rounded px-2 py-1 text-sm" />
             </div>
-            <textarea value={q.text} onChange={e => updateQuestion(i, { text: e.target.value })} placeholder={`Q${i + 1}: Question text`} rows={2} className="w-full border rounded px-2 py-1 text-sm mb-2 resize-none" />
+            <RichTextEditor value={q.text} onChange={text => updateQuestion(i, { text })} placeholder={`Q${i + 1}: Question text`} />
 
             {q.type === 'MCQ' && (
               <McqEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />

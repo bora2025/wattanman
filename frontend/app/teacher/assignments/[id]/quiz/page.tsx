@@ -18,6 +18,8 @@ import { SpeakWordsEditor } from '../../../../../components/questions/SpeakWords
 import { SpeakWordsSetEditor } from '../../../../../components/questions/SpeakWordsSetField'
 import { DictationEditor } from '../../../../../components/questions/DictationField'
 import MathText from '../../../../../components/MathText'
+import RichText from '../../../../../components/RichText'
+import RichTextEditor from '../../../../../components/RichTextEditor'
 
 type QType = 'MCQ' | 'TF' | 'MATCHING' | 'NUMERICAL' | H5PType
 
@@ -211,7 +213,7 @@ export default function TeacherQuizEditorPage() {
                         <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-violet-100 text-violet-700">{TYPE_LABEL[q.type] ?? q.type}</span>
                         <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">{q.points} pt</span>
                       </div>
-                      <MathText as="p" className="text-sm text-slate-800 whitespace-pre-wrap" text={q.prompt} />
+                      <RichText as="p" className="text-sm text-slate-800 whitespace-pre-wrap" html={q.prompt} />
                       {q.type === 'MCQ' && Array.isArray(q.data?.choices) && (
                         <ul className="mt-2 space-y-1">
                           {q.data.choices.map((c: Choice) => (
@@ -271,7 +273,7 @@ export default function TeacherQuizEditorPage() {
                     <input type="number" step="any" min={0} value={draft.points} onChange={e => setDraft({ ...draft, points: Number(e.target.value) || 0 })} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
                   </label>
                 </div>
-                <textarea value={draft.prompt} onChange={e => setDraft({ ...draft, prompt: e.target.value })} rows={3} placeholder="Question prompt" className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
+                <RichTextEditor value={draft.prompt} onChange={prompt => setDraft({ ...draft, prompt })} placeholder="Question prompt" />
 
                 {/* Type-specific editor */}
                 {draftType === 'MCQ' && (

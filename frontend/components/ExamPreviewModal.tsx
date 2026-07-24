@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { QuestionInput } from './ExamQuestionInput'
-import MathText from './MathText'
+import RichText from './RichText'
 import { sanitizeForPreview, gradeQuestion, TYPE_LABEL, type ExamQuestionDraft } from '../lib/examQuestionLogic'
 
 function formatTime(secs: number) {
@@ -85,10 +85,11 @@ export default function ExamPreviewModal({ questions, durationMinutes, onClose }
             return (
               <div key={i} className={`rounded-xl border p-4 ${cardClass}`}>
                 <div className="flex items-start justify-between gap-3 mb-3">
-                  <p className="font-semibold text-slate-800 text-sm">
-                    Q{i + 1}. {q.text ? <MathText as="span" text={q.text} /> : <span className="text-slate-400 italic font-normal">(no question text yet)</span>}
-                    <span className="ml-2 text-xs font-normal text-slate-400">{TYPE_LABEL[q.type]} · {q.marks} mark{q.marks !== 1 ? 's' : ''}</span>
-                  </p>
+                  <div className="font-semibold text-slate-800 text-sm">
+                    <span>Q{i + 1}.</span>
+                    {q.text ? <RichText as="div" html={q.text} /> : <span className="text-slate-400 italic font-normal">(no question text yet)</span>}
+                    <span className="text-xs font-normal text-slate-400">{TYPE_LABEL[q.type]} · {q.marks} mark{q.marks !== 1 ? 's' : ''}</span>
+                  </div>
                   {checked && result && (
                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${result.autoGraded ? badgeClass : 'bg-slate-100 text-slate-500'}`}>
                       {result.autoGraded ? `+${Math.round((result.awarded ?? 0) * 100) / 100} / ${q.marks}` : 'Manual grading'}

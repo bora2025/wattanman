@@ -15,6 +15,7 @@ import { SpeakWordsInput } from '../../../../../../../components/questions/Speak
 import { SpeakWordsSetInput } from '../../../../../../../components/questions/SpeakWordsSetField'
 import { DictationInput } from '../../../../../../../components/questions/DictationField'
 import MathText from '../../../../../../../components/MathText'
+import RichText from '../../../../../../../components/RichText'
 import ProgressBar from '../../../../../../../components/ProgressBar'
 import EmptyState from '../../../../../../../components/EmptyState'
 
@@ -665,7 +666,7 @@ function QuestionView({
 
   return (
     <div className="space-y-3">
-      <MathText as="div" className="whitespace-pre-wrap text-sm text-slate-700" text={c.prompt} />
+      <RichText as="div" className="whitespace-pre-wrap text-sm text-slate-700" html={c.prompt} />
 
       {(qt === 'MCQ_SINGLE' || qt === 'MCQ_MULTI') && (
         <div className="space-y-1.5">
@@ -805,7 +806,7 @@ function BranchView({
   const disabled = submitting || !!lastResult
   return (
     <div className="space-y-3">
-      <MathText as="div" className="whitespace-pre-wrap text-sm text-slate-700" text={c.prompt} />
+      <RichText as="div" className="whitespace-pre-wrap text-sm text-slate-700" html={c.prompt} />
       <div className="space-y-2">
         {(c.choices || []).map((ch: any) => (
           <button
