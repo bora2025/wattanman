@@ -14,6 +14,36 @@ import Placeholder from '@tiptap/extension-placeholder'
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024
 const MAX_AUDIO_BYTES = 8 * 1024 * 1024
 
+// Some third-party audio converters produce files whose container/codec headers
+// look perfectly valid but that specific browsers still refuse to actually decode
+// (this bit us with a Clipchamp-exported .m4a — standard AAC-LC per its own esds
+// box, yet silently unplayable). Rather than trust the file, actually try to play
+// a couple of frames of it in this browser before accepting the upload, so a
+// broken file is caught immediately instead of surfacing as "audio doesn't play"
+// for students much later.
+function verifyAudioPlayable(src: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const probe = new window.Audio()
+    let settled = false
+    const finish = (ok: boolean) => {
+      if (settled) return
+      settled = true
+      probe.removeAttribute('src')
+      probe.load()
+      resolve(ok)
+    }
+    probe.addEventListener('canplaythrough', () => finish(true), { once: true })
+    probe.addEventListener('loadeddata', () => finish(true), { once: true })
+    probe.addEventListener('error', () => finish(false), { once: true })
+    // A data URI decodes locally with no network latency, so a real failure
+    // surfaces almost immediately — this timeout only guards against an unusually
+    // slow decode being mistaken for a hang, not a real verification signal.
+    setTimeout(() => finish(true), 4000)
+    probe.src = src
+    probe.load()
+  })
+}
+
 /** Renders as a plain <audio controls src="..."> — RichText.tsx adds a speed
  * selector next to it at render time (see enhanceAudioPlayers there). Kept as a
  * minimal node (no custom NodeView) since the editor's own live preview only
@@ -72,6 +102,7 @@ export default function RichTextEditor({
   const imageInputRef = useRef<HTMLInputElement>(null)
   const audioInputRef = useRef<HTMLInputElement>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadingAudio, setUploadingAudio] = useState(false)
 
   if (!editor) return null
 
@@ -108,12 +139,19 @@ export default function RichTextEditor({
       return
     }
     const reader = new FileReader()
-    reader.onload = () => {
+    reader.onload = async () => {
       // iOS/Safari reports .m4a files as "audio/x-m4a" — a non-standard MIME string
       // that Chrome/Firefox/Edge's <audio> element doesn't recognize, so it silently
       // fails to play there even though the underlying AAC-in-MP4 data is fine. Every
       // major browser (including Safari) plays the same data fine under "audio/mp4".
       const src = (reader.result as string).replace(/^data:audio\/x-m4a;/, 'data:audio/mp4;')
+      setUploadingAudio(true)
+      const playable = await verifyAudioPlayable(src)
+      setUploadingAudio(false)
+      if (!playable) {
+        setUploadError("This browser can't play that audio file — try re-exporting it (e.g. as MP3) and upload again.")
+        return
+      }
       editor.chain().focus().insertContent({ type: 'audio', attrs: { src } }).run()
     }
     reader.readAsDataURL(file)
@@ -134,11 +172,12 @@ export default function RichTextEditor({
         <span className="w-px h-4 bg-slate-200 mx-0.5" />
         <button type="button" onClick={setLink} className={btn(editor.isActive('link'))} title="Link">🔗</button>
         <button type="button" onClick={() => imageInputRef.current?.click()} className={btn(false)} title="Upload image">🖼</button>
-        <button type="button" onClick={() => audioInputRef.current?.click()} className={btn(false)} title="Upload audio">🔊</button>
+        <button type="button" onClick={() => audioInputRef.current?.click()} className={btn(false)} title="Upload audio" disabled={uploadingAudio}>{uploadingAudio ? '⏳' : '🔊'}</button>
         <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageFile} className="hidden" />
         <input ref={audioInputRef} type="file" accept="audio/*" onChange={handleAudioFile} className="hidden" />
         <span className="w-px h-4 bg-slate-200 mx-0.5" />
         <button type="button" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} className={btn(false)} title="Clear formatting">✕ Format</button>
+        {uploadingAudio && <span className="text-xs text-slate-400 ml-1">Checking audio…</span>}
         {uploadError && <span className="text-xs text-red-600 ml-1">{uploadError}</span>}
       </div>
       <EditorContent editor={editor} className="resize-y overflow-y-auto min-h-[4.5rem] max-h-[32rem]" />
