@@ -39,6 +39,7 @@ interface ExamRow {
   duration: number
   totalMarks: number
   passMark: number
+  maxAttempts: number
   createdBy?: { id: string; name: string } | null
   _count?: { questions: number; attempts: number }
   createdAt: string
@@ -414,11 +415,11 @@ function ExamsPanel({ classId }: { classId: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [creating, setCreating] = useState(false)
-  const [form, setForm] = useState({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50 })
+  const [form, setForm] = useState({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50, allowRetake: false, maxAttempts: 1 })
   const [questions, setQuestions] = useState<ExamQuestionDraft[]>([defaultQuestion()])
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editMetaForm, setEditMetaForm] = useState({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50 })
+  const [editMetaForm, setEditMetaForm] = useState({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50, allowRetake: false, maxAttempts: 1 })
   const [editQuestions, setEditQuestions] = useState<ExamQuestionDraft[]>([])
   const [editLoadingId, setEditLoadingId] = useState<string | null>(null)
   const [editSaving, setEditSaving] = useState(false)
@@ -447,13 +448,14 @@ function ExamsPanel({ classId }: { classId: string }) {
         duration: Number(form.duration) || 60,
         totalMarks: Number(form.totalMarks) || 100,
         passMark: Number(form.passMark) || 50,
+        maxAttempts: form.allowRetake ? Math.max(0, Number(form.maxAttempts) || 0) : 1,
         questions,
       }
       const r = await apiFetch('/api/exams', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       })
       if (!r.ok) throw new Error()
-      setForm({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50 })
+      setForm({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50, allowRetake: false, maxAttempts: 1 })
       setQuestions([defaultQuestion()])
       setCreating(false)
       await load()
@@ -495,6 +497,8 @@ function ExamsPanel({ classId }: { classId: string }) {
         duration: full.duration ?? 60,
         totalMarks: full.totalMarks ?? 100,
         passMark: full.passMark ?? 50,
+        allowRetake: (full.maxAttempts ?? 1) !== 1,
+        maxAttempts: full.maxAttempts ?? 1,
       })
       setEditQuestions((full.questions || []).length
         ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data }))
@@ -514,6 +518,7 @@ function ExamsPanel({ classId }: { classId: string }) {
         duration: Number(editMetaForm.duration) || 60,
         totalMarks: Number(editMetaForm.totalMarks) || 100,
         passMark: Number(editMetaForm.passMark) || 50,
+        maxAttempts: editMetaForm.allowRetake ? Math.max(0, Number(editMetaForm.maxAttempts) || 0) : 1,
         questions: editQuestions,
       }
       const r = await apiFetch(`/api/exams/${examId}`, {
@@ -568,6 +573,22 @@ function ExamsPanel({ classId }: { classId: string }) {
             <textarea rows={2} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className="w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 grid grid-cols-2 gap-3 items-end">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-2 col-span-2">
+              <input type="checkbox" checked={form.allowRetake} onChange={e => setForm(f => ({ ...f, allowRetake: e.target.checked }))} className="h-4 w-4" />
+              <span>Allow students to <strong>retake</strong> this exam</span>
+            </label>
+            {form.allowRetake ? (
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-slate-600 mb-1">Max attempts</label>
+                <input type="number" min={0} max={50} placeholder="0 = unlimited" value={form.maxAttempts}
+                  onChange={e => setForm(f => ({ ...f, maxAttempts: Number(e.target.value) }))}
+                  className="w-full border rounded-lg px-3 py-2 text-sm" />
+              </div>
+            ) : (
+              <span className="text-[11px] text-slate-500 col-span-2">Students get a single attempt.</span>
+            )}
+          </div>
           <ExamQuestionsEditor questions={questions} onChange={setQuestions} durationMinutes={form.duration} />
           <div className="flex gap-2">
             <button type="submit" disabled={saving} className="btn-primary btn-sm disabled:opacity-60">
@@ -609,7 +630,10 @@ function ExamsPanel({ classId }: { classId: string }) {
                     <td className="px-4 py-2 text-slate-600">{r.duration} min</td>
                     <td className="px-4 py-2 text-slate-600">{r.totalMarks} · {r.passMark}</td>
                     <td className="px-4 py-2 text-slate-600">{r._count?.questions ?? 0}</td>
-                    <td className="px-4 py-2 text-slate-600">{r._count?.attempts ?? 0}</td>
+                    <td className="px-4 py-2 text-slate-600">
+                      {r._count?.attempts ?? 0}
+                      {r.maxAttempts !== 1 && <p className="text-[10px] text-slate-400">{r.maxAttempts === 0 ? 'unlimited' : `up to ${r.maxAttempts}`} allowed</p>}
+                    </td>
                     <td className="px-4 py-2">
                       <select value={r.status} onChange={e => handleStatusChange(r, e.target.value)}
                         className={`text-xs font-semibold px-2 py-1 rounded-full border outline-none ${statusColor(r.status)}`}>
@@ -655,6 +679,22 @@ function ExamsPanel({ classId }: { classId: string }) {
                             <input value={editMetaForm.description} onChange={e => setEditMetaForm(f => ({ ...f, description: e.target.value }))}
                               className="w-full border rounded-lg px-3 py-2 text-sm" />
                           </div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white p-3 grid grid-cols-2 gap-3 items-end">
+                          <label className="text-xs font-semibold text-slate-600 flex items-center gap-2 col-span-2">
+                            <input type="checkbox" checked={editMetaForm.allowRetake} onChange={e => setEditMetaForm(f => ({ ...f, allowRetake: e.target.checked }))} className="h-4 w-4" />
+                            <span>Allow students to <strong>retake</strong> this exam</span>
+                          </label>
+                          {editMetaForm.allowRetake ? (
+                            <div className="col-span-2">
+                              <label className="block text-xs font-medium text-slate-600 mb-1">Max attempts</label>
+                              <input type="number" min={0} max={50} placeholder="0 = unlimited" value={editMetaForm.maxAttempts}
+                                onChange={e => setEditMetaForm(f => ({ ...f, maxAttempts: Number(e.target.value) }))}
+                                className="w-full border rounded-lg px-3 py-2 text-sm" />
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-slate-500 col-span-2">Students get a single attempt.</span>
+                          )}
                         </div>
                         <ExamQuestionsEditor questions={editQuestions} onChange={setEditQuestions} durationMinutes={editMetaForm.duration} />
                         <div className="flex gap-2 justify-end mt-3">
