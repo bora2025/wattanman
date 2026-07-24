@@ -38,6 +38,19 @@ function enhanceAudioPlayers(container: HTMLElement) {
     wrap.appendChild(label)
     wrap.appendChild(select)
     audio.insertAdjacentElement('afterend', wrap)
+
+    // Playback failures (unsupported codec, corrupt data, etc.) otherwise fail
+    // completely silently — the native controls just never respond to play.
+    audio.addEventListener('error', () => {
+      const err = audio.error
+      const reason = err?.code === MediaError.MEDIA_ERR_DECODE ? 'This audio file is corrupted or uses an unsupported encoding.'
+        : err?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED ? "This browser can't play this audio format."
+        : 'This audio failed to load.'
+      const notice = document.createElement('p')
+      notice.className = 'text-xs text-red-600 mt-1'
+      notice.textContent = `⚠ ${reason}`
+      wrap.insertAdjacentElement('afterend', notice)
+    })
   })
 }
 
