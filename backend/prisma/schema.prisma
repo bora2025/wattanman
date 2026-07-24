@@ -818,6 +818,7 @@ model Exam {
   duration    Int            @default(60) // minutes
   totalMarks  Float          @default(100)
   passMark    Float          @default(50)
+  maxAttempts Int            @default(1) // 0 = unlimited — same convention as Assignment.maxAttempts
   status      String         @default("DRAFT") // DRAFT, PUBLISHED, ACTIVE, COMPLETED
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -849,6 +850,7 @@ model ExamAttempt {
   score       Float?
   grade       String?
   status      String    @default("IN_PROGRESS") // IN_PROGRESS, SUBMITTED, GRADED
+  attemptNumber Int     @default(0) // bumped on each submit — gated against Exam.maxAttempts, same convention as AssignmentSubmission
   startedAt   DateTime  @default(now())
   submittedAt DateTime?
   gradedAt    DateTime?

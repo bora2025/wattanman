@@ -13,7 +13,7 @@ import { defaultQuestion } from '../../../components/ExamQuestionsEditor'
 
 interface Exam {
   id: string; title: string; description: string | null; status: string
-  duration: number; totalMarks: number; passMark: number
+  duration: number; totalMarks: number; passMark: number; maxAttempts: number
   class: { id: string; name: string } | null
   createdBy: { id: string; name: string }
   _count: { questions: number; attempts: number }
@@ -67,6 +67,7 @@ export default function ExamAdminPage() {
         duration: full.duration ?? 60,
         totalMarks: full.totalMarks ?? 100,
         passMark: full.passMark ?? 50,
+        maxAttempts: full.maxAttempts ?? 1,
         questions: (full.questions || []).length
           ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data }))
           : [defaultQuestion()],
@@ -138,7 +139,10 @@ export default function ExamAdminPage() {
                         <p className="font-semibold text-gray-900 truncate">{exam.title}</p>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLOR[exam.status]}`}>{exam.status}</span>
                       </div>
-                      <p className="text-xs text-gray-500">{exam.class?.name ?? 'All classes'} · {exam._count.questions} questions · {exam.duration} min · Pass: {exam.passMark}/{exam.totalMarks}</p>
+                      <p className="text-xs text-gray-500">
+                        {exam.class?.name ?? 'All classes'} · {exam._count.questions} questions · {exam.duration} min · Pass: {exam.passMark}/{exam.totalMarks}
+                        {exam.maxAttempts !== 1 && ` · ${exam.maxAttempts === 0 ? 'unlimited' : `up to ${exam.maxAttempts}`} attempts`}
+                      </p>
                       <p className="text-xs text-gray-400 mt-0.5">{exam._count.attempts} attempt(s) · by {exam.createdBy.name}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">

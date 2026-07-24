@@ -17,7 +17,7 @@ const studentNav = [
   { label: 'My Parent', href: '/student/parent', icon: 'users' },
 ]
 
-interface Exam { id: string; title: string; duration: number; totalMarks: number; passMark: number; status: string; class: { name: string } | null; attempts: { id: string; status: string; score: number | null; submittedAt: string | null }[] }
+interface Exam { id: string; title: string; duration: number; totalMarks: number; passMark: number; maxAttempts: number; status: string; class: { name: string } | null; attempts: { id: string; status: string; score: number | null; submittedAt: string | null; attemptNumber: number }[] }
 
 const STATUS_COLOR: Record<string, string> = {
   DRAFT: 'bg-slate-100 text-slate-600',
@@ -62,8 +62,13 @@ export default function StudentExamsPage() {
                 const hasAttempt = !!attempt
                 const isGraded = attempt?.status === 'GRADED'
                 const isInProgress = attempt?.status === 'IN_PROGRESS'
+                const attemptsUsed = attempt?.attemptNumber ?? 0
+                const attemptsLeft = exam.maxAttempts === 0 || attemptsUsed < exam.maxAttempts
                 const canStart = exam.status === 'ACTIVE' && !hasAttempt
                 const canResume = exam.status === 'ACTIVE' && isInProgress
+                // Only once fully GRADED — retaking while still SUBMITTED (awaiting manual
+                // grading on a mixed exam) would silently wipe the teacher's pending item.
+                const canRetake = exam.status === 'ACTIVE' && isGraded && attemptsLeft
                 return (
                   <div key={exam.id} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex items-center justify-between gap-4 hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -99,7 +104,13 @@ export default function StudentExamsPage() {
                           Resume Exam
                         </Link>
                       )}
-                      {isGraded && <span className="text-xs text-emerald-600 font-semibold">✓ Completed</span>}
+                      {canRetake && (
+                        <Link href={`/student/exams/${exam.id}`}
+                          className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-indigo-700 shadow-sm">
+                          Retake Exam
+                        </Link>
+                      )}
+                      {isGraded && !canRetake && <span className="text-xs text-emerald-600 font-semibold">✓ Completed</span>}
                     </div>
                   </div>
                 )

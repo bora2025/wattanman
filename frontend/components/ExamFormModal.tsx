@@ -9,7 +9,7 @@ export interface ExamClassItem { id: string; name: string; subject?: string }
 
 export interface ExamEditInitialData {
   title: string; description: string; classId: string
-  duration: number; totalMarks: number; passMark: number
+  duration: number; totalMarks: number; passMark: number; maxAttempts: number
   questions: ExamQuestionDraft[]
 }
 
@@ -26,15 +26,18 @@ export default function ExamFormModal({ classes, examId, initialData, onClose, o
 }) {
   const { register, handleSubmit, watch, formState: { isSubmitting } } = useForm({
     defaultValues: initialData
-      ? { title: initialData.title, description: initialData.description, classId: initialData.classId, duration: initialData.duration, totalMarks: initialData.totalMarks, passMark: initialData.passMark }
-      : { title: '', description: '', classId: '', duration: 60, totalMarks: 100, passMark: 50 },
+      ? { title: initialData.title, description: initialData.description, classId: initialData.classId, duration: initialData.duration, totalMarks: initialData.totalMarks, passMark: initialData.passMark, allowRetake: initialData.maxAttempts !== 1, maxAttempts: initialData.maxAttempts }
+      : { title: '', description: '', classId: '', duration: 60, totalMarks: 100, passMark: 50, allowRetake: false, maxAttempts: 1 },
   })
   const watchedDuration = Number(watch('duration')) || undefined
+  const watchAllowRetake = watch('allowRetake')
   const [questions, setQuestions] = useState<ExamQuestionDraft[]>(initialData?.questions?.length ? initialData.questions : [defaultQuestion()])
   const [formError, setFormError] = useState<string | null>(null)
 
   const onSubmit = async (data: any) => {
     setFormError(null)
+    if (!data.allowRetake) data.maxAttempts = 1
+    delete data.allowRetake
     const url = examId ? `/api/exams/${examId}` : '/api/exams'
     const method = examId ? 'PUT' : 'POST'
     const body = examId ? { ...data, questions } : { ...data, status: 'DRAFT', questions }
@@ -85,6 +88,20 @@ export default function ExamFormModal({ classes, examId, initialData, onClose, o
             <label className="block text-xs font-semibold text-slate-500">Pass mark
               <input type="number" {...register('passMark')} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
             </label>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 grid grid-cols-2 gap-3 items-end">
+            <label className="text-xs font-semibold text-slate-600 flex items-center gap-2 col-span-2">
+              <input type="checkbox" {...register('allowRetake')} className="h-4 w-4" />
+              <span>Allow students to <strong>retake</strong> this exam</span>
+            </label>
+            {watchAllowRetake ? (
+              <label className="block text-xs font-semibold text-slate-500 col-span-2">Max attempts
+                <input type="number" min={0} max={50} placeholder="0 = unlimited" {...register('maxAttempts')} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+              </label>
+            ) : (
+              <span className="text-[11px] text-slate-500 col-span-2">Students get a single attempt.</span>
+            )}
           </div>
 
           <div className="border-t border-slate-100 pt-4">

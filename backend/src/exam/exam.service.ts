@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { H5P_TYPES, isH5PType, sanitizeH5PInput, sanitizeH5PForStudent, gradeH5PQuestion } from '../h5p/h5p-questions';
 
@@ -184,21 +185,46 @@ export class ExamService {
     const student = await this.prisma.student.findUnique({ where: { userId } });
     if (!student) throw new BadRequestException('Student profile not found');
 
+    const exam = await this.prisma.exam.findUnique({ where: { id: examId } });
+    if (!exam) throw new NotFoundException('Exam not found');
+
     const existing = await this.prisma.examAttempt.findUnique({
       where: { examId_studentId: { examId, studentId: student.id } },
     });
     if (existing) {
-      // Only an in-progress attempt is safe to hand back for resuming — a
-      // submitted/graded one must never be reopened (that would let a student
-      // re-answer and silently overwrite an already-graded score).
-      if (existing.status !== 'IN_PROGRESS') {
-        throw new BadRequestException('This exam has already been submitted');
+      // An in-progress attempt is always safe to hand back for resuming.
+      if (existing.status === 'IN_PROGRESS') return existing;
+
+      // SUBMITTED (a mixed exam awaiting manual grading) can't be reopened —
+      // that would silently wipe the teacher's pending-grading item. Only a
+      // fully GRADED attempt is eligible for a retake.
+      if (existing.status === 'SUBMITTED') {
+        throw new BadRequestException('This attempt is awaiting manual grading and cannot be retaken yet');
       }
-      return existing;
+      // Already graded — only reopen it if the exam's retake policy
+      // (maxAttempts, 0 = unlimited) still has room; otherwise a student could
+      // re-answer and silently overwrite an already-graded score forever.
+      const maxAttempts = exam.maxAttempts ?? 1;
+      if (maxAttempts > 0 && existing.attemptNumber >= maxAttempts) {
+        throw new BadRequestException(`Maximum attempts (${maxAttempts}) reached`);
+      }
+      if (exam.status !== 'ACTIVE') throw new BadRequestException('This exam is not currently active');
+      return this.prisma.examAttempt.update({
+        where: { id: existing.id },
+        data: {
+          status: 'IN_PROGRESS',
+          answers: Prisma.JsonNull,
+          score: null,
+          grade: null,
+          manualMarks: Prisma.JsonNull,
+          feedback: null,
+          startedAt: new Date(),
+          submittedAt: null,
+          gradedAt: null,
+        },
+      });
     }
 
-    const exam = await this.prisma.exam.findUnique({ where: { id: examId } });
-    if (!exam) throw new NotFoundException('Exam not found');
     if (exam.status !== 'ACTIVE') throw new BadRequestException('This exam is not currently active');
 
     return this.prisma.examAttempt.create({
@@ -246,6 +272,7 @@ export class ExamService {
           score: total,
           grade: passed ? 'PASS' : 'FAIL',
           answers,
+          attemptNumber: attempt.attemptNumber + 1,
         },
       });
     }
@@ -260,6 +287,7 @@ export class ExamService {
         submittedAt: new Date(),
         score: total,
         grade: null,
+        attemptNumber: attempt.attemptNumber + 1,
       },
     });
   }

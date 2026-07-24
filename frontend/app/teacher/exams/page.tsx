@@ -14,7 +14,7 @@ import { defaultQuestion } from '../../../components/ExamQuestionsEditor'
 
 interface Exam {
   id: string; title: string; description: string | null; status: string
-  duration: number; totalMarks: number; passMark: number
+  duration: number; totalMarks: number; passMark: number; maxAttempts: number
   class: { id: string; name: string } | null
   createdBy: { id: string; name: string }
   _count: { questions: number; attempts: number }
@@ -74,6 +74,7 @@ export default function TeacherExamsPage() {
         duration: full.duration ?? 60,
         totalMarks: full.totalMarks ?? 100,
         passMark: full.passMark ?? 50,
+        maxAttempts: full.maxAttempts ?? 1,
         questions: (full.questions || []).length
           ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data }))
           : [defaultQuestion()],
@@ -148,6 +149,7 @@ export default function TeacherExamsPage() {
                       </div>
                       <p className="text-xs text-gray-500">
                         {exam.class?.name ?? 'All classes'} · {exam._count.questions} questions · {exam.duration} min · Pass: {exam.passMark}/{exam.totalMarks}
+                        {exam.maxAttempts !== 1 && ` · ${exam.maxAttempts === 0 ? 'unlimited' : `up to ${exam.maxAttempts}`} attempts`}
                       </p>
                       <p className="text-xs text-amber-600 mt-0.5">{exam._count.attempts} attempt(s)</p>
                       <p className="text-xs text-gray-400 mt-0.5">{STATUS_HINT[exam.status]}</p>

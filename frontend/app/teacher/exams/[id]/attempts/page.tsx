@@ -37,6 +37,7 @@ interface Attempt {
   status: string
   score: number | null
   grade: string | null
+  attemptNumber: number
   submittedAt: string | null
   gradedAt: string | null
   answers: Record<string, any> | null
@@ -152,7 +153,10 @@ export default function ExamGradebookPage() {
                     <div key={att.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                       <div className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                         <div className="min-w-0">
-                          <p className="font-semibold text-slate-800 truncate">{att.student.user.name}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-slate-800 truncate">{att.student.user.name}</p>
+                            {att.attemptNumber > 1 && <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-semibold">Attempt {att.attemptNumber}</span>}
+                          </div>
                           <p className="text-xs text-slate-500">
                             Submitted: {att.submittedAt ? new Date(att.submittedAt).toLocaleString() : '—'}
                             {att.gradedAt && <> · Graded: {new Date(att.gradedAt).toLocaleString()}</>}
