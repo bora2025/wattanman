@@ -16,12 +16,12 @@ interface PublicClass {
 type FieldMode = 'REQUIRED' | 'OPTIONAL' | 'HIDDEN'
 
 interface FormConfig {
-  settings: { khmerNameMode: FieldMode; phoneMode: FieldMode; emailMode: FieldMode; photoMode: FieldMode }
+  settings: { khmerNameMode: FieldMode; phoneMode: FieldMode; emailMode: FieldMode; photoMode: FieldMode; passwordMode: FieldMode }
   fields: { id: string; key: string; label: string; required: boolean }[]
 }
 
 const DEFAULT_FORM_CONFIG: FormConfig = {
-  settings: { khmerNameMode: 'REQUIRED', phoneMode: 'REQUIRED', emailMode: 'REQUIRED', photoMode: 'OPTIONAL' },
+  settings: { khmerNameMode: 'REQUIRED', phoneMode: 'REQUIRED', emailMode: 'REQUIRED', photoMode: 'OPTIONAL', passwordMode: 'REQUIRED' },
   fields: [],
 }
 
@@ -89,7 +89,7 @@ function RegisterForm() {
     })()
   }, [])
 
-  const { khmerNameMode, phoneMode, emailMode, photoMode } = formConfig.settings
+  const { khmerNameMode, phoneMode, emailMode, photoMode, passwordMode } = formConfig.settings
 
   const emailTrimmed = email.trim()
   const phoneTrimmed = phone.trim()
@@ -104,8 +104,11 @@ function RegisterForm() {
     (phoneMode !== 'REQUIRED' || phoneTrimmed !== '') &&
     (emailMode === 'REQUIRED' || phoneMode === 'REQUIRED' || emailFormatOk || phoneTrimmed !== '')
 
-  const passwordValid = password.length >= MIN_PASSWORD_LENGTH
-  const passwordsMatch = password === confirmPassword
+  // Blank is fine when Password isn't Required — the backend auto-generates one and
+  // shows it to the admin. If the student types anything at all, it still has to
+  // meet the minimum length and be confirmed correctly.
+  const passwordValid = password === '' ? passwordMode !== 'REQUIRED' : password.length >= MIN_PASSWORD_LENGTH
+  const passwordsMatch = password === '' ? true : password === confirmPassword
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -148,7 +151,7 @@ function RegisterForm() {
           // (e.g. leftover/duplicate text) and a phone was given, it's just dropped.
           email: emailMode === 'HIDDEN' ? undefined : (emailFormatOk ? emailTrimmed : undefined),
           phone: phoneMode === 'HIDDEN' ? undefined : phoneTrimmed || undefined,
-          password,
+          password: password || undefined,
           photo: photoMode === 'HIDDEN' ? undefined : photo || undefined,
           customFieldValues,
         }),
@@ -184,7 +187,8 @@ function RegisterForm() {
               {emailTrimmed
                 ? <>We'll email you at <span className="font-medium text-slate-700">{emailTrimmed}</span> once an admin approves or rejects it.</>
                 : <>An admin will review your request soon.</>}
-              {' '}Once approved, log in with the {emailTrimmed ? 'email' : 'phone number'} and password you just set.
+              {' '}Once approved, log in with the {emailTrimmed ? 'email' : 'phone number'} and{' '}
+              {password ? 'password you just set.' : 'password your admin or teacher gives you.'}
             </p>
             <Link href="/" className="btn-primary inline-flex mt-6">Back to home</Link>
           </div>
@@ -300,34 +304,44 @@ function RegisterForm() {
               </div>
             ))}
 
-            <div className="pt-2 border-t border-slate-100">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={MIN_PASSWORD_LENGTH}
-                placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
-              />
-              {password.length > 0 && !passwordValid && (
-                <p className="text-xs text-red-600 mt-1">Password must be at least {MIN_PASSWORD_LENGTH} characters</p>
-              )}
-            </div>
+            {passwordMode !== 'HIDDEN' && (
+              <div className="pt-2 border-t border-slate-100">
+                <label className="form-label">
+                  Password
+                  {passwordMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs"> (optional — leave blank and your admin/teacher will give you one)</span>}
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required={passwordMode === 'REQUIRED'}
+                  minLength={password ? MIN_PASSWORD_LENGTH : undefined}
+                  placeholder={passwordMode === 'REQUIRED' ? `At least ${MIN_PASSWORD_LENGTH} characters` : 'Leave blank, or set your own'}
+                />
+                {password.length > 0 && !passwordValid && (
+                  <p className="text-xs text-red-600 mt-1">Password must be at least {MIN_PASSWORD_LENGTH} characters</p>
+                )}
+              </div>
+            )}
 
-            <div>
-              <label className="form-label">Confirm Password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                placeholder="Re-enter your password"
-              />
-              {confirmPassword.length > 0 && !passwordsMatch && (
-                <p className="text-xs text-red-600 mt-1">Passwords do not match</p>
-              )}
-            </div>
+            {passwordMode !== 'HIDDEN' && password.length > 0 && (
+              <div>
+                <label className="form-label">Confirm Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  placeholder="Re-enter your password"
+                />
+                {confirmPassword.length > 0 && !passwordsMatch && (
+                  <p className="text-xs text-red-600 mt-1">Passwords do not match</p>
+                )}
+              </div>
+            )}
+            {passwordMode === 'HIDDEN' && (
+              <p className="text-xs text-slate-400 -mt-1">A login password will be generated for you — your admin or teacher will share it once approved.</p>
+            )}
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 

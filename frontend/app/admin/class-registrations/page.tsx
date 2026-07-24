@@ -13,8 +13,9 @@ interface ClassRegistrationItem {
   id: string
   nameKh: string
   nameEn: string
-  email: string
-  phone: string
+  email: string | null
+  phone: string | null
+  generatedPassword: string | null
   photo: string | null
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   rejectReason: string | null
@@ -33,6 +34,7 @@ interface ClassRegistrationSettings {
   phoneMode: FieldMode
   emailMode: FieldMode
   photoMode: FieldMode
+  passwordMode: FieldMode
 }
 
 interface ClassRegistrationField {
@@ -146,6 +148,7 @@ export default function AdminClassRegistrationsPage() {
                     <th className="text-left px-4 py-2">Class</th>
                     <th className="text-left px-4 py-2">Email</th>
                     <th className="text-left px-4 py-2">Phone</th>
+                    <th className="text-left px-4 py-2">Password</th>
                     <th className="text-left px-4 py-2">Submitted</th>
                     <th className="text-left px-4 py-2">Status</th>
                     <th className="text-right px-4 py-2">Actions</th>
@@ -166,6 +169,15 @@ export default function AdminClassRegistrationsPage() {
                       <td className="px-4 py-2 text-slate-600">{r.class?.name ?? '—'}</td>
                       <td className="px-4 py-2 text-slate-700">{r.email}</td>
                       <td className="px-4 py-2 text-slate-600">{r.phone}</td>
+                      <td className="px-4 py-2">
+                        {r.generatedPassword ? (
+                          <span className="inline-flex items-center gap-1 font-mono text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded px-1.5 py-0.5" title="Auto-generated — share this with the student">
+                            🔑 {r.generatedPassword}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-300">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-2 text-xs text-slate-500">{new Date(r.createdAt).toLocaleString()}</td>
                       <td className="px-4 py-2">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded ${r.status === 'PENDING' ? 'bg-amber-100 text-amber-800' : r.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
@@ -359,7 +371,7 @@ function FormSettingsView() {
     <div className="space-y-6 max-w-2xl">
       <div className="bg-white border border-slate-100 rounded-xl p-4">
         <h2 className="text-sm font-semibold text-slate-800 mb-1">Built-in fields</h2>
-        <p className="text-xs text-slate-500 mb-2">Listed in the same order students see them. Class, English Name, and Password are always required to create a student's account and can't be changed. Email and Phone can each be set independently, but not both Hidden at once — a student needs at least one to log in.</p>
+        <p className="text-xs text-slate-500 mb-2">Listed in the same order students see them. Class and English Name are always required to create a student's account and can't be changed. Email and Phone can each be set independently, but not both Hidden at once — a student needs at least one to log in. If Password isn't Required and a student leaves it blank, one is auto-generated — check the Requests tab to see it.</p>
         {settingsError && <div className="mb-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{settingsError}</div>}
         {settingsLoading || !settings ? (
           <div className="text-sm text-slate-400 py-4">Loading…</div>
@@ -371,7 +383,7 @@ function FormSettingsView() {
             <ModeToggle label="Phone" value={settings.phoneMode} onChange={(m) => updateSettings.mutate({ phoneMode: m })} disableHidden={settings.emailMode === 'HIDDEN'} />
             <ModeToggle label="Email" value={settings.emailMode} onChange={(m) => updateSettings.mutate({ emailMode: m })} disableHidden={settings.phoneMode === 'HIDDEN'} />
             <ModeToggle label="Photo" value={settings.photoMode} onChange={(m) => updateSettings.mutate({ photoMode: m })} />
-            <LockedFieldRow label="Password" />
+            <ModeToggle label="Password" value={settings.passwordMode} onChange={(m) => updateSettings.mutate({ passwordMode: m })} />
           </div>
         )}
       </div>

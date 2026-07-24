@@ -21,3 +21,17 @@ export function normalizePhone(value: string | null | undefined): string {
 export function looksLikeEmail(identifier: string): boolean {
   return identifier.includes('@');
 }
+
+// Excludes visually-ambiguous characters (0/O, 1/l/I) so an admin can read a
+// generated password aloud or retype it without second-guessing which is which.
+const PASSWORD_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+
+/** Generates a random password for registrations where the student didn't set
+ * one (ClassRegistrationSettings.passwordMode !== 'REQUIRED'). */
+export function generatePassword(length = 8): string {
+  let out = '';
+  for (let i = 0; i < length; i++) {
+    out += PASSWORD_CHARS[Math.floor(Math.random() * PASSWORD_CHARS.length)];
+  }
+  return out;
+}

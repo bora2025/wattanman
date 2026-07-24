@@ -214,7 +214,8 @@ model ClassRegistration {
   nameEn            String
   email             String? // at least one of email/phone is required — see createRegistration
   phone             String? // required unless hidden/optional via ClassRegistrationSettings.phoneMode
-  passwordHash      String // bcrypt hash of the password the student chose at registration
+  passwordHash      String // bcrypt hash of the password the student chose, or an auto-generated one — see passwordMode
+  generatedPassword String? // plaintext, set ONLY when auto-generated (never for a student-chosen password), so an admin can relay it
   photo             String? // base64 data URL, same convention as Student.photo
   customFieldValues Json? // { [ClassRegistrationField.key]: string }
   status            String    @default("PENDING") // PENDING | APPROVED | REJECTED
@@ -235,6 +236,7 @@ model ClassRegistrationSettings {
   phoneMode     String   @default("REQUIRED") // REQUIRED | OPTIONAL | HIDDEN
   emailMode     String   @default("REQUIRED") // REQUIRED | OPTIONAL | HIDDEN — emailMode and phoneMode can't both be HIDDEN (no way to create a login otherwise)
   photoMode     String   @default("OPTIONAL") // REQUIRED | OPTIONAL | HIDDEN
+  passwordMode  String   @default("REQUIRED") // REQUIRED | OPTIONAL | HIDDEN — non-REQUIRED means a password is auto-generated when the student doesn't set one
   updatedAt     DateTime @updatedAt
 }
 
