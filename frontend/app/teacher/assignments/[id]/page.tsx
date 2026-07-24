@@ -9,6 +9,7 @@ import AuthGuard from '../../../../components/AuthGuard'
 import Sidebar from '../../../../components/Sidebar'
 import StatCard from '../../../../components/StatCard'
 import EmptyState from '../../../../components/EmptyState'
+import ConfirmModal from '../../../../components/ConfirmModal'
 import { teacherNav } from '../../../../lib/teacher-nav'
 import { apiFetch } from '../../../../lib/api'
 import { H5P_TYPE_LABEL, parseDragWordsText, diffWords } from '../../../../lib/h5pQuestionLogic'
@@ -46,6 +47,7 @@ export default function TeacherGradingPage() {
   const assignmentId = params?.id as string
   const [gradingId, setGradingId] = useState<string | null>(null)
   const [perQId, setPerQId] = useState<string | null>(null)
+  const [resetTarget, setResetTarget] = useState<Submission | null>(null)
   const qc = useQueryClient()
 
   const { data: assignment } = useQuery({
@@ -63,6 +65,15 @@ export default function TeacherGradingPage() {
     mutationFn: ({ submissionId, marks, feedback }: { submissionId: string; marks: number; feedback: string }) =>
       apiFetch(`/api/assignments/submissions/${submissionId}/grade`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ marks, feedback }) }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['submissions', assignmentId] }); setGradingId(null) },
+  })
+
+  const resetMutation = useMutation({
+    mutationFn: async (submissionId: string) => {
+      const r = await apiFetch(`/api/assignments/submissions/${submissionId}/reset`, { method: 'DELETE' })
+      if (!r.ok) throw new Error('Failed to reset submission')
+      return r.json()
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['submissions', assignmentId] }); setResetTarget(null) },
   })
 
   const { register, handleSubmit, formState: { isSubmitting } } = useForm<{ marks: number; feedback: string }>()
@@ -153,6 +164,10 @@ export default function TeacherGradingPage() {
                           {perQId === sub.id ? 'Hide answers' : 'Grade per Q'}
                         </button>
                       )}
+                      <button onClick={() => setResetTarget(sub)}
+                        className="text-xs bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg font-medium hover:bg-amber-200">
+                        ↻ Re-Attempt
+                      </button>
                     </div>
                   </div>
 
@@ -181,6 +196,18 @@ export default function TeacherGradingPage() {
         </div>
         </main>
       </div>
+
+      {resetTarget && (
+        <ConfirmModal
+          title="Allow re-attempt?"
+          message={`This permanently deletes ${resetTarget.student?.user?.name}'s current submission${resetTarget.marks != null ? ` (marks: ${resetTarget.marks}/${assignment?.totalMarks})` : ''} so they can submit again from scratch. This can't be undone.`}
+          confirmLabel="Delete & Allow Retry"
+          danger
+          pending={resetMutation.isPending}
+          onConfirm={() => resetMutation.mutate(resetTarget.id)}
+          onCancel={() => setResetTarget(null)}
+        />
+      )}
     </AuthGuard>
   )
 }

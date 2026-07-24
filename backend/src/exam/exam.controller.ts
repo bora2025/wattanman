@@ -47,6 +47,11 @@ export class ExamController {
   @Get(':id/attempts')
   getAttempts(@Param('id') id: string) { return this.examService.getExamAttempts(id); }
 
+  // Deletes the attempt so the student can start a fresh one.
+  @Roles('ADMIN', 'TEACHER')
+  @Delete('attempts/:attemptId/reset')
+  resetAttempt(@Param('attemptId') attemptId: string) { return this.examService.resetAttempt(attemptId); }
+
   @Roles('ADMIN')
   @Delete(':id')
   delete(@Param('id') id: string) { return this.examService.delete(id); }

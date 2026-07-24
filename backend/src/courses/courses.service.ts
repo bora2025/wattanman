@@ -954,6 +954,43 @@ export class CoursesService {
     return attempts.map((a) => ({ ...a, student: studentById.get(a.studentId) ?? null }));
   }
 
+  /** Teacher/Admin: void an attempt so it no longer counts. Course lessons can
+   * already be freely retaken once an attempt is COMPLETED — this exists for
+   * the cases that would otherwise stay stuck: an IN_PROGRESS attempt (the
+   * player always resumes it, so a stuck one blocks a fresh start) and an
+   * AWAITING_GRADE one the teacher would rather void than grade. */
+  async resetLessonAttempt(attemptId: string, userId: string, role: string) {
+    const attempt = await this.prisma.lessonAttempt.findUnique({
+      where: { id: attemptId },
+      include: { lesson: { select: { courseId: true, title: true } } },
+    });
+    if (!attempt) throw new NotFoundException('Attempt not found');
+    await this.assertCanManageCourse(attempt.lesson.courseId, userId, role);
+
+    const updated = await this.prisma.lessonAttempt.update({
+      where: { id: attemptId },
+      data: { status: 'ABANDONED' },
+    });
+
+    try {
+      const student = await this.prisma.student.findUnique({
+        where: { id: attempt.studentId },
+        select: { userId: true },
+      });
+      if (student) {
+        await this.prisma.notification.create({
+          data: {
+            userId: student.userId,
+            type: 'lesson_attempt_reset',
+            message: `Your attempt on "${attempt.lesson.title}" was reset — you can start it again.`,
+          },
+        });
+      }
+    } catch {}
+
+    return updated;
+  }
+
   /** Teacher/Admin: grade a single pending PageResponse (Essay). Recomputes the
    * attempt's total score, and finalizes it (COMPLETED + pass/fail) once no
    * pending responses remain. */
@@ -1490,6 +1527,7 @@ export class CoursesService {
         this.prisma.lessonAttempt.findMany({
           where: { lesson: { courseId } },
           select: {
+            id: true,
             lessonId: true,
             studentId: true,
             status: true,
@@ -1540,6 +1578,7 @@ export class CoursesService {
           videoDurationSec: v?.videoDurationSec ?? null,
           videoPct: pct,
           videoCompleted: v?.videoCompleted ?? false,
+          attemptId: a?.id ?? null,
           attemptStatus: a?.status ?? null,
           attemptScore: a?.score ?? null,
           attemptMaxScore: a?.maxScore ?? null,

@@ -1,12 +1,14 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import { useParams } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import AuthGuard from '../../../../../components/AuthGuard'
 import StatCard from '../../../../../components/StatCard'
 import ProgressBar from '../../../../../components/ProgressBar'
 import EmptyState from '../../../../../components/EmptyState'
+import ConfirmModal from '../../../../../components/ConfirmModal'
 import { apiFetch } from '../../../../../lib/api'
 
 interface LessonRow {
@@ -18,6 +20,7 @@ interface LessonRow {
   videoDurationSec: number | null
   videoPct: number
   videoCompleted: boolean
+  attemptId: string | null
   attemptStatus: string | null
   attemptScore: number | null
   attemptMaxScore: number | null
@@ -58,6 +61,8 @@ function fmtMin(seconds: number): string {
 export default function CourseEngagementPage() {
   const params = useParams<{ id: string }>()
   const courseId = params?.id as string
+  const qc = useQueryClient()
+  const [resetTarget, setResetTarget] = useState<{ attemptId: string; studentName: string; lessonTitle: string } | null>(null)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['course-engagement', courseId],
@@ -66,6 +71,18 @@ export default function CourseEngagementPage() {
       const r = await apiFetch(`/api/courses/${courseId}/engagement-report`)
       if (!r.ok) throw new Error('Failed to load engagement report')
       return r.json() as Promise<Report>
+    },
+  })
+
+  const resetMutation = useMutation({
+    mutationFn: async (attemptId: string) => {
+      const r = await apiFetch(`/api/courses/attempts/${attemptId}/reset`, { method: 'PATCH' })
+      if (!r.ok) throw new Error('Failed to reset attempt')
+      return r.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['course-engagement', courseId] })
+      setResetTarget(null)
     },
   })
 
@@ -202,6 +219,18 @@ export default function CourseEngagementPage() {
                                   <div className="text-[10px] text-slate-500">
                                     Opens: {row.openCount}
                                   </div>
+                                  {row.attemptId && (
+                                    <button
+                                      onClick={() => setResetTarget({
+                                        attemptId: row.attemptId!,
+                                        studentName: s.name,
+                                        lessonTitle: data.lessons.find(l => l.id === row.lessonId)?.title ?? 'this lesson',
+                                      })}
+                                      className="text-[10px] text-amber-600 hover:underline"
+                                    >
+                                      ↻ Reset
+                                    </button>
+                                  )}
                                   {row.videoDurationSec ? (
                                     <div
                                       className={
@@ -228,6 +257,18 @@ export default function CourseEngagementPage() {
           )}
         </div>
       </div>
+
+      {resetTarget && (
+        <ConfirmModal
+          title="Reset this attempt?"
+          message={`This voids ${resetTarget.studentName}'s attempt on "${resetTarget.lessonTitle}" so they get a clean fresh start next time they open it. This can't be undone.`}
+          confirmLabel="Reset Attempt"
+          danger
+          pending={resetMutation.isPending}
+          onConfirm={() => resetMutation.mutate(resetTarget.attemptId)}
+          onCancel={() => setResetTarget(null)}
+        />
+      )}
     </AuthGuard>
   )
 }

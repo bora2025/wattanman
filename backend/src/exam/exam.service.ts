@@ -322,6 +322,34 @@ export class ExamService {
     });
   }
 
+  // Deletes the attempt (examId_studentId is unique, so any status — including
+  // GRADED — would otherwise block startAttempt forever) so the student can
+  // start a fresh one.
+  async resetAttempt(attemptId: string) {
+    const attempt = await this.prisma.examAttempt.findUnique({
+      where: { id: attemptId },
+      include: {
+        exam: { select: { title: true } },
+        student: { select: { userId: true } },
+      },
+    });
+    if (!attempt) throw new NotFoundException('Attempt not found');
+
+    await this.prisma.examAttempt.delete({ where: { id: attemptId } });
+
+    try {
+      await this.prisma.notification.create({
+        data: {
+          userId: attempt.student.userId,
+          type: 'exam_reset',
+          message: `Your attempt on "${attempt.exam.title}" was reset — you can take it again.`,
+        },
+      });
+    } catch {}
+
+    return { success: true };
+  }
+
   // Aggregated exam results for the student-facing scores page.
   async getStudentResults(userId: string) {
     const student = await this.prisma.student.findUnique({

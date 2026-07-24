@@ -8,6 +8,7 @@ import AuthGuard from '../../../../../components/AuthGuard'
 import Sidebar from '../../../../../components/Sidebar'
 import StatCard from '../../../../../components/StatCard'
 import EmptyState from '../../../../../components/EmptyState'
+import ConfirmModal from '../../../../../components/ConfirmModal'
 import { teacherNav } from '../../../../../lib/teacher-nav'
 import { apiFetch } from '../../../../../lib/api'
 import { gradeQuestion } from '../../../../../lib/examQuestionLogic'
@@ -75,6 +76,19 @@ export default function ExamGradebookPage() {
   const router = useRouter()
   const qc = useQueryClient()
   const [openAttemptId, setOpenAttemptId] = useState<string | null>(null)
+  const [resetTarget, setResetTarget] = useState<Attempt | null>(null)
+
+  const resetMutation = useMutation({
+    mutationFn: async (attemptId: string) => {
+      const r = await apiFetch(`/api/exams/attempts/${attemptId}/reset`, { method: 'DELETE' })
+      if (!r.ok) throw new Error('Failed to reset attempt')
+      return r.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['exam-attempts', examId] })
+      setResetTarget(null)
+    },
+  })
 
   const { data: exam, isLoading: examLoading } = useQuery<Exam>({
     enabled: !!examId,
@@ -158,6 +172,12 @@ export default function ExamGradebookPage() {
                           >
                             {openAttemptId === att.id ? 'Close' : att.status === 'GRADED' ? 'Review' : 'Grade'}
                           </button>
+                          <button
+                            onClick={() => setResetTarget(att)}
+                            className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md border border-amber-200 text-amber-700 hover:bg-amber-50 font-medium"
+                          >
+                            ↻ Re-Attempt
+                          </button>
                         </div>
                       </div>
 
@@ -180,6 +200,18 @@ export default function ExamGradebookPage() {
           </div>
         </main>
       </div>
+
+      {resetTarget && (
+        <ConfirmModal
+          title="Allow re-attempt?"
+          message={`This permanently deletes ${resetTarget.student.user.name}'s current attempt${resetTarget.score != null ? ` (score: ${resetTarget.score}/${exam?.totalMarks})` : ''} so they can take this exam again from scratch. This can't be undone.`}
+          confirmLabel="Delete & Allow Retry"
+          danger
+          pending={resetMutation.isPending}
+          onConfirm={() => resetMutation.mutate(resetTarget.id)}
+          onCancel={() => setResetTarget(null)}
+        />
+      )}
     </AuthGuard>
   )
 }

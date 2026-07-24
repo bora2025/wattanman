@@ -230,6 +230,14 @@ export class CoursesController {
     );
   }
 
+  // Voids an attempt (IN_PROGRESS/AWAITING_GRADE/COMPLETED) so the student can
+  // start a clean one — see resetLessonAttempt for why this is needed.
+  @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER')
+  @Patch('attempts/:attemptId/reset')
+  resetAttempt(@Param('attemptId') attemptId: string, @Request() req: any) {
+    return this.svc.resetLessonAttempt(attemptId, req.user.userId, req.user.role);
+  }
+
   // ── Course attendance: sessions ─────────────────────────────────────
   @Roles('ADMIN', 'SUPER_ADMIN', 'TEACHER', 'STUDENT')
   @Get(':id/sessions')

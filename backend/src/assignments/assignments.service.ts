@@ -876,4 +876,33 @@ export class AssignmentsService {
 
     return updated;
   }
+
+  // Deletes the submission (cascades its QuizAnswer rows) so the student can
+  // submit/start fresh — assignmentId_studentId is unique, so an old row would
+  // otherwise keep blocking them via maxAttempts even after a teacher's intent
+  // to grant one more try.
+  async resetSubmission(submissionId: string) {
+    const sub = await this.prisma.assignmentSubmission.findUnique({
+      where: { id: submissionId },
+      include: {
+        assignment: { select: { title: true } },
+        student: { select: { userId: true } },
+      },
+    });
+    if (!sub) throw new NotFoundException('Submission not found');
+
+    await this.prisma.assignmentSubmission.delete({ where: { id: submissionId } });
+
+    try {
+      await this.prisma.notification.create({
+        data: {
+          userId: sub.student.userId,
+          type: 'assignment_reset',
+          message: `Your submission for "${sub.assignment.title}" was reset — you can attempt it again.`,
+        },
+      });
+    } catch {}
+
+    return { success: true };
+  }
 }

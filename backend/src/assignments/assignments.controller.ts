@@ -45,6 +45,13 @@ export class AssignmentsController {
     return this.svc.gradeSubmission(id, body);
   }
 
+  // Deletes the submission so the student can attempt it again from scratch.
+  @Roles('ADMIN', 'TEACHER')
+  @Delete('submissions/:id/reset')
+  resetSubmission(@Param('id') id: string) {
+    return this.svc.resetSubmission(id);
+  }
+
   // ── Quiz questions (Teacher) ──
   @Roles('ADMIN', 'TEACHER')
   @Get(':id/questions')
