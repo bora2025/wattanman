@@ -57,21 +57,32 @@ function enhanceAudioPlayers(container: HTMLElement): () => void {
     // element document.elementFromPoint actually finds at the play button's
     // on-screen position, right after the browser has settled into its final
     // layout. If something else is stacked on top, this names it directly.
+    // The same question text can be mounted more than once at a time (e.g. a
+    // preview modal open on top of the editor's own inline preview), so each
+    // <audio> is tagged with whether it's inside the modal and whether it's
+    // actually visible, to tell a live one apart from a hidden duplicate.
     setTimeout(() => {
-      const r = audio.getBoundingClientRect()
-      if (r.width === 0 && r.height === 0) {
-        console.info('[audio-debug] hit-test: audio element has ZERO size', r)
-        return
+      let inModal = false
+      let visible = true
+      let n: HTMLElement | null = audio
+      while (n) {
+        if (typeof n.className === 'string' && n.className.includes('z-[60]')) inModal = true
+        n = n.parentElement
       }
+      if (audio.offsetParent === null) visible = false
+
+      const r = audio.getBoundingClientRect()
       const x = r.left + 20
       const y = r.top + r.height / 2
-      const hit = document.elementFromPoint(x, y) as HTMLElement | null
-      console.info('[audio-debug] hit-test at play-button position:', {
+      const hit = r.width > 0 || r.height > 0 ? (document.elementFromPoint(x, y) as HTMLElement | null) : null
+      console.info('[audio-debug] hit-test:', {
+        inModal,
+        visible,
         rect: { left: r.left, top: r.top, width: r.width, height: r.height },
         isAudioItself: hit === audio,
         hitTag: hit?.tagName,
         hitClass: hit?.className,
-        hitElement: hit,
+        audioSrcPrefix: audio.currentSrc?.slice(0, 30),
       })
     }, 500)
 
