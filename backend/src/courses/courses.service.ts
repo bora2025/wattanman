@@ -75,6 +75,7 @@ interface LessonInput {
   passingScore?: number | null;
   requireVideoWatch?: boolean;
   videoWatchPct?: number;
+  maxAttempts?: number;
 }
 
 interface PageInput {
@@ -153,6 +154,9 @@ function sanitizeLessonInput(input: LessonInput) {
   if (input.videoWatchPct !== undefined) {
     const pct = Math.max(1, Math.min(100, Number(input.videoWatchPct) || 90));
     data.videoWatchPct = Math.round(pct);
+  }
+  if (input.maxAttempts !== undefined) {
+    data.maxAttempts = Math.max(0, Math.round(Number(input.maxAttempts) || 0));
   }
   return data;
 }
@@ -678,13 +682,25 @@ export class CoursesService {
   /** Start a new attempt or return the in-progress one. */
   async startLessonAttempt(lessonId: string, userId: string) {
     const student = await this.getStudentByUserId(userId);
-    await this.assertLessonVisibleToStudent(lessonId, student);
+    const lesson = await this.assertLessonVisibleToStudent(lessonId, student);
 
     const existing = await this.prisma.lessonAttempt.findFirst({
       where: { lessonId, studentId: student.id, status: 'IN_PROGRESS' },
       orderBy: { startedAt: 'desc' },
     });
     if (existing) return existing;
+
+    const maxAttempts = (lesson as any).maxAttempts ?? 0;
+    if (maxAttempts > 0) {
+      // A teacher's reset (see resetLessonAttempt) marks the voided attempt
+      // ABANDONED specifically so it doesn't count against this cap.
+      const takenCount = await this.prisma.lessonAttempt.count({
+        where: { lessonId, studentId: student.id, status: { not: 'ABANDONED' } },
+      });
+      if (takenCount >= maxAttempts) {
+        throw new ForbiddenException(`Maximum attempts (${maxAttempts}) reached for this lesson`);
+      }
+    }
 
     const pages = await this.prisma.lessonPage.findMany({
       where: { lessonId },

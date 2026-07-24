@@ -1074,6 +1074,7 @@ model CourseLesson {
   passingScore     Float?
   requireVideoWatch Boolean        @default(false)
   videoWatchPct    Int             @default(90) // % of video required to count as finished
+  maxAttempts      Int             @default(0) // 0 = unlimited (the pre-existing behavior) — caps how many times a student can retake this lesson
   publishedAt      DateTime?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt

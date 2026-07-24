@@ -43,6 +43,7 @@ interface Lesson {
   passingScore: number | null
   requireVideoWatch?: boolean
   videoWatchPct?: number
+  maxAttempts?: number
   publishedAt: string | null
   _count: { pages: number }
 }
@@ -416,6 +417,10 @@ function LessonEditor({
   const [videoWatchPct, setVideoWatchPct] = useState<string>(
     String(lesson.videoWatchPct ?? 90),
   )
+  const [limitAttempts, setLimitAttempts] = useState<boolean>((lesson.maxAttempts ?? 0) > 0)
+  const [maxAttempts, setMaxAttempts] = useState<string>(
+    String(lesson.maxAttempts && lesson.maxAttempts > 0 ? lesson.maxAttempts : 3),
+  )
   const [newPageType, setNewPageType] = useState<PageType | null>(null)
   const [confirmDeletePage, setConfirmDeletePage] = useState<LessonPage | null>(null)
 
@@ -483,6 +488,7 @@ function LessonEditor({
       passingScore: passingScore === '' ? null : Number(passingScore),
       requireVideoWatch,
       videoWatchPct: Math.max(1, Math.min(100, Number(videoWatchPct) || 90)),
+      maxAttempts: limitAttempts ? Math.max(1, Number(maxAttempts) || 1) : 0,
     })
   }
 
@@ -596,6 +602,31 @@ function LessonEditor({
               />
               Show progress bar
             </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={limitAttempts}
+                onChange={(e) => setLimitAttempts(e.target.checked)}
+              />
+              Limit number of attempts
+            </label>
+            {limitAttempts && (
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">
+                  Max attempts
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={maxAttempts}
+                  onChange={(e) => setMaxAttempts(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+              </div>
+            )}
+            {!limitAttempts && (
+              <p className="text-xs text-gray-400 self-center">Students can retake this lesson unlimited times.</p>
+            )}
           </div>
         </div>
 
