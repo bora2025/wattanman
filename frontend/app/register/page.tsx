@@ -49,6 +49,16 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024 // 3MB source file cap
 const MIN_PASSWORD_LENGTH = 6
 
+function SectionLabel({ icon, text }: { icon: string; text: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-base leading-none">{icon}</span>
+      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">{text}</h3>
+      <div className="flex-1 h-px bg-slate-100" />
+    </div>
+  )
+}
+
 export default function StudentRegisterPage() {
   return (
     <Suspense>
@@ -134,6 +144,9 @@ function RegisterForm() {
   const passwordValid = password === '' ? passwordMode !== 'REQUIRED' : password.length >= MIN_PASSWORD_LENGTH
   const passwordsMatch = password === '' ? true : password === confirmPassword
 
+  const hasContactSection = phoneMode !== 'HIDDEN' || emailMode !== 'HIDDEN'
+  const hasDetailsSection = photoMode !== 'HIDDEN' || sexMode !== 'HIDDEN' || dateOfBirthMode !== 'HIDDEN' || addressMode !== 'HIDDEN' || generationMode !== 'HIDDEN'
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     setPhotoError(null)
@@ -202,17 +215,20 @@ function RegisterForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white py-10 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-slate-50 to-white py-10 px-4">
       <div className="max-w-lg mx-auto">
         <div className="mb-6 text-center">
           <Link href="/" className="text-xs text-indigo-600 hover:underline">← Back to home</Link>
-          <h1 className="text-2xl font-bold text-slate-800 mt-2">🎓 Student Registration</h1>
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-2xl flex items-center justify-center mx-auto mt-4 shadow-lg shadow-indigo-200">
+            🎓
+          </div>
+          <h1 className="text-2xl font-bold text-slate-800 mt-3">Student Registration</h1>
           <p className="text-sm text-slate-500 mt-1">Register for a class — your request will be reviewed by an admin before your account is activated.</p>
         </div>
 
         {success ? (
           <div className="card p-8 text-center">
-            <div className="text-4xl mb-3">✅</div>
+            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 text-3xl flex items-center justify-center mx-auto mb-4">✅</div>
             <h2 className="text-lg font-semibold text-slate-800">Registration submitted</h2>
             <p className="text-sm text-slate-500 mt-2">
               Your registration is pending review.{' '}
@@ -225,7 +241,7 @@ function RegisterForm() {
             <Link href="/" className="btn-primary inline-flex mt-6">Back to home</Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="card p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="card p-6 sm:p-8 space-y-6">
             <div>
               <label className="form-label">Class</label>
               <select value={classId} onChange={(e) => setClassId(e.target.value)} required disabled={loadingClasses}>
@@ -244,175 +260,212 @@ function RegisterForm() {
               )}
             </div>
 
-            {khmerNameMode !== 'HIDDEN' && (
-              <div>
-                <label className="form-label">
-                  Full Name (Khmer) — ឈ្មោះពេញជាភាសាខ្មែរ
-                  {khmerNameMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs"> (optional)</span>}
-                </label>
-                <input type="text" value={nameKh} onChange={(e) => setNameKh(e.target.value)} required={khmerNameMode === 'REQUIRED'} placeholder="សុខ សុភា" />
-              </div>
-            )}
+            <div className="space-y-4">
+              <SectionLabel icon="🧑" text="Personal Information" />
 
-            <div>
-              <label className="form-label">Full Name (English)</label>
-              <input type="text" value={nameEn} onChange={(e) => setNameEn(e.target.value)} required placeholder="Sok Sophea" />
+              {khmerNameMode !== 'HIDDEN' && (
+                <div>
+                  <label className="form-label">
+                    Full Name (Khmer) — ឈ្មោះពេញជាភាសាខ្មែរ
+                    {khmerNameMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs"> (optional)</span>}
+                  </label>
+                  <input type="text" value={nameKh} onChange={(e) => setNameKh(e.target.value)} required={khmerNameMode === 'REQUIRED'} placeholder="សុខ សុភា" />
+                </div>
+              )}
+
+              <div>
+                <label className="form-label">Full Name (English)</label>
+                <input type="text" value={nameEn} onChange={(e) => setNameEn(e.target.value)} required placeholder="Sok Sophea" />
+              </div>
             </div>
 
-            {phoneMode !== 'HIDDEN' && (
-              <div>
-                <label className="form-label">
-                  Phone Number
-                  {phoneMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs"> (optional)</span>}
-                </label>
-                <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} required={phoneMode === 'REQUIRED'} placeholder="012 345 678" />
+            {hasContactSection && (
+              <div className="space-y-4">
+                <SectionLabel icon="📞" text="Contact" />
+
+                {phoneMode !== 'HIDDEN' && (
+                  <div>
+                    <label className="form-label">
+                      Phone Number
+                      {phoneMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs"> (optional)</span>}
+                    </label>
+                    <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} required={phoneMode === 'REQUIRED'} placeholder="012 345 678" />
+                  </div>
+                )}
+
+                {emailMode !== 'HIDDEN' && (
+                  <div>
+                    <label className="form-label">
+                      Email
+                      {emailMode === 'OPTIONAL' && (
+                        <span className="text-slate-400 font-normal text-xs">
+                          {' '}({phoneTrimmed ? 'you can leave this blank — you already entered a phone number above' : 'optional'})
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      // type="text", not "email" — the browser's own type="email" format
+                      // validation would block submission natively even when our own JS
+                      // validation intentionally allows non-email text here once a phone
+                      // number covers the requirement, regardless of the required attribute.
+                      type="text"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required={emailMode === 'REQUIRED'}
+                      placeholder={emailMode !== 'REQUIRED' && phoneTrimmed ? 'Leave blank' : 'you@example.com'}
+                    />
+                    {email.length > 0 && !emailFormatOk && emailMode !== 'REQUIRED' && phoneTrimmed ? (
+                      // A phone number already satisfies the requirement, so this is just an
+                      // FYI — it won't block submission, and won't be sent since it isn't a
+                      // valid email.
+                      <p className="text-xs text-slate-400 mt-1">
+                        This won't be submitted since it isn't a valid email — you're all set with the phone number entered above.
+                      </p>
+                    ) : email.length > 0 && !emailFormatOk && /^[\d\s+()-]+$/.test(emailTrimmed) ? (
+                      <p className="text-xs text-red-600 mt-1">That looks like a phone number{phoneMode !== 'HIDDEN' ? ' — enter it in the Phone Number field above instead, and leave this blank' : ''}.</p>
+                    ) : email.length > 0 && !emailFormatOk && (
+                      <p className="text-xs text-red-600 mt-1">Enter a valid email address</p>
+                    )}
+                    {emailMode !== 'REQUIRED' && !emailTrimmed && !phoneTrimmed && phoneMode !== 'REQUIRED' && (
+                      <p className="text-xs text-red-600 mt-1">Enter an email or a phone number above</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
-            {emailMode !== 'HIDDEN' && (
-              <div>
-                <label className="form-label">
-                  Email
-                  {emailMode === 'OPTIONAL' && (
-                    <span className="text-slate-400 font-normal text-xs">
-                      {' '}({phoneTrimmed ? 'you can leave this blank — you already entered a phone number above' : 'optional'})
+            {hasDetailsSection && (
+              <div className="space-y-4">
+                <SectionLabel icon="🪪" text="Additional Details" />
+
+                {photoMode !== 'HIDDEN' && (
+                  <div className="flex flex-col items-center gap-2 py-1">
+                    <label className="relative cursor-pointer group">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center group-hover:border-indigo-400 transition-colors">
+                        {photo ? (
+                          <img src={photo} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 17a4 4 0 100-8 4 4 0 000 8z" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md group-hover:bg-indigo-700 transition-colors">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      </span>
+                      <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+                    </label>
+                    <span className="text-xs font-medium text-slate-500">
+                      Photo {photoMode === 'OPTIONAL' && <span className="font-normal text-slate-400">(optional)</span>}
                     </span>
-                  )}
-                </label>
-                <input
-                  // type="text", not "email" — the browser's own type="email" format
-                  // validation would block submission natively even when our own JS
-                  // validation intentionally allows non-email text here once a phone
-                  // number covers the requirement, regardless of the required attribute.
-                  type="text"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required={emailMode === 'REQUIRED'}
-                  placeholder={emailMode !== 'REQUIRED' && phoneTrimmed ? 'Leave blank' : 'you@example.com'}
-                />
-                {email.length > 0 && !emailFormatOk && emailMode !== 'REQUIRED' && phoneTrimmed ? (
-                  // A phone number already satisfies the requirement, so this is just an
-                  // FYI — it won't block submission, and won't be sent since it isn't a
-                  // valid email.
-                  <p className="text-xs text-slate-400 mt-1">
-                    This won't be submitted since it isn't a valid email — you're all set with the phone number entered above.
-                  </p>
-                ) : email.length > 0 && !emailFormatOk && /^[\d\s+()-]+$/.test(emailTrimmed) ? (
-                  <p className="text-xs text-red-600 mt-1">That looks like a phone number{phoneMode !== 'HIDDEN' ? ' — enter it in the Phone Number field above instead, and leave this blank' : ''}.</p>
-                ) : email.length > 0 && !emailFormatOk && (
-                  <p className="text-xs text-red-600 mt-1">Enter a valid email address</p>
+                    {photo && (
+                      <button type="button" onClick={() => setPhoto(null)} className="text-xs text-red-500 hover:underline">Remove photo</button>
+                    )}
+                    {photoError && <p className="text-xs text-red-600">{photoError}</p>}
+                  </div>
                 )}
-                {emailMode !== 'REQUIRED' && !emailTrimmed && !phoneTrimmed && phoneMode !== 'REQUIRED' && (
-                  <p className="text-xs text-red-600 mt-1">Enter an email or a phone number above</p>
+
+                {sexMode !== 'HIDDEN' && (
+                  <div>
+                    <label className="form-label">
+                      Sex {sexMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
+                    </label>
+                    <select value={sex} onChange={(e) => setSex(e.target.value)} required={sexMode === 'REQUIRED'}>
+                      <option value="">Select…</option>
+                      <option value="MALE">Male</option>
+                      <option value="FEMALE">Female</option>
+                    </select>
+                  </div>
+                )}
+
+                {dateOfBirthMode !== 'HIDDEN' && (
+                  <div>
+                    <label className="form-label">
+                      Date of Birth {dateOfBirthMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
+                    </label>
+                    <input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required={dateOfBirthMode === 'REQUIRED'} />
+                  </div>
+                )}
+
+                {addressMode !== 'HIDDEN' && (
+                  <div>
+                    <label className="form-label">
+                      Address {addressMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
+                    </label>
+                    <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} required={addressMode === 'REQUIRED'} placeholder="Street, City, Province" />
+                  </div>
+                )}
+
+                {generationMode !== 'HIDDEN' && (
+                  <div>
+                    <label className="form-label">
+                      Generation (ជំនាន់ទី) {generationMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
+                    </label>
+                    <input type="number" min="1" value={generation} onChange={(e) => setGeneration(e.target.value)} required={generationMode === 'REQUIRED'} placeholder="1" />
+                  </div>
                 )}
               </div>
             )}
 
-            {photoMode !== 'HIDDEN' && (
-              <div>
-                <label className="form-label">
-                  Photo {photoMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
-                </label>
-                <input type="file" accept="image/*" onChange={handlePhotoChange} className="text-sm" required={photoMode === 'REQUIRED'} />
-                {photoError && <p className="text-xs text-red-600 mt-1">{photoError}</p>}
-                {photo && (
-                  <img src={photo} alt="Preview" className="mt-2 w-20 h-20 rounded-lg object-cover border border-slate-200" />
-                )}
+            {formConfig.fields.length > 0 && (
+              <div className="space-y-4">
+                <SectionLabel icon="📋" text="More Information" />
+                {formConfig.fields.map((f) => (
+                  <div key={f.id}>
+                    <label className="form-label">
+                      {f.label}
+                      {!f.required && <span className="text-slate-400 font-normal text-xs"> (optional)</span>}
+                    </label>
+                    <input
+                      type="text"
+                      value={customFieldValues[f.key] || ''}
+                      onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                      required={f.required}
+                    />
+                  </div>
+                ))}
               </div>
             )}
-
-            {sexMode !== 'HIDDEN' && (
-              <div>
-                <label className="form-label">
-                  Sex {sexMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
-                </label>
-                <select value={sex} onChange={(e) => setSex(e.target.value)} required={sexMode === 'REQUIRED'}>
-                  <option value="">Select…</option>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                </select>
-              </div>
-            )}
-
-            {dateOfBirthMode !== 'HIDDEN' && (
-              <div>
-                <label className="form-label">
-                  Date of Birth {dateOfBirthMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
-                </label>
-                <input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required={dateOfBirthMode === 'REQUIRED'} />
-              </div>
-            )}
-
-            {addressMode !== 'HIDDEN' && (
-              <div>
-                <label className="form-label">
-                  Address {addressMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
-                </label>
-                <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} required={addressMode === 'REQUIRED'} placeholder="Street, City, Province" />
-              </div>
-            )}
-
-            {generationMode !== 'HIDDEN' && (
-              <div>
-                <label className="form-label">
-                  Generation (ជំនាន់ទី) {generationMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
-                </label>
-                <input type="number" min="1" value={generation} onChange={(e) => setGeneration(e.target.value)} required={generationMode === 'REQUIRED'} placeholder="1" />
-              </div>
-            )}
-
-            {formConfig.fields.map((f) => (
-              <div key={f.id}>
-                <label className="form-label">
-                  {f.label}
-                  {!f.required && <span className="text-slate-400 font-normal text-xs"> (optional)</span>}
-                </label>
-                <input
-                  type="text"
-                  value={customFieldValues[f.key] || ''}
-                  onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                  required={f.required}
-                />
-              </div>
-            ))}
 
             {passwordMode !== 'HIDDEN' && (
-              <div className="pt-2 border-t border-slate-100">
-                <label className="form-label">
-                  Password
-                  {passwordMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs"> (optional — leave blank and your admin/teacher will give you one)</span>}
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required={passwordMode === 'REQUIRED'}
-                  minLength={password ? MIN_PASSWORD_LENGTH : undefined}
-                  placeholder={passwordMode === 'REQUIRED' ? `At least ${MIN_PASSWORD_LENGTH} characters` : 'Leave blank, or set your own'}
-                />
-                {password.length > 0 && !passwordValid && (
-                  <p className="text-xs text-red-600 mt-1">Password must be at least {MIN_PASSWORD_LENGTH} characters</p>
-                )}
-              </div>
-            )}
+              <div className="space-y-4">
+                <SectionLabel icon="🔒" text="Account Security" />
 
-            {passwordMode !== 'HIDDEN' && password.length > 0 && (
-              <div>
-                <label className="form-label">Confirm Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  placeholder="Re-enter your password"
-                />
-                {confirmPassword.length > 0 && !passwordsMatch && (
-                  <p className="text-xs text-red-600 mt-1">Passwords do not match</p>
+                <div>
+                  <label className="form-label">
+                    Password
+                    {passwordMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs"> (optional — leave blank and your admin/teacher will give you one)</span>}
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required={passwordMode === 'REQUIRED'}
+                    minLength={password ? MIN_PASSWORD_LENGTH : undefined}
+                    placeholder={passwordMode === 'REQUIRED' ? `At least ${MIN_PASSWORD_LENGTH} characters` : 'Leave blank, or set your own'}
+                  />
+                  {password.length > 0 && !passwordValid && (
+                    <p className="text-xs text-red-600 mt-1">Password must be at least {MIN_PASSWORD_LENGTH} characters</p>
+                  )}
+                </div>
+
+                {password.length > 0 && (
+                  <div>
+                    <label className="form-label">Confirm Password</label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      placeholder="Re-enter your password"
+                    />
+                    {confirmPassword.length > 0 && !passwordsMatch && (
+                      <p className="text-xs text-red-600 mt-1">Passwords do not match</p>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-            {passwordMode === 'HIDDEN' && (
-              <p className="text-xs text-slate-400 -mt-1">A login password will be generated for you — your admin or teacher will share it once approved.</p>
             )}
 
             {error && <p className="text-sm text-red-600">{error}</p>}
