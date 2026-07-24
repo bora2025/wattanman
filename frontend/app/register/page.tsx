@@ -86,6 +86,9 @@ function RegisterForm() {
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [sex, setSex] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
+  const [dobDay, setDobDay] = useState('')
+  const [dobMonth, setDobMonth] = useState('')
+  const [dobYear, setDobYear] = useState('')
   const [address, setAddress] = useState('')
   const [generation, setGeneration] = useState('')
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({})
@@ -146,6 +149,18 @@ function RegisterForm() {
 
   const hasContactSection = phoneMode !== 'HIDDEN' || emailMode !== 'HIDDEN'
   const hasDetailsSection = photoMode !== 'HIDDEN' || sexMode !== 'HIDDEN' || dateOfBirthMode !== 'HIDDEN' || addressMode !== 'HIDDEN' || generationMode !== 'HIDDEN'
+
+  // Day/Month/Year are typed as three separate boxes (some mobile browsers render a bare
+  // type="date" input with no visible text at all) and combined into one ISO date here.
+  const dobStarted = dobDay !== '' || dobMonth !== '' || dobYear !== ''
+  useEffect(() => {
+    const d = parseInt(dobDay, 10)
+    const m = parseInt(dobMonth, 10)
+    const y = parseInt(dobYear, 10)
+    const valid = dobDay !== '' && dobMonth !== '' && dobYear.length === 4 &&
+      d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1900 && y <= new Date().getFullYear()
+    setDateOfBirth(valid ? `${dobYear}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` : '')
+  }, [dobDay, dobMonth, dobYear])
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -384,7 +399,26 @@ function RegisterForm() {
                     <label className="form-label">
                       Date of Birth {dateOfBirthMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
                     </label>
-                    <input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required={dateOfBirthMode === 'REQUIRED'} />
+                    <div className="flex gap-2">
+                      <input
+                        type="text" inputMode="numeric" maxLength={2} placeholder="DD"
+                        value={dobDay} onChange={(e) => setDobDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                        className="w-1/4 text-center"
+                      />
+                      <input
+                        type="text" inputMode="numeric" maxLength={2} placeholder="MM"
+                        value={dobMonth} onChange={(e) => setDobMonth(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                        className="w-1/4 text-center"
+                      />
+                      <input
+                        type="text" inputMode="numeric" maxLength={4} placeholder="YYYY"
+                        value={dobYear} onChange={(e) => setDobYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        className="w-1/2 text-center"
+                      />
+                    </div>
+                    {dobStarted && !dateOfBirth && (
+                      <p className="text-xs text-red-600 mt-1">Enter a valid day, month, and year</p>
+                    )}
                   </div>
                 )}
 
