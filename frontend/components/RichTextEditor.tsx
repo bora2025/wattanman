@@ -108,7 +108,14 @@ export default function RichTextEditor({
       return
     }
     const reader = new FileReader()
-    reader.onload = () => editor.chain().focus().insertContent({ type: 'audio', attrs: { src: reader.result as string } }).run()
+    reader.onload = () => {
+      // iOS/Safari reports .m4a files as "audio/x-m4a" — a non-standard MIME string
+      // that Chrome/Firefox/Edge's <audio> element doesn't recognize, so it silently
+      // fails to play there even though the underlying AAC-in-MP4 data is fine. Every
+      // major browser (including Safari) plays the same data fine under "audio/mp4".
+      const src = (reader.result as string).replace(/^data:audio\/x-m4a;/, 'data:audio/mp4;')
+      editor.chain().focus().insertContent({ type: 'audio', attrs: { src } }).run()
+    }
     reader.readAsDataURL(file)
     e.target.value = ''
   }
