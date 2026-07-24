@@ -28,6 +28,13 @@ const STATUS_COLOR: Record<string, string> = {
   COMPLETED: 'bg-purple-100 text-purple-700',
 }
 
+const STATUS_HINT: Record<string, string> = {
+  DRAFT: 'Hidden from students — still being written.',
+  PUBLISHED: 'Visible to students, but they can\'t start it yet.',
+  ACTIVE: 'Students can start and submit right now.',
+  COMPLETED: 'Closed — students can no longer start it.',
+}
+
 export default function TeacherExamsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingExamId, setEditingExamId] = useState<string | null>(null)
@@ -143,6 +150,7 @@ export default function TeacherExamsPage() {
                         {exam.class?.name ?? 'All classes'} · {exam._count.questions} questions · {exam.duration} min · Pass: {exam.passMark}/{exam.totalMarks}
                       </p>
                       <p className="text-xs text-amber-600 mt-0.5">{exam._count.attempts} attempt(s)</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{STATUS_HINT[exam.status]}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button onClick={() => openEdit(exam.id)} disabled={editLoadingId === exam.id} className="text-xs text-sky-600 hover:underline disabled:opacity-50 font-medium">
@@ -154,8 +162,18 @@ export default function TeacherExamsPage() {
                       >
                         Grade ({exam._count.attempts})
                       </Link>
+                      {(exam.status === 'DRAFT' || exam.status === 'PUBLISHED') && (
+                        <button
+                          onClick={() => statusMutation.mutate({ id: exam.id, status: 'ACTIVE' })}
+                          disabled={statusMutation.isPending}
+                          className="text-xs px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-semibold disabled:opacity-50"
+                        >
+                          ▶ Activate Now
+                        </button>
+                      )}
                       <select value={exam.status}
                         onChange={e => statusMutation.mutate({ id: exam.id, status: e.target.value })}
+                        title="Change exam status"
                         className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300">
                         {['DRAFT','PUBLISHED','ACTIVE','COMPLETED'].map(s => <option key={s} value={s}>{s}</option>)}
                       </select>

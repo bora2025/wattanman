@@ -82,6 +82,8 @@ export default function StudentExamsPage() {
                           </p>
                         )}
                         {hasAttempt && !isGraded && !isInProgress && <p className="text-xs text-amber-600 mt-1">Submitted · Awaiting result</p>}
+                        {!hasAttempt && exam.status === 'PUBLISHED' && <p className="text-xs text-gray-400 mt-1">Not open yet — check back once your teacher starts it</p>}
+                        {!hasAttempt && exam.status === 'COMPLETED' && <p className="text-xs text-gray-400 mt-1">Closed — this exam is no longer open</p>}
                       </div>
                     </div>
                     <div className="flex-shrink-0">
