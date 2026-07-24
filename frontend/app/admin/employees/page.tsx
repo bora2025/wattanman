@@ -503,6 +503,7 @@ export default function ManageEmployees() {
                               </td>
                               <td>
                                 <div className="flex gap-1">
+                                  <Link href={`/admin/employees/${user.id}/cv`} className="btn-outline btn-sm" title="Curriculum Vitae">📄</Link>
                                   <button onClick={() => openEdit(user)} className="btn-outline btn-sm">✏️</button>
                                   <button onClick={() => setDeleteId(user.id)} className="btn-outline btn-sm text-red-500 hover:bg-red-50">🗑️</button>
                                 </div>

@@ -261,47 +261,57 @@ export default function SearchPage() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">{t('search.title')}</h1>
-          <p className="text-sm text-slate-500 mt-1">{t('search.subtitle')}</p>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200 flex-shrink-0">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">{t('search.title')}</h1>
+              <p className="text-sm text-slate-500 mt-0.5">{t('search.subtitle')}</p>
+            </div>
+          </div>
         </div>
 
         <div className="page-body space-y-5">
           {/* Search Bar */}
-          <div className="card p-4">
-            <div className="flex items-center gap-3">
-              <span className="text-slate-400 text-lg flex-shrink-0">🔍</span>
+          <div className="card p-1.5 sm:p-2">
+            <div className="flex items-center gap-3 px-3">
+              <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
               <input
                 type="text"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder={t('search.placeholder')}
-                className="flex-1 py-2.5 bg-transparent border-0 outline-none focus:ring-0 text-sm text-slate-800 placeholder:text-slate-400"
+                className="flex-1 py-3 bg-transparent border-0 outline-none focus:ring-0 text-sm text-slate-800 placeholder:text-slate-400"
                 autoFocus
               />
               {query && (
                 <button
                   onClick={() => setQuery('')}
-                  className="text-slate-400 hover:text-slate-600 text-sm flex-shrink-0"
+                  className="text-slate-400 hover:text-slate-600 flex-shrink-0 w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
                 >
-                  ✕
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               )}
             </div>
           </div>
 
           {/* Role Filter Tabs */}
-          <div className="flex gap-1 flex-wrap">
+          <div className="flex gap-1.5 flex-wrap">
             {roleFilters.map(r => (
               <button
                 key={r}
                 onClick={() => setRoleFilter(r)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-all inline-flex items-center gap-1.5 ${
                   roleFilter === r
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/50'
                 }`}
               >
-                {r === 'ALL' ? `${t('common.all')} (${roleCounts.ALL})` : `${t(roleKeyMap[r] || '')} (${roleCounts[r] ?? 0})`}
+                {r === 'ALL' ? t('common.all') : t(roleKeyMap[r] || '')}
+                <span className={`text-[11px] font-semibold rounded-full px-1.5 leading-4 ${roleFilter === r ? 'bg-white/25' : 'bg-slate-100 text-slate-500'}`}>
+                  {r === 'ALL' ? roleCounts.ALL : (roleCounts[r] ?? 0)}
+                </span>
               </button>
             ))}
           </div>
@@ -388,8 +398,9 @@ export default function SearchPage() {
                           <span className="text-[11px] text-slate-500">{user.studentProfile?.class?.name || user.department?.name}</span>
                         )}
                         {user.phone && (
-                          <a href={`tel:${user.phone}`} onClick={e => e.stopPropagation()} className="text-[11px] text-indigo-500 font-medium">
-                            📞 {user.phone}
+                          <a href={`tel:${user.phone}`} onClick={e => e.stopPropagation()} className="text-[11px] text-indigo-500 font-medium inline-flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                            {user.phone}
                           </a>
                         )}
                       </div>

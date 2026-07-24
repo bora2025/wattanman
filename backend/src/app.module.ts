@@ -31,6 +31,7 @@ import { CardAliasesModule } from './card-aliases/card-aliases.module';
 import { SiteSettingsModule } from './site-settings/site-settings.module';
 import { PostsModule } from './posts/posts.module';
 import { ClassRegistrationsModule } from './class-registrations/class-registrations.module';
+import { StaffCvModule } from './staff-cv/staff-cv.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { ClassRegistrationsModule } from './class-registrations/class-registrati
     SiteSettingsModule,
     PostsModule,
     ClassRegistrationsModule,
+    StaffCvModule,
   ],
   controllers: [AppController],
   providers: [
