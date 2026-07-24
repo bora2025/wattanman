@@ -83,6 +83,15 @@ function enhanceAudioPlayers(container: HTMLElement): () => void {
       notice.textContent = `⚠ ${reason}`
       wrap.insertAdjacentElement('afterend', notice)
     })
+
+    // Temporary instrumentation: clicking Play but seeing no console output at
+    // all (no error, no state change) means the click isn't reaching the media
+    // element's playback logic — these logs pin down which stage actually runs.
+    const tag = '[audio-debug]'
+    audio.addEventListener('click', () => console.info(tag, 'click reached <audio>'))
+    ;['play', 'playing', 'pause', 'stalled', 'waiting', 'suspend', 'abort'].forEach((evt) => {
+      audio.addEventListener(evt, () => console.info(tag, evt, { currentTime: audio.currentTime, readyState: audio.readyState, networkState: audio.networkState }))
+    })
   })
   return () => { blobUrls.forEach((url) => URL.revokeObjectURL(url)) }
 }
