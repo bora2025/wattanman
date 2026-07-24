@@ -469,24 +469,22 @@ function FormSettingsView() {
               <li key={f.id} className="border border-slate-200 rounded-lg px-3 py-2">
                 {editingFieldId === f.id ? (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={editLabel}
-                        onChange={(e) => setEditLabel(e.target.value)}
-                        placeholder="Field label"
-                        className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
-                      />
-                      <select
-                        value={editFieldType}
-                        onChange={(e) => setEditFieldType(e.target.value as 'TEXT' | 'SELECT' | 'MULTI_SELECT')}
-                        className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white"
-                      >
-                        <option value="TEXT">Text</option>
-                        <option value="SELECT">Choose box (single)</option>
-                        <option value="MULTI_SELECT">Multi-choice</option>
-                      </select>
-                    </div>
+                    <input
+                      type="text"
+                      value={editLabel}
+                      onChange={(e) => setEditLabel(e.target.value)}
+                      placeholder="Field label"
+                      className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+                    />
+                    <select
+                      value={editFieldType}
+                      onChange={(e) => setEditFieldType(e.target.value as 'TEXT' | 'SELECT' | 'MULTI_SELECT')}
+                      className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white"
+                    >
+                      <option value="TEXT">Text</option>
+                      <option value="SELECT">Choose box (single)</option>
+                      <option value="MULTI_SELECT">Multi-choice</option>
+                    </select>
                     {(editFieldType === 'SELECT' || editFieldType === 'MULTI_SELECT') && (
                       <input
                         type="text"
@@ -549,14 +547,14 @@ function FormSettingsView() {
           onSubmit={(e) => { e.preventDefault(); if (newLabel.trim()) createField.mutate() }}
           className="space-y-2 pt-3 border-t border-slate-100"
         >
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              placeholder="New field label, e.g. Course Study Mode"
-              className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
-            />
+          <input
+            type="text"
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            placeholder="New field label, e.g. Course Study Mode"
+            className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+          />
+          <div className="flex items-center gap-2 flex-wrap">
             <select
               value={newFieldType}
               onChange={(e) => setNewFieldType(e.target.value as 'TEXT' | 'SELECT' | 'MULTI_SELECT')}
