@@ -93,11 +93,14 @@ function RegisterForm() {
 
   const emailTrimmed = email.trim()
   const phoneTrimmed = phone.trim()
-  const emailValid = emailTrimmed === '' || EMAIL_RE.test(emailTrimmed)
+  const emailFormatOk = EMAIL_RE.test(emailTrimmed)
   // A class that hides phone entirely has no fallback identifier, so email stays
-  // required in that case — otherwise either one, filled in, is enough.
+  // required — and must be well-formed — in that case. Otherwise a phone number
+  // alone is enough: whatever's typed into Email (even leftover/duplicate text
+  // that isn't a valid address) never blocks submission once a phone is given —
+  // it's simply left out of what gets submitted.
   const emailRequired = phoneMode === 'HIDDEN'
-  const identifierOk = emailRequired ? (emailTrimmed !== '' && emailValid) : (EMAIL_RE.test(emailTrimmed) || phoneTrimmed !== '')
+  const identifierOk = emailRequired ? (emailTrimmed !== '' && emailFormatOk) : (emailFormatOk || phoneTrimmed !== '')
   const passwordValid = password.length >= MIN_PASSWORD_LENGTH
   const passwordsMatch = password === confirmPassword
 
@@ -119,7 +122,6 @@ function RegisterForm() {
     classId &&
     (khmerNameMode !== 'REQUIRED' || nameKh.trim()) &&
     nameEn.trim() &&
-    emailValid &&
     identifierOk &&
     (phoneMode !== 'REQUIRED' || phoneTrimmed) &&
     (photoMode !== 'REQUIRED' || photo) &&
@@ -140,7 +142,9 @@ function RegisterForm() {
           classId,
           nameKh: khmerNameMode === 'HIDDEN' ? undefined : nameKh.trim(),
           nameEn: nameEn.trim(),
-          email: emailTrimmed || undefined,
+          // Only ever send email if it's actually a valid address — if it isn't
+          // (e.g. leftover/duplicate text) and a phone was given, it's just dropped.
+          email: emailFormatOk ? emailTrimmed : undefined,
           phone: phoneMode === 'HIDDEN' ? undefined : phoneTrimmed || undefined,
           password,
           photo: photoMode === 'HIDDEN' ? undefined : photo || undefined,
@@ -271,11 +275,16 @@ function RegisterForm() {
                 required={emailRequired}
                 placeholder={!emailRequired && phoneTrimmed ? 'Leave blank' : 'you@example.com'}
               />
-              {email.length > 0 && !emailValid && /^[\d\s+()-]+$/.test(emailTrimmed) ? (
-                <p className="text-xs text-red-600 mt-1">
-                  That looks like a phone number — {phoneTrimmed ? 'clear this field, you already entered your phone number above' : 'enter it in the Phone Number field above instead, and leave this blank'}.
+              {email.length > 0 && !emailFormatOk && phoneTrimmed ? (
+                // A phone number already satisfies the requirement, so this is just an
+                // FYI — it won't block submission, and won't be sent since it isn't a
+                // valid email.
+                <p className="text-xs text-slate-400 mt-1">
+                  This won't be submitted since it isn't a valid email — you're all set with the phone number entered above.
                 </p>
-              ) : email.length > 0 && !emailValid && (
+              ) : email.length > 0 && !emailFormatOk && /^[\d\s+()-]+$/.test(emailTrimmed) ? (
+                <p className="text-xs text-red-600 mt-1">That looks like a phone number — enter it in the Phone Number field above instead, and leave this blank.</p>
+              ) : email.length > 0 && !emailFormatOk && (
                 <p className="text-xs text-red-600 mt-1">Enter a valid email address</p>
               )}
               {!emailRequired && !emailTrimmed && !phoneTrimmed && (
