@@ -2,10 +2,30 @@
 
 import { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
+import { Node, mergeAttributes } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
+
+/** Renders as a plain <audio controls src="..."> — RichText.tsx adds a speed
+ * selector next to it at render time (see enhanceAudioPlayers there). Kept as a
+ * minimal node (no custom NodeView) since the editor's own live preview only
+ * needs native playback controls; the speed selector is a student-facing extra. */
+const Audio = Node.create({
+  name: 'audio',
+  group: 'block',
+  atom: true,
+  addAttributes() {
+    return { src: { default: null } }
+  },
+  parseHTML() {
+    return [{ tag: 'audio[src]' }]
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['audio', mergeAttributes(HTMLAttributes, { controls: 'true', preload: 'metadata' })]
+  },
+})
 
 /** Shared rich text editor for "Question text" fields (Exams, Assignments, Course
  * lesson questions). Outputs sanitized-at-render HTML (see RichText.tsx) — this
@@ -21,6 +41,7 @@ export default function RichTextEditor({
       StarterKit.configure({ heading: false, codeBlock: false, blockquote: false, horizontalRule: false }),
       Link.configure({ openOnClick: false, autolink: true }),
       Image,
+      Audio,
       Placeholder.configure({ placeholder: placeholder || 'Question text' }),
     ],
     content: value || '',
@@ -58,6 +79,12 @@ export default function RichTextEditor({
     editor.chain().focus().setImage({ src: url }).run()
   }
 
+  const addAudio = () => {
+    const url = window.prompt('Audio URL (e.g. a link to an .mp3 file)')
+    if (!url) return
+    editor.chain().focus().insertContent({ type: 'audio', attrs: { src: url } }).run()
+  }
+
   const btn = (active: boolean) =>
     `px-2 py-1 rounded text-xs font-semibold border ${active ? 'bg-sky-600 text-white border-sky-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`
 
@@ -72,6 +99,7 @@ export default function RichTextEditor({
         <span className="w-px h-4 bg-slate-200 mx-0.5" />
         <button type="button" onClick={setLink} className={btn(editor.isActive('link'))} title="Link">🔗</button>
         <button type="button" onClick={addImage} className={btn(false)} title="Image">🖼</button>
+        <button type="button" onClick={addAudio} className={btn(false)} title="Audio">🔊</button>
         <span className="w-px h-4 bg-slate-200 mx-0.5" />
         <button type="button" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} className={btn(false)} title="Clear formatting">✕ Format</button>
       </div>
