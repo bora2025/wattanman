@@ -258,16 +258,24 @@ function RegisterForm() {
             <div className="pt-2 border-t border-slate-100">
               <label className="form-label">
                 Email
-                {!emailRequired && <span className="text-slate-400 font-normal text-xs"> (optional if phone number is provided)</span>}
+                {!emailRequired && (
+                  <span className="text-slate-400 font-normal text-xs">
+                    {' '}({phoneTrimmed ? 'you can leave this blank — you already entered a phone number above' : 'optional if you enter a phone number above'})
+                  </span>
+                )}
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required={emailRequired}
-                placeholder="you@example.com"
+                placeholder={!emailRequired && phoneTrimmed ? 'Leave blank' : 'you@example.com'}
               />
-              {email.length > 0 && !emailValid && (
+              {email.length > 0 && !emailValid && /^[\d\s+()-]+$/.test(emailTrimmed) ? (
+                <p className="text-xs text-red-600 mt-1">
+                  That looks like a phone number — {phoneTrimmed ? 'clear this field, you already entered your phone number above' : 'enter it in the Phone Number field above instead, and leave this blank'}.
+                </p>
+              ) : email.length > 0 && !emailValid && (
                 <p className="text-xs text-red-600 mt-1">Enter a valid email address</p>
               )}
               {!emailRequired && !emailTrimmed && !phoneTrimmed && (
