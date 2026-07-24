@@ -35,6 +35,10 @@ interface ClassRegistrationSettings {
   emailMode: FieldMode
   photoMode: FieldMode
   passwordMode: FieldMode
+  sexMode: FieldMode
+  dateOfBirthMode: FieldMode
+  addressMode: FieldMode
+  generationMode: FieldMode
 }
 
 interface ClassRegistrationField {
@@ -384,6 +388,10 @@ function FormSettingsView() {
             <ModeToggle label="Email" value={settings.emailMode} onChange={(m) => updateSettings.mutate({ emailMode: m })} disableHidden={settings.phoneMode === 'HIDDEN'} />
             <ModeToggle label="Photo" value={settings.photoMode} onChange={(m) => updateSettings.mutate({ photoMode: m })} />
             <ModeToggle label="Password" value={settings.passwordMode} onChange={(m) => updateSettings.mutate({ passwordMode: m })} />
+            <ModeToggle label="Sex" value={settings.sexMode} onChange={(m) => updateSettings.mutate({ sexMode: m })} />
+            <ModeToggle label="Date of Birth" value={settings.dateOfBirthMode} onChange={(m) => updateSettings.mutate({ dateOfBirthMode: m })} />
+            <ModeToggle label="Address" value={settings.addressMode} onChange={(m) => updateSettings.mutate({ addressMode: m })} />
+            <ModeToggle label="Generation" value={settings.generationMode} onChange={(m) => updateSettings.mutate({ generationMode: m })} />
           </div>
         )}
       </div>

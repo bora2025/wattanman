@@ -7,6 +7,7 @@ import Sidebar from '../../../components/Sidebar';
 import { adminNav, classAdminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../lib/i18n';
+import { downloadStudentsCsv } from '../../../lib/exportCsv';
 
 interface StudyYear {
   id: string;
@@ -1241,6 +1242,14 @@ function ManageClasses() {
                         className="btn-outline btn-sm inline-flex items-center gap-1"
                       >
                         ⬇ Download Sample CSV
+                      </button>
+                      <button
+                        type="button"
+                        disabled={classStudents.length === 0}
+                        onClick={() => downloadStudentsCsv(classStudents, customFieldDefs, `${selectedClass.name}.csv`)}
+                        className="btn-outline btn-sm inline-flex items-center gap-1 disabled:opacity-50 disabled:pointer-events-none"
+                      >
+                        ⬇ Export Students CSV
                       </button>
                     </div>
 

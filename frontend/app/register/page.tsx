@@ -16,12 +16,32 @@ interface PublicClass {
 type FieldMode = 'REQUIRED' | 'OPTIONAL' | 'HIDDEN'
 
 interface FormConfig {
-  settings: { khmerNameMode: FieldMode; phoneMode: FieldMode; emailMode: FieldMode; photoMode: FieldMode; passwordMode: FieldMode }
+  settings: {
+    khmerNameMode: FieldMode
+    phoneMode: FieldMode
+    emailMode: FieldMode
+    photoMode: FieldMode
+    passwordMode: FieldMode
+    sexMode: FieldMode
+    dateOfBirthMode: FieldMode
+    addressMode: FieldMode
+    generationMode: FieldMode
+  }
   fields: { id: string; key: string; label: string; required: boolean }[]
 }
 
 const DEFAULT_FORM_CONFIG: FormConfig = {
-  settings: { khmerNameMode: 'REQUIRED', phoneMode: 'REQUIRED', emailMode: 'REQUIRED', photoMode: 'OPTIONAL', passwordMode: 'REQUIRED' },
+  settings: {
+    khmerNameMode: 'REQUIRED',
+    phoneMode: 'REQUIRED',
+    emailMode: 'REQUIRED',
+    photoMode: 'OPTIONAL',
+    passwordMode: 'REQUIRED',
+    sexMode: 'HIDDEN',
+    dateOfBirthMode: 'HIDDEN',
+    addressMode: 'HIDDEN',
+    generationMode: 'HIDDEN',
+  },
   fields: [],
 }
 
@@ -54,6 +74,10 @@ function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [photo, setPhoto] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
+  const [sex, setSex] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
+  const [address, setAddress] = useState('')
+  const [generation, setGeneration] = useState('')
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({})
 
   const [submitting, setSubmitting] = useState(false)
@@ -89,7 +113,7 @@ function RegisterForm() {
     })()
   }, [])
 
-  const { khmerNameMode, phoneMode, emailMode, photoMode, passwordMode } = formConfig.settings
+  const { khmerNameMode, phoneMode, emailMode, photoMode, passwordMode, sexMode, dateOfBirthMode, addressMode, generationMode } = formConfig.settings
 
   const emailTrimmed = email.trim()
   const phoneTrimmed = phone.trim()
@@ -130,6 +154,10 @@ function RegisterForm() {
     nameEn.trim() &&
     identifierOk &&
     (photoMode !== 'REQUIRED' || photo) &&
+    (sexMode !== 'REQUIRED' || sex) &&
+    (dateOfBirthMode !== 'REQUIRED' || dateOfBirth) &&
+    (addressMode !== 'REQUIRED' || address.trim()) &&
+    (generationMode !== 'REQUIRED' || generation.trim()) &&
     passwordValid &&
     passwordsMatch &&
     formConfig.fields.every((f) => !f.required || customFieldValues[f.key]?.trim())
@@ -153,6 +181,10 @@ function RegisterForm() {
           phone: phoneMode === 'HIDDEN' ? undefined : phoneTrimmed || undefined,
           password: password || undefined,
           photo: photoMode === 'HIDDEN' ? undefined : photo || undefined,
+          sex: sexMode === 'HIDDEN' ? undefined : sex || undefined,
+          dateOfBirth: dateOfBirthMode === 'HIDDEN' ? undefined : dateOfBirth || undefined,
+          address: addressMode === 'HIDDEN' ? undefined : address.trim() || undefined,
+          generation: generationMode === 'HIDDEN' ? undefined : generation.trim() || undefined,
           customFieldValues,
         }),
       })
@@ -286,6 +318,46 @@ function RegisterForm() {
                 {photo && (
                   <img src={photo} alt="Preview" className="mt-2 w-20 h-20 rounded-lg object-cover border border-slate-200" />
                 )}
+              </div>
+            )}
+
+            {sexMode !== 'HIDDEN' && (
+              <div>
+                <label className="form-label">
+                  Sex {sexMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
+                </label>
+                <select value={sex} onChange={(e) => setSex(e.target.value)} required={sexMode === 'REQUIRED'}>
+                  <option value="">Select…</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                </select>
+              </div>
+            )}
+
+            {dateOfBirthMode !== 'HIDDEN' && (
+              <div>
+                <label className="form-label">
+                  Date of Birth {dateOfBirthMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
+                </label>
+                <input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required={dateOfBirthMode === 'REQUIRED'} />
+              </div>
+            )}
+
+            {addressMode !== 'HIDDEN' && (
+              <div>
+                <label className="form-label">
+                  Address {addressMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
+                </label>
+                <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} required={addressMode === 'REQUIRED'} placeholder="Street, City, Province" />
+              </div>
+            )}
+
+            {generationMode !== 'HIDDEN' && (
+              <div>
+                <label className="form-label">
+                  Generation (ជំនាន់ទី) {generationMode === 'OPTIONAL' && <span className="text-slate-400 font-normal text-xs">(optional)</span>}
+                </label>
+                <input type="number" min="1" value={generation} onChange={(e) => setGeneration(e.target.value)} required={generationMode === 'REQUIRED'} placeholder="1" />
               </div>
             )}
 

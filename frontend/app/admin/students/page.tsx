@@ -6,6 +6,7 @@ import Sidebar from '../../../components/Sidebar';
 import { adminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../lib/i18n';
+import { downloadStudentsCsv } from '../../../lib/exportCsv';
 
 /* â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 interface StudyYear { id: string; year: number; label: string | null; isCurrent: boolean }
@@ -506,6 +507,22 @@ function ManageStudents() {
                         {csvUploading ? 'Uploading...' : 'Import CSV'}
                         <input type="file" accept=".csv" className="hidden" onChange={handleCsv} />
                       </label>
+
+                      {/* CSV export */}
+                      <button
+                        type="button"
+                        title="Export CSV"
+                        disabled={filteredStudents.length === 0}
+                        onClick={() => downloadStudentsCsv(
+                          filteredStudents,
+                          customFieldDefs,
+                          `${selectedGrade?.name || 'students'}.csv`,
+                        )}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white shadow-sm text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M7 10l5 5 5-5M12 15V3" /></svg>
+                        Export CSV
+                      </button>
 
                       {/* Add student */}
                       <button
