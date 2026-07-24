@@ -36,7 +36,7 @@ interface ExamLite {
   totalMarks: number;
   passMark: number;
   class?: { name: string } | null;
-  attempt: { status: string; score: number | null } | null;
+  attempts: { status: string; score: number | null }[];
 }
 
 const studentNav = [
@@ -119,7 +119,7 @@ export default function StudentPortal() {
     .filter(a => !a.submission && a.dueDate && new Date(a.dueDate).getTime() >= now)
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
     .slice(0, 5);
-  const activeExams = exams.filter(e => e.status === 'ACTIVE' && !e.attempt);
+  const activeExams = exams.filter(e => e.status === 'ACTIVE' && e.attempts.length === 0);
 
   const gradedAssignments = assignments.filter(a => a.submission && a.submission.marks !== null);
   const overallGrade = gradedAssignments.length

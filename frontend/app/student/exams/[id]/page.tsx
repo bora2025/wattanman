@@ -12,7 +12,7 @@ import type { QType } from '../../../../lib/examQuestionLogic'
 
 interface Question { id: string; text: string; type: QType; marks: number; order: number; data: any }
 interface ExamDetail { id: string; title: string; duration: number; totalMarks: number; passMark: number; questions: Question[] }
-interface Attempt { id: string; status: string; startedAt: string }
+interface Attempt { id: string; status: string; startedAt: string; answers?: Record<string, any> | null }
 
 export default function StudentExamTakingPage() {
   const params = useParams()
@@ -22,6 +22,8 @@ export default function StudentExamTakingPage() {
   const [answers, setAnswers] = useState<Record<string, any>>({})
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [startError, setStartError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { data: exam, isLoading } = useQuery({
     queryKey: ['exam-detail', examId],
@@ -31,13 +33,36 @@ export default function StudentExamTakingPage() {
 
   const startMutation = useMutation({
     mutationFn: () => apiFetch(`/api/exams/${examId}/start`, { method: 'POST' }),
-    onSuccess: async (res) => { const data = await res.json(); setAttempt(data); setTimeLeft((exam?.duration ?? 60) * 60) },
+    onSuccess: async (res) => {
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        setStartError(j.message || 'Failed to start exam')
+        return
+      }
+      const data = await res.json()
+      setAttempt(data)
+      setAnswers(data.answers || {})
+      // Resuming an in-progress attempt — count down from the real remaining
+      // time, not a fresh full duration, so refreshing the page can't reset the clock.
+      const elapsed = Math.floor((Date.now() - new Date(data.startedAt).getTime()) / 1000)
+      const remaining = Math.max(0, (exam?.duration ?? 60) * 60 - elapsed)
+      setTimeLeft(remaining)
+    },
+    onError: () => setStartError('Failed to start exam'),
   })
 
   const submitMutation = useMutation({
     mutationFn: (attemptId: string) =>
       apiFetch(`/api/exams/attempts/${attemptId}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) }),
-    onSuccess: () => setSubmitted(true),
+    onSuccess: async (res) => {
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        setSubmitError(j.message || 'Failed to submit exam')
+        return
+      }
+      setSubmitted(true)
+    },
+    onError: () => setSubmitError('Failed to submit exam'),
   })
 
   const saveAnswers = useCallback(async () => {
@@ -103,10 +128,11 @@ export default function StudentExamTakingPage() {
                   <p className="text-gray-500 text-sm mb-1">{exam.questions.length} questions · {exam.duration} minutes</p>
                   <p className="text-gray-500 text-sm mb-6">Pass mark: {exam.passMark}/{exam.totalMarks}</p>
                   <p className="text-xs text-amber-700 mb-6 bg-amber-50 border border-amber-100 rounded-xl px-4 py-2">⚠️ Once started, the timer cannot be paused. Answers auto-save every 30 seconds.</p>
-                  <button onClick={() => startMutation.mutate()} disabled={startMutation.isPending}
+                  <button onClick={() => { setStartError(null); startMutation.mutate() }} disabled={startMutation.isPending}
                     className="bg-sky-600 text-white px-8 py-3 rounded-xl font-semibold text-lg hover:bg-sky-700 disabled:opacity-60 shadow-sm">
                     {startMutation.isPending ? 'Starting...' : 'Start Exam'}
                   </button>
+                  {startError && <p className="text-sm text-red-600 mt-4">{startError}</p>}
                 </>
               ) : (
                 <p className="text-red-500">Failed to load exam</p>
@@ -128,11 +154,12 @@ export default function StudentExamTakingPage() {
               ))}
 
               <div className="text-center pb-10 pt-2">
-                <button onClick={() => attempt && submitMutation.mutate(attempt.id)} disabled={submitMutation.isPending}
+                <button onClick={() => { setSubmitError(null); attempt && submitMutation.mutate(attempt.id) }} disabled={submitMutation.isPending}
                   className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-semibold text-lg hover:bg-emerald-700 disabled:opacity-60 shadow-sm">
                   {submitMutation.isPending ? 'Submitting...' : 'Submit Exam'}
                 </button>
                 <p className="text-xs text-gray-400 mt-2">Make sure all questions are answered before submitting</p>
+                {submitError && <p className="text-sm text-red-600 mt-3">{submitError}</p>}
               </div>
             </div>
           )}

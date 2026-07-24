@@ -17,7 +17,7 @@ const studentNav = [
   { label: 'My Parent', href: '/student/parent', icon: 'users' },
 ]
 
-interface Exam { id: string; title: string; duration: number; totalMarks: number; passMark: number; status: string; class: { name: string } | null; attempt: { id: string; status: string; score: number | null; submittedAt: string | null } | null }
+interface Exam { id: string; title: string; duration: number; totalMarks: number; passMark: number; status: string; class: { name: string } | null; attempts: { id: string; status: string; score: number | null; submittedAt: string | null }[] }
 
 const STATUS_COLOR: Record<string, string> = {
   DRAFT: 'bg-slate-100 text-slate-600',
@@ -58,9 +58,12 @@ export default function StudentExamsPage() {
           ) : (
             <div className="space-y-3">
               {exams.map(exam => {
-                const hasAttempt = !!exam.attempt
-                const isGraded = exam.attempt?.status === 'GRADED'
-                const canTake = exam.status === 'ACTIVE' && !hasAttempt
+                const attempt = exam.attempts?.[0] ?? null
+                const hasAttempt = !!attempt
+                const isGraded = attempt?.status === 'GRADED'
+                const isInProgress = attempt?.status === 'IN_PROGRESS'
+                const canStart = exam.status === 'ACTIVE' && !hasAttempt
+                const canResume = exam.status === 'ACTIVE' && isInProgress
                 return (
                   <div key={exam.id} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex items-center justify-between gap-4 hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -73,19 +76,25 @@ export default function StudentExamsPage() {
                           <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLOR[exam.status]}`}>{exam.status}</span>
                         </div>
                         <p className="text-xs text-gray-500">{exam.class?.name ?? 'General'} · {exam.duration} min · Pass: {exam.passMark}/{exam.totalMarks}</p>
-                        {isGraded && exam.attempt && (
-                          <p className={`text-xs font-semibold mt-1 ${(exam.attempt.score ?? 0) >= exam.passMark ? 'text-emerald-600' : 'text-red-600'}`}>
-                            Score: {exam.attempt.score}/{exam.totalMarks} — {(exam.attempt.score ?? 0) >= exam.passMark ? 'PASSED' : 'FAILED'}
+                        {isGraded && attempt && (
+                          <p className={`text-xs font-semibold mt-1 ${(attempt.score ?? 0) >= exam.passMark ? 'text-emerald-600' : 'text-red-600'}`}>
+                            Score: {attempt.score}/{exam.totalMarks} — {(attempt.score ?? 0) >= exam.passMark ? 'PASSED' : 'FAILED'}
                           </p>
                         )}
-                        {hasAttempt && !isGraded && <p className="text-xs text-amber-600 mt-1">Submitted · Awaiting result</p>}
+                        {hasAttempt && !isGraded && !isInProgress && <p className="text-xs text-amber-600 mt-1">Submitted · Awaiting result</p>}
                       </div>
                     </div>
                     <div className="flex-shrink-0">
-                      {canTake && (
+                      {canStart && (
                         <Link href={`/student/exams/${exam.id}`}
                           className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-emerald-700 shadow-sm">
                           Start Exam
+                        </Link>
+                      )}
+                      {canResume && (
+                        <Link href={`/student/exams/${exam.id}`}
+                          className="bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-amber-600 shadow-sm">
+                          Resume Exam
                         </Link>
                       )}
                       {isGraded && <span className="text-xs text-emerald-600 font-semibold">✓ Completed</span>}

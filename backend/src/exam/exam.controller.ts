@@ -70,8 +70,8 @@ export class ExamController {
 
   @Roles('STUDENT', 'ADMIN')
   @Post('attempts/:attemptId/submit')
-  submitAttempt(@Param('attemptId') attemptId: string) {
-    return this.examService.submitAttempt(attemptId);
+  submitAttempt(@Param('attemptId') attemptId: string, @Body() body?: { answers?: Record<string, any> }) {
+    return this.examService.submitAttempt(attemptId, body?.answers);
   }
 
   @Roles('STUDENT', 'TEACHER', 'ADMIN')

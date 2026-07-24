@@ -187,7 +187,19 @@ export class ExamService {
     const existing = await this.prisma.examAttempt.findUnique({
       where: { examId_studentId: { examId, studentId: student.id } },
     });
-    if (existing) return existing;
+    if (existing) {
+      // Only an in-progress attempt is safe to hand back for resuming — a
+      // submitted/graded one must never be reopened (that would let a student
+      // re-answer and silently overwrite an already-graded score).
+      if (existing.status !== 'IN_PROGRESS') {
+        throw new BadRequestException('This exam has already been submitted');
+      }
+      return existing;
+    }
+
+    const exam = await this.prisma.exam.findUnique({ where: { id: examId } });
+    if (!exam) throw new NotFoundException('Exam not found');
+    if (exam.status !== 'ACTIVE') throw new BadRequestException('This exam is not currently active');
 
     return this.prisma.examAttempt.create({
       data: { examId, studentId: student.id, status: 'IN_PROGRESS' },
@@ -201,14 +213,19 @@ export class ExamService {
     });
   }
 
-  async submitAttempt(attemptId: string) {
+  async submitAttempt(attemptId: string, finalAnswers?: Record<string, any>) {
     const attempt = await this.prisma.examAttempt.findUnique({
       where: { id: attemptId },
       include: { exam: { include: { questions: true } } },
     });
     if (!attempt) throw new NotFoundException('Attempt not found');
+    if (attempt.status !== 'IN_PROGRESS') {
+      throw new BadRequestException('This attempt has already been submitted');
+    }
 
-    const answers = (attempt.answers as Record<string, any>) ?? {};
+    // Prefer whatever the student's browser sent with the submit request — the
+    // last 30s autosave tick can miss changes made in the final stretch.
+    const answers = finalAnswers ?? (attempt.answers as Record<string, any>) ?? {};
     let total = 0;
     let hasManual = false;
     for (const q of attempt.exam.questions) {
@@ -228,6 +245,7 @@ export class ExamService {
           gradedAt: new Date(),
           score: total,
           grade: passed ? 'PASS' : 'FAIL',
+          answers,
         },
       });
     }
@@ -238,6 +256,7 @@ export class ExamService {
       where: { id: attemptId },
       data: {
         status: 'SUBMITTED',
+        answers,
         submittedAt: new Date(),
         score: total,
         grade: null,
