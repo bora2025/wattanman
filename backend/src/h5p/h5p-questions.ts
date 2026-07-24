@@ -22,15 +22,20 @@ export function isH5PType(type: string): type is H5PType {
   return (H5P_TYPES as readonly string[]).includes(type);
 }
 
-// Drag the Words uses a *word*-delimited markup as the single source of truth for
-// both the correct answers (grading) and the student-facing blanked-out segments —
-// avoids storing two things that could drift out of sync.
-export function parseDragWordsText(text: string): Array<{ type: 'text'; value: string } | { type: 'blank'; id: string; answer: string }> {
-  const parts = (text || '').split(/(\*[^*]+\*)/g).filter((p) => p.length > 0);
+// Drag the Words uses a *word*/#word#-delimited markup as the single source of truth
+// for both the correct answers (grading) and the student-facing blanked-out segments —
+// avoids storing two things that could drift out of sync. *word* is group 'a', #word#
+// is group 'b' — a purely visual hint (different blank/chip color) so students can
+// narrow down candidates faster; it does not restrict which word can be dropped where.
+export function parseDragWordsText(text: string): Array<{ type: 'text'; value: string } | { type: 'blank'; id: string; answer: string; group: 'a' | 'b' }> {
+  const parts = (text || '').split(/(\*[^*]+\*|#[^#]+#)/g).filter((p) => p.length > 0);
   let i = 0;
   return parts.map((p) => {
     if (p.startsWith('*') && p.endsWith('*') && p.length > 2) {
-      return { type: 'blank' as const, id: `b${i++}`, answer: p.slice(1, -1).trim() };
+      return { type: 'blank' as const, id: `b${i++}`, answer: p.slice(1, -1).trim(), group: 'a' as const };
+    }
+    if (p.startsWith('#') && p.endsWith('#') && p.length > 2) {
+      return { type: 'blank' as const, id: `b${i++}`, answer: p.slice(1, -1).trim(), group: 'b' as const };
     }
     return { type: 'text' as const, value: p };
   });
@@ -163,9 +168,10 @@ export function sanitizeH5PForStudent(type: H5PType, data: any): any {
 
     case 'DRAG_WORDS': {
       const parsed = parseDragWordsText(d.text || '');
-      const segments = parsed.map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id } : s));
-      const answers = parsed.filter((s) => s.type === 'blank').map((s: any) => s.answer);
-      const wordBank = shuffle([...answers, ...(d.distractors || [])]);
+      const segments = parsed.map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id, group: s.group } : s));
+      const answers = parsed.filter((s) => s.type === 'blank').map((s: any) => ({ word: s.answer, group: s.group as 'a' | 'b' }));
+      const distractorWords = (d.distractors || []).map((w: string) => ({ word: w, group: 'a' as const }));
+      const wordBank = shuffle([...answers, ...distractorWords]);
       return { segments, wordBank };
     }
 

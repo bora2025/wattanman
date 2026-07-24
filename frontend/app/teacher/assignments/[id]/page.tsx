@@ -288,7 +288,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
       )
     }
     if (question.type === 'DRAG_WORDS') {
-      const blanks = parseDragWordsText(question.data?.text || '').filter((s): s is { type: 'blank'; id: string; answer: string } => s.type === 'blank')
+      const blanks = parseDragWordsText(question.data?.text || '').filter((s): s is { type: 'blank'; id: string; answer: string; group: 'a' | 'b' } => s.type === 'blank')
       const given: Record<string, string> = r && typeof r === 'object' ? r : {}
       return (
         <div className="text-xs space-y-0.5">

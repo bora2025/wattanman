@@ -51,14 +51,18 @@ export function h5pDefaultData(type: H5PType): any {
   }
 }
 
-// Drag the Words uses a *word*-delimited markup as the single source of truth —
-// mirrors backend/src/h5p/h5p-questions.ts's parseDragWordsText.
-export function parseDragWordsText(text: string): Array<{ type: 'text'; value: string } | { type: 'blank'; id: string; answer: string }> {
-  const parts = (text || '').split(/(\*[^*]+\*)/g).filter((p) => p.length > 0)
+// Drag the Words uses a *word*/#word#-delimited markup as the single source of truth —
+// mirrors backend/src/h5p/h5p-questions.ts's parseDragWordsText. *word* is group 'a',
+// #word# is group 'b' — a purely visual hint, doesn't affect grading.
+export function parseDragWordsText(text: string): Array<{ type: 'text'; value: string } | { type: 'blank'; id: string; answer: string; group: 'a' | 'b' }> {
+  const parts = (text || '').split(/(\*[^*]+\*|#[^#]+#)/g).filter((p) => p.length > 0)
   let i = 0
   return parts.map((p) => {
     if (p.startsWith('*') && p.endsWith('*') && p.length > 2) {
-      return { type: 'blank' as const, id: `b${i++}`, answer: p.slice(1, -1).trim() }
+      return { type: 'blank' as const, id: `b${i++}`, answer: p.slice(1, -1).trim(), group: 'a' as const }
+    }
+    if (p.startsWith('#') && p.endsWith('#') && p.length > 2) {
+      return { type: 'blank' as const, id: `b${i++}`, answer: p.slice(1, -1).trim(), group: 'b' as const }
     }
     return { type: 'text' as const, value: p }
   })
@@ -93,9 +97,9 @@ export function sanitizeH5PForPreview(type: H5PType, data: any): any {
       return { paragraphs: shuffle((d.paragraphs || []).map((p: any) => ({ id: p.id, text: p.text }))) }
     case 'DRAG_WORDS': {
       const parsed = parseDragWordsText(d.text || '')
-      const segments = parsed.map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id } : s))
-      const answers = parsed.filter((s) => s.type === 'blank').map((s: any) => s.answer)
-      const cleanDistractors = (d.distractors || []).map((w: string) => w.trim()).filter(Boolean)
+      const segments = parsed.map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id, group: s.group } : s))
+      const answers = parsed.filter((s) => s.type === 'blank').map((s: any) => ({ word: s.answer, group: s.group as 'a' | 'b' }))
+      const cleanDistractors = (d.distractors || []).map((w: string) => w.trim()).filter(Boolean).map((w: string) => ({ word: w, group: 'a' as const }))
       const wordBank = shuffle([...answers, ...cleanDistractors])
       return { segments, wordBank }
     }

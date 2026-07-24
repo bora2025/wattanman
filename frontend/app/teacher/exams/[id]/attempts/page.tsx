@@ -53,7 +53,7 @@ function isAutoGraded(type: string) {
 // Mirrors backend/src/h5p/h5p-questions.ts's parseDragWordsText, so the gradebook
 // can derive blanks+answers from the same *word*-marked-up text without a round trip.
 function parseDragWordsBlanks(text: string): { id: string; answer: string }[] {
-  return parseDragWordsText(text).filter((s): s is { type: 'blank'; id: string; answer: string } => s.type === 'blank')
+  return parseDragWordsText(text).filter((s): s is { type: 'blank'; id: string; answer: string; group: 'a' | 'b' } => s.type === 'blank')
 }
 
 // Delegates to lib/examQuestionLogic.ts's gradeQuestion (which mirrors the backend
