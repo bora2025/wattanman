@@ -710,8 +710,12 @@ function ManageClasses() {
   const handleAddNewStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClass) return;
+    if (!newStudentForm.email.trim() && !newStudentForm.phone.trim()) {
+      alert('Enter an email or a phone number');
+      return;
+    }
     try {
-      const autoPassword = 'student' + (newStudentForm.email.split('@')[0] || 'default');
+      const autoPassword = 'student' + (newStudentForm.email.split('@')[0] || newStudentForm.phone.replace(/\D/g, '') || 'default');
       const finalPassword = newStudentForm.password.trim() || autoPassword;
       const registerRes = await apiFetch('/api/auth/register', {
         method: 'POST',
@@ -1276,8 +1280,8 @@ function ManageClasses() {
                             <input type="text" value={newStudentForm.name} onChange={(e) => setNewStudentForm({ ...newStudentForm, name: e.target.value })} required />
                           </div>
                           <div>
-                            <label className="form-label">Email</label>
-                            <input type="email" value={newStudentForm.email} onChange={(e) => setNewStudentForm({ ...newStudentForm, email: e.target.value })} required />
+                            <label className="form-label">Email <span className="text-slate-400 font-normal text-xs">(or phone below)</span></label>
+                            <input type="email" value={newStudentForm.email} onChange={(e) => setNewStudentForm({ ...newStudentForm, email: e.target.value })} />
                           </div>
                           <div>
                             <label className="form-label">Password <span className="text-slate-400 text-xs">(optional — auto-generated if blank)</span></label>

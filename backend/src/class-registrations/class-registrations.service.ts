@@ -2,8 +2,8 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationService } from '../notification/notification.service';
+import { isValidEmail, normalizePhone } from '../common/identity';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 6;
 const FIELD_MODES = ['REQUIRED', 'OPTIONAL', 'HIDDEN'] as const;
 type FieldMode = (typeof FIELD_MODES)[number];
@@ -146,7 +146,7 @@ export class ClassRegistrationsService {
     classId: string;
     nameKh?: string;
     nameEn: string;
-    email: string;
+    email?: string;
     phone?: string;
     password: string;
     photo?: string;
@@ -160,7 +160,8 @@ export class ClassRegistrationsService {
 
     if (!body?.classId) throw new BadRequestException('classId is required');
     if (!nameEn) throw new BadRequestException('English name is required');
-    if (!email || !EMAIL_RE.test(email)) throw new BadRequestException('Invalid email address');
+    if (!email && !phone) throw new BadRequestException('Email or phone number is required');
+    if (email && !isValidEmail(email)) throw new BadRequestException('Invalid email address');
     if (password.length < MIN_PASSWORD_LENGTH) {
       throw new BadRequestException(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
     }
@@ -168,6 +169,11 @@ export class ClassRegistrationsService {
     const settings = await this.getOrCreateSettings();
     if (settings.khmerNameMode === 'REQUIRED' && !nameKh) {
       throw new BadRequestException('Khmer name is required');
+    }
+    // A class that hides phone entirely has no fallback identifier, so email
+    // stays required in that case even though it's otherwise optional-if-phone-given.
+    if (settings.phoneMode === 'HIDDEN' && !email) {
+      throw new BadRequestException('Email is required');
     }
     if (settings.phoneMode === 'REQUIRED' && !phone) {
       throw new BadRequestException('Phone number is required');
@@ -193,9 +199,13 @@ export class ClassRegistrationsService {
       throw new BadRequestException('Registration is not currently open for this class');
     }
 
-    // Dedup: a pending request for the same class+email is returned as-is
+    // Dedup: a pending request for the same class+identifier (whichever was given) is returned as-is
     const existing = await this.prisma.classRegistration.findFirst({
-      where: { classId: body.classId, email, status: 'PENDING' },
+      where: {
+        classId: body.classId,
+        status: 'PENDING',
+        OR: [...(email ? [{ email }] : []), ...(phone ? [{ phone }] : [])],
+      },
     });
     if (existing) return existing;
 
@@ -205,7 +215,7 @@ export class ClassRegistrationsService {
         classId: body.classId,
         nameKh: settings.khmerNameMode === 'HIDDEN' ? undefined : nameKh || undefined,
         nameEn,
-        email,
+        email: email || undefined,
         phone: settings.phoneMode === 'HIDDEN' ? undefined : phone || undefined,
         passwordHash,
         photo: settings.photoMode === 'HIDDEN' ? undefined : body.photo || undefined,
@@ -266,24 +276,38 @@ export class ClassRegistrationsService {
           resolvedBy: adminUserId,
         },
       });
-      try {
-        await this.notificationService.sendEmail(
-          reg.email,
-          'Your class registration was not approved',
-          `Hi ${reg.nameEn}, your registration for ${reg.class.name} was not approved${body.rejectReason ? `: ${body.rejectReason}` : '.'}`,
-        );
-      } catch {}
+      if (reg.email) {
+        try {
+          await this.notificationService.sendEmail(
+            reg.email,
+            'Your class registration was not approved',
+            `Hi ${reg.nameEn}, your registration for ${reg.class.name} was not approved${body.rejectReason ? `: ${body.rejectReason}` : '.'}`,
+          );
+        } catch {}
+      }
       return updated;
     }
 
     // APPROVE — create the User + Student accounts using the password the student set at registration
-    const existingUser = await this.prisma.user.findUnique({ where: { email: reg.email } });
+    const normalizedPhone = normalizePhone(reg.phone);
+    const existingUser = reg.email
+      ? await this.prisma.user.findUnique({ where: { email: reg.email } })
+      : normalizedPhone
+        ? await this.prisma.user.findUnique({ where: { phoneNormalized: normalizedPhone } })
+        : null;
     if (existingUser) {
-      throw new BadRequestException('A user with this email already exists. Link the student manually instead.');
+      throw new BadRequestException(`A user with this ${reg.email ? 'email' : 'phone number'} already exists. Link the student manually instead.`);
     }
 
     const user = await this.prisma.user.create({
-      data: { email: reg.email, password: reg.passwordHash, name: reg.nameEn, phone: reg.phone || undefined, role: 'STUDENT' },
+      data: {
+        email: reg.email || undefined,
+        password: reg.passwordHash,
+        name: reg.nameEn,
+        phone: reg.phone || undefined,
+        phoneNormalized: normalizedPhone || undefined,
+        role: 'STUDENT',
+      },
     });
 
     const count = await this.prisma.student.count({ where: { classId: reg.classId } });
@@ -305,13 +329,15 @@ export class ClassRegistrationsService {
       data: { status: 'APPROVED', studentId: student.id, resolvedAt: new Date(), resolvedBy: adminUserId },
     });
 
-    try {
-      await this.notificationService.sendEmail(
-        reg.email,
-        'Your class registration is approved',
-        `Hi ${reg.nameEn}, welcome to ${reg.class.name}! Your registration has been approved — log in at your school portal with the email and password you registered with.`,
-      );
-    } catch {}
+    if (reg.email) {
+      try {
+        await this.notificationService.sendEmail(
+          reg.email,
+          'Your class registration is approved',
+          `Hi ${reg.nameEn}, welcome to ${reg.class.name}! Your registration has been approved — log in at your school portal with the email and password you registered with.`,
+        );
+      } catch {}
+    }
 
     return updated;
   }

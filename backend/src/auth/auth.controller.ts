@@ -142,10 +142,10 @@ export class AuthController {
   @Post('register')
   async register(@Body() body: RegisterDto & { departmentId?: string }) {
     try {
-      return await this.authService.register(body.email, body.password, body.name, body.role, body.departmentId);
+      return await this.authService.register(body.email, body.password, body.name, body.role, body.departmentId, body.phone);
     } catch (error: any) {
-      if (error.message === 'Email already exists') {
-        throw new HttpException('Email already exists', HttpStatus.BAD_REQUEST);
+      if (error.message === 'Email already exists' || error.message === 'Phone number already registered' || error.message === 'Email or phone is required' || error.message === 'Invalid email address') {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
       }
       throw error;
     }
@@ -216,8 +216,8 @@ export class AuthController {
     try {
       return await this.authService.updateUser(id, body);
     } catch (error: any) {
-      if (error.message === 'Email already exists') {
-        throw new HttpException('Email already exists', HttpStatus.BAD_REQUEST);
+      if (error.message === 'Email already exists' || error.message === 'Phone number already registered') {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
       }
       if (error.message === 'Invalid role') {
         throw new HttpException('Invalid role', HttpStatus.BAD_REQUEST);

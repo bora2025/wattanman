@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import * as bcrypt from 'bcryptjs';
+import { isValidEmail, normalizePhone } from '../common/identity';
 
 const REGISTRATION_STATUSES = ['AVAILABLE', 'UNAVAILABLE', 'HIDDEN'];
 
@@ -384,7 +385,8 @@ export class ClassesService {
     const nameIdx = header.findIndex(h => h === 'name');
     const sexIdx = header.findIndex(h => h === 'sex');
     const classIdx = header.findIndex(h => h === 'class');
-    const contactIdx = header.findIndex(h => h.includes('mail') || h.includes('phone') || h.includes('email') || h.includes('contact'));
+    const emailIdx = header.findIndex(h => h.includes('mail'));
+    const phoneIdx = header.findIndex(h => h.includes('phone') || h.includes('contact'));
     const photoIdx = header.findIndex(h => h === 'photo');
     const passwordIdx = header.findIndex(h => h === 'password');
     const dobIdx = header.findIndex(h => h.includes('birth') || h.includes('dob') || h === 'date of birth');
@@ -409,7 +411,8 @@ export class ClassesService {
       const studentId = idIdx !== -1 ? cols[idIdx]?.trim() : String(i).padStart(4, '0');
       const name = cols[nameIdx]?.trim();
       const rawSex = sexIdx !== -1 ? cols[sexIdx]?.trim() : '';
-      const contact = contactIdx !== -1 ? cols[contactIdx]?.trim() : '';
+      const rawEmail = emailIdx !== -1 ? cols[emailIdx]?.trim() : '';
+      const rawPhone = phoneIdx !== -1 ? cols[phoneIdx]?.trim() : '';
       const rawPhoto = photoIdx !== -1 ? cols[photoIdx]?.trim() : '';
       const password = passwordIdx !== -1 ? cols[passwordIdx]?.trim() : '';
       const dateOfBirth = dobIdx !== -1 ? cols[dobIdx]?.trim() : '';
@@ -432,7 +435,9 @@ export class ClassesService {
         sex = 'FEMALE';
       }
 
-      const phone = contact && !contact.includes('@') ? contact : '';
+      const email = rawEmail && isValidEmail(rawEmail) ? rawEmail.toLowerCase() : '';
+      const phone = rawPhone;
+      const normalizedPhone = normalizePhone(phone);
 
       // Track student IDs to detect duplicates within this batch
       if (usedIds.has(studentId)) {
@@ -456,19 +461,39 @@ export class ClassesService {
         if (student) {
           user = await this.prisma.user.update({
             where: { id: student.userId },
-            data: { name, ...(phone ? { phone } : {}) },
+            data: {
+              name,
+              ...(phone ? { phone, phoneNormalized: normalizedPhone || undefined } : {}),
+              ...(email ? { email } : {}),
+            },
           });
         } else {
-          // Build a synthetic email, avoiding collision with any unrelated existing account
-          let email = `student${studentId}@school.local`;
-          let suffix = 1;
-          while (await this.prisma.user.findUnique({ where: { email } })) {
-            suffix++;
-            email = `student${studentId}-${suffix}@school.local`;
+          // Prefer a real email or phone from the CSV as the login identity; only
+          // fall back to a synthetic placeholder email when neither was given.
+          let finalEmail = email;
+          if (finalEmail) {
+            const clash = await this.prisma.user.findUnique({ where: { email: finalEmail } });
+            if (clash) throw new Error(`Email ${finalEmail} is already used by another account`);
+          } else if (normalizedPhone) {
+            const clash = await this.prisma.user.findUnique({ where: { phoneNormalized: normalizedPhone } });
+            if (clash) throw new Error(`Phone number ${phone} is already used by another account`);
+          } else {
+            finalEmail = `student${studentId}@school.local`;
+            let suffix = 1;
+            while (await this.prisma.user.findUnique({ where: { email: finalEmail } })) {
+              suffix++;
+              finalEmail = `student${studentId}-${suffix}@school.local`;
+            }
           }
           const hashedPassword = await bcrypt.hash(finalPassword, 10);
           user = await this.prisma.user.create({
-            data: { email, password: hashedPassword, name, role: 'STUDENT', ...(phone ? { phone } : {}) },
+            data: {
+              email: finalEmail || undefined,
+              password: hashedPassword,
+              name,
+              role: 'STUDENT',
+              ...(phone ? { phone, phoneNormalized: normalizedPhone || undefined } : {}),
+            },
           });
         }
 
@@ -493,7 +518,7 @@ export class ClassesService {
           });
         }
 
-        results.push({ row: i + 1, id: studentId, name, email: user.email, status: 'success' });
+        results.push({ row: i + 1, id: studentId, name, email: user.email || '', status: 'success' });
       } catch (err: any) {
         results.push({ row: i + 1, id: studentId, name, email: '', status: 'error', error: err.message || 'Unknown error' });
       }

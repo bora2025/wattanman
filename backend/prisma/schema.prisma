@@ -11,12 +11,13 @@ datasource db {
 }
 
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  password     String
-  name         String
-  phone        String?
-  photo        String?
+  id              String      @id @default(cuid())
+  email           String?     @unique // nullable — a user may register with phone instead
+  password        String
+  name            String
+  phone           String?
+  phoneNormalized String?     @unique // digits-only form of `phone`, used as an alternate login identifier when no email is set
+  photo           String?
   role         String
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
@@ -211,7 +212,7 @@ model ClassRegistration {
   class             Class     @relation(fields: [classId], references: [id])
   nameKh            String? // required unless hidden/optional via ClassRegistrationSettings.khmerNameMode
   nameEn            String
-  email             String
+  email             String? // at least one of email/phone is required — see createRegistration
   phone             String? // required unless hidden/optional via ClassRegistrationSettings.phoneMode
   passwordHash      String // bcrypt hash of the password the student chose at registration
   photo             String? // base64 data URL, same convention as Student.photo

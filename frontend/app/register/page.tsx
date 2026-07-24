@@ -91,7 +91,13 @@ function RegisterForm() {
 
   const { khmerNameMode, phoneMode, photoMode } = formConfig.settings
 
-  const emailValid = EMAIL_RE.test(email.trim())
+  const emailTrimmed = email.trim()
+  const phoneTrimmed = phone.trim()
+  const emailValid = emailTrimmed === '' || EMAIL_RE.test(emailTrimmed)
+  // A class that hides phone entirely has no fallback identifier, so email stays
+  // required in that case — otherwise either one, filled in, is enough.
+  const emailRequired = phoneMode === 'HIDDEN'
+  const identifierOk = emailRequired ? (emailTrimmed !== '' && emailValid) : (EMAIL_RE.test(emailTrimmed) || phoneTrimmed !== '')
   const passwordValid = password.length >= MIN_PASSWORD_LENGTH
   const passwordsMatch = password === confirmPassword
 
@@ -114,7 +120,8 @@ function RegisterForm() {
     (khmerNameMode !== 'REQUIRED' || nameKh.trim()) &&
     nameEn.trim() &&
     emailValid &&
-    (phoneMode !== 'REQUIRED' || phone.trim()) &&
+    identifierOk &&
+    (phoneMode !== 'REQUIRED' || phoneTrimmed) &&
     (photoMode !== 'REQUIRED' || photo) &&
     passwordValid &&
     passwordsMatch &&
@@ -133,8 +140,8 @@ function RegisterForm() {
           classId,
           nameKh: khmerNameMode === 'HIDDEN' ? undefined : nameKh.trim(),
           nameEn: nameEn.trim(),
-          email: email.trim(),
-          phone: phoneMode === 'HIDDEN' ? undefined : phone.trim(),
+          email: emailTrimmed || undefined,
+          phone: phoneMode === 'HIDDEN' ? undefined : phoneTrimmed || undefined,
           password,
           photo: photoMode === 'HIDDEN' ? undefined : photo || undefined,
           customFieldValues,
@@ -167,7 +174,11 @@ function RegisterForm() {
             <div className="text-4xl mb-3">✅</div>
             <h2 className="text-lg font-semibold text-slate-800">Registration submitted</h2>
             <p className="text-sm text-slate-500 mt-2">
-              Your registration is pending review. We'll email you at <span className="font-medium text-slate-700">{email}</span> once an admin approves or rejects it — once approved, log in with the email and password you just set.
+              Your registration is pending review.{' '}
+              {emailTrimmed
+                ? <>We'll email you at <span className="font-medium text-slate-700">{emailTrimmed}</span> once an admin approves or rejects it.</>
+                : <>An admin will review your request soon.</>}
+              {' '}Once approved, log in with the {emailTrimmed ? 'email' : 'phone number'} and password you just set.
             </p>
             <Link href="/" className="btn-primary inline-flex mt-6">Back to home</Link>
           </div>
@@ -245,16 +256,22 @@ function RegisterForm() {
             ))}
 
             <div className="pt-2 border-t border-slate-100">
-              <label className="form-label">Email</label>
+              <label className="form-label">
+                Email
+                {!emailRequired && <span className="text-slate-400 font-normal text-xs"> (optional if phone number is provided)</span>}
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
+                required={emailRequired}
                 placeholder="you@example.com"
               />
               {email.length > 0 && !emailValid && (
                 <p className="text-xs text-red-600 mt-1">Enter a valid email address</p>
+              )}
+              {!emailRequired && !emailTrimmed && !phoneTrimmed && (
+                <p className="text-xs text-red-600 mt-1">Enter an email or a phone number above</p>
               )}
             </div>
 

@@ -3,13 +3,29 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { PrismaService } from '../database/prisma.service';
+import { isValidEmail, looksLikeEmail, normalizePhone } from '../common/identity';
 
 @Injectable()
 export class AuthService {
   constructor(private jwtService: JwtService, private prisma: PrismaService) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+  /** `identifier` is whatever the user typed into the login field — an email
+   * address or a phone number. Routed to the matching unique column.
+   * Case-insensitive email match (not just a .toLowerCase() before the lookup)
+   * because existing accounts predate any case normalization on write — an
+   * exact-match lookup would silently break login for any account whose stored
+   * email has uppercase characters. */
+  async validateUser(identifier: string, password: string): Promise<any> {
+    const trimmed = (identifier || '').trim();
+    let user: any = null;
+    if (looksLikeEmail(trimmed)) {
+      user = await this.prisma.user.findFirst({ where: { email: { equals: trimmed, mode: 'insensitive' } } });
+    } else {
+      const normalized = normalizePhone(trimmed);
+      if (normalized) {
+        user = await this.prisma.user.findUnique({ where: { phoneNormalized: normalized } });
+      }
+    }
     if (user && (await bcrypt.compare(password, user.password))) {
       const { password, ...result } = user;
       return result;
@@ -74,15 +90,29 @@ export class AuthService {
     return { access_token: accessToken, refresh_token: refreshToken };
   }
 
-  async register(email: string, password: string, name: string, role: string, departmentId?: string) {
+  async register(email: string | undefined, password: string, name: string, role: string, departmentId?: string, phone?: string) {
     const normalizedRole = role.trim();
     if (!normalizedRole || normalizedRole.startsWith('__')) {
       throw new Error('Invalid role');
     }
+    const trimmedEmail = (email || '').trim().toLowerCase();
+    const normalizedPhone = normalizePhone(phone);
+    if (!trimmedEmail && !normalizedPhone) {
+      throw new Error('Email or phone is required');
+    }
+    if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+      throw new Error('Invalid email address');
+    }
     try {
       const hashedPassword = await bcrypt.hash(password, 12);
       const user = await this.prisma.user.create({
-        data: { email, password: hashedPassword, name, role: normalizedRole as any, ...(departmentId ? { departmentId } : {}) },
+        data: {
+          email: trimmedEmail || undefined,
+          phone: phone || undefined,
+          phoneNormalized: normalizedPhone || undefined,
+          password: hashedPassword, name, role: normalizedRole as any,
+          ...(departmentId ? { departmentId } : {}),
+        },
       });
       const loginResult = await this.login(user);
       return {
@@ -96,7 +126,8 @@ export class AuthService {
       };
     } catch (error: any) {
       if (error.code === 'P2002') {
-        throw new Error('Email already exists');
+        const target = Array.isArray(error.meta?.target) ? error.meta.target.join(',') : String(error.meta?.target || '');
+        throw new Error(target.includes('phone') ? 'Phone number already registered' : 'Email already exists');
       }
       throw error;
     }
@@ -242,7 +273,10 @@ export class AuthService {
     const updateData: any = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.email !== undefined) updateData.email = data.email;
-    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.phone !== undefined) {
+      updateData.phone = data.phone;
+      updateData.phoneNormalized = normalizePhone(data.phone) || null;
+    }
     if (data.departmentId !== undefined) updateData.departmentId = data.departmentId || null;
     if (data.role) {
       const trimmed = data.role.trim();
@@ -259,7 +293,8 @@ export class AuthService {
       });
     } catch (error: any) {
       if (error.code === 'P2002') {
-        throw new Error('Email already exists');
+        const target = Array.isArray(error.meta?.target) ? error.meta.target.join(',') : String(error.meta?.target || '');
+        throw new Error(target.includes('phone') ? 'Phone number already registered' : 'Email already exists');
       }
       throw error;
     }

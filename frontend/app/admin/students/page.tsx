@@ -223,9 +223,13 @@ function ManageStudents() {
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedGrade) return;
+    if (!newForm.email.trim() && !newForm.phone.trim()) {
+      alert('Enter an email or a phone number');
+      return;
+    }
     setAddingStudent(true);
     try {
-      const pwd = newForm.password.trim() || `student${newForm.email.split('@')[0]}`;
+      const pwd = newForm.password.trim() || `student${(newForm.email.split('@')[0] || newForm.phone.replace(/\D/g, '')) || 'account'}`;
       const reg = await apiFetch('/api/auth/register', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...newForm, password: pwd, role: 'STUDENT' }),
@@ -538,8 +542,8 @@ function ManageStudents() {
                           <input type="text" required value={newForm.name} onChange={e => setNewForm({ ...newForm, name: e.target.value })} placeholder="Full name" />
                         </div>
                         <div className="sm:col-span-2">
-                          <label className="form-label text-xs">Email *</label>
-                          <input type="email" required value={newForm.email} onChange={e => setNewForm({ ...newForm, email: e.target.value })} placeholder="student@school.edu" />
+                          <label className="form-label text-xs">Email <span className="text-slate-400 font-normal">(or phone below)</span></label>
+                          <input type="email" value={newForm.email} onChange={e => setNewForm({ ...newForm, email: e.target.value })} placeholder="student@school.edu" />
                         </div>
                         <div>
                           <label className="form-label text-xs">Password <span className="text-slate-400 font-normal">(auto)</span></label>

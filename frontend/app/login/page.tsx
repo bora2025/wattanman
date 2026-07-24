@@ -112,7 +112,7 @@ function LoginContent() {
             )}
 
             <div>
-              <label className="block text-[15px] font-semibold mb-2" style={{ color: 'var(--color-text)' }}>{t('common.email')}</label>
+              <label className="block text-[15px] font-semibold mb-2" style={{ color: 'var(--color-text)' }}>{t('common.emailOrPhone')}</label>
               <input
                 type="email"
                 name="email"
@@ -268,14 +268,14 @@ function LoginContent() {
               )}
 
               <div>
-                <label className="form-label">{t('common.email')}</label>
+                <label className="form-label">{t('common.emailOrPhone')}</label>
                 <input
-                  type="email"
+                  type="text"
                   name="email"
-                  autoComplete="email"
+                  autoComplete="username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@school.edu"
+                  placeholder="you@school.edu or 012 345 678"
                   required
                   autoFocus
                 />
