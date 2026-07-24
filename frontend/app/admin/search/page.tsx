@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import Link from 'next/link'
 import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
@@ -506,23 +507,18 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Detail Modal */}
+      {/* Detail Drawer — slides in from the right instead of a centered modal */}
       {selected && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex flex-col sm:items-start sm:justify-center sm:p-3 sm:pt-8 sm:overflow-y-auto"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-end"
           onClick={() => { setSelected(null); setFullProfile(null) }}
         >
           <div
-            className="bg-white w-full sm:rounded-2xl sm:shadow-xl sm:max-w-2xl sm:mb-8 flex flex-col mt-auto sm:mt-0 rounded-t-3xl max-h-[95dvh] sm:max-h-none"
+            className="bg-white w-full sm:w-[440px] h-full flex flex-col shadow-2xl animate-drawer-in overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
-            {/* Mobile drag handle */}
-            <div className="flex justify-center pt-3 pb-1 sm:hidden">
-              <div className="w-10 h-1 rounded-full bg-slate-200" />
-            </div>
-
             {/* Header */}
-            <div className="relative px-4 pt-2 pb-4 sm:px-5 sm:pt-5 sm:pb-5 flex-shrink-0 overflow-hidden rounded-t-3xl sm:rounded-t-2xl">
+            <div className="relative px-4 pt-5 pb-5 sm:px-5 flex-shrink-0 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-indigo-500 to-violet-600" />
               <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, white 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
               <div className="relative flex items-center gap-3">
@@ -558,12 +554,23 @@ export default function SearchPage() {
                         {selected.studentProfile?.studentNumber && <span className="text-xs text-white/70">#{selected.studentProfile.studentNumber}</span>}
                       </div>
                     </div>
-                    <button
-                      onClick={() => { setSelected(null); setFullProfile(null) }}
-                      className="p-1.5 rounded-xl hover:bg-white/15 text-white/80 hover:text-white flex-shrink-0"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {selected.role !== 'STUDENT' && selected.role !== 'PARENT' && (
+                        <Link
+                          href={`/admin/employees/${selected.id}/cv`}
+                          title="Curriculum Vitae"
+                          className="p-1.5 rounded-xl hover:bg-white/15 text-white/80 hover:text-white"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => { setSelected(null); setFullProfile(null) }}
+                        className="p-1.5 rounded-xl hover:bg-white/15 text-white/80 hover:text-white"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -605,7 +612,7 @@ export default function SearchPage() {
                     </div>
                   </div>
 
-                  <div className="p-4 sm:p-5 overflow-y-auto flex-1" style={{ maxHeight: 'calc(95dvh - 200px)' }}>
+                  <div className="p-4 sm:p-5 overflow-y-auto flex-1 min-h-0">
                     {fullProfileLoading ? (
                       <div className="text-center py-10">
                         <div className="inline-block w-7 h-7 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
