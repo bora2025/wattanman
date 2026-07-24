@@ -34,6 +34,19 @@ function dataUriToBlobUrl(dataUri: string): string | null {
  * safe to call again after re-renders). Plain DOM manipulation rather than React
  * since this runs over a dangerouslySetInnerHTML subtree React doesn't manage. */
 function enhanceAudioPlayers(container: HTMLElement): () => void {
+  // Temporary instrumentation: a click on the visible native play button never
+  // reaches the <audio> element's own click listener, which means some other
+  // element is absorbing the pointer event at that screen position. A capture-
+  // phase listener on document fires before any descendant can stop it, so
+  // this pins down exactly what's actually receiving the click.
+  if (!(window as any).__audioDebugGlobalClick) {
+    ;(window as any).__audioDebugGlobalClick = true
+    document.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement
+      console.info('[audio-debug] document-capture click target:', t?.tagName, t?.className, t)
+    }, true)
+  }
+
   const blobUrls: string[] = []
   container.querySelectorAll('audio').forEach((audio) => {
     if (audio.dataset.enhanced) return
