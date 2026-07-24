@@ -53,6 +53,28 @@ function enhanceAudioPlayers(container: HTMLElement): () => void {
     audio.dataset.enhanced = '1'
     audio.className = `${audio.className} max-w-full`.trim()
 
+    // Runs automatically, no manual console interaction needed — checks what
+    // element document.elementFromPoint actually finds at the play button's
+    // on-screen position, right after the browser has settled into its final
+    // layout. If something else is stacked on top, this names it directly.
+    setTimeout(() => {
+      const r = audio.getBoundingClientRect()
+      if (r.width === 0 && r.height === 0) {
+        console.info('[audio-debug] hit-test: audio element has ZERO size', r)
+        return
+      }
+      const x = r.left + 20
+      const y = r.top + r.height / 2
+      const hit = document.elementFromPoint(x, y) as HTMLElement | null
+      console.info('[audio-debug] hit-test at play-button position:', {
+        rect: { left: r.left, top: r.top, width: r.width, height: r.height },
+        isAudioItself: hit === audio,
+        hitTag: hit?.tagName,
+        hitClass: hit?.className,
+        hitElement: hit,
+      })
+    }, 500)
+
     const src = audio.getAttribute('src')
     if (src?.startsWith('data:')) {
       const blobUrl = dataUriToBlobUrl(src)
