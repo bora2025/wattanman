@@ -39,7 +39,7 @@ export function ExamQuestionsEditor({ questions, onChange, durationMinutes }: { 
           👁 Preview
         </button>
       </div>
-      <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+      <div className="space-y-3">
         {questions.map((q, i) => (
           <div key={i} className="border border-slate-200 rounded-xl p-3 bg-slate-50 relative">
             <button type="button" onClick={() => removeQuestion(i)} disabled={questions.length <= 1} className="absolute top-2 right-2 text-red-400 text-xs disabled:opacity-30">✕</button>
