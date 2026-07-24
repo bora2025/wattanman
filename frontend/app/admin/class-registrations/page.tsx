@@ -31,6 +31,7 @@ type FieldMode = 'REQUIRED' | 'OPTIONAL' | 'HIDDEN'
 interface ClassRegistrationSettings {
   khmerNameMode: FieldMode
   phoneMode: FieldMode
+  emailMode: FieldMode
   photoMode: FieldMode
 }
 
@@ -213,20 +214,25 @@ export default function AdminClassRegistrationsPage() {
 
 const MODE_LABELS: Record<FieldMode, string> = { REQUIRED: 'Required', OPTIONAL: 'Optional', HIDDEN: 'Hidden' }
 
-function ModeToggle({ label, value, onChange }: { label: string; value: FieldMode; onChange: (m: FieldMode) => void }) {
+function ModeToggle({ label, value, onChange, disableHidden }: { label: string; value: FieldMode; onChange: (m: FieldMode) => void; disableHidden?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3 border-b border-slate-100 last:border-0">
       <span className="text-sm font-medium text-slate-700">{label}</span>
       <div className="flex rounded-lg border border-slate-200 overflow-hidden">
-        {(['REQUIRED', 'OPTIONAL', 'HIDDEN'] as FieldMode[]).map(m => (
-          <button
-            key={m}
-            onClick={() => onChange(m)}
-            className={`px-3 py-1.5 text-xs font-medium ${value === m ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
-          >
-            {MODE_LABELS[m]}
-          </button>
-        ))}
+        {(['REQUIRED', 'OPTIONAL', 'HIDDEN'] as FieldMode[]).map(m => {
+          const disabled = m === 'HIDDEN' && disableHidden && value !== 'HIDDEN'
+          return (
+            <button
+              key={m}
+              onClick={() => onChange(m)}
+              disabled={disabled}
+              title={disabled ? 'Email and Phone cannot both be hidden' : undefined}
+              className={`px-3 py-1.5 text-xs font-medium ${value === m ? 'bg-indigo-600 text-white' : disabled ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+            >
+              {MODE_LABELS[m]}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
@@ -248,6 +254,7 @@ function FormSettingsView() {
   const [newLabel, setNewLabel] = useState('')
   const [newRequired, setNewRequired] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<ClassRegistrationField | null>(null)
+  const [settingsError, setSettingsError] = useState<string | null>(null)
 
   const { data: settings, isLoading: settingsLoading } = useQuery<ClassRegistrationSettings>({
     queryKey: ['admin-registration-settings'],
@@ -274,10 +281,15 @@ function FormSettingsView() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch),
       })
-      if (!r.ok) throw new Error('Failed to save')
+      if (!r.ok) {
+        let msg = 'Failed to save'
+        try { const j = await r.json(); if (j?.message) msg = j.message } catch {}
+        throw new Error(msg)
+      }
       return r.json()
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-registration-settings'] }),
+    onSuccess: () => { setSettingsError(null); qc.invalidateQueries({ queryKey: ['admin-registration-settings'] }) },
+    onError: (e: any) => setSettingsError(e?.message || 'Failed to save'),
   })
 
   const createField = useMutation({
@@ -347,7 +359,8 @@ function FormSettingsView() {
     <div className="space-y-6 max-w-2xl">
       <div className="bg-white border border-slate-100 rounded-xl p-4">
         <h2 className="text-sm font-semibold text-slate-800 mb-1">Built-in fields</h2>
-        <p className="text-xs text-slate-500 mb-2">Listed in the same order students see them. Class, English Name, and Password are always required to create a student's account and can't be changed. Email is required unless Phone is collected — a student can register with either one.</p>
+        <p className="text-xs text-slate-500 mb-2">Listed in the same order students see them. Class, English Name, and Password are always required to create a student's account and can't be changed. Email and Phone can each be set independently, but not both Hidden at once — a student needs at least one to log in.</p>
+        {settingsError && <div className="mb-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{settingsError}</div>}
         {settingsLoading || !settings ? (
           <div className="text-sm text-slate-400 py-4">Loading…</div>
         ) : (
@@ -355,9 +368,9 @@ function FormSettingsView() {
             <LockedFieldRow label="Class" />
             <ModeToggle label="Khmer Name" value={settings.khmerNameMode} onChange={(m) => updateSettings.mutate({ khmerNameMode: m })} />
             <LockedFieldRow label="English Name" />
-            <ModeToggle label="Phone" value={settings.phoneMode} onChange={(m) => updateSettings.mutate({ phoneMode: m })} />
+            <ModeToggle label="Phone" value={settings.phoneMode} onChange={(m) => updateSettings.mutate({ phoneMode: m })} disableHidden={settings.emailMode === 'HIDDEN'} />
+            <ModeToggle label="Email" value={settings.emailMode} onChange={(m) => updateSettings.mutate({ emailMode: m })} disableHidden={settings.phoneMode === 'HIDDEN'} />
             <ModeToggle label="Photo" value={settings.photoMode} onChange={(m) => updateSettings.mutate({ photoMode: m })} />
-            <LockedFieldRow label="Email" note={settings.phoneMode === 'HIDDEN' ? 'Always required' : 'Required unless phone is given'} />
             <LockedFieldRow label="Password" />
           </div>
         )}

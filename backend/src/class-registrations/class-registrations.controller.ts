@@ -28,7 +28,7 @@ export class ClassRegistrationsController {
       classId: string;
       nameKh?: string;
       nameEn: string;
-      email: string;
+      email?: string;
       phone?: string;
       password: string;
       photo?: string;
@@ -49,7 +49,7 @@ export class ClassRegistrationsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Patch('settings')
-  updateSettings(@Body() body: { khmerNameMode?: string; phoneMode?: string; photoMode?: string }) {
+  updateSettings(@Body() body: { khmerNameMode?: string; phoneMode?: string; emailMode?: string; photoMode?: string }) {
     return this.svc.updateSettings(body);
   }
 

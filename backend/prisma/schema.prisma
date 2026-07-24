@@ -233,6 +233,7 @@ model ClassRegistrationSettings {
   id            String   @id @default("singleton")
   khmerNameMode String   @default("REQUIRED") // REQUIRED | OPTIONAL | HIDDEN
   phoneMode     String   @default("REQUIRED") // REQUIRED | OPTIONAL | HIDDEN
+  emailMode     String   @default("REQUIRED") // REQUIRED | OPTIONAL | HIDDEN — emailMode and phoneMode can't both be HIDDEN (no way to create a login otherwise)
   photoMode     String   @default("OPTIONAL") // REQUIRED | OPTIONAL | HIDDEN
   updatedAt     DateTime @updatedAt
 }

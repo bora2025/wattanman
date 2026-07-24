@@ -543,7 +543,7 @@ function ManageStudents() {
                         </div>
                         <div className="sm:col-span-2">
                           <label className="form-label text-xs">Email <span className="text-slate-400 font-normal">(or phone below)</span></label>
-                          <input type="email" value={newForm.email} onChange={e => setNewForm({ ...newForm, email: e.target.value })} placeholder="student@school.edu" />
+                          <input type="text" value={newForm.email} onChange={e => setNewForm({ ...newForm, email: e.target.value })} placeholder="student@school.edu" />
                         </div>
                         <div>
                           <label className="form-label text-xs">Password <span className="text-slate-400 font-normal">(auto)</span></label>

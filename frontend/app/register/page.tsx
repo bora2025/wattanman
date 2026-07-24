@@ -16,12 +16,12 @@ interface PublicClass {
 type FieldMode = 'REQUIRED' | 'OPTIONAL' | 'HIDDEN'
 
 interface FormConfig {
-  settings: { khmerNameMode: FieldMode; phoneMode: FieldMode; photoMode: FieldMode }
+  settings: { khmerNameMode: FieldMode; phoneMode: FieldMode; emailMode: FieldMode; photoMode: FieldMode }
   fields: { id: string; key: string; label: string; required: boolean }[]
 }
 
 const DEFAULT_FORM_CONFIG: FormConfig = {
-  settings: { khmerNameMode: 'REQUIRED', phoneMode: 'REQUIRED', photoMode: 'OPTIONAL' },
+  settings: { khmerNameMode: 'REQUIRED', phoneMode: 'REQUIRED', emailMode: 'REQUIRED', photoMode: 'OPTIONAL' },
   fields: [],
 }
 
@@ -89,18 +89,21 @@ function RegisterForm() {
     })()
   }, [])
 
-  const { khmerNameMode, phoneMode, photoMode } = formConfig.settings
+  const { khmerNameMode, phoneMode, emailMode, photoMode } = formConfig.settings
 
   const emailTrimmed = email.trim()
   const phoneTrimmed = phone.trim()
   const emailFormatOk = EMAIL_RE.test(emailTrimmed)
-  // A class that hides phone entirely has no fallback identifier, so email stays
-  // required — and must be well-formed — in that case. Otherwise a phone number
-  // alone is enough: whatever's typed into Email (even leftover/duplicate text
-  // that isn't a valid address) never blocks submission once a phone is given —
-  // it's simply left out of what gets submitted.
-  const emailRequired = phoneMode === 'HIDDEN'
-  const identifierOk = emailRequired ? (emailTrimmed !== '' && emailFormatOk) : (emailFormatOk || phoneTrimmed !== '')
+
+  // Email and Phone are each independently Required/Optional/Hidden (admin-configured,
+  // never both Hidden at once — enforced server-side too). Whichever one is REQUIRED
+  // must be present/valid on its own; if NEITHER is required, at least one of them
+  // still has to be filled in, mirroring the backend's baseline safety net.
+  const identifierOk =
+    (emailMode !== 'REQUIRED' || (emailTrimmed !== '' && emailFormatOk)) &&
+    (phoneMode !== 'REQUIRED' || phoneTrimmed !== '') &&
+    (emailMode === 'REQUIRED' || phoneMode === 'REQUIRED' || emailFormatOk || phoneTrimmed !== '')
+
   const passwordValid = password.length >= MIN_PASSWORD_LENGTH
   const passwordsMatch = password === confirmPassword
 
@@ -123,7 +126,6 @@ function RegisterForm() {
     (khmerNameMode !== 'REQUIRED' || nameKh.trim()) &&
     nameEn.trim() &&
     identifierOk &&
-    (phoneMode !== 'REQUIRED' || phoneTrimmed) &&
     (photoMode !== 'REQUIRED' || photo) &&
     passwordValid &&
     passwordsMatch &&
@@ -144,7 +146,7 @@ function RegisterForm() {
           nameEn: nameEn.trim(),
           // Only ever send email if it's actually a valid address — if it isn't
           // (e.g. leftover/duplicate text) and a phone was given, it's just dropped.
-          email: emailFormatOk ? emailTrimmed : undefined,
+          email: emailMode === 'HIDDEN' ? undefined : (emailFormatOk ? emailTrimmed : undefined),
           phone: phoneMode === 'HIDDEN' ? undefined : phoneTrimmed || undefined,
           password,
           photo: photoMode === 'HIDDEN' ? undefined : photo || undefined,
@@ -231,6 +233,45 @@ function RegisterForm() {
               </div>
             )}
 
+            {emailMode !== 'HIDDEN' && (
+              <div>
+                <label className="form-label">
+                  Email
+                  {emailMode === 'OPTIONAL' && (
+                    <span className="text-slate-400 font-normal text-xs">
+                      {' '}({phoneTrimmed ? 'you can leave this blank — you already entered a phone number above' : 'optional'})
+                    </span>
+                  )}
+                </label>
+                <input
+                  // type="text", not "email" — the browser's own type="email" format
+                  // validation would block submission natively even when our own JS
+                  // validation intentionally allows non-email text here once a phone
+                  // number covers the requirement, regardless of the required attribute.
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required={emailMode === 'REQUIRED'}
+                  placeholder={emailMode !== 'REQUIRED' && phoneTrimmed ? 'Leave blank' : 'you@example.com'}
+                />
+                {email.length > 0 && !emailFormatOk && emailMode !== 'REQUIRED' && phoneTrimmed ? (
+                  // A phone number already satisfies the requirement, so this is just an
+                  // FYI — it won't block submission, and won't be sent since it isn't a
+                  // valid email.
+                  <p className="text-xs text-slate-400 mt-1">
+                    This won't be submitted since it isn't a valid email — you're all set with the phone number entered above.
+                  </p>
+                ) : email.length > 0 && !emailFormatOk && /^[\d\s+()-]+$/.test(emailTrimmed) ? (
+                  <p className="text-xs text-red-600 mt-1">That looks like a phone number{phoneMode !== 'HIDDEN' ? ' — enter it in the Phone Number field above instead, and leave this blank' : ''}.</p>
+                ) : email.length > 0 && !emailFormatOk && (
+                  <p className="text-xs text-red-600 mt-1">Enter a valid email address</p>
+                )}
+                {emailMode !== 'REQUIRED' && !emailTrimmed && !phoneTrimmed && phoneMode !== 'REQUIRED' && (
+                  <p className="text-xs text-red-600 mt-1">Enter an email or a phone number above</p>
+                )}
+              </div>
+            )}
+
             {photoMode !== 'HIDDEN' && (
               <div>
                 <label className="form-label">
@@ -260,39 +301,6 @@ function RegisterForm() {
             ))}
 
             <div className="pt-2 border-t border-slate-100">
-              <label className="form-label">
-                Email
-                {!emailRequired && (
-                  <span className="text-slate-400 font-normal text-xs">
-                    {' '}({phoneTrimmed ? 'you can leave this blank — you already entered a phone number above' : 'optional if you enter a phone number above'})
-                  </span>
-                )}
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required={emailRequired}
-                placeholder={!emailRequired && phoneTrimmed ? 'Leave blank' : 'you@example.com'}
-              />
-              {email.length > 0 && !emailFormatOk && phoneTrimmed ? (
-                // A phone number already satisfies the requirement, so this is just an
-                // FYI — it won't block submission, and won't be sent since it isn't a
-                // valid email.
-                <p className="text-xs text-slate-400 mt-1">
-                  This won't be submitted since it isn't a valid email — you're all set with the phone number entered above.
-                </p>
-              ) : email.length > 0 && !emailFormatOk && /^[\d\s+()-]+$/.test(emailTrimmed) ? (
-                <p className="text-xs text-red-600 mt-1">That looks like a phone number — enter it in the Phone Number field above instead, and leave this blank.</p>
-              ) : email.length > 0 && !emailFormatOk && (
-                <p className="text-xs text-red-600 mt-1">Enter a valid email address</p>
-              )}
-              {!emailRequired && !emailTrimmed && !phoneTrimmed && (
-                <p className="text-xs text-red-600 mt-1">Enter an email or a phone number above</p>
-              )}
-            </div>
-
-            <div>
               <label className="form-label">Password</label>
               <input
                 type="password"

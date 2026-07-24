@@ -1281,7 +1281,7 @@ function ManageClasses() {
                           </div>
                           <div>
                             <label className="form-label">Email <span className="text-slate-400 font-normal text-xs">(or phone below)</span></label>
-                            <input type="email" value={newStudentForm.email} onChange={(e) => setNewStudentForm({ ...newStudentForm, email: e.target.value })} />
+                            <input type="text" value={newStudentForm.email} onChange={(e) => setNewStudentForm({ ...newStudentForm, email: e.target.value })} placeholder="student@school.edu" />
                           </div>
                           <div>
                             <label className="form-label">Password <span className="text-slate-400 text-xs">(optional — auto-generated if blank)</span></label>

@@ -48,9 +48,9 @@ export class ClassRegistrationsService {
     return this.getOrCreateSettings();
   }
 
-  async updateSettings(body: { khmerNameMode?: string; phoneMode?: string; photoMode?: string }) {
+  async updateSettings(body: { khmerNameMode?: string; phoneMode?: string; emailMode?: string; photoMode?: string }) {
     const data: Record<string, string> = {};
-    for (const key of ['khmerNameMode', 'phoneMode', 'photoMode'] as const) {
+    for (const key of ['khmerNameMode', 'phoneMode', 'emailMode', 'photoMode'] as const) {
       const v = body?.[key];
       if (v === undefined) continue;
       if (!FIELD_MODES.includes(v as FieldMode)) {
@@ -58,7 +58,12 @@ export class ClassRegistrationsService {
       }
       data[key] = v;
     }
-    await this.getOrCreateSettings();
+    const current = await this.getOrCreateSettings();
+    const nextEmailMode = data.emailMode ?? current.emailMode;
+    const nextPhoneMode = data.phoneMode ?? current.phoneMode;
+    if (nextEmailMode === 'HIDDEN' && nextPhoneMode === 'HIDDEN') {
+      throw new BadRequestException('Email and Phone cannot both be hidden — a student needs at least one to create a login');
+    }
     return this.prisma.classRegistrationSettings.update({ where: { id: 'singleton' }, data });
   }
 
@@ -160,7 +165,6 @@ export class ClassRegistrationsService {
 
     if (!body?.classId) throw new BadRequestException('classId is required');
     if (!nameEn) throw new BadRequestException('English name is required');
-    if (!email && !phone) throw new BadRequestException('Email or phone number is required');
     if (email && !isValidEmail(email)) throw new BadRequestException('Invalid email address');
     if (password.length < MIN_PASSWORD_LENGTH) {
       throw new BadRequestException(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
@@ -170,13 +174,16 @@ export class ClassRegistrationsService {
     if (settings.khmerNameMode === 'REQUIRED' && !nameKh) {
       throw new BadRequestException('Khmer name is required');
     }
-    // A class that hides phone entirely has no fallback identifier, so email
-    // stays required in that case even though it's otherwise optional-if-phone-given.
-    if (settings.phoneMode === 'HIDDEN' && !email) {
+    if (settings.emailMode === 'REQUIRED' && !email) {
       throw new BadRequestException('Email is required');
     }
     if (settings.phoneMode === 'REQUIRED' && !phone) {
       throw new BadRequestException('Phone number is required');
+    }
+    // Baseline safety net regardless of mode — e.g. both set to Optional and the
+    // student left both blank — since the account still needs one identifier.
+    if (!email && !phone) {
+      throw new BadRequestException('Email or phone number is required');
     }
     if (settings.photoMode === 'REQUIRED' && !body.photo) {
       throw new BadRequestException('Photo is required');
@@ -215,7 +222,7 @@ export class ClassRegistrationsService {
         classId: body.classId,
         nameKh: settings.khmerNameMode === 'HIDDEN' ? undefined : nameKh || undefined,
         nameEn,
-        email: email || undefined,
+        email: settings.emailMode === 'HIDDEN' ? undefined : email || undefined,
         phone: settings.phoneMode === 'HIDDEN' ? undefined : phone || undefined,
         passwordHash,
         photo: settings.photoMode === 'HIDDEN' ? undefined : body.photo || undefined,
