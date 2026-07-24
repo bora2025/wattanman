@@ -3,14 +3,15 @@
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, type DragEndEvent } from '@dnd-kit/core'
 import MathText from '../MathText'
 
-/** Authoring editor for Drag the Words. `data: { text: string }` using *word* markup. */
+/** Authoring editor for Drag the Words. `data: { text: string, distractors?: string[] }` using *word* markup. */
 export function DragWordsEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
   const text: string = data?.text ?? ''
+  const distractors: string[] = data?.distractors ?? []
   const preview = text.split(/(\*[^*]+\*)/g).filter((s: string) => s.length > 0)
   return (
     <div className="space-y-2">
       <p className="text-xs text-slate-500">Wrap each draggable word in *asterisks*, e.g. &quot;The *cat* sat on the *mat*.&quot;</p>
-      <textarea value={text} onChange={e => onChange({ text: e.target.value })} rows={3} placeholder="The *cat* sat on the *mat*." className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
+      <textarea value={text} onChange={e => onChange({ ...data, text: e.target.value })} rows={3} placeholder="The *cat* sat on the *mat*." className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
       {text && (
         <div className="text-sm bg-white border rounded-lg p-2 leading-relaxed">
           {preview.map((seg, i) => (
@@ -20,6 +21,16 @@ export function DragWordsEditor({ data, onChange }: { data: any; onChange: (d: a
           ))}
         </div>
       )}
+      <div>
+        <label className="text-xs text-slate-500 block mb-1">Extra decoy words <span className="text-slate-400">(optional, comma-separated — shown in the word bank but don&apos;t fit any blank)</span></label>
+        <input
+          type="text"
+          value={distractors.join(',')}
+          onChange={e => onChange({ ...data, distractors: e.target.value.split(',') })}
+          placeholder="e.g. Cardiff, Cork, Derry"
+          className="w-full border rounded-lg px-3 py-2 text-sm"
+        />
+      </div>
     </div>
   )
 }

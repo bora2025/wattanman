@@ -39,7 +39,7 @@ export function h5pDefaultData(type: H5PType): any {
     case 'SORT_PARAGRAPHS':
       return { paragraphs: [{ id: uid('p'), text: '' }, { id: uid('p'), text: '' }] }
     case 'DRAG_WORDS':
-      return { text: '' }
+      return { text: '', distractors: [] }
     case 'DRAG_DROP':
       return { backgroundImage: '', zones: [], items: [] }
     case 'SPEAK_WORDS':
@@ -94,7 +94,9 @@ export function sanitizeH5PForPreview(type: H5PType, data: any): any {
     case 'DRAG_WORDS': {
       const parsed = parseDragWordsText(d.text || '')
       const segments = parsed.map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id } : s))
-      const wordBank = shuffle(parsed.filter((s) => s.type === 'blank').map((s: any) => s.answer))
+      const answers = parsed.filter((s) => s.type === 'blank').map((s: any) => s.answer)
+      const cleanDistractors = (d.distractors || []).map((w: string) => w.trim()).filter(Boolean)
+      const wordBank = shuffle([...answers, ...cleanDistractors])
       return { segments, wordBank }
     }
     case 'DRAG_DROP':

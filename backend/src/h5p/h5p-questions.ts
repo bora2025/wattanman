@@ -74,7 +74,10 @@ export function sanitizeH5PInput(type: H5PType, raw: any): any {
       if (!dragText) throw new BadRequestException('Drag the Words needs body text');
       const blanks = parseDragWordsText(dragText).filter((s) => s.type === 'blank');
       if (blanks.length < 1) throw new BadRequestException('Drag the Words needs at least one *word* marked as a blank');
-      return { text: dragText };
+      const distractors = (Array.isArray(raw?.distractors) ? raw.distractors : [])
+        .map((w: any) => String(w).trim())
+        .filter(Boolean);
+      return { text: dragText, distractors };
     }
 
     case 'DRAG_DROP': {
@@ -161,7 +164,8 @@ export function sanitizeH5PForStudent(type: H5PType, data: any): any {
     case 'DRAG_WORDS': {
       const parsed = parseDragWordsText(d.text || '');
       const segments = parsed.map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id } : s));
-      const wordBank = shuffle(parsed.filter((s) => s.type === 'blank').map((s: any) => s.answer));
+      const answers = parsed.filter((s) => s.type === 'blank').map((s: any) => s.answer);
+      const wordBank = shuffle([...answers, ...(d.distractors || [])]);
       return { segments, wordBank };
     }
 
