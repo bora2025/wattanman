@@ -47,6 +47,7 @@ interface Student {
   id: string;
   studentNumber: string;
   name: string;
+  nameKh?: string;
   email: string;
   phone: string;
   photo: string | null;
@@ -237,10 +238,10 @@ function ManageClasses() {
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [classStudents, setClassStudents] = useState<Student[]>([]);
   const [availableStudents, setAvailableStudents] = useState<Student[]>([]);
-  const [newStudentForm, setNewStudentForm] = useState({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
+  const [newStudentForm, setNewStudentForm] = useState({ name: '', nameKh: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
   const [showAddStudentForm, setShowAddStudentForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
-  const [editStudentData, setEditStudentData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '', parentId: '' });
+  const [editStudentData, setEditStudentData] = useState({ name: '', nameKh: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '', parentId: '' });
   const [editStudentCustomFields, setEditStudentCustomFields] = useState<Record<string, string | string[]>>({});
   const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([]);
   const [parents, setParents] = useState<ParentOption[]>([]);
@@ -614,7 +615,7 @@ function ManageClasses() {
 
   const handleManageStudents = async (cls: Class) => {
     setSelectedClass(cls);
-    setNewStudentForm({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
+    setNewStudentForm({ name: '', nameKh: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
     setShowAddStudentForm(false);
     await fetchClassStudents(cls.id);
     await fetchAvailableStudents(cls.id);
@@ -672,7 +673,7 @@ function ManageClasses() {
     setEditingStudent(student.id);
     setSaveError(null);
     setPhotoPreviewError(false);
-    setEditStudentData({ name: student.name || '', sex: student.sex || '', phone: student.phone || '', photo: student.photo || '', dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '', address: student.address || '', generation: student.generation || '', studentNumber: student.studentNumber || '', parentId: student.parentId || '' });
+    setEditStudentData({ name: student.name || '', nameKh: student.nameKh || '', sex: student.sex || '', phone: student.phone || '', photo: student.photo || '', dateOfBirth: student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '', address: student.address || '', generation: student.generation || '', studentNumber: student.studentNumber || '', parentId: student.parentId || '' });
     setEditStudentCustomFields(student.customFieldValues || {});
     // Lazy-load parent list once
     if (parents.length === 0) {
@@ -734,13 +735,14 @@ function ManageClasses() {
         });
         if (addRes.ok) {
           const addedStudent = await addRes.json();
-          if (newStudentForm.sex || newStudentForm.photo || newStudentForm.dateOfBirth || newStudentForm.address || newStudentForm.generation || newStudentForm.studentNumber) {
+          if (newStudentForm.nameKh || newStudentForm.sex || newStudentForm.photo || newStudentForm.dateOfBirth || newStudentForm.address || newStudentForm.generation || newStudentForm.studentNumber) {
             const studentId = addedStudent.id || addedStudent.student?.id;
             if (studentId) {
               await apiFetch(`/api/classes/${selectedClass.id}/students/${studentId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                  ...(newStudentForm.nameKh ? { nameKh: newStudentForm.nameKh } : {}),
                   ...(newStudentForm.sex ? { sex: newStudentForm.sex } : {}),
                   ...(newStudentForm.photo ? { photo: newStudentForm.photo } : {}),
                   ...(newStudentForm.dateOfBirth ? { dateOfBirth: newStudentForm.dateOfBirth } : {}),
@@ -751,7 +753,7 @@ function ManageClasses() {
               });
             }
           }
-          setNewStudentForm({ name: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
+          setNewStudentForm({ name: '', nameKh: '', email: '', password: '', sex: '', photo: '', phone: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
           setShowAddStudentForm(false);
           await fetchClassStudents(selectedClass.id);
           await fetchAvailableStudents(selectedClass.id);
@@ -1289,6 +1291,10 @@ function ManageClasses() {
                             <input type="text" value={newStudentForm.name} onChange={(e) => setNewStudentForm({ ...newStudentForm, name: e.target.value })} required />
                           </div>
                           <div>
+                            <label className="form-label">Khmer Name</label>
+                            <input type="text" value={newStudentForm.nameKh} onChange={(e) => setNewStudentForm({ ...newStudentForm, nameKh: e.target.value })} placeholder="Khmer name" />
+                          </div>
+                          <div>
                             <label className="form-label">Email <span className="text-slate-400 font-normal text-xs">(or phone below)</span></label>
                             <input type="text" value={newStudentForm.email} onChange={(e) => setNewStudentForm({ ...newStudentForm, email: e.target.value })} placeholder="student@school.edu" />
                           </div>
@@ -1389,7 +1395,7 @@ function ManageClasses() {
                                         {s.photo ? <img src={s.photo} alt={s.name} className="w-full h-full object-cover" /> : s.name.charAt(0).toUpperCase()}
                                       </div>
                                     </td>
-                                    <td className="px-3 py-2 font-medium text-slate-800">{s.name}</td>
+                                    <td className="px-3 py-2 font-medium text-slate-800">{s.name}{s.nameKh && <span className="text-slate-400 font-normal"> · {s.nameKh}</span>}</td>
                                     <td className="px-3 py-2">
                                       {s.sex ? (
                                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${s.sex === 'MALE' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>
@@ -1457,6 +1463,10 @@ function ManageClasses() {
                         <div>
                           <label className="form-label text-xs">Name</label>
                           <input type="text" value={editStudentData.name} onChange={(e) => setEditStudentData({ ...editStudentData, name: e.target.value })} placeholder="Student name" />
+                        </div>
+                        <div>
+                          <label className="form-label text-xs">Khmer Name</label>
+                          <input type="text" value={editStudentData.nameKh} onChange={(e) => setEditStudentData({ ...editStudentData, nameKh: e.target.value })} placeholder="Khmer name" />
                         </div>
                         <div>
                           <label className="form-label text-xs">Sex</label>

@@ -5,6 +5,7 @@ interface CustomFieldDef { key: string; label: string }
 interface ExportableStudent {
   studentNumber?: string;
   name: string;
+  nameKh?: string | null;
   email?: string | null;
   phone?: string | null;
   sex?: string | null;
@@ -31,7 +32,7 @@ export function downloadStudentsCsv(
   includeClassColumn = false,
 ) {
   const headers = [
-    'Student Number', 'Name', 'Email', 'Phone', 'Sex', 'Date of Birth', 'Address', 'Generation',
+    'Student Number', 'Name', 'Khmer Name', 'Email', 'Phone', 'Sex', 'Date of Birth', 'Address', 'Generation',
     ...(includeClassColumn ? ['Class'] : []),
     ...customFieldDefs.map(f => f.label),
   ];
@@ -39,6 +40,7 @@ export function downloadStudentsCsv(
   const rows = students.map(s => [
     s.studentNumber || '',
     s.name || '',
+    s.nameKh || '',
     s.email || '',
     s.phone || '',
     s.sex || '',

@@ -112,6 +112,7 @@ export class ClassesService {
       studentNumber: s.studentNumber || '',
       userId: s.userId,
       name: s.user.name,
+      nameKh: s.nameKh || '',
       email: s.user.email,
       phone: s.user.phone || '',
       qrCode: s.qrCode,
@@ -149,6 +150,7 @@ export class ClassesService {
         studentNumber: s.studentNumber || '',
         userId: s.userId,
         name: s.user.name,
+        nameKh: s.nameKh || '',
         email: s.user.email,
         phone: s.user.phone || '',
         qrCode: s.qrCode,
@@ -571,9 +573,10 @@ export class ClassesService {
     return url;
   }
 
-  async updateStudent(studentId: string, data: { name?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string; studentNumber?: string; parentId?: string | null; customFieldValues?: Record<string, string> }) {
+  async updateStudent(studentId: string, data: { name?: string; nameKh?: string; sex?: string; phone?: string; photo?: string; dateOfBirth?: string; address?: string; generation?: string; studentNumber?: string; parentId?: string | null; customFieldValues?: Record<string, string> }) {
     // Update student fields (sex, photo, dateOfBirth, address, generation, studentNumber, parentId)
     const studentData: any = {};
+    if (data.nameKh !== undefined) studentData.nameKh = data.nameKh;
     if (data.sex !== undefined) studentData.sex = data.sex;
     if (data.photo !== undefined) studentData.photo = this.convertGoogleDriveUrl(data.photo || '');
     if (data.dateOfBirth !== undefined) studentData.dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
@@ -620,6 +623,7 @@ export class ClassesService {
       studentNumber: student.studentNumber || '',
       userId: student.userId,
       name: updatedUser?.name || student.user.name,
+      nameKh: student.nameKh || '',
       email: updatedUser?.email || student.user.email,
       phone: updatedUser?.phone || student.user.phone || '',
       qrCode: student.qrCode,
@@ -628,6 +632,8 @@ export class ClassesService {
       dateOfBirth: student.dateOfBirth,
       address: student.address || '',
       generation: student.generation || '',
+      customFieldValues: student.customFieldValues || {},
+      parentId: student.parentId,
       className: student.class?.name || null,
     };
   }

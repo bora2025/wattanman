@@ -12,7 +12,7 @@ import { downloadStudentsCsv } from '../../../lib/exportCsv';
 interface StudyYear { id: string; year: number; label: string | null; isCurrent: boolean }
 interface Grade { id: string; name: string; subject: string; teacher?: { name: string }; studyYearId?: string }
 interface Student {
-  id: string; userId: string; studentNumber: string; name: string; email: string; phone: string;
+  id: string; userId: string; studentNumber: string; name: string; nameKh?: string; email: string; phone: string;
   photo: string | null; sex: string | null; dateOfBirth: string | null;
   address: string; generation?: string; parentId?: string | null;
   customFieldValues?: Record<string, string | string[]>;
@@ -51,7 +51,7 @@ function ManageStudents() {
 
   /* â”€â”€ edit â”€â”€ */
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState({ name: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '', parentId: '' });
+  const [editData, setEditData] = useState({ name: '', nameKh: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '', parentId: '' });
   const [editCustomFields, setEditCustomFields] = useState<Record<string, string | string[]>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -61,7 +61,7 @@ function ManageStudents() {
 
   /* â”€â”€ add new student â”€â”€ */
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newForm, setNewForm] = useState({ name: '', email: '', password: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
+  const [newForm, setNewForm] = useState({ name: '', nameKh: '', email: '', password: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
   const [addingStudent, setAddingStudent] = useState(false);
 
   /* â”€â”€ CSV â”€â”€ */
@@ -175,7 +175,7 @@ function ManageStudents() {
     setEditingId(s.id);
     setSaveError(null);
     setEditData({
-      name: s.name || '', sex: s.sex || '', phone: s.phone || '', photo: s.photo || '',
+      name: s.name || '', nameKh: s.nameKh || '', sex: s.sex || '', phone: s.phone || '', photo: s.photo || '',
       dateOfBirth: s.dateOfBirth ? s.dateOfBirth.slice(0, 10) : '',
       address: s.address || '', generation: s.generation || '',
       studentNumber: s.studentNumber || '', parentId: s.parentId || '',
@@ -243,7 +243,7 @@ function ManageStudents() {
       });
       if (!add.ok) { const d = await add.json(); alert(d.message || 'Failed to add to class'); return; }
       const added = await add.json();
-      const fields = ['sex', 'photo', 'dateOfBirth', 'address', 'generation', 'studentNumber'] as const;
+      const fields = ['nameKh', 'sex', 'photo', 'dateOfBirth', 'address', 'generation', 'studentNumber'] as const;
       if (fields.some(f => newForm[f])) {
         const sid = added.id || added.student?.id;
         if (sid) await apiFetch(`/api/classes/${selectedGrade.id}/students/${sid}`, {
@@ -251,7 +251,7 @@ function ManageStudents() {
           body: JSON.stringify(Object.fromEntries(fields.filter(f => newForm[f]).map(f => [f, newForm[f]]))),
         });
       }
-      setNewForm({ name: '', email: '', password: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
+      setNewForm({ name: '', nameKh: '', email: '', password: '', sex: '', phone: '', photo: '', dateOfBirth: '', address: '', generation: '', studentNumber: '' });
       setShowAddForm(false);
       await fetchStudents(selectedGrade.id);
       setGradeCounts(prev => ({ ...prev, [selectedGrade.id]: (prev[selectedGrade.id] ?? 0) + 1 }));
@@ -559,6 +559,10 @@ function ManageStudents() {
                           <input type="text" required value={newForm.name} onChange={e => setNewForm({ ...newForm, name: e.target.value })} placeholder="Full name" />
                         </div>
                         <div className="sm:col-span-2">
+                          <label className="form-label text-xs">Khmer Name</label>
+                          <input type="text" value={newForm.nameKh} onChange={e => setNewForm({ ...newForm, nameKh: e.target.value })} placeholder="Khmer name" />
+                        </div>
+                        <div className="sm:col-span-2">
                           <label className="form-label text-xs">Email <span className="text-slate-400 font-normal">(or phone below)</span></label>
                           <input type="text" value={newForm.email} onChange={e => setNewForm({ ...newForm, email: e.target.value })} placeholder="student@school.edu" />
                         </div>
@@ -652,6 +656,7 @@ function ManageStudents() {
                             {/* Info */}
                             <div className="p-2.5 flex-1 flex flex-col gap-0.5 min-w-0">
                               <p className="text-xs font-bold text-slate-800 truncate leading-tight">{s.name}</p>
+                              {s.nameKh && <p className="text-[10px] text-slate-500 truncate">{s.nameKh}</p>}
                               <p className="text-[10px] text-slate-400 truncate">{s.email}</p>
                               {s.generation && <p className="text-[10px] text-violet-500 font-medium">Gen {s.generation}</p>}
                             </div>
@@ -701,7 +706,7 @@ function ManageStudents() {
                                     {s.photo ? <img src={s.photo} alt={s.name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} /> : avatarInitials(s.name)}
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="font-semibold text-slate-800 truncate text-sm">{s.name}</p>
+                                    <p className="font-semibold text-slate-800 truncate text-sm">{s.name}{s.nameKh && <span className="text-slate-400 font-normal"> · {s.nameKh}</span>}</p>
                                     <p className="text-xs text-slate-400 truncate">{s.email}</p>
                                   </div>
                                 </div>
@@ -789,6 +794,10 @@ function ManageStudents() {
                 <div>
                   <label className="form-label text-xs">Full Name</label>
                   <input type="text" value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} />
+                </div>
+                <div>
+                  <label className="form-label text-xs">Khmer Name</label>
+                  <input type="text" value={editData.nameKh} onChange={e => setEditData({ ...editData, nameKh: e.target.value })} />
                 </div>
                 <div>
                   <label className="form-label text-xs">Sex</label>
