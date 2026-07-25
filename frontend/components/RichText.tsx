@@ -30,61 +30,95 @@ function dataUriToBlobUrl(dataUri: string): string | null {
   }
 }
 
-/** Adds a speed selector next to every <audio> in the container (idempotent —
- * safe to call again after re-renders). Plain DOM manipulation rather than React
- * since this runs over a dangerouslySetInnerHTML subtree React doesn't manage. */
-function enhanceAudioPlayers(container: HTMLElement): () => void {
-  // Temporary instrumentation: a click on the visible native play button never
-  // reaches the <audio> element's own click listener, which means some other
-  // element is absorbing the pointer event at that screen position. A capture-
-  // phase listener on document fires before any descendant can stop it, so
-  // this pins down exactly what's actually receiving the click.
-  if (!(window as any).__audioDebugGlobalClick) {
-    ;(window as any).__audioDebugGlobalClick = true
-    document.addEventListener('click', (e) => {
-      const t = e.target as HTMLElement
-      console.info('[audio-debug] document-capture click target:', t?.tagName, t?.className, t)
-    }, true)
-  }
+function formatTime(t: number): string {
+  if (!isFinite(t) || t < 0) return '0:00'
+  const m = Math.floor(t / 60)
+  const s = Math.floor(t % 60)
+  return `${m}:${String(s).padStart(2, '0')}`
+}
 
+/** Builds a fully custom play/pause + seek bar UI for one <audio> element,
+ * driven entirely by our own click handlers instead of the browser's native
+ * media controls. Native controls render inside a user-agent shadow root that
+ * — in some layouts here — silently swallowed clicks on the play button with
+ * no error, no event, nothing reaching the page's JS at all; a plain <button>
+ * we own doesn't have that failure mode. */
+function buildCustomPlayer(audio: HTMLAudioElement): HTMLElement {
+  audio.controls = false
+  audio.removeAttribute('controls')
+  audio.className = `${audio.className} hidden`.trim()
+
+  const wrap = document.createElement('div')
+  wrap.className = 'flex items-center gap-2 mt-1 p-2 border border-slate-200 rounded-lg bg-slate-50 max-w-full'
+
+  const playBtn = document.createElement('button')
+  playBtn.type = 'button'
+  playBtn.setAttribute('aria-label', 'Play')
+  playBtn.className = 'shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 text-sm leading-none'
+  playBtn.textContent = '▶'
+
+  const seek = document.createElement('input')
+  seek.type = 'range'
+  seek.min = '0'
+  seek.max = '1000'
+  seek.value = '0'
+  seek.className = 'flex-1 min-w-0 accent-indigo-600'
+
+  const time = document.createElement('span')
+  time.className = 'text-xs text-slate-500 font-mono shrink-0'
+  time.textContent = '0:00 / 0:00'
+
+  const select = document.createElement('select')
+  select.className = 'text-xs border border-slate-200 rounded px-1 py-0.5 bg-white shrink-0'
+  PLAYBACK_RATES.forEach((rate) => {
+    const opt = document.createElement('option')
+    opt.value = String(rate)
+    opt.textContent = `${rate}x`
+    if (rate === 1) opt.selected = true
+    select.appendChild(opt)
+  })
+  select.addEventListener('change', () => { audio.playbackRate = Number(select.value) })
+
+  let seeking = false
+
+  playBtn.addEventListener('click', () => {
+    if (audio.paused) audio.play().catch(() => {})
+    else audio.pause()
+  })
+  audio.addEventListener('play', () => { playBtn.textContent = '⏸'; playBtn.setAttribute('aria-label', 'Pause') })
+  audio.addEventListener('pause', () => { playBtn.textContent = '▶'; playBtn.setAttribute('aria-label', 'Play') })
+  audio.addEventListener('timeupdate', () => {
+    if (!seeking && audio.duration) seek.value = String((audio.currentTime / audio.duration) * 1000)
+    time.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`
+  })
+  audio.addEventListener('loadedmetadata', () => {
+    time.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`
+  })
+  seek.addEventListener('input', () => {
+    seeking = true
+    if (audio.duration) time.textContent = `${formatTime((Number(seek.value) / 1000) * audio.duration)} / ${formatTime(audio.duration)}`
+  })
+  seek.addEventListener('change', () => {
+    if (audio.duration) audio.currentTime = (Number(seek.value) / 1000) * audio.duration
+    seeking = false
+  })
+
+  wrap.appendChild(playBtn)
+  wrap.appendChild(seek)
+  wrap.appendChild(time)
+  wrap.appendChild(select)
+  return wrap
+}
+
+/** Replaces every <audio> in the container with a custom play/pause + seek UI
+ * (idempotent — safe to call again after re-renders). Plain DOM manipulation
+ * rather than React since this runs over a dangerouslySetInnerHTML subtree
+ * React doesn't manage. */
+function enhanceAudioPlayers(container: HTMLElement): () => void {
   const blobUrls: string[] = []
   container.querySelectorAll('audio').forEach((audio) => {
     if (audio.dataset.enhanced) return
     audio.dataset.enhanced = '1'
-    audio.className = `${audio.className} max-w-full`.trim()
-
-    // Runs automatically, no manual console interaction needed — checks what
-    // element document.elementFromPoint actually finds at the play button's
-    // on-screen position, right after the browser has settled into its final
-    // layout. If something else is stacked on top, this names it directly.
-    // The same question text can be mounted more than once at a time (e.g. a
-    // preview modal open on top of the editor's own inline preview), so each
-    // <audio> is tagged with whether it's inside the modal and whether it's
-    // actually visible, to tell a live one apart from a hidden duplicate.
-    setTimeout(() => {
-      let inModal = false
-      let visible = true
-      let n: HTMLElement | null = audio
-      while (n) {
-        if (typeof n.className === 'string' && n.className.includes('z-[60]')) inModal = true
-        n = n.parentElement
-      }
-      if (audio.offsetParent === null) visible = false
-
-      const r = audio.getBoundingClientRect()
-      const x = r.left + 20
-      const y = r.top + r.height / 2
-      const hit = r.width > 0 || r.height > 0 ? (document.elementFromPoint(x, y) as HTMLElement | null) : null
-      console.info('[audio-debug] hit-test:', {
-        inModal,
-        visible,
-        rect: { left: r.left, top: r.top, width: r.width, height: r.height },
-        isAudioItself: hit === audio,
-        hitTag: hit?.tagName,
-        hitClass: hit?.className,
-        audioSrcPrefix: audio.currentSrc?.slice(0, 30),
-      })
-    }, 500)
 
     const src = audio.getAttribute('src')
     if (src?.startsWith('data:')) {
@@ -95,30 +129,11 @@ function enhanceAudioPlayers(container: HTMLElement): () => void {
       }
     }
 
-    const wrap = document.createElement('div')
-    wrap.className = 'flex items-center gap-1.5 mt-1'
-    const label = document.createElement('span')
-    label.className = 'text-xs text-slate-500'
-    label.textContent = 'Speed:'
-    const select = document.createElement('select')
-    select.className = 'text-xs border border-slate-200 rounded px-1 py-0.5 bg-white'
-    PLAYBACK_RATES.forEach((rate) => {
-      const opt = document.createElement('option')
-      opt.value = String(rate)
-      opt.textContent = `${rate}x`
-      if (rate === 1) opt.selected = true
-      select.appendChild(opt)
-    })
-    select.addEventListener('change', () => {
-      audio.playbackRate = Number(select.value)
-    })
-
-    wrap.appendChild(label)
-    wrap.appendChild(select)
-    audio.insertAdjacentElement('afterend', wrap)
+    const player = buildCustomPlayer(audio)
+    audio.insertAdjacentElement('afterend', player)
 
     // Playback failures (unsupported codec, corrupt data, etc.) otherwise fail
-    // completely silently — the native controls just never respond to play.
+    // completely silently.
     audio.addEventListener('error', () => {
       const err = audio.error
       const reason = err?.code === MediaError.MEDIA_ERR_DECODE ? 'This audio file is corrupted or uses an unsupported encoding.'
@@ -127,16 +142,7 @@ function enhanceAudioPlayers(container: HTMLElement): () => void {
       const notice = document.createElement('p')
       notice.className = 'text-xs text-red-600 mt-1'
       notice.textContent = `⚠ ${reason}`
-      wrap.insertAdjacentElement('afterend', notice)
-    })
-
-    // Temporary instrumentation: clicking Play but seeing no console output at
-    // all (no error, no state change) means the click isn't reaching the media
-    // element's playback logic — these logs pin down which stage actually runs.
-    const tag = '[audio-debug]'
-    audio.addEventListener('click', () => console.info(tag, 'click reached <audio>'))
-    ;['play', 'playing', 'pause', 'stalled', 'waiting', 'suspend', 'abort'].forEach((evt) => {
-      audio.addEventListener(evt, () => console.info(tag, evt, { currentTime: audio.currentTime, readyState: audio.readyState, networkState: audio.networkState }))
+      player.insertAdjacentElement('afterend', notice)
     })
   })
   return () => { blobUrls.forEach((url) => URL.revokeObjectURL(url)) }
@@ -148,7 +154,7 @@ function enhanceAudioPlayers(container: HTMLElement): () => void {
  * MathText component unchanged, so no data migration is needed. Content that does
  * contain HTML tags is sanitized (DOMPurify) and rendered as markup, then MathJax
  * typesets any \( \) / \[ \] LaTeX found inside it, and any <audio> element gets a
- * speed-control dropdown added next to its native play/pause/seek controls. */
+ * custom play/pause + seek bar in place of the browser's native controls. */
 export default function RichText({
   html, as = 'div', className,
 }: { html: string | null | undefined; as?: 'div' | 'span' | 'p'; className?: string }) {
