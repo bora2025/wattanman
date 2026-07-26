@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useRouter, useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
@@ -13,6 +13,41 @@ import type { QType } from '../../../../lib/examQuestionLogic'
 interface Question { id: string; text: string; type: QType; marks: number; order: number; data: any }
 interface ExamDetail { id: string; title: string; duration: number; totalMarks: number; passMark: number; questions: Question[] }
 interface Attempt { id: string; status: string; startedAt: string; answers?: Record<string, any> | null }
+
+function formatTime(secs: number) {
+  return `${Math.floor(secs / 60).toString().padStart(2, '0')}:${(secs % 60).toString().padStart(2, '0')}`
+}
+
+/** Owns the second-by-second countdown itself, so ticking only re-renders this
+ * small header widget — not the whole exam page (questions, audio players,
+ * drag-and-drop inputs, etc.) every single second. `onExpire`/`onTick` are read
+ * fresh from props each time the internal tick fires, so the parent doesn't need
+ * to memoize them; it just reacts to being called (submit on expiry, autosave
+ * every 30s) without needing to hold the ticking value in its own state. */
+function ExamCountdown({ initialSeconds, onExpire, onTick }: { initialSeconds: number; onExpire: () => void; onTick: (secondsLeft: number) => void }) {
+  const [timeLeft, setTimeLeft] = useState(initialSeconds)
+  const expiredRef = useRef(false)
+  const onExpireRef = useRef(onExpire)
+  const onTickRef = useRef(onTick)
+  onExpireRef.current = onExpire
+  onTickRef.current = onTick
+
+  useEffect(() => {
+    onTickRef.current(timeLeft)
+    if (timeLeft <= 0) {
+      if (!expiredRef.current) { expiredRef.current = true; onExpireRef.current() }
+      return
+    }
+    const tick = setTimeout(() => setTimeLeft(t => Math.max(0, t - 1)), 1000)
+    return () => clearTimeout(tick)
+  }, [timeLeft])
+
+  return (
+    <div className={`text-lg font-mono font-bold px-3 py-1 rounded-xl ${timeLeft < 300 ? 'text-red-600 bg-red-50' : 'text-gray-800 bg-gray-100'}`}>
+      ⏱ {formatTime(timeLeft)}
+    </div>
+  )
+}
 
 export default function StudentExamTakingPage() {
   const params = useParams()
@@ -70,15 +105,13 @@ export default function StudentExamTakingPage() {
     await apiFetch(`/api/exams/attempts/${attempt.id}/answers`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) })
   }, [attempt, answers])
 
-  useEffect(() => {
-    if (!attempt || timeLeft === null) return
-    if (timeLeft <= 0) { submitMutation.mutate(attempt.id); return }
-    const tick = setInterval(() => setTimeLeft(t => (t ?? 1) - 1), 1000)
-    if (timeLeft % 30 === 0) saveAnswers()
-    return () => clearInterval(tick)
-  }, [timeLeft, attempt])
+  const handleTick = useCallback((secondsLeft: number) => {
+    if (secondsLeft % 30 === 0) saveAnswers()
+  }, [saveAnswers])
 
-  const formatTime = (secs: number) => `${Math.floor(secs / 60).toString().padStart(2, '0')}:${(secs % 60).toString().padStart(2, '0')}`
+  const handleExpire = useCallback(() => {
+    if (attempt) submitMutation.mutate(attempt.id)
+  }, [attempt])
 
   if (submitted) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -104,9 +137,7 @@ export default function StudentExamTakingPage() {
               <p className="text-xs text-gray-400">{exam?.totalMarks} marks · {exam?.questions?.length ?? 0} questions</p>
             </div>
             {attempt && timeLeft !== null && (
-              <div className={`text-lg font-mono font-bold px-3 py-1 rounded-xl ${timeLeft < 300 ? 'text-red-600 bg-red-50' : 'text-gray-800 bg-gray-100'}`}>
-                ⏱ {formatTime(timeLeft)}
-              </div>
+              <ExamCountdown initialSeconds={timeLeft} onTick={handleTick} onExpire={handleExpire} />
             )}
           </div>
           {attempt && exam && (

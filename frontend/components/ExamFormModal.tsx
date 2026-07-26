@@ -105,7 +105,7 @@ export default function ExamFormModal({ classes, examId, initialData, onClose, o
           </div>
 
           <div className="border-t border-slate-100 pt-4">
-            <ExamQuestionsEditor questions={questions} onChange={setQuestions} durationMinutes={watchedDuration} />
+            <ExamQuestionsEditor questions={questions} onChange={setQuestions} />
           </div>
 
           {formError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-3 py-2">{formError}</div>}

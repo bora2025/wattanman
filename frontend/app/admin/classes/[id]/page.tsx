@@ -589,7 +589,7 @@ function ExamsPanel({ classId }: { classId: string }) {
               <span className="text-[11px] text-slate-500 col-span-2">Students get a single attempt.</span>
             )}
           </div>
-          <ExamQuestionsEditor questions={questions} onChange={setQuestions} durationMinutes={form.duration} />
+          <ExamQuestionsEditor questions={questions} onChange={setQuestions} />
           <div className="flex gap-2">
             <button type="submit" disabled={saving} className="btn-primary btn-sm disabled:opacity-60">
               {saving ? 'Saving…' : 'Create'}
@@ -696,7 +696,7 @@ function ExamsPanel({ classId }: { classId: string }) {
                             <span className="text-[11px] text-slate-500 col-span-2">Students get a single attempt.</span>
                           )}
                         </div>
-                        <ExamQuestionsEditor questions={editQuestions} onChange={setEditQuestions} durationMinutes={editMetaForm.duration} />
+                        <ExamQuestionsEditor questions={editQuestions} onChange={setEditQuestions} />
                         <div className="flex gap-2 justify-end mt-3">
                           <button onClick={() => setEditingId(null)} className="btn-outline btn-sm">Cancel</button>
                           <button onClick={() => saveEditQuestions(r.id)} disabled={editSaving} className="btn-primary btn-sm disabled:opacity-60">
