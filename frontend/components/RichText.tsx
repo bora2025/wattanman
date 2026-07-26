@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
 import { useMathJax } from '../lib/useMathJax'
 import MathText from './MathText'
@@ -100,6 +100,18 @@ export default function RichText({
   const ready = useMathJax()
   const ref = useRef<HTMLElement>(null)
 
+  // Sanitizing a large question (e.g. one with an embedded audio file, whose
+  // base64 data URI can run into the megabytes) takes real time — recomputing
+  // it on every render, rather than only when the content itself changes,
+  // blocked the main thread on a ~200ms loop anywhere this re-rendered on a
+  // timer (an exam countdown ticking every second), which is enough to make
+  // the whole page feel like it's stuttering/reloading and can starve a media
+  // element's own event handling at the same cadence.
+  const clean = useMemo(() => {
+    if (!looksLikeHtml) return ''
+    return DOMPurify.sanitize(value, { ADD_TAGS: ['audio'], ADD_ATTR: ['controls', 'preload'] })
+  }, [value, looksLikeHtml])
+
   useEffect(() => {
     if (!looksLikeHtml || !ref.current) return
     enhanceAudioPlayers(ref.current)
@@ -121,6 +133,5 @@ export default function RichText({
   }
 
   const Tag = as as any
-  const clean = DOMPurify.sanitize(value, { ADD_TAGS: ['audio'], ADD_ATTR: ['controls', 'preload'] })
   return <Tag ref={ref} className={className} dangerouslySetInnerHTML={{ __html: clean }} />
 }
