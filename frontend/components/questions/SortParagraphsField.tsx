@@ -8,6 +8,13 @@ import MathText from '../MathText'
 
 interface Paragraph { id: string; text: string }
 
+// Hoisted to a stable reference — dnd-kit's useSensor memoizes internally keyed
+// on this options object, so passing a fresh literal on every render defeats
+// that memoization and makes DndContext redo its setup on every re-render
+// (visible as the drag-and-drop UI flashing/resetting on any parent re-render,
+// e.g. an exam countdown timer ticking once a second).
+const POINTER_ACTIVATION_CONSTRAINT = { activationConstraint: { distance: 4 } }
+
 function SortableRow({ id, children }: { id: string; children: (opts: { listeners: any; attributes: any }) => React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }
@@ -17,7 +24,7 @@ function SortableRow({ id, children }: { id: string; children: (opts: { listener
 /** Authoring editor for Sort the Paragraphs. `data: { paragraphs: [{id,text}] }` in correct order. */
 export function SortParagraphsEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
   const paragraphs: Paragraph[] = data?.paragraphs ?? []
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+  const sensors = useSensors(useSensor(PointerSensor, POINTER_ACTIVATION_CONSTRAINT))
 
   function updateText(i: number, text: string) {
     onChange({ ...data, paragraphs: paragraphs.map((p, idx) => idx === i ? { ...p, text } : p) })
@@ -82,7 +89,7 @@ export function SortParagraphsInput({ data, value, onChange, disabled }: { data:
   const paragraphs: Paragraph[] = data?.paragraphs ?? []
   const order: string[] = Array.isArray(value) && value.length === paragraphs.length ? value : paragraphs.map(p => p.id)
   const byId = Object.fromEntries(paragraphs.map(p => [p.id, p.text]))
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+  const sensors = useSensors(useSensor(PointerSensor, POINTER_ACTIVATION_CONSTRAINT))
 
   function handleDragEnd(e: DragEndEvent) {
     const { active, over } = e

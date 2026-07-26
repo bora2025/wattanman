@@ -8,6 +8,13 @@ import { parseDragWordsText } from '../../lib/h5pQuestionLogic'
 type Group = 'a' | 'b'
 type Answer = { word: string; group: Group }
 
+// Hoisted to a stable reference — dnd-kit's useSensor memoizes internally keyed
+// on this options object, so passing a fresh literal on every render defeats
+// that memoization and makes DndContext redo its setup on every re-render
+// (visible as the drag-and-drop UI flashing/resetting on any parent re-render,
+// e.g. an exam countdown timer ticking once a second).
+const POINTER_ACTIVATION_CONSTRAINT = { activationConstraint: { distance: 4 } }
+
 const BLANK_RE = /_{3,}/g
 
 // data.text keeps storing the *word*/#word# markup as the single source of truth
@@ -157,7 +164,7 @@ export function DragWordsInput({ data, value, onChange, disabled }: { data: any;
   const wordBank: Array<{ word: string; group: Group }> = data?.wordBank ?? []
   const filled: Record<string, string> = value && typeof value === 'object' ? value : {}
   const placedWords = Object.values(filled)
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+  const sensors = useSensors(useSensor(PointerSensor, POINTER_ACTIVATION_CONSTRAINT))
 
   function handleDragEnd(e: DragEndEvent) {
     const { active, over } = e
