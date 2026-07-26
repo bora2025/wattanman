@@ -10,14 +10,7 @@ const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
 /** Adds a speed selector next to every <audio> in the container (idempotent —
  * safe to call again after re-renders). Plain DOM manipulation rather than React
- * since this runs over a dangerouslySetInnerHTML subtree React doesn't manage.
- *
- * Deliberately minimal: the question-authoring editor renders the exact same
- * <audio controls src="data:..."> markup with no extra processing and plays
- * fine, so this leaves the native element and its src completely untouched —
- * earlier attempts to "fix" playback here (converting to a Blob URL, swapping
- * in a custom play button) were unverified guesses layered on top of a native
- * player that was never actually broken, and only added new failure surface. */
+ * since this runs over a dangerouslySetInnerHTML subtree React doesn't manage. */
 function enhanceAudioPlayers(container: HTMLElement) {
   container.querySelectorAll('audio').forEach((audio) => {
     if (audio.dataset.enhanced) return
@@ -44,30 +37,6 @@ function enhanceAudioPlayers(container: HTMLElement) {
 
     wrap.appendChild(label)
     wrap.appendChild(select)
-
-    // Temporary diagnostic: clicking the native play button produces zero
-    // visible effect (no time movement, no sound, no error) even with the
-    // exact same src/controls setup that works in the editor. This button
-    // calls audio.play() directly, bypassing whatever handles clicks on the
-    // native control's shadow-root UI, so we can tell apart "clicks aren't
-    // reaching the element" from "the browser can't actually play this data."
-    const testBtn = document.createElement('button')
-    testBtn.type = 'button'
-    testBtn.textContent = '🔧 Test play()'
-    testBtn.className = 'text-xs border border-amber-300 bg-amber-50 text-amber-700 rounded px-2 py-0.5'
-    testBtn.addEventListener('click', () => {
-      const r = audio.getBoundingClientRect()
-      console.info('[audio-debug] rect:', { width: r.width, height: r.height, top: r.top, left: r.left })
-      console.info('[audio-debug] readyState:', audio.readyState, 'networkState:', audio.networkState, 'error:', audio.error, 'paused:', audio.paused, 'currentTime:', audio.currentTime, 'duration:', audio.duration)
-      audio.play().then(() => {
-        console.info('[audio-debug] play() RESOLVED')
-        setTimeout(() => console.info('[audio-debug] 1s later currentTime:', audio.currentTime), 1000)
-      }).catch((e) => {
-        console.info('[audio-debug] play() REJECTED:', e?.name, e?.message)
-      })
-    })
-    wrap.appendChild(testBtn)
-
     audio.insertAdjacentElement('afterend', wrap)
 
     // Playback failures (unsupported codec, corrupt data, etc.) otherwise fail
