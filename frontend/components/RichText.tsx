@@ -21,12 +21,28 @@ function enhanceAudioPlayers(container: HTMLElement) {
   // doesn't re-run — those are two different possible causes of the same
   // symptom, and this tells them apart.
   console.info('[audio-debug]', new Date().toISOString(), 'enhanceAudioPlayers effect ran')
+  if (!(window as any).__audioDebugGlobalClick) {
+    ;(window as any).__audioDebugGlobalClick = true
+    document.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement
+      console.info('[audio-debug]', new Date().toISOString(), 'document-capture click target:', t?.tagName, t?.className)
+    }, true)
+  }
   container.querySelectorAll('audio').forEach((audio) => {
     if (!audio.dataset.audioDebugWired) {
       audio.dataset.audioDebugWired = '1'
       ;(['emptied', 'abort', 'pause', 'play'] as const).forEach((evt) => {
         audio.addEventListener(evt, () => console.info('[audio-debug]', new Date().toISOString(), evt, 'currentTime:', audio.currentTime))
       })
+      audio.addEventListener('click', () => console.info('[audio-debug]', new Date().toISOString(), 'click reached <audio> element'))
+      setInterval(() => {
+        const r = audio.getBoundingClientRect()
+        if (r.width === 0 && r.height === 0) return
+        const x = r.left + 20
+        const y = r.top + r.height / 2
+        const hit = document.elementFromPoint(x, y) as HTMLElement | null
+        console.info('[audio-debug]', new Date().toISOString(), 'hit-test:', { rect: { w: r.width, h: r.height, top: r.top, left: r.left }, isAudioItself: hit === audio, hitTag: hit?.tagName, hitClass: hit?.className })
+      }, 3000)
     }
     if (audio.dataset.enhanced) return
     audio.dataset.enhanced = '1'
