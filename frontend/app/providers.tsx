@@ -21,26 +21,14 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     if (document.readyState === 'complete') onLoad()
     else window.addEventListener('load', onLoad, { once: true })
 
-    // If this tab was already controlled by a service worker and a NEW one
-    // takes over control (i.e. a redeploy happened while the tab was open),
-    // the JS bundle already loaded in memory is now stale — its build id /
-    // Server Action manifest no longer matches the server. Reload once so
-    // the tab picks up the current deployment instead of failing later with
-    // "Failed to find Server Action ... older or newer deployment" errors.
-    // We only do this if the tab was already controlled (not a first visit),
-    // so brand-new visitors never get an unexpected reload.
-    const hadController = !!navigator.serviceWorker.controller
-    let reloaded = false
-    const onControllerChange = () => {
-      if (!hadController || reloaded) return
-      reloaded = true
-      window.location.reload()
-    }
-    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange)
-
+    // Deliberately NOT reloading the page when a new service worker takes
+    // control (e.g. after a redeploy while this tab was open). That used to
+    // call window.location.reload() here, but a forced reload can land at
+    // any moment — including mid-exam for a student with this tab open —
+    // silently discarding whatever they were doing. A stale bundle after a
+    // deploy is a much smaller problem than that.
     return () => {
       window.removeEventListener('load', onLoad)
-      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange)
     }
   }, [])
 
