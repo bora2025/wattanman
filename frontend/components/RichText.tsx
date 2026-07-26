@@ -44,6 +44,30 @@ function enhanceAudioPlayers(container: HTMLElement) {
 
     wrap.appendChild(label)
     wrap.appendChild(select)
+
+    // Temporary diagnostic: clicking the native play button produces zero
+    // visible effect (no time movement, no sound, no error) even with the
+    // exact same src/controls setup that works in the editor. This button
+    // calls audio.play() directly, bypassing whatever handles clicks on the
+    // native control's shadow-root UI, so we can tell apart "clicks aren't
+    // reaching the element" from "the browser can't actually play this data."
+    const testBtn = document.createElement('button')
+    testBtn.type = 'button'
+    testBtn.textContent = '🔧 Test play()'
+    testBtn.className = 'text-xs border border-amber-300 bg-amber-50 text-amber-700 rounded px-2 py-0.5'
+    testBtn.addEventListener('click', () => {
+      const r = audio.getBoundingClientRect()
+      console.info('[audio-debug] rect:', { width: r.width, height: r.height, top: r.top, left: r.left })
+      console.info('[audio-debug] readyState:', audio.readyState, 'networkState:', audio.networkState, 'error:', audio.error, 'paused:', audio.paused, 'currentTime:', audio.currentTime, 'duration:', audio.duration)
+      audio.play().then(() => {
+        console.info('[audio-debug] play() RESOLVED')
+        setTimeout(() => console.info('[audio-debug] 1s later currentTime:', audio.currentTime), 1000)
+      }).catch((e) => {
+        console.info('[audio-debug] play() REJECTED:', e?.name, e?.message)
+      })
+    })
+    wrap.appendChild(testBtn)
+
     audio.insertAdjacentElement('afterend', wrap)
 
     // Playback failures (unsupported codec, corrupt data, etc.) otherwise fail
