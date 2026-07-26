@@ -12,7 +12,22 @@ const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2]
  * safe to call again after re-renders). Plain DOM manipulation rather than React
  * since this runs over a dangerouslySetInnerHTML subtree React doesn't manage. */
 function enhanceAudioPlayers(container: HTMLElement) {
+  // Temporary instrumentation: audio reportedly plays for a moment then resets,
+  // repeatedly, in sync with an exam countdown timer. These logs show (a) how
+  // often this effect itself re-runs, and (b) whether the <audio> element is
+  // being reset (emptied/abort fire when the browser's media element load
+  // algorithm restarts, e.g. from a src reassignment or an ancestor re-render
+  // forcing dangerouslySetInnerHTML to replace the DOM) even if this effect
+  // doesn't re-run — those are two different possible causes of the same
+  // symptom, and this tells them apart.
+  console.info('[audio-debug]', new Date().toISOString(), 'enhanceAudioPlayers effect ran')
   container.querySelectorAll('audio').forEach((audio) => {
+    if (!audio.dataset.audioDebugWired) {
+      audio.dataset.audioDebugWired = '1'
+      ;(['emptied', 'abort', 'pause', 'play'] as const).forEach((evt) => {
+        audio.addEventListener(evt, () => console.info('[audio-debug]', new Date().toISOString(), evt, 'currentTime:', audio.currentTime))
+      })
+    }
     if (audio.dataset.enhanced) return
     audio.dataset.enhanced = '1'
     audio.className = `${audio.className} max-w-full`.trim()
