@@ -8,132 +8,46 @@ import MathText from './MathText'
 const HTML_TAG_RE = /<([a-z][a-z0-9]*)\b[^>]*>/i
 const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
-/** Multi-megabyte base64 data: URIs are unreliable as a media element's `src`
- * when the element was parsed out of a huge dangerouslySetInnerHTML string —
- * some browsers stall or silently fail to decode rather than erroring, even
- * though the underlying audio is completely valid (confirmed by re-verifying
- * a real failing file byte-for-byte with a dedicated MP3 parser — it decoded
- * cleanly, so the data itself wasn't the problem). Converting to a real Blob
- * URL up front is the standard, more robust pattern for large embedded media.
- * Returns the object URL so the caller can revoke it when the content changes. */
-function dataUriToBlobUrl(dataUri: string): string | null {
-  const match = dataUri.match(/^data:([^;]+);base64,([\s\S]*)$/)
-  if (!match) return null
-  try {
-    const [, mime, base64] = match
-    const binary = atob(base64)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-    return URL.createObjectURL(new Blob([bytes], { type: mime }))
-  } catch {
-    return null
-  }
-}
-
-function formatTime(t: number): string {
-  if (!isFinite(t) || t < 0) return '0:00'
-  const m = Math.floor(t / 60)
-  const s = Math.floor(t % 60)
-  return `${m}:${String(s).padStart(2, '0')}`
-}
-
-/** Builds a fully custom play/pause + seek bar UI for one <audio> element,
- * driven entirely by our own click handlers instead of the browser's native
- * media controls. Native controls render inside a user-agent shadow root that
- * — in some layouts here — silently swallowed clicks on the play button with
- * no error, no event, nothing reaching the page's JS at all; a plain <button>
- * we own doesn't have that failure mode. */
-function buildCustomPlayer(audio: HTMLAudioElement): HTMLElement {
-  audio.controls = false
-  audio.removeAttribute('controls')
-  audio.className = `${audio.className} hidden`.trim()
-
-  const wrap = document.createElement('div')
-  wrap.className = 'flex items-center gap-2 mt-1 p-2 border border-slate-200 rounded-lg bg-slate-50 max-w-full'
-
-  const playBtn = document.createElement('button')
-  playBtn.type = 'button'
-  playBtn.setAttribute('aria-label', 'Play')
-  playBtn.className = 'shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 text-sm leading-none'
-  playBtn.textContent = '▶'
-
-  const seek = document.createElement('input')
-  seek.type = 'range'
-  seek.min = '0'
-  seek.max = '1000'
-  seek.value = '0'
-  seek.className = 'flex-1 min-w-0 accent-indigo-600'
-
-  const time = document.createElement('span')
-  time.className = 'text-xs text-slate-500 font-mono shrink-0'
-  time.textContent = '0:00 / 0:00'
-
-  const select = document.createElement('select')
-  select.className = 'text-xs border border-slate-200 rounded px-1 py-0.5 bg-white shrink-0'
-  PLAYBACK_RATES.forEach((rate) => {
-    const opt = document.createElement('option')
-    opt.value = String(rate)
-    opt.textContent = `${rate}x`
-    if (rate === 1) opt.selected = true
-    select.appendChild(opt)
-  })
-  select.addEventListener('change', () => { audio.playbackRate = Number(select.value) })
-
-  let seeking = false
-
-  playBtn.addEventListener('click', () => {
-    if (audio.paused) audio.play().catch(() => {})
-    else audio.pause()
-  })
-  audio.addEventListener('play', () => { playBtn.textContent = '⏸'; playBtn.setAttribute('aria-label', 'Pause') })
-  audio.addEventListener('pause', () => { playBtn.textContent = '▶'; playBtn.setAttribute('aria-label', 'Play') })
-  audio.addEventListener('timeupdate', () => {
-    if (!seeking && audio.duration) seek.value = String((audio.currentTime / audio.duration) * 1000)
-    time.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`
-  })
-  audio.addEventListener('loadedmetadata', () => {
-    time.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`
-  })
-  seek.addEventListener('input', () => {
-    seeking = true
-    if (audio.duration) time.textContent = `${formatTime((Number(seek.value) / 1000) * audio.duration)} / ${formatTime(audio.duration)}`
-  })
-  seek.addEventListener('change', () => {
-    if (audio.duration) audio.currentTime = (Number(seek.value) / 1000) * audio.duration
-    seeking = false
-  })
-
-  wrap.appendChild(playBtn)
-  wrap.appendChild(seek)
-  wrap.appendChild(time)
-  wrap.appendChild(select)
-  return wrap
-}
-
-/** Replaces every <audio> in the container with a custom play/pause + seek UI
- * (idempotent — safe to call again after re-renders). Plain DOM manipulation
- * rather than React since this runs over a dangerouslySetInnerHTML subtree
- * React doesn't manage. */
-function enhanceAudioPlayers(container: HTMLElement): () => void {
-  const blobUrls: string[] = []
+/** Adds a speed selector next to every <audio> in the container (idempotent —
+ * safe to call again after re-renders). Plain DOM manipulation rather than React
+ * since this runs over a dangerouslySetInnerHTML subtree React doesn't manage.
+ *
+ * Deliberately minimal: the question-authoring editor renders the exact same
+ * <audio controls src="data:..."> markup with no extra processing and plays
+ * fine, so this leaves the native element and its src completely untouched —
+ * earlier attempts to "fix" playback here (converting to a Blob URL, swapping
+ * in a custom play button) were unverified guesses layered on top of a native
+ * player that was never actually broken, and only added new failure surface. */
+function enhanceAudioPlayers(container: HTMLElement) {
   container.querySelectorAll('audio').forEach((audio) => {
     if (audio.dataset.enhanced) return
     audio.dataset.enhanced = '1'
+    audio.className = `${audio.className} max-w-full`.trim()
 
-    const src = audio.getAttribute('src')
-    if (src?.startsWith('data:')) {
-      const blobUrl = dataUriToBlobUrl(src)
-      if (blobUrl) {
-        blobUrls.push(blobUrl)
-        audio.src = blobUrl
-      }
-    }
+    const wrap = document.createElement('div')
+    wrap.className = 'flex items-center gap-1.5 mt-1'
+    const label = document.createElement('span')
+    label.className = 'text-xs text-slate-500'
+    label.textContent = 'Speed:'
+    const select = document.createElement('select')
+    select.className = 'text-xs border border-slate-200 rounded px-1 py-0.5 bg-white'
+    PLAYBACK_RATES.forEach((rate) => {
+      const opt = document.createElement('option')
+      opt.value = String(rate)
+      opt.textContent = `${rate}x`
+      if (rate === 1) opt.selected = true
+      select.appendChild(opt)
+    })
+    select.addEventListener('change', () => {
+      audio.playbackRate = Number(select.value)
+    })
 
-    const player = buildCustomPlayer(audio)
-    audio.insertAdjacentElement('afterend', player)
+    wrap.appendChild(label)
+    wrap.appendChild(select)
+    audio.insertAdjacentElement('afterend', wrap)
 
     // Playback failures (unsupported codec, corrupt data, etc.) otherwise fail
-    // completely silently.
+    // completely silently — the native controls just never respond to play.
     audio.addEventListener('error', () => {
       const err = audio.error
       const reason = err?.code === MediaError.MEDIA_ERR_DECODE ? 'This audio file is corrupted or uses an unsupported encoding.'
@@ -142,10 +56,9 @@ function enhanceAudioPlayers(container: HTMLElement): () => void {
       const notice = document.createElement('p')
       notice.className = 'text-xs text-red-600 mt-1'
       notice.textContent = `⚠ ${reason}`
-      player.insertAdjacentElement('afterend', notice)
+      wrap.insertAdjacentElement('afterend', notice)
     })
   })
-  return () => { blobUrls.forEach((url) => URL.revokeObjectURL(url)) }
 }
 
 /** Renders a question's rich text (authored via RichTextEditor). Content authored
@@ -154,7 +67,7 @@ function enhanceAudioPlayers(container: HTMLElement): () => void {
  * MathText component unchanged, so no data migration is needed. Content that does
  * contain HTML tags is sanitized (DOMPurify) and rendered as markup, then MathJax
  * typesets any \( \) / \[ \] LaTeX found inside it, and any <audio> element gets a
- * custom play/pause + seek bar in place of the browser's native controls. */
+ * speed-control dropdown added next to its native play/pause/seek controls. */
 export default function RichText({
   html, as = 'div', className,
 }: { html: string | null | undefined; as?: 'div' | 'span' | 'p'; className?: string }) {
@@ -165,7 +78,7 @@ export default function RichText({
 
   useEffect(() => {
     if (!looksLikeHtml || !ref.current) return
-    return enhanceAudioPlayers(ref.current)
+    enhanceAudioPlayers(ref.current)
   }, [value, looksLikeHtml])
 
   useEffect(() => {
