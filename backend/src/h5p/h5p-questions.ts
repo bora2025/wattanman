@@ -7,6 +7,7 @@ import { BadRequestException } from '@nestjs/common';
 // reimplement e.g. the drag-and-drop or speech-grading logic independently.
 
 export const H5P_TYPES = [
+  'TEXT',
   'ESSAY',
   'SORT_PARAGRAPHS',
   'DRAG_WORDS',
@@ -80,6 +81,12 @@ function normalizeAnswer(s: string): string {
 
 export function sanitizeH5PInput(type: H5PType, raw: any): any {
   switch (type) {
+    // A display-only reading passage — no fields of its own, the passage content
+    // IS the question's own `text` (same rich-text field every type already has),
+    // so there's nothing type-specific to validate here.
+    case 'TEXT':
+      return {};
+
     case 'ESSAY':
       return { minWords: Math.max(0, Number(raw?.minWords) || 0) };
 
@@ -187,6 +194,9 @@ export function sanitizeH5PInput(type: H5PType, raw: any): any {
 export function sanitizeH5PForStudent(type: H5PType, data: any): any {
   const d = data || {};
   switch (type) {
+    case 'TEXT':
+      return {};
+
     case 'ESSAY':
       return { minWords: d.minWords || 0 };
 
@@ -228,6 +238,10 @@ export function sanitizeH5PForStudent(type: H5PType, data: any): any {
 
 export function gradeH5PQuestion(type: H5PType, data: any, response: any, marks: number): { awarded: number | null; autoGraded: boolean } {
   if (type === 'ESSAY') return { awarded: null, autoGraded: false };
+  // A passage never has a response to grade — marks are also forced to 0 for this
+  // type when the question is saved (see exam.service.ts), so this returning 0
+  // never actually costs a student anything either way.
+  if (type === 'TEXT') return { awarded: 0, autoGraded: true };
   if (response == null) return { awarded: 0, autoGraded: true };
 
   const d = data || {};

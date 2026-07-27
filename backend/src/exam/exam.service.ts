@@ -21,7 +21,10 @@ function sanitizeExamQuestionInput(body: any) {
   }
   const text = String(body.text || '').trim();
   if (!text) throw new BadRequestException('Question text is required');
-  const marks = Math.max(0, Number(body.marks) || 1);
+  // A TEXT passage is never gradable — forcing 0 here (regardless of what's sent)
+  // is what keeps it out of totalMarks/autoTotal without needing every marks-summing
+  // call site to separately filter the type out.
+  const marks = type === 'TEXT' ? 0 : Math.max(0, Number(body.marks) || 1);
   const section = cleanSectionLabel(String(body.section || '').trim()) || null;
   const raw = body.data ?? {};
   let data: any;

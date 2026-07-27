@@ -30,6 +30,14 @@ export default function ExamPreviewModal({ questions, onClose }: { questions: Ex
   const pages = useMemo(() => groupQuestionsBySection(questions), [questions])
   const currentPage = pages[Math.min(page, pages.length - 1)] ?? { section: null, questions: [], startIndex: 0 }
 
+  // TEXT (a reading passage) is never numbered as a question — students see "Q1,
+  // Q2…" skip straight over it, same as a real exam paper would never label a
+  // passage itself as a question.
+  const displayNumbers = useMemo(() => {
+    let n = 0
+    return questions.map((q) => (q.type === 'TEXT' ? null : ++n))
+  }, [questions])
+
   const totalMarks = questions.reduce((s, q) => s + (q.marks || 0), 0)
   const results = questions.map((q, i) => gradeQuestion(q, answers[i]))
   const autoTotal = results.reduce((s, r) => s + (r.autoGraded ? (r.awarded ?? 0) : 0), 0)
@@ -66,22 +74,25 @@ export default function ExamPreviewModal({ questions, onClose }: { questions: Ex
             <p className="text-sm text-slate-400 text-center py-8">No questions to preview yet.</p>
           ) : currentPage.questions.map((q, localI) => {
             const i = currentPage.startIndex + localI
+            const isPassage = q.type === 'TEXT'
             const result = checked ? results[i] : null
             const badgeClass = result?.autoGraded
               ? (result.awarded === q.marks ? 'bg-emerald-100 text-emerald-700' : (result.awarded ?? 0) > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700')
               : ''
-            const cardClass = result?.autoGraded
+            const cardClass = isPassage
+              ? 'border-slate-200 bg-slate-50/60'
+              : result?.autoGraded
               ? (result.awarded === q.marks ? 'border-emerald-200 bg-emerald-50/40' : (result.awarded ?? 0) > 0 ? 'border-amber-200 bg-amber-50/40' : 'border-red-200 bg-red-50/40')
               : 'border-slate-200'
             return (
               <div key={i} className={`rounded-xl border p-4 ${cardClass}`}>
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="font-semibold text-slate-800 text-sm">
-                    <span>Q{i + 1}.</span>
+                    <span>{isPassage ? '📖 Reading Passage' : `Q${displayNumbers[i]}.`}</span>
                     {q.text ? <RichText as="div" html={q.text} /> : <span className="text-slate-400 italic font-normal">(no question text yet)</span>}
-                    <span className="text-xs font-normal text-slate-400">{TYPE_LABEL[q.type]} · {q.marks} mark{q.marks !== 1 ? 's' : ''}</span>
+                    {!isPassage && <span className="text-xs font-normal text-slate-400">{TYPE_LABEL[q.type]} · {q.marks} mark{q.marks !== 1 ? 's' : ''}</span>}
                   </div>
-                  {checked && result && (
+                  {!isPassage && checked && result && (
                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${result.autoGraded ? badgeClass : 'bg-slate-100 text-slate-500'}`}>
                       {result.autoGraded ? `+${Math.round((result.awarded ?? 0) * 100) / 100} / ${q.marks}` : 'Manual grading'}
                     </span>

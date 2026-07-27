@@ -262,6 +262,13 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
     onError: (e: any) => setError(e?.message || 'Failed to save'),
   })
 
+  // A passage is never numbered as a question — "Q1, Q2…" skips straight over it,
+  // matching how it's numbered on the student-facing preview/taking pages.
+  const displayNumbers = (() => {
+    let n = 0
+    return exam.questions.map((q) => (q.type === 'TEXT' ? null : ++n))
+  })()
+
   return (
     <div className="border-t border-slate-100 bg-slate-50/60 p-4 space-y-4">
       {exam.questions.map((q, idx) => {
@@ -280,11 +287,11 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
           <div key={q.id} className={`bg-white rounded-xl border-l-4 border border-slate-200 p-3 ${autoGraded ? 'border-l-emerald-400' : 'border-l-amber-400'}`}>
             <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5 mb-2">
               <div className="text-sm font-semibold text-slate-800 min-w-0 break-words">
-                <span>Q{idx + 1}.</span>
+                <span>{q.type === 'TEXT' ? '📖 Reading Passage' : `Q${displayNumbers[idx]}.`}</span>
                 <RichText as="div" html={q.text} />
                 <span className="text-xs text-slate-400 font-normal">({q.type} · {q.marks} marks)</span>
               </div>
-              {autoGraded && (
+              {autoGraded && q.type !== 'TEXT' && (
                 <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold ${awarded === q.marks ? 'bg-emerald-100 text-emerald-700' : awarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
                   +{Math.round(awarded * 100) / 100} (auto)
                 </span>
@@ -345,6 +352,8 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                 Script: <MathText as="span" className="text-emerald-700 font-semibold" text={q.data.script} />
               </div>
             )}
+            {q.type !== 'TEXT' && (
+            <>
             <div className="text-xs text-slate-500 mb-1">Student answer:</div>
             <div className="text-sm bg-slate-50 border border-slate-200 rounded p-2 whitespace-pre-wrap">
               {q.type === 'MCQ' ? (
@@ -416,6 +425,8 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                 studentAnswer || <span className="text-slate-400 italic">(no answer)</span>
               )}
             </div>
+            </>
+            )}
             {!autoGraded && (
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <label className="text-xs text-slate-600">Marks:</label>

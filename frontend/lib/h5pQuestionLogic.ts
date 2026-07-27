@@ -5,6 +5,7 @@
 // Exam's MCQ/TF) locally and only imports this file for the 7 shared types.
 
 export const H5P_TYPES = [
+  'TEXT',
   'ESSAY',
   'SORT_PARAGRAPHS',
   'DRAG_WORDS',
@@ -22,6 +23,7 @@ export function isH5PType(type: string): type is H5PType {
 }
 
 export const H5P_TYPE_LABEL: Record<H5PType, string> = {
+  TEXT: 'Text Passage',
   ESSAY: 'Essay',
   SORT_PARAGRAPHS: 'Sort the Paragraphs',
   DRAG_WORDS: 'Drag the Words',
@@ -36,6 +38,8 @@ export function uid(prefix: string) { return `${prefix}_${Math.random().toString
 
 export function h5pDefaultData(type: H5PType): any {
   switch (type) {
+    case 'TEXT':
+      return {}
     case 'ESSAY':
       return { minWords: 0 }
     case 'SORT_PARAGRAPHS':
@@ -111,6 +115,8 @@ function normalizeAnswer(s: string): string {
 export function sanitizeH5PForPreview(type: H5PType, data: any): any {
   const d = data || {}
   switch (type) {
+    case 'TEXT':
+      return {}
     case 'ESSAY':
       return { minWords: d.minWords || 0 }
     case 'SORT_PARAGRAPHS':
@@ -143,6 +149,7 @@ export function sanitizeH5PForPreview(type: H5PType, data: any): any {
 // Mirrors backend/src/h5p/h5p-questions.ts's gradeH5PQuestion.
 export function gradeH5PQuestion(type: H5PType, data: any, response: any, marks: number): { awarded: number | null; autoGraded: boolean } {
   if (type === 'ESSAY') return { awarded: null, autoGraded: false }
+  if (type === 'TEXT') return { awarded: 0, autoGraded: true }
   if (response == null) return { awarded: 0, autoGraded: true }
 
   const d = data || {}

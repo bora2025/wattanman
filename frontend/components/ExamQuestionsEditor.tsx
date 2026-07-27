@@ -34,7 +34,9 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
     onChange(questions.map((q, idx) => idx === i ? { ...q, ...patch } : q))
   }
   function changeType(i: number, type: QType) {
-    updateQuestion(i, { type, data: defaultData(type) })
+    // A Text Passage is never gradable — force marks to 0 so it can't accidentally
+    // eat into the exam's total (the marks input is hidden for this type below too).
+    updateQuestion(i, { type, data: defaultData(type), marks: type === 'TEXT' ? 0 : questions[i].marks })
   }
   function addQuestion() { onChange([...questions, defaultQuestion()]) }
   function removeQuestion(i: number) { onChange(questions.filter((_, idx) => idx !== i)) }
@@ -76,7 +78,11 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
               <select value={q.type} onChange={e => changeType(i, e.target.value as QType)} className="col-span-2 border rounded px-2 py-1 text-sm">
                 {(Object.keys(TYPE_LABEL) as QType[]).map(t => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
               </select>
-              <input type="number" step="any" min={0} value={q.marks} onChange={e => updateQuestion(i, { marks: Number(e.target.value) || 0 })} placeholder="Marks" className="border rounded px-2 py-1 text-sm" />
+              {q.type === 'TEXT' ? (
+                <span className="border rounded px-2 py-1 text-sm text-slate-400 bg-slate-100 text-center" title="A passage isn't scored">not scored</span>
+              ) : (
+                <input type="number" step="any" min={0} value={q.marks} onChange={e => updateQuestion(i, { marks: Number(e.target.value) || 0 })} placeholder="Marks" className="border rounded px-2 py-1 text-sm" />
+              )}
             </div>
             <input
               type="text"
@@ -87,7 +93,7 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
               title="One section name per question — questions in a row sharing the same name become one page for students. Leave blank for questions with no section."
               className="w-full border rounded px-2 py-1 text-xs mb-2 text-slate-600"
             />
-            <RichTextEditor value={q.text} onChange={text => updateQuestion(i, { text })} placeholder={`Q${i + 1}: Question text`} />
+            <RichTextEditor value={q.text} onChange={text => updateQuestion(i, { text })} placeholder={q.type === 'TEXT' ? `Passage ${i + 1}: paste or write the reading text here` : `Q${i + 1}: Question text`} />
 
             {q.type === 'MCQ' && (
               <McqEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />

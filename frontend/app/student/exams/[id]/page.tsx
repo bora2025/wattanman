@@ -126,7 +126,10 @@ export default function StudentExamTakingPage() {
     </div>
   )
 
-  const answeredCount = exam ? exam.questions.filter(q => answers[q.id] != null).length : 0
+  // TEXT (a reading passage) has no answer, so it's excluded from "answered X of
+  // Y" — otherwise a student could never reach 100% no matter what they answered.
+  const answerableQuestions = exam?.questions.filter(q => q.type !== 'TEXT') ?? []
+  const answeredCount = answerableQuestions.filter(q => answers[q.id] != null).length
 
   // Consecutive questions sharing a section (e.g. "Listening") become one page —
   // an exam with no sections assigned collapses to a single page, so SectionPager
@@ -136,6 +139,12 @@ export default function StudentExamTakingPage() {
   const pages = useMemo(() => groupQuestionsBySection(exam?.questions ?? []), [exam?.questions])
   const currentPage = pages[Math.min(page, pages.length - 1)] ?? { section: null, questions: [] as Question[], startIndex: 0 }
   const isLastPage = pages.length === 0 || page >= pages.length - 1
+
+  // A passage is never numbered as a question — "Q1, Q2…" skips straight over it.
+  const displayNumbers = useMemo(() => {
+    let n = 0
+    return (exam?.questions ?? []).map((q) => (q.type === 'TEXT' ? null : ++n))
+  }, [exam?.questions])
 
   return (
     <AuthGuard requiredRole="STUDENT">
@@ -153,7 +162,7 @@ export default function StudentExamTakingPage() {
           </div>
           {attempt && exam && (
             <div className="mt-3">
-              <ProgressBar pct={(answeredCount / (exam.questions.length || 1)) * 100} label={`${answeredCount} of ${exam.questions.length} answered`} color="bg-emerald-500" />
+              <ProgressBar pct={(answeredCount / (answerableQuestions.length || 1)) * 100} label={`${answeredCount} of ${answerableQuestions.length} answered`} color="bg-emerald-500" />
             </div>
           )}
           {attempt && pages.length > 1 && (
@@ -190,13 +199,18 @@ export default function StudentExamTakingPage() {
             <div className="space-y-4">
               {currentPage.questions.map((q, localI) => {
                 const i = currentPage.startIndex + localI
+                const isPassage = q.type === 'TEXT'
                 return (
-                <div key={q.id} className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
+                <div key={q.id} className={`rounded-2xl shadow-sm p-5 border ${isPassage ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'}`}>
                   <div className="flex items-start gap-2 mb-3">
-                    <span className="flex-none w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                    {isPassage ? (
+                      <span className="text-lg leading-none mt-0.5">📖</span>
+                    ) : (
+                      <span className="flex-none w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">{displayNumbers[i]}</span>
+                    )}
                     <div className="font-semibold text-gray-900">
                       <RichText as="div" html={q.text} />
-                      <span className="text-xs font-normal text-gray-400">({q.marks} mark{q.marks !== 1 ? 's' : ''})</span>
+                      {!isPassage && <span className="text-xs font-normal text-gray-400">({q.marks} mark{q.marks !== 1 ? 's' : ''})</span>}
                     </div>
                   </div>
                   <QuestionInput q={q} value={answers[q.id]} onChange={v => setAnswers(a => ({ ...a, [q.id]: v }))} />

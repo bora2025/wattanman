@@ -63,6 +63,7 @@ export function QuestionInput({ q, value, onChange }: { q: QuestionInputQuestion
     )
   }
 
+  if (q.type === 'TEXT') return null // a passage has no answer — its content is the question's own text, shown by the caller
   if (q.type === 'ESSAY') return <EssayInput data={q.data} value={value} onChange={onChange} />
   if (q.type === 'SORT_PARAGRAPHS') return <SortParagraphsInput data={q.data} value={value} onChange={onChange} />
   if (q.type === 'DRAG_WORDS') return <DragWordsInput data={q.data} value={value} onChange={onChange} />
