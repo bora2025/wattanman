@@ -12,7 +12,7 @@ import EmptyState from '../../../../components/EmptyState'
 import ConfirmModal from '../../../../components/ConfirmModal'
 import { teacherNav } from '../../../../lib/teacher-nav'
 import { apiFetch } from '../../../../lib/api'
-import { H5P_TYPE_LABEL, parseDragWordsText, diffWords } from '../../../../lib/h5pQuestionLogic'
+import { H5P_TYPE_LABEL, parseDragWordsText, parseFillBlanksText, diffWords } from '../../../../lib/h5pQuestionLogic'
 import MathText from '../../../../components/MathText'
 import RichText from '../../../../components/RichText'
 interface Submission {
@@ -323,6 +323,19 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
             const val = given[b.id]
             const ok = (val || '').trim().toLowerCase() === b.answer.trim().toLowerCase()
             return <div key={b.id}>Blank &quot;{b.answer}&quot;: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{val || '(blank)'}</span></div>
+          })}
+        </div>
+      )
+    }
+    if (question.type === 'FILL_BLANKS') {
+      const blanks = parseFillBlanksText(question.data?.text || '').filter((s): s is { type: 'blank'; id: string; answers: string[] } => s.type === 'blank')
+      const given: Record<string, string> = r && typeof r === 'object' ? r : {}
+      return (
+        <div className="text-xs space-y-0.5">
+          {blanks.map(b => {
+            const val = given[b.id]
+            const ok = b.answers.some((a) => (val || '').trim().toLowerCase() === a.trim().toLowerCase())
+            return <div key={b.id}>Blank &quot;{b.answers.join(' / ')}&quot;: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{val || '(blank)'}</span></div>
           })}
         </div>
       )

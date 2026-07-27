@@ -8,6 +8,7 @@ export const H5P_TYPES = [
   'ESSAY',
   'SORT_PARAGRAPHS',
   'DRAG_WORDS',
+  'FILL_BLANKS',
   'DRAG_DROP',
   'SPEAK_WORDS',
   'SPEAK_WORDS_SET',
@@ -24,6 +25,7 @@ export const H5P_TYPE_LABEL: Record<H5PType, string> = {
   ESSAY: 'Essay',
   SORT_PARAGRAPHS: 'Sort the Paragraphs',
   DRAG_WORDS: 'Drag the Words',
+  FILL_BLANKS: 'Fill in the Blanks',
   DRAG_DROP: 'Drag and Drop',
   SPEAK_WORDS: 'Speak the Words',
   SPEAK_WORDS_SET: 'Speak the Words Set',
@@ -40,6 +42,8 @@ export function h5pDefaultData(type: H5PType): any {
       return { paragraphs: [{ id: uid('p'), text: '' }, { id: uid('p'), text: '' }] }
     case 'DRAG_WORDS':
       return { text: '', distractors: [] }
+    case 'FILL_BLANKS':
+      return { text: '' }
     case 'DRAG_DROP':
       return { backgroundImage: '', zones: [], items: [] }
     case 'SPEAK_WORDS':
@@ -63,6 +67,22 @@ export function parseDragWordsText(text: string): Array<{ type: 'text'; value: s
     }
     if (p.startsWith('#') && p.endsWith('#') && p.length > 2) {
       return { type: 'blank' as const, id: `b${i++}`, answer: p.slice(1, -1).trim(), group: 'b' as const }
+    }
+    return { type: 'text' as const, value: p }
+  })
+}
+
+// Mirrors backend/src/h5p/h5p-questions.ts's parseFillBlanksText. Same *word*-delimited
+// markup as Drag the Words, but each blank is typed rather than dragged — so no
+// group coloring, and a blank can list multiple accepted spellings/synonyms separated
+// by "/", e.g. "*blueberries/blueberry*".
+export function parseFillBlanksText(text: string): Array<{ type: 'text'; value: string } | { type: 'blank'; id: string; answers: string[] }> {
+  const parts = (text || '').split(/(\*[^*]+\*)/g).filter((p) => p.length > 0)
+  let i = 0
+  return parts.map((p) => {
+    if (p.startsWith('*') && p.endsWith('*') && p.length > 2) {
+      const answers = p.slice(1, -1).split('/').map((a) => a.trim()).filter(Boolean)
+      return { type: 'blank' as const, id: `fb${i++}`, answers }
     }
     return { type: 'text' as const, value: p }
   })
@@ -103,6 +123,8 @@ export function sanitizeH5PForPreview(type: H5PType, data: any): any {
       const wordBank = shuffle([...answers, ...cleanDistractors])
       return { segments, wordBank }
     }
+    case 'FILL_BLANKS':
+      return { segments: parseFillBlanksText(d.text || '').map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id } : s)) }
     case 'DRAG_DROP':
       return {
         backgroundImage: d.backgroundImage,
@@ -137,6 +159,16 @@ export function gradeH5PQuestion(type: H5PType, data: any, response: any, marks:
       const given: Record<string, string> = response && typeof response === 'object' ? response : {}
       let correct = 0
       for (const b of blanks) if ((given[b.id] || '').trim().toLowerCase() === b.answer.trim().toLowerCase()) correct++
+      return { awarded: (marks * correct) / (blanks.length || 1), autoGraded: true }
+    }
+    case 'FILL_BLANKS': {
+      const blanks = parseFillBlanksText(d.text || '').filter((s) => s.type === 'blank') as { id: string; answers: string[] }[]
+      const given: Record<string, string> = response && typeof response === 'object' ? response : {}
+      let correct = 0
+      for (const b of blanks) {
+        const accepted = b.answers.map(normalizeAnswer)
+        if (accepted.includes(normalizeAnswer(given[b.id] || ''))) correct++
+      }
       return { awarded: (marks * correct) / (blanks.length || 1), autoGraded: true }
     }
     case 'DRAG_DROP': {

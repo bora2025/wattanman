@@ -5,6 +5,7 @@ import MathText from './MathText'
 import { EssayInput } from './questions/EssayField'
 import { SortParagraphsInput } from './questions/SortParagraphsField'
 import { DragWordsInput } from './questions/DragWordsField'
+import { FillBlanksInput } from './questions/FillBlanksField'
 import { DragDropInput } from './questions/DragDropField'
 import { SpeakWordsInput } from './questions/SpeakWordsField'
 import { SpeakWordsSetInput } from './questions/SpeakWordsSetField'
@@ -65,6 +66,7 @@ export function QuestionInput({ q, value, onChange }: { q: QuestionInputQuestion
   if (q.type === 'ESSAY') return <EssayInput data={q.data} value={value} onChange={onChange} />
   if (q.type === 'SORT_PARAGRAPHS') return <SortParagraphsInput data={q.data} value={value} onChange={onChange} />
   if (q.type === 'DRAG_WORDS') return <DragWordsInput data={q.data} value={value} onChange={onChange} />
+  if (q.type === 'FILL_BLANKS') return <FillBlanksInput data={q.data} value={value} onChange={onChange} />
   if (q.type === 'DRAG_DROP') return <DragDropInput data={q.data} value={value} onChange={onChange} />
   if (q.type === 'SPEAK_WORDS') return <SpeakWordsInput data={q.data} value={value} onChange={onChange} />
   if (q.type === 'SPEAK_WORDS_SET') return <SpeakWordsSetInput data={q.data} value={value} onChange={onChange} />

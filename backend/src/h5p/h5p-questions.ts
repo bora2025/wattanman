@@ -10,6 +10,7 @@ export const H5P_TYPES = [
   'ESSAY',
   'SORT_PARAGRAPHS',
   'DRAG_WORDS',
+  'FILL_BLANKS',
   'DRAG_DROP',
   'SPEAK_WORDS',
   'SPEAK_WORDS_SET',
@@ -36,6 +37,23 @@ export function parseDragWordsText(text: string): Array<{ type: 'text'; value: s
     }
     if (p.startsWith('#') && p.endsWith('#') && p.length > 2) {
       return { type: 'blank' as const, id: `b${i++}`, answer: p.slice(1, -1).trim(), group: 'b' as const };
+    }
+    return { type: 'text' as const, value: p };
+  });
+}
+
+// Fill in the Blanks uses the same *word*-delimited markup as Drag the Words (single
+// source of truth for the blanked-out segments and the correct answers), but each
+// blank is answered by typing rather than dragging a chip — so there's no drag/drop
+// group coloring to track, and instead each blank can list multiple accepted
+// spellings/synonyms separated by "/", e.g. "*blueberries/blueberry*".
+export function parseFillBlanksText(text: string): Array<{ type: 'text'; value: string } | { type: 'blank'; id: string; answers: string[] }> {
+  const parts = (text || '').split(/(\*[^*]+\*)/g).filter((p) => p.length > 0);
+  let i = 0;
+  return parts.map((p) => {
+    if (p.startsWith('*') && p.endsWith('*') && p.length > 2) {
+      const answers = p.slice(1, -1).split('/').map((a) => a.trim()).filter(Boolean);
+      return { type: 'blank' as const, id: `fb${i++}`, answers };
     }
     return { type: 'text' as const, value: p };
   });
@@ -83,6 +101,15 @@ export function sanitizeH5PInput(type: H5PType, raw: any): any {
         .map((w: any) => String(w).trim())
         .filter(Boolean);
       return { text: dragText, distractors };
+    }
+
+    case 'FILL_BLANKS': {
+      const fillText = String(raw?.text || '').trim();
+      if (!fillText) throw new BadRequestException('Fill in the Blanks needs body text');
+      const blanks = parseFillBlanksText(fillText).filter((s) => s.type === 'blank') as { answers: string[] }[];
+      if (blanks.length < 1) throw new BadRequestException('Fill in the Blanks needs at least one *word* marked as a blank');
+      if (blanks.some((b) => b.answers.length < 1)) throw new BadRequestException('Every blank needs at least one accepted answer');
+      return { text: fillText };
     }
 
     case 'DRAG_DROP': {
@@ -175,6 +202,9 @@ export function sanitizeH5PForStudent(type: H5PType, data: any): any {
       return { segments, wordBank };
     }
 
+    case 'FILL_BLANKS':
+      return { segments: parseFillBlanksText(d.text || '').map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id } : s)) };
+
     case 'DRAG_DROP':
       return {
         backgroundImage: d.backgroundImage,
@@ -215,6 +245,17 @@ export function gradeH5PQuestion(type: H5PType, data: any, response: any, marks:
       const given: Record<string, string> = response && typeof response === 'object' ? response : {};
       let correct = 0;
       for (const b of blanks) if ((given[b.id] || '').trim().toLowerCase() === b.answer.trim().toLowerCase()) correct++;
+      return { awarded: (marks * correct) / (blanks.length || 1), autoGraded: true };
+    }
+
+    case 'FILL_BLANKS': {
+      const blanks = parseFillBlanksText(d.text || '').filter((s) => s.type === 'blank') as { id: string; answers: string[] }[];
+      const given: Record<string, string> = response && typeof response === 'object' ? response : {};
+      let correct = 0;
+      for (const b of blanks) {
+        const accepted = b.answers.map(normalizeAnswer);
+        if (accepted.includes(normalizeAnswer(given[b.id] || ''))) correct++;
+      }
       return { awarded: (marks * correct) / (blanks.length || 1), autoGraded: true };
     }
 

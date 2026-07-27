@@ -10,6 +10,7 @@ import { type H5PType } from '../../../../../lib/h5pQuestionLogic'
 import { EssayInput } from '../../../../../components/questions/EssayField'
 import { SortParagraphsInput } from '../../../../../components/questions/SortParagraphsField'
 import { DragWordsInput } from '../../../../../components/questions/DragWordsField'
+import { FillBlanksInput } from '../../../../../components/questions/FillBlanksField'
 import { DragDropInput } from '../../../../../components/questions/DragDropField'
 import { SpeakWordsInput } from '../../../../../components/questions/SpeakWordsField'
 import { SpeakWordsSetInput } from '../../../../../components/questions/SpeakWordsSetField'
@@ -276,6 +277,8 @@ function QuestionInput({ q, value, onChange, disabled }: { q: Question; value: a
       return <SortParagraphsInput data={q.data} value={value} onChange={onChange} disabled={disabled} />
     case 'DRAG_WORDS':
       return <DragWordsInput data={q.data} value={value} onChange={onChange} disabled={disabled} />
+    case 'FILL_BLANKS':
+      return <FillBlanksInput data={q.data} value={value} onChange={onChange} disabled={disabled} />
     case 'DRAG_DROP':
       return <DragDropInput data={q.data} value={value} onChange={onChange} disabled={disabled} />
     case 'SPEAK_WORDS':

@@ -10,6 +10,7 @@ import { type H5PType, isH5PType, sanitizeH5PForPreview } from '../../../../../.
 import { EssayInput } from '../../../../../../../components/questions/EssayField'
 import { SortParagraphsInput } from '../../../../../../../components/questions/SortParagraphsField'
 import { DragWordsInput } from '../../../../../../../components/questions/DragWordsField'
+import { FillBlanksInput } from '../../../../../../../components/questions/FillBlanksField'
 import { DragDropInput } from '../../../../../../../components/questions/DragDropField'
 import { SpeakWordsInput } from '../../../../../../../components/questions/SpeakWordsField'
 import { SpeakWordsSetInput } from '../../../../../../../components/questions/SpeakWordsSetField'
@@ -760,6 +761,9 @@ function QuestionView({
       )}
       {qt === 'DRAG_WORDS' && (
         <DragWordsInput data={safeH5PData} value={h5pValue} onChange={setH5pValue} disabled={disabled} />
+      )}
+      {qt === 'FILL_BLANKS' && (
+        <FillBlanksInput data={safeH5PData} value={h5pValue} onChange={setH5pValue} disabled={disabled} />
       )}
       {qt === 'DRAG_DROP' && (
         <DragDropInput data={safeH5PData} value={h5pValue} onChange={setH5pValue} disabled={disabled} />

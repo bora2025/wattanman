@@ -12,6 +12,7 @@ import { type H5PType, isH5PType, H5P_TYPE_LABEL, h5pDefaultData } from '../../.
 import { EssayEditor } from '../../../../components/questions/EssayField'
 import { SortParagraphsEditor } from '../../../../components/questions/SortParagraphsField'
 import { DragWordsEditor } from '../../../../components/questions/DragWordsField'
+import { FillBlanksEditor } from '../../../../components/questions/FillBlanksField'
 import { DragDropEditor } from '../../../../components/questions/DragDropField'
 import { SpeakWordsEditor } from '../../../../components/questions/SpeakWordsField'
 import { SpeakWordsSetEditor } from '../../../../components/questions/SpeakWordsSetField'
@@ -1243,6 +1244,9 @@ function QuestionEditor({
       )}
       {qt === 'DRAG_WORDS' && (
         <DragWordsEditor data={value.data} onChange={(d) => onChange({ ...value, data: d })} />
+      )}
+      {qt === 'FILL_BLANKS' && (
+        <FillBlanksEditor data={value.data} onChange={(d) => onChange({ ...value, data: d })} />
       )}
       {qt === 'DRAG_DROP' && (
         <DragDropEditor data={value.data} onChange={(d) => onChange({ ...value, data: d })} />

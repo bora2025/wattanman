@@ -12,7 +12,7 @@ import ConfirmModal from '../../../../../components/ConfirmModal'
 import { teacherNav } from '../../../../../lib/teacher-nav'
 import { apiFetch } from '../../../../../lib/api'
 import { gradeQuestion } from '../../../../../lib/examQuestionLogic'
-import { parseDragWordsText, diffWords } from '../../../../../lib/h5pQuestionLogic'
+import { parseDragWordsText, parseFillBlanksText, diffWords } from '../../../../../lib/h5pQuestionLogic'
 import MathText from '../../../../../components/MathText'
 import RichText from '../../../../../components/RichText'
 
@@ -56,6 +56,10 @@ function isAutoGraded(type: string) {
 // can derive blanks+answers from the same *word*-marked-up text without a round trip.
 function parseDragWordsBlanks(text: string): { id: string; answer: string }[] {
   return parseDragWordsText(text).filter((s): s is { type: 'blank'; id: string; answer: string; group: 'a' | 'b' } => s.type === 'blank')
+}
+
+function parseFillBlanksBlanks(text: string): { id: string; answers: string[] }[] {
+  return parseFillBlanksText(text).filter((s): s is { type: 'blank'; id: string; answers: string[] } => s.type === 'blank')
 }
 
 // Delegates to lib/examQuestionLogic.ts's gradeQuestion (which mirrors the backend
@@ -268,6 +272,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
         const chosenIds = new Set(Array.isArray(studentAnswer) ? studentAnswer.map(String) : studentAnswer != null ? [String(studentAnswer)] : [])
         const paragraphs: { id: string; text: string }[] = q.data?.paragraphs ?? []
         const dragBlanks = q.type === 'DRAG_WORDS' ? parseDragWordsBlanks(q.data?.text || '') : []
+        const fillBlanks = q.type === 'FILL_BLANKS' ? parseFillBlanksBlanks(q.data?.text || '') : []
         const dropItems: { id: string; label: string; correctZoneId: string }[] = q.data?.items ?? []
         const dropZones: { id: string }[] = q.data?.zones ?? []
         const swSetItems: { id: string; prompt: string; acceptedAnswers: string[] }[] = q.data?.items ?? []
@@ -307,6 +312,11 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
             {q.type === 'DRAG_WORDS' && dragBlanks.length > 0 && (
               <div className="text-xs text-slate-600 mb-2 ml-4">
                 Correct words: {dragBlanks.map((b) => <span key={b.id} className="text-emerald-700 font-semibold mr-2">[{b.answer}]</span>)}
+              </div>
+            )}
+            {q.type === 'FILL_BLANKS' && fillBlanks.length > 0 && (
+              <div className="text-xs text-slate-600 mb-2 ml-4">
+                Accepted answers: {fillBlanks.map((b) => <span key={b.id} className="text-emerald-700 font-semibold mr-2">[{b.answers.join(' / ')}]</span>)}
               </div>
             )}
             {q.type === 'DRAG_DROP' && dropItems.length > 0 && (
@@ -360,6 +370,16 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                       const given = studentAnswer && typeof studentAnswer === 'object' ? studentAnswer[b.id] : undefined
                       const ok = (given || '').trim().toLowerCase() === b.answer.trim().toLowerCase()
                       return <div key={b.id}>Blank &quot;{b.answer}&quot;: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{given || '(blank)'}</span></div>
+                    })}
+                  </div>
+                ) : <span className="text-slate-400 italic">(no answer)</span>
+              ) : q.type === 'FILL_BLANKS' ? (
+                fillBlanks.length > 0 ? (
+                  <div className="space-y-0.5">
+                    {fillBlanks.map((b) => {
+                      const given = studentAnswer && typeof studentAnswer === 'object' ? studentAnswer[b.id] : undefined
+                      const ok = b.answers.some((a) => (given || '').trim().toLowerCase() === a.trim().toLowerCase())
+                      return <div key={b.id}>Blank &quot;{b.answers.join(' / ')}&quot;: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{given || '(blank)'}</span></div>
                     })}
                   </div>
                 ) : <span className="text-slate-400 italic">(no answer)</span>

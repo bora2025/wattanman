@@ -13,6 +13,7 @@ import { type H5PType, isH5PType, H5P_TYPE_LABEL, h5pDefaultData, uid, parseDrag
 import { EssayEditor } from '../../../../../components/questions/EssayField'
 import { SortParagraphsEditor } from '../../../../../components/questions/SortParagraphsField'
 import { DragWordsEditor } from '../../../../../components/questions/DragWordsField'
+import { FillBlanksEditor } from '../../../../../components/questions/FillBlanksField'
 import { DragDropEditor } from '../../../../../components/questions/DragDropField'
 import { SpeakWordsEditor } from '../../../../../components/questions/SpeakWordsField'
 import { SpeakWordsSetEditor } from '../../../../../components/questions/SpeakWordsSetField'
@@ -307,6 +308,9 @@ export default function TeacherQuizEditorPage() {
                 )}
                 {draftType === 'DRAG_WORDS' && (
                   <DragWordsEditor data={draft.data} onChange={d => setDraft({ ...draft, data: d })} />
+                )}
+                {draftType === 'FILL_BLANKS' && (
+                  <FillBlanksEditor data={draft.data} onChange={d => setDraft({ ...draft, data: d })} />
                 )}
                 {draftType === 'DRAG_DROP' && (
                   <DragDropEditor data={draft.data} onChange={d => setDraft({ ...draft, data: d })} />

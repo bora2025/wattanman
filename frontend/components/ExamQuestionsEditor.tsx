@@ -6,6 +6,7 @@ import RichTextEditor from './RichTextEditor'
 import { EssayEditor } from './questions/EssayField'
 import { SortParagraphsEditor } from './questions/SortParagraphsField'
 import { DragWordsEditor } from './questions/DragWordsField'
+import { FillBlanksEditor } from './questions/FillBlanksField'
 import { DragDropEditor } from './questions/DragDropField'
 import { SpeakWordsEditor } from './questions/SpeakWordsField'
 import { SpeakWordsSetEditor } from './questions/SpeakWordsSetField'
@@ -67,6 +68,9 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
             )}
             {q.type === 'DRAG_WORDS' && (
               <DragWordsEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
+            )}
+            {q.type === 'FILL_BLANKS' && (
+              <FillBlanksEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
             )}
             {q.type === 'DRAG_DROP' && (
               <DragDropEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
