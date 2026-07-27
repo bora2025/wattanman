@@ -13,6 +13,7 @@ function sanitizeExamQuestionInput(body: any) {
   const text = String(body.text || '').trim();
   if (!text) throw new BadRequestException('Question text is required');
   const marks = Math.max(0, Number(body.marks) || 1);
+  const section = String(body.section || '').trim() || null;
   const raw = body.data ?? {};
   let data: any;
   if (isH5PType(type)) {
@@ -32,10 +33,10 @@ function sanitizeExamQuestionInput(body: any) {
   } else {
     data = { correct: !!raw.correct };
   }
-  return { type, text, marks, data };
+  return { type, text, marks, section, data };
 }
 
-function sanitizeExamQuestionForStudent(q: { id: string; type: string; text: string; marks: number; order: number; data: any }) {
+function sanitizeExamQuestionForStudent(q: { id: string; type: string; text: string; marks: number; order: number; section: string | null; data: any }) {
   const d = q.data || {};
   let safe: any;
   if (isH5PType(q.type)) {
@@ -45,7 +46,7 @@ function sanitizeExamQuestionForStudent(q: { id: string; type: string; text: str
   } else {
     safe = {};
   }
-  return { id: q.id, type: q.type, text: q.text, marks: q.marks, order: q.order, data: safe };
+  return { id: q.id, type: q.type, text: q.text, marks: q.marks, order: q.order, section: q.section, data: safe };
 }
 
 function gradeExamQuestion(q: { type: string; marks: number; data: any }, response: any): { awarded: number | null; autoGraded: boolean } {

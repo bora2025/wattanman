@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useRouter, useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
@@ -8,9 +8,10 @@ import { apiFetch } from '../../../../lib/api'
 import { QuestionInput } from '../../../../components/ExamQuestionInput'
 import RichText from '../../../../components/RichText'
 import ProgressBar from '../../../../components/ProgressBar'
-import type { QType } from '../../../../lib/examQuestionLogic'
+import SectionPager from '../../../../components/SectionPager'
+import { groupQuestionsBySection, type QType } from '../../../../lib/examQuestionLogic'
 
-interface Question { id: string; text: string; type: QType; marks: number; order: number; data: any }
+interface Question { id: string; text: string; type: QType; marks: number; order: number; section?: string | null; data: any }
 interface ExamDetail { id: string; title: string; duration: number; totalMarks: number; passMark: number; questions: Question[] }
 interface Attempt { id: string; status: string; startedAt: string; answers?: Record<string, any> | null }
 
@@ -59,6 +60,7 @@ export default function StudentExamTakingPage() {
   const [submitted, setSubmitted] = useState(false)
   const [startError, setStartError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [page, setPage] = useState(0)
 
   const { data: exam, isLoading } = useQuery({
     queryKey: ['exam-detail', examId],
@@ -126,6 +128,15 @@ export default function StudentExamTakingPage() {
 
   const answeredCount = exam ? exam.questions.filter(q => answers[q.id] != null).length : 0
 
+  // Consecutive questions sharing a section (e.g. "Listening") become one page —
+  // an exam with no sections assigned collapses to a single page, so SectionPager
+  // renders nothing and this behaves exactly like the old single-list layout.
+  // Answers are keyed by question id regardless of which page is showing, so
+  // navigating back and forth between pages never loses anything already typed.
+  const pages = useMemo(() => groupQuestionsBySection(exam?.questions ?? []), [exam?.questions])
+  const currentPage = pages[Math.min(page, pages.length - 1)] ?? { section: null, questions: [] as Question[], startIndex: 0 }
+  const isLastPage = pages.length === 0 || page >= pages.length - 1
+
   return (
     <AuthGuard requiredRole="STUDENT">
       <div className="min-h-screen bg-gray-50">
@@ -143,6 +154,12 @@ export default function StudentExamTakingPage() {
           {attempt && exam && (
             <div className="mt-3">
               <ProgressBar pct={(answeredCount / (exam.questions.length || 1)) * 100} label={`${answeredCount} of ${exam.questions.length} answered`} color="bg-emerald-500" />
+            </div>
+          )}
+          {attempt && pages.length > 1 && (
+            <div className="mt-2">
+              {currentPage.section && <p className="text-center text-sm font-bold text-gray-700 mb-1">{currentPage.section}</p>}
+              <SectionPager labels={pages.map(p => p.section || 'Questions')} current={page} onChange={setPage} />
             </div>
           )}
         </div>
@@ -171,7 +188,9 @@ export default function StudentExamTakingPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {exam?.questions.map((q, i) => (
+              {currentPage.questions.map((q, localI) => {
+                const i = currentPage.startIndex + localI
+                return (
                 <div key={q.id} className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
                   <div className="flex items-start gap-2 mb-3">
                     <span className="flex-none w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
@@ -182,14 +201,24 @@ export default function StudentExamTakingPage() {
                   </div>
                   <QuestionInput q={q} value={answers[q.id]} onChange={v => setAnswers(a => ({ ...a, [q.id]: v }))} />
                 </div>
-              ))}
+                )
+              })}
 
               <div className="text-center pb-10 pt-2">
-                <button onClick={() => { setSubmitError(null); attempt && submitMutation.mutate(attempt.id) }} disabled={submitMutation.isPending}
-                  className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-semibold text-lg hover:bg-emerald-700 disabled:opacity-60 shadow-sm">
-                  {submitMutation.isPending ? 'Submitting...' : 'Submit Exam'}
-                </button>
-                <p className="text-xs text-gray-400 mt-2">Make sure all questions are answered before submitting</p>
+                {!isLastPage ? (
+                  <button onClick={() => setPage(p => p + 1)}
+                    className="bg-sky-600 text-white px-8 py-3 rounded-xl font-semibold text-lg hover:bg-sky-700 shadow-sm">
+                    Next Section →
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={() => { setSubmitError(null); attempt && submitMutation.mutate(attempt.id) }} disabled={submitMutation.isPending}
+                      className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-semibold text-lg hover:bg-emerald-700 disabled:opacity-60 shadow-sm">
+                      {submitMutation.isPending ? 'Submitting...' : 'Submit Exam'}
+                    </button>
+                    <p className="text-xs text-gray-400 mt-2">Make sure all questions are answered before submitting</p>
+                  </>
+                )}
                 {submitError && <p className="text-sm text-red-600 mt-3">{submitError}</p>}
               </div>
             </div>

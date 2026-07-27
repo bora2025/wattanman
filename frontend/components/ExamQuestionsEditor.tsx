@@ -30,6 +30,13 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
   function addQuestion() { onChange([...questions, defaultQuestion()]) }
   function removeQuestion(i: number) { onChange(questions.filter((_, idx) => idx !== i)) }
 
+  // Section names already used elsewhere in this exam, offered via a datalist so
+  // a teacher typing "Listening" for a 2nd/3rd time gets it spelled consistently —
+  // consecutive questions with matching section text become one page for students
+  // (see groupQuestionsBySection), so a typo would silently split what was meant
+  // to be a single section into two.
+  const sectionNames = Array.from(new Set(questions.map(q => (q.section || '').trim()).filter(Boolean)))
+
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -38,9 +45,23 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
           👁 Preview
         </button>
       </div>
+      <datalist id="exam-section-names">
+        {sectionNames.map(name => <option key={name} value={name} />)}
+      </datalist>
       <div className="space-y-3">
-        {questions.map((q, i) => (
-          <div key={i} className="border border-slate-200 rounded-xl p-3 bg-slate-50 relative">
+        {questions.map((q, i) => {
+          const section = (q.section || '').trim()
+          const prevSection = (questions[i - 1]?.section || '').trim()
+          const showSectionDivider = section && section !== prevSection
+          return (
+          <div key={i}>
+            {showSectionDivider && (
+              <div className="flex items-center gap-2 mt-4 mb-1.5 first:mt-0">
+                <span className="text-xs font-bold text-sky-700 uppercase tracking-wide">{section}</span>
+                <div className="flex-1 h-px bg-sky-200" />
+              </div>
+            )}
+            <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 relative">
             <button type="button" onClick={() => removeQuestion(i)} disabled={questions.length <= 1} className="absolute top-2 right-2 text-red-400 text-xs disabled:opacity-30">✕</button>
             <div className="grid grid-cols-3 gap-2 mb-2">
               <select value={q.type} onChange={e => changeType(i, e.target.value as QType)} className="col-span-2 border rounded px-2 py-1 text-sm">
@@ -48,6 +69,14 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
               </select>
               <input type="number" step="any" min={0} value={q.marks} onChange={e => updateQuestion(i, { marks: Number(e.target.value) || 0 })} placeholder="Marks" className="border rounded px-2 py-1 text-sm" />
             </div>
+            <input
+              type="text"
+              list="exam-section-names"
+              value={q.section || ''}
+              onChange={e => updateQuestion(i, { section: e.target.value })}
+              placeholder="Section (optional, e.g. Listening) — groups consecutive questions into one page for students"
+              className="w-full border rounded px-2 py-1 text-xs mb-2 text-slate-600"
+            />
             <RichTextEditor value={q.text} onChange={text => updateQuestion(i, { text })} placeholder={`Q${i + 1}: Question text`} />
 
             {q.type === 'MCQ' && (
@@ -84,8 +113,10 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
             {q.type === 'DICTATION' && (
               <DictationEditor data={q.data} onChange={d => updateQuestion(i, { data: d })} />
             )}
+            </div>
           </div>
-        ))}
+          )
+        })}
       </div>
       <button type="button" onClick={addQuestion} className="mt-2 text-sm text-sky-600 hover:underline">+ Add Question</button>
       {previewOpen && <ExamPreviewModal questions={questions} onClose={() => setPreviewOpen(false)} />}

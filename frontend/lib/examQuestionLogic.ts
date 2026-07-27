@@ -17,6 +17,7 @@ export interface ExamQuestionDraft {
   type: QType
   marks: number
   data: any
+  section?: string | null
 }
 
 export const TYPE_LABEL: Record<QType, string> = {
@@ -34,7 +35,31 @@ export function defaultData(type: QType): any {
 }
 
 export function defaultQuestion(): ExamQuestionDraft {
-  return { text: '', type: 'MCQ', marks: 1, data: defaultData('MCQ') }
+  return { text: '', type: 'MCQ', marks: 1, data: defaultData('MCQ'), section: '' }
+}
+
+export interface QuestionPage<T> {
+  section: string | null
+  questions: T[]
+  startIndex: number // index of this page's first question within the original flat array — lets the UI keep numbering "Q1, Q2…" continuous across pages
+}
+
+// Groups consecutive questions sharing the same (trimmed, case-sensitive) section
+// label into one page — e.g. 10 "Listening" questions then 10 "Reading" ones
+// becomes 2 pages. Un-sectioned questions (null/empty) are grouped the same way,
+// so an exam nobody assigned sections to collapses to a single page and the
+// pagination UI stays hidden entirely (checked via `pages.length <= 1` at the
+// call site) — a plain question list behaves exactly as it did before this
+// feature existed.
+export function groupQuestionsBySection<T extends { section?: string | null }>(questions: T[]): QuestionPage<T>[] {
+  const pages: QuestionPage<T>[] = []
+  questions.forEach((q, i) => {
+    const section = (q.section || '').trim() || null
+    const last = pages[pages.length - 1]
+    if (last && last.section === section) last.questions.push(q)
+    else pages.push({ section, questions: [q], startIndex: i })
+  })
+  return pages
 }
 
 // Strips correct-answer data the same way exam.service.ts's

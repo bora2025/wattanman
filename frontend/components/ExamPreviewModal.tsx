@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react'
 import { QuestionInput } from './ExamQuestionInput'
 import RichText from './RichText'
-import { sanitizeForPreview, gradeQuestion, TYPE_LABEL, type ExamQuestionDraft } from '../lib/examQuestionLogic'
+import SectionPager from './SectionPager'
+import { sanitizeForPreview, gradeQuestion, groupQuestionsBySection, TYPE_LABEL, type ExamQuestionDraft } from '../lib/examQuestionLogic'
 
 /**
  * Lets a teacher/admin try an exam exactly as a student would, before publishing it.
@@ -17,10 +18,17 @@ import { sanitizeForPreview, gradeQuestion, TYPE_LABEL, type ExamQuestionDraft }
 export default function ExamPreviewModal({ questions, onClose }: { questions: ExamQuestionDraft[]; onClose: () => void }) {
   const [answers, setAnswers] = useState<Record<number, any>>({})
   const [checked, setChecked] = useState(false)
+  const [page, setPage] = useState(0)
 
   // Computed once per modal open — re-deriving on every keystroke would reshuffle
   // Sort the Paragraphs / rebuild the Drag the Words word bank mid-interaction.
   const previewData = useMemo(() => questions.map(q => sanitizeForPreview(q.type, q.data)), [questions])
+
+  // Consecutive questions sharing a section (e.g. "Listening") become one page —
+  // an exam with no sections assigned collapses to a single page, so SectionPager
+  // renders nothing and this behaves exactly like the old single-list preview.
+  const pages = useMemo(() => groupQuestionsBySection(questions), [questions])
+  const currentPage = pages[Math.min(page, pages.length - 1)] ?? { section: null, questions: [], startIndex: 0 }
 
   const totalMarks = questions.reduce((s, q) => s + (q.marks || 0), 0)
   const results = questions.map((q, i) => gradeQuestion(q, answers[i]))
@@ -30,6 +38,7 @@ export default function ExamPreviewModal({ questions, onClose }: { questions: Ex
   function reset() {
     setAnswers({})
     setChecked(false)
+    setPage(0)
   }
 
   return (
@@ -43,10 +52,20 @@ export default function ExamPreviewModal({ questions, onClose }: { questions: Ex
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none flex-shrink-0">✕</button>
         </div>
 
+        {pages.length > 1 && (
+          <div className="px-5 pt-3 border-b border-slate-100">
+            {currentPage.section && (
+              <p className="text-center text-sm font-bold text-slate-700 mb-1">{currentPage.section}</p>
+            )}
+            <SectionPager labels={pages.map(p => p.section || 'Questions')} current={page} onChange={setPage} />
+          </div>
+        )}
+
         <div className="p-5 overflow-y-auto space-y-4 flex-1">
           {questions.length === 0 ? (
             <p className="text-sm text-slate-400 text-center py-8">No questions to preview yet.</p>
-          ) : questions.map((q, i) => {
+          ) : currentPage.questions.map((q, localI) => {
+            const i = currentPage.startIndex + localI
             const result = checked ? results[i] : null
             const badgeClass = result?.autoGraded
               ? (result.awarded === q.marks ? 'bg-emerald-100 text-emerald-700' : (result.awarded ?? 0) > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700')

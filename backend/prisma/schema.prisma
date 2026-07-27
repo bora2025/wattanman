@@ -904,6 +904,8 @@ model ExamQuestion {
   data      Json? // type-specific config, e.g. MCQ: { choices:[{id,text,isCorrect}], multiple }, TF: { correct }
   marks     Float    @default(1)
   order     Int      @default(0)
+  section   String? // free-text label (e.g. "Listening", "Reading") — consecutive questions sharing
+  // a section are grouped into one page in the exam-taking UI; null/absent means no pagination
   createdAt DateTime @default(now())
 }
 
