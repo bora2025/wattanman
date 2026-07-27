@@ -5,6 +5,15 @@ import { H5P_TYPES, isH5PType, sanitizeH5PInput, sanitizeH5PForStudent, gradeH5P
 
 const ALLOWED_EXAM_QUESTION_TYPES = ['MCQ', 'TF', ...H5P_TYPES];
 
+// Strips a wrapping quote/trailing comma that tends to survive a copy-paste of a
+// section name written out as part of a list elsewhere (e.g. `"Listening",`) —
+// the frontend already does this on input, but sanitizing here too means a stray
+// quote can never silently stop two questions meant to share a section from
+// matching, regardless of what sent the request.
+function cleanSectionLabel(raw: string): string {
+  return raw.replace(/^[\s"'“”‘’]+|[\s"'“”‘’,]+$/g, '');
+}
+
 function sanitizeExamQuestionInput(body: any) {
   const type = String(body.type || '').toUpperCase();
   if (!ALLOWED_EXAM_QUESTION_TYPES.includes(type)) {
@@ -13,7 +22,7 @@ function sanitizeExamQuestionInput(body: any) {
   const text = String(body.text || '').trim();
   if (!text) throw new BadRequestException('Question text is required');
   const marks = Math.max(0, Number(body.marks) || 1);
-  const section = String(body.section || '').trim() || null;
+  const section = cleanSectionLabel(String(body.section || '').trim()) || null;
   const raw = body.data ?? {};
   let data: any;
   if (isH5PType(type)) {

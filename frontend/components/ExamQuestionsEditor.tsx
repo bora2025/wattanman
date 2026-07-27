@@ -17,6 +17,15 @@ export type { QType, ExamQuestionDraft }
 export { TYPE_LABEL, uid, defaultData, defaultQuestion }
 export interface Choice { id: string; text: string; isCorrect: boolean }
 
+// Guards against a common mistake: pasting/typing a section name the way it'd be
+// written in a list elsewhere (e.g. "Listening", with a wrapping quote and trailing
+// comma copied along) — each question gets its OWN plain section name, not a
+// combined list, so a stray quote/comma would otherwise become part of the label
+// and silently stop two questions meant to share a section from matching.
+function cleanSectionLabel(raw: string): string {
+  return raw.replace(/^[\s"'“”‘’]+|[\s"'“”‘’,]+$/g, '')
+}
+
 /** Renders the full "Questions" section: type-switching list + add/remove, for authoring an exam. */
 export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQuestionDraft[]; onChange: (qs: ExamQuestionDraft[]) => void }) {
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -73,8 +82,9 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
               type="text"
               list="exam-section-names"
               value={q.section || ''}
-              onChange={e => updateQuestion(i, { section: e.target.value })}
-              placeholder="Section (optional, e.g. Listening) — groups consecutive questions into one page for students"
+              onChange={e => updateQuestion(i, { section: cleanSectionLabel(e.target.value) })}
+              placeholder="Section this question belongs to (optional) — e.g. Listening"
+              title="One section name per question — questions in a row sharing the same name become one page for students. Leave blank for questions with no section."
               className="w-full border rounded px-2 py-1 text-xs mb-2 text-slate-600"
             />
             <RichTextEditor value={q.text} onChange={text => updateQuestion(i, { text })} placeholder={`Q${i + 1}: Question text`} />
