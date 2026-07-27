@@ -69,7 +69,7 @@ export default function ExamAdminPage() {
         passMark: full.passMark ?? 50,
         maxAttempts: full.maxAttempts ?? 1,
         questions: (full.questions || []).length
-          ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data }))
+          ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data, section: q.section }))
           : [defaultQuestion()],
       })
       setEditingExamId(examId)

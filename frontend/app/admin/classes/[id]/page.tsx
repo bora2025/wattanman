@@ -454,12 +454,15 @@ function ExamsPanel({ classId }: { classId: string }) {
       const r = await apiFetch('/api/exams', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       })
-      if (!r.ok) throw new Error()
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}))
+        throw new Error(Array.isArray(j.message) ? j.message.join(', ') : j.message || 'Failed to create exam.')
+      }
       setForm({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50, allowRetake: false, maxAttempts: 1 })
       setQuestions([defaultQuestion()])
       setCreating(false)
       await load()
-    } catch { setError('Failed to create exam.') }
+    } catch (e: any) { setError(e?.message || 'Failed to create exam.') }
     finally { setSaving(false) }
   }
 
@@ -501,7 +504,7 @@ function ExamsPanel({ classId }: { classId: string }) {
         maxAttempts: full.maxAttempts ?? 1,
       })
       setEditQuestions((full.questions || []).length
-        ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data }))
+        ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data, section: q.section }))
         : [defaultQuestion()])
       setEditingId(row.id)
     } catch { setError('Failed to load exam.') }
@@ -525,10 +528,13 @@ function ExamsPanel({ classId }: { classId: string }) {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      if (!r.ok) throw new Error()
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}))
+        throw new Error(Array.isArray(j.message) ? j.message.join(', ') : j.message || 'Failed to save exam.')
+      }
       setEditingId(null)
       await load()
-    } catch { setError('Failed to save exam.') }
+    } catch (e: any) { setError(e?.message || 'Failed to save exam.') }
     finally { setEditSaving(false) }
   }
 
