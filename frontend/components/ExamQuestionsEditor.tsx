@@ -26,6 +26,27 @@ function cleanSectionLabel(raw: string): string {
   return raw.replace(/^[\s"'“”‘’]+|[\s"'“”‘’,]+$/g, '')
 }
 
+/** Small icon-only action button shared by the question toolbar (move/duplicate/delete). */
+function ToolbarButton({ onClick, disabled, title, danger, children }: { onClick: () => void; disabled?: boolean; title: string; danger?: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      className={`w-7 h-7 flex items-center justify-center rounded-lg disabled:opacity-25 disabled:pointer-events-none transition-colors ${danger ? 'text-red-400 hover:bg-red-50 hover:text-red-600' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-700'}`}
+    >
+      {children}
+    </button>
+  )
+}
+
+const IconChevronUp = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
+const IconChevronDown = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+const IconDuplicate = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg>
+const IconTrash = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+
 /** Renders the full "Questions" section: type-switching list + add/remove, for authoring an exam. */
 export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQuestionDraft[]; onChange: (qs: ExamQuestionDraft[]) => void }) {
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -39,7 +60,19 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
     updateQuestion(i, { type, data: defaultData(type), marks: type === 'TEXT' ? 0 : questions[i].marks })
   }
   function addQuestion() { onChange([...questions, defaultQuestion()]) }
+  function insertQuestionAt(i: number) { onChange([...questions.slice(0, i), defaultQuestion(), ...questions.slice(i)]) }
   function removeQuestion(i: number) { onChange(questions.filter((_, idx) => idx !== i)) }
+  function duplicateQuestion(i: number) {
+    const copy: ExamQuestionDraft = { ...questions[i], data: JSON.parse(JSON.stringify(questions[i].data ?? {})) }
+    onChange([...questions.slice(0, i + 1), copy, ...questions.slice(i + 1)])
+  }
+  function moveQuestion(i: number, dir: -1 | 1) {
+    const j = i + dir
+    if (j < 0 || j >= questions.length) return
+    const next = [...questions]
+    ;[next[i], next[j]] = [next[j], next[i]]
+    onChange(next)
+  }
 
   // Section names already used elsewhere in this exam, offered via a datalist so
   // a teacher typing "Listening" for a 2nd/3rd time gets it spelled consistently —
@@ -59,30 +92,54 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
       <datalist id="exam-section-names">
         {sectionNames.map(name => <option key={name} value={name} />)}
       </datalist>
-      <div className="space-y-3">
+      <div className="space-y-0">
         {questions.map((q, i) => {
           const section = (q.section || '').trim()
           const prevSection = (questions[i - 1]?.section || '').trim()
           const showSectionDivider = section && section !== prevSection
           return (
           <div key={i}>
+            {/* Hover-revealed insert point — lets a question be added at an exact
+                position instead of only ever appending at the very end. Always
+                occupies real layout space (no negative-margin/zero-height tricks),
+                just visually near-empty until hovered. */}
+            <div className="group/insert flex items-center h-5 px-1">
+              <button
+                type="button"
+                onClick={() => insertQuestionAt(i)}
+                title="Insert question here"
+                aria-label="Insert question here"
+                className="flex-1 flex items-center opacity-0 group-hover/insert:opacity-100 focus:opacity-100 transition-opacity"
+              >
+                <span className="flex-1 h-px bg-sky-300" />
+                <span className="mx-1.5 w-5 h-5 rounded-full bg-sky-600 text-white flex items-center justify-center text-xs leading-none shrink-0">+</span>
+                <span className="flex-1 h-px bg-sky-300" />
+              </button>
+            </div>
             {showSectionDivider && (
-              <div className="flex items-center gap-2 mt-4 mb-1.5 first:mt-0">
+              <div className="flex items-center gap-2 mb-1.5">
                 <span className="text-xs font-bold text-sky-700 uppercase tracking-wide">{section}</span>
                 <div className="flex-1 h-px bg-sky-200" />
               </div>
             )}
-            <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 relative">
-            <button type="button" onClick={() => removeQuestion(i)} disabled={questions.length <= 1} className="absolute top-2 right-2 text-red-400 text-xs disabled:opacity-30">✕</button>
-            <div className="grid grid-cols-3 gap-2 mb-2">
-              <select value={q.type} onChange={e => changeType(i, e.target.value as QType)} className="col-span-2 border rounded px-2 py-1 text-sm">
-                {(Object.keys(TYPE_LABEL) as QType[]).map(t => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
-              </select>
-              {q.type === 'TEXT' ? (
-                <span className="border rounded px-2 py-1 text-sm text-slate-400 bg-slate-100 text-center" title="A passage isn't scored">not scored</span>
-              ) : (
-                <input type="number" step="any" min={0} value={q.marks} onChange={e => updateQuestion(i, { marks: Number(e.target.value) || 0 })} placeholder="Marks" className="border rounded px-2 py-1 text-sm" />
-              )}
+            <div className="border border-slate-200 rounded-xl p-3 bg-slate-50">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="grid grid-cols-3 gap-2 flex-1">
+                <select value={q.type} onChange={e => changeType(i, e.target.value as QType)} className="col-span-2 border rounded px-2 py-1 text-sm">
+                  {(Object.keys(TYPE_LABEL) as QType[]).map(t => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
+                </select>
+                {q.type === 'TEXT' ? (
+                  <span className="border rounded px-2 py-1 text-sm text-slate-400 bg-slate-100 text-center" title="A passage isn't scored">not scored</span>
+                ) : (
+                  <input type="number" step="any" min={0} value={q.marks} onChange={e => updateQuestion(i, { marks: Number(e.target.value) || 0 })} placeholder="Marks" className="border rounded px-2 py-1 text-sm" />
+                )}
+              </div>
+              <div className="flex items-center gap-0.5 shrink-0 border border-slate-200 rounded-lg bg-white p-0.5">
+                <ToolbarButton onClick={() => moveQuestion(i, -1)} disabled={i === 0} title="Move up"><IconChevronUp /></ToolbarButton>
+                <ToolbarButton onClick={() => moveQuestion(i, 1)} disabled={i === questions.length - 1} title="Move down"><IconChevronDown /></ToolbarButton>
+                <ToolbarButton onClick={() => duplicateQuestion(i)} title="Duplicate"><IconDuplicate /></ToolbarButton>
+                <ToolbarButton onClick={() => removeQuestion(i)} disabled={questions.length <= 1} title="Delete" danger><IconTrash /></ToolbarButton>
+              </div>
             </div>
             <input
               type="text"
@@ -134,7 +191,14 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
           )
         })}
       </div>
-      <button type="button" onClick={addQuestion} className="mt-2 text-sm text-sky-600 hover:underline">+ Add Question</button>
+      <button
+        type="button"
+        onClick={addQuestion}
+        className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-dashed border-slate-300 text-sm font-medium text-slate-500 hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50/50 transition-colors"
+      >
+        <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs leading-none">+</span>
+        Add Question
+      </button>
       {previewOpen && <ExamPreviewModal questions={questions} onClose={() => setPreviewOpen(false)} />}
     </div>
   )
