@@ -123,18 +123,21 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
               </div>
             )}
             <div className="border border-slate-200 rounded-xl p-3 bg-slate-50">
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <div className="grid grid-cols-3 gap-2 flex-1">
-                <select value={q.type} onChange={e => changeType(i, e.target.value as QType)} className="col-span-2 border rounded px-2 py-1 text-sm">
+            {/* Stacked on mobile — cramming the type/marks grid AND the 4-button
+                toolbar into one non-wrapping row squeezed the <select> until it
+                visibly truncated ("Multi-Choi…") on narrow phones. */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+              <div className="grid grid-cols-3 gap-2 flex-1 min-w-0">
+                <select value={q.type} onChange={e => changeType(i, e.target.value as QType)} className="col-span-2 border rounded px-2 py-1 text-sm min-w-0">
                   {(Object.keys(TYPE_LABEL) as QType[]).map(t => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
                 </select>
                 {q.type === 'TEXT' ? (
                   <span className="border rounded px-2 py-1 text-sm text-slate-400 bg-slate-100 text-center" title="A passage isn't scored">not scored</span>
                 ) : (
-                  <input type="number" step="any" min={0} value={q.marks} onChange={e => updateQuestion(i, { marks: Number(e.target.value) || 0 })} placeholder="Marks" className="border rounded px-2 py-1 text-sm" />
+                  <input type="number" step="any" min={0} value={q.marks} onChange={e => updateQuestion(i, { marks: Number(e.target.value) || 0 })} placeholder="Marks" className="border rounded px-2 py-1 text-sm min-w-0" />
                 )}
               </div>
-              <div className="flex items-center gap-0.5 shrink-0 border border-slate-200 rounded-lg bg-white p-0.5">
+              <div className="flex items-center gap-0.5 shrink-0 border border-slate-200 rounded-lg bg-white p-0.5 self-start">
                 <ToolbarButton onClick={() => moveQuestion(i, -1)} disabled={i === 0} title="Move up"><IconChevronUp /></ToolbarButton>
                 <ToolbarButton onClick={() => moveQuestion(i, 1)} disabled={i === questions.length - 1} title="Move down"><IconChevronDown /></ToolbarButton>
                 <ToolbarButton onClick={() => duplicateQuestion(i)} title="Duplicate"><IconDuplicate /></ToolbarButton>
