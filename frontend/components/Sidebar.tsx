@@ -21,7 +21,7 @@ interface NavItem {
   /** If set, renders a section header above this item */
   section?: string;
   /** If set, displays an unread badge driven by /api/<key>/unread-count. */
-  badgeKey?: 'messages' | 'announcements';
+  badgeKey?: 'messages' | 'announcements' | 'class-registrations';
 }
 
 interface SidebarProps {
@@ -149,7 +149,8 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
   // Unread counts for badge-bearing nav items. Lightweight, polls every 30s.
   const needMessages = navItems.some(n => n.badgeKey === 'messages');
   const needAnnouncements = navItems.some(n => n.badgeKey === 'announcements');
-  const [unread, setUnread] = useState<{ messages: number; announcements: number }>({ messages: 0, announcements: 0 });
+  const needClassRegistrations = navItems.some(n => n.badgeKey === 'class-registrations');
+  const [unread, setUnread] = useState<{ messages: number; announcements: number; 'class-registrations': number }>({ messages: 0, announcements: 0, 'class-registrations': 0 });
   useEffect(() => {
     let active = true;
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
@@ -158,6 +159,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
         const reqs: Promise<Response>[] = [];
         if (needMessages) reqs.push(fetch(`${apiBase}/api/messages/unread-count`, { credentials: 'include' }));
         if (needAnnouncements) reqs.push(fetch(`${apiBase}/api/announcements/unread-count`, { credentials: 'include' }));
+        if (needClassRegistrations) reqs.push(fetch(`${apiBase}/api/class-registrations/unread-count`, { credentials: 'include' }));
         const results = await Promise.all(reqs);
         let i = 0;
         let next = { ...unread };
@@ -167,17 +169,20 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
         if (needAnnouncements) {
           const r = results[i++]; if (r.ok) next.announcements = (await r.json()).count ?? 0;
         }
+        if (needClassRegistrations) {
+          const r = results[i++]; if (r.ok) next['class-registrations'] = (await r.json()).count ?? 0;
+        }
         if (active) setUnread(next);
       } catch { /* silent */ }
     };
-    if (needMessages || needAnnouncements) {
+    if (needMessages || needAnnouncements || needClassRegistrations) {
       tick();
       const id = setInterval(tick, 30_000);
       return () => { active = false; clearInterval(id); };
     }
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [needMessages, needAnnouncements]);
+  }, [needMessages, needAnnouncements, needClassRegistrations]);
 
   const handleLogout = async () => {
     try {

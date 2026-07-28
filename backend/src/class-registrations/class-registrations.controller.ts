@@ -108,6 +108,13 @@ export class ClassRegistrationsController {
   // ─── Admin: list & resolve ──────────────────────────────────────────────
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'CLASS_ADMIN')
+  @Get('unread-count')
+  async unreadCount(@Request() req: any) {
+    return this.svc.countPending(req.user?.role, req.user?.userId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'CLASS_ADMIN')
   @Get()
   async list(@Request() req: any, @Query('status') status?: string) {
     return this.svc.listRegistrations(status, req.user?.role, req.user?.userId);

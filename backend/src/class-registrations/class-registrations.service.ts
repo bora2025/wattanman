@@ -360,6 +360,17 @@ export class ClassRegistrationsService {
     });
   }
 
+  /** Drives the sidebar's red notification badge — same PENDING + CLASS_ADMIN
+   * scoping as listRegistrations, just a count instead of the full rows. */
+  async countPending(actorRole?: string, actorUserId?: string) {
+    const where: any = { status: 'PENDING' };
+    if (actorRole === 'CLASS_ADMIN' && actorUserId) {
+      where.class = { classAdminId: actorUserId };
+    }
+    const count = await this.prisma.classRegistration.count({ where });
+    return { count };
+  }
+
   async resolveRegistration(
     adminUserId: string,
     id: string,
