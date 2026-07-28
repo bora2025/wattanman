@@ -91,10 +91,14 @@ export function sanitizeForPreview(type: QType, data: any): any {
   if (isH5PType(type)) return sanitizeH5PForPreview(type, data)
   const d = data || {}
   if (type === 'MCQ') {
+    // Older questions saved before label styles existed have no labelStyle in
+    // their stored data — default to ALPHA here too so preview matches what
+    // the student-facing endpoint returns.
+    const labelStyle: LabelStyle = LABEL_STYLES.includes(d.labelStyle) ? d.labelStyle : 'ALPHA'
     return {
       choices: shuffle((d.choices || []).map((c: any) => ({ id: c.id, text: c.text }))),
       multiple: !!d.multiple,
-      labelStyle: d.labelStyle as LabelStyle | undefined,
+      labelStyle,
     }
   }
   return {}

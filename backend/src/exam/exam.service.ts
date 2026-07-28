@@ -59,7 +59,11 @@ function sanitizeExamQuestionForStudent(q: { id: string; type: string; text: str
     // Shuffled fresh on every fetch (not stored), same convention as the H5P
     // types' word banks/paragraph order — grading matches by choice id, so
     // display order never affects correctness.
-    safe = { choices: shuffle((d.choices || []).map((c: any) => ({ id: c.id, text: c.text }))), multiple: !!d.multiple, labelStyle: d.labelStyle };
+    // Older questions saved before label styles existed have no labelStyle in
+    // their stored data — default to ALPHA here too so they don't silently
+    // render without labels until a teacher happens to re-save them.
+    const labelStyle = LABEL_STYLES.includes(d.labelStyle) ? d.labelStyle : 'ALPHA';
+    safe = { choices: shuffle((d.choices || []).map((c: any) => ({ id: c.id, text: c.text }))), multiple: !!d.multiple, labelStyle };
   } else {
     safe = {};
   }
