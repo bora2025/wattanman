@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
@@ -149,6 +150,8 @@ export default function ExamAdminPage() {
                       <button onClick={() => openEdit(exam.id)} disabled={editLoadingId === exam.id} className="text-xs text-indigo-600 hover:underline disabled:opacity-50 font-medium">
                         {editLoadingId === exam.id ? 'Loading…' : 'Edit'}
                       </button>
+                      <Link href={`/teacher/exams/${exam.id}/attempts`} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-emerald-700 hover:underline font-medium">Grade ↗</Link>
                       <select value={exam.status}
                         onChange={e => statusMutation.mutate({ id: exam.id, status: e.target.value })}
                         className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300">

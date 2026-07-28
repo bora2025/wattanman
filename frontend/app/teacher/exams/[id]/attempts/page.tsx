@@ -10,6 +10,7 @@ import StatCard from '../../../../../components/StatCard'
 import EmptyState from '../../../../../components/EmptyState'
 import ConfirmModal from '../../../../../components/ConfirmModal'
 import { teacherNav } from '../../../../../lib/teacher-nav'
+import { adminNav } from '../../../../../lib/admin-nav'
 import { apiFetch } from '../../../../../lib/api'
 import { gradeQuestion } from '../../../../../lib/examQuestionLogic'
 import { parseDragWordsText, parseFillBlanksText, diffWords } from '../../../../../lib/h5pQuestionLogic'
@@ -117,14 +118,20 @@ export default function ExamGradebookPage() {
 
   const manualQuestions = useMemo(() => exam?.questions.filter(q => !isAutoGraded(q.type)) ?? [], [exam])
 
+  // This page is reachable from both the teacher's own nav AND an admin's
+  // "Grade ↗" link (admin/exams, admin/classes/[id]) — the sidebar/back button
+  // used to always assume a teacher, so an admin landing here had no way back
+  // to their own home (the teacher nav's links/back button don't apply to them).
+  const isAdmin = typeof window !== 'undefined' && ['ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(localStorage.getItem('role') || '')
+
   return (
     <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
       <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
-        <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
+        <Sidebar title={isAdmin ? 'Admin Panel' : 'Teacher'} subtitle={isAdmin ? 'Wattanman' : 'Portal'} navItems={isAdmin ? adminNav : teacherNav} accentColor={isAdmin ? 'indigo' : 'sky'} />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
           <div className="flex items-center gap-3 flex-wrap">
-            <button onClick={() => router.push('/teacher/exams')} className="text-sm text-gray-500 hover:text-gray-800">← Back</button>
+            <button onClick={() => router.push(isAdmin ? '/admin/exams' : '/teacher/exams')} className="text-sm text-gray-500 hover:text-gray-800">← Back</button>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
               📊 Gradebook {exam ? `· ${exam.title}` : ''}
             </h1>
