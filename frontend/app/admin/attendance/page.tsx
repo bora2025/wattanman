@@ -369,11 +369,16 @@ function AdminTakeAttendance() {
     setScheduledDayOff(checkClassDayOff(cls?.schedule))
   }
 
+  // Mirrors backend/src/attendance/attendance.service.ts's own late-detection
+  // (cfg.endTime, not startTime+20) — this used to use a different, looser
+  // threshold than the backend's authoritative check, so a student scanned
+  // between endTime and startTime+20 showed as "✓ Present" here but was
+  // silently flipped to LATE the moment the record actually got saved.
   const isLateByConfig = () => {
     const cfg = sessionConfigsRef.current.find(c => c.session === sessionRef.current)
     if (!cfg) return false
-    const [h, m] = cfg.startTime.split(':').map(Number)
-    const lateAfterMinutes = h * 60 + m + 20
+    const [h, m] = cfg.endTime.split(':').map(Number)
+    const lateAfterMinutes = h * 60 + m
     const cambodiaNow = new Date(Date.now() + 7 * 60 * 60 * 1000)
     const nowMinutes = cambodiaNow.getUTCHours() * 60 + cambodiaNow.getUTCMinutes()
     return nowMinutes > lateAfterMinutes
