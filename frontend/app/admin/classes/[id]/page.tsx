@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
@@ -8,7 +8,8 @@ import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
 import { formatCambodiaTime } from '../../../../lib/dateUtils'
-import { ExamQuestionsEditor, defaultQuestion, type ExamQuestionDraft } from '../../../../components/ExamQuestionsEditor'
+import { defaultQuestion } from '../../../../components/ExamQuestionsEditor'
+import ExamFormModal, { type ExamEditInitialData, type ExamClassItem } from '../../../../components/ExamFormModal'
 
 type Tab = 'assignments' | 'exams' | 'courses'
 
@@ -149,7 +150,7 @@ function ClassDetailContent() {
           </div>
 
           {tab === 'assignments' && <AssignmentsPanel classId={classId} />}
-          {tab === 'exams' && <ExamsPanel classId={classId} />}
+          {tab === 'exams' && <ExamsPanel classId={classId} classLabel={cls?.name || ''} />}
           {tab === 'courses' && <CoursesPanel classId={classId} />}
         </div>
       </div>
@@ -410,19 +411,19 @@ function AssignmentsPanel({ classId }: { classId: string }) {
 }
 
 // ─── Exams panel ──────────────────────────────────────────────────────────
-function ExamsPanel({ classId }: { classId: string }) {
+// Reuses the same ExamFormModal as /admin/exams and /teacher/exams (previously
+// this panel hand-rolled its own separate create/edit form) — so create/edit
+// exam is one consistent interface everywhere an admin reaches it, and any
+// future editor improvement (question types, formatting, etc.) applies here
+// automatically instead of needing to be ported into a second implementation.
+function ExamsPanel({ classId, classLabel }: { classId: string; classLabel: string }) {
   const [rows, setRows] = useState<ExamRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [creating, setCreating] = useState(false)
-  const [form, setForm] = useState({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50, allowRetake: false, maxAttempts: 1 })
-  const [questions, setQuestions] = useState<ExamQuestionDraft[]>([defaultQuestion()])
-  const [saving, setSaving] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editMetaForm, setEditMetaForm] = useState({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50, allowRetake: false, maxAttempts: 1 })
-  const [editQuestions, setEditQuestions] = useState<ExamQuestionDraft[]>([])
+  const [showForm, setShowForm] = useState(false)
+  const [editingExamId, setEditingExamId] = useState<string | null>(null)
+  const [editInitialData, setEditInitialData] = useState<ExamEditInitialData | null>(null)
   const [editLoadingId, setEditLoadingId] = useState<string | null>(null)
-  const [editSaving, setEditSaving] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -435,36 +436,6 @@ function ExamsPanel({ classId }: { classId: string }) {
   }, [classId])
 
   useEffect(() => { load() }, [load])
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.title.trim()) return
-    setSaving(true); setError('')
-    try {
-      const body = {
-        classId,
-        title: form.title.trim(),
-        description: form.description.trim() || undefined,
-        duration: Number(form.duration) || 60,
-        totalMarks: Number(form.totalMarks) || 100,
-        passMark: Number(form.passMark) || 50,
-        maxAttempts: form.allowRetake ? Math.max(0, Number(form.maxAttempts) || 0) : 1,
-        questions,
-      }
-      const r = await apiFetch('/api/exams', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-      })
-      if (!r.ok) {
-        const j = await r.json().catch(() => ({}))
-        throw new Error(Array.isArray(j.message) ? j.message.join(', ') : j.message || 'Failed to create exam.')
-      }
-      setForm({ title: '', description: '', duration: 60, totalMarks: 100, passMark: 50, allowRetake: false, maxAttempts: 1 })
-      setQuestions([defaultQuestion()])
-      setCreating(false)
-      await load()
-    } catch (e: any) { setError(e?.message || 'Failed to create exam.') }
-    finally { setSaving(false) }
-  }
 
   const handleStatusChange = async (row: ExamRow, status: string) => {
     try {
@@ -486,57 +457,30 @@ function ExamsPanel({ classId }: { classId: string }) {
     } catch { setError('Failed to delete exam.') }
   }
 
-  const toggleEditQuestions = async (row: ExamRow) => {
-    if (editingId === row.id) { setEditingId(null); return }
-    setCreating(false)
-    setEditLoadingId(row.id); setError('')
+  const openEdit = async (examId: string) => {
+    setEditLoadingId(examId); setError('')
     try {
-      const r = await apiFetch(`/api/exams/${row.id}`)
+      const r = await apiFetch(`/api/exams/${examId}`)
       if (!r.ok) throw new Error()
       const full = await r.json()
-      setEditMetaForm({
+      setEditInitialData({
         title: full.title || '',
         description: full.description || '',
+        classId: full.classId || full.class?.id || classId,
         duration: full.duration ?? 60,
         totalMarks: full.totalMarks ?? 100,
         passMark: full.passMark ?? 50,
-        allowRetake: (full.maxAttempts ?? 1) !== 1,
         maxAttempts: full.maxAttempts ?? 1,
+        questions: (full.questions || []).length
+          ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data, section: q.section }))
+          : [defaultQuestion()],
       })
-      setEditQuestions((full.questions || []).length
-        ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data, section: q.section }))
-        : [defaultQuestion()])
-      setEditingId(row.id)
+      setEditingExamId(examId)
     } catch { setError('Failed to load exam.') }
     finally { setEditLoadingId(null) }
   }
 
-  const saveEditQuestions = async (examId: string) => {
-    if (!editMetaForm.title.trim()) { setError('Title is required.'); return }
-    setEditSaving(true); setError('')
-    try {
-      const body = {
-        title: editMetaForm.title.trim(),
-        description: editMetaForm.description.trim() || undefined,
-        duration: Number(editMetaForm.duration) || 60,
-        totalMarks: Number(editMetaForm.totalMarks) || 100,
-        passMark: Number(editMetaForm.passMark) || 50,
-        maxAttempts: editMetaForm.allowRetake ? Math.max(0, Number(editMetaForm.maxAttempts) || 0) : 1,
-        questions: editQuestions,
-      }
-      const r = await apiFetch(`/api/exams/${examId}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (!r.ok) {
-        const j = await r.json().catch(() => ({}))
-        throw new Error(Array.isArray(j.message) ? j.message.join(', ') : j.message || 'Failed to save exam.')
-      }
-      setEditingId(null)
-      await load()
-    } catch (e: any) { setError(e?.message || 'Failed to save exam.') }
-    finally { setEditSaving(false) }
-  }
+  const classesForModal: ExamClassItem[] = [{ id: classId, name: classLabel || 'This class' }]
 
   return (
     <div className="space-y-4">
@@ -544,66 +488,8 @@ function ExamsPanel({ classId }: { classId: string }) {
         <p className="text-sm text-slate-600">
           <span className="font-semibold text-slate-800">{rows.length}</span> exam{rows.length === 1 ? '' : 's'} in this class
         </p>
-        <button onClick={() => { setEditingId(null); setCreating(s => !s) }} className="btn-primary btn-sm">
-          {creating ? '× Cancel' : '+ New Exam'}
-        </button>
+        <button onClick={() => setShowForm(true)} className="btn-primary btn-sm">+ New Exam</button>
       </div>
-
-      {creating && (
-        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-indigo-50/30 border-indigo-200">
-          <h3 className="text-sm font-semibold text-slate-800">New exam</h3>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-slate-600 mb-1">Title *</label>
-              <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required
-                className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Duration (min)</label>
-              <input type="number" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: Number(e.target.value) }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Total marks</label>
-              <input type="number" value={form.totalMarks} onChange={e => setForm(f => ({ ...f, totalMarks: Number(e.target.value) }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Pass mark</label>
-              <input type="number" value={form.passMark} onChange={e => setForm(f => ({ ...f, passMark: Number(e.target.value) }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
-            <textarea rows={2} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 grid grid-cols-2 gap-3 items-end">
-            <label className="text-xs font-semibold text-slate-600 flex items-center gap-2 col-span-2">
-              <input type="checkbox" checked={form.allowRetake} onChange={e => setForm(f => ({ ...f, allowRetake: e.target.checked }))} className="h-4 w-4" />
-              <span>Allow students to <strong>retake</strong> this exam</span>
-            </label>
-            {form.allowRetake ? (
-              <div className="col-span-2">
-                <label className="block text-xs font-medium text-slate-600 mb-1">Max attempts</label>
-                <input type="number" min={0} max={50} placeholder="0 = unlimited" value={form.maxAttempts}
-                  onChange={e => setForm(f => ({ ...f, maxAttempts: Number(e.target.value) }))}
-                  className="w-full border rounded-lg px-3 py-2 text-sm" />
-              </div>
-            ) : (
-              <span className="text-[11px] text-slate-500 col-span-2">Students get a single attempt.</span>
-            )}
-          </div>
-          <ExamQuestionsEditor questions={questions} onChange={setQuestions} />
-          <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="btn-primary btn-sm disabled:opacity-60">
-              {saving ? 'Saving…' : 'Create'}
-            </button>
-            <button type="button" onClick={() => setCreating(false)} className="btn-outline btn-sm">Cancel</button>
-          </div>
-        </form>
-      )}
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-sm">{error}</div>}
 
@@ -627,96 +513,56 @@ function ExamsPanel({ classId }: { classId: string }) {
             </thead>
             <tbody>
               {rows.map(r => (
-                <Fragment key={r.id}>
-                  <tr className="border-t border-slate-100">
-                    <td className="px-4 py-2 font-medium text-slate-800">
-                      {r.title}
-                      {r.createdBy && <p className="text-xs text-slate-400">by {r.createdBy.name}</p>}
-                    </td>
-                    <td className="px-4 py-2 text-slate-600">{r.duration} min</td>
-                    <td className="px-4 py-2 text-slate-600">{r.totalMarks} · {r.passMark}</td>
-                    <td className="px-4 py-2 text-slate-600">{r._count?.questions ?? 0}</td>
-                    <td className="px-4 py-2 text-slate-600">
-                      {r._count?.attempts ?? 0}
-                      {r.maxAttempts !== 1 && <p className="text-[10px] text-slate-400">{r.maxAttempts === 0 ? 'unlimited' : `up to ${r.maxAttempts}`} allowed</p>}
-                    </td>
-                    <td className="px-4 py-2">
-                      <select value={r.status} onChange={e => handleStatusChange(r, e.target.value)}
-                        className={`text-xs font-semibold px-2 py-1 rounded-full border outline-none ${statusColor(r.status)}`}>
-                        {EXAM_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-4 py-2 text-right whitespace-nowrap">
-                      <button onClick={() => toggleEditQuestions(r)} disabled={editLoadingId === r.id}
-                        className="text-xs text-emerald-700 hover:underline mr-3 disabled:opacity-50">
-                        {editingId === r.id ? 'Close' : editLoadingId === r.id ? 'Loading…' : 'Edit'}
-                      </button>
-                      <Link href={`/teacher/exams/${r.id}/attempts`} target="_blank" rel="noopener noreferrer"
-                        className="text-xs text-indigo-600 hover:underline mr-3">Grade ↗</Link>
-                      <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
-                    </td>
-                  </tr>
-                  {editingId === r.id && (
-                    <tr className="border-t border-slate-100 bg-slate-50/60">
-                      <td colSpan={7} className="px-4 py-4 space-y-3">
-                        <div className="grid sm:grid-cols-2 gap-3">
-                          <div className="sm:col-span-2">
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Title *</label>
-                            <input value={editMetaForm.title} onChange={e => setEditMetaForm(f => ({ ...f, title: e.target.value }))} required
-                              className="w-full border rounded-lg px-3 py-2 text-sm" />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Duration (min)</label>
-                            <input type="number" value={editMetaForm.duration} onChange={e => setEditMetaForm(f => ({ ...f, duration: Number(e.target.value) }))}
-                              className="w-full border rounded-lg px-3 py-2 text-sm" />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Total marks</label>
-                            <input type="number" value={editMetaForm.totalMarks} onChange={e => setEditMetaForm(f => ({ ...f, totalMarks: Number(e.target.value) }))}
-                              className="w-full border rounded-lg px-3 py-2 text-sm" />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Pass mark</label>
-                            <input type="number" value={editMetaForm.passMark} onChange={e => setEditMetaForm(f => ({ ...f, passMark: Number(e.target.value) }))}
-                              className="w-full border rounded-lg px-3 py-2 text-sm" />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
-                            <input value={editMetaForm.description} onChange={e => setEditMetaForm(f => ({ ...f, description: e.target.value }))}
-                              className="w-full border rounded-lg px-3 py-2 text-sm" />
-                          </div>
-                        </div>
-                        <div className="rounded-lg border border-slate-200 bg-white p-3 grid grid-cols-2 gap-3 items-end">
-                          <label className="text-xs font-semibold text-slate-600 flex items-center gap-2 col-span-2">
-                            <input type="checkbox" checked={editMetaForm.allowRetake} onChange={e => setEditMetaForm(f => ({ ...f, allowRetake: e.target.checked }))} className="h-4 w-4" />
-                            <span>Allow students to <strong>retake</strong> this exam</span>
-                          </label>
-                          {editMetaForm.allowRetake ? (
-                            <div className="col-span-2">
-                              <label className="block text-xs font-medium text-slate-600 mb-1">Max attempts</label>
-                              <input type="number" min={0} max={50} placeholder="0 = unlimited" value={editMetaForm.maxAttempts}
-                                onChange={e => setEditMetaForm(f => ({ ...f, maxAttempts: Number(e.target.value) }))}
-                                className="w-full border rounded-lg px-3 py-2 text-sm" />
-                            </div>
-                          ) : (
-                            <span className="text-[11px] text-slate-500 col-span-2">Students get a single attempt.</span>
-                          )}
-                        </div>
-                        <ExamQuestionsEditor questions={editQuestions} onChange={setEditQuestions} />
-                        <div className="flex gap-2 justify-end mt-3">
-                          <button onClick={() => setEditingId(null)} className="btn-outline btn-sm">Cancel</button>
-                          <button onClick={() => saveEditQuestions(r.id)} disabled={editSaving} className="btn-primary btn-sm disabled:opacity-60">
-                            {editSaving ? 'Saving…' : 'Save Exam'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
+                <tr key={r.id} className="border-t border-slate-100">
+                  <td className="px-4 py-2 font-medium text-slate-800">
+                    {r.title}
+                    {r.createdBy && <p className="text-xs text-slate-400">by {r.createdBy.name}</p>}
+                  </td>
+                  <td className="px-4 py-2 text-slate-600">{r.duration} min</td>
+                  <td className="px-4 py-2 text-slate-600">{r.totalMarks} · {r.passMark}</td>
+                  <td className="px-4 py-2 text-slate-600">{r._count?.questions ?? 0}</td>
+                  <td className="px-4 py-2 text-slate-600">
+                    {r._count?.attempts ?? 0}
+                    {r.maxAttempts !== 1 && <p className="text-[10px] text-slate-400">{r.maxAttempts === 0 ? 'unlimited' : `up to ${r.maxAttempts}`} allowed</p>}
+                  </td>
+                  <td className="px-4 py-2">
+                    <select value={r.status} onChange={e => handleStatusChange(r, e.target.value)}
+                      className={`text-xs font-semibold px-2 py-1 rounded-full border outline-none ${statusColor(r.status)}`}>
+                      {EXAM_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-4 py-2 text-right whitespace-nowrap">
+                    <button onClick={() => openEdit(r.id)} disabled={editLoadingId === r.id}
+                      className="text-xs text-emerald-700 hover:underline mr-3 disabled:opacity-50">
+                      {editLoadingId === r.id ? 'Loading…' : 'Edit'}
+                    </button>
+                    <Link href={`/teacher/exams/${r.id}/attempts`} target="_blank" rel="noopener noreferrer"
+                      className="text-xs text-indigo-600 hover:underline mr-3">Grade ↗</Link>
+                    <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
+                  </td>
+                </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {showForm && (
+        <ExamFormModal
+          classes={classesForModal}
+          initialData={{ title: '', description: '', classId, duration: 60, totalMarks: 100, passMark: 50, maxAttempts: 1, questions: [defaultQuestion()] }}
+          onClose={() => setShowForm(false)}
+          onSuccess={() => { setShowForm(false); load() }}
+        />
+      )}
+      {editingExamId && editInitialData && (
+        <ExamFormModal
+          classes={classesForModal}
+          examId={editingExamId}
+          initialData={editInitialData}
+          onClose={() => { setEditingExamId(null); setEditInitialData(null) }}
+          onSuccess={() => { setEditingExamId(null); setEditInitialData(null); load() }}
+        />
       )}
     </div>
   )
