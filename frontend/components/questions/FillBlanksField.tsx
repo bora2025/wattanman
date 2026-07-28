@@ -160,7 +160,7 @@ export function FillBlanksEditor({ data, onChange }: { data: any; onChange: (d: 
           onChange={e => setSentence(e.target.value)}
           rows={4}
           placeholder="Bilberries are also known as ___ berries."
-          className="w-full px-3 py-2 text-sm resize-none focus:outline-none"
+          className="w-full px-3 py-2 text-sm resize-y min-h-[4.5rem] focus:outline-none"
           style={style}
         />
       </div>
@@ -179,7 +179,7 @@ export function FillBlanksEditor({ data, onChange }: { data: any; onChange: (d: 
       )}
 
       {sentence && (
-        <div className="text-sm bg-white border rounded-lg p-2 leading-relaxed" style={style}>
+        <div className="text-sm bg-white border rounded-lg p-2 leading-relaxed whitespace-pre-wrap" style={style}>
           {(() => {
             const parts = sentence.split(BLANK_RE)
             const out: ReactNode[] = []
@@ -213,7 +213,7 @@ export function FillBlanksInput({ data, value, onChange, disabled }: { data: any
   const style: BlockTextStyle = data?.style || {}
 
   return (
-    <div className={`text-base leading-loose ${disabled ? 'pointer-events-none opacity-60' : ''}`} style={style}>
+    <div className={`text-base leading-loose whitespace-pre-wrap ${disabled ? 'pointer-events-none opacity-60' : ''}`} style={style}>
       {segments.map((seg, i) =>
         seg.type === 'text' ? (
           <MathText key={i} as="span" text={seg.value} />
