@@ -115,17 +115,6 @@ export default function StudentExamTakingPage() {
     if (attempt) submitMutation.mutate(attempt.id)
   }, [attempt])
 
-  if (submitted) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl p-10 text-center shadow-xl max-w-sm border border-gray-100">
-        <p className="text-5xl mb-4">✅</p>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Exam Submitted!</h2>
-        <p className="text-gray-500 text-sm mb-6">Your answers have been submitted. Results will be available soon.</p>
-        <button onClick={() => router.push('/student/exams')} className="bg-sky-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-sky-700 shadow-sm">Back to Exams</button>
-      </div>
-    </div>
-  )
-
   // TEXT (a reading passage) has no answer, so it's excluded from "answered X of
   // Y" — otherwise a student could never reach 100% no matter what they answered.
   const answerableQuestions = exam?.questions.filter(q => q.type !== 'TEXT') ?? []
@@ -136,6 +125,14 @@ export default function StudentExamTakingPage() {
   // renders nothing and this behaves exactly like the old single-list layout.
   // Answers are keyed by question id regardless of which page is showing, so
   // navigating back and forth between pages never loses anything already typed.
+  //
+  // These two useMemo calls (and everything above) must stay ABOVE the
+  // `if (submitted) return` below — hooks can never be skipped on some renders
+  // and not others. They used to sit after that early return, so the moment an
+  // exam actually got submitted (auto-submit at timeout or a manual Submit
+  // click) React saw a different number of hooks called than the previous
+  // render and threw a hard "Rendered fewer hooks than expected" error, caught
+  // by the app's error boundary instead of showing the confirmation screen.
   const pages = useMemo(() => groupQuestionsBySection(exam?.questions ?? []), [exam?.questions])
   const currentPage = pages[Math.min(page, pages.length - 1)] ?? { section: null, questions: [] as Question[], startIndex: 0 }
   const isLastPage = pages.length === 0 || page >= pages.length - 1
@@ -145,6 +142,17 @@ export default function StudentExamTakingPage() {
     let n = 0
     return (exam?.questions ?? []).map((q) => (q.type === 'TEXT' ? null : ++n))
   }, [exam?.questions])
+
+  if (submitted) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="bg-white rounded-2xl p-10 text-center shadow-xl max-w-sm border border-gray-100">
+        <p className="text-5xl mb-4">✅</p>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Exam Submitted!</h2>
+        <p className="text-gray-500 text-sm mb-6">Your answers have been submitted. Results will be available soon.</p>
+        <button onClick={() => router.push('/student/exams')} className="bg-sky-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-sky-700 shadow-sm">Back to Exams</button>
+      </div>
+    </div>
+  )
 
   return (
     <AuthGuard requiredRole="STUDENT">
