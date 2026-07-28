@@ -4,8 +4,73 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import MathText from '../MathText'
 import { AcceptedAnswersEditor } from './SpeakWordsField'
 import { parseFillBlanksText } from '../../lib/h5pQuestionLogic'
+import { FONT_FAMILIES, FONT_SIZES, LINE_HEIGHTS, type BlockTextStyle } from '../../lib/textFormatting'
 
 const BLANK_RE = /_{3,}/g
+
+/** Toolbar for the sentence-prompt textarea's whole-box style (font, size, alignment,
+ * line spacing) — lighter than RichTextEditor's toolbar since it edits a plain
+ * BlockTextStyle object rather than a TipTap editor, which keeps the sentence a plain
+ * string so its *word*-markup parsing (source of truth for blanks/grading) never has
+ * to deal with mixed-in HTML formatting. */
+function BlockStyleToolbar({ style, onChange }: { style: BlockTextStyle; onChange: (s: BlockTextStyle) => void }) {
+  const set = (patch: Partial<BlockTextStyle>) => onChange({ ...style, ...patch })
+  const unset = (key: keyof BlockTextStyle) => {
+    const next = { ...style }
+    delete next[key]
+    onChange(next)
+  }
+  const btn = (active: boolean) =>
+    `px-2 py-1 rounded text-xs font-semibold border ${active ? 'bg-sky-600 text-white border-sky-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`
+  const select = 'px-1.5 py-1 rounded text-xs border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-1 focus:ring-sky-400'
+  const align = style.textAlign || 'left'
+  return (
+    <div className="flex flex-wrap items-center gap-1 border-b border-slate-100 bg-slate-50 px-2 py-1.5">
+      <select
+        value={style.fontFamily || ''}
+        onChange={e => (e.target.value ? set({ fontFamily: e.target.value }) : unset('fontFamily'))}
+        className={`${select} w-28`}
+        title="Font family"
+      >
+        {FONT_FAMILIES.map(f => <option key={f.label} value={f.value}>{f.label}</option>)}
+      </select>
+      <select
+        value={style.fontSize || ''}
+        onChange={e => (e.target.value ? set({ fontSize: e.target.value }) : unset('fontSize'))}
+        className={`${select} w-16`}
+        title="Font size"
+      >
+        <option value="">Size</option>
+        {FONT_SIZES.map(s => <option key={s} value={s}>{s.replace('px', '')}</option>)}
+      </select>
+      <span className="w-px h-4 bg-slate-200 mx-0.5" />
+      <button type="button" onClick={() => set({ textAlign: 'left' })} className={btn(align === 'left')} title="Align left">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h10.5M3.75 17.25h13.5" /></svg>
+      </button>
+      <button type="button" onClick={() => set({ textAlign: 'center' })} className={btn(align === 'center')} title="Align center">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" d="M3.75 6.75h16.5M7 12h10M5.25 17.25h13.5" /></svg>
+      </button>
+      <button type="button" onClick={() => set({ textAlign: 'right' })} className={btn(align === 'right')} title="Align right">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" d="M3.75 6.75h16.5M9.75 12h10.5M6.75 17.25h13.5" /></svg>
+      </button>
+      <button type="button" onClick={() => set({ textAlign: 'justify' })} className={btn(align === 'justify')} title="Justify">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+      </button>
+      <span className="w-px h-4 bg-slate-200 mx-0.5" />
+      <select
+        value={style.lineHeight || ''}
+        onChange={e => (e.target.value ? set({ lineHeight: e.target.value }) : unset('lineHeight'))}
+        className={`${select} w-20`}
+        title="Line spacing"
+      >
+        <option value="">Spacing</option>
+        {LINE_HEIGHTS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+      </select>
+      <span className="w-px h-4 bg-slate-200 mx-0.5" />
+      <button type="button" onClick={() => onChange({})} className={btn(false)} title="Clear formatting">✕ Format</button>
+    </div>
+  )
+}
 
 type BlankAnswers = { answers: string[] }
 
@@ -49,6 +114,8 @@ export function FillBlanksEditor({ data, onChange }: { data: any; onChange: (d: 
   const [sentence, setSentenceState] = useState(initial.sentence)
   const [answers, setAnswersState] = useState<BlankAnswers[]>(initial.answers)
   const lastEmitted = useRef<string>(data?.text ?? '')
+  const style: BlockTextStyle = data?.style || {}
+  const setStyle = (newStyle: BlockTextStyle) => onChange({ ...data, style: newStyle })
 
   useEffect(() => {
     const incoming = data?.text ?? ''
@@ -86,7 +153,17 @@ export function FillBlanksEditor({ data, onChange }: { data: any; onChange: (d: 
       <p className="text-xs text-slate-500">
         Type the text with <code className="bg-slate-100 px-1 rounded">___</code> where each blank goes, then fill in the accepted answer(s) below — e.g. &quot;Bilberries are also known as ___ berries.&quot;
       </p>
-      <textarea value={sentence} onChange={e => setSentence(e.target.value)} rows={4} placeholder="Bilberries are also known as ___ berries." className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
+      <div className="border border-slate-200 rounded-lg overflow-hidden">
+        <BlockStyleToolbar style={style} onChange={setStyle} />
+        <textarea
+          value={sentence}
+          onChange={e => setSentence(e.target.value)}
+          rows={4}
+          placeholder="Bilberries are also known as ___ berries."
+          className="w-full px-3 py-2 text-sm resize-none focus:outline-none"
+          style={style}
+        />
+      </div>
 
       {answers.length > 0 && (
         <div className="space-y-2">
@@ -102,7 +179,7 @@ export function FillBlanksEditor({ data, onChange }: { data: any; onChange: (d: 
       )}
 
       {sentence && (
-        <div className="text-sm bg-white border rounded-lg p-2 leading-relaxed">
+        <div className="text-sm bg-white border rounded-lg p-2 leading-relaxed" style={style}>
           {(() => {
             const parts = sentence.split(BLANK_RE)
             const out: ReactNode[] = []
@@ -133,9 +210,10 @@ export function FillBlanksEditor({ data, onChange }: { data: any; onChange: (d: 
 export function FillBlanksInput({ data, value, onChange, disabled }: { data: any; value: any; onChange: (v: any) => void; disabled?: boolean }) {
   const segments: Array<{ type: 'text'; value: string } | { type: 'blank'; id: string }> = data?.segments ?? []
   const filled: Record<string, string> = value && typeof value === 'object' ? value : {}
+  const style: BlockTextStyle = data?.style || {}
 
   return (
-    <div className={`text-base leading-loose ${disabled ? 'pointer-events-none opacity-60' : ''}`}>
+    <div className={`text-base leading-loose ${disabled ? 'pointer-events-none opacity-60' : ''}`} style={style}>
       {segments.map((seg, i) =>
         seg.type === 'text' ? (
           <MathText key={i} as="span" text={seg.value} />

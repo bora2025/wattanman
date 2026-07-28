@@ -9,30 +9,13 @@ import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle, FontFamily, FontSize, LineHeight } from '@tiptap/extension-text-style'
+import { FONT_FAMILIES, FONT_SIZES, LINE_HEIGHTS } from '../lib/textFormatting'
 
 // Same base64-in-database convention used for student/class photos and the Drag
 // and Drop question's background image (frontend/components/questions/DragDropField.tsx)
 // — this app has no real object-storage backend, so uploads are embedded directly.
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024
 const MAX_AUDIO_BYTES = 8 * 1024 * 1024
-
-const FONT_FAMILIES = [
-  { label: 'Default', value: '' },
-  { label: 'Sans Serif', value: 'Arial, Helvetica, sans-serif' },
-  { label: 'Serif', value: 'Georgia, "Times New Roman", serif' },
-  { label: 'Monospace', value: '"Courier New", monospace' },
-  { label: 'Verdana', value: 'Verdana, sans-serif' },
-  { label: 'Comic Sans', value: '"Comic Sans MS", cursive' },
-] as const
-
-const FONT_SIZES = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px'] as const
-
-const LINE_HEIGHTS = [
-  { label: 'Single', value: '1' },
-  { label: '1.15', value: '1.15' },
-  { label: '1.5', value: '1.5' },
-  { label: 'Double', value: '2' },
-] as const
 
 // Some third-party audio converters produce files whose container/codec headers
 // look perfectly valid but that specific browsers still refuse to actually decode

@@ -69,6 +69,25 @@ export function shuffle<T>(arr: T[]): T[] {
   return out;
 }
 
+// Whitelisted block-level presentation style for the Fill in the Blanks prompt box
+// (font family/size, alignment, line spacing) — must mirror the option lists in
+// frontend/lib/textFormatting.ts. Purely cosmetic: stored alongside the *word*-markup
+// text but never consulted by parseFillBlanksText/grading.
+const BLOCK_FONT_FAMILIES = ['', 'Arial, Helvetica, sans-serif', 'Georgia, "Times New Roman", serif', '"Courier New", monospace', 'Verdana, sans-serif', '"Comic Sans MS", cursive'];
+const BLOCK_FONT_SIZES = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px'];
+const BLOCK_LINE_HEIGHTS = ['1', '1.15', '1.5', '2'];
+const BLOCK_TEXT_ALIGNS = ['left', 'center', 'right', 'justify'];
+
+function sanitizeBlockTextStyle(raw: any): Record<string, string> {
+  const r = raw && typeof raw === 'object' ? raw : {};
+  const style: Record<string, string> = {};
+  if (r.fontFamily && BLOCK_FONT_FAMILIES.includes(r.fontFamily)) style.fontFamily = r.fontFamily;
+  if (BLOCK_FONT_SIZES.includes(r.fontSize)) style.fontSize = r.fontSize;
+  if (BLOCK_LINE_HEIGHTS.includes(r.lineHeight)) style.lineHeight = r.lineHeight;
+  if (BLOCK_TEXT_ALIGNS.includes(r.textAlign)) style.textAlign = r.textAlign;
+  return style;
+}
+
 // Trims/lowercases/strips punctuation so speech transcripts and typed answers can
 // be compared to accepted answers without being defeated by casing or stray commas.
 function normalizeAnswer(s: string): string {
@@ -116,7 +135,7 @@ export function sanitizeH5PInput(type: H5PType, raw: any): any {
       const blanks = parseFillBlanksText(fillText).filter((s) => s.type === 'blank') as { answers: string[] }[];
       if (blanks.length < 1) throw new BadRequestException('Fill in the Blanks needs at least one *word* marked as a blank');
       if (blanks.some((b) => b.answers.length < 1)) throw new BadRequestException('Every blank needs at least one accepted answer');
-      return { text: fillText };
+      return { text: fillText, style: sanitizeBlockTextStyle(raw?.style) };
     }
 
     case 'DRAG_DROP': {
@@ -213,7 +232,7 @@ export function sanitizeH5PForStudent(type: H5PType, data: any): any {
     }
 
     case 'FILL_BLANKS':
-      return { segments: parseFillBlanksText(d.text || '').map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id } : s)) };
+      return { segments: parseFillBlanksText(d.text || '').map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id } : s)), style: d.style || {} };
 
     case 'DRAG_DROP':
       return {

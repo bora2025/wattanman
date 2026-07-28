@@ -130,7 +130,7 @@ export function sanitizeH5PForPreview(type: H5PType, data: any): any {
       return { segments, wordBank }
     }
     case 'FILL_BLANKS':
-      return { segments: parseFillBlanksText(d.text || '').map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id } : s)) }
+      return { segments: parseFillBlanksText(d.text || '').map((s) => (s.type === 'blank' ? { type: 'blank' as const, id: s.id } : s)), style: d.style || {} }
     case 'DRAG_DROP':
       return {
         backgroundImage: d.backgroundImage,
