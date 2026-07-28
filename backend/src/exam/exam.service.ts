@@ -15,6 +15,32 @@ function cleanSectionLabel(raw: string): string {
   return raw.replace(/^[\s"'“”‘’]+|[\s"'“”‘’,]+$/g, '');
 }
 
+// react-hook-form's register() submits whatever the browser's <input> gives it —
+// a plain string, unless the field opts into valueAsNumber — so a number field a
+// teacher never touches survives as a number (straight from defaultValues), but
+// one they actually type into arrives as a string. exam.create/update used to
+// spread the request body straight into Prisma, so a string reaching an Int/Float
+// column (e.g. maxAttempts: "5") crashed as an unhandled PrismaClientValidationError
+// (raw 500, no useful message) instead of failing cleanly. `toNumber`'s 0-is-valid
+// check matters specifically for maxAttempts, where 0 means "unlimited attempts" —
+// a naive `Number(v) || fallback` would silently turn that into the fallback.
+function toNumber(v: any, fallback: number): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function sanitizeExamInput(body: any) {
+  const title = String(body?.title || '').trim();
+  if (!title) throw new BadRequestException('Exam title is required');
+  const description = body?.description != null ? String(body.description).trim() || null : null;
+  const classId = body?.classId ? String(body.classId) : null;
+  const duration = Math.max(1, Math.round(toNumber(body?.duration, 60)));
+  const totalMarks = Math.max(0, toNumber(body?.totalMarks, 100));
+  const passMark = Math.max(0, toNumber(body?.passMark, 50));
+  const maxAttempts = Math.max(0, Math.round(toNumber(body?.maxAttempts, 1)));
+  return { title, description, classId, duration, totalMarks, passMark, maxAttempts };
+}
+
 function sanitizeExamQuestionInput(body: any) {
   const type = String(body.type || '').toUpperCase();
   if (!ALLOWED_EXAM_QUESTION_TYPES.includes(type)) {
@@ -142,7 +168,8 @@ export class ExamService {
   }
 
   async create(data: any, createdById: string) {
-    const { questions, ...examData } = data;
+    const { questions } = data;
+    const examData = sanitizeExamInput(data);
     const sanitizedQuestions = Array.isArray(questions) ? questions.map(sanitizeExamQuestionInput) : [];
     return this.prisma.exam.create({
       data: {
@@ -157,7 +184,8 @@ export class ExamService {
   }
 
   async update(id: string, data: any) {
-    const { questions, ...examData } = data;
+    const { questions } = data;
+    const examData = sanitizeExamInput(data);
     await this.prisma.exam.update({
       where: { id },
       data: examData,

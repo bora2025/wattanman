@@ -85,13 +85,13 @@ export default function ExamFormModal({ classes, examId, initialData, onClose, o
                 </select>
               </label>
               <label className="block text-xs font-semibold text-slate-500">Duration (min)
-                <input type="number" {...register('duration')} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                <input type="number" {...register('duration', { valueAsNumber: true })} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
               </label>
               <label className="block text-xs font-semibold text-slate-500">Total marks
-                <input type="number" {...register('totalMarks')} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                <input type="number" {...register('totalMarks', { valueAsNumber: true })} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
               </label>
               <label className="block text-xs font-semibold text-slate-500">Pass mark
-                <input type="number" {...register('passMark')} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                <input type="number" {...register('passMark', { valueAsNumber: true })} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
               </label>
             </div>
 
@@ -102,7 +102,7 @@ export default function ExamFormModal({ classes, examId, initialData, onClose, o
               </label>
               {watchAllowRetake ? (
                 <label className="block text-xs font-semibold text-slate-500 col-span-2">Max attempts
-                  <input type="number" min={0} max={50} placeholder="0 = unlimited" {...register('maxAttempts')} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                  <input type="number" min={0} max={50} placeholder="0 = unlimited" {...register('maxAttempts', { valueAsNumber: true })} className="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
                 </label>
               ) : (
                 <span className="text-[11px] text-slate-500 col-span-2">Students get a single attempt.</span>
