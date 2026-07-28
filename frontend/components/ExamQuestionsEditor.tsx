@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { type QType, type ExamQuestionDraft, TYPE_LABEL, uid, defaultData, defaultQuestion } from '../lib/examQuestionLogic'
+import { type QType, type ExamQuestionDraft, type LabelStyle, TYPE_LABEL, LABEL_STYLES, LABEL_STYLE_NAME, optionLabel, uid, defaultData, defaultQuestion } from '../lib/examQuestionLogic'
 import RichTextEditor from './RichTextEditor'
 import { EssayEditor } from './questions/EssayField'
 import { SortParagraphsEditor } from './questions/SortParagraphsField'
@@ -207,6 +207,7 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
 function McqEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
   const choices: Choice[] = data?.choices ?? []
   const multiple = !!data?.multiple
+  const labelStyle: LabelStyle = LABEL_STYLES.includes(data?.labelStyle) ? data.labelStyle : 'ALPHA'
   function setChoice(i: number, patch: Partial<Choice>) {
     const next = choices.map((c, idx) => idx === i ? { ...c, ...patch } : c)
     onChange({ ...data, choices: next })
@@ -222,16 +223,29 @@ function McqEditor({ data, onChange }: { data: any; onChange: (d: any) => void }
   }
   return (
     <div className="space-y-2">
-      <label className="flex items-center gap-2 text-xs text-slate-500">
-        <input type="checkbox" checked={multiple} onChange={e => onChange({ ...data, multiple: e.target.checked })} /> Allow multiple correct answers
-      </label>
-      {choices.map((c, i) => (
-        <div key={c.id} className="flex items-center gap-2">
-          <input type={multiple ? 'checkbox' : 'radio'} checked={c.isCorrect} onChange={() => toggleCorrect(i)} title="Mark as correct" />
-          <input value={c.text} onChange={e => setChoice(i, { text: e.target.value })} placeholder={`Choice ${i + 1}`} className="flex-1 border rounded-lg px-3 py-1.5 text-sm" />
-          <button type="button" onClick={() => removeChoice(i)} disabled={choices.length <= 2} className="text-xs text-red-500 disabled:opacity-30">✕</button>
-        </div>
-      ))}
+      <div className="flex flex-wrap items-center gap-4">
+        <label className="flex items-center gap-2 text-xs text-slate-500">
+          <input type="checkbox" checked={multiple} onChange={e => onChange({ ...data, multiple: e.target.checked })} /> Allow multiple correct answers
+        </label>
+        <label className="flex items-center gap-2 text-xs text-slate-500">
+          Answer labels
+          <select value={labelStyle} onChange={e => onChange({ ...data, labelStyle: e.target.value })} className="border rounded-lg px-2 py-1 text-xs">
+            {LABEL_STYLES.map(s => <option key={s} value={s}>{LABEL_STYLE_NAME[s]}</option>)}
+          </select>
+        </label>
+      </div>
+      <p className="text-[11px] text-slate-400">Choices are shown to students in random order every time — labels always match what they see.</p>
+      {choices.map((c, i) => {
+        const label = optionLabel(labelStyle, i)
+        return (
+          <div key={c.id} className="flex items-center gap-2">
+            <input type={multiple ? 'checkbox' : 'radio'} checked={c.isCorrect} onChange={() => toggleCorrect(i)} title="Mark as correct" />
+            {label && <span className="text-xs font-semibold text-slate-400 w-5 text-center flex-shrink-0">{label}.</span>}
+            <input value={c.text} onChange={e => setChoice(i, { text: e.target.value })} placeholder={`Choice ${i + 1}`} className="flex-1 border rounded-lg px-3 py-1.5 text-sm" />
+            <button type="button" onClick={() => removeChoice(i)} disabled={choices.length <= 2} className="text-xs text-red-500 disabled:opacity-30">✕</button>
+          </div>
+        )
+      })}
       <button type="button" onClick={addChoice} className="text-xs text-sky-600 hover:underline">+ Add choice</button>
     </div>
   )

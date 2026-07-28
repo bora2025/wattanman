@@ -28,9 +28,31 @@ export const TYPE_LABEL: Record<QType, string> = {
 
 export { uid, parseDragWordsText, shuffle, isH5PType, H5P_TYPES }
 
+export const LABEL_STYLES = ['ALPHA', 'NUMERIC', 'ROMAN', 'NONE'] as const
+export type LabelStyle = (typeof LABEL_STYLES)[number]
+export const LABEL_STYLE_NAME: Record<LabelStyle, string> = {
+  ALPHA: 'A, B, C',
+  NUMERIC: '1, 2, 3',
+  ROMAN: 'I, II, III',
+  NONE: 'None',
+}
+const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX']
+
+// The label follows the choice's DISPLAYED position (post-shuffle), not whatever
+// order it was authored in — otherwise "A" could silently stop lining up with
+// whichever choice a student actually sees first.
+export function optionLabel(style: LabelStyle | undefined, index: number): string {
+  switch (style) {
+    case 'ALPHA': return String.fromCharCode(65 + index)
+    case 'NUMERIC': return String(index + 1)
+    case 'ROMAN': return ROMAN_NUMERALS[index] || String(index + 1)
+    default: return ''
+  }
+}
+
 export function defaultData(type: QType): any {
   if (isH5PType(type)) return h5pDefaultData(type)
-  if (type === 'MCQ') return { choices: [{ id: uid('c'), text: '', isCorrect: false }, { id: uid('c'), text: '', isCorrect: false }], multiple: false }
+  if (type === 'MCQ') return { choices: [{ id: uid('c'), text: '', isCorrect: false }, { id: uid('c'), text: '', isCorrect: false }], multiple: false, labelStyle: 'ALPHA' as LabelStyle }
   return { correct: true }
 }
 
@@ -68,7 +90,13 @@ export function groupQuestionsBySection<T extends { section?: string | null }>(q
 export function sanitizeForPreview(type: QType, data: any): any {
   if (isH5PType(type)) return sanitizeH5PForPreview(type, data)
   const d = data || {}
-  if (type === 'MCQ') return { choices: (d.choices || []).map((c: any) => ({ id: c.id, text: c.text })), multiple: !!d.multiple }
+  if (type === 'MCQ') {
+    return {
+      choices: shuffle((d.choices || []).map((c: any) => ({ id: c.id, text: c.text }))),
+      multiple: !!d.multiple,
+      labelStyle: d.labelStyle as LabelStyle | undefined,
+    }
+  }
   return {}
 }
 

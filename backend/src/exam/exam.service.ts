@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
-import { H5P_TYPES, isH5PType, sanitizeH5PInput, sanitizeH5PForStudent, gradeH5PQuestion } from '../h5p/h5p-questions';
+import { H5P_TYPES, isH5PType, sanitizeH5PInput, sanitizeH5PForStudent, gradeH5PQuestion, shuffle } from '../h5p/h5p-questions';
 
 const ALLOWED_EXAM_QUESTION_TYPES = ['MCQ', 'TF', ...H5P_TYPES];
+const LABEL_STYLES = ['ALPHA', 'NUMERIC', 'ROMAN', 'NONE'];
 
 // Strips a wrapping quote/trailing comma that tends to survive a copy-paste of a
 // section name written out as part of a list elsewhere (e.g. `"Listening",`) —
@@ -41,7 +42,8 @@ function sanitizeExamQuestionInput(body: any) {
       }));
     if (cleanedChoices.length < 2) throw new BadRequestException('Multi-choice needs at least 2 choices');
     if (!cleanedChoices.some((c) => c.isCorrect)) throw new BadRequestException('Multi-choice needs at least 1 correct choice');
-    data = { choices: cleanedChoices, multiple: !!raw.multiple };
+    const labelStyle = LABEL_STYLES.includes(raw.labelStyle) ? raw.labelStyle : 'ALPHA';
+    data = { choices: cleanedChoices, multiple: !!raw.multiple, labelStyle };
   } else {
     data = { correct: !!raw.correct };
   }
@@ -54,7 +56,10 @@ function sanitizeExamQuestionForStudent(q: { id: string; type: string; text: str
   if (isH5PType(q.type)) {
     safe = sanitizeH5PForStudent(q.type, d);
   } else if (q.type === 'MCQ') {
-    safe = { choices: (d.choices || []).map((c: any) => ({ id: c.id, text: c.text })), multiple: !!d.multiple };
+    // Shuffled fresh on every fetch (not stored), same convention as the H5P
+    // types' word banks/paragraph order — grading matches by choice id, so
+    // display order never affects correctness.
+    safe = { choices: shuffle((d.choices || []).map((c: any) => ({ id: c.id, text: c.text }))), multiple: !!d.multiple, labelStyle: d.labelStyle };
   } else {
     safe = {};
   }

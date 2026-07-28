@@ -1,6 +1,6 @@
 "use client"
 
-import type { QType } from '../lib/examQuestionLogic'
+import { optionLabel, type QType, type LabelStyle } from '../lib/examQuestionLogic'
 import MathText from './MathText'
 import { EssayInput } from './questions/EssayField'
 import { SortParagraphsInput } from './questions/SortParagraphsField'
@@ -24,6 +24,7 @@ export function QuestionInput({ q, value, onChange }: { q: QuestionInputQuestion
   if (q.type === 'MCQ') {
     const choices: { id: string; text: string }[] = q.data?.choices ?? []
     const multiple = !!q.data?.multiple
+    const labelStyle: LabelStyle | undefined = q.data?.labelStyle
     const selected: string[] = Array.isArray(value) ? value : []
     const toggle = (id: string) => {
       if (multiple) {
@@ -34,14 +35,16 @@ export function QuestionInput({ q, value, onChange }: { q: QuestionInputQuestion
     }
     return (
       <div className="space-y-2">
-        {choices.map((c) => {
+        {choices.map((c, i) => {
           const isSelected = selected.includes(c.id)
+          const label = optionLabel(labelStyle, i)
           return (
             <label key={c.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${isSelected ? 'border-sky-500 bg-sky-50' : 'border-slate-200 hover:border-slate-300'}`}>
               <input type={multiple ? 'checkbox' : 'radio'} name={q.id} checked={isSelected} onChange={() => toggle(c.id)} className="sr-only" />
               <div className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 ${multiple ? 'rounded' : 'rounded-full'} ${isSelected ? 'border-sky-500' : 'border-slate-300'}`}>
                 {isSelected && <div className={`bg-sky-500 ${multiple ? 'w-2.5 h-2.5 rounded-sm' : 'w-2.5 h-2.5 rounded-full'}`} />}
               </div>
+              {label && <span className="text-sm font-semibold text-slate-400 flex-shrink-0">{label}.</span>}
               <MathText as="span" className="text-sm text-slate-700" text={c.text} />
             </label>
           )
