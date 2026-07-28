@@ -1,17 +1,16 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import AuthGuard from '../../../../components/AuthGuard'
 import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
 import { formatCambodiaTime } from '../../../../lib/dateUtils'
-import { defaultQuestion } from '../../../../components/ExamQuestionsEditor'
-import ExamFormModal, { type ExamEditInitialData, type ExamClassItem } from '../../../../components/ExamFormModal'
 
 type Tab = 'assignments' | 'exams' | 'courses'
+const TABS: Tab[] = ['assignments', 'exams', 'courses']
 
 interface ClassDetail {
   id: string
@@ -82,7 +81,11 @@ function statusColor(s: string) {
 function ClassDetailContent() {
   const params = useParams<{ id: string }>()
   const classId = params?.id as string
-  const [tab, setTab] = useState<Tab>('assignments')
+  const searchParams = useSearchParams()
+  // Lets a Cancel/Save on the exam builder page land back on this exact tab
+  // (via ?tab=exams in its returnTo) instead of always resetting to Assignments.
+  const initialTab = TABS.includes(searchParams?.get('tab') as Tab) ? (searchParams!.get('tab') as Tab) : 'assignments'
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [cls, setCls] = useState<ClassDetail | null>(null)
   const [loadingClass, setLoadingClass] = useState(true)
 
@@ -150,7 +153,7 @@ function ClassDetailContent() {
           </div>
 
           {tab === 'assignments' && <AssignmentsPanel classId={classId} />}
-          {tab === 'exams' && <ExamsPanel classId={classId} classLabel={cls?.name || ''} />}
+          {tab === 'exams' && <ExamsPanel classId={classId} />}
           {tab === 'courses' && <CoursesPanel classId={classId} />}
         </div>
       </div>
@@ -411,19 +414,16 @@ function AssignmentsPanel({ classId }: { classId: string }) {
 }
 
 // ─── Exams panel ──────────────────────────────────────────────────────────
-// Reuses the same ExamFormModal as /admin/exams and /teacher/exams (previously
-// this panel hand-rolled its own separate create/edit form) — so create/edit
-// exam is one consistent interface everywhere an admin reaches it, and any
-// future editor improvement (question types, formatting, etc.) applies here
-// automatically instead of needing to be ported into a second implementation.
-function ExamsPanel({ classId, classLabel }: { classId: string; classLabel: string }) {
+// Links out to the shared exam builder pages (/teacher/exams/new, /teacher/exams/[id]/edit)
+// — the same pages admin's Examinations sidebar and the teacher's own
+// Examinations page use — so create/edit exam is one consistent page
+// everywhere an admin reaches it, scoped to this class via ?classId= and
+// returning here (on this exact tab) via ?returnTo=.
+function ExamsPanel({ classId }: { classId: string }) {
   const [rows, setRows] = useState<ExamRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [showForm, setShowForm] = useState(false)
-  const [editingExamId, setEditingExamId] = useState<string | null>(null)
-  const [editInitialData, setEditInitialData] = useState<ExamEditInitialData | null>(null)
-  const [editLoadingId, setEditLoadingId] = useState<string | null>(null)
+  const returnTo = encodeURIComponent(`/admin/classes/${classId}?tab=exams`)
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -457,38 +457,13 @@ function ExamsPanel({ classId, classLabel }: { classId: string; classLabel: stri
     } catch { setError('Failed to delete exam.') }
   }
 
-  const openEdit = async (examId: string) => {
-    setEditLoadingId(examId); setError('')
-    try {
-      const r = await apiFetch(`/api/exams/${examId}`)
-      if (!r.ok) throw new Error()
-      const full = await r.json()
-      setEditInitialData({
-        title: full.title || '',
-        description: full.description || '',
-        classId: full.classId || full.class?.id || classId,
-        duration: full.duration ?? 60,
-        totalMarks: full.totalMarks ?? 100,
-        passMark: full.passMark ?? 50,
-        maxAttempts: full.maxAttempts ?? 1,
-        questions: (full.questions || []).length
-          ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data, section: q.section }))
-          : [defaultQuestion()],
-      })
-      setEditingExamId(examId)
-    } catch { setError('Failed to load exam.') }
-    finally { setEditLoadingId(null) }
-  }
-
-  const classesForModal: ExamClassItem[] = [{ id: classId, name: classLabel || 'This class' }]
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-slate-600">
           <span className="font-semibold text-slate-800">{rows.length}</span> exam{rows.length === 1 ? '' : 's'} in this class
         </p>
-        <button onClick={() => setShowForm(true)} className="btn-primary btn-sm">+ New Exam</button>
+        <Link href={`/teacher/exams/new?classId=${classId}&returnTo=${returnTo}`} className="btn-primary btn-sm">+ New Exam</Link>
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-sm">{error}</div>}
@@ -532,10 +507,8 @@ function ExamsPanel({ classId, classLabel }: { classId: string; classLabel: stri
                     </select>
                   </td>
                   <td className="px-4 py-2 text-right whitespace-nowrap">
-                    <button onClick={() => openEdit(r.id)} disabled={editLoadingId === r.id}
-                      className="text-xs text-emerald-700 hover:underline mr-3 disabled:opacity-50">
-                      {editLoadingId === r.id ? 'Loading…' : 'Edit'}
-                    </button>
+                    <Link href={`/teacher/exams/${r.id}/edit?returnTo=${returnTo}`}
+                      className="text-xs text-emerald-700 hover:underline mr-3">Edit</Link>
                     <Link href={`/teacher/exams/${r.id}/attempts`} target="_blank" rel="noopener noreferrer"
                       className="text-xs text-indigo-600 hover:underline mr-3">Grade ↗</Link>
                     <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
@@ -545,24 +518,6 @@ function ExamsPanel({ classId, classLabel }: { classId: string; classLabel: stri
             </tbody>
           </table>
         </div>
-      )}
-
-      {showForm && (
-        <ExamFormModal
-          classes={classesForModal}
-          initialData={{ title: '', description: '', classId, duration: 60, totalMarks: 100, passMark: 50, maxAttempts: 1, questions: [defaultQuestion()] }}
-          onClose={() => setShowForm(false)}
-          onSuccess={() => { setShowForm(false); load() }}
-        />
-      )}
-      {editingExamId && editInitialData && (
-        <ExamFormModal
-          classes={classesForModal}
-          examId={editingExamId}
-          initialData={editInitialData}
-          onClose={() => { setEditingExamId(null); setEditInitialData(null) }}
-          onSuccess={() => { setEditingExamId(null); setEditInitialData(null); load() }}
-        />
       )}
     </div>
   )
@@ -767,7 +722,9 @@ function CoursesPanel({ classId }: { classId: string }) {
 export default function AdminClassDetailPage() {
   return (
     <AuthGuard allowedRoles={['ADMIN', 'SUPER_ADMIN', 'CLASS_ADMIN']}>
-      <ClassDetailContent />
+      <Suspense>
+        <ClassDetailContent />
+      </Suspense>
     </AuthGuard>
   )
 }

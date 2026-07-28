@@ -1,16 +1,14 @@
 "use client"
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import StatCard from '../../../components/StatCard'
 import EmptyState from '../../../components/EmptyState'
-import ExamFormModal, { type ExamEditInitialData } from '../../../components/ExamFormModal'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
-import { defaultQuestion } from '../../../components/ExamQuestionsEditor'
 
 interface Exam {
   id: string; title: string; description: string | null; status: string
@@ -20,7 +18,6 @@ interface Exam {
   _count: { questions: number; attempts: number }
   createdAt: string
 }
-interface ClassItem { id: string; name: string }
 
 const STATUS_COLOR: Record<string, string> = {
   DRAFT: 'bg-slate-100 text-slate-600',
@@ -30,19 +27,11 @@ const STATUS_COLOR: Record<string, string> = {
 }
 
 export default function ExamAdminPage() {
-  const [showForm, setShowForm] = useState(false)
-  const [editingExamId, setEditingExamId] = useState<string | null>(null)
-  const [editInitialData, setEditInitialData] = useState<ExamEditInitialData | null>(null)
-  const [editLoadingId, setEditLoadingId] = useState<string | null>(null)
   const qc = useQueryClient()
 
   const { data: exams = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['exams'],
     queryFn: async () => { const r = await apiFetch('/api/exams'); if (!r.ok) throw new Error(); return r.json() as Promise<Exam[]> },
-  })
-  const { data: classes = [] } = useQuery({
-    queryKey: ['classes-list'],
-    queryFn: async () => { const r = await apiFetch('/api/classes'); if (!r.ok) throw new Error(); return r.json() as Promise<ClassItem[]> },
   })
 
   const statusMutation = useMutation({
@@ -54,32 +43,6 @@ export default function ExamAdminPage() {
     mutationFn: (id: string) => apiFetch(`/api/exams/${id}`, { method: 'DELETE' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['exams'] }),
   })
-
-  async function openEdit(examId: string) {
-    setEditLoadingId(examId)
-    try {
-      const r = await apiFetch(`/api/exams/${examId}`)
-      if (!r.ok) throw new Error()
-      const full = await r.json()
-      setEditInitialData({
-        title: full.title || '',
-        description: full.description || '',
-        classId: full.classId || full.class?.id || '',
-        duration: full.duration ?? 60,
-        totalMarks: full.totalMarks ?? 100,
-        passMark: full.passMark ?? 50,
-        maxAttempts: full.maxAttempts ?? 1,
-        questions: (full.questions || []).length
-          ? full.questions.map((q: any) => ({ text: q.text, type: q.type, marks: q.marks, data: q.data, section: q.section }))
-          : [defaultQuestion()],
-      })
-      setEditingExamId(examId)
-    } catch {
-      alert('Failed to load exam for editing')
-    } finally {
-      setEditLoadingId(null)
-    }
-  }
 
   const counts = useMemo(() => ({
     total: exams.length,
@@ -99,10 +62,10 @@ export default function ExamAdminPage() {
                 <h1 className="text-2xl font-bold text-gray-900">📝 Examinations</h1>
                 <p className="text-sm text-gray-500 mt-0.5">Create, publish, and manage exams across classes</p>
               </div>
-              <button onClick={() => setShowForm(true)}
+              <Link href="/teacher/exams/new?returnTo=/admin/exams"
                 className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 shadow-sm">
                 + Create Exam
-              </button>
+              </Link>
             </div>
 
             {!isLoading && !isError && exams.length > 0 && (
@@ -128,7 +91,7 @@ export default function ExamAdminPage() {
             ) : exams.length === 0 ? (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
                 <EmptyState icon="📝" message="No exams yet" action={
-                  <button onClick={() => setShowForm(true)} className="text-sm text-indigo-600 font-medium hover:underline">Create your first exam</button>
+                  <Link href="/teacher/exams/new?returnTo=/admin/exams" className="text-sm text-indigo-600 font-medium hover:underline">Create your first exam</Link>
                 } />
               </div>
             ) : (
@@ -147,9 +110,9 @@ export default function ExamAdminPage() {
                       <p className="text-xs text-gray-400 mt-0.5">{exam._count.attempts} attempt(s) · by {exam.createdBy.name}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <button onClick={() => openEdit(exam.id)} disabled={editLoadingId === exam.id} className="text-xs text-indigo-600 hover:underline disabled:opacity-50 font-medium">
-                        {editLoadingId === exam.id ? 'Loading…' : 'Edit'}
-                      </button>
+                      <Link href={`/teacher/exams/${exam.id}/edit?returnTo=/admin/exams`} className="text-xs text-indigo-600 hover:underline font-medium">
+                        Edit
+                      </Link>
                       <Link href={`/teacher/exams/${exam.id}/attempts`} target="_blank" rel="noopener noreferrer"
                         className="text-xs text-emerald-700 hover:underline font-medium">Grade ↗</Link>
                       <select value={exam.status}
@@ -165,23 +128,6 @@ export default function ExamAdminPage() {
             )}
           </div>
         </main>
-
-        {showForm && (
-          <ExamFormModal
-            classes={classes}
-            onClose={() => setShowForm(false)}
-            onSuccess={() => { setShowForm(false); qc.invalidateQueries({ queryKey: ['exams'] }) }}
-          />
-        )}
-        {editingExamId && editInitialData && (
-          <ExamFormModal
-            classes={classes}
-            examId={editingExamId}
-            initialData={editInitialData}
-            onClose={() => { setEditingExamId(null); setEditInitialData(null) }}
-            onSuccess={() => { setEditingExamId(null); setEditInitialData(null); qc.invalidateQueries({ queryKey: ['exams'] }) }}
-          />
-        )}
       </div>
     </AuthGuard>
   )
