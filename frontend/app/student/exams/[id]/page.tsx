@@ -44,7 +44,7 @@ function ExamCountdown({ initialSeconds, onExpire, onTick }: { initialSeconds: n
   }, [timeLeft])
 
   return (
-    <div className={`text-lg font-mono font-bold px-3 py-1 rounded-xl ${timeLeft < 300 ? 'text-red-600 bg-red-50' : 'text-gray-800 bg-gray-100'}`}>
+    <div className={`text-base sm:text-lg font-mono font-bold px-2.5 py-1 sm:px-3 rounded-xl whitespace-nowrap ${timeLeft < 300 ? 'text-red-600 bg-red-50' : 'text-gray-800 bg-gray-100'}`}>
       ⏱ {formatTime(timeLeft)}
     </div>
   )
@@ -150,14 +150,16 @@ export default function StudentExamTakingPage() {
     <AuthGuard requiredRole="STUDENT">
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-10 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-bold text-gray-900">{exam?.title ?? 'Loading...'}</p>
+        <div className="bg-white border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4 sticky top-0 z-10 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-bold text-gray-900 truncate">{exam?.title ?? 'Loading...'}</p>
               <p className="text-xs text-gray-400">{exam?.totalMarks} marks · {exam?.questions?.length ?? 0} questions</p>
             </div>
             {attempt && timeLeft !== null && (
-              <ExamCountdown initialSeconds={timeLeft} onTick={handleTick} onExpire={handleExpire} />
+              <div className="flex-shrink-0">
+                <ExamCountdown initialSeconds={timeLeft} onTick={handleTick} onExpire={handleExpire} />
+              </div>
             )}
           </div>
           {attempt && exam && (
@@ -173,9 +175,9 @@ export default function StudentExamTakingPage() {
           )}
         </div>
 
-        <div className="max-w-2xl mx-auto p-6">
+        <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6 sm:py-6">
           {!attempt ? (
-            <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-100 mt-10">
+            <div className="bg-white rounded-2xl p-6 sm:p-10 text-center shadow-sm border border-gray-100 mt-6 sm:mt-10">
               <p className="text-4xl mb-4">📝</p>
               {isLoading ? (
                 <p className="text-gray-400">Loading exam...</p>
@@ -186,7 +188,7 @@ export default function StudentExamTakingPage() {
                   <p className="text-gray-500 text-sm mb-6">Pass mark: {exam.passMark}/{exam.totalMarks}</p>
                   <p className="text-xs text-amber-700 mb-6 bg-amber-50 border border-amber-100 rounded-xl px-4 py-2">⚠️ Once started, the timer cannot be paused. Answers auto-save every 30 seconds.</p>
                   <button onClick={() => { setStartError(null); startMutation.mutate() }} disabled={startMutation.isPending}
-                    className="bg-sky-600 text-white px-8 py-3 rounded-xl font-semibold text-lg hover:bg-sky-700 disabled:opacity-60 shadow-sm">
+                    className="w-full sm:w-auto bg-sky-600 text-white px-8 py-3 rounded-xl font-semibold text-lg hover:bg-sky-700 disabled:opacity-60 shadow-sm">
                     {startMutation.isPending ? 'Starting...' : 'Start Exam'}
                   </button>
                   {startError && <p className="text-sm text-red-600 mt-4">{startError}</p>}
@@ -196,19 +198,23 @@ export default function StudentExamTakingPage() {
               )}
             </div>
           ) : (
-            <div className="space-y-4">
+            // Bottom padding clears the fixed action bar below so it never covers
+            // the last question — the button used to sit in-flow after the last
+            // question, which on a long/mobile-height list meant scrolling all the
+            // way down just to find Submit.
+            <div className="space-y-3 sm:space-y-4 pb-28">
               {currentPage.questions.map((q, localI) => {
                 const i = currentPage.startIndex + localI
                 const isPassage = q.type === 'TEXT'
                 return (
-                <div key={q.id} className={`rounded-2xl shadow-sm p-5 border ${isPassage ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'}`}>
+                <div key={q.id} className={`rounded-2xl shadow-sm p-4 sm:p-5 border ${isPassage ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'}`}>
                   <div className="flex items-start gap-2 mb-3">
                     {isPassage ? (
                       <span className="text-lg leading-none mt-0.5">📖</span>
                     ) : (
                       <span className="flex-none w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">{displayNumbers[i]}</span>
                     )}
-                    <div className="font-semibold text-gray-900">
+                    <div className="font-semibold text-gray-900 flex-1 min-w-0">
                       <RichText as="div" html={q.text} />
                       {!isPassage && <span className="text-xs font-normal text-gray-400">({q.marks} mark{q.marks !== 1 ? 's' : ''})</span>}
                     </div>
@@ -217,27 +223,31 @@ export default function StudentExamTakingPage() {
                 </div>
                 )
               })}
-
-              <div className="text-center pb-10 pt-2">
-                {!isLastPage ? (
-                  <button onClick={() => setPage(p => p + 1)}
-                    className="bg-sky-600 text-white px-8 py-3 rounded-xl font-semibold text-lg hover:bg-sky-700 shadow-sm">
-                    Next Section →
-                  </button>
-                ) : (
-                  <>
-                    <button onClick={() => { setSubmitError(null); attempt && submitMutation.mutate(attempt.id) }} disabled={submitMutation.isPending}
-                      className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-semibold text-lg hover:bg-emerald-700 disabled:opacity-60 shadow-sm">
-                      {submitMutation.isPending ? 'Submitting...' : 'Submit Exam'}
-                    </button>
-                    <p className="text-xs text-gray-400 mt-2">Make sure all questions are answered before submitting</p>
-                  </>
-                )}
-                {submitError && <p className="text-sm text-red-600 mt-3">{submitError}</p>}
-              </div>
             </div>
           )}
         </div>
+
+        {attempt && (
+          <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] z-10">
+            <div className="max-w-2xl mx-auto px-4 py-3 sm:px-6">
+              {!isLastPage ? (
+                <button onClick={() => setPage(p => p + 1)}
+                  className="w-full bg-sky-600 text-white px-6 py-3 rounded-xl font-semibold text-base sm:text-lg hover:bg-sky-700 shadow-sm">
+                  Next Section →
+                </button>
+              ) : (
+                <>
+                  <button onClick={() => { setSubmitError(null); attempt && submitMutation.mutate(attempt.id) }} disabled={submitMutation.isPending}
+                    className="w-full bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold text-base sm:text-lg hover:bg-emerald-700 disabled:opacity-60 shadow-sm">
+                    {submitMutation.isPending ? 'Submitting...' : 'Submit Exam'}
+                  </button>
+                  <p className="text-center text-xs text-gray-400 mt-1.5">Make sure all questions are answered before submitting</p>
+                </>
+              )}
+              {submitError && <p className="text-center text-sm text-red-600 mt-1.5">{submitError}</p>}
+            </div>
+          </div>
+        )}
       </div>
     </AuthGuard>
   )
