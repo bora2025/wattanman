@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 interface EducationInput {
   institution: string;
@@ -77,10 +78,11 @@ export class StaffCvService {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
     if (!user) throw new NotFoundException('User not found');
 
+    const schoolId = getCurrentSchoolId();
     const skills = Array.isArray(body.skills) ? body.skills.map((s) => String(s).trim()).filter(Boolean) : [];
     await this.prisma.staffProfile.upsert({
       where: { userId },
-      create: { userId, title: body.title?.trim() || null, summary: body.summary?.trim() || null, skills },
+      create: { userId, schoolId, title: body.title?.trim() || null, summary: body.summary?.trim() || null, skills },
       update: { title: body.title?.trim() || null, summary: body.summary?.trim() || null, skills },
     });
 
@@ -90,6 +92,7 @@ export class StaffCvService {
         .filter((e) => e.institution?.trim())
         .map((e, i) => ({
           userId,
+          schoolId,
           institution: e.institution.trim(),
           degree: e.degree?.trim() || null,
           fieldOfStudy: e.fieldOfStudy?.trim() || null,
@@ -106,6 +109,7 @@ export class StaffCvService {
         .filter((e) => e.title?.trim() && e.employer?.trim())
         .map((e, i) => ({
           userId,
+          schoolId,
           title: e.title.trim(),
           employer: e.employer.trim(),
           startDate: e.startDate ? new Date(e.startDate) : null,
@@ -122,6 +126,7 @@ export class StaffCvService {
         .filter((c) => c.name?.trim())
         .map((c, i) => ({
           userId,
+          schoolId,
           name: c.name.trim(),
           issuer: c.issuer?.trim() || null,
           issueDate: c.issueDate ? new Date(c.issueDate) : null,

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 const ACTIVE_DESIGN_NAME = '__active__';
 
@@ -25,6 +26,7 @@ export class CardTemplatesService {
   async create(data: { name: string; cardType: string; design: object }) {
     return this.prisma.cardTemplate.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         name: data.name,
         cardType: data.cardType,
         design: data.design,
@@ -53,7 +55,7 @@ export class CardTemplatesService {
       });
     }
     return this.prisma.cardTemplate.create({
-      data: { name: ACTIVE_DESIGN_NAME, cardType, design },
+      data: { schoolId: getCurrentSchoolId(), name: ACTIVE_DESIGN_NAME, cardType, design },
     });
   }
 }

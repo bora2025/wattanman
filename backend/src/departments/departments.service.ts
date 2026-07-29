@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 @Injectable()
 export class DepartmentsService {
@@ -13,7 +14,7 @@ export class DepartmentsService {
   }
 
   async create(data: { name: string; nameKh?: string; description?: string }) {
-    return this.prisma.department.create({ data });
+    return this.prisma.department.create({ data: { ...data, schoolId: getCurrentSchoolId() } });
   }
 
   async update(id: string, data: { name?: string; nameKh?: string; description?: string }) {

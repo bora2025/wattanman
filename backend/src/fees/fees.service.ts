@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 @Injectable()
 export class FeesService {
@@ -98,6 +99,7 @@ export class FeesService {
 
     const record = await this.prisma.feeRecord.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         studentId: data.studentId,
         totalAmount: data.totalAmount,
         discount,
@@ -186,6 +188,7 @@ export class FeesService {
     await this.prisma.$transaction([
       this.prisma.feePayment.create({
         data: {
+          schoolId: record.schoolId,
           feeRecordId,
           amount: data.amount,
           note: data.note ?? null,
@@ -214,12 +217,13 @@ export class FeesService {
     return { totalRevenue, pendingAmount, paidCount, collectionRate, total: records.length };
   }
 
-  // ─── Settings (singleton) ─────────────────────────────────────────────────
+  // ─── Settings (one row per school — see the conversion plan's Phase 1d) ────
 
   async getSettings() {
+    const schoolId = getCurrentSchoolId();
     const s = await this.prisma.feeSettings.upsert({
-      where:  { id: 'singleton' },
-      create: { id: 'singleton' },
+      where:  { schoolId },
+      create: { schoolId },
       update: {},
     });
     return { ...s, discountPresets: JSON.parse(s.discountPresets), promotions: JSON.parse(s.promotions) };
@@ -230,12 +234,13 @@ export class FeesService {
     invoiceTitle?: string; invoiceSubtitle?: string; invoiceFooter?: string;
     discountPresets?: any[]; promotions?: any[];
   }) {
+    const schoolId = getCurrentSchoolId();
     const payload: Record<string, any> = { ...data };
     if (data.discountPresets !== undefined) payload.discountPresets = JSON.stringify(data.discountPresets);
     if (data.promotions     !== undefined) payload.promotions      = JSON.stringify(data.promotions);
     const s = await this.prisma.feeSettings.upsert({
-      where:  { id: 'singleton' },
-      create: { id: 'singleton', ...payload },
+      where:  { schoolId },
+      create: { schoolId, ...payload },
       update: payload,
     });
     return { ...s, discountPresets: JSON.parse(s.discountPresets), promotions: JSON.parse(s.promotions) };

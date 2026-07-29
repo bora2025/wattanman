@@ -3,6 +3,7 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { isValidEmail, normalizePhone, generatePassword } from '../common/identity';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 const MIN_PASSWORD_LENGTH = 6;
 const FIELD_MODES = ['REQUIRED', 'OPTIONAL', 'HIDDEN'] as const;
@@ -56,9 +57,9 @@ export class ClassRegistrationsService {
 
   private async getOrCreateSettings() {
     return this.prisma.classRegistrationSettings.upsert({
-      where: { id: 'singleton' },
+      where: { schoolId: getCurrentSchoolId() },
       update: {},
-      create: { id: 'singleton' },
+      create: { schoolId: getCurrentSchoolId() },
     });
   }
 
@@ -103,7 +104,7 @@ export class ClassRegistrationsService {
     if (nextEmailMode === 'HIDDEN' && nextPhoneMode === 'HIDDEN') {
       throw new BadRequestException('Email and Phone cannot both be hidden — a student needs at least one to create a login');
     }
-    return this.prisma.classRegistrationSettings.update({ where: { id: 'singleton' }, data });
+    return this.prisma.classRegistrationSettings.update({ where: { schoolId: getCurrentSchoolId() }, data });
   }
 
   // ─── Admin: custom fields CRUD ──────────────────────────────────────────
@@ -119,13 +120,14 @@ export class ClassRegistrationsService {
     const base = slugify(label);
     let key = base;
     let n = 1;
-    while (await this.prisma.classRegistrationField.findUnique({ where: { key } })) {
+    while (await this.prisma.classRegistrationField.findFirst({ where: { key } })) {
       key = `${base}_${++n}`;
     }
 
     const maxOrder = await this.prisma.classRegistrationField.aggregate({ _max: { order: true } });
     return this.prisma.classRegistrationField.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         key,
         label,
         fieldType,
@@ -313,6 +315,7 @@ export class ClassRegistrationsService {
     const passwordHash = await bcrypt.hash(finalPassword, 12);
     const created = await this.prisma.classRegistration.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         classId: body.classId,
         nameKh: settings.khmerNameMode === 'HIDDEN' ? undefined : nameKh || undefined,
         nameEn,
@@ -334,6 +337,7 @@ export class ClassRegistrationsService {
       if (admins.length) {
         await this.prisma.notification.createMany({
           data: admins.map(a => ({
+            schoolId: getCurrentSchoolId(),
             userId: a.id,
             type: 'class_registration_request',
             message: `${nameEn} requested to register for class ${cls.name}`,
@@ -406,11 +410,12 @@ export class ClassRegistrationsService {
     }
 
     // APPROVE — create the User + Student accounts using the password the student set at registration
+    const schoolId = getCurrentSchoolId();
     const normalizedPhone = normalizePhone(reg.phone);
     const existingUser = reg.email
-      ? await this.prisma.user.findUnique({ where: { email: reg.email } })
+      ? await this.prisma.user.findFirst({ where: { email: reg.email } })
       : normalizedPhone
-        ? await this.prisma.user.findUnique({ where: { phoneNormalized: normalizedPhone } })
+        ? await this.prisma.user.findFirst({ where: { phoneNormalized: normalizedPhone } })
         : null;
     if (existingUser) {
       throw new BadRequestException(`A user with this ${reg.email ? 'email' : 'phone number'} already exists. Link the student manually instead.`);
@@ -418,6 +423,7 @@ export class ClassRegistrationsService {
 
     const user = await this.prisma.user.create({
       data: {
+        schoolId,
         email: reg.email || undefined,
         password: reg.passwordHash,
         name: reg.nameEn,
@@ -432,6 +438,7 @@ export class ClassRegistrationsService {
 
     const student = await this.prisma.student.create({
       data: {
+        schoolId,
         userId: user.id,
         classId: reg.classId,
         studentNumber,

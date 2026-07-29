@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 @Injectable()
 export class StudyYearsService {
@@ -20,13 +21,14 @@ export class StudyYearsService {
   }
 
   async create(data: { year: number; label?: string; startDate?: string; endDate?: string; schoolName?: string; logoUrl?: string }) {
-    const existing = await this.prisma.studyYear.findUnique({ where: { year: data.year } });
+    const existing = await this.prisma.studyYear.findFirst({ where: { year: data.year } });
     if (existing) {
       throw new BadRequestException(`Study year ${data.year} already exists`);
     }
 
     return this.prisma.studyYear.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         year: data.year,
         label: data.label || `${data.year}-${data.year + 1}`,
         startDate: data.startDate ? new Date(data.startDate) : undefined,

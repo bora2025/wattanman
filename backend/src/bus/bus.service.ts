@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 @Injectable()
 export class BusService {
@@ -22,7 +23,7 @@ export class BusService {
   }
 
   async createBus(data: { name: string; plateNumber: string; capacity?: number; routeId?: string }) {
-    return this.prisma.bus.create({ data });
+    return this.prisma.bus.create({ data: { ...data, schoolId: getCurrentSchoolId() } });
   }
 
   async updateBus(id: string, data: any) {
@@ -41,7 +42,7 @@ export class BusService {
   }
 
   async createRoute(data: { name: string; description?: string }) {
-    return this.prisma.busRoute.create({ data });
+    return this.prisma.busRoute.create({ data: { ...data, schoolId: getCurrentSchoolId() } });
   }
 
   async updateRoute(id: string, data: any) {
@@ -53,7 +54,7 @@ export class BusService {
   }
 
   async addStop(routeId: string, data: { name: string; latitude: number; longitude: number; order?: number }) {
-    return this.prisma.busStop.create({ data: { ...data, routeId } });
+    return this.prisma.busStop.create({ data: { ...data, routeId, schoolId: getCurrentSchoolId() } });
   }
 
   async deleteStop(id: string) {
@@ -68,7 +69,7 @@ export class BusService {
   }
 
   async recordLocation(busId: string, data: { latitude: number; longitude: number; speed?: number; heading?: number }) {
-    return this.prisma.busLocation.create({ data: { busId, ...data } });
+    return this.prisma.busLocation.create({ data: { busId, ...data, schoolId: getCurrentSchoolId() } });
   }
 
   async getLocationHistory(busId: string, limit = 100) {

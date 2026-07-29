@@ -61,10 +61,14 @@ export class NotificationService {
       }
     }
 
-    // Log notification
+    // Log notification. Derive schoolId from the already-loaded `student` row
+    // rather than the ambient tenant context — this method may run from
+    // contexts without a request-scoped context (e.g. a future scheduled job),
+    // and the student's own schoolId is the unambiguous source of truth here.
     try {
       await this.prisma.notification.create({
         data: {
+          schoolId: student.schoolId,
           userId: parent.id,
           message,
           type: 'absence',

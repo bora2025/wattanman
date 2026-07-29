@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 @Injectable()
 export class CardAliasesService {
@@ -49,7 +50,7 @@ export class CardAliasesService {
 
     try {
       return await this.prisma.cardAlias.create({
-        data: { qrValue, studentId, createdById },
+        data: { schoolId: getCurrentSchoolId(), qrValue, studentId, createdById },
       });
     } catch (err: any) {
       if (err?.code === 'P2002') {
@@ -98,7 +99,7 @@ export class CardAliasesService {
     };
 
     // 1. Card-alias
-    const alias = await this.prisma.cardAlias.findUnique({
+    const alias = await this.prisma.cardAlias.findFirst({
       where: { qrValue: q },
       include: { student: { include } },
     });

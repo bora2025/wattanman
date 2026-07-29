@@ -1,4 +1,4 @@
-import { IsString, MinLength } from 'class-validator';
+import { IsOptional, IsString, MinLength } from 'class-validator';
 
 export class LoginDto {
   // Email address or phone number — AuthService.validateUser routes to whichever
@@ -10,4 +10,10 @@ export class LoginDto {
   @IsString()
   @MinLength(6)
   password: string;
+
+  // Required only when the account has MFA enabled (currently enforced for
+  // PLATFORM_ADMIN — see AuthController.login and the conversion plan's Phase 2a).
+  @IsOptional()
+  @IsString()
+  mfaCode?: string;
 }

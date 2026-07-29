@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 export interface HeroSlide {
   id: string;
@@ -39,14 +40,17 @@ export interface SiteSettingDto {
 export class SiteSettingsService {
   constructor(private prisma: PrismaService) {}
 
-  /** Get or create the singleton settings record. */
+  /** Get or create the current school's settings record (one row per school —
+   * see the conversion plan's Phase 1d; this used to be a single global
+   * "singleton" row before multi-tenancy). */
   async get() {
+    const schoolId = getCurrentSchoolId();
     let settings = await this.prisma.siteSetting.findUnique({
-      where: { id: 'singleton' },
+      where: { schoolId },
     });
     if (!settings) {
       settings = await this.prisma.siteSetting.create({
-        data: { id: 'singleton' },
+        data: { schoolId },
       });
     }
     return {
@@ -56,8 +60,9 @@ export class SiteSettingsService {
     };
   }
 
-  /** Upsert the singleton settings record. */
+  /** Upsert the current school's settings record. */
   async update(dto: SiteSettingDto) {
+    const schoolId = getCurrentSchoolId();
     const data: Record<string, unknown> = { ...dto };
     if (dto.heroSlides !== undefined) {
       data.heroSlides = JSON.stringify(dto.heroSlides);
@@ -66,8 +71,8 @@ export class SiteSettingsService {
       data.aboutFeatures = JSON.stringify(dto.aboutFeatures);
     }
     const settings = await this.prisma.siteSetting.upsert({
-      where: { id: 'singleton' },
-      create: { id: 'singleton', ...data } as any,
+      where: { schoolId },
+      create: { schoolId, ...data } as any,
       update: data as any,
     });
     return {

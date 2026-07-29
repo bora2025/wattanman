@@ -6,11 +6,11 @@ import { ROLES_KEY } from './roles.decorator';
  * Role hierarchy — a user with a "higher" role implicitly satisfies any
  * @Roles() check that requires one of the "lower" roles.
  *
- *   SUPER_ADMIN  ─┐
- *                 ├─ implicitly grants ADMIN, SCHOOL_ADMIN, WATTAMAN, WATTAMAN_REPORTER, CLASS_ADMIN
- *   SCHOOL_ADMIN ─┘     (and anything ADMIN can do)
+ *   SUPER_ADMIN  ─── implicitly grants ADMIN, WATTAMAN, WATTAMAN_REPORTER, CLASS_ADMIN, ACCOUNTER
+ *                    (and anything ADMIN can do). School-scoped — a school's SUPER_ADMIN can
+ *                    manage other admins within that same school only, never across schools.
  *
- *   ADMIN        ─── implicitly grants WATTAMAN, WATTAMAN_REPORTER, CLASS_ADMIN
+ *   ADMIN        ─── implicitly grants WATTAMAN, WATTAMAN_REPORTER, CLASS_ADMIN, ACCOUNTER
  *
  *   WATTAMAN_REPORTER — read-only role; can view and print attendance reports
  *                       for staff and students. Cannot scan or edit attendance.
@@ -18,11 +18,14 @@ import { ROLES_KEY } from './roles.decorator';
  *   CLASS_ADMIN  — limited edit role; can manage classes, scoring, student
  *                  attendance, and timetable. Cannot access user/staff management.
  *
+ * PLATFORM_ADMIN is intentionally NOT part of this hierarchy — it's a separate,
+ * cross-school role wired up on its own (see backend/src/platform/*), not a
+ * superset/subset of any school-scoped role above.
+ *
  * This avoids having to list every higher-tier role on every endpoint.
  */
 const ROLE_INHERITS: Record<string, string[]> = {
-  SUPER_ADMIN: ['ADMIN', 'SCHOOL_ADMIN', 'WATTAMAN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN', 'ACCOUNTER'],
-  SCHOOL_ADMIN: ['ADMIN', 'WATTAMAN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN', 'ACCOUNTER'],
+  SUPER_ADMIN: ['ADMIN', 'WATTAMAN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN', 'ACCOUNTER'],
   ADMIN: ['WATTAMAN', 'WATTAMAN_REPORTER', 'CLASS_ADMIN', 'ACCOUNTER'],
 };
 

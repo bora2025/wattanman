@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { MessagesGateway } from './messages.gateway';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 @Injectable()
 export class MessagesService {
@@ -87,7 +88,7 @@ export class MessagesService {
     if (!content?.trim()) throw new BadRequestException('Message cannot be empty');
     await this.assertCanMessage(senderId, receiverId);
     const created = await this.prisma.message.create({
-      data: { senderId, receiverId, content: content.trim() },
+      data: { schoolId: getCurrentSchoolId(), senderId, receiverId, content: content.trim() },
       include: {
         sender: { select: { id: true, name: true, photo: true } },
         receiver: { select: { id: true, name: true, photo: true } },

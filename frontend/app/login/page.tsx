@@ -9,6 +9,8 @@ import { useLanguage } from '../../lib/i18n';
 function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaRequired, setMfaRequired] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -26,13 +28,21 @@ function LoginContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, mfaCode: mfaRequired ? mfaCode : undefined }),
       });
 
       if (res.ok) {
         const data = await res.json();
         const role = data.user?.role;
         if (role) localStorage.setItem('role', role);
+
+        // PLATFORM_ADMIN accounts that haven't enrolled in MFA yet must set it
+        // up before touching anything else — see backend/src/auth/auth.controller.ts's
+        // `mfaSetupRequired` flag (Phase 2a-i's mandatory-MFA enforcement).
+        if (data.mfaSetupRequired) {
+          router.push('/platform/mfa-setup');
+          return;
+        }
 
         // Check for returnTo query param (e.g. from AuthGuard redirect)
         const returnTo = searchParams.get('returnTo');
@@ -48,6 +58,7 @@ function LoginContent() {
           const reporterRoles = ['WATTAMAN_REPORTER'];
           const classAdminRoles = ['CLASS_ADMIN'];
           const accounterRoles = ['ACCOUNTER'];
+          const platformAdminRoles = ['PLATFORM_ADMIN'];
           let dest = '/employee';
           if (adminRoles.includes(role)) dest = '/admin';
           else if (classAdminRoles.includes(role)) dest = '/admin/classes';
@@ -57,10 +68,22 @@ function LoginContent() {
           else if (wattamanRoles.includes(role)) dest = '/wattaman';
           else if (reporterRoles.includes(role)) dest = '/reporter';
           else if (accounterRoles.includes(role)) dest = '/accounter';
+          else if (platformAdminRoles.includes(role)) dest = '/platform';
           router.push(dest);
         }
       } else {
-        setError(t('login.invalidCredentials'));
+        const data = await res.json().catch(() => ({}));
+        // Backend signals MFA_REQUIRED (Phase 2a-i) as a structured 401 body
+        // rather than a plain string, so the form can switch to the code input
+        // without discarding the email/password the user already typed.
+        if (data?.message?.error === 'MFA_REQUIRED') {
+          setMfaRequired(true);
+          setError('Enter your 6-digit authenticator code.');
+        } else if (mfaRequired) {
+          setError(typeof data?.message === 'string' ? data.message : 'Invalid MFA code');
+        } else {
+          setError(t('login.invalidCredentials'));
+        }
         setLoading(false);
       }
     } catch {
@@ -157,6 +180,22 @@ function LoginContent() {
                 </button>
               </div>
             </div>
+
+            {mfaRequired && (
+              <div>
+                <label className="block text-[15px] font-semibold mb-2" style={{ color: 'var(--color-text)' }}>Authenticator code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="123456"
+                  autoFocus
+                  className="text-center tracking-[0.3em] font-mono"
+                />
+              </div>
+            )}
 
             <div className="pt-5">
               <button
@@ -313,6 +352,22 @@ function LoginContent() {
                   </button>
                 </div>
               </div>
+
+              {mfaRequired && (
+                <div>
+                  <label className="form-label">Authenticator code</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                    placeholder="123456"
+                    autoFocus
+                    className="text-center tracking-[0.3em] font-mono"
+                  />
+                </div>
+              )}
 
               <button
                 type="submit"

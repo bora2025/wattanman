@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { isValidEmail, normalizePhone } from '../common/identity';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 const REGISTRATION_STATUSES = ['AVAILABLE', 'UNAVAILABLE', 'HIDDEN'];
 
@@ -41,6 +42,7 @@ export class ClassesService {
     return this.prisma.class.create({
       data: {
         ...data,
+        schoolId: getCurrentSchoolId(),
         classAdminId: data.classAdminId || undefined,
         studyYearId: data.studyYearId || undefined,
       },
@@ -209,6 +211,7 @@ export class ClassesService {
       const studentNumber = await this.generateStudentNumber(classId);
       return this.prisma.student.create({
         data: {
+          schoolId: getCurrentSchoolId(),
           userId: studentId,
           classId,
           studentNumber,
@@ -474,15 +477,15 @@ export class ClassesService {
           // fall back to a synthetic placeholder email when neither was given.
           let finalEmail = email;
           if (finalEmail) {
-            const clash = await this.prisma.user.findUnique({ where: { email: finalEmail } });
+            const clash = await this.prisma.user.findFirst({ where: { email: finalEmail } });
             if (clash) throw new Error(`Email ${finalEmail} is already used by another account`);
           } else if (normalizedPhone) {
-            const clash = await this.prisma.user.findUnique({ where: { phoneNormalized: normalizedPhone } });
+            const clash = await this.prisma.user.findFirst({ where: { phoneNormalized: normalizedPhone } });
             if (clash) throw new Error(`Phone number ${phone} is already used by another account`);
           } else {
             finalEmail = `student${studentId}@school.local`;
             let suffix = 1;
-            while (await this.prisma.user.findUnique({ where: { email: finalEmail } })) {
+            while (await this.prisma.user.findFirst({ where: { email: finalEmail } })) {
               suffix++;
               finalEmail = `student${studentId}-${suffix}@school.local`;
             }
@@ -490,6 +493,7 @@ export class ClassesService {
           const hashedPassword = await bcrypt.hash(finalPassword, 10);
           user = await this.prisma.user.create({
             data: {
+              schoolId: getCurrentSchoolId(),
               email: finalEmail || undefined,
               password: hashedPassword,
               name,

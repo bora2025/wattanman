@@ -8,6 +8,7 @@ import { Roles } from './roles.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuditService } from '../audit/audit.service';
+import { tenantContext } from '../tenancy/tenant-context';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const COOKIE_OPTIONS = {
@@ -75,6 +76,36 @@ export class AuthController {
       });
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
+
+    // MFA enforcement — currently PLATFORM_ADMIN only (Phase 2a). A PLATFORM_ADMIN
+    // account can reach every school, so it's the one role this system requires
+    // stronger-than-password auth for. Accounts that haven't enrolled yet
+    // (mfaEnabled === false) are still allowed to log in — enrollment happens
+    // authenticated, post-login (see /auth/mfa/setup), so blocking login entirely
+    // would make first-time setup impossible. `mfaSetupRequired` in the response
+    // lets the frontend force that flow before anything else.
+    if (user.role === 'PLATFORM_ADMIN' && user.mfaEnabled) {
+      if (!this.authService.verifyMfaCode(user.mfaSecret, body.mfaCode || '')) {
+        this.audit.log({
+          action: 'LOGIN_FAILED',
+          resource: 'AUTH',
+          actorId: user.id,
+          actorRole: user.role,
+          actorEmail: user.email,
+          method: 'POST',
+          path: '/auth/login',
+          ip: this.clientIp(req),
+          userAgent: req.headers?.['user-agent'] ?? null,
+          success: false,
+          errorMessage: 'Invalid or missing MFA code',
+        });
+        throw new HttpException(
+          body.mfaCode ? 'Invalid MFA code' : { error: 'MFA_REQUIRED', message: 'MFA code required' },
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+    }
+
     const { access_token, refresh_token } = await this.authService.login(user);
     this.setTokenCookies(res, access_token, refresh_token);
     this.audit.log({
@@ -91,7 +122,88 @@ export class AuthController {
       success: true,
     });
     // Return tokens in body as well (mobile app needs them)
-    return { access_token, refresh_token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
+    return {
+      access_token,
+      refresh_token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      mfaSetupRequired: user.role === 'PLATFORM_ADMIN' && !user.mfaEnabled,
+    };
+  }
+
+  /** Establishes a same-origin session cookie from an impersonation token
+   * issued on the platform host (see PlatformModule's SchoolsService.impersonate).
+   * The browser can't just be handed that token as a cookie there — cookies
+   * are host-only by design (Phase 2a's standing guardrail against cross-tenant
+   * session leakage) and platform.wattaman.app can't set a cookie for
+   * someschool.wattaman.app. Instead the token rides in the URL to the target
+   * subdomain (frontend/app/session-bridge/page.tsx), and this endpoint —
+   * called from that page, so it lands on the correct origin — verifies it and
+   * sets the cookie for whichever host actually received the request.
+   * Deliberately narrower than /auth/login: no MFA path, no refresh token
+   * issued (impersonation sessions are bounded and re-request their own fresh
+   * token+reason if extended), and only tokens carrying `impersonatedBy` are
+   * accepted (enforced in AuthService.verifyImpersonationToken). */
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  @Post('session/consume')
+  async consumeSession(@Body() body: { token: string }, @Request() req: any, @Res({ passthrough: true }) res: Response) {
+    const payload = this.authService.verifyImpersonationToken(body?.token || '');
+    const store = tenantContext.getStore();
+    if (!store || store.schoolId !== payload.schoolId) {
+      throw new HttpException('Session does not match the current school', HttpStatus.UNAUTHORIZED);
+    }
+    const maxAgeMs = Math.max(0, payload.exp * 1000 - Date.now());
+    res.cookie('access_token', body.token, { ...COOKIE_OPTIONS, maxAge: maxAgeMs });
+    this.audit.log({
+      action: 'IMPERSONATION_SESSION_CONSUMED',
+      resource: 'AUTH',
+      actorId: payload.sub,
+      actorRole: payload.role,
+      actorEmail: payload.email,
+      method: 'POST',
+      path: '/auth/session/consume',
+      ip: this.clientIp(req),
+      userAgent: req.headers?.['user-agent'] ?? null,
+      success: true,
+      metadata: { impersonatedBy: payload.impersonatedBy },
+    });
+    return { ok: true, role: payload.role };
+  }
+
+  /** Step 1 of MFA enrollment — generates a TOTP secret (not yet enabled) and
+   * an otpauth:// URL for the frontend to render as a QR code (the existing
+   * `qrcode` package is already a frontend dependency, no new one needed). */
+  @UseGuards(JwtAuthGuard)
+  @Post('mfa/setup')
+  async mfaSetup(@Request() req: any) {
+    return this.authService.setupMfa(req.user.userId);
+  }
+
+  /** Step 2 — verify the first code, which is what actually flips mfaEnabled. */
+  @UseGuards(JwtAuthGuard)
+  @Post('mfa/verify')
+  async mfaVerify(@Request() req: any, @Body() body: { code: string }) {
+    return this.authService.verifyAndEnableMfa(req.user.userId, body?.code || '');
+  }
+
+  // Same 5/min throttle as login — this endpoint triggers an email/SMS send per
+  // request and accepts arbitrary identifiers, so it needs its own rate limit
+  // independent of whether the identifier resolves to a real account.
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: { identifier: string }) {
+    await this.authService.requestPasswordReset(body?.identifier || '');
+    // Same response whether or not an account matched — see AuthService.requestPasswordReset.
+    return { message: 'If an account exists for that email or phone, a reset link has been sent.' };
+  }
+
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Post('reset-password')
+  async resetPassword(@Body() body: { token: string; password: string }) {
+    if (!body?.password || body.password.length < 6) {
+      throw new HttpException('Password must be at least 6 characters', HttpStatus.BAD_REQUEST);
+    }
+    await this.authService.resetPassword(body.token, body.password);
+    return { ok: true };
   }
 
   @SkipThrottle()

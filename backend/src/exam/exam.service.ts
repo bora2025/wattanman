@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 import { H5P_TYPES, isH5PType, sanitizeH5PInput, sanitizeH5PForStudent, gradeH5PQuestion, shuffle } from '../h5p/h5p-questions';
 
 const ALLOWED_EXAM_QUESTION_TYPES = ['MCQ', 'TF', ...H5P_TYPES];
@@ -169,14 +170,19 @@ export class ExamService {
 
   async create(data: any, createdById: string) {
     const { questions } = data;
+    const schoolId = getCurrentSchoolId();
     const examData = sanitizeExamInput(data);
     const sanitizedQuestions = Array.isArray(questions) ? questions.map(sanitizeExamQuestionInput) : [];
     return this.prisma.exam.create({
       data: {
         ...examData,
+        schoolId,
         createdById,
+        // Nested creates bypass PrismaService's tenant-scoping middleware (it only
+        // intercepts top-level model.action calls — see the conversion plan's
+        // Phase 2c) — schoolId has to be set explicitly on each nested question.
         questions: sanitizedQuestions.length
-          ? { create: sanitizedQuestions.map((q: any, i: number) => ({ ...q, order: i })) }
+          ? { create: sanitizedQuestions.map((q: any, i: number) => ({ ...q, schoolId, order: i })) }
           : undefined,
       },
       include: { questions: true },
@@ -238,8 +244,9 @@ export class ExamService {
     const exam = await this.prisma.exam.findUnique({ where: { id: examId } });
     if (!exam) throw new NotFoundException('Exam not found');
 
+    const schoolId = getCurrentSchoolId();
     const existing = await this.prisma.examAttempt.findUnique({
-      where: { examId_studentId: { examId, studentId: student.id } },
+      where: { schoolId_examId_studentId: { schoolId, examId, studentId: student.id } },
     });
     if (existing) {
       // An in-progress attempt is always safe to hand back for resuming.
@@ -278,7 +285,7 @@ export class ExamService {
     if (exam.status !== 'ACTIVE') throw new BadRequestException('This exam is not currently active');
 
     return this.prisma.examAttempt.create({
-      data: { examId, studentId: student.id, status: 'IN_PROGRESS' },
+      data: { schoolId, examId, studentId: student.id, status: 'IN_PROGRESS' },
     });
   }
 
@@ -418,6 +425,7 @@ export class ExamService {
     try {
       await this.prisma.notification.create({
         data: {
+          schoolId: attempt.schoolId,
           userId: attempt.student.userId,
           type: 'exam_reset',
           message: `Your attempt on "${attempt.exam.title}" was reset — you can take it again.`,
