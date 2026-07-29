@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 @Injectable()
 export class ScoringService {
@@ -9,11 +10,15 @@ export class ScoringService {
 
   async createSheet(data: { name: string; degree?: string; logoUrl?: string; classIds?: string[]; studyYearId?: string }) {
     const { classIds, ...sheetData } = data;
+    const schoolId = getCurrentSchoolId();
     return this.prisma.scoreSheet.create({
       data: {
         ...sheetData,
+        schoolId,
+        // Nested creates bypass PrismaService's tenant-scoping middleware — see
+        // the conversion plan's Phase 2c — schoolId has to be set explicitly here.
         ...(classIds?.length ? {
-          classes: { create: classIds.map(classId => ({ classId })) },
+          classes: { create: classIds.map(classId => ({ classId, schoolId })) },
         } : {}),
       },
       include: {
@@ -81,7 +86,7 @@ export class ScoringService {
         this.prisma.scoreSheetClass.deleteMany({ where: { scoreSheetId: id } }),
         ...(classIds.length > 0
           ? [this.prisma.scoreSheetClass.createMany({
-              data: classIds.map(classId => ({ scoreSheetId: id, classId })),
+              data: classIds.map(classId => ({ scoreSheetId: id, classId, schoolId: getCurrentSchoolId() })),
               skipDuplicates: true,
             })]
           : []),
@@ -108,7 +113,7 @@ export class ScoringService {
     order?: number;
     timetableSubjectId?: string;
   }) {
-    return this.prisma.scoreSubject.create({ data: { scoreSheetId, ...data } });
+    return this.prisma.scoreSubject.create({ data: { scoreSheetId, ...data, schoolId: getCurrentSchoolId() } });
   }
 
   async updateSubject(id: string, data: { name?: string; maxScore?: number; color?: string; order?: number }) {
@@ -138,7 +143,7 @@ export class ScoringService {
   // ─── Exam Tabs ────────────────────────────────────────────────────────────
 
   async addExamTab(scoreSheetId: string, data: { label: string; type: string; order?: number }) {
-    return this.prisma.scoreExamTab.create({ data: { scoreSheetId, ...data } });
+    return this.prisma.scoreExamTab.create({ data: { scoreSheetId, ...data, schoolId: getCurrentSchoolId() } });
   }
 
   async deleteExamTab(id: string) {
@@ -179,15 +184,17 @@ export class ScoringService {
     formula?: string | null;
   }) {
     const { formula, ...rest } = data;
+    const schoolId = getCurrentSchoolId();
     return this.prisma.scoreEntry.upsert({
       where: {
-        examTabId_subjectId_studentId: {
+        schoolId_examTabId_subjectId_studentId: {
+          schoolId,
           examTabId: data.examTabId,
           subjectId: data.subjectId,
           studentId: data.studentId,
         },
       },
-      create: { ...rest, formula: formula ?? null },
+      create: { ...rest, schoolId, formula: formula ?? null },
       update: { score: data.score, formula: formula ?? null },
     });
   }
@@ -201,17 +208,19 @@ export class ScoringService {
       formula?: string | null;
     }>,
   ) {
+    const schoolId = getCurrentSchoolId();
     const ops = entries.map(e => {
       const { formula, ...rest } = e;
       return this.prisma.scoreEntry.upsert({
         where: {
-          examTabId_subjectId_studentId: {
+          schoolId_examTabId_subjectId_studentId: {
+            schoolId,
             examTabId: e.examTabId,
             subjectId: e.subjectId,
             studentId: e.studentId,
           },
         },
-        create: { ...rest, formula: formula ?? null },
+        create: { ...rest, schoolId, formula: formula ?? null },
         update: { score: e.score, formula: formula ?? null },
       });
     });

@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 import { H5P_TYPES, isH5PType, sanitizeH5PInput, sanitizeH5PForStudent, gradeH5PQuestion } from '../h5p/h5p-questions';
 
 const ALLOWED_TYPES = ['HOMEWORK', 'QUIZ', 'PROJECT', 'LAB', 'ESSAY'];
@@ -321,6 +322,7 @@ export class AssignmentsService {
       if (!students.length) return;
       await this.prisma.notification.createMany({
         data: students.map(s => ({
+          schoolId: getCurrentSchoolId(),
           userId: s.userId,
           type: 'assignment_published',
           message: `New assignment: "${a.title}" in ${a.class?.name ?? 'your class'}`,
@@ -377,8 +379,9 @@ export class AssignmentsService {
       throw new ForbiddenException('Late submissions are not allowed for this assignment');
     }
 
+    const schoolId = getCurrentSchoolId();
     const existing = await this.prisma.assignmentSubmission.findUnique({
-      where: { assignmentId_studentId: { assignmentId, studentId: student.id } },
+      where: { schoolId_assignmentId_studentId: { schoolId, assignmentId, studentId: student.id } },
     });
     const maxAttempts = assignment.maxAttempts ?? 1;
     const currentAttempt = existing?.attemptNumber ?? 0;
@@ -393,8 +396,9 @@ export class AssignmentsService {
     }
 
     return this.prisma.assignmentSubmission.upsert({
-      where: { assignmentId_studentId: { assignmentId, studentId: student.id } },
+      where: { schoolId_assignmentId_studentId: { schoolId, assignmentId, studentId: student.id } },
       create: {
+        schoolId,
         assignmentId,
         studentId: student.id,
         content,
@@ -432,6 +436,7 @@ export class AssignmentsService {
     const count = await this.prisma.quizQuestion.count({ where: { assignmentId } });
     const created = await this.prisma.quizQuestion.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         assignmentId,
         order: body.order != null ? Number(body.order) : count,
         type: cleaned.type,
@@ -495,7 +500,7 @@ export class AssignmentsService {
       orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
     });
     const submission = await this.prisma.assignmentSubmission.findUnique({
-      where: { assignmentId_studentId: { assignmentId, studentId: student.id } },
+      where: { schoolId_assignmentId_studentId: { schoolId: getCurrentSchoolId(), assignmentId, studentId: student.id } },
       include: { answers: true },
     });
     // Randomization (deterministic per student & assignment so refresh keeps order)
@@ -585,8 +590,9 @@ export class AssignmentsService {
     if (!assignment) throw new NotFoundException('Assignment not found');
     if (assignment.classId !== student.classId) throw new ForbiddenException('Not your class');
     if (assignment.status !== 'PUBLISHED') throw new ForbiddenException('Quiz not available');
+    const schoolId = getCurrentSchoolId();
     const existing = await this.prisma.assignmentSubmission.findUnique({
-      where: { assignmentId_studentId: { assignmentId, studentId: student.id } },
+      where: { schoolId_assignmentId_studentId: { schoolId, assignmentId, studentId: student.id } },
     });
     const maxAttempts = assignment.maxAttempts ?? 1;
     if (existing && maxAttempts > 0 && (existing.attemptNumber ?? 0) >= maxAttempts && !(existing as any).quizStartedAt) {
@@ -605,6 +611,7 @@ export class AssignmentsService {
     }
     const created = await this.prisma.assignmentSubmission.create({
       data: {
+        schoolId,
         assignmentId,
         studentId: student.id,
         status: 'SUBMITTED',
@@ -630,8 +637,9 @@ export class AssignmentsService {
     const isLate = !!(assignment.dueDate && now > assignment.dueDate);
     if (isLate && !assignment.allowLate) throw new ForbiddenException('Late submissions are not allowed');
 
+    const schoolId = getCurrentSchoolId();
     const existing = await this.prisma.assignmentSubmission.findUnique({
-      where: { assignmentId_studentId: { assignmentId, studentId: student.id } },
+      where: { schoolId_assignmentId_studentId: { schoolId, assignmentId, studentId: student.id } },
     });
     const maxAttempts = assignment.maxAttempts ?? 1;
     const currentAttempt = existing?.attemptNumber ?? 0;
@@ -671,8 +679,9 @@ export class AssignmentsService {
 
     const submission = await this.prisma.$transaction(async (tx) => {
       const sub = await tx.assignmentSubmission.upsert({
-        where: { assignmentId_studentId: { assignmentId, studentId: student.id } },
+        where: { schoolId_assignmentId_studentId: { schoolId, assignmentId, studentId: student.id } },
         create: {
+          schoolId,
           assignmentId,
           studentId: student.id,
           content: null,
@@ -697,7 +706,7 @@ export class AssignmentsService {
       await tx.quizAnswer.deleteMany({ where: { submissionId: sub.id } });
       if (answersToCreate.length) {
         await tx.quizAnswer.createMany({
-          data: answersToCreate.map(a => ({ ...a, submissionId: sub.id })),
+          data: answersToCreate.map(a => ({ ...a, schoolId, submissionId: sub.id })),
         });
       }
       return sub;
@@ -750,6 +759,7 @@ export class AssignmentsService {
       try {
         await this.prisma.notification.create({
           data: {
+            schoolId: getCurrentSchoolId(),
             userId: ans.submission.student.userId,
             type: 'assignment_graded',
             message: `Your submission for "${ans.submission.assignment.title}" was graded: ${finalMarks}/${ans.submission.assignment.totalMarks}`,
@@ -823,6 +833,7 @@ export class AssignmentsService {
       const cleaned = sanitizeQuestionInput(raw);
       await this.prisma.quizQuestion.create({
         data: {
+          schoolId: getCurrentSchoolId(),
           assignmentId,
           order: raw?.order != null ? Number(raw.order) : existingCount + i + 1,
           type: cleaned.type,
@@ -867,6 +878,7 @@ export class AssignmentsService {
     try {
       await this.prisma.notification.create({
         data: {
+          schoolId: getCurrentSchoolId(),
           userId: sub.student.userId,
           type: 'assignment_graded',
           message: `Your submission for "${sub.assignment.title}" was graded: ${finalMarks}/${sub.assignment.totalMarks}`,
@@ -896,6 +908,7 @@ export class AssignmentsService {
     try {
       await this.prisma.notification.create({
         data: {
+          schoolId: getCurrentSchoolId(),
           userId: sub.student.userId,
           type: 'assignment_reset',
           message: `Your submission for "${sub.assignment.title}" was reset — you can attempt it again.`,

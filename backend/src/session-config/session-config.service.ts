@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 const DEFAULT_CONFIGS = [
   { session: 1, type: 'CHECK_IN', startTime: '07:00', endTime: '07:15' },
@@ -113,6 +114,7 @@ export class SessionConfigService {
 
     return this.prisma.sessionConfig.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         classId,
         session: data.session,
         type: data.type,
@@ -138,8 +140,10 @@ export class SessionConfigService {
     });
 
     // Create fresh rows in a single batch
+    const schoolId = getCurrentSchoolId();
     await this.prisma.sessionConfig.createMany({
       data: configs.map(cfg => ({
+        schoolId,
         classId: cid,
         session: cfg.session,
         type: cfg.type,
@@ -238,21 +242,20 @@ export class SessionConfigService {
       });
     }
     return this.prisma.attendanceFormatRule.create({
-      data: { scope: data.scope, organizationId: orgId, ...payload },
+      data: { schoolId: getCurrentSchoolId(), scope: data.scope, organizationId: orgId, ...payload },
     });
   }
 
-  // ─── Staff weekly schedule (global) ────────────────────────────────────────
-  // Single-row config controlling which weekdays count as working days for staff
-  // attendance reports. Defaults to SAT/SUN as 'day-off' when no row exists.
+  // ─── Staff weekly schedule (one row per school) ────────────────────────────
+  // Controls which weekdays count as working days for staff attendance reports.
+  // Defaults to SAT/SUN as 'day-off' when no row exists yet for this school.
   private static readonly STAFF_SCHEDULE_DEFAULT: Record<string, string> = {
     MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'day-off', SUN: 'day-off',
   };
-  private static readonly STAFF_SCHEDULE_ID = 'default';
 
   async getStaffWeeklySchedule(): Promise<{ schedule: Record<string, string>; isDefault: boolean }> {
     const row = await this.prisma.staffWeeklySchedule.findUnique({
-      where: { id: SessionConfigService.STAFF_SCHEDULE_ID },
+      where: { schoolId: getCurrentSchoolId() },
     });
     if (!row) {
       return { schedule: { ...SessionConfigService.STAFF_SCHEDULE_DEFAULT }, isDefault: true };
@@ -277,10 +280,11 @@ export class SessionConfigService {
       if (typeof v === 'string' && allowedValues.has(v)) cleaned[day] = v;
     }
     const json = JSON.stringify(cleaned);
+    const schoolId = getCurrentSchoolId();
     await this.prisma.staffWeeklySchedule.upsert({
-      where: { id: SessionConfigService.STAFF_SCHEDULE_ID },
+      where: { schoolId },
       update: { schedule: json },
-      create: { id: SessionConfigService.STAFF_SCHEDULE_ID, schedule: json },
+      create: { schoolId, schedule: json },
     });
     return { schedule: cleaned, isDefault: false };
   }

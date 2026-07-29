@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 @Injectable()
 export class ParentService {
@@ -96,6 +97,7 @@ export class ParentService {
 
     const created = await this.prisma.parentLinkRequest.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         studentId: student.id,
         parentEmail: email,
         parentName: body.parentName?.trim() || null,
@@ -113,6 +115,7 @@ export class ParentService {
       if (admins.length) {
         await this.prisma.notification.createMany({
           data: admins.map(a => ({
+            schoolId: getCurrentSchoolId(),
             userId: a.id,
             type: 'parent_link_request',
             message: `${student.user?.name ?? 'A student'} requested to link parent ${email}`,
@@ -166,6 +169,7 @@ export class ParentService {
       try {
         await this.prisma.notification.create({
           data: {
+            schoolId: req.schoolId,
             userId: req.student.userId,
             type: 'parent_link_rejected',
             message: `Your parent-link request was rejected${body.rejectReason ? `: ${body.rejectReason}` : ''}.`,
@@ -176,7 +180,7 @@ export class ParentService {
     }
 
     // APPROVE
-    let parentUser = await this.prisma.user.findUnique({
+    let parentUser = await this.prisma.user.findFirst({
       where: { email: req.parentEmail },
       select: { id: true, role: true, name: true },
     });
@@ -193,6 +197,7 @@ export class ParentService {
       const tempPassword = '$2a$10$placeholderPlaceholderPlaceholderPlaceholderPlaceholder12'; // intentionally unusable
       parentUser = await this.prisma.user.create({
         data: {
+          schoolId: req.schoolId,
           email: req.parentEmail,
           password: tempPassword,
           name: req.parentName || req.parentEmail.split('@')[0],
@@ -225,11 +230,13 @@ export class ParentService {
       await this.prisma.notification.createMany({
         data: [
           {
+            schoolId: req.schoolId,
             userId: req.student.userId,
             type: 'parent_link_approved',
             message: `Your parent (${parentUser.name}) is now linked to your account.`,
           },
           {
+            schoolId: req.schoolId,
             userId: parentUser.id,
             type: 'parent_link_approved',
             message: `You have been linked to student ${req.student.user?.name ?? ''}.`,

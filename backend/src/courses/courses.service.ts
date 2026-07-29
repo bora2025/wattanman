@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 import {
   validatePageContent,
   gradeQuestion,
@@ -378,6 +379,7 @@ export class CoursesService {
       if (!students.length) return;
       await this.prisma.notification.createMany({
         data: students.map((s) => ({
+          schoolId: getCurrentSchoolId(),
           userId: s.userId,
           type: 'course_published',
           message: `New course available: "${c.title}" in ${c.class?.name ?? 'your class'}`,
@@ -395,12 +397,13 @@ export class CoursesService {
       select: { id: true },
     });
     if (!students.length) return;
-    // Use individual upserts to respect the unique([courseId, studentId]) index.
+    // Use individual upserts to respect the unique([schoolId, courseId, studentId]) index.
+    const schoolId = getCurrentSchoolId();
     await this.prisma.$transaction(
       students.map((s) =>
         this.prisma.courseEnrollment.upsert({
-          where: { courseId_studentId: { courseId, studentId: s.id } },
-          create: { courseId, studentId: s.id, status: 'ENROLLED' },
+          where: { schoolId_courseId_studentId: { schoolId, courseId, studentId: s.id } },
+          create: { schoolId, courseId, studentId: s.id, status: 'ENROLLED' },
           update: {},
         }),
       ),
@@ -417,9 +420,10 @@ export class CoursesService {
     if (!course.enrollmentOpen && course.status !== 'ENROLLMENT') {
       throw new ForbiddenException('Course is not open for enrollment');
     }
+    const schoolId = getCurrentSchoolId();
     return this.prisma.courseEnrollment.upsert({
-      where: { courseId_studentId: { courseId, studentId } },
-      create: { courseId, studentId, status: 'ENROLLED' },
+      where: { schoolId_courseId_studentId: { schoolId, courseId, studentId } },
+      create: { schoolId, courseId, studentId, status: 'ENROLLED' },
       update: {},
     });
   }
@@ -712,6 +716,7 @@ export class CoursesService {
 
     const attempt = await this.prisma.lessonAttempt.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         lessonId,
         studentId: student.id,
         status: 'IN_PROGRESS',
@@ -733,9 +738,10 @@ export class CoursesService {
     });
     if (sessions.length === 0) return;
     const now = new Date();
+    const schoolId = getCurrentSchoolId();
     for (const s of sessions) {
       const existing = await this.prisma.courseAttendance.findUnique({
-        where: { sessionId_studentId: { sessionId: s.id, studentId } },
+        where: { schoolId_sessionId_studentId: { schoolId, sessionId: s.id, studentId } },
         select: { id: true, source: true, status: true },
       });
       // Skip if a teacher already marked manually (don't override)
@@ -748,6 +754,7 @@ export class CoursesService {
       } else {
         await this.prisma.courseAttendance.create({
           data: {
+            schoolId,
             sessionId: s.id,
             studentId,
             status: 'PRESENT',
@@ -800,7 +807,7 @@ export class CoursesService {
     let correct: boolean | null = null;
     let pointsAwarded: number | null = 0;
     if (page.pageType === 'QUESTION') {
-      const grading = gradeQuestion(page.content as QuestionPagePayload, answer);
+      const grading = gradeQuestion(page.content as unknown as QuestionPagePayload, answer);
       correct = grading.correct;
       pointsAwarded = grading.pointsAwarded;
     }
@@ -813,12 +820,14 @@ export class CoursesService {
     const nextPageId = resolveNextPageId(page as any, allPages, answer);
 
     // Upsert so retrying the same page replaces the prior answer.
+    const schoolId = getCurrentSchoolId();
     const prior = await this.prisma.pageResponse.findUnique({
-      where: { attemptId_pageId: { attemptId, pageId } },
+      where: { schoolId_attemptId_pageId: { schoolId, attemptId, pageId } },
     });
     await this.prisma.pageResponse.upsert({
-      where: { attemptId_pageId: { attemptId, pageId } },
+      where: { schoolId_attemptId_pageId: { schoolId, attemptId, pageId } },
       create: {
+        schoolId,
         attemptId,
         pageId,
         answer: answer as any,
@@ -880,7 +889,8 @@ export class CoursesService {
     if (attempt.lesson.requireVideoWatch) {
       const view = await this.prisma.lessonView.findUnique({
         where: {
-          lessonId_studentId: {
+          schoolId_lessonId_studentId: {
+            schoolId: getCurrentSchoolId(),
             lessonId: attempt.lesson.id,
             studentId: student.id,
           },
@@ -996,6 +1006,7 @@ export class CoursesService {
       if (student) {
         await this.prisma.notification.create({
           data: {
+            schoolId: getCurrentSchoolId(),
             userId: student.userId,
             type: 'lesson_attempt_reset',
             message: `Your attempt on "${attempt.lesson.title}" was reset — you can start it again.`,
@@ -1082,8 +1093,9 @@ export class CoursesService {
     courseId: string,
     studentId: string,
   ) {
+    const schoolId = getCurrentSchoolId();
     const enrollment = await this.prisma.courseEnrollment.findUnique({
-      where: { courseId_studentId: { courseId, studentId } },
+      where: { schoolId_courseId_studentId: { schoolId, courseId, studentId } },
     });
     if (!enrollment) return;
 
@@ -1109,7 +1121,7 @@ export class CoursesService {
     ) / 10;
 
     await this.prisma.courseEnrollment.update({
-      where: { courseId_studentId: { courseId, studentId } },
+      where: { schoolId_courseId_studentId: { schoolId, courseId, studentId } },
       data: {
         progressPct: pct,
         status: pct >= 100 ? 'COMPLETED' : 'ACTIVE',
@@ -1187,6 +1199,7 @@ export class CoursesService {
     }
     return this.prisma.courseSession.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         courseId,
         title: body.title,
         scheduledAt: new Date(body.scheduledAt),
@@ -1286,8 +1299,9 @@ export class CoursesService {
       throw new BadRequestException('Invalid status');
     }
     return this.prisma.courseAttendance.upsert({
-      where: { sessionId_studentId: { sessionId, studentId: body.studentId } },
+      where: { schoolId_sessionId_studentId: { schoolId: getCurrentSchoolId(), sessionId, studentId: body.studentId } },
       create: {
+        schoolId: getCurrentSchoolId(),
         sessionId,
         studentId: body.studentId,
         status,
@@ -1329,9 +1343,10 @@ export class CoursesService {
       throw new BadRequestException('Invalid check-in code');
     }
     // Ensure student is enrolled
+    const schoolId = getCurrentSchoolId();
     const enrolled = await this.prisma.courseEnrollment.findUnique({
       where: {
-        courseId_studentId: { courseId: session.courseId, studentId: student.id },
+        schoolId_courseId_studentId: { schoolId, courseId: session.courseId, studentId: student.id },
       },
     });
     if (!enrolled) throw new ForbiddenException('You are not enrolled in this course');
@@ -1342,8 +1357,9 @@ export class CoursesService {
     const isLate = now.getTime() > startedAt.getTime() + 5 * 60_000; // 5 min grace
     const status = isLate ? 'LATE' : 'PRESENT';
     return this.prisma.courseAttendance.upsert({
-      where: { sessionId_studentId: { sessionId, studentId: student.id } },
+      where: { schoolId_sessionId_studentId: { schoolId, sessionId, studentId: student.id } },
       create: {
+        schoolId,
         sessionId,
         studentId: student.id,
         status,
@@ -1394,8 +1410,9 @@ export class CoursesService {
     await this.assertLessonVisibleToStudent(lessonId, student);
     const now = new Date();
     return this.prisma.lessonView.upsert({
-      where: { lessonId_studentId: { lessonId, studentId: student.id } },
+      where: { schoolId_lessonId_studentId: { schoolId: getCurrentSchoolId(), lessonId, studentId: student.id } },
       create: {
+        schoolId: getCurrentSchoolId(),
         lessonId,
         studentId: student.id,
         firstOpenedAt: now,
@@ -1427,8 +1444,9 @@ export class CoursesService {
       select: { videoWatchPct: true },
     });
     const view = await this.prisma.lessonView.upsert({
-      where: { lessonId_studentId: { lessonId, studentId: student.id } },
+      where: { schoolId_lessonId_studentId: { schoolId: getCurrentSchoolId(), lessonId, studentId: student.id } },
       create: {
+        schoolId: getCurrentSchoolId(),
         lessonId,
         studentId: student.id,
         watchedSeconds,
@@ -1459,7 +1477,7 @@ export class CoursesService {
     const student = await this.getStudentByUserId(userId);
     await this.assertLessonVisibleToStudent(lessonId, student);
     return this.prisma.lessonView.findUnique({
-      where: { lessonId_studentId: { lessonId, studentId: student.id } },
+      where: { schoolId_lessonId_studentId: { schoolId: getCurrentSchoolId(), lessonId, studentId: student.id } },
     });
   }
 
@@ -1495,6 +1513,7 @@ export class CoursesService {
         new Date(baseDate.getTime() + l.order * 7 * 24 * 60 * 60 * 1000);
       await this.prisma.courseSession.create({
         data: {
+          schoolId: getCurrentSchoolId(),
           courseId,
           lessonId: l.id,
           title: l.title,

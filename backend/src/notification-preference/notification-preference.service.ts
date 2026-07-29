@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 export interface UpdatePreferenceDto {
   emailEnabled?: boolean;
@@ -19,13 +20,13 @@ export class NotificationPreferenceService {
       where: { userId },
     });
     if (existing) return existing;
-    return this.prisma.notificationPreference.create({ data: { userId } });
+    return this.prisma.notificationPreference.create({ data: { userId, schoolId: getCurrentSchoolId() } });
   }
 
   async update(userId: string, dto: UpdatePreferenceDto) {
     return this.prisma.notificationPreference.upsert({
       where: { userId },
-      create: { userId, ...dto },
+      create: { userId, schoolId: getCurrentSchoolId(), ...dto },
       update: { ...dto },
     });
   }

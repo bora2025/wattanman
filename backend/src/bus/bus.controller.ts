@@ -6,9 +6,15 @@ import { BusService } from './bus.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RequiresModuleGuard } from '../school-modules/requires-module.guard';
+import { RequiresModule } from '../school-modules/requires-module.decorator';
 
+// Phase 7 — Bus is the one module a PLATFORM_ADMIN can disable per school
+// (e.g. a school with no transport program). Gated at the API, not just
+// hidden in the nav, so a direct request can't bypass a "hidden" module.
 @Controller('bus')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, RequiresModuleGuard)
+@RequiresModule('BUS')
 export class BusController {
   constructor(private busService: BusService) {}
 

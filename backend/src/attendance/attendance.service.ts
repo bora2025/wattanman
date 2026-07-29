@@ -3,6 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { AttendanceGateway } from './attendance.gateway';
 import { NotificationService } from '../notification/notification.service';
 import { SessionConfigService } from '../session-config/session-config.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 function toUTCMidnight(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
@@ -55,6 +56,7 @@ export class AttendanceService {
 
     const sessions = permissionSessions(permissionType);
     const days = dateRangeDays(from, to);
+    const schoolId = getCurrentSchoolId();
     const cleanup = days.map(day =>
       this.prisma.attendance.deleteMany({
         where: {
@@ -69,7 +71,7 @@ export class AttendanceService {
     const writes = days.flatMap(day =>
       sessions.map(session =>
         this.prisma.attendance.upsert({
-          where: { studentId_classId_date_session: { studentId, classId, date: day, session } },
+          where: { schoolId_studentId_classId_date_session: { schoolId, studentId, classId, date: day, session } },
           update: {
             status: 'PERMISSION',
             permissionType,
@@ -80,6 +82,7 @@ export class AttendanceService {
             checkOutTime: null,
           },
           create: {
+            schoolId,
             studentId,
             classId,
             date: day,
@@ -123,6 +126,7 @@ export class AttendanceService {
 
     const sessions = permissionSessions(permissionType);
     const days = dateRangeDays(from, to);
+    const schoolId = getCurrentSchoolId();
     const cleanup = days.map(day =>
       this.prisma.staffAttendance.deleteMany({
         where: {
@@ -136,7 +140,7 @@ export class AttendanceService {
     const writes = days.flatMap(day =>
       sessions.map(session =>
         this.prisma.staffAttendance.upsert({
-          where: { userId_date_session: { userId, date: day, session } },
+          where: { schoolId_userId_date_session: { schoolId, userId, date: day, session } },
           update: {
             status: 'PERMISSION',
             permissionType,
@@ -147,6 +151,7 @@ export class AttendanceService {
             checkOutTime: null,
           },
           create: {
+            schoolId,
             userId,
             date: day,
             session,
@@ -245,15 +250,17 @@ export class AttendanceService {
     const isAttending = finalStatus === 'PRESENT' || finalStatus === 'LATE';
 
     // Check if a record already exists — preserve the first check-in time and its status
+    const schoolId = getCurrentSchoolId();
     const existingRecord = await this.prisma.attendance.findUnique({
-      where: { studentId_classId_date_session: { studentId, classId, date: attendanceDate, session } },
+      where: { schoolId_studentId_classId_date_session: { schoolId, studentId, classId, date: attendanceDate, session } },
     });
     const keepOriginal = !!(existingRecord?.checkInTime) && isAttending;
 
     // Use upsert to handle re-submissions
     const attendance = await this.prisma.attendance.upsert({
       where: {
-        studentId_classId_date_session: {
+        schoolId_studentId_classId_date_session: {
+          schoolId,
           studentId,
           classId,
           date: attendanceDate,
@@ -272,6 +279,7 @@ export class AttendanceService {
         ...(location ? { scanLocation: location } : {}),
       },
       create: {
+        schoolId,
         studentId,
         classId,
         date: attendanceDate,
@@ -376,7 +384,7 @@ export class AttendanceService {
           for (const day of days) {
             for (const permSession of sessions) {
               await tx.attendance.upsert({
-                where: { studentId_classId_date_session: { studentId: record.studentId, classId, date: day, session: permSession } },
+                where: { schoolId_studentId_classId_date_session: { schoolId: getCurrentSchoolId(), studentId: record.studentId, classId, date: day, session: permSession } },
                 update: {
                   status: 'PERMISSION',
                   permissionType: pType,
@@ -387,6 +395,7 @@ export class AttendanceService {
                   checkOutTime: null,
                 },
                 create: {
+                  schoolId: getCurrentSchoolId(),
                   studentId: record.studentId,
                   classId,
                   date: day,
@@ -434,13 +443,14 @@ export class AttendanceService {
 
         // Check if a record already exists — preserve the first check-in time and its status
         const existingBulk = await tx.attendance.findUnique({
-          where: { studentId_classId_date_session: { studentId: record.studentId, classId, date: attendanceDate, session } },
+          where: { schoolId_studentId_classId_date_session: { schoolId: getCurrentSchoolId(), studentId: record.studentId, classId, date: attendanceDate, session } },
         });
         const keepOriginalBulk = !!(existingBulk?.checkInTime) && isAttending;
 
         await tx.attendance.upsert({
           where: {
-            studentId_classId_date_session: {
+            schoolId_studentId_classId_date_session: {
+              schoolId: getCurrentSchoolId(),
               studentId: record.studentId,
               classId,
               date: attendanceDate,
@@ -457,6 +467,7 @@ export class AttendanceService {
             ...locData,
           },
           create: {
+            schoolId: getCurrentSchoolId(),
             studentId: record.studentId,
             classId,
             date: attendanceDate,
@@ -523,7 +534,7 @@ export class AttendanceService {
 
     const existing = await this.prisma.attendance.findUnique({
       where: {
-        studentId_classId_date_session: { studentId, classId, date: attendanceDate, session: targetSession },
+        schoolId_studentId_classId_date_session: { schoolId: getCurrentSchoolId(), studentId, classId, date: attendanceDate, session: targetSession },
       },
     });
 
@@ -602,14 +613,15 @@ export class AttendanceService {
       const isAttending = finalStatus === 'PRESENT' || finalStatus === 'LATE';
 
       // Check if a record already exists — preserve the first check-in time and its status
+      const schoolId = getCurrentSchoolId();
       const existingStaff = await this.prisma.staffAttendance.findUnique({
-        where: { userId_date_session: { userId, date: attendanceDate, session } },
+        where: { schoolId_userId_date_session: { schoolId, userId, date: attendanceDate, session } },
       });
       const keepOriginalStaff = existingStaff?.checkInTime && isAttending;
 
       const record = await this.prisma.staffAttendance.upsert({
         where: {
-          userId_date_session: { userId, date: attendanceDate, session },
+          schoolId_userId_date_session: { schoolId, userId, date: attendanceDate, session },
         },
         update: {
           status: keepOriginalStaff ? existingStaff.status : finalStatus,
@@ -623,6 +635,7 @@ export class AttendanceService {
           ...(location ? { scanLocation: location } : {}),
         },
         create: {
+          schoolId,
           userId,
           date: attendanceDate,
           session,
@@ -671,7 +684,7 @@ export class AttendanceService {
 
       const existing = await this.prisma.staffAttendance.findUnique({
         where: {
-          userId_date_session: { userId, date: attendanceDate, session: targetSession },
+          schoolId_userId_date_session: { schoolId: getCurrentSchoolId(), userId, date: attendanceDate, session: targetSession },
         },
       });
 
@@ -774,7 +787,7 @@ export class AttendanceService {
       if (rec && (rec.status === 'PRESENT' || rec.status === 'LATE')) continue;
       ops.push(
         this.prisma.attendance.upsert({
-          where: { studentId_classId_date_session: { studentId, classId, date: attendanceDate, session } },
+          where: { schoolId_studentId_classId_date_session: { schoolId: getCurrentSchoolId(), studentId, classId, date: attendanceDate, session } },
           update: {
             status: 'PERMISSION',
             permissionType: newType,
@@ -785,6 +798,7 @@ export class AttendanceService {
             checkOutTime: null,
           },
           create: {
+            schoolId: getCurrentSchoolId(),
             studentId,
             classId,
             date: attendanceDate,
@@ -953,7 +967,7 @@ export class AttendanceService {
       const pStart = toUTCMidnight(permissionStartDate || attendanceDate);
       const pEnd = toUTCMidnight(permissionEndDate || permissionStartDate || attendanceDate);
       return this.prisma.attendance.upsert({
-        where: { studentId_classId_date_session: { studentId, classId, date: attendanceDate, session } },
+        where: { schoolId_studentId_classId_date_session: { schoolId: getCurrentSchoolId(), studentId, classId, date: attendanceDate, session } },
         update: {
           status: 'PERMISSION',
           permissionType: pType,
@@ -964,6 +978,7 @@ export class AttendanceService {
           checkOutTime: null,
         },
         create: {
+          schoolId: getCurrentSchoolId(),
           studentId,
           classId,
           date: attendanceDate,
@@ -983,7 +998,7 @@ export class AttendanceService {
 
     return this.prisma.attendance.upsert({
       where: {
-        studentId_classId_date_session: { studentId, classId, date: attendanceDate, session },
+        schoolId_studentId_classId_date_session: { schoolId: getCurrentSchoolId(), studentId, classId, date: attendanceDate, session },
       },
       update: {
         status,
@@ -993,6 +1008,7 @@ export class AttendanceService {
         markedById: adminId,
       },
       create: {
+        schoolId: getCurrentSchoolId(),
         studentId,
         classId,
         date: attendanceDate,
@@ -1024,7 +1040,7 @@ export class AttendanceService {
       const pStart = toUTCMidnight(permissionStartDate || attendanceDate);
       const pEnd = toUTCMidnight(permissionEndDate || permissionStartDate || attendanceDate);
       return this.prisma.staffAttendance.upsert({
-        where: { userId_date_session: { userId, date: attendanceDate, session } },
+        where: { schoolId_userId_date_session: { schoolId: getCurrentSchoolId(), userId, date: attendanceDate, session } },
         update: {
           status: 'PERMISSION',
           permissionType: pType,
@@ -1035,6 +1051,7 @@ export class AttendanceService {
           checkOutTime: null,
         },
         create: {
+          schoolId: getCurrentSchoolId(),
           userId,
           date: attendanceDate,
           session,
@@ -1053,7 +1070,7 @@ export class AttendanceService {
 
     return this.prisma.staffAttendance.upsert({
       where: {
-        userId_date_session: { userId, date: attendanceDate, session },
+        schoolId_userId_date_session: { schoolId: getCurrentSchoolId(), userId, date: attendanceDate, session },
       },
       update: {
         status,
@@ -1063,6 +1080,7 @@ export class AttendanceService {
         markedById: adminId,
       },
       create: {
+        schoolId: getCurrentSchoolId(),
         userId,
         date: attendanceDate,
         session,
@@ -1155,13 +1173,14 @@ export class AttendanceService {
         }
 
         // Check if a record already exists — preserve the first check-in time and its status
+        const schoolId = getCurrentSchoolId();
         const existingAutoScan = await this.prisma.staffAttendance.findUnique({
-          where: { userId_date_session: { userId, date: attendanceDate, session: matched.session } },
+          where: { schoolId_userId_date_session: { schoolId, userId, date: attendanceDate, session: matched.session } },
         });
         const keepOriginalAutoScan = existingAutoScan?.checkInTime;
 
         const record = await this.prisma.staffAttendance.upsert({
-          where: { userId_date_session: { userId, date: attendanceDate, session: matched.session } },
+          where: { schoolId_userId_date_session: { schoolId, userId, date: attendanceDate, session: matched.session } },
           update: {
             status: keepOriginalAutoScan ? existingAutoScan.status : status,
             permissionType: null,
@@ -1172,6 +1191,7 @@ export class AttendanceService {
             ...locData,
           },
           create: {
+            schoolId,
             userId,
             date: attendanceDate,
             session: matched.session,
@@ -1194,7 +1214,7 @@ export class AttendanceService {
         console.log('[staff/auto-scan] CHECK_OUT pairing: session', matched.session, '→ check-in session', targetSession);
 
         const existing = await this.prisma.staffAttendance.findUnique({
-          where: { userId_date_session: { userId, date: attendanceDate, session: targetSession } },
+          where: { schoolId_userId_date_session: { schoolId: getCurrentSchoolId(), userId, date: attendanceDate, session: targetSession } },
         });
 
         if (existing) {
@@ -1214,6 +1234,7 @@ export class AttendanceService {
           // No prior check-in — create a record with both check-in (null) and check-out
           const record = await this.prisma.staffAttendance.create({
             data: {
+              schoolId: getCurrentSchoolId(),
               userId,
               date: attendanceDate,
               session: targetSession,
@@ -1389,7 +1410,7 @@ export class AttendanceService {
 
     // 1. Card-alias lookup FIRST — admin explicitly linked this card to a specific student.
     //    This takes highest priority so admins can override any ambiguity.
-    const alias = await this.prisma.cardAlias.findUnique({
+    const alias = await this.prisma.cardAlias.findFirst({
       where: { qrValue: q },
       include: { student: { include: studentInclude } },
     });
@@ -1565,13 +1586,14 @@ export class AttendanceService {
     };
 
     // Preserve first check-in if already recorded
+    const schoolId = getCurrentSchoolId();
     const existing = await this.prisma.attendance.findUnique({
-      where: { studentId_classId_date_session: { studentId: student.id, classId, date: attendanceDate, session } },
+      where: { schoolId_studentId_classId_date_session: { schoolId, studentId: student.id, classId, date: attendanceDate, session } },
     });
     const keepOriginal = !!(existing?.checkInTime);
 
     const record = await this.prisma.attendance.upsert({
-      where: { studentId_classId_date_session: { studentId: student.id, classId, date: attendanceDate, session } },
+      where: { schoolId_studentId_classId_date_session: { schoolId, studentId: student.id, classId, date: attendanceDate, session } },
       update: {
         status: keepOriginal ? existing!.status : status,
         markedById: scannedById,
@@ -1582,6 +1604,7 @@ export class AttendanceService {
         ...locData,
       },
       create: {
+        schoolId,
         studentId: student.id,
         classId,
         date: attendanceDate,
@@ -1659,7 +1682,7 @@ export class AttendanceService {
       if (rec && (rec.status === 'PRESENT' || rec.status === 'LATE')) continue;
       ops.push(
         this.prisma.staffAttendance.upsert({
-          where: { userId_date_session: { userId, date: attendanceDate, session } },
+          where: { schoolId_userId_date_session: { schoolId: getCurrentSchoolId(), userId, date: attendanceDate, session } },
           update: {
             status: 'PERMISSION',
             permissionType: newType,
@@ -1670,6 +1693,7 @@ export class AttendanceService {
             checkOutTime: null,
           },
           create: {
+            schoolId: getCurrentSchoolId(),
             userId,
             date: attendanceDate,
             session,

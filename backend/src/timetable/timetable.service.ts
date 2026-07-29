@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -54,7 +55,7 @@ export class TimetableService {
     maxOnDay?: number;
     docNotes?: string;
   }) {
-    return this.prisma.timetable.create({ data });
+    return this.prisma.timetable.create({ data: { ...data, schoolId: getCurrentSchoolId() } });
   }
 
   async updateTimetable(id: string, data: Partial<{
@@ -109,7 +110,7 @@ export class TimetableService {
     name: string; short: string; color?: string;
     picture?: string; classroomCount?: number; customFields?: object;
   }) {
-    return this.prisma.timetableSubject.create({ data: { timetableId, ...data } });
+    return this.prisma.timetableSubject.create({ data: { timetableId, ...data, schoolId: getCurrentSchoolId() } });
   }
 
   async updateSubject(id: string, data: Partial<{
@@ -129,7 +130,7 @@ export class TimetableService {
     name: string; short: string; color?: string;
     picture?: string; printSubjectPicture?: boolean; customFields?: object;
   }) {
-    return this.prisma.timetableClass.create({ data: { timetableId, ...data } });
+    return this.prisma.timetableClass.create({ data: { timetableId, ...data, schoolId: getCurrentSchoolId() } });
   }
 
   async updateClass(id: string, data: Partial<{
@@ -149,7 +150,7 @@ export class TimetableService {
     name: string; short: string; color?: string;
     picture?: string; customFields?: object;
   }) {
-    return this.prisma.timetableClassroom.create({ data: { timetableId, ...data } });
+    return this.prisma.timetableClassroom.create({ data: { timetableId, ...data, schoolId: getCurrentSchoolId() } });
   }
 
   async updateClassroom(id: string, data: Partial<{
@@ -172,7 +173,7 @@ export class TimetableService {
   }) {
     const qrCode = crypto.randomBytes(16).toString('hex');
     return this.prisma.timetableTeacher.create({
-      data: { timetableId, qrCode, ...data },
+      data: { timetableId, qrCode, ...data, schoolId: getCurrentSchoolId() },
     });
   }
 
@@ -195,7 +196,7 @@ export class TimetableService {
     perWeek: number; lessonType?: string;
   }) {
     return this.prisma.timetableLesson.create({
-      data: { timetableId, lessonType: 'SINGLE', ...data },
+      data: { timetableId, lessonType: 'SINGLE', ...data, schoolId: getCurrentSchoolId() },
       include: { teacher: true, subject: true, class: true },
     });
   }
@@ -220,9 +221,10 @@ export class TimetableService {
     classId: string; teacherId: string; subjectId: string;
     classroomId?: string; lessonId?: string; day: number; period: number;
   }) {
+    const schoolId = getCurrentSchoolId();
     return this.prisma.timetableEntry.upsert({
-      where: { timetableId_classId_day_period: { timetableId, classId: data.classId, day: data.day, period: data.period } },
-      create: { timetableId, ...data },
+      where: { schoolId_timetableId_classId_day_period: { schoolId, timetableId, classId: data.classId, day: data.day, period: data.period } },
+      create: { timetableId, ...data, schoolId },
       update: { teacherId: data.teacherId, subjectId: data.subjectId, classroomId: data.classroomId, lessonId: data.lessonId },
       include: { class: true, teacher: true, subject: true, classroom: true },
     });
@@ -263,6 +265,7 @@ export class TimetableService {
           if (!occupied.has(key)) {
             const entry = await this.prisma.timetableEntry.create({
               data: {
+                schoolId: getCurrentSchoolId(),
                 timetableId: id,
                 lessonId: lesson.id,
                 classId: lesson.classId,
@@ -287,15 +290,16 @@ export class TimetableService {
 
   async markTeacherAttendance(teacherId: string, date: string, period: number, status = 'PRESENT') {
     const dateObj = new Date(date + 'T00:00:00.000Z');
+    const schoolId = getCurrentSchoolId();
     return this.prisma.timetableTeacherAttendance.upsert({
-      where: { teacherId_date_period: { teacherId, date: dateObj, period } },
-      create: { teacherId, date: dateObj, period, status, checkIn: new Date() },
+      where: { schoolId_teacherId_date_period: { schoolId, teacherId, date: dateObj, period } },
+      create: { schoolId, teacherId, date: dateObj, period, status, checkIn: new Date() },
       update: { status, checkIn: new Date() },
     });
   }
 
   async markTeacherAttendanceByQr(qrCode: string, period: number) {
-    const teacher = await this.prisma.timetableTeacher.findUnique({ where: { qrCode } });
+    const teacher = await this.prisma.timetableTeacher.findFirst({ where: { qrCode } });
     if (!teacher) throw new NotFoundException('Teacher QR code not found');
     const today = new Date().toISOString().split('T')[0];
     return this.markTeacherAttendance(teacher.id, today, period, 'PRESENT');
@@ -342,7 +346,7 @@ export class TimetableService {
     longitude?: number,
     location?: string,
   ) {
-    const teacher = await this.prisma.timetableTeacher.findUnique({
+    const teacher = await this.prisma.timetableTeacher.findFirst({
       where: { qrCode },
       include: {
         timetable: { select: { id: true, name: true, periodTimes: true } },
@@ -393,8 +397,9 @@ export class TimetableService {
     const className = targetEntry?.class?.name ?? '';
 
     // Check for duplicate
+    const schoolId = getCurrentSchoolId();
     const existing = await this.prisma.timetableTeacherAttendance.findUnique({
-      where: { teacherId_date_period: { teacherId: teacher.id, date: dateObj, period } },
+      where: { schoolId_teacherId_date_period: { schoolId, teacherId: teacher.id, date: dateObj, period } },
     });
 
     if (existing) {
@@ -433,7 +438,7 @@ export class TimetableService {
     }
 
     const attendance = await this.prisma.timetableTeacherAttendance.create({
-      data: { teacherId: teacher.id, date: dateObj, period, status, checkIn: new Date() },
+      data: { schoolId, teacherId: teacher.id, date: dateObj, period, status, checkIn: new Date() },
     });
 
     return {

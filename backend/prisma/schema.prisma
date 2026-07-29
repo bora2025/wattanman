@@ -10,15 +10,123 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Multi-tenancy root ───────────────────────────────────────────────────────
+// One row per customer school. Every tenant-scoped model below carries a direct
+// `schoolId` FK (not just a transitive one via a parent relation) so the backend
+// Prisma Client Extension (see backend/src/database/prisma.service.ts, Phase 2 of
+// the conversion plan) can uniformly auto-inject a `schoolId` filter on every
+// query without needing model-specific logic.
+//
+// A reserved sentinel row (subdomain = "platform", see
+// backend/src/tenancy/constants.ts) exists so PLATFORM_ADMIN users — who don't
+// belong to any real school — still have a non-null schoolId. This keeps the
+// column NOT NULL everywhere, which simplifies the auto-scoping extension (no
+// per-model null-handling) at the cost of one fake row that Platform-tier School
+// listings must filter out.
+model School {
+  id           String   @id @default(cuid())
+  subdomain    String   @unique // matches <subdomain>.wattaman.app; "platform" is the reserved sentinel
+  customDomain String? @unique // optional, e.g. "portal.someschool.com" — layered on top of subdomain, never a
+  // replacement for it (see the conversion plan's custom-domain discussion). Globally unique is correct
+  // here, unlike almost everything else in this schema — domain ownership is inherently public, not a
+  // cross-tenant leak vector.
+  name         String
+  status       String   @default("ACTIVE") // ACTIVE | SUSPENDED | TRIAL
+  // Phase 7 — per-school module toggles. An opt-OUT list, not opt-in: every
+  // module is enabled by default (matches today's single-tenant behavior for
+  // every existing school), and a PLATFORM_ADMIN explicitly disables the ones
+  // a given school doesn't use. See backend/src/school-modules/module-keys.ts
+  // for the canonical set of togglable keys.
+  disabledModules String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // ── Relations (one array/optional field per tenant-scoped model) ──
+  users                        User[]
+  classes                      Class[]
+  students                     Student[]
+  cardAliases                  CardAlias[]
+  attendances                  Attendance[]
+  notifications                Notification[]
+  parentLinkRequests           ParentLinkRequest[]
+  classRegistrations           ClassRegistration[]
+  classRegistrationSettings    ClassRegistrationSettings?
+  classRegistrationFields      ClassRegistrationField[]
+  staffAttendances             StaffAttendance[]
+  sessionConfigs               SessionConfig[]
+  staffWeeklySchedule          StaffWeeklySchedule?
+  studyYears                   StudyYear[]
+  holidays                     Holiday[]
+  departments                  Department[]
+  refreshTokens                RefreshToken[]
+  passwordResetTokens           PasswordResetToken[]
+  auditLogs                    AuditLog[]
+  auditCleanupSchedules        AuditCleanupSchedule[]
+  cardTemplates                CardTemplate[]
+  attendanceFormatRules        AttendanceFormatRule[]
+  feeRecords                   FeeRecord[]
+  feePayments                  FeePayment[]
+  timetables                   Timetable[]
+  timetableSubjects            TimetableSubject[]
+  timetableClasses             TimetableClass[]
+  timetableClassrooms          TimetableClassroom[]
+  timetableTeachers            TimetableTeacher[]
+  timetableLessons             TimetableLesson[]
+  timetableEntries             TimetableEntry[]
+  timetableTeacherAttendances  TimetableTeacherAttendance[]
+  scoreSheets                  ScoreSheet[]
+  scoreSheetClasses            ScoreSheetClass[]
+  scoreSubjects                ScoreSubject[]
+  scoreExamTabs                ScoreExamTab[]
+  scoreEntries                 ScoreEntry[]
+  salaries                     Salary[]
+  staffProfiles                StaffProfile[]
+  staffEducations              StaffEducation[]
+  staffWorkExperiences         StaffWorkExperience[]
+  staffCertifications          StaffCertification[]
+  buses                        Bus[]
+  busRoutes                    BusRoute[]
+  busStops                     BusStop[]
+  busLocations                 BusLocation[]
+  exams                        Exam[]
+  examQuestions                ExamQuestion[]
+  examAttempts                 ExamAttempt[]
+  assignments                  Assignment[]
+  assignmentSubmissions        AssignmentSubmission[]
+  quizQuestions                QuizQuestion[]
+  quizAnswers                  QuizAnswer[]
+  messages                     Message[]
+  announcements                Announcement[]
+  announcementReads            AnnouncementRead[]
+  notificationPreferences      NotificationPreference[]
+  courses                      Course[]
+  courseLessons                CourseLesson[]
+  lessonPages                  LessonPage[]
+  courseEnrollments            CourseEnrollment[]
+  lessonAttempts                LessonAttempt[]
+  pageResponses                PageResponse[]
+  courseSessions               CourseSession[]
+  courseAttendances            CourseAttendance[]
+  lessonViews                  LessonView[]
+  feeSettings                  FeeSettings?
+  siteSetting                  SiteSetting?
+  posts                        Post[]
+  schoolAddons                  SchoolAddon[]
+}
+
 model User {
   id              String      @id @default(cuid())
-  email           String?     @unique // nullable — a user may register with phone instead
+  schoolId        String
+  school          School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  email           String? // nullable — a user may register with phone instead. Unique per-school, not globally (see @@unique below).
   password        String
   name            String
   phone           String?
-  phoneNormalized String?     @unique // digits-only form of `phone`, used as an alternate login identifier when no email is set
+  phoneNormalized String? // digits-only form of `phone`, used as an alternate login identifier when no email is set. Unique per-school.
   photo           String?
   role            String
+  mfaSecret       String? // TOTP secret, base32 — set on /auth/mfa/setup, not yet trusted until mfaEnabled
+  mfaEnabled      Boolean     @default(false) // PLATFORM_ADMIN login requires this to be true once set up (Phase 2a)
   departmentId    String?
   department      Department? @relation(fields: [departmentId], references: [id])
   createdAt       DateTime    @default(now())
@@ -36,6 +144,7 @@ model User {
   studentProfile Student?
   parentStudents Student[]      @relation("ParentStudents")
   refreshTokens  RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
 
   // Module 1: Salary
   salaries Salary[] @relation("UserSalaries")
@@ -64,10 +173,16 @@ model User {
   announcementsAuthored  Announcement[]          @relation("AnnouncementAuthor")
   announcementReads      AnnouncementRead[]      @relation("AnnouncementReads")
   notificationPreference NotificationPreference?
+
+  @@unique([schoolId, email])
+  @@unique([schoolId, phoneNormalized])
+  @@index([schoolId])
 }
 
 model Class {
   id                 String     @id @default(cuid())
+  schoolId           String
+  school             School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   name               String
   subject            String?
   teacherId          String?
@@ -96,10 +211,14 @@ model Class {
   announcements  Announcement[]      @relation("ClassAnnouncements")
   courses        Course[]            @relation("ClassCourses")
   registrations  ClassRegistration[]
+
+  @@index([schoolId])
 }
 
 model Student {
   id                String    @id @default(cuid())
+  schoolId          String
+  school            School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   studentNumber     String? // ID number from CSV (e.g., 0001, 0002)
   userId            String    @unique
   user              User      @relation(fields: [userId], references: [id])
@@ -107,7 +226,7 @@ model Student {
   class             Class?    @relation(fields: [classId], references: [id])
   parentId          String?
   parent            User?     @relation("ParentStudents", fields: [parentId], references: [id])
-  qrCode            String?   @unique // For static QR if needed
+  qrCode            String? // For static QR if needed. Unique per-school — see @@unique below.
   photo             String? // URL or base64 of student photo
   sex               String? // MALE or FEMALE
   dateOfBirth       DateTime? // Date of birth
@@ -120,7 +239,7 @@ model Student {
 
   // Relations
   attendances           Attendance[]
-  feeRecords            FeeRecord[]
+  feeRecords             FeeRecord[]
   examAttempts          ExamAttempt[]          @relation("StudentExamAttempts")
   assignmentSubmissions AssignmentSubmission[] @relation("StudentSubmissions")
   parentLinkRequests    ParentLinkRequest[]
@@ -129,6 +248,8 @@ model Student {
   courseAttendances     CourseAttendance[]     @relation("StudentCourseAttendances")
   lessonViews           LessonView[]           @relation("StudentLessonViews")
 
+  @@unique([schoolId, qrCode])
+  @@index([schoolId])
   @@index([studentNumber])
   @@index([classId])
   @@index([parentId])
@@ -139,17 +260,25 @@ model Student {
 // re-import regenerates Student.id values.
 model CardAlias {
   id          String   @id @default(cuid())
-  qrValue     String   @unique
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  qrValue     String // Unique per-school — see @@unique below. Scan-resolution (AttendanceService.wattamanScan)
+  // always runs under an authenticated, already school-scoped WATTAMAN user, so a per-school
+  // unique constraint is safe and avoids any cross-school collision risk.
   studentId   String
   student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   createdById String?
   createdAt   DateTime @default(now())
 
+  @@unique([schoolId, qrValue])
+  @@index([schoolId])
   @@index([studentId])
 }
 
 model Attendance {
   id                  String    @id @default(cuid())
+  schoolId            String
+  school              School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   studentId           String
   student             Student   @relation(fields: [studentId], references: [id])
   classId             String
@@ -169,7 +298,8 @@ model Attendance {
   scanLocation        String? // Human-readable location label
   timestamp           DateTime  @default(now())
 
-  @@unique([studentId, classId, date, session])
+  @@unique([schoolId, studentId, classId, date, session])
+  @@index([schoolId])
   @@index([date])
   @@index([classId, date])
   @@index([studentId, date])
@@ -178,14 +308,17 @@ model Attendance {
 }
 
 model Notification {
-  id      String    @id @default(cuid())
-  userId  String
-  user    User      @relation(fields: [userId], references: [id])
-  message String
-  type    String // e.g., "absence", "late"
-  sentAt  DateTime  @default(now())
-  readAt  DateTime?
+  id       String    @id @default(cuid())
+  schoolId String
+  school   School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User      @relation(fields: [userId], references: [id])
+  message  String
+  type     String // e.g., "absence", "late"
+  sentAt   DateTime  @default(now())
+  readAt   DateTime?
 
+  @@index([schoolId])
   @@index([userId, sentAt])
   @@index([sentAt])
   @@index([readAt])
@@ -194,6 +327,8 @@ model Notification {
 // Student-initiated request to be linked to a parent account. Reviewed by admin.
 model ParentLinkRequest {
   id           String    @id @default(cuid())
+  schoolId     String
+  school       School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   studentId    String
   student      Student   @relation(fields: [studentId], references: [id])
   parentEmail  String
@@ -206,6 +341,7 @@ model ParentLinkRequest {
   resolvedAt   DateTime?
   resolvedBy   String? // admin user id
 
+  @@index([schoolId])
   @@index([status])
   @@index([studentId])
 }
@@ -214,6 +350,8 @@ model ParentLinkRequest {
 // Reviewed by admin; approval creates the User + Student records.
 model ClassRegistration {
   id                String    @id @default(cuid())
+  schoolId          String
+  school            School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   classId           String
   class             Class     @relation(fields: [classId], references: [id])
   nameKh            String? // required unless hidden/optional via ClassRegistrationSettings.khmerNameMode
@@ -235,13 +373,17 @@ model ClassRegistration {
   resolvedAt        DateTime?
   resolvedBy        String? // admin user id
 
+  @@index([schoolId])
   @@index([status])
   @@index([classId])
 }
 
-// Site-wide toggle for which built-in fields the public registration form shows/requires.
+// Per-school toggle for which built-in fields the public registration form shows/requires.
+// One row per school (schoolId unique) — was a single global "singleton" row pre-multi-tenancy.
 model ClassRegistrationSettings {
-  id              String   @id @default("singleton")
+  id              String   @id @default(cuid())
+  schoolId        String   @unique
+  school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   khmerNameMode   String   @default("REQUIRED") // REQUIRED | OPTIONAL | HIDDEN
   phoneMode       String   @default("REQUIRED") // REQUIRED | OPTIONAL | HIDDEN
   emailMode       String   @default("REQUIRED") // REQUIRED | OPTIONAL | HIDDEN — emailMode and phoneMode can't both be HIDDEN (no way to create a login otherwise)
@@ -254,10 +396,13 @@ model ClassRegistrationSettings {
   updatedAt       DateTime @updatedAt
 }
 
-// Admin-defined extra fields rendered on the public registration form, global across all classes.
+// Admin-defined extra fields rendered on the public registration form. Per-school
+// (key is unique within a school, not globally) — a school's own custom-field slugs.
 model ClassRegistrationField {
   id        String   @id @default(cuid())
-  key       String   @unique // slug used as the JSON key in ClassRegistration.customFieldValues
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  key       String // slug used as the JSON key in ClassRegistration.customFieldValues — unique per-school, see @@unique below
   label     String
   fieldType String   @default("TEXT") // TEXT | SELECT
   options   Json? // string[] — choices shown when fieldType is SELECT, ignored otherwise
@@ -266,10 +411,15 @@ model ClassRegistrationField {
   enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([schoolId, key])
+  @@index([schoolId])
 }
 
 model StaffAttendance {
   id                  String    @id @default(cuid())
+  schoolId            String
+  school              School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   userId              String
   user                User      @relation("StaffAttendances", fields: [userId], references: [id])
   date                DateTime
@@ -287,7 +437,8 @@ model StaffAttendance {
   scanLocation        String? // Human-readable location label
   timestamp           DateTime  @default(now())
 
-  @@unique([userId, date, session])
+  @@unique([schoolId, userId, date, session])
+  @@index([schoolId])
   @@index([date])
   @@index([userId, date])
   @@index([status])
@@ -296,7 +447,9 @@ model StaffAttendance {
 
 model SessionConfig {
   id        String   @id @default(cuid())
-  classId   String? // null = global default
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classId   String? // null = global default for this school
   class     Class?   @relation(fields: [classId], references: [id])
   session   Int // 1=Morning1, 2=Morning2, 3=Afternoon1, 4=Afternoon2
   type      String // CHECK_IN or CHECK_OUT
@@ -306,22 +459,28 @@ model SessionConfig {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([classId, session, scope])
+  @@unique([schoolId, classId, session, scope])
+  @@index([schoolId])
 }
 
-// Global weekly schedule for STAFF (single row, id = "default").
+// Per-school weekly schedule for STAFF (one row per school, schoolId unique).
+// Was a single global row (id = "default") pre-multi-tenancy.
 // `schedule` is a JSON string: { MON:'same'|'day-off'|..., TUE:..., ..., SUN:... }
 // Same value vocabulary as Class.schedule. 'day-off' days are excluded from
 // staff attendance reports (not auto-marked ABSENT, not counted in totals).
 model StaffWeeklySchedule {
-  id        String   @id @default("default")
+  id        String   @id @default(cuid())
+  schoolId  String   @unique
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   schedule  String
   updatedAt DateTime @updatedAt
 }
 
 model StudyYear {
   id         String    @id @default(cuid())
-  year       Int       @unique // e.g., 2026, 2027
+  schoolId   String
+  school     School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  year       Int // e.g., 2026, 2027 — unique per-school, see @@unique below
   label      String? // e.g., "2026-2027"
   startDate  DateTime?
   endDate    DateTime?
@@ -332,10 +491,15 @@ model StudyYear {
   updatedAt  DateTime  @updatedAt
 
   classes Class[]
+
+  @@unique([schoolId, year])
+  @@index([schoolId])
 }
 
 model Holiday {
   id          String   @id @default(cuid())
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   date        DateTime
   name        String
   description String?
@@ -344,31 +508,91 @@ model Holiday {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@unique([date, name])
+  @@unique([schoolId, date, name])
+  @@index([schoolId])
   @@index([date])
 }
 
 model Department {
   id          String   @id @default(cuid())
-  name        String   @unique
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name        String // Unique per-school, not globally — see @@unique below
   nameKh      String? // Khmer name
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   users User[]
+
+  @@unique([schoolId, name])
+  @@index([schoolId])
 }
 
 model RefreshToken {
   id        String   @id @default(cuid())
+  // Not part of a uniqueness leak-vector concern (see the conversion plan's guiding
+  // security principle) — `token` is a random opaque value, not a human-chosen
+  // identifier, so it stays globally @unique. schoolId is carried for consistency
+  // with every other tenant-scoped model, not for uniqueness enforcement.
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   token     String   @unique
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
 
+  @@index([schoolId])
   @@index([userId])
   @@index([expiresAt])
+}
+
+// Single-use, short-lived token for the /auth/forgot-password → /auth/reset-password
+// flow (Phase 2a). Deliberately a separate model from RefreshToken — different
+// semantics (single-use, short TTL, one specific purpose) rather than overloading
+// a session-token model with password-recovery meaning.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  schoolId  String
+  school    School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([schoolId])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// Phase 7a — paid add-ons with manual (invoice-outside-the-system) billing.
+// One row per school per addon the platform has ever touched for that school;
+// a school with no row for a given key is implicitly PENDING/disabled — see
+// SchoolAddonsService.list(), which synthesizes a default entry for any
+// canonical key with no row yet, rather than requiring a bootstrap row per
+// school. `enabled` is the actual feature gate a future @RequiresAddon()
+// consumer checks; `billingStatus` is bookkeeping for the platform admin and
+// deliberately doesn't auto-drive `enabled` — a PLATFORM_ADMIN flips it
+// explicitly, matching the plan's "manual toggle" billing model (no payment
+// gateway in this phase).
+model SchoolAddon {
+  id            String    @id @default(cuid())
+  schoolId      String
+  school        School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  addonKey      String // e.g. "FACE_RECOGNITION_ATTENDANCE" — see backend/src/school-addons/addon-keys.ts
+  billingStatus String    @default("PENDING") // PENDING | ACTIVE | OVERDUE | CANCELLED
+  enabled       Boolean   @default(false)
+  activatedAt   DateTime?
+  activatedBy   String? // PLATFORM_ADMIN userId who last flipped `enabled`
+  notes         String? // invoice ref / manual notes for the platform admin
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([schoolId, addonKey])
+  @@index([schoolId])
 }
 
 /// Append-only audit trail of every privileged action in the system.
@@ -376,6 +600,10 @@ model RefreshToken {
 /// the record survives even if the user is later deleted.
 model AuditLog {
   id        String   @id @default(cuid())
+  schoolId  String // Every request already resolves a school before auth runs (Phase 2's
+  // TenantHostMiddleware), including PLATFORM_ADMIN traffic on the reserved platform
+  // host (resolves to the sentinel School) — so this is never null in practice.
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   // ── Who ──
@@ -387,10 +615,10 @@ model AuditLog {
   // ── What ──
   // High-level verb. Suggested set: CREATE, READ, UPDATE, DELETE, LOGIN,
   // LOGIN_FAILED, LOGOUT, EXPORT, IMPORT, ROLE_CHANGE, PASSWORD_RESET,
-  // PERMISSION_CHANGE, BACKUP, RESTORE.
+  // PERMISSION_CHANGE, BACKUP, RESTORE, IMPERSONATION_START, IMPERSONATION_END.
   action        String
   // Resource type, e.g. USER, STUDENT, CLASS, ATTENDANCE, CARD_TEMPLATE,
-  // EXAM, FEE, SALARY, ANNOUNCEMENT, BACKUP, SETTINGS, etc.
+  // EXAM, FEE, SALARY, ANNOUNCEMENT, BACKUP, SETTINGS, SCHOOL, etc.
   resource      String
   resourceId    String?
   resourceLabel String? // human-readable snapshot (e.g. student name)
@@ -410,15 +638,19 @@ model AuditLog {
   success      Boolean @default(true)
   errorMessage String?
 
+  @@index([schoolId, createdAt])
   @@index([createdAt])
   @@index([actorId, createdAt])
   @@index([resource, resourceId, createdAt])
   @@index([action, createdAt])
 }
 
-/// Stores admin-configured schedules for automatic audit log cleanup.
+/// Stores admin-configured schedules for automatic audit log cleanup. Per-school —
+/// each school's admin sets their own retention policy.
 model AuditCleanupSchedule {
   id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -440,20 +672,27 @@ model AuditCleanupSchedule {
   /// Number of rows deleted in the last run
   lastDeletedCount Int @default(0)
 
+  @@index([schoolId])
   @@index([enabled])
 }
 
 model CardTemplate {
   id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   name      String
   cardType  String // "student" or "staff"
   design    Json // full CardDesign JSON
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([schoolId])
 }
 
 model AttendanceFormatRule {
   id                         String   @id @default(cuid())
+  schoolId                   String
+  school                     School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   scope                      String // CLASS or STAFF
   organizationId             String?
   permissionsPerAbsent       Int      @default(3) // X permissions = 1 absent full day
@@ -470,13 +709,16 @@ model AttendanceFormatRule {
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
 
-  @@unique([scope, organizationId])
+  @@unique([schoolId, scope, organizationId])
+  @@index([schoolId])
 }
 
 // ─── Fee Management ───────────────────────────────────────────────────────────
 
 model FeeRecord {
   id             String   @id @default(cuid())
+  schoolId       String
+  school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   studentId      String
   student        Student  @relation(fields: [studentId], references: [id])
   totalAmount    Float
@@ -494,11 +736,14 @@ model FeeRecord {
 
   payments FeePayment[]
 
+  @@index([schoolId])
   @@index([studentId])
 }
 
 model FeePayment {
   id          String    @id @default(cuid())
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   feeRecordId String
   feeRecord   FeeRecord @relation(fields: [feeRecordId], references: [id], onDelete: Cascade)
   amount      Float
@@ -506,6 +751,7 @@ model FeePayment {
   createdById String
   createdAt   DateTime  @default(now())
 
+  @@index([schoolId])
   @@index([feeRecordId])
 }
 
@@ -513,6 +759,8 @@ model FeePayment {
 
 model Timetable {
   id            String   @id @default(cuid())
+  schoolId      String
+  school        School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   name          String
   short         String?
   academicYear  String
@@ -535,10 +783,14 @@ model Timetable {
   teachers   TimetableTeacher[]
   lessons    TimetableLesson[]
   entries    TimetableEntry[]
+
+  @@index([schoolId])
 }
 
 model TimetableSubject {
   id             String    @id @default(cuid())
+  schoolId       String
+  school         School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   timetableId    String
   timetable      Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
   name           String
@@ -552,10 +804,14 @@ model TimetableSubject {
 
   lessons TimetableLesson[]
   entries TimetableEntry[]
+
+  @@index([schoolId])
 }
 
 model TimetableClass {
   id                  String    @id @default(cuid())
+  schoolId            String
+  school              School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   timetableId         String
   timetable           Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
   name                String
@@ -570,10 +826,14 @@ model TimetableClass {
   classTeachers TimetableTeacher[] @relation("ClassTeacherRel")
   lessons       TimetableLesson[]
   entries       TimetableEntry[]
+
+  @@index([schoolId])
 }
 
 model TimetableClassroom {
   id           String    @id @default(cuid())
+  schoolId     String
+  school       School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   timetableId  String
   timetable    Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
   name         String
@@ -585,10 +845,14 @@ model TimetableClassroom {
   updatedAt    DateTime  @updatedAt
 
   entries TimetableEntry[]
+
+  @@index([schoolId])
 }
 
 model TimetableTeacher {
   id             String          @id @default(cuid())
+  schoolId       String
+  school         School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   timetableId    String
   timetable      Timetable       @relation(fields: [timetableId], references: [id], onDelete: Cascade)
   lastName       String
@@ -602,17 +866,23 @@ model TimetableTeacher {
   color          String?
   classTeacherId String? // FK to TimetableClass (no unique — multiple teachers can share a class)
   classTeacher   TimetableClass? @relation("ClassTeacherRel", fields: [classTeacherId], references: [id])
-  qrCode         String?         @unique
+  qrCode         String? // Unique per-school — see @@unique below. Same safety reasoning as Student.qrCode:
+  // scan resolution always runs under an authenticated, already school-scoped user.
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
   lessons     TimetableLesson[]
   entries     TimetableEntry[]
   attendances TimetableTeacherAttendance[]
+
+  @@unique([schoolId, qrCode])
+  @@index([schoolId])
 }
 
 model TimetableLesson {
   id          String           @id @default(cuid())
+  schoolId    String
+  school      School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   timetableId String
   timetable   Timetable        @relation(fields: [timetableId], references: [id], onDelete: Cascade)
   teacherId   String
@@ -627,10 +897,14 @@ model TimetableLesson {
   updatedAt   DateTime         @updatedAt
 
   entries TimetableEntry[]
+
+  @@index([schoolId])
 }
 
 model TimetableEntry {
   id          String              @id @default(cuid())
+  schoolId    String
+  school      School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   timetableId String
   timetable   Timetable           @relation(fields: [timetableId], references: [id], onDelete: Cascade)
   lessonId    String?
@@ -648,11 +922,14 @@ model TimetableEntry {
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
 
-  @@unique([timetableId, classId, day, period])
+  @@unique([schoolId, timetableId, classId, day, period])
+  @@index([schoolId])
 }
 
 model TimetableTeacherAttendance {
   id        String           @id @default(cuid())
+  schoolId  String
+  school    School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   teacherId String
   teacher   TimetableTeacher @relation(fields: [teacherId], references: [id])
   date      DateTime
@@ -662,13 +939,16 @@ model TimetableTeacherAttendance {
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
 
-  @@unique([teacherId, date, period])
+  @@unique([schoolId, teacherId, date, period])
+  @@index([schoolId])
 }
 
 // ─── Student Scoring Module ───────────────────────────────────────────────────
 
 model ScoreSheet {
   id          String   @id @default(cuid())
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   name        String // Gradebook label (e.g. "2026-2027")
   degree      String? // Degree/level label (e.g. "Degree 1: Grade 7–9")
   logoUrl     String? // School logo URL
@@ -679,21 +959,28 @@ model ScoreSheet {
   classes  ScoreSheetClass[]
   subjects ScoreSubject[]
   examTabs ScoreExamTab[]
+
+  @@index([schoolId])
 }
 
 // Join table: one score sheet → many classes
 model ScoreSheetClass {
   id           String     @id @default(cuid())
+  schoolId     String
+  school       School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   scoreSheetId String
   scoreSheet   ScoreSheet @relation(fields: [scoreSheetId], references: [id], onDelete: Cascade)
   classId      String // Reference to Class.id
   createdAt    DateTime   @default(now())
 
-  @@unique([scoreSheetId, classId])
+  @@unique([schoolId, scoreSheetId, classId])
+  @@index([schoolId])
 }
 
 model ScoreSubject {
   id                 String     @id @default(cuid())
+  schoolId           String
+  school             School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   scoreSheetId       String
   scoreSheet         ScoreSheet @relation(fields: [scoreSheetId], references: [id], onDelete: Cascade)
   name               String
@@ -705,10 +992,14 @@ model ScoreSubject {
   updatedAt          DateTime   @updatedAt
 
   entries ScoreEntry[]
+
+  @@index([schoolId])
 }
 
 model ScoreExamTab {
   id           String     @id @default(cuid())
+  schoolId     String
+  school       School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   scoreSheetId String
   scoreSheet   ScoreSheet @relation(fields: [scoreSheetId], references: [id], onDelete: Cascade)
   label        String // e.g., "January", "Q1", "Semester 1"
@@ -718,10 +1009,14 @@ model ScoreExamTab {
   updatedAt    DateTime   @updatedAt
 
   entries ScoreEntry[]
+
+  @@index([schoolId])
 }
 
 model ScoreEntry {
   id        String       @id @default(cuid())
+  schoolId  String
+  school    School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   examTabId String
   examTab   ScoreExamTab @relation(fields: [examTabId], references: [id], onDelete: Cascade)
   subjectId String
@@ -732,13 +1027,16 @@ model ScoreEntry {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  @@unique([examTabId, subjectId, studentId])
+  @@unique([schoolId, examTabId, subjectId, studentId])
+  @@index([schoolId])
 }
 
 // ─── Module 1: Salary Management ─────────────────────────────────────────────
 
 model Salary {
   id          String    @id @default(cuid())
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   userId      String
   user        User      @relation("UserSalaries", fields: [userId], references: [id])
   month       Int // 1-12
@@ -754,7 +1052,8 @@ model Salary {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  @@unique([userId, month, year])
+  @@unique([schoolId, userId, month, year])
+  @@index([schoolId])
   @@index([year, month])
   @@index([isPaid])
 }
@@ -768,16 +1067,22 @@ model Salary {
 
 model StaffProfile {
   id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String? // job title / position, e.g. "Senior English Teacher"
   summary   String? // professional summary paragraph
   skills    Json? // string[]
   updatedAt DateTime @updatedAt
+
+  @@index([schoolId])
 }
 
 model StaffEducation {
   id           String   @id @default(cuid())
+  schoolId     String
+  school       School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   institution  String
@@ -789,11 +1094,14 @@ model StaffEducation {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  @@index([schoolId])
   @@index([userId])
 }
 
 model StaffWorkExperience {
   id          String    @id @default(cuid())
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   title       String
@@ -805,11 +1113,14 @@ model StaffWorkExperience {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  @@index([schoolId])
   @@index([userId])
 }
 
 model StaffCertification {
   id        String    @id @default(cuid())
+  schoolId  String
+  school    School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
@@ -819,6 +1130,7 @@ model StaffCertification {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  @@index([schoolId])
   @@index([userId])
 }
 
@@ -826,8 +1138,12 @@ model StaffCertification {
 
 model Bus {
   id          String        @id @default(cuid())
+  schoolId    String
+  school      School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   name        String
-  plateNumber String        @unique
+  plateNumber String // Unique per-school, not globally — see @@unique below. Real-world plates are
+  // globally unique, but the app has no legitimate need to enforce that, and doing so would let
+  // one school's "plate already exists" error leak the existence of another school's bus.
   capacity    Int           @default(40)
   status      String        @default("ACTIVE") // ACTIVE, INACTIVE, MAINTENANCE
   driverId    String?
@@ -836,20 +1152,29 @@ model Bus {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   locations   BusLocation[]
+
+  @@unique([schoolId, plateNumber])
+  @@index([schoolId])
 }
 
 model BusRoute {
   id          String    @id @default(cuid())
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   name        String
   description String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   buses       Bus[]
   stops       BusStop[]
+
+  @@index([schoolId])
 }
 
 model BusStop {
   id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   name      String
   latitude  Float
   longitude Float
@@ -857,10 +1182,14 @@ model BusStop {
   routeId   String
   route     BusRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@index([schoolId])
 }
 
 model BusLocation {
   id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   busId     String
   bus       Bus      @relation(fields: [busId], references: [id], onDelete: Cascade)
   latitude  Float
@@ -869,6 +1198,7 @@ model BusLocation {
   heading   Float?
   timestamp DateTime @default(now())
 
+  @@index([schoolId])
   @@index([busId, timestamp])
 }
 
@@ -876,6 +1206,8 @@ model BusLocation {
 
 model Exam {
   id          String         @id @default(cuid())
+  schoolId    String
+  school      School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   title       String
   description String?
   classId     String?
@@ -893,10 +1225,14 @@ model Exam {
   updatedAt   DateTime       @updatedAt
   questions   ExamQuestion[]
   attempts    ExamAttempt[]
+
+  @@index([schoolId])
 }
 
 model ExamQuestion {
   id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   examId    String
   exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   text      String
@@ -907,10 +1243,14 @@ model ExamQuestion {
   section   String? // free-text label (e.g. "Listening", "Reading") — consecutive questions sharing
   // a section are grouped into one page in the exam-taking UI; null/absent means no pagination
   createdAt DateTime @default(now())
+
+  @@index([schoolId])
 }
 
 model ExamAttempt {
   id            String    @id @default(cuid())
+  schoolId      String
+  school        School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   examId        String
   exam          Exam      @relation(fields: [examId], references: [id])
   studentId     String
@@ -928,7 +1268,8 @@ model ExamAttempt {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  @@unique([examId, studentId])
+  @@unique([schoolId, examId, studentId])
+  @@index([schoolId])
   @@index([studentId])
   @@index([examId])
   @@index([status])
@@ -938,6 +1279,8 @@ model ExamAttempt {
 
 model Assignment {
   id                 String                 @id @default(cuid())
+  schoolId           String
+  school             School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   title              String
   description        String?
   instructions       String?
@@ -963,10 +1306,14 @@ model Assignment {
   updatedAt          DateTime               @updatedAt
   submissions        AssignmentSubmission[]
   questions          QuizQuestion[]
+
+  @@index([schoolId])
 }
 
 model AssignmentSubmission {
   id                 String       @id @default(cuid())
+  schoolId           String
+  school             School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   assignmentId       String
   assignment         Assignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   studentId          String
@@ -985,7 +1332,8 @@ model AssignmentSubmission {
   updatedAt          DateTime     @updatedAt
   answers            QuizAnswer[]
 
-  @@unique([assignmentId, studentId])
+  @@unique([schoolId, assignmentId, studentId])
+  @@index([schoolId])
   @@index([studentId])
   @@index([status])
   @@index([submittedAt])
@@ -993,6 +1341,8 @@ model AssignmentSubmission {
 
 model QuizQuestion {
   id           String       @id @default(cuid())
+  schoolId     String
+  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   assignmentId String
   assignment   Assignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   order        Int          @default(0)
@@ -1003,10 +1353,14 @@ model QuizQuestion {
   answers      QuizAnswer[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+
+  @@index([schoolId])
 }
 
 model QuizAnswer {
   id            String               @id @default(cuid())
+  schoolId      String
+  school        School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   submissionId  String
   submission    AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   questionId    String
@@ -1018,13 +1372,16 @@ model QuizAnswer {
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
-  @@unique([submissionId, questionId])
+  @@unique([schoolId, submissionId, questionId])
+  @@index([schoolId])
 }
 
 // ─── Module 4: Parents Portal — Messaging ────────────────────────────────────
 
 model Message {
   id         String    @id @default(cuid())
+  schoolId   String
+  school     School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   senderId   String
   sender     User      @relation("MessageSender", fields: [senderId], references: [id])
   receiverId String
@@ -1033,6 +1390,7 @@ model Message {
   readAt     DateTime?
   createdAt  DateTime  @default(now())
 
+  @@index([schoolId])
   @@index([senderId, receiverId, createdAt])
   @@index([receiverId, readAt])
   @@index([createdAt])
@@ -1042,6 +1400,8 @@ model Message {
 
 model Announcement {
   id          String    @id @default(cuid())
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   authorId    String
   author      User      @relation("AnnouncementAuthor", fields: [authorId], references: [id])
   title       String
@@ -1062,6 +1422,7 @@ model Announcement {
 
   reads AnnouncementRead[]
 
+  @@index([schoolId])
   @@index([sentAt])
   @@index([classId, sentAt])
   @@index([audience, targetRole, sentAt])
@@ -1070,18 +1431,23 @@ model Announcement {
 
 model AnnouncementRead {
   id             String       @id @default(cuid())
+  schoolId       String
+  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   announcementId String
   announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
   userId         String
   user           User         @relation("AnnouncementReads", fields: [userId], references: [id])
   readAt         DateTime     @default(now())
 
-  @@unique([announcementId, userId])
+  @@unique([schoolId, announcementId, userId])
+  @@index([schoolId])
   @@index([userId])
 }
 
 model NotificationPreference {
   id                   String   @id @default(cuid())
+  schoolId             String
+  school               School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   userId               String   @unique
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailEnabled         Boolean  @default(true)
@@ -1092,6 +1458,8 @@ model NotificationPreference {
   digestFrequency      String   @default("NONE") // NONE | DAILY | WEEKLY
   updatedAt            DateTime @updatedAt
   createdAt            DateTime @default(now())
+
+  @@index([schoolId])
 }
 
 // --- LMS: Courses, Lessons, Pages, Enrollments -------------------------------
@@ -1102,6 +1470,8 @@ model NotificationPreference {
 
 model Course {
   id             String             @id @default(cuid())
+  schoolId       String
+  school         School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   title          String
   description    String?
   category       String?
@@ -1123,6 +1493,7 @@ model Course {
   enrollments    CourseEnrollment[]
   sessions       CourseSession[]
 
+  @@index([schoolId])
   @@index([classId])
   @@index([status])
   @@index([createdById])
@@ -1130,6 +1501,8 @@ model Course {
 
 model CourseLesson {
   id                String          @id @default(cuid())
+  schoolId          String
+  school            School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   courseId          String
   course            Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title             String
@@ -1154,12 +1527,15 @@ model CourseLesson {
   sessions          CourseSession[]
   views             LessonView[]
 
+  @@index([schoolId])
   @@index([courseId])
   @@index([status])
 }
 
 model LessonPage {
   id         String         @id @default(cuid())
+  schoolId   String
+  school     School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   lessonId   String
   lesson     CourseLesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   title      String
@@ -1171,12 +1547,15 @@ model LessonPage {
   updatedAt  DateTime       @updatedAt
   responses  PageResponse[]
 
+  @@index([schoolId])
   @@index([lessonId])
   @@index([pageType])
 }
 
 model CourseEnrollment {
   id             String    @id @default(cuid())
+  schoolId       String
+  school         School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   courseId       String
   course         Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   studentId      String
@@ -1187,7 +1566,8 @@ model CourseEnrollment {
   completedAt    DateTime?
   certificateUrl String?
 
-  @@unique([courseId, studentId])
+  @@unique([schoolId, courseId, studentId])
+  @@index([schoolId])
   @@index([courseId])
   @@index([studentId])
   @@index([status])
@@ -1199,6 +1579,8 @@ model CourseEnrollment {
 // creates a new LessonAttempt row.
 model LessonAttempt {
   id            String         @id @default(cuid())
+  schoolId      String
+  school        School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   lessonId      String
   lesson        CourseLesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   studentId     String
@@ -1211,6 +1593,7 @@ model LessonAttempt {
   completedAt   DateTime?
   responses     PageResponse[]
 
+  @@index([schoolId])
   @@index([lessonId])
   @@index([studentId])
   @@index([status])
@@ -1218,6 +1601,8 @@ model LessonAttempt {
 
 model PageResponse {
   id            String        @id @default(cuid())
+  schoolId      String
+  school        School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   attemptId     String
   attempt       LessonAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   pageId        String
@@ -1228,17 +1613,20 @@ model PageResponse {
   nextPageId    String? // page the player was sent to after this response
   answeredAt    DateTime      @default(now())
 
-  @@unique([attemptId, pageId])
+  @@unique([schoolId, attemptId, pageId])
+  @@index([schoolId])
   @@index([attemptId])
   @@index([pageId])
 }
 
 // --- Course attendance ------------------------------------------------
 // Per-course meetings/sessions and the per-student attendance records.
-// A session may optionally be tied to a CourseLesson � opening / finishing
+// A session may optionally be tied to a CourseLesson — opening / finishing
 // that lesson auto-marks the student PRESENT for the linked session.
 model CourseSession {
   id              String        @id @default(cuid())
+  schoolId        String
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   courseId        String
   course          Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessonId        String?
@@ -1253,6 +1641,7 @@ model CourseSession {
 
   attendances CourseAttendance[]
 
+  @@index([schoolId])
   @@index([courseId])
   @@index([lessonId])
   @@index([scheduledAt])
@@ -1260,6 +1649,8 @@ model CourseSession {
 
 model CourseAttendance {
   id          String        @id @default(cuid())
+  schoolId    String
+  school      School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   sessionId   String
   session     CourseSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   studentId   String
@@ -1273,7 +1664,8 @@ model CourseAttendance {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  @@unique([sessionId, studentId])
+  @@unique([schoolId, sessionId, studentId])
+  @@index([schoolId])
   @@index([sessionId])
   @@index([studentId])
   @@index([status])
@@ -1283,6 +1675,8 @@ model CourseAttendance {
 // One row per (lesson, student). Updated on every open + video heartbeat.
 model LessonView {
   id               String       @id @default(cuid())
+  schoolId         String
+  school           School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   lessonId         String
   lesson           CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   studentId        String
@@ -1295,15 +1689,20 @@ model LessonView {
   videoCompleted   Boolean      @default(false)
   completedAt      DateTime?
 
-  @@unique([lessonId, studentId])
+  @@unique([schoolId, lessonId, studentId])
+  @@index([schoolId])
   @@index([lessonId])
   @@index([studentId])
 }
 
-// ─── Fee Settings (singleton) ─────────────────────────────────────────────────
+// ─── Fee Settings ─────────────────────────────────────────────────────────────
+// One row per school (schoolId unique). Was a single global "singleton" row
+// pre-multi-tenancy.
 
 model FeeSettings {
-  id              String   @id @default("singleton")
+  id              String   @id @default(cuid())
+  schoolId        String   @unique
+  school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   schoolName      String   @default("Wattaman School")
   schoolAddress   String   @default("")
   schoolPhone     String   @default("")
@@ -1317,8 +1716,13 @@ model FeeSettings {
   updatedAt       DateTime @updatedAt
 }
 
+// One row per school (schoolId unique). Was a single global "singleton" row
+// pre-multi-tenancy — see the conversion plan's Phase 1d + 5c for how the
+// frontend resolves and renders per-school branding dynamically.
 model SiteSetting {
-  id               String   @id @default("singleton")
+  id               String   @id @default(cuid())
+  schoolId         String   @unique
+  school           School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   // Header
   siteName         String   @default("Wattaman")
   siteTagline      String   @default("Smart School Management")
@@ -1351,6 +1755,8 @@ model SiteSetting {
 
 model Post {
   id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   title     String
   excerpt   String   @default("")
   body      String   @default("")
@@ -1364,4 +1770,6 @@ model Post {
   authorId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([schoolId])
 }

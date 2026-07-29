@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 export type AuditAction =
   | 'CREATE'
@@ -62,8 +63,15 @@ export class AuditService {
           ? this.diff(entry.before ?? null, entry.after ?? null)
           : undefined);
 
+      // Every real call site runs inside an HTTP request (TenantHostMiddleware
+      // resolves a tenant before any route, including /auth/login), so a
+      // schoolId is always available here. If it's somehow not (getCurrentSchoolId
+      // throws), the surrounding try/catch already treats audit writes as
+      // best-effort and swallows the failure — consistent with this method's
+      // existing contract of never breaking the request it's logging.
       await this.prisma.auditLog.create({
         data: {
+          schoolId: getCurrentSchoolId(),
           actorId: entry.actorId ?? null,
           actorRole: entry.actorRole ?? null,
           actorName: entry.actorName ?? null,
@@ -131,6 +139,13 @@ export class AuditService {
    */
   @Cron('0 * * * *') // top of every hour
   async runScheduledCleanup(): Promise<void> {
+    // A cron job runs outside any HTTP request, so there's no tenant context
+    // (AsyncLocalStorage store) open here — PrismaService's middleware passes
+    // this findMany through unscoped, which is what we actually want: a
+    // platform-wide sweep across every school's own cleanup schedule, not just
+    // one. Each schedule's deletion below is then explicitly scoped to that
+    // one schedule's OWN schoolId — never relying on ambient context, since
+    // none exists in this code path.
     let schedules: any[];
     try {
       schedules = await this.prisma.auditCleanupSchedule.findMany({ where: { enabled: true } });
@@ -143,7 +158,9 @@ export class AuditService {
       if (!this.isDue(s)) continue;
       try {
         const cutoff = new Date(Date.now() - s.retainDays * 24 * 60 * 60 * 1000);
-        const result = await this.prisma.auditLog.deleteMany({ where: { createdAt: { lt: cutoff } } });
+        const result = await this.prisma.auditLog.deleteMany({
+          where: { schoolId: s.schoolId, createdAt: { lt: cutoff } },
+        });
         await this.prisma.auditCleanupSchedule.update({
           where: { id: s.id },
           data: { lastRunAt: new Date(), lastDeletedCount: result.count },

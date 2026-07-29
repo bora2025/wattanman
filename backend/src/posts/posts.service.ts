@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 export interface CreatePostDto {
   title: string;
@@ -49,6 +50,7 @@ export class PostsService {
   async create(dto: CreatePostDto) {
     const post = await this.prisma.post.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         title: dto.title,
         excerpt: dto.excerpt ?? '',
         body: dto.body ?? '',

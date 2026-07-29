@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 @Controller('audit')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -35,7 +36,12 @@ export class AuditController {
     const take = Math.min(Math.max(parseInt(pageSize, 10) || 50, 1), 200);
     const pageNum = Math.max(parseInt(page, 10) || 1, 1);
     const skip = (pageNum - 1) * take;
-    const hasFilters = Object.keys(where).length > 0;
+    // Real count, always — the old pg_class row-count estimate existed because
+    // `where` was usually empty on a huge, whole-database table. Post-multi-tenancy
+    // every query here is auto-scoped to one school (PrismaService's tenant
+    // middleware — see backend/src/database/prisma.service.ts), so `where` is
+    // never actually empty in practice and a real count on an already-filtered
+    // set is cheap. See the conversion plan's Phase 3b.
     const [rawItems, total] = await Promise.all([
       this.prisma.auditLog.findMany({
         where,
@@ -64,29 +70,19 @@ export class AuditController {
           errorMessage: true,
         },
       }),
-      hasFilters ? this.prisma.auditLog.count({ where }) : this.estimatedCount('AuditLog'),
+      this.prisma.auditLog.count({ where }),
     ]);
     const items = await this.enrichLabels(rawItems as any);
     return { items, total, page: pageNum, pageSize: take, pages: Math.ceil(total / take) };
   }
 
-  /** Full detail for a single log entry (includes heavy JSON columns). */
+  /** Full detail for a single log entry (includes heavy JSON columns). Scoped
+   * to the current school by the same PrismaService middleware as every other
+   * findUnique in the codebase — a cross-school id here now 404s instead of
+   * returning another school's log entry. */
   @Get('logs/:id')
   async getOne(@Param('id') id: string) {
     return this.prisma.auditLog.findUnique({ where: { id } });
-  }
-
-  /** Cheap row-count estimate from pg_class. Falls back to a real count on error. */
-  private async estimatedCount(table: string): Promise<number> {
-    try {
-      const rows = await this.prisma.$queryRawUnsafe<Array<{ estimate: bigint | number }>>(
-        `SELECT reltuples::bigint AS estimate FROM pg_class WHERE relname = $1`,
-        table,
-      );
-      const v = rows?.[0]?.estimate;
-      if (v !== undefined && v !== null) return Number(v);
-    } catch { /* ignore */ }
-    return this.prisma.auditLog.count();
   }
 
   /** Distinct values for filter dropdowns. */
@@ -447,11 +443,14 @@ export class AuditController {
               break;
             }
             case 'STUDY-YEARS': {
+              // Pre-existing bug, unrelated to tenancy: StudyYear has no `name`
+              // field, only `label` (e.g. "2026-2027") — this case has always
+              // silently fallen through to the User-table fallback below.
               const rows = await this.prisma.studyYear.findMany({
                 where: { id: { in: ids } },
-                select: { id: true, name: true },
+                select: { id: true, label: true },
               });
-              for (const r of rows) remember(resource, r.id, r.name);
+              for (const r of rows) remember(resource, r.id, r.label ?? r.id);
               break;
             }
           }
@@ -507,6 +506,7 @@ export class AuditController {
     if (!retain || retain < 1) throw new BadRequestException('retainDays must be a positive integer');
     return this.prisma.auditCleanupSchedule.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         label: body.label?.trim() || `${freq} – keep ${retain} days`,
         frequency: freq,
         retainDays: retain,

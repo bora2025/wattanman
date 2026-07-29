@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 @Injectable()
 export class SalaryService {
@@ -68,6 +69,7 @@ export class SalaryService {
     const net = (data.baseSalary ?? 0) + (data.allowances ?? 0) - (data.deductions ?? 0);
     return this.prisma.salary.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         userId: data.userId,
         month: Number(data.month),
         year: Number(data.year),

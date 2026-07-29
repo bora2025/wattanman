@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 @Injectable()
 export class HolidaysService {
@@ -54,6 +55,7 @@ export class HolidaysService {
     const dateObj = new Date(data.date + 'T00:00:00.000Z');
     return this.prisma.holiday.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         date: dateObj,
         name: data.name,
         description: data.description || null,

@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../database/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { MessagesGateway } from '../parent/messages.gateway';
+import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 export type AnnouncementAudience = 'SCHOOL' | 'ROLE' | 'CLASS';
 export type AnnouncementChannel = 'IN_APP' | 'EMAIL' | 'SMS';
@@ -138,8 +139,8 @@ export class AnnouncementsService {
 
   async markRead(announcementId: string, userId: string) {
     await this.prisma.announcementRead.upsert({
-      where: { announcementId_userId: { announcementId, userId } },
-      create: { announcementId, userId },
+      where: { schoolId_announcementId_userId: { schoolId: getCurrentSchoolId(), announcementId, userId } },
+      create: { schoolId: getCurrentSchoolId(), announcementId, userId },
       update: {},
     });
     return { ok: true };
@@ -162,6 +163,7 @@ export class AnnouncementsService {
 
     const a = await this.prisma.announcement.create({
       data: {
+        schoolId: getCurrentSchoolId(),
         authorId,
         title: dto.title.trim(),
         body: dto.body.trim(),
@@ -221,6 +223,12 @@ export class AnnouncementsService {
       if (channels.includes('IN_APP') && isAllowed(user.id, 'IN_APP')) {
         await this.prisma.notification.create({
           data: {
+            // Derived from the already-loaded announcement, not ambient tenant
+            // context — dispatch() runs fire-and-forget (announcements.service.ts
+            // create()), so relying on it still having the request's context by
+            // the time this runs is unnecessary risk when `a.schoolId` is already
+            // the unambiguous source of truth.
+            schoolId: a.schoolId,
             userId: user.id,
             message: `${a.title}: ${a.body}`,
             type: 'announcement',
