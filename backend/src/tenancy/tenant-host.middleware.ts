@@ -44,7 +44,30 @@ export class TenantHostMiddleware implements NestMiddleware {
     // Intentionally the one unscoped School lookup in the codebase outside the
     // Platform module — this is the query that *establishes* tenancy, so there's
     // no tenant context yet for it to be scoped by.
-    const school = await this.prisma.school.findUnique({ where: { subdomain } });
+    let school = await this.prisma.school.findUnique({ where: { subdomain } });
+
+    // Transition fallback: the Railway service domain (e.g.
+    // wattanman-production.up.railway.app) doesn't match the subdomain a school
+    // was seeded with (e.g. "default" via SEED_SCHOOL_SUBDOMAIN), so the lookup
+    // above fails for every request even though the production data clearly
+    // belongs to exactly one real school. Rather than 404 pre-auth logins for
+    // existing users while the proper multi-tenant domain migration (custom
+    // domains / re-seeding with the right subdomain) happens separately, fall
+    // back to "the one non-Platform school" when it's unambiguous.
+    //
+    // This only ever applies to the sentinel-less case: if the host resolved to
+    // PLATFORM_SCHOOL_SUBDOMAIN it already matched above (the Platform row
+    // always exists), so we never accidentally fall back for Platform requests.
+    if (!school && subdomain !== PLATFORM_SCHOOL_SUBDOMAIN) {
+      const candidates = await this.prisma.school.findMany({
+        where: { subdomain: { not: PLATFORM_SCHOOL_SUBDOMAIN } },
+        take: 2,
+      });
+      if (candidates.length === 1) {
+        school = candidates[0];
+      }
+    }
+
     if (!school) {
       throw new NotFoundException('Unknown school');
     }
