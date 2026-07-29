@@ -24,6 +24,14 @@ async function proxyRequest(req: NextRequest, { params }: { params: Promise<{ pa
   const qs = url.search;
 
   const headers = new Headers(req.headers);
+  // Forward the browser's original Host before stripping it below — this is
+  // the one signal the backend's TenantHostMiddleware needs to resolve which
+  // school (or the platform host) the request is for. Without this, every
+  // request would appear to come from wherever this Next.js server itself is
+  // deployed, not from the tenant subdomain the browser actually visited. See
+  // the conversion plan's Phase 5a and backend/src/tenancy/tenant-host.middleware.ts.
+  const originalHost = req.headers.get('host');
+  if (originalHost) headers.set('x-tenant-host', originalHost);
   // Remove headers that conflict with the proxy layer
   headers.delete('host');
   headers.delete('accept-encoding');

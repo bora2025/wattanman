@@ -22,6 +22,9 @@ interface NavItem {
   section?: string;
   /** If set, displays an unread badge driven by /api/<key>/unread-count. */
   badgeKey?: 'messages' | 'announcements' | 'class-registrations';
+  /** If set, this item is hidden when the current school has disabled that
+   * module (Phase 7's per-school module toggles — see /api/school-modules). */
+  moduleKey?: string;
 }
 
 interface SidebarProps {
@@ -57,6 +60,17 @@ const colorMap: Record<string, { bg: string; text: string; hover: string; active
     active: 'bg-white/18 text-white font-semibold',
     ring: 'ring-sky-500',
     gradient: 'from-[#0c4a6e] to-[#075985]',
+  },
+  // Platform tier only (frontend/app/platform/*) — deliberately distinct from
+  // every school-facing accent so it's visually obvious which "layer" of the
+  // product a screenshot or a confused support session is in.
+  slate: {
+    bg: 'bg-slate-700',
+    text: 'text-slate-200',
+    hover: 'hover:bg-white/10',
+    active: 'bg-white/18 text-white font-semibold',
+    ring: 'ring-slate-500',
+    gradient: 'from-[#0f172a] to-[#1e293b]',
   },
 };
 
@@ -143,7 +157,30 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
     }
   }, [pathname]);
 
-  const tabs = pickBottomTabs(navItems, bottomTabs);
+  // Phase 7 module toggles: fetch once (not polled — a platform admin
+  // flipping a toggle mid-session is rare enough that a page refresh picking
+  // it up is fine) and filter out any nav item whose moduleKey is disabled
+  // for this school. Only fires the request at all if some item in this nav
+  // list actually uses moduleKey — most role dashboards (teacher/student/etc.)
+  // never do, so they pay zero extra cost.
+  const needsModuleCheck = navItems.some(n => n.moduleKey);
+  const [disabledModules, setDisabledModules] = useState<string[]>([]);
+  useEffect(() => {
+    if (!needsModuleCheck) return;
+    let active = true;
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
+    fetch(`${apiBase}/api/school-modules`, { credentials: 'include' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => { if (active && data) setDisabledModules(data.disabledModules ?? []); })
+      .catch(() => { /* silent — worst case, a disabled module's nav item stays visible until refresh */ });
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needsModuleCheck]);
+  const visibleNavItems = needsModuleCheck
+    ? navItems.filter(n => !n.moduleKey || !disabledModules.includes(n.moduleKey))
+    : navItems;
+
+  const tabs = pickBottomTabs(visibleNavItems, bottomTabs);
   const hasMore = tabs.some(t => t.href === '__more__');
 
   // Unread counts for badge-bearing nav items. Lightweight, polls every 30s.
@@ -278,7 +315,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
               >✕</button>
             </div>
             <nav className="px-3 py-3">
-              {navItems.filter(item => !tabs.some(t => t.href === item.href)).map((item) => {
+              {visibleNavItems.filter(item => !tabs.some(t => t.href === item.href)).map((item) => {
                 const isExact = pathname === item.href;
                 const isParent = !isExact && item.href !== '/' && item.href.length > 1
                   && navItems.some(n => n.href !== item.href && n.href.startsWith(item.href + '/'))
@@ -384,7 +421,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
             {sidebarOpen && <span className="truncate text-white/70">{t('common.backToHome')}</span>}
           </Link>
           <div className={`border-t border-white/10 mb-2 ${sidebarOpen ? 'mx-1' : 'mx-0'}`} />
-          {navItems.map((item, idx) => {
+          {visibleNavItems.map((item, idx) => {
             // ── Active state detection ──────────────────────────────────
             // isExact: user is on exactly this page
             const isExact = pathname === item.href;

@@ -72,6 +72,7 @@ export async function getCurrentUser(): Promise<{
   role: string;
   departmentId?: string | null;
   department?: { id: string; name: string; nameKh?: string } | null;
+  mfaEnabled?: boolean;
 } | null> {
   try {
     const res = await apiFetch('/api/auth/me');
@@ -84,6 +85,7 @@ export async function getCurrentUser(): Promise<{
         role: data.role,
         departmentId: data.departmentId ?? null,
         department: data.department ?? null,
+        mfaEnabled: data.mfaEnabled ?? false,
       };
     }
     return null;
