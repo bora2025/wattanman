@@ -40,6 +40,7 @@ function LoginContent() {
         // up before touching anything else — see backend/src/auth/auth.controller.ts's
         // `mfaSetupRequired` flag (Phase 2a-i's mandatory-MFA enforcement).
         if (data.mfaSetupRequired) {
+          setLoading(false);
           router.push('/platform/mfa-setup');
           return;
         }
