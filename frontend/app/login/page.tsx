@@ -40,6 +40,7 @@ function LoginContent() {
         // up before touching anything else — see backend/src/auth/auth.controller.ts's
         // `mfaSetupRequired` flag (Phase 2a-i's mandatory-MFA enforcement).
         if (data.mfaSetupRequired) {
+          setLoading(false);
           router.push('/platform/mfa-setup');
           return;
         }
@@ -76,7 +77,7 @@ function LoginContent() {
         // Backend signals MFA_REQUIRED (Phase 2a-i) as a structured 401 body
         // rather than a plain string, so the form can switch to the code input
         // without discarding the email/password the user already typed.
-        if (data?.message?.error === 'MFA_REQUIRED') {
+        if (data?.error === 'MFA_REQUIRED') {
           setMfaRequired(true);
           setError('Enter your 6-digit authenticator code.');
         } else if (mfaRequired) {
