@@ -65,22 +65,44 @@ export class AddonDirectoryService {
     });
   }
 
+  /**
+   * `kind` is editable here (e.g. turning a free MODULE like Attendance into
+   * a priced ADDON once the business decides to charge for it). Schools that
+   * already have the key `enabled: true` are unaffected — RequiresAddonGuard
+   * and the enabled-key list only ever check `SchoolAddon.enabled`, never
+   * `kind`, so an existing school's access is grandfathered automatically,
+   * with no SchoolAddon rows to touch. The only real effects of the switch:
+   * the school-creation wizard stops offering it as a free pick, the
+   * school's own Add-ons page moves it into the "Paid Add-ons" section
+   * (still shown Enabled if it already was), and new schools now have to
+   * request it and wait for platform-admin approval, same as any other
+   * paid add-on.
+   */
   async update(
     id: string,
-    data: { name?: string; description?: string; category?: string; icon?: string; price?: number | null; priceNote?: string; isActive?: boolean },
+    data: { name?: string; kind?: string; description?: string; category?: string; icon?: string; price?: number | null; priceNote?: string; isActive?: boolean },
   ) {
     const existing = await this.prisma.addonDefinition.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Add-on not found');
+
+    if (data.kind !== undefined && !VALID_KINDS.includes(data.kind)) {
+      throw new BadRequestException(`kind must be one of ${VALID_KINDS.join(', ')}`);
+    }
+    const nextKind = data.kind ?? existing.kind;
 
     return this.prisma.addonDefinition.update({
       where: { id },
       data: {
         name: data.name?.trim() || undefined,
+        kind: data.kind,
         description: data.description !== undefined ? data.description.trim() || null : undefined,
         category: data.category !== undefined ? data.category.trim() || null : undefined,
         icon: data.icon !== undefined ? data.icon.trim() || null : undefined,
-        price: data.price === null ? null : data.price,
-        priceNote: data.priceNote !== undefined ? data.priceNote.trim() || null : undefined,
+        // A MODULE is always free — clear any price the form still had
+        // lying around rather than trusting stale client state, same
+        // reasoning as create().
+        price: nextKind === 'MODULE' ? null : (data.price === null ? null : data.price),
+        priceNote: nextKind === 'MODULE' ? null : (data.priceNote !== undefined ? data.priceNote.trim() || null : undefined),
         isActive: data.isActive,
       },
     });

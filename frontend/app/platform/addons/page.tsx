@@ -51,6 +51,8 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const kindChanged = form.kind !== addon.kind
+
   async function save() {
     setSaving(true)
     setError('')
@@ -60,6 +62,7 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name.trim(),
+          kind: form.kind,
           description: form.description,
           category: form.category,
           icon: form.icon,
@@ -80,6 +83,32 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
   return (
     <div className="space-y-3 pt-3 border-t border-slate-100">
       {error && <div className="text-xs text-red-600">{error}</div>}
+      <div>
+        <label className="block text-xs font-medium text-slate-600 mb-1">Kind</label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, kind: 'MODULE' })}
+            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'MODULE' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200'}`}
+          >
+            Module (free)
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, kind: 'ADDON' })}
+            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'ADDON' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-200'}`}
+          >
+            Paid add-on
+          </button>
+        </div>
+        {kindChanged && (
+          <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 mt-2">
+            {form.kind === 'ADDON'
+              ? 'Schools that already have this enabled keep it, free, with no change — only new schools (and anyone requesting it fresh) will see it as paid going forward.'
+              : 'Every school (including ones with a pending paid request) can now self-enable it for free from their own Add-ons page — nothing turns on by itself, but no approval is needed anymore either.'}
+          </p>
+        )}
+      </div>
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-slate-600 mb-1">Name</label>
@@ -172,7 +201,7 @@ function AddonCard({ addon, onChanged }: { addon: AddonDefinition; onChanged: (a
                 {addon.kind === 'MODULE' ? 'Module' : 'Paid add-on'}
               </span>
               {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">{addon.category}</span>}
-              {!addon.isActive && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200">Retired</span>}
+              {!addon.isActive && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200">Deactivated — hidden from new schools</span>}
             </div>
             {addon.description && <p className="text-xs text-slate-500 mt-1">{addon.description}</p>}
             <p className="text-xs font-medium text-slate-600 mt-1">{priceLabel(addon)}</p>
@@ -180,8 +209,13 @@ function AddonCard({ addon, onChanged }: { addon: AddonDefinition; onChanged: (a
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button onClick={() => setEditing(!editing)} className="btn-outline btn-sm">{editing ? 'Close' : 'Edit'}</button>
-          <button onClick={toggleActive} disabled={busy} className="btn-outline btn-sm disabled:opacity-50">
-            {addon.isActive ? 'Retire' : 'Reactivate'}
+          <button
+            onClick={toggleActive}
+            disabled={busy}
+            title={addon.isActive ? 'Hide from new schools — existing schools keep access' : 'Offer this again to schools that don\'t have it yet'}
+            className={`btn btn-sm border ${addon.isActive ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-emerald-700 border-emerald-200 hover:bg-emerald-50'}`}
+          >
+            {busy ? '…' : addon.isActive ? 'Deactivate' : 'Activate'}
           </button>
           <button onClick={remove} disabled={busy} className="text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50">Delete</button>
         </div>
