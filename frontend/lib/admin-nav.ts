@@ -6,7 +6,7 @@ export const adminNav = [
   // ── Academics ──
   { label: 'nav.manageClasses', href: '/admin/classes', icon: 'book', section: 'nav.section.academics', moduleKey: 'CLASSES' },
   { label: 'nav.studyYears', href: '/admin/study-years', icon: 'layers', moduleKey: 'CLASSES' },
-  { label: 'nav.timetable', href: '/admin/timetable', icon: 'calendar', moduleKey: 'CLASSES' },
+  { label: 'nav.timetable', href: '/admin/timetable', icon: 'calendar', moduleKey: 'TIMETABLE' },
   { label: 'nav.scoring', href: '/admin/scoring', icon: 'trophy', moduleKey: 'EXAMS' },
   { label: 'Examinations', href: '/admin/exams', icon: 'book', moduleKey: 'EXAMS' },
 
@@ -23,10 +23,10 @@ export const adminNav = [
   { label: 'Parent Portal', href: '/admin/parents', icon: 'users', moduleKey: 'PARENT_PORTAL' },
   { label: 'nav.manageHub', href: '/admin/manage-hub', icon: 'briefcase' },
   { label: 'nav.manageOfficer', href: '/admin/employees', icon: 'briefcase' },
-  { label: 'nav.manageTeachers', href: '/wattaman/scheduled-teacher', icon: 'graduation', moduleKey: 'CLASSES' },
+  { label: 'nav.manageTeachers', href: '/wattaman/scheduled-teacher', icon: 'graduation', moduleKey: 'PART_TIME_TEACHER' },
 
   // ── Communication ──
-  { label: 'Communication Hub', href: '/admin/communication', icon: 'clipboard', section: 'Communication', badgeKey: 'messages' as const },
+  { label: 'Communication Hub', href: '/admin/communication', icon: 'clipboard', section: 'Communication', badgeKey: 'messages' as const, moduleKey: 'CHAT' },
   { label: 'Parent Link Requests', href: '/admin/parent-requests', icon: 'users' },
   { label: 'Class Registrations', href: '/admin/class-registrations', icon: 'clipboard', badgeKey: 'class-registrations' as const },
 
@@ -38,7 +38,7 @@ export const adminNav = [
   // ── Reports ──
   { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', section: 'nav.section.reports' },
   { label: 'nav.officerReport', href: '/admin/staff-reports', icon: 'bar-chart' },
-  { label: 'nav.teacherReports', href: '/wattaman/teacher-reports', icon: 'clipboard', moduleKey: 'CLASSES' },
+  { label: 'nav.teacherReports', href: '/wattaman/teacher-reports', icon: 'clipboard', moduleKey: 'PART_TIME_TEACHER' },
 
   // ── Designer ──
   { label: 'nav.cardDesigner', href: '/admin/card-designer', icon: 'design', section: 'Designer', moduleKey: 'CARD_DESIGNER' },
