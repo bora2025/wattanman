@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { PrismaService } from '../database/prisma.service';
 
 const KEY_PATTERN = /^[A-Z][A-Z0-9_]*$/;
+const VALID_KINDS = ['MODULE', 'ADDON'];
 
 function slugifyToKey(name: string): string {
   return name
@@ -13,12 +14,14 @@ function slugifyToKey(name: string): string {
 }
 
 /**
- * Platform tier's Add-ons Directory — the catalog itself (WordPress-plugin-
- * directory-shaped): a PLATFORM_ADMIN creates/prices/retires listings here,
- * independent of any one school. Per-school enabling of a listing is a
- * separate concern, handled by SchoolAddonsService
- * (backend/src/platform/school-addons.service.ts) — this service only ever
- * touches AddonDefinition rows, never SchoolAddon.
+ * Platform tier's Modules & Add-ons Directory — the catalog itself
+ * (WordPress-plugin-directory-shaped): a PLATFORM_ADMIN creates/prices/
+ * retires listings here, independent of any one school. Covers both free
+ * opt-in-at-creation MODULEs (Phase 9) and paid opt-in-after-creation ADDONs
+ * (Phase 7a) — one catalog, one management surface, distinguished by `kind`.
+ * Per-school enabling of a listing is a separate concern, handled by
+ * SchoolAddonsService (backend/src/platform/school-addons.service.ts) — this
+ * service only ever touches AddonDefinition rows, never SchoolAddon.
  */
 @Injectable()
 export class AddonDirectoryService {
@@ -31,26 +34,33 @@ export class AddonDirectoryService {
     return this.prisma.addonDefinition.findMany({ orderBy: { createdAt: 'asc' } });
   }
 
-  async create(data: { name: string; description?: string; category?: string; icon?: string; price?: number; priceNote?: string }) {
+  async create(data: { name: string; kind?: string; description?: string; category?: string; icon?: string; price?: number; priceNote?: string }) {
     const name = (data.name || '').trim();
     if (!name) throw new BadRequestException('Name is required');
+    const kind = data.kind || 'ADDON';
+    if (!VALID_KINDS.includes(kind)) {
+      throw new BadRequestException(`kind must be one of ${VALID_KINDS.join(', ')}`);
+    }
 
     const key = slugifyToKey(name);
     if (!key || !KEY_PATTERN.test(key)) {
       throw new BadRequestException('Could not derive a valid key from that name — use at least one letter');
     }
     const existing = await this.prisma.addonDefinition.findUnique({ where: { key } });
-    if (existing) throw new ConflictException(`An add-on with key "${key}" already exists (derived from this name)`);
+    if (existing) throw new ConflictException(`An entry with key "${key}" already exists (derived from this name)`);
 
     return this.prisma.addonDefinition.create({
       data: {
         key,
+        kind,
         name,
         description: data.description?.trim() || undefined,
         category: data.category?.trim() || undefined,
         icon: data.icon?.trim() || undefined,
-        price: data.price ?? undefined,
-        priceNote: data.priceNote?.trim() || undefined,
+        // MODULE listings are always free — ignore any price sent for one,
+        // rather than trusting the client not to send stale form state.
+        price: kind === 'MODULE' ? undefined : data.price ?? undefined,
+        priceNote: kind === 'MODULE' ? undefined : data.priceNote?.trim() || undefined,
       },
     });
   }

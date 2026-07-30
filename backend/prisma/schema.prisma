@@ -32,12 +32,6 @@ model School {
   // cross-tenant leak vector.
   name         String
   status       String   @default("ACTIVE") // ACTIVE | SUSPENDED | TRIAL
-  // Phase 7 — per-school module toggles. An opt-OUT list, not opt-in: every
-  // module is enabled by default (matches today's single-tenant behavior for
-  // every existing school), and a PLATFORM_ADMIN explicitly disables the ones
-  // a given school doesn't use. See backend/src/school-modules/module-keys.ts
-  // for the canonical set of togglable keys.
-  disabledModules String[] @default([])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -596,18 +590,28 @@ model SchoolAddon {
   @@index([schoolId])
 }
 
-/// The add-ons "directory" (Platform tier, WordPress-plugin-directory-shaped):
-/// a platform-wide catalog a PLATFORM_ADMIN curates — create new listings,
-/// price them, retire ones no longer sold — independent of any one school.
-/// Not tenant-scoped (like School itself): this is the same catalog every
-/// school browses, not a per-school row. `isActive: false` is how "remove"
-/// works day-to-day (hides it from new browsing/enabling without breaking
-/// schools that already have it — mirrors a plugin directory delisting a
-/// plugin without uninstalling it from sites that already run it); a real
-/// SQL DELETE is only allowed when zero SchoolAddon rows reference it.
+/// The Modules & Add-ons directory (Platform tier, WordPress-plugin-directory-
+/// shaped): a platform-wide catalog a PLATFORM_ADMIN curates — create new
+/// listings, price the paid ones, retire ones no longer offered — independent
+/// of any one school. Not tenant-scoped (like School itself): this is the
+/// same catalog every school browses, not a per-school row. `isActive: false`
+/// is how "remove" works day-to-day (hides it from new browsing/enabling
+/// without breaking schools that already have it — mirrors a plugin
+/// directory delisting a plugin without uninstalling it from sites that
+/// already run it); a real SQL DELETE is only allowed when zero SchoolAddon
+/// rows reference it.
+///
+/// `kind` (Phase 9) distinguishes free, opt-in-at-creation MODULEs (e.g.
+/// Attendance, Fee Management — no price, no billing lifecycle) from paid
+/// opt-in-after-creation ADDONs (Phase 7a, e.g. Face Recognition Attendance —
+/// priced, billingStatus-tracked on the SchoolAddon row). Both kinds share
+/// this one table and SchoolAddon's per-school enablement rather than two
+/// parallel systems — a MODULE row's `price`/`priceNote` just stay null, and
+/// its SchoolAddon rows leave `billingStatus` at its unused default.
 model AddonDefinition {
   id          String   @id @default(cuid())
   key         String   @unique // stable identifier, e.g. "FACE_RECOGNITION_ATTENDANCE" — set at creation, not editable after
+  kind        String   @default("ADDON") // MODULE | ADDON
   name        String
   description String?
   category    String?

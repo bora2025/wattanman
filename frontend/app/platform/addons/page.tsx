@@ -9,6 +9,7 @@ import { apiFetch } from '../../../lib/api'
 interface AddonDefinition {
   id: string
   key: string
+  kind: string
   name: string
   description: string | null
   category: string | null
@@ -20,6 +21,7 @@ interface AddonDefinition {
 }
 
 interface FormState {
+  kind: 'MODULE' | 'ADDON'
   name: string
   description: string
   category: string
@@ -28,15 +30,17 @@ interface FormState {
   priceNote: string
 }
 
-const EMPTY_FORM: FormState = { name: '', description: '', category: '', icon: '', price: '', priceNote: '' }
+const EMPTY_FORM: FormState = { kind: 'ADDON', name: '', description: '', category: '', icon: '', price: '', priceNote: '' }
 
 function priceLabel(a: AddonDefinition): string {
+  if (a.kind === 'MODULE') return 'Free module'
   if (a.price == null) return 'No price set'
   return `$${a.price}${a.priceNote ? ` ${a.priceNote}` : ''}`
 }
 
 function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCancel: () => void; onSaved: (a: AddonDefinition) => void }) {
   const [form, setForm] = useState<FormState>({
+    kind: addon.kind === 'MODULE' ? 'MODULE' : 'ADDON',
     name: addon.name,
     description: addon.description ?? '',
     category: addon.category ?? '',
@@ -59,8 +63,8 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
           description: form.description,
           category: form.category,
           icon: form.icon,
-          price: form.price.trim() === '' ? null : Number(form.price),
-          priceNote: form.priceNote,
+          price: form.kind === 'MODULE' ? null : (form.price.trim() === '' ? null : Number(form.price)),
+          priceNote: form.kind === 'MODULE' ? '' : form.priceNote,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -89,16 +93,18 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
           <label className="block text-xs font-medium text-slate-600 mb-1">Icon (emoji)</label>
           <input type="text" value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })} placeholder="✨" className="w-full text-sm" />
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Price ($)</label>
-            <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="29" className="w-full text-sm" />
+        {form.kind === 'ADDON' && (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Price ($)</label>
+              <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="29" className="w-full text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Price note</label>
+              <input type="text" value={form.priceNote} onChange={e => setForm({ ...form, priceNote: e.target.value })} placeholder="/month" className="w-full text-sm" />
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Price note</label>
-            <input type="text" value={form.priceNote} onChange={e => setForm({ ...form, priceNote: e.target.value })} placeholder="/month" className="w-full text-sm" />
-          </div>
-        </div>
+        )}
       </div>
       <div>
         <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
@@ -162,6 +168,9 @@ function AddonCard({ addon, onChanged }: { addon: AddonDefinition; onChanged: (a
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-slate-800">{addon.name}</span>
               <code className="text-[10px] text-slate-400">{addon.key}</code>
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${addon.kind === 'MODULE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                {addon.kind === 'MODULE' ? 'Module' : 'Paid add-on'}
+              </span>
               {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">{addon.category}</span>}
               {!addon.isActive && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200">Retired</span>}
             </div>
@@ -197,12 +206,13 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          kind: form.kind,
           name: form.name.trim(),
           description: form.description || undefined,
           category: form.category || undefined,
           icon: form.icon || undefined,
-          price: form.price.trim() === '' ? undefined : Number(form.price),
-          priceNote: form.priceNote || undefined,
+          price: form.kind === 'MODULE' || form.price.trim() === '' ? undefined : Number(form.price),
+          priceNote: form.kind === 'MODULE' ? undefined : (form.priceNote || undefined),
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -220,15 +230,34 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
   if (!open) {
     return (
       <button onClick={() => setOpen(true)} className="btn-primary text-sm px-4 py-2.5 rounded-xl w-fit">
-        + New Add-on
+        + New Listing
       </button>
     )
   }
 
   return (
     <div className="card p-5 space-y-3 border-2 border-indigo-100">
-      <h3 className="text-sm font-semibold text-slate-700">New Add-on Listing</h3>
+      <h3 className="text-sm font-semibold text-slate-700">New Listing</h3>
       {error && <div className="text-xs text-red-600">{error}</div>}
+      <div>
+        <label className="block text-xs font-medium text-slate-600 mb-1">Kind</label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, kind: 'MODULE' })}
+            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'MODULE' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200'}`}
+          >
+            Module (free, opt-in at school creation)
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, kind: 'ADDON' })}
+            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'ADDON' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-200'}`}
+          >
+            Paid add-on (billed, enabled later)
+          </button>
+        </div>
+      </div>
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-slate-600 mb-1">Name</label>
@@ -242,16 +271,18 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
           <label className="block text-xs font-medium text-slate-600 mb-1">Icon (emoji)</label>
           <input type="text" value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })} placeholder="✨" className="w-full text-sm" />
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Price ($)</label>
-            <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="29" className="w-full text-sm" />
+        {form.kind === 'ADDON' && (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Price ($)</label>
+              <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="29" className="w-full text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Price note</label>
+              <input type="text" value={form.priceNote} onChange={e => setForm({ ...form, priceNote: e.target.value })} placeholder="/month" className="w-full text-sm" />
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Price note</label>
-            <input type="text" value={form.priceNote} onChange={e => setForm({ ...form, priceNote: e.target.value })} placeholder="/month" className="w-full text-sm" />
-          </div>
-        </div>
+        )}
       </div>
       <div>
         <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
@@ -302,8 +333,8 @@ function AddonDirectoryContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">Add-ons Directory</h1>
-          <p className="text-sm text-slate-500 mt-1">The catalog every school browses from its own Add-ons page. Create listings, price them, retire ones no longer sold.</p>
+          <h1 className="text-2xl font-bold text-slate-800">Modules &amp; Add-ons Directory</h1>
+          <p className="text-sm text-slate-500 mt-1">Free modules are offered at school creation; paid add-ons are browsed and billed per school afterward. Create listings, price the paid ones, retire ones no longer offered.</p>
         </div>
 
         <div className="page-body space-y-4">

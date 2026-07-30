@@ -17,7 +17,7 @@ export class AddonDirectoryController {
   }
 
   @Post()
-  create(@Body() body: { name: string; description?: string; category?: string; icon?: string; price?: number; priceNote?: string }) {
+  create(@Body() body: { name: string; kind?: string; description?: string; category?: string; icon?: string; price?: number; priceNote?: string }) {
     return this.directory.create(body);
   }
 

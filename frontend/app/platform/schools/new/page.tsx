@@ -25,6 +25,17 @@ interface CreateResult {
   temporaryPassword: string
 }
 
+interface ModuleListing {
+  id: string
+  key: string
+  kind: string
+  name: string
+  description: string | null
+  category: string | null
+  icon: string | null
+  isActive: boolean
+}
+
 function NewSchoolContent() {
   const router = useRouter()
   const [name, setName] = useState('')
@@ -33,6 +44,8 @@ function NewSchoolContent() {
   const [adminName, setAdminName] = useState('')
   const [adminEmail, setAdminEmail] = useState('')
   const [adminPhone, setAdminPhone] = useState('')
+  const [modules, setModules] = useState<ModuleListing[]>([])
+  const [selectedModules, setSelectedModules] = useState<string[]>([])
 
   const [checking, setChecking] = useState(false)
   const [availability, setAvailability] = useState<{ available: boolean; reason?: string } | null>(null)
@@ -40,6 +53,17 @@ function NewSchoolContent() {
   const [error, setError] = useState('')
   const [result, setResult] = useState<CreateResult | null>(null)
   const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    apiFetch('/api/platform/addon-directory')
+      .then(res => res.ok ? res.json() : [])
+      .then((data: ModuleListing[]) => setModules((data || []).filter(a => a.kind === 'MODULE' && a.isActive)))
+      .catch(() => setModules([]))
+  }, [])
+
+  function toggleModule(key: string) {
+    setSelectedModules(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
+  }
 
   // Auto-derive subdomain from name until the user edits it directly.
   useEffect(() => {
@@ -74,7 +98,7 @@ function NewSchoolContent() {
       const res = await apiFetch('/api/platform/schools', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), subdomain: subdomain.trim(), adminName: adminName.trim(), adminEmail: adminEmail.trim(), adminPhone: adminPhone.trim() || undefined }),
+        body: JSON.stringify({ name: name.trim(), subdomain: subdomain.trim(), adminName: adminName.trim(), adminEmail: adminEmail.trim(), adminPhone: adminPhone.trim() || undefined, moduleKeys: selectedModules }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -163,6 +187,26 @@ function NewSchoolContent() {
                       : <span className="text-red-600 font-medium">✗ {availability.reason || 'Unavailable'}</span>
                   )}
                 </div>
+              </div>
+
+              <div className="border-t border-slate-100 pt-4">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Modules</p>
+                <p className="text-xs text-slate-400 mb-3">Pick what this school actually needs. Nothing is selected by default — unpicked modules stay hidden and their APIs stay locked; more can be enabled later from the school's page.</p>
+                {modules.length === 0 ? (
+                  <p className="text-xs text-slate-400">No modules in the catalog yet.</p>
+                ) : (
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    {modules.map(m => (
+                      <label key={m.key} className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer text-sm ${selectedModules.includes(m.key) ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-slate-200'}`}>
+                        <input type="checkbox" checked={selectedModules.includes(m.key)} onChange={() => toggleModule(m.key)} className="mt-0.5" />
+                        <span>
+                          <span className="font-medium text-slate-700 flex items-center gap-1">{m.icon && <span>{m.icon}</span>}{m.name}</span>
+                          {m.description && <span className="block text-xs text-slate-400 mt-0.5">{m.description}</span>}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-slate-100 pt-4">

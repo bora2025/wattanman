@@ -4,9 +4,12 @@ import { ClassesService } from './classes.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
+import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
 @Controller('classes')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
+@RequiresAddon('CLASSES')
 export class ClassesController {
   constructor(private classesService: ClassesService) {}
 

@@ -35,7 +35,6 @@ import { PostsModule } from './posts/posts.module';
 import { ClassRegistrationsModule } from './class-registrations/class-registrations.module';
 import { StaffCvModule } from './staff-cv/staff-cv.module';
 import { PlatformModule } from './platform/platform.module';
-import { SchoolModulesModule } from './school-modules/school-modules.module';
 import { SchoolAddonsModule } from './school-addons/school-addons.module';
 
 @Module({
@@ -77,7 +76,6 @@ import { SchoolAddonsModule } from './school-addons/school-addons.module';
     ClassRegistrationsModule,
     StaffCvModule,
     PlatformModule,
-    SchoolModulesModule,
     SchoolAddonsModule,
   ],
   controllers: [AppController],
