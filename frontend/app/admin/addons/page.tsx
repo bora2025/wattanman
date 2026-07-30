@@ -48,7 +48,7 @@ function ModuleToggle({ addon, onChanged, size = 'md' }: { addon: DirectoryAddon
     }
   }
 
-  const track = size === 'lg' ? 'w-14 h-7' : 'w-11 h-6'
+  const track = size === 'lg' ? 'w-14 h-7 p-0.5' : 'w-11 h-6 p-0.5'
   const knob = size === 'lg' ? 'w-6 h-6' : 'w-5 h-5'
   const slide = size === 'lg' ? 'translate-x-7' : 'translate-x-5'
 
@@ -57,10 +57,10 @@ function ModuleToggle({ addon, onChanged, size = 'md' }: { addon: DirectoryAddon
       <button
         onClick={toggle}
         disabled={busy}
-        className={`relative ${track} rounded-full transition-colors shrink-0 disabled:opacity-60 ${addon.enabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
+        className={`${track} inline-flex items-center rounded-full transition-colors shrink-0 disabled:opacity-60 ${addon.enabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
         aria-label={addon.enabled ? `Disable ${addon.name}` : `Enable ${addon.name}`}
       >
-        <span className={`absolute top-0.5 ${knob} rounded-full bg-white shadow transition-transform ${addon.enabled ? slide : 'translate-x-0.5'}`} />
+        <span className={`${knob} inline-block rounded-full bg-white shadow transform transition-transform ${addon.enabled ? slide : 'translate-x-0'}`} />
       </button>
       {error && <span className="text-[11px] text-red-600">{error}</span>}
     </div>
