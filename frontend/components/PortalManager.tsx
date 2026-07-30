@@ -151,7 +151,15 @@ export default function PortalManager({
   async function fetchUsers() {
     setLoading(true)
     try {
-      const res = await apiFetch(`/api/auth/users?roles=${roles.join(',')}`)
+      // Teacher/Parent Portal each get their own gated, role-hardcoded
+      // endpoint (Phase 11) instead of the shared /auth/users?roles=...
+      // used by core "Manage Users" — falls back to the shared endpoint
+      // for any other role combination this component might be mounted
+      // with in the future.
+      const endpoint = roles.length === 1 && roles[0] === 'TEACHER' ? '/api/portal-manager/teachers'
+        : roles.length === 1 && roles[0] === 'PARENT' ? '/api/portal-manager/parents'
+        : `/api/auth/users?roles=${roles.join(',')}`
+      const res = await apiFetch(endpoint)
       const data = await res.json()
       // Server should already filter, but be defensive.
       setUsers(Array.isArray(data) ? data.filter((u: PortalUser) => roles.includes(u.role)) : [])

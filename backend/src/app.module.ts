@@ -36,6 +36,7 @@ import { ClassRegistrationsModule } from './class-registrations/class-registrati
 import { StaffCvModule } from './staff-cv/staff-cv.module';
 import { PlatformModule } from './platform/platform.module';
 import { SchoolAddonsModule } from './school-addons/school-addons.module';
+import { PortalManagerModule } from './portal-manager/portal-manager.module';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { SchoolAddonsModule } from './school-addons/school-addons.module';
     StaffCvModule,
     PlatformModule,
     SchoolAddonsModule,
+    PortalManagerModule,
   ],
   controllers: [AppController],
   providers: [
