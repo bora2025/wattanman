@@ -7,19 +7,29 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
-import { RequiresAddon } from '../school-addons/requires-addon.decorator';
+import { RequiresAddon, SkipAddonCheck } from '../school-addons/requires-addon.decorator';
 
+/**
+ * Phase 12: this controller serves two genuinely different admin features
+ * that used to share one CLASSES gate — the schedule grid itself
+ * (TIMETABLE) and the roster of schedulable/part-time teachers plus their
+ * attendance (PART_TIME_TEACHER). Split per-method below, same mechanism as
+ * ClassesController's CLASSES/STUDENT_PORTAL split (method-level
+ * @RequiresAddon overrides the class-level one via getAllAndOverride).
+ */
 @Controller('timetable')
 @UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
-@RequiresAddon('CLASSES')
+@RequiresAddon('TIMETABLE')
 export class TimetableController {
   constructor(private readonly svc: TimetableService) {}
 
-  // â”€â”€â”€ Timetable documents â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Timetable documents (prerequisite lookups, shared by both modules) ---
 
+  @SkipAddonCheck()
   @Get()
   list() { return this.svc.listTimetables(); }
 
+  @SkipAddonCheck()
   @Get(':id')
   get(@Param('id') id: string) { return this.svc.getTimetable(id); }
 
@@ -37,13 +47,13 @@ export class TimetableController {
   @Delete(':id')
   remove(@Param('id') id: string) { return this.svc.deleteTimetable(id); }
 
-  // â”€â”€â”€ Generate (Test button) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Generate (Test button) ---
 
   @Roles('ADMIN')
   @Post(':id/generate')
   generate(@Param('id') id: string) { return this.svc.generateTimetable(id); }
 
-  // â”€â”€â”€ Subjects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Subjects ---
 
   @Roles('ADMIN')
   @Post(':id/subjects')
@@ -61,7 +71,7 @@ export class TimetableController {
   @Delete('subjects/:id')
   deleteSubject(@Param('id') id: string) { return this.svc.deleteSubject(id); }
 
-  // â”€â”€â”€ Classes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Classes ---
 
   @Roles('ADMIN')
   @Post(':id/classes')
@@ -79,7 +89,7 @@ export class TimetableController {
   @Delete('classes/:id')
   deleteClass(@Param('id') id: string) { return this.svc.deleteClass(id); }
 
-  // â”€â”€â”€ Classrooms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Classrooms ---
 
   @Roles('ADMIN')
   @Post(':id/classrooms')
@@ -97,25 +107,29 @@ export class TimetableController {
   @Delete('classrooms/:id')
   deleteClassroom(@Param('id') id: string) { return this.svc.deleteClassroom(id); }
 
-  // â”€â”€â”€ Teachers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Teachers (Phase 12 — this is what "Manage Part Time Teacher" actually
+  // edits, so it's PART_TIME_TEACHER, not TIMETABLE) ---
 
+  @RequiresAddon('PART_TIME_TEACHER')
   @Roles('ADMIN')
   @Post(':id/teachers')
   createTeacher(@Param('id') timetableId: string, @Body() body: any) {
     return this.svc.createTeacher(timetableId, body);
   }
 
+  @RequiresAddon('PART_TIME_TEACHER')
   @Roles('ADMIN')
   @Put('teachers/:id')
   updateTeacher(@Param('id') id: string, @Body() body: any) {
     return this.svc.updateTeacher(id, body);
   }
 
+  @RequiresAddon('PART_TIME_TEACHER')
   @Roles('ADMIN')
   @Delete('teachers/:id')
   deleteTeacher(@Param('id') id: string) { return this.svc.deleteTeacher(id); }
 
-  // â”€â”€â”€ Lessons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Lessons ---
 
   @Roles('ADMIN')
   @Post(':id/lessons')
@@ -133,7 +147,7 @@ export class TimetableController {
   @Delete('lessons/:id')
   deleteLesson(@Param('id') id: string) { return this.svc.deleteLesson(id); }
 
-  // â”€â”€â”€ Entries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Entries ---
 
   @Roles('ADMIN')
   @Post(':id/entries')
@@ -145,13 +159,18 @@ export class TimetableController {
   @Delete('entries/:id')
   deleteEntry(@Param('id') id: string) { return this.svc.deleteEntry(id); }
 
-  // â”€â”€â”€ Teacher Attendance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Teacher Attendance (Phase 12 — PART_TIME_TEACHER, except the two
+  // self/kiosk scan endpoints which stay ungated, same reasoning as
+  // AttendanceController/card-aliases — a teacher's own scan and the
+  // WATTAMAN gate kiosk aren't "admin management") ---
 
+  @SkipAddonCheck()
   @Post('teacher-attendance/scan')
   scanQr(@Body() body: { qrCode: string; period: number }) {
     return this.svc.markTeacherAttendanceByQr(body.qrCode, body.period);
   }
 
+  @SkipAddonCheck()
   @Roles('ADMIN', 'WATTAMAN')
   @Post('teacher-attendance/wattaman-scan')
   wattamanTeacherScan(
@@ -167,17 +186,20 @@ export class TimetableController {
     );
   }
 
+  @RequiresAddon('PART_TIME_TEACHER')
   @Get('scheduled-teachers/all')
   getAllScheduledTeachers() {
     return this.svc.getAllScheduledTeachers();
   }
 
+  @RequiresAddon('PART_TIME_TEACHER')
   @Roles('ADMIN')
   @Post('teacher-attendance/mark')
   markAttendance(@Body() body: { teacherId: string; date: string; period: number; status: string }) {
     return this.svc.markTeacherAttendance(body.teacherId, body.date, body.period, body.status);
   }
 
+  @RequiresAddon('PART_TIME_TEACHER')
   @Roles('ADMIN')
   @Get(':id/teacher-attendance')
   getTeacherReport(
@@ -188,6 +210,7 @@ export class TimetableController {
     return this.svc.getTeacherAttendanceReport(timetableId, startDate, endDate);
   }
 
+  @RequiresAddon('PART_TIME_TEACHER')
   @Get(':id/teacher-attendance/monthly')
   getTeacherMonthly(
     @Param('id') timetableId: string,

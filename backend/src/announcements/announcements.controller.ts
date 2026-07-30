@@ -13,17 +13,29 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
+import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 import {
   AnnouncementsService,
   CreateAnnouncementDto,
 } from './announcements.service';
 
+/**
+ * Phase 12: only the two ADMIN-exclusive moderation actions below
+ * (listAll/remove — both unique to the Communication Hub page) are gated
+ * under CHAT. Everything else here (feed/unread-count/read, and create,
+ * which TEACHER also uses for their own announcements page) is shared
+ * across every role's own messaging/announcements experience and stays
+ * ungated on purpose — see the Phase 12 plan notes on why Chat couldn't
+ * cleanly gate the Messages half at all.
+ */
 @Controller('announcements')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
 export class AnnouncementsController {
   constructor(private svc: AnnouncementsService) {}
 
   // Admin sees all (for moderation / audit)
+  @RequiresAddon('CHAT')
   @Roles('ADMIN')
   @Get('all')
   listAll() {
@@ -66,6 +78,7 @@ export class AnnouncementsController {
     return this.svc.create(req.user.userId, body);
   }
 
+  @RequiresAddon('CHAT')
   @Roles('ADMIN')
   @Delete(':id')
   remove(@Param('id') id: string) {
