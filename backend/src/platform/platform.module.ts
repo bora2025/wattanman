@@ -8,6 +8,8 @@ import { PlatformAdminsController } from './platform-admins.controller';
 import { PlatformAdminsService } from './platform-admins.service';
 import { SchoolAddonsController } from './school-addons.controller';
 import { SchoolAddonsService } from './school-addons.service';
+import { AddonDirectoryController } from './addon-directory.controller';
+import { AddonDirectoryService } from './addon-directory.service';
 
 @Module({
   imports: [
@@ -18,7 +20,7 @@ import { SchoolAddonsService } from './school-addons.service';
       signOptions: { expiresIn: '8h' },
     }),
   ],
-  controllers: [SchoolsController, PlatformAdminsController, SchoolAddonsController],
-  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService],
+  controllers: [SchoolsController, PlatformAdminsController, SchoolAddonsController, AddonDirectoryController],
+  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService],
 })
 export class PlatformModule {}

@@ -11,7 +11,12 @@ import { apiFetch } from '../../../../../lib/api'
 interface Addon {
   addonKey: string
   label: string
-  description: string
+  description: string | null
+  category: string | null
+  icon: string | null
+  price: number | null
+  priceNote: string | null
+  retired: boolean
   billingStatus: 'PENDING' | 'ACTIVE' | 'OVERDUE' | 'CANCELLED'
   enabled: boolean
   activatedAt: string | null
@@ -59,16 +64,22 @@ function AddonCard({ addon, schoolId, onSaved }: { addon: Addon; schoolId: strin
   return (
     <div className="card p-5 space-y-4">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-slate-800">{addon.label}</span>
-            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_STYLES[addon.billingStatus]}`}>{addon.billingStatus}</span>
-            {addon.enabled && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">Feature ON</span>}
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-lg shrink-0">{addon.icon || '🧩'}</div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-slate-800">{addon.label}</span>
+              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">{addon.category}</span>}
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_STYLES[addon.billingStatus]}`}>{addon.billingStatus}</span>
+              {addon.enabled && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">Feature ON</span>}
+              {addon.retired && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200">Retired from directory</span>}
+            </div>
+            {addon.description && <p className="text-xs text-slate-500 mt-1">{addon.description}</p>}
+            {addon.price != null && <p className="text-xs font-medium text-slate-600 mt-1">${addon.price}{addon.priceNote ? ` ${addon.priceNote}` : ''}</p>}
+            {addon.activatedAt && (
+              <p className="text-[11px] text-slate-400 mt-1">Last activated {new Date(addon.activatedAt).toLocaleString()}</p>
+            )}
           </div>
-          <p className="text-xs text-slate-500 mt-1">{addon.description}</p>
-          {addon.activatedAt && (
-            <p className="text-[11px] text-slate-400 mt-1">Last activated {new Date(addon.activatedAt).toLocaleString()}</p>
-          )}
         </div>
         <button
           onClick={() => setEnabled(!enabled)}
