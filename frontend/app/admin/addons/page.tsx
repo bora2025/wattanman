@@ -24,7 +24,6 @@ function priceLabel(a: DirectoryAddon): string {
   return `$${a.price}${a.priceNote ? ` ${a.priceNote}` : ''}`
 }
 
-/** Enabled = gray (quiet, already-handled), Disabled = green (needs a look). */
 function ModuleToggle({ addon, onChanged, size = 'md' }: { addon: DirectoryAddon; onChanged: (a: DirectoryAddon) => void; size?: 'md' | 'lg' }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -58,7 +57,7 @@ function ModuleToggle({ addon, onChanged, size = 'md' }: { addon: DirectoryAddon
       <button
         onClick={toggle}
         disabled={busy}
-        className={`relative ${track} rounded-full transition-colors shrink-0 disabled:opacity-60 ${addon.enabled ? 'bg-slate-300' : 'bg-emerald-500'}`}
+        className={`relative ${track} rounded-full transition-colors shrink-0 disabled:opacity-60 ${addon.enabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
         aria-label={addon.enabled ? `Disable ${addon.name}` : `Enable ${addon.name}`}
       >
         <span className={`absolute top-0.5 ${knob} rounded-full bg-white shadow transition-transform ${addon.enabled ? slide : 'translate-x-0.5'}`} />
