@@ -6,15 +6,15 @@ import { BusService } from './bus.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { RequiresModuleGuard } from '../school-modules/requires-module.guard';
-import { RequiresModule } from '../school-modules/requires-module.decorator';
+import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
+import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
-// Phase 7 — Bus is the one module a PLATFORM_ADMIN can disable per school
-// (e.g. a school with no transport program). Gated at the API, not just
-// hidden in the nav, so a direct request can't bypass a "hidden" module.
+// Phase 9 — Bus is a free MODULE a PLATFORM_ADMIN opts a school into (e.g. a
+// school with a transport program). Gated at the API, not just hidden in the
+// nav, so a direct request can't bypass a "hidden" module.
 @Controller('bus')
-@UseGuards(JwtAuthGuard, RolesGuard, RequiresModuleGuard)
-@RequiresModule('BUS')
+@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
+@RequiresAddon('BUS')
 export class BusController {
   constructor(private busService: BusService) {}
 

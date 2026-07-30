@@ -15,17 +15,10 @@ interface SchoolDetail {
   customDomain: string | null
   status: string
   createdAt: string
-  disabledModules: string[]
   counts: { students: number; staff: number; classes: number }
 }
 
 const SCHOOL_ROOT_DOMAIN = process.env.NEXT_PUBLIC_SCHOOL_ROOT_DOMAIN || 'wattaman.app'
-
-// Mirrors backend/src/school-modules/module-keys.ts — kept short and
-// duplicated rather than shared across the two apps for one entry.
-const AVAILABLE_MODULES: { key: string; label: string; description: string }[] = [
-  { key: 'BUS', label: 'School Bus / Transport', description: 'Bus routes, stops, and live location tracking.' },
-]
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -39,13 +32,10 @@ function SchoolDetailContent() {
   const [school, setSchool] = useState<SchoolDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [tab, setTab] = useState<'overview' | 'modules' | 'danger'>('overview')
+  const [tab, setTab] = useState<'overview' | 'danger'>('overview')
 
   const [statusBusy, setStatusBusy] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
-
-  const [moduleBusyKey, setModuleBusyKey] = useState<string | null>(null)
-  const [moduleError, setModuleError] = useState('')
 
   const [reason, setReason] = useState('')
   const [impersonating, setImpersonating] = useState(false)
@@ -96,31 +86,6 @@ function SchoolDetailContent() {
       setStatusMsg(e.message || 'Failed to update status')
     } finally {
       setStatusBusy(false)
-    }
-  }
-
-  async function toggleModule(key: string, currentlyDisabled: boolean) {
-    if (!school) return
-    setModuleBusyKey(key)
-    setModuleError('')
-    const nextDisabled = currentlyDisabled
-      ? school.disabledModules.filter(k => k !== key)
-      : [...school.disabledModules, key]
-    try {
-      const res = await apiFetch(`/api/platform/schools/${school.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ disabledModules: nextDisabled }),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.message || `HTTP ${res.status}`)
-      }
-      setSchool(await res.json())
-    } catch (e: any) {
-      setModuleError(e.message || 'Failed to update module')
-    } finally {
-      setModuleBusyKey(null)
     }
   }
 
@@ -223,10 +188,10 @@ function SchoolDetailContent() {
           ) : school && (
             <>
               <div className="flex gap-1 border-b border-slate-200">
-                {(['overview', 'modules', 'danger'] as const).map(t => (
+                {(['overview', 'danger'] as const).map(t => (
                   <button key={t} onClick={() => setTab(t)}
                     className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${tab === t ? 'border-slate-700 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
-                    {t === 'overview' ? 'Overview' : t === 'modules' ? 'Modules' : 'Danger Zone'}
+                    {t === 'overview' ? 'Overview' : 'Danger Zone'}
                   </button>
                 ))}
               </div>
@@ -257,8 +222,8 @@ function SchoolDetailContent() {
 
                   <Link href={`/platform/schools/${school.id}/addons`} className="card p-5 flex items-center justify-between gap-3 hover:shadow-md transition-all">
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-700">Paid Add-ons</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">Manage billing-gated features like face recognition attendance.</p>
+                      <h3 className="text-sm font-semibold text-slate-700">Modules & Add-ons</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">Manage free modules (Attendance, Fees, etc.) and billing-gated paid features.</p>
                     </div>
                     <span className="text-slate-400">→</span>
                   </Link>
@@ -303,32 +268,6 @@ function SchoolDetailContent() {
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-
-              {tab === 'modules' && (
-                <div className="space-y-3">
-                  <p className="text-xs text-slate-500">Every module is enabled by default. Turn off ones this school doesn't use — hides the nav entry and blocks the API for that school.</p>
-                  {moduleError && <div className="text-xs text-red-600">{moduleError}</div>}
-                  {AVAILABLE_MODULES.map(m => {
-                    const isDisabled = school.disabledModules.includes(m.key)
-                    return (
-                      <div key={m.key} className="card p-4 flex items-center justify-between gap-4">
-                        <div>
-                          <div className="font-semibold text-sm text-slate-800">{m.label}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">{m.description}</div>
-                        </div>
-                        <button
-                          onClick={() => toggleModule(m.key, isDisabled)}
-                          disabled={moduleBusyKey === m.key}
-                          className={`relative w-11 h-6 rounded-full transition-colors disabled:opacity-50 ${isDisabled ? 'bg-slate-200' : 'bg-emerald-500'}`}
-                          aria-label={isDisabled ? `Enable ${m.label}` : `Disable ${m.label}`}
-                        >
-                          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${isDisabled ? 'translate-x-0.5' : 'translate-x-5'}`} />
-                        </button>
-                      </div>
-                    )
-                  })}
                 </div>
               )}
 

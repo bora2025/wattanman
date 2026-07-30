@@ -6,9 +6,12 @@ import { SalaryService } from './salary.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
+import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
 @Controller('salary')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
+@RequiresAddon('SALARY')
 export class SalaryController {
   constructor(private salaryService: SalaryService) {}
 

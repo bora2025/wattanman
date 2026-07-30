@@ -5,7 +5,6 @@ import { PrismaService } from '../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { generatePassword, isValidEmail } from '../common/identity';
 import { PLATFORM_SCHOOL_SUBDOMAIN } from '../tenancy/constants';
-import { isValidModuleKey } from '../school-modules/module-keys';
 
 const SUBDOMAIN_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const RESERVED_SUBDOMAINS = new Set([PLATFORM_SCHOOL_SUBDOMAIN, 'www', 'api', 'app']);
@@ -69,11 +68,21 @@ export class SchoolsService {
     return { ...school, counts: { students, staff, classes } };
   }
 
-  /** Create a school + its first ADMIN account in one step (the onboarding
-   * wizard's final submit). Runs while the caller is on the platform host —
-   * mode is 'unscoped' there (see PlatformScopeGuard), so nothing here can
-   * rely on ambient tenant context; every schoolId below is explicit. */
-  async create(data: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string }) {
+  /** Create a school + its first ADMIN account + its selected free modules,
+   * all in one step (the onboarding wizard's final submit). Runs while the
+   * caller is on the platform host — mode is 'unscoped' there (see
+   * PlatformScopeGuard), so nothing here can rely on ambient tenant context;
+   * every schoolId below is explicit.
+   *
+   * `moduleKeys` (Phase 9) is opt-in, not opt-out — unlike the old
+   * disabledModules array, a module is only usable if explicitly selected
+   * here (or enabled later via the per-school Modules tab). Invalid/unknown
+   * keys, or keys for a retired or paid (kind: "ADDON") listing, are
+   * silently dropped rather than rejected — this step only ever offers
+   * checkboxes sourced from the live MODULE catalog, so a mismatch here
+   * means the catalog changed between page load and submit, not a client
+   * bug worth failing the whole school creation over. */
+  async create(data: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string; moduleKeys?: string[] }) {
     const name = (data.name || '').trim();
     const subdomain = (data.subdomain || '').trim().toLowerCase();
     const adminName = (data.adminName || '').trim();
@@ -85,6 +94,11 @@ export class SchoolsService {
 
     const availability = await this.checkSubdomainAvailable(subdomain);
     if (!availability.available) throw new ConflictException(availability.reason || 'Subdomain unavailable');
+
+    const requestedKeys = (data.moduleKeys ?? []).filter(Boolean);
+    const validModules = requestedKeys.length
+      ? await this.prisma.addonDefinition.findMany({ where: { key: { in: requestedKeys }, kind: 'MODULE', isActive: true } })
+      : [];
 
     const tempPassword = generatePassword(12);
     const hashed = await bcrypt.hash(tempPassword, 12);
@@ -101,6 +115,11 @@ export class SchoolsService {
           role: 'ADMIN',
         },
       });
+      if (validModules.length > 0) {
+        await tx.schoolAddon.createMany({
+          data: validModules.map((m) => ({ schoolId: school.id, addonKey: m.key, enabled: true })),
+        });
+      }
       return { school, admin };
     });
 
@@ -111,20 +130,14 @@ export class SchoolsService {
     };
   }
 
-  async update(id: string, data: { name?: string; status?: string; disabledModules?: string[] }) {
+  async update(id: string, data: { name?: string; status?: string }) {
     const school = await this.getOne(id);
     if (data.status && !['ACTIVE', 'SUSPENDED', 'TRIAL'].includes(data.status)) {
       throw new BadRequestException('status must be one of ACTIVE, SUSPENDED, TRIAL');
     }
-    if (data.disabledModules) {
-      const invalid = data.disabledModules.filter((k) => !isValidModuleKey(k));
-      if (invalid.length > 0) {
-        throw new BadRequestException(`Unknown module key(s): ${invalid.join(', ')}`);
-      }
-    }
     return this.prisma.school.update({
       where: { id },
-      data: { name: data.name?.trim() || undefined, status: data.status, disabledModules: data.disabledModules },
+      data: { name: data.name?.trim() || undefined, status: data.status },
     });
   }
 

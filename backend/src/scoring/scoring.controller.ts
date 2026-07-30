@@ -3,9 +3,12 @@ import { ScoringService } from './scoring.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
+import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
 @Controller('scoring')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
+@RequiresAddon('EXAMS')
 export class ScoringController {
   constructor(private scoringService: ScoringService) {}
 

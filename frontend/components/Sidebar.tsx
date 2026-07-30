@@ -157,27 +157,29 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
     }
   }, [pathname]);
 
-  // Phase 7 module toggles: fetch once (not polled — a platform admin
-  // flipping a toggle mid-session is rare enough that a page refresh picking
-  // it up is fine) and filter out any nav item whose moduleKey is disabled
-  // for this school. Only fires the request at all if some item in this nav
-  // list actually uses moduleKey — most role dashboards (teacher/student/etc.)
-  // never do, so they pay zero extra cost.
+  // Phase 9 module toggles: opt-IN, not opt-out — a moduleKey-tagged nav item
+  // only shows if this school explicitly has it enabled (modules now live in
+  // the same SchoolAddon table as paid add-ons, see the multi-tenant plan's
+  // Phase 9). Fetched once (not polled — a platform admin enabling a module
+  // mid-session is rare enough that a page refresh picking it up is fine),
+  // and only fires the request at all if some item in this nav list actually
+  // uses moduleKey — most role dashboards (teacher/student/etc.) never do, so
+  // they pay zero extra cost.
   const needsModuleCheck = navItems.some(n => n.moduleKey);
-  const [disabledModules, setDisabledModules] = useState<string[]>([]);
+  const [enabledModules, setEnabledModules] = useState<string[]>([]);
   useEffect(() => {
     if (!needsModuleCheck) return;
     let active = true;
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
-    fetch(`${apiBase}/api/school-modules`, { credentials: 'include' })
+    fetch(`${apiBase}/api/school-addons`, { credentials: 'include' })
       .then(r => (r.ok ? r.json() : null))
-      .then(data => { if (active && data) setDisabledModules(data.disabledModules ?? []); })
-      .catch(() => { /* silent — worst case, a disabled module's nav item stays visible until refresh */ });
+      .then(data => { if (active && data) setEnabledModules(data.enabled ?? []); })
+      .catch(() => { /* silent — worst case, an enabled module's nav item stays hidden until refresh */ });
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [needsModuleCheck]);
   const visibleNavItems = needsModuleCheck
-    ? navItems.filter(n => !n.moduleKey || !disabledModules.includes(n.moduleKey))
+    ? navItems.filter(n => !n.moduleKey || enabledModules.includes(n.moduleKey))
     : navItems;
 
   const tabs = pickBottomTabs(visibleNavItems, bottomTabs);

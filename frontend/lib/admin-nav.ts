@@ -4,17 +4,17 @@ export const adminNav = [
   { label: 'nav.search', href: '/admin/search', icon: 'search' },
 
   // ── Academics ──
-  { label: 'nav.manageClasses', href: '/admin/classes', icon: 'book', section: 'nav.section.academics' },
-  { label: 'nav.studyYears', href: '/admin/study-years', icon: 'layers' },
-  { label: 'nav.timetable', href: '/admin/timetable', icon: 'calendar' },
-  { label: 'nav.scoring', href: '/admin/scoring', icon: 'trophy' },
-  { label: 'Examinations', href: '/admin/exams', icon: 'book' },
+  { label: 'nav.manageClasses', href: '/admin/classes', icon: 'book', section: 'nav.section.academics', moduleKey: 'CLASSES' },
+  { label: 'nav.studyYears', href: '/admin/study-years', icon: 'layers', moduleKey: 'CLASSES' },
+  { label: 'nav.timetable', href: '/admin/timetable', icon: 'calendar', moduleKey: 'CLASSES' },
+  { label: 'nav.scoring', href: '/admin/scoring', icon: 'trophy', moduleKey: 'EXAMS' },
+  { label: 'Examinations', href: '/admin/exams', icon: 'book', moduleKey: 'EXAMS' },
 
   // ── Attendance ──
-  { label: 'nav.takeAttendance', href: '/admin/camera', icon: 'camera', section: 'nav.section.attendance' },
-  { label: 'nav.officerAttendance', href: '/admin/staff-attendance', icon: 'clipboard' },
-  { label: 'nav.editAttendance', href: '/admin/attendance/edit', icon: 'edit' },
-  { label: 'nav.editOfficerAttendance', href: '/admin/staff-attendance/edit', icon: 'edit' },
+  { label: 'nav.takeAttendance', href: '/admin/camera', icon: 'camera', section: 'nav.section.attendance', moduleKey: 'ATTENDANCE' },
+  { label: 'nav.officerAttendance', href: '/admin/staff-attendance', icon: 'clipboard', moduleKey: 'ATTENDANCE' },
+  { label: 'nav.editAttendance', href: '/admin/attendance/edit', icon: 'edit', moduleKey: 'ATTENDANCE' },
+  { label: 'nav.editOfficerAttendance', href: '/admin/staff-attendance/edit', icon: 'edit', moduleKey: 'ATTENDANCE' },
 
   // ── People ──
   { label: 'nav.manageUsers', href: '/admin/users', icon: 'users', section: 'nav.section.people' },
@@ -31,9 +31,9 @@ export const adminNav = [
   { label: 'Class Registrations', href: '/admin/class-registrations', icon: 'clipboard', badgeKey: 'class-registrations' as const },
 
   // ── Finance ──
-  { label: 'Finance Dashboard', href: '/admin/budget-report', icon: 'bar-chart', section: 'Finance' },
-  { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money' },
-  { label: 'Salary Management', href: '/admin/salary', icon: 'money' },
+  { label: 'Finance Dashboard', href: '/admin/budget-report', icon: 'bar-chart', section: 'Finance', moduleKey: 'FEES' },
+  { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money', moduleKey: 'FEES' },
+  { label: 'Salary Management', href: '/admin/salary', icon: 'money', moduleKey: 'SALARY' },
 
   // ── Reports ──
   { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', section: 'nav.section.reports' },
@@ -41,10 +41,10 @@ export const adminNav = [
   { label: 'nav.teacherReports', href: '/wattaman/teacher-reports', icon: 'clipboard' },
 
   // ── Designer ──
-  { label: 'nav.cardDesigner', href: '/admin/card-designer', icon: 'design', section: 'Designer' },
-  { label: 'nav.studentCards', href: '/admin/student-cards', icon: 'id-card' },
-  { label: 'nav.staffCards', href: '/admin/staff-cards', icon: 'id-card' },
-  { label: 'Certificate', href: '/admin/certificate', icon: 'certificate' },
+  { label: 'nav.cardDesigner', href: '/admin/card-designer', icon: 'design', section: 'Designer', moduleKey: 'CARD_DESIGNER' },
+  { label: 'nav.studentCards', href: '/admin/student-cards', icon: 'id-card', moduleKey: 'CARD_DESIGNER' },
+  { label: 'nav.staffCards', href: '/admin/staff-cards', icon: 'id-card', moduleKey: 'CARD_DESIGNER' },
+  { label: 'Certificate', href: '/admin/certificate', icon: 'certificate', moduleKey: 'CARD_DESIGNER' },
 
   // ── Modules ──
   { label: 'School Bus', href: '/admin/bus', icon: 'calendar', section: 'Modules', moduleKey: 'BUS' },
@@ -67,12 +67,12 @@ export const adminNav = [
 /** Navigation for CLASS_ADMIN — limited to classes, scoring, and student attendance only. */
 export const classAdminNav = [
   // ── Academics ──
-  { label: 'nav.manageClasses', href: '/admin/classes', icon: 'book', section: 'nav.section.academics' },
-  { label: 'nav.scoring', href: '/admin/scoring', icon: 'trophy' },
+  { label: 'nav.manageClasses', href: '/admin/classes', icon: 'book', section: 'nav.section.academics', moduleKey: 'CLASSES' },
+  { label: 'nav.scoring', href: '/admin/scoring', icon: 'trophy', moduleKey: 'EXAMS' },
   { label: 'Class Registrations', href: '/admin/class-registrations', icon: 'clipboard', badgeKey: 'class-registrations' as const },
 
   // ── Attendance ──
-  { label: 'nav.takeAttendance', href: '/admin/attendance', icon: 'camera', section: 'nav.section.attendance' },
-  { label: 'nav.editAttendance', href: '/admin/attendance/edit', icon: 'edit' },
+  { label: 'nav.takeAttendance', href: '/admin/attendance', icon: 'camera', section: 'nav.section.attendance', moduleKey: 'ATTENDANCE' },
+  { label: 'nav.editAttendance', href: '/admin/attendance/edit', icon: 'edit', moduleKey: 'ATTENDANCE' },
   { label: 'nav.selfScan', href: '/employee/scan', icon: 'camera' },
 ]

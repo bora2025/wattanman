@@ -32,12 +32,12 @@ export class SchoolsController {
   }
 
   @Post()
-  create(@Body() body: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string }) {
+  create(@Body() body: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string; moduleKeys?: string[] }) {
     return this.schools.create(body);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() body: { name?: string; status?: string; disabledModules?: string[] }) {
+  update(@Param('id') id: string, @Body() body: { name?: string; status?: string }) {
     return this.schools.update(id, body);
   }
 
