@@ -137,7 +137,7 @@ export default function TeacherCoursesPage() {
   const { data: classes = [] } = useQuery({
     queryKey: ['teacher-my-classes'],
     queryFn: async () => {
-      const r = await apiFetch('/api/classes?teacherId=me')
+      const r = await apiFetch('/api/classes/mine')
       if (!r.ok) throw new Error('Failed to load classes')
       return r.json() as Promise<ClassItem[]>
     },

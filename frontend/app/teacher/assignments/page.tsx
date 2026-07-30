@@ -96,7 +96,7 @@ export default function TeacherAssignmentsPage() {
   })
   const { data: classes = [] } = useQuery({
     queryKey: ['teacher-my-classes'],
-    queryFn: async () => { const r = await apiFetch('/api/classes?teacherId=me'); if (!r.ok) throw new Error(); return r.json() as Promise<ClassItem[]> },
+    queryFn: async () => { const r = await apiFetch('/api/classes/mine'); if (!r.ok) throw new Error(); return r.json() as Promise<ClassItem[]> },
   })
 
   const saveMutation = useMutation({

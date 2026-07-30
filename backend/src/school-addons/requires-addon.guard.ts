@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../database/prisma.service';
-import { REQUIRES_ADDON_KEY } from './requires-addon.decorator';
+import { REQUIRES_ADDON_KEY, SKIP_ADDON_CHECK_KEY } from './requires-addon.decorator';
 
 /**
  * Enforces Phase 7a's paid-addon gate at the API level. No current controller
@@ -21,6 +21,10 @@ export class RequiresAddonGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    // Method-level escape hatch, checked before the class-level requirement —
+    // see SkipAddonCheck()'s own doc comment for why this exists.
+    if (this.reflector.get<boolean>(SKIP_ADDON_CHECK_KEY, context.getHandler())) return true;
+
     const requiredAddon = this.reflector.getAllAndOverride<string | undefined>(REQUIRES_ADDON_KEY, [
       context.getHandler(),
       context.getClass(),

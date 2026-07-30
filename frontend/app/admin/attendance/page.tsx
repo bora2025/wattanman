@@ -313,7 +313,8 @@ function AdminTakeAttendance() {
 
   const fetchClasses = async () => {
     try {
-      const res = await apiFetch('/api/classes')
+      // CLASS_ADMIN-only page (linked from classAdminNav) — always their own classes.
+      const res = await apiFetch('/api/classes/mine')
       if (res.ok) {
         const data = await res.json()
         setClasses(data)

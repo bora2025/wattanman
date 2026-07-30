@@ -44,7 +44,7 @@ const studentNav = [
   { label: 'Courses', href: '/student/courses', icon: 'book' },
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },
   { label: 'My Scores', href: '/student/scores', icon: 'chart' },
-  { label: 'Exams', href: '/student/exams', icon: 'clipboard' },
+  { label: 'Exams', href: '/student/exams', icon: 'clipboard', moduleKey: 'EXAMS' },
   { label: 'Messages', href: '/student/messages', icon: 'clipboard', badgeKey: 'messages' as const },
   { label: 'My Parent', href: '/student/parent', icon: 'users' },
 ];

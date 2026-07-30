@@ -59,7 +59,7 @@ export default function TeacherDashboard() {
 
   const fetchClasses = async () => {
     try {
-      const res = await apiFetch(`/api/classes?teacherId=${teacherId}`)
+      const res = await apiFetch(`/api/classes/mine`)
       const data = await res.json()
       setClasses(data)
     } catch (error) {

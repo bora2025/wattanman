@@ -57,7 +57,7 @@ export default function MyClasses() {
     try {
       const user = await getCurrentUser();
       if (!user) return;
-      const res = await apiFetch(`/api/classes?teacherId=${user.userId}`);
+      const res = await apiFetch(`/api/classes/mine`);
       if (res.ok) setClasses(await res.json());
     } catch (err) { console.error('Failed to fetch classes'); }
   };
