@@ -10,6 +10,7 @@ import { apiFetch } from '../../../../../lib/api'
 
 interface Addon {
   addonKey: string
+  kind: string
   label: string
   description: string | null
   category: string | null
@@ -34,13 +35,37 @@ const STATUS_STYLES: Record<string, string> = {
 }
 
 function AddonCard({ addon, schoolId, onSaved }: { addon: Addon; schoolId: string; onSaved: (a: Addon) => void }) {
+  const isModule = addon.kind === 'MODULE'
   const [billingStatus, setBillingStatus] = useState(addon.billingStatus)
-  const [enabled, setEnabled] = useState(addon.enabled)
   const [notes, setNotes] = useState(addon.notes ?? '')
   const [saving, setSaving] = useState(false)
+  const [toggling, setToggling] = useState(false)
   const [error, setError] = useState('')
 
-  const dirty = billingStatus !== addon.billingStatus || enabled !== addon.enabled || notes !== (addon.notes ?? '')
+  const dirty = billingStatus !== addon.billingStatus || notes !== (addon.notes ?? '')
+
+  // The switch is a toggle, not a form field — it saves the instant you click
+  // it, same as a light switch. Requiring a separate "Save" click after it
+  // looked like the button was broken (it visually flipped but nothing
+  // actually changed on the school until Save was pressed too).
+  async function toggleEnabled() {
+    setToggling(true)
+    setError('')
+    try {
+      const res = await apiFetch(`/api/platform/schools/${schoolId}/addons/${addon.addonKey}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !addon.enabled }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`)
+      onSaved({ ...addon, enabled: !addon.enabled, activatedAt: data.activatedAt ?? addon.activatedAt, activatedBy: data.activatedBy ?? addon.activatedBy })
+    } catch (e: any) {
+      setError(e.message || 'Failed to update')
+    } finally {
+      setToggling(false)
+    }
+  }
 
   async function save() {
     setSaving(true)
@@ -49,11 +74,11 @@ function AddonCard({ addon, schoolId, onSaved }: { addon: Addon; schoolId: strin
       const res = await apiFetch(`/api/platform/schools/${schoolId}/addons/${addon.addonKey}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ billingStatus, enabled, notes: notes || undefined }),
+        body: JSON.stringify({ billingStatus, notes: notes || undefined }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`)
-      onSaved({ ...addon, billingStatus, enabled, notes: notes || null, activatedAt: data.activatedAt ?? addon.activatedAt, activatedBy: data.activatedBy ?? addon.activatedBy })
+      onSaved({ ...addon, billingStatus, notes: notes || null })
     } catch (e: any) {
       setError(e.message || 'Failed to save')
     } finally {
@@ -69,8 +94,11 @@ function AddonCard({ addon, schoolId, onSaved }: { addon: Addon; schoolId: strin
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-slate-800">{addon.label}</span>
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${isModule ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                {isModule ? 'Module' : 'Paid add-on'}
+              </span>
               {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">{addon.category}</span>}
-              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_STYLES[addon.billingStatus]}`}>{addon.billingStatus}</span>
+              {!isModule && <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_STYLES[addon.billingStatus]}`}>{addon.billingStatus}</span>}
               {addon.enabled && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">Feature ON</span>}
               {addon.retired && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200">Retired from directory</span>}
             </div>
@@ -82,32 +110,37 @@ function AddonCard({ addon, schoolId, onSaved }: { addon: Addon; schoolId: strin
           </div>
         </div>
         <button
-          onClick={() => setEnabled(!enabled)}
-          className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${enabled ? 'bg-emerald-500' : 'bg-slate-200'}`}
-          aria-label={enabled ? `Disable ${addon.label}` : `Enable ${addon.label}`}
+          onClick={toggleEnabled}
+          disabled={toggling}
+          className={`relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60 ${addon.enabled ? 'bg-emerald-500' : 'bg-slate-200'}`}
+          aria-label={addon.enabled ? `Disable ${addon.label}` : `Enable ${addon.label}`}
         >
-          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${addon.enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
         </button>
       </div>
 
       {error && <div className="text-xs text-red-600">{error}</div>}
 
-      <div className="grid sm:grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Billing status</label>
-          <select value={billingStatus} onChange={e => setBillingStatus(e.target.value as Addon['billingStatus'])} className="w-full text-sm">
-            {BILLING_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Notes (invoice ref, etc.)</label>
-          <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. Invoice #4521, paid 2026-07-15" className="w-full text-sm" />
-        </div>
-      </div>
+      {!isModule && (
+        <>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Billing status</label>
+              <select value={billingStatus} onChange={e => setBillingStatus(e.target.value as Addon['billingStatus'])} className="w-full text-sm">
+                {BILLING_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Notes (invoice ref, etc.)</label>
+              <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. Invoice #4521, paid 2026-07-15" className="w-full text-sm" />
+            </div>
+          </div>
 
-      <button onClick={save} disabled={!dirty || saving} className="btn-primary text-sm px-4 py-2 rounded-lg disabled:opacity-50">
-        {saving ? 'Saving…' : 'Save'}
-      </button>
+          <button onClick={save} disabled={!dirty || saving} className="btn-primary text-sm px-4 py-2 rounded-lg disabled:opacity-50">
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </>
+      )}
     </div>
   )
 }
@@ -145,8 +178,8 @@ function AddonsContent() {
         <div className="h-14 lg:hidden" />
         <div className="page-header">
           <Link href={`/platform/schools/${id}`} className="text-xs text-slate-500 hover:text-slate-700 mb-2 inline-flex items-center gap-1">← Back to {schoolName || 'School'}</Link>
-          <h1 className="text-2xl font-bold text-slate-800">Paid Add-ons</h1>
-          <p className="text-sm text-slate-500 mt-1">Billing is manual — invoice the school outside this system, then flip it on here once paid.</p>
+          <h1 className="text-2xl font-bold text-slate-800">Modules &amp; Add-ons</h1>
+          <p className="text-sm text-slate-500 mt-1">Toggle a module on or off, or manage a paid add-on's billing. Billing is manual — invoice the school outside this system, then flip it on here once paid.</p>
         </div>
 
         <div className="page-body space-y-3">
