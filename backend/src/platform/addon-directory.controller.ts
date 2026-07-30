@@ -24,7 +24,7 @@ export class AddonDirectoryController {
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body() body: { name?: string; description?: string; category?: string; icon?: string; price?: number | null; priceNote?: string; isActive?: boolean },
+    @Body() body: { name?: string; kind?: string; description?: string; category?: string; icon?: string; price?: number | null; priceNote?: string; isActive?: boolean },
   ) {
     return this.directory.update(id, body);
   }
