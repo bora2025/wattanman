@@ -43,6 +43,8 @@ export class SchoolAddonsService {
           enabled: row?.enabled ?? false,
           activatedAt: row?.activatedAt ?? null,
           activatedBy: row?.activatedBy ?? null,
+          requestedAt: row?.enabled ? null : (row?.requestedAt ?? null),
+          requestedBy: row?.enabled ? null : (row?.requestedBy ?? null),
           notes: row?.notes ?? null,
         };
       });
@@ -86,6 +88,20 @@ export class SchoolAddonsService {
         notes: data.notes,
         ...(turningOn ? { activatedAt: new Date(), activatedBy: platformAdminId } : {}),
       },
+    });
+  }
+
+  /** The platform-admin-side reject action — clears a pending request without
+   * touching billingStatus/enabled, so a school can ask again later. */
+  async dismissRequest(schoolId: string, addonKey: string) {
+    await this.schools.getOne(schoolId);
+    const existing = await this.prisma.schoolAddon.findFirst({ where: { schoolId, addonKey } });
+    if (!existing?.requestedAt) {
+      throw new BadRequestException('No pending request to dismiss.');
+    }
+    return this.prisma.schoolAddon.update({
+      where: { id: existing.id },
+      data: { requestedAt: null, requestedBy: null },
     });
   }
 }

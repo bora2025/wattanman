@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -24,5 +24,10 @@ export class SchoolAddonsController {
     @Request() req: any,
   ) {
     return this.addons.update(schoolId, addonKey, body, req.user.userId);
+  }
+
+  @Post(':addonKey/dismiss-request')
+  dismissRequest(@Param('schoolId') schoolId: string, @Param('addonKey') addonKey: string) {
+    return this.addons.dismissRequest(schoolId, addonKey);
   }
 }

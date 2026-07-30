@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../database/database.module';
-import { SchoolAddonsReadController } from './school-addons.controller';
+import { SchoolAddonsSelfServiceController } from './school-addons.controller';
 import { RequiresAddonGuard } from './requires-addon.guard';
 
 @Module({
   imports: [DatabaseModule],
-  controllers: [SchoolAddonsReadController],
+  controllers: [SchoolAddonsSelfServiceController],
   providers: [RequiresAddonGuard],
   exports: [RequiresAddonGuard],
 })

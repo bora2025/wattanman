@@ -21,9 +21,9 @@ interface NavItem {
   /** If set, renders a section header above this item */
   section?: string;
   /** If set, displays an unread badge driven by /api/<key>/unread-count. */
-  badgeKey?: 'messages' | 'announcements' | 'class-registrations';
-  /** If set, this item is hidden when the current school has disabled that
-   * module (Phase 7's per-school module toggles — see /api/school-modules). */
+  badgeKey?: 'messages' | 'announcements' | 'class-registrations' | 'addon-requests';
+  /** If set, this item is only shown once the current school has opted into
+   * that module/add-on (Phase 9's opt-in catalog — see /api/school-addons). */
   moduleKey?: string;
 }
 
@@ -189,7 +189,8 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
   const needMessages = navItems.some(n => n.badgeKey === 'messages');
   const needAnnouncements = navItems.some(n => n.badgeKey === 'announcements');
   const needClassRegistrations = navItems.some(n => n.badgeKey === 'class-registrations');
-  const [unread, setUnread] = useState<{ messages: number; announcements: number; 'class-registrations': number }>({ messages: 0, announcements: 0, 'class-registrations': 0 });
+  const needAddonRequests = navItems.some(n => n.badgeKey === 'addon-requests');
+  const [unread, setUnread] = useState<{ messages: number; announcements: number; 'class-registrations': number; 'addon-requests': number }>({ messages: 0, announcements: 0, 'class-registrations': 0, 'addon-requests': 0 });
   useEffect(() => {
     let active = true;
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
@@ -199,6 +200,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
         if (needMessages) reqs.push(fetch(`${apiBase}/api/messages/unread-count`, { credentials: 'include' }));
         if (needAnnouncements) reqs.push(fetch(`${apiBase}/api/announcements/unread-count`, { credentials: 'include' }));
         if (needClassRegistrations) reqs.push(fetch(`${apiBase}/api/class-registrations/unread-count`, { credentials: 'include' }));
+        if (needAddonRequests) reqs.push(fetch(`${apiBase}/api/platform/addon-requests/count`, { credentials: 'include' }));
         const results = await Promise.all(reqs);
         let i = 0;
         let next = { ...unread };
@@ -211,17 +213,20 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
         if (needClassRegistrations) {
           const r = results[i++]; if (r.ok) next['class-registrations'] = (await r.json()).count ?? 0;
         }
+        if (needAddonRequests) {
+          const r = results[i++]; if (r.ok) next['addon-requests'] = (await r.json()).count ?? 0;
+        }
         if (active) setUnread(next);
       } catch { /* silent */ }
     };
-    if (needMessages || needAnnouncements || needClassRegistrations) {
+    if (needMessages || needAnnouncements || needClassRegistrations || needAddonRequests) {
       tick();
       const id = setInterval(tick, 30_000);
       return () => { active = false; clearInterval(id); };
     }
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [needMessages, needAnnouncements, needClassRegistrations]);
+  }, [needMessages, needAnnouncements, needClassRegistrations, needAddonRequests]);
 
   const handleLogout = async () => {
     try {

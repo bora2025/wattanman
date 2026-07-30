@@ -7,6 +7,29 @@ function toDelegateName(modelName: string): string {
   return modelName.charAt(0).toLowerCase() + modelName.slice(1);
 }
 
+/**
+ * update/delete/upsert's `where` is Prisma's WhereUniqueInput — either a flat
+ * scalar (`{ id }`) or one level of compound-unique nesting (`{ schoolId_addonKey:
+ * { schoolId, addonKey } }`). findFirst's WhereInput has no idea what a
+ * synthetic compound-key field name means, so passing a compound `where`
+ * straight through to the ownership-check findFirst below throws
+ * "Unknown argument". Flatten one level so the check runs on the real
+ * columns instead. Safe specifically because WhereUniqueInput (unlike a
+ * general filter) can never contain a relation filter at this position, so
+ * "nested plain object → flatten it" has no other case to collide with.
+ */
+function flattenUniqueWhere(where: Record<string, unknown>): Record<string, unknown> {
+  const flat: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(where)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      Object.assign(flat, value as Record<string, unknown>);
+    } else {
+      flat[key] = value;
+    }
+  }
+  return flat;
+}
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
@@ -137,7 +160,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         case 'delete': {
           const delegate = (this as any)[toDelegateName(modelName)];
           const found = await delegate.findFirst({
-            where: { ...(params.args.where ?? {}), schoolId },
+            where: { ...flattenUniqueWhere(params.args.where ?? {}), schoolId },
             select: { id: true },
           });
           if (!found) {
@@ -152,7 +175,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         case 'upsert': {
           const delegate = (this as any)[toDelegateName(modelName)];
           const found = await delegate.findFirst({
-            where: { ...(params.args.where ?? {}), schoolId },
+            where: { ...flattenUniqueWhere(params.args.where ?? {}), schoolId },
             select: { id: true },
           });
           if (!found) {

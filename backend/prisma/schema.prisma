@@ -582,6 +582,8 @@ model SchoolAddon {
   enabled         Boolean         @default(false)
   activatedAt     DateTime?
   activatedBy     String? // PLATFORM_ADMIN userId who last flipped `enabled`
+  requestedAt     DateTime? // set when a school ADMIN requests a paid ADDON (Phase 10) — historical, not cleared on approval
+  requestedBy     String? // that ADMIN's userId
   notes           String? // invoice ref / manual notes for the platform admin
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt

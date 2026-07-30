@@ -22,6 +22,8 @@ interface Addon {
   enabled: boolean
   activatedAt: string | null
   activatedBy: string | null
+  requestedAt: string | null
+  requestedBy: string | null
   notes: string | null
 }
 
@@ -40,9 +42,26 @@ function AddonCard({ addon, schoolId, onSaved }: { addon: Addon; schoolId: strin
   const [notes, setNotes] = useState(addon.notes ?? '')
   const [saving, setSaving] = useState(false)
   const [toggling, setToggling] = useState(false)
+  const [dismissing, setDismissing] = useState(false)
   const [error, setError] = useState('')
 
   const dirty = billingStatus !== addon.billingStatus || notes !== (addon.notes ?? '')
+  const requested = !isModule && !addon.enabled && !!addon.requestedAt
+
+  async function dismissRequest() {
+    setDismissing(true)
+    setError('')
+    try {
+      const res = await apiFetch(`/api/platform/schools/${schoolId}/addons/${addon.addonKey}/dismiss-request`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`)
+      onSaved({ ...addon, requestedAt: null, requestedBy: null })
+    } catch (e: any) {
+      setError(e.message || 'Failed to dismiss')
+    } finally {
+      setDismissing(false)
+    }
+  }
 
   // The switch is a toggle, not a form field — it saves the instant you click
   // it, same as a light switch. Requiring a separate "Save" click after it
@@ -100,12 +119,21 @@ function AddonCard({ addon, schoolId, onSaved }: { addon: Addon; schoolId: strin
               {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">{addon.category}</span>}
               {!isModule && <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_STYLES[addon.billingStatus]}`}>{addon.billingStatus}</span>}
               {addon.enabled && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">Feature ON</span>}
+              {requested && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200">Requested by school</span>}
               {addon.retired && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200">Retired from directory</span>}
             </div>
             {addon.description && <p className="text-xs text-slate-500 mt-1">{addon.description}</p>}
             {addon.price != null && <p className="text-xs font-medium text-slate-600 mt-1">${addon.price}{addon.priceNote ? ` ${addon.priceNote}` : ''}</p>}
             {addon.activatedAt && (
               <p className="text-[11px] text-slate-400 mt-1">Last activated {new Date(addon.activatedAt).toLocaleString()}</p>
+            )}
+            {requested && addon.requestedAt && (
+              <p className="text-[11px] text-amber-600 mt-1">
+                Requested {new Date(addon.requestedAt).toLocaleString()} —{' '}
+                <button onClick={dismissRequest} disabled={dismissing} className="underline hover:text-amber-800 disabled:opacity-50">
+                  {dismissing ? 'Dismissing…' : 'Dismiss request'}
+                </button>
+              </p>
             )}
           </div>
         </div>
@@ -189,9 +217,11 @@ function AddonsContent() {
               <div className="w-8 h-8 border-3 border-slate-300 border-t-slate-700 rounded-full animate-spin" />
             </div>
           ) : (
-            addons.map(a => (
-              <AddonCard key={a.addonKey} addon={a} schoolId={id} onSaved={updated => setAddons(prev => prev.map(x => x.addonKey === updated.addonKey ? updated : x))} />
-            ))
+            [...addons]
+              .sort((a, b) => Number(!!b.requestedAt && !b.enabled) - Number(!!a.requestedAt && !a.enabled))
+              .map(a => (
+                <AddonCard key={a.addonKey} addon={a} schoolId={id} onSaved={updated => setAddons(prev => prev.map(x => x.addonKey === updated.addonKey ? updated : x))} />
+              ))
           )}
         </div>
       </div>
