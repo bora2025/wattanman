@@ -31,6 +31,7 @@ export class SchoolAddonsService {
         const row = byKey.get(d.key);
         return {
           addonKey: d.key,
+          kind: d.kind,
           label: d.name,
           description: d.description,
           category: d.category,
