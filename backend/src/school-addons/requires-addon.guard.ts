@@ -2,7 +2,6 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../database/prisma.service';
 import { REQUIRES_ADDON_KEY } from './requires-addon.decorator';
-import { SchoolAddonKey } from './addon-keys';
 
 /**
  * Enforces Phase 7a's paid-addon gate at the API level. No current controller
@@ -22,7 +21,7 @@ export class RequiresAddonGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredAddon = this.reflector.getAllAndOverride<SchoolAddonKey | undefined>(REQUIRES_ADDON_KEY, [
+    const requiredAddon = this.reflector.getAllAndOverride<string | undefined>(REQUIRES_ADDON_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);

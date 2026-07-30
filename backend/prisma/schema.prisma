@@ -579,20 +579,46 @@ model PasswordResetToken {
 // explicitly, matching the plan's "manual toggle" billing model (no payment
 // gateway in this phase).
 model SchoolAddon {
-  id            String    @id @default(cuid())
-  schoolId      String
-  school        School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  addonKey      String // e.g. "FACE_RECOGNITION_ATTENDANCE" — see backend/src/school-addons/addon-keys.ts
-  billingStatus String    @default("PENDING") // PENDING | ACTIVE | OVERDUE | CANCELLED
-  enabled       Boolean   @default(false)
-  activatedAt   DateTime?
-  activatedBy   String? // PLATFORM_ADMIN userId who last flipped `enabled`
-  notes         String? // invoice ref / manual notes for the platform admin
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String          @id @default(cuid())
+  schoolId        String
+  school          School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  addonKey        String // references AddonDefinition.key, not .id — stable even if the catalog row's id changes
+  addonDefinition AddonDefinition @relation(fields: [addonKey], references: [key])
+  billingStatus   String          @default("PENDING") // PENDING | ACTIVE | OVERDUE | CANCELLED
+  enabled         Boolean         @default(false)
+  activatedAt     DateTime?
+  activatedBy     String? // PLATFORM_ADMIN userId who last flipped `enabled`
+  notes           String? // invoice ref / manual notes for the platform admin
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   @@unique([schoolId, addonKey])
   @@index([schoolId])
+}
+
+/// The add-ons "directory" (Platform tier, WordPress-plugin-directory-shaped):
+/// a platform-wide catalog a PLATFORM_ADMIN curates — create new listings,
+/// price them, retire ones no longer sold — independent of any one school.
+/// Not tenant-scoped (like School itself): this is the same catalog every
+/// school browses, not a per-school row. `isActive: false` is how "remove"
+/// works day-to-day (hides it from new browsing/enabling without breaking
+/// schools that already have it — mirrors a plugin directory delisting a
+/// plugin without uninstalling it from sites that already run it); a real
+/// SQL DELETE is only allowed when zero SchoolAddon rows reference it.
+model AddonDefinition {
+  id          String   @id @default(cuid())
+  key         String   @unique // stable identifier, e.g. "FACE_RECOGNITION_ATTENDANCE" — set at creation, not editable after
+  name        String
+  description String?
+  category    String?
+  icon        String? // a single emoji, kept simple — no file upload system
+  price       Float?
+  priceNote   String? // free text, e.g. "/month", "one-time" — billing itself stays manual (Phase 7a), this is just the listed price
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schoolAddons SchoolAddon[]
 }
 
 /// Append-only audit trail of every privileged action in the system.
