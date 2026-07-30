@@ -51,7 +51,7 @@ export const adminNav = [
   { label: 'Add-ons', href: '/admin/addons', icon: 'design' },
 
   // ── Tools ──
-  { label: 'LaTeX Editor', href: '/tools/latex-editor', icon: '∑', section: 'Tools' },
+  { label: 'LaTeX Editor', href: '/tools/latex-editor', icon: '∑', section: 'Tools', moduleKey: 'LATEX_EDITOR' },
 
   // ── Settings ──
   { label: 'nav.sessionSettings', href: '/admin/session-settings', icon: 'clock', section: 'nav.section.settings' },
