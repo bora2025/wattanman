@@ -55,4 +55,9 @@ export class SchoolsController {
   endImpersonation(@Param('id') id: string, @Request() req: any) {
     return this.schools.endImpersonation(req.user.userId, id);
   }
+
+  @Post(':id/reset-admin-password')
+  resetAdminPassword(@Param('id') id: string, @Body() body: { reason: string }, @Request() req: any) {
+    return this.schools.resetAdminPassword(req.user.userId, id, body?.reason || '');
+  }
 }
