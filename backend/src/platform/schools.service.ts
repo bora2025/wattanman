@@ -199,6 +199,50 @@ export class SchoolsService {
     return { access_token: token, school: { id: school.id, name: school.name, subdomain: school.subdomain } };
   }
 
+  /** Resets a school's admin password to a fresh, randomly-generated
+   * temporary one — the self-service replacement for what was, until now,
+   * a manual "generate a bcrypt hash and UPDATE the row by hand" operation.
+   * Same "find the school's oldest ADMIN/SUPER_ADMIN" targeting as
+   * impersonate(); if a school ever has more than one, this always resets
+   * the same (first-created) one, matching what impersonate() would log
+   * into. Mandatorily audited — this is a real account-takeover-shaped
+   * capability (Phase 2a-iv's reasoning for impersonation applies just as
+   * much here), so it gets the same reason-required, actor-logged pattern. */
+  async resetAdminPassword(platformAdminId: string, schoolId: string, reason: string) {
+    if (!reason || !reason.trim()) {
+      throw new BadRequestException('A reason is required to reset a school admin password');
+    }
+    const school = await this.getOne(schoolId);
+    const [targetAdmin, actor] = await Promise.all([
+      this.prisma.user.findFirst({
+        where: { schoolId: school.id, role: { in: ['ADMIN', 'SUPER_ADMIN'] } },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.user.findUnique({ where: { id: platformAdminId }, select: { name: true, email: true } }),
+    ]);
+    if (!targetAdmin) {
+      throw new NotFoundException('This school has no admin account to reset');
+    }
+
+    const tempPassword = generatePassword(12);
+    const hashed = await bcrypt.hash(tempPassword, 12);
+    await this.prisma.user.update({ where: { id: targetAdmin.id }, data: { password: hashed } });
+
+    await this.audit.log({
+      action: 'PASSWORD_RESET',
+      resource: 'SCHOOL',
+      resourceId: school.id,
+      resourceLabel: school.name,
+      actorId: platformAdminId,
+      actorName: actor?.name ?? null,
+      actorEmail: actor?.email ?? null,
+      actorRole: 'PLATFORM_ADMIN',
+      metadata: { reason: reason.trim(), targetUserId: targetAdmin.id, targetUserEmail: targetAdmin.email },
+    });
+
+    return { email: targetAdmin.email, temporaryPassword: tempPassword };
+  }
+
   async endImpersonation(platformAdminId: string, schoolId: string) {
     const [school, actor] = await Promise.all([
       this.prisma.school.findUnique({ where: { id: schoolId } }),

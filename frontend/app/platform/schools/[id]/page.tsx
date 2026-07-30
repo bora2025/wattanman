@@ -51,6 +51,12 @@ function SchoolDetailContent() {
   const [impersonating, setImpersonating] = useState(false)
   const [impersonateError, setImpersonateError] = useState('')
 
+  const [resetReason, setResetReason] = useState('')
+  const [resetting, setResetting] = useState(false)
+  const [resetError, setResetError] = useState('')
+  const [resetResult, setResetResult] = useState<{ email: string; temporaryPassword: string } | null>(null)
+  const [resetCopied, setResetCopied] = useState(false)
+
   const [confirmName, setConfirmName] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
@@ -138,6 +144,35 @@ function SchoolDetailContent() {
     } finally {
       setImpersonating(false)
     }
+  }
+
+  async function handleResetPassword() {
+    if (!school || !resetReason.trim()) return
+    setResetting(true)
+    setResetError('')
+    try {
+      const res = await apiFetch(`/api/platform/schools/${school.id}/reset-admin-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: resetReason.trim() }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`)
+      setResetResult({ email: data.email, temporaryPassword: data.temporaryPassword })
+      setResetReason('')
+    } catch (e: any) {
+      setResetError(e.message || 'Failed to reset password')
+    } finally {
+      setResetting(false)
+    }
+  }
+
+  function copyResetPassword() {
+    if (!resetResult) return
+    navigator.clipboard?.writeText(resetResult.temporaryPassword).then(() => {
+      setResetCopied(true)
+      setTimeout(() => setResetCopied(false), 2000)
+    })
   }
 
   async function handleDelete() {
@@ -241,6 +276,32 @@ function SchoolDetailContent() {
                       </button>
                     </div>
                     {school.status === 'SUSPENDED' && <p className="text-xs text-amber-600 mt-2">Reactivate the school before impersonating — a suspended school blocks all access, including this.</p>}
+                  </div>
+
+                  <div className="card p-5">
+                    <h3 className="text-sm font-semibold text-slate-700 mb-1">Reset admin password</h3>
+                    <p className="text-xs text-slate-500 mb-3">Generates a new temporary password for this school's admin account (the same one used for impersonation) and shows it once. Audit-logged with the reason you provide.</p>
+                    {resetError && <div className="text-xs text-red-600 mb-2">{resetError}</div>}
+                    {resetResult ? (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
+                        <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">Temporary password — shown once</p>
+                        <div className="text-sm text-slate-700"><span className="text-slate-500">Email:</span> {resetResult.email}</div>
+                        <div className="flex items-center gap-2">
+                          <code className="bg-white border border-amber-200 rounded px-2 py-1 text-sm font-mono">{resetResult.temporaryPassword}</code>
+                          <button onClick={copyResetPassword} className="btn-outline btn-sm">{resetCopied ? 'Copied!' : 'Copy'}</button>
+                        </div>
+                        <button onClick={() => setResetResult(null)} className="text-xs text-amber-700 underline mt-1">Reset again</button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input type="text" value={resetReason} onChange={e => setResetReason(e.target.value)}
+                          placeholder="Reason (required — e.g. admin lost their password)" className="flex-1" />
+                        <button onClick={handleResetPassword} disabled={!resetReason.trim() || resetting}
+                          className="btn-outline text-sm px-4 py-2 rounded-lg whitespace-nowrap disabled:opacity-50">
+                          {resetting ? 'Resetting…' : '🔑 Reset Password'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
