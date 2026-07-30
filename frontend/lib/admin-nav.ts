@@ -23,7 +23,7 @@ export const adminNav = [
   { label: 'Parent Portal', href: '/admin/parents', icon: 'users' },
   { label: 'nav.manageHub', href: '/admin/manage-hub', icon: 'briefcase' },
   { label: 'nav.manageOfficer', href: '/admin/employees', icon: 'briefcase' },
-  { label: 'nav.manageTeachers', href: '/wattaman/scheduled-teacher', icon: 'graduation' },
+  { label: 'nav.manageTeachers', href: '/wattaman/scheduled-teacher', icon: 'graduation', moduleKey: 'CLASSES' },
 
   // ── Communication ──
   { label: 'Communication Hub', href: '/admin/communication', icon: 'clipboard', section: 'Communication', badgeKey: 'messages' as const },
@@ -38,7 +38,7 @@ export const adminNav = [
   // ── Reports ──
   { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', section: 'nav.section.reports' },
   { label: 'nav.officerReport', href: '/admin/staff-reports', icon: 'bar-chart' },
-  { label: 'nav.teacherReports', href: '/wattaman/teacher-reports', icon: 'clipboard' },
+  { label: 'nav.teacherReports', href: '/wattaman/teacher-reports', icon: 'clipboard', moduleKey: 'CLASSES' },
 
   // ── Designer ──
   { label: 'nav.cardDesigner', href: '/admin/card-designer', icon: 'design', section: 'Designer', moduleKey: 'CARD_DESIGNER' },

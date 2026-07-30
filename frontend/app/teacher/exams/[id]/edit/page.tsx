@@ -38,7 +38,8 @@ function EditExamPageContent() {
 
   const { data: classes = [] as ExamClassItem[] } = useQuery<ExamClassItem[]>({
     queryKey: ['classes-list'],
-    queryFn: async () => { const r = await apiFetch('/api/classes'); if (!r.ok) throw new Error(); return r.json() },
+    // ADMIN browses every class; a teacher only ever sees their own.
+    queryFn: async () => { const r = await apiFetch(isAdmin ? '/api/classes' : '/api/classes/mine'); if (!r.ok) throw new Error(); return r.json() },
   })
 
   const { data: initialData, isLoading, isError } = useQuery<ExamEditInitialData>({

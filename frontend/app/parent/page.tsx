@@ -22,7 +22,7 @@ const parentNav = [
   { label: 'Grades', href: '/parent/grades', icon: 'chart' },
   { label: 'Messages', href: '/parent/messages', icon: '💬', badgeKey: 'messages' as const },
   { label: 'Fees', href: '/parent/fees', icon: 'money' },
-  { label: 'Bus Tracker', href: '/parent/bus', icon: 'globe' },
+  { label: 'Bus Tracker', href: '/parent/bus', icon: 'globe', moduleKey: 'BUS' },
 ]
 
 export default function ParentDashboard() {

@@ -33,7 +33,7 @@ export default function TeacherGradebookPage() {
 
   const { data: classes = [] as ClassItem[] } = useQuery<ClassItem[]>({
     queryKey: ['classes-list'],
-    queryFn: async () => { const r = await apiFetch('/api/classes'); if (!r.ok) throw new Error(); return r.json() },
+    queryFn: async () => { const r = await apiFetch('/api/classes/mine'); if (!r.ok) throw new Error(); return r.json() },
   })
 
   const { data: gradebook, isLoading, isError, refetch } = useQuery<GradebookData>({

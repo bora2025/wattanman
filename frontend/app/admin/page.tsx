@@ -96,6 +96,18 @@ function DashboardContent() {
   const [density, setDensity] = useState<'comfortable'|'compact'>('comfortable')
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [agoStr, setAgoStr] = useState('')
+  // Phase 9: which modules this school has opted into — drives the Quick
+  // Actions grid filter below (Sidebar.tsx fetches this same endpoint
+  // independently for its own nav filtering).
+  const [enabledModules, setEnabledModules] = useState<string[]>([])
+  useEffect(() => {
+    let active = true
+    apiFetch('/api/school-addons')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => { if (active && data) setEnabledModules(data.enabled ?? []) })
+      .catch(() => { /* silent — worst case a gated quick action stays hidden until refresh */ })
+    return () => { active = false }
+  }, [])
   // Per-class real-time progress
   interface ClassProgressRow { classId: string; className: string; total: number; present: number; late: number; absent: number; permission: number; scanned: number; pctPresent: number; pctScanned: number }
   const [classProgress, setClassProgress] = useState<ClassProgressRow[]>([])
@@ -432,17 +444,22 @@ function DashboardContent() {
   const selectedDateObj = selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date()
   const isToday = selectedDate === todayCambodia()
 
-  // Quick Action shortcuts — most common admin tasks
-  const quickActions: { label: string; href: string; emoji: string; color: string }[] = [
-    { label: 'Take Attendance', href: '/admin/camera',                emoji: '📷', color: 'from-purple-500 to-fuchsia-500' },
-    { label: 'Edit Attendance', href: '/admin/attendance/edit',       emoji: '✏️', color: 'from-indigo-500 to-blue-500' },
+  // Quick Action shortcuts — most common admin tasks. moduleKey mirrors the
+  // same gating as admin-nav.ts/Sidebar.tsx (Phase 9) — this grid is a
+  // separate hardcoded list from the sidebar nav, so it needs its own filter
+  // against the same enabledModules data, or a school without a module still
+  // gets a dead shortcut card straight to its (403'ing) page.
+  const quickActions: { label: string; href: string; emoji: string; color: string; moduleKey?: string }[] = [
+    { label: 'Take Attendance', href: '/admin/camera',                emoji: '📷', color: 'from-purple-500 to-fuchsia-500', moduleKey: 'ATTENDANCE' },
+    { label: 'Edit Attendance', href: '/admin/attendance/edit',       emoji: '✏️', color: 'from-indigo-500 to-blue-500', moduleKey: 'ATTENDANCE' },
     { label: 'Reports',         href: '/admin/reports',               emoji: '📊', color: 'from-emerald-500 to-teal-500' },
     { label: 'Staff Reports',   href: '/admin/staff-reports',         emoji: '👥', color: 'from-cyan-500 to-sky-500' },
-    { label: 'Classes',         href: '/admin/classes',               emoji: '🏫', color: 'from-amber-500 to-orange-500' },
+    { label: 'Classes',         href: '/admin/classes',               emoji: '🏫', color: 'from-amber-500 to-orange-500', moduleKey: 'CLASSES' },
     { label: 'Holidays',        href: '/admin/holidays',              emoji: '🎉', color: 'from-rose-500 to-pink-500' },
     { label: 'Sessions',        href: '/admin/session-settings',      emoji: '⏰', color: 'from-violet-500 to-purple-500' },
     { label: 'Notifications',   href: '/admin/notifications',         emoji: '🔔', color: 'from-yellow-500 to-amber-500' },
   ]
+  const visibleQuickActions = quickActions.filter(a => !a.moduleKey || enabledModules.includes(a.moduleKey))
 
   // Spacing scale per density
   const sp = density === 'compact' ? 'space-y-3' : 'space-y-5'
@@ -578,7 +595,7 @@ function DashboardContent() {
         <div className={`page-body ${sp}`}>
           {/* ── Quick Actions ── */}
           <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
-            {quickActions.map(a => (
+            {visibleQuickActions.map(a => (
               <Link key={a.href} href={a.href}
                 className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200/70 hover:border-transparent hover:shadow-lg active:scale-[0.97] transition-all p-3 sm:p-4 flex flex-col items-center justify-center gap-1.5 text-center">
                 <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br ${a.color}`} aria-hidden />

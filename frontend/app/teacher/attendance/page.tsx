@@ -287,7 +287,7 @@ function TakeAttendance() {
       try {
         const user = await getCurrentUser()
         if (!user) return
-        const res = await apiFetch(`/api/classes?teacherId=${user.userId}`)
+        const res = await apiFetch(`/api/classes/mine`)
         if (res.ok) {
           const data = await res.json()
           setTeacherClasses(data)

@@ -5,7 +5,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
-import { RequiresAddon } from '../school-addons/requires-addon.decorator';
+import { RequiresAddon, SkipAddonCheck } from '../school-addons/requires-addon.decorator';
 
 @Controller('classes')
 @UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
@@ -19,6 +19,15 @@ export class ClassesController {
     return this.classesService.createClass(data);
   }
 
+  /**
+   * Listing classes is exempt from @RequiresAddon('CLASSES') — it's the
+   * grouping mechanism the "Student Portal" (core, never-gated people
+   * management — admin/students/page.tsx) uses to pick which roster to view,
+   * and the prerequisite lookup for Attendance/Exams/Gradebook/Reports.
+   * Only actually creating/editing/deleting a class (the real "class
+   * management" feature) stays gated below.
+   */
+  @SkipAddonCheck()
   @Get()
   async getClasses(
     @Request() req: any,
@@ -34,6 +43,24 @@ export class ClassesController {
     return this.classesService.getClasses(resolvedTeacherId, studyYearId);
   }
 
+  /**
+   * "Which classes am I in / do I teach" — a roster/identity lookup, not
+   * class management, so it's deliberately exempt from @RequiresAddon('CLASSES')
+   * above. Attendance, Exams, Gradebook, and Reports for teachers/class-admins
+   * all resolve this first before doing anything module-specific; gating it
+   * meant disabling Classes broke those other, independently-enabled modules.
+   * Always scoped to the caller — never accepts an id for someone else.
+   */
+  @SkipAddonCheck()
+  @Get('mine')
+  async getMyClasses(@Request() req: any, @Query('studyYearId') studyYearId?: string) {
+    if (req?.user?.role === 'CLASS_ADMIN') {
+      return this.classesService.getClassesByAdmin(req.user.userId, studyYearId);
+    }
+    return this.classesService.getClasses(req?.user?.userId, studyYearId);
+  }
+
+  @SkipAddonCheck()
   @Roles('ADMIN', 'CLASS_ADMIN')
   @Get('parents')
   async listParents() {
@@ -46,6 +73,13 @@ export class ClassesController {
     return this.classesService.updateClass(id, data);
   }
 
+  // ─── Student roster (core people management, not "class management") ─────
+  // Everything below is scoped by classId in the URL but is genuinely
+  // student CRUD, not the Classes module's own feature — exempt so
+  // admin/students/page.tsx ("Student Portal", never gate-able per plan)
+  // keeps working regardless of whether a school has Classes enabled.
+
+  @SkipAddonCheck()
   @Get(':id/students')
   async getStudentsInClass(@Param('id') classId: string) {
     return this.classesService.getStudentsInClass(classId);
@@ -56,12 +90,14 @@ export class ClassesController {
    * Query: ?ids=classId1,classId2,...
    * Returns: { [classId]: Student[] }
    */
+  @SkipAddonCheck()
   @Get('students/batch')
   async getStudentsByClasses(@Query('ids') ids?: string) {
     const classIds = (ids || '').split(',').map(s => s.trim()).filter(Boolean);
     return this.classesService.getStudentsByClasses(classIds);
   }
 
+  @SkipAddonCheck()
   @Roles('ADMIN', 'CLASS_ADMIN', 'TEACHER')
   @Patch(':classId/students/:studentId')
   async updateStudent(
@@ -72,12 +108,14 @@ export class ClassesController {
     return this.classesService.updateStudent(studentId, data);
   }
 
+  @SkipAddonCheck()
   @Roles('ADMIN', 'CLASS_ADMIN')
   @Post(':id/students')
   async addStudentToClass(@Param('id') classId: string, @Body() data: { studentId: string }) {
     return this.classesService.addStudentToClass(classId, data.studentId);
   }
 
+  @SkipAddonCheck()
   @Roles('ADMIN', 'CLASS_ADMIN')
   @Post(':id/students/bulk-csv')
   @UseInterceptors(FileInterceptor('file'))
@@ -88,24 +126,29 @@ export class ClassesController {
     return this.classesService.bulkAddStudentsFromCsv(classId, file.buffer);
   }
 
+  // ─── Class management (the actual gated feature) ──────────────────────────
+
   @Roles('ADMIN', 'CLASS_ADMIN')
   @Delete(':id')
   async deleteClass(@Param('id') id: string) {
     return this.classesService.deleteClass(id);
   }
 
+  @SkipAddonCheck()
   @Roles('ADMIN', 'CLASS_ADMIN')
   @Post('cleanup-orphaned-students')
   async cleanupOrphanedStudents() {
     return this.classesService.cleanupOrphanedStudents();
   }
 
+  @SkipAddonCheck()
   @Roles('ADMIN', 'CLASS_ADMIN')
   @Delete(':id/students/:studentId')
   async removeStudentFromClass(@Param('id') classId: string, @Param('studentId') studentId: string) {
     return this.classesService.removeStudentFromClass(classId, studentId);
   }
 
+  @SkipAddonCheck()
   @Get(':id/available-students')
   async getAvailableStudents(@Param('id') classId: string) {
     return this.classesService.getAvailableStudents(classId);
