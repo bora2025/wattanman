@@ -48,7 +48,9 @@ export const adminNav = [
 
   // ── Modules ──
   { label: 'School Bus', href: '/admin/bus', icon: 'calendar', section: 'Modules', moduleKey: 'BUS' },
-  { label: 'Add-ons', href: '/admin/addons', icon: 'design' },
+
+  // ── Add-ons ──
+  { label: 'Add-ons', href: '/admin/addons', icon: 'design', section: 'Add-ons' },
 
   // ── Tools ──
   { label: 'LaTeX Editor', href: '/tools/latex-editor', icon: '∑', section: 'Tools', moduleKey: 'LATEX_EDITOR' },
