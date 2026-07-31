@@ -29,15 +29,42 @@
   --radius-btn: 12px;
 }
 
+/* Dark-mode overrides — see lib/theme.tsx for how the `dark` class on <html>
+   is controlled. Re-defining these variables re-themes every component below
+   that already reads from them (section titles, form labels, stat cards,
+   the mobile "More" drawer's active-nav background, etc.) with no per-class
+   edits needed. */
+.dark {
+  --color-primary-light: rgba(0, 201, 167, 0.16);
+  --color-card-border: rgba(0, 201, 167, 0.28);
+  --color-text: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-light: #64748B;
+  --color-input-bg: #1E293B;
+  --color-input-border: #334155;
+  --color-icon: #2DD4BF;
+  --glass-bg: rgba(15, 23, 42, 0.72);
+  --glass-border: rgba(51, 65, 85, 0.55);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
 @layer base {
   body {
-    @apply text-slate-800 antialiased;
+    @apply text-slate-800 dark:text-slate-100 antialiased;
     /* Default body bg — individual pages override via their wrapper */
     background: #ffffff;
+  }
+  .dark body {
+    background: #0F172A;
   }
   @screen lg {
     body {
       background: #ffffff;
+    }
+    .dark body {
+      background: #0F172A;
     }
   }
 
@@ -73,9 +100,9 @@
   input[type="number"],
   textarea,
   select {
-    @apply w-full px-5 py-3 rounded-full text-base bg-white transition-colors duration-150
+    @apply w-full px-5 py-3 rounded-full text-base bg-white dark:text-slate-100 transition-colors duration-150
       focus:outline-none focus:ring-2 focus:ring-offset-0
-      placeholder:text-slate-400;
+      placeholder:text-slate-400 dark:placeholder:text-slate-500;
     font-size: 16px;
     border: 1px solid var(--color-input-border);
     background-color: var(--color-input-bg);
@@ -104,8 +131,20 @@
     input[type="number"],
     textarea,
     select {
-      @apply py-2 px-3 rounded-lg border-slate-300;
+      @apply py-2 px-3 rounded-lg border-slate-300 dark:border-slate-600;
       background-color: #fff;
+    }
+    .dark input[type="text"],
+    .dark input[type="email"],
+    .dark input[type="password"],
+    .dark input[type="search"],
+    .dark input[type="url"],
+    .dark input[type="tel"],
+    .dark input[type="date"],
+    .dark input[type="number"],
+    .dark textarea,
+    .dark select {
+      background-color: #1E293B;
     }
     input[type="text"]:focus,
     input[type="email"]:focus,
@@ -146,15 +185,18 @@
 @layer components {
   /* ── Card — glassmorphism on mobile, clean on desktop ── */
   .card {
-    @apply bg-white;
+    @apply bg-white dark:bg-slate-900;
     border-radius: var(--radius-card);
     border: 1px solid var(--color-card-border);
     box-shadow: var(--shadow-card);
   }
   @screen lg {
     .card {
-      @apply rounded-2xl border-slate-200/80;
+      @apply rounded-2xl border-slate-200/80 dark:border-slate-700/80;
       box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .dark .card {
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
     }
   }
   .card-hover {
@@ -204,7 +246,7 @@
   }
   /* Card designer context menu item */
   .ctx-item {
-    @apply w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors text-left;
+    @apply w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left;
   }
   .btn-success {
     @apply btn bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500 shadow-sm;
@@ -216,15 +258,15 @@
     @apply btn bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500 shadow-sm;
   }
   .btn-ghost {
-    @apply btn text-slate-600 hover:bg-slate-100 focus:ring-slate-400;
+    @apply btn text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 focus:ring-slate-400;
   }
   .btn-outline {
-    @apply btn border text-slate-700 hover:bg-slate-50;
+    @apply btn border text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800;
     border-color: var(--color-input-border);
   }
   @screen lg {
     .btn-outline {
-      @apply border-slate-300 focus:ring-indigo-500;
+      @apply border-slate-300 dark:border-slate-600 focus:ring-indigo-500;
     }
   }
   .btn-sm {
@@ -240,25 +282,25 @@
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
   .badge-green {
-    @apply badge bg-emerald-100 text-emerald-800;
+    @apply badge bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300;
   }
   .badge-red {
-    @apply badge bg-red-100 text-red-800;
+    @apply badge bg-red-100 dark:bg-red-950/50 text-red-800 dark:text-red-300;
   }
   .badge-yellow {
-    @apply badge bg-amber-100 text-amber-800;
+    @apply badge bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300;
   }
   .badge-blue {
-    @apply badge bg-indigo-100 text-indigo-800;
+    @apply badge bg-indigo-100 dark:bg-indigo-950/50 text-indigo-800 dark:text-indigo-300;
   }
   .badge-gray {
-    @apply badge bg-slate-100 text-slate-700;
+    @apply badge bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300;
   }
   .badge-teal {
-    @apply badge bg-teal-100 text-teal-800;
+    @apply badge bg-teal-100 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300;
   }
   .badge-purple {
-    @apply badge bg-purple-100 text-purple-800;
+    @apply badge bg-purple-100 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300;
   }
 
   /* ── Page shell — mobile: teal bg, bottom nav space ── */
@@ -287,7 +329,7 @@
   }
   @screen lg {
     .page-header {
-      @apply bg-white border-b border-slate-200;
+      @apply bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700;
     }
   }
   .page-body {
@@ -317,20 +359,23 @@
     @apply w-full;
   }
   .table-container thead {
-    @apply bg-slate-50 border-b border-slate-200;
+    @apply bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700;
   }
   .table-container th {
-    @apply px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap;
+    @apply px-3 sm:px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap;
   }
   .table-container td {
-    @apply px-3 sm:px-4 py-3 sm:py-3.5 text-sm text-slate-700;
+    @apply px-3 sm:px-4 py-3 sm:py-3.5 text-sm text-slate-700 dark:text-slate-200;
   }
   .table-container tbody tr {
-    @apply border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors;
+    @apply border-b border-slate-100 dark:border-slate-800 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors;
   }
 
   .table-container tbody tr:nth-child(odd) {
     background: rgba(248, 250, 252, 0.45);
+  }
+  .dark .table-container tbody tr:nth-child(odd) {
+    background: rgba(30, 41, 59, 0.4);
   }
 
   /* ── Avatar — mobile: teal tint ── */
@@ -341,7 +386,7 @@
   }
   @screen lg {
     .avatar {
-      @apply bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-600;
+      @apply bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-600 dark:from-indigo-900 dark:to-indigo-800 dark:text-indigo-300;
     }
   }
   .avatar-sm { @apply w-8 h-8 text-xs; }
@@ -469,7 +514,7 @@
 
   /* ── Mobile-app style action card ── */
   .action-card-mobile {
-    @apply flex flex-col items-center justify-center p-3 bg-white;
+    @apply flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-900;
     border-radius: 14px;
     border: 1.5px dashed var(--color-card-border);
     min-height: 80px;
@@ -509,10 +554,18 @@
     border: 1px solid rgba(255, 255, 255, 0.8);
     box-shadow: 0 8px 22px rgba(15, 118, 110, 0.12);
   }
+  .dark .mobile-topbar {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.8);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+  }
 
   .mobile-bottomnav-wrap {
     @apply fixed bottom-0 left-0 right-0 z-40 px-3;
     background: linear-gradient(180deg, rgba(238, 255, 247, 0) 0%, rgba(238, 255, 247, 0.9) 30%, rgba(238, 255, 247, 1) 100%);
+  }
+  .dark .mobile-bottomnav-wrap {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.9) 30%, rgba(15, 23, 42, 1) 100%);
   }
   .mobile-bottomnav {
     @apply flex items-center justify-around px-2 py-2 rounded-2xl;
@@ -521,6 +574,11 @@
     backdrop-filter: blur(10px);
     border: 1px solid rgba(226, 232, 240, 0.9);
     box-shadow: 0 10px 28px rgba(2, 132, 199, 0.14);
+  }
+  .dark .mobile-bottomnav {
+    background: rgba(15, 23, 42, 0.92);
+    border: 1px solid rgba(51, 65, 85, 0.9);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
   }
   .mobile-tab-btn {
     @apply flex flex-col items-center justify-center flex-1 relative transition-all duration-200;
@@ -547,10 +605,10 @@
 
   /* ── Timetable utility classes ── */
   .label-sm {
-    @apply block text-xs font-semibold text-gray-600 mb-1;
+    @apply block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1;
   }
   .input-field {
-    @apply w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white;
+    @apply w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:text-slate-100;
   }
 }
 

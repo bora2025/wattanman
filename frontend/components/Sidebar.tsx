@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../lib/i18n';
-import { iconMap, IconGlobe, IconLogout } from './Icons';
+import { useTheme } from '../lib/theme';
+import { iconMap, IconGlobe, IconLogout, IconSun, IconMoon } from './Icons';
 import InstallAppButton from './InstallAppButton';
 
 /** Renders an icon: if `key` maps to an SVG component, uses it; otherwise falls back to text/emoji. */
@@ -138,6 +139,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
   const [showMore, setShowMore] = useState(false);
   const colors = colorMap[accentColor] || colorMap.indigo;
   const { lang, setLang, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const navRef = useRef<HTMLElement>(null);
 
   // Scroll the active nav item into view whenever the page changes
@@ -241,8 +243,16 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
           <div className="flex items-center gap-2">
           <InstallAppButton variant="compact" />
           <button
+            onClick={toggleTheme}
+            className="w-10 h-10 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur flex items-center justify-center shadow-sm ring-1 ring-white/70 dark:ring-slate-600/70"
+            style={{ color: 'var(--color-icon)' }}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
+          </button>
+          <button
             onClick={() => setLang(lang === 'en' ? 'kh' : 'en')}
-            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm ring-1 ring-white/70"
+            className="w-10 h-10 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur flex items-center justify-center shadow-sm ring-1 ring-white/70 dark:ring-slate-600/70"
             style={{ color: 'var(--color-icon)' }}
             aria-label="Language"
           >
@@ -250,7 +260,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
           </button>
           <button
             onClick={handleLogout}
-            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm ring-1 ring-white/70"
+            className="w-10 h-10 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur flex items-center justify-center shadow-sm ring-1 ring-white/70 dark:ring-slate-600/70"
             style={{ color: 'var(--color-icon)' }}
             aria-label="Logout"
           >
@@ -305,7 +315,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
       {collapsed && showMore && (
         <>
           <div className="lg:hidden fixed inset-0 bg-black/40 z-50" onClick={() => { setCollapsed(false); setShowMore(false); }} />
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl max-h-[80vh] overflow-y-auto" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xl max-h-[80vh] overflow-y-auto" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
             <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--color-input-border)' }}>
               <h2 className="font-bold text-lg" style={{ color: 'var(--color-text)' }}>{t('common.more') || 'More'}</h2>
               <button
@@ -348,7 +358,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-1/2 rounded-r-full"
                           style={{ background: 'var(--color-primary)' }} />
                       )}
-                      {isChild && <span className="absolute left-3 top-0 bottom-0 w-px bg-gray-200" />}
+                      {isChild && <span className="absolute left-3 top-0 bottom-0 w-px bg-gray-200 dark:bg-slate-700" />}
                       <NavIcon icon={item.icon} size={isChild ? 18 : 22} />
                       <span className={isChild ? 'text-[13px]' : ''}>{t(item.label)}</span>
                     </Link>
@@ -501,6 +511,13 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
         {/* Bottom — compact, icon-only regardless of expand state */}
         <div className={`px-2 py-2 border-t border-white/10 flex items-center gap-0.5 ${sidebarOpen ? 'justify-center' : 'flex-col'}`}>
           <InstallAppButton variant="icon" className={`${colors.text} hover:bg-white/10`} />
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center ${colors.text} hover:bg-white/10 transition-colors`}
+          >
+            {theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
+          </button>
           <button
             onClick={() => setLang(lang === 'en' ? 'kh' : 'en')}
             title={lang === 'en' ? 'ភាសាខ្មែរ' : 'English'}
