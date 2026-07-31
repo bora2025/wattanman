@@ -7,6 +7,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -162,6 +163,7 @@ function TimeOffEditor({ rules, onChange }: { rules: TimeOffRule[]; onChange: (r
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function TimetablePage() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage()
   const DAY_LABELS = [t('timetable.mon'), t('timetable.tue'), t('timetable.wed'), t('timetable.thu'), t('timetable.fri'), t('timetable.sat'), t('timetable.sun')]
   const WIZARD_STEPS = [t('timetable.schoolInfo'), t('timetable.subjects'), t('timetable.classes'), t('timetable.classrooms'), t('timetable.teachersContracts')]
@@ -916,7 +918,7 @@ export default function TimetablePage() {
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
       <div className="flex min-h-screen lg:h-screen bg-gray-100 dark:bg-slate-800 print:bg-white print:h-auto print:block pt-14 lg:pt-0 pb-[72px] lg:pb-0">
-        <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor={accentColor} />
         <div className="flex-1 flex flex-col overflow-hidden print:hidden">
           {/* Ribbon Toolbar */}
           <div className="bg-white dark:bg-slate-900 border-b-2 border-indigo-100 dark:border-indigo-900 select-none">

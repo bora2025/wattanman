@@ -6,6 +6,7 @@ import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface Department {
   id: string
@@ -54,6 +55,7 @@ function normalizePhotoUrl(url: string): string {
 }
 
 export default function ManageEmployees() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage()
   const getRoleLabel = (role: string) => t('role.' + role.toLowerCase()) || role
   const [users, setUsers] = useState<User[]>([])
@@ -324,7 +326,7 @@ export default function ManageEmployees() {
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
-      <Sidebar title="Admin" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
 
       <main className="flex-1 lg:ml-0">
         <div className="lg:hidden h-14" />

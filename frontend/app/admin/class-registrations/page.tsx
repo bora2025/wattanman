@@ -8,6 +8,7 @@ import Sidebar from '../../../components/Sidebar'
 import ConfirmModal from '../../../components/ConfirmModal'
 import { adminNav, classAdminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface ClassRegistrationItem {
   id: string
@@ -53,6 +54,7 @@ interface ClassRegistrationField {
 }
 
 export default function AdminClassRegistrationsPage() {
+  const { accentColor } = useAccentColor()
   const qc = useQueryClient()
   const [tab, setTab] = useState<Tab>('PENDING')
   const [view, setView] = useState<View>('requests')
@@ -102,7 +104,7 @@ export default function AdminClassRegistrationsPage() {
   return (
     <AuthGuard requiredRole="CLASS_ADMIN">
       <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
-        <Sidebar title="Admin" subtitle="Portal" navItems={isClassAdmin ? classAdminNav : adminNav} accentColor="indigo" />
+        <Sidebar title="Admin" subtitle="Portal" navItems={isClassAdmin ? classAdminNav : adminNav} accentColor={accentColor} />
         <main className="flex-1 p-6">
           <div className="mb-4">
             <Link href="/admin" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">← Dashboard</Link>

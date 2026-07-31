@@ -7,6 +7,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface StudyYear {
   id: string
@@ -21,6 +22,7 @@ interface StudyYear {
 }
 
 export default function StudyYearsPage() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage()
   const [studyYears, setStudyYears] = useState<StudyYear[]>([])
   const [loading, setLoading] = useState(true)
@@ -151,7 +153,7 @@ export default function StudyYearsPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="page-shell">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <div className="page-content">
           <div className="h-14 lg:hidden" />
           <div className="page-header flex items-center justify-between">

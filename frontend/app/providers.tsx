@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LanguageProvider } from '../lib/i18n'
-import { ThemeProvider } from '../lib/theme'
+import { ThemeProvider } from '../lib/appearance/theme'
+import { AccentColorProvider } from '../lib/appearance/accentColor'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -36,7 +37,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <LanguageProvider>{children}</LanguageProvider>
+        <AccentColorProvider>
+          <LanguageProvider>{children}</LanguageProvider>
+        </AccentColorProvider>
       </ThemeProvider>
     </QueryClientProvider>
   )

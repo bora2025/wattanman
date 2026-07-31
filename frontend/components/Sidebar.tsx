@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../lib/i18n';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../lib/appearance/theme';
 import { iconMap, IconGlobe, IconLogout, IconSun, IconMoon } from './Icons';
 import InstallAppButton from './InstallAppButton';
 
@@ -61,6 +61,65 @@ const colorMap: Record<string, { bg: string; text: string; hover: string; active
     active: 'bg-white/18 text-white font-semibold',
     ring: 'ring-sky-500',
     gradient: 'from-[#0c4a6e] to-[#075985]',
+  },
+  // The 6 below + the 3 above are the school admin's selectable Appearance
+  // accent-color palette (frontend/app/admin/addons/page.tsx's AppearanceTab).
+  // `slate` is deliberately excluded from that picker — see its own comment.
+  teal: {
+    bg: 'bg-teal-600',
+    text: 'text-teal-100',
+    hover: 'hover:bg-white/10',
+    active: 'bg-white/18 text-white font-semibold',
+    ring: 'ring-teal-500',
+    gradient: 'from-[#134e4a] to-[#115e59]',
+  },
+  violet: {
+    bg: 'bg-violet-600',
+    text: 'text-violet-100',
+    hover: 'hover:bg-white/10',
+    active: 'bg-white/18 text-white font-semibold',
+    ring: 'ring-violet-500',
+    gradient: 'from-[#4c1d95] to-[#5b21b6]',
+  },
+  rose: {
+    bg: 'bg-rose-600',
+    text: 'text-rose-100',
+    hover: 'hover:bg-white/10',
+    active: 'bg-white/18 text-white font-semibold',
+    ring: 'ring-rose-500',
+    gradient: 'from-[#881337] to-[#9f1239]',
+  },
+  amber: {
+    bg: 'bg-amber-600',
+    text: 'text-amber-100',
+    hover: 'hover:bg-white/10',
+    active: 'bg-white/18 text-white font-semibold',
+    ring: 'ring-amber-500',
+    gradient: 'from-[#78350f] to-[#92400e]',
+  },
+  blue: {
+    bg: 'bg-blue-600',
+    text: 'text-blue-100',
+    hover: 'hover:bg-white/10',
+    active: 'bg-white/18 text-white font-semibold',
+    ring: 'ring-blue-500',
+    gradient: 'from-[#1e3a8a] to-[#1e40af]',
+  },
+  fuchsia: {
+    bg: 'bg-fuchsia-600',
+    text: 'text-fuchsia-100',
+    hover: 'hover:bg-white/10',
+    active: 'bg-white/18 text-white font-semibold',
+    ring: 'ring-fuchsia-500',
+    gradient: 'from-[#701a75] to-[#86198f]',
+  },
+  cyan: {
+    bg: 'bg-cyan-600',
+    text: 'text-cyan-100',
+    hover: 'hover:bg-white/10',
+    active: 'bg-white/18 text-white font-semibold',
+    ring: 'ring-cyan-500',
+    gradient: 'from-[#164e63] to-[#155e75]',
   },
   // Platform tier only (frontend/app/platform/*) — deliberately distinct from
   // every school-facing accent so it's visually obvious which "layer" of the

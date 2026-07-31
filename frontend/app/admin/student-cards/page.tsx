@@ -12,6 +12,7 @@ import { formatDOB } from '../../../lib/dateUtils';
 import { CardDesign, STUDENT_TEMPLATE, DESIGN_STORAGE_KEY, loadSavedDesign, apiGetActiveDesign, saveDesign } from '../../../components/card-designer/types';
 import { renderDesignToCanvas } from '../../../components/card-designer/renderDesignToCanvas';
 import { downloadSingleCardPDF, downloadA4CardsPDF } from '../../../components/card-designer/generateCardPDF';
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 // Lazy-load the heavy card editor (QRCode + jsPDF + canvas + ~50KB) so the
 // student-cards page itself loads instantly. The editor only mounts when the
@@ -66,6 +67,7 @@ function normalizePhotoUrl(url: string): string {
 }
 
 export default function StudentCardsPage() {
+  const { accentColor } = useAccentColor()
   const { t, lang } = useLanguage();
   const [studyYears, setStudyYears] = useState<StudyYear[]>([]);
   const [selectedStudyYear, setSelectedStudyYear] = useState<string>('');
@@ -318,7 +320,7 @@ export default function StudentCardsPage() {
   if (loading) {
     return (
       <div className="page-shell">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <div className="page-content">
           <div className="flex min-h-screen items-center justify-center">
             <div className="text-center">
@@ -341,7 +343,7 @@ export default function StudentCardsPage() {
           </div>
         </div>
       )}
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

@@ -9,6 +9,7 @@ import Sidebar from '../../../../components/Sidebar';
 import { adminNav } from '../../../../lib/admin-nav';
 import { apiFetch } from '../../../../lib/api';
 import { formatDOB } from '../../../../lib/dateUtils';
+import { useAccentColor } from '../../../../lib/appearance/accentColor'
 import {
   CardDesign, CardType, CARD_TYPE_FIELDS,
   apiGetActiveDesign,
@@ -90,6 +91,7 @@ function normalizePhoto(url: string | null | undefined): string | null {
 
 /* ── Main page ──────────────────────────────────────────────────────────── */
 export default function CertificatePrintPage() {
+  const { accentColor } = useAccentColor()
   const searchParams = useSearchParams();
   const initialMode = (searchParams.get('mode') as Mode | null) ?? 'certificate-student';
   const [mode, setMode] = useState<Mode>(initialMode);
@@ -350,7 +352,7 @@ export default function CertificatePrintPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="page-shell">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <div className="page-content lg:ml-0">
           <div className="h-14 lg:hidden" />
 

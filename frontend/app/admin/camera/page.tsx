@@ -5,13 +5,15 @@ import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { useLanguage } from '../../../lib/i18n'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 function AdminCameraHubContent() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage()
 
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
 

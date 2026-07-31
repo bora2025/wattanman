@@ -5,15 +5,17 @@ import Sidebar from '../../../../../components/Sidebar'
 import AuthGuard from '../../../../../components/AuthGuard'
 import { adminNav } from '../../../../../lib/admin-nav'
 import PostEditorForm from '../PostEditorForm'
+import { useAccentColor } from '../../../../../lib/appearance/accentColor'
 
 export default function EditPostPage() {
+  const { accentColor } = useAccentColor()
   const params = useParams<{ id: string }>()
   const postId = params?.id as string
 
   return (
     <AuthGuard>
       <div className="flex h-screen bg-[#f0f0f1]">
-        <Sidebar title="Admin" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin" navItems={adminNav} accentColor={accentColor} />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-6xl mx-auto px-6 py-8">
             {postId && <PostEditorForm postId={postId} />}

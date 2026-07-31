@@ -6,6 +6,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface User {
   id: string
@@ -100,6 +101,7 @@ function normalizePhotoUrl(url: string): string {
 }
 
 export default function ManageUsers() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -343,7 +345,7 @@ export default function ManageUsers() {
   return (
     <AuthGuard allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

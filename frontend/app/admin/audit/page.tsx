@@ -6,6 +6,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { formatCambodiaTime } from '../../../lib/dateUtils'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -74,6 +75,7 @@ function relativeTime(iso: string): string {
 }
 
 export default function AuditLogsPage() {
+  const { accentColor } = useAccentColor()
   const [activeTab, setActiveTab] = useState<'logs' | 'cleanup'>('logs')
   const [page, setPage] = useState<Page<AuditLog>>({ items: [], total: 0, page: 1, pageSize: 50, pages: 0 })
   const [facets, setFacets] = useState<Facets>({ actions: [], resources: [], actors: [] })
@@ -163,7 +165,7 @@ export default function AuditLogsPage() {
   return (
     <AuthGuard allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
       <div className="page-shell">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <div className="page-content">
           <div className="h-14 lg:hidden" />
 

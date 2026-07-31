@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
-import { IconSun, IconMoon } from '../../../components/Icons'
+import AppearanceTab from '../../../components/appearance/AppearanceTab'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
-import { useTheme } from '../../../lib/theme'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface DirectoryAddon {
   addonKey: string
@@ -222,47 +222,10 @@ function AddonDetailModal({ addon, onClose, onChanged }: { addon: DirectoryAddon
   )
 }
 
-function AppearanceTab() {
-  const { theme, setTheme } = useTheme()
-
-  const options: { id: 'light' | 'dark'; label: string; icon: React.ReactNode }[] = [
-    { id: 'light', label: 'Light', icon: <IconSun size={22} /> },
-    { id: 'dark', label: 'Dark', icon: <IconMoon size={22} /> },
-  ]
-
-  return (
-    <div className="max-w-lg space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Dashboard theme</h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          This only changes how your own dashboard looks on this device — other staff at your school pick their own,
-          and it's separate from your school's public website branding (under Appearance in the sidebar).
-        </p>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        {options.map(o => (
-          <button
-            key={o.id}
-            onClick={() => setTheme(o.id)}
-            className={`card p-5 flex flex-col items-center gap-2 transition-all ${
-              theme === o.id
-                ? 'border-indigo-400 dark:border-indigo-500 ring-2 ring-indigo-100 dark:ring-indigo-900/40'
-                : 'hover:border-indigo-200 dark:hover:border-slate-600'
-            }`}
-          >
-            <span className="text-slate-700 dark:text-slate-200">{o.icon}</span>
-            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{o.label}</span>
-            {theme === o.id && <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">Active</span>}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 type PageTab = 'addons' | 'appearance'
 
 function AddonsContent() {
+  const { accentColor } = useAccentColor()
   const [addons, setAddons] = useState<DirectoryAddon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -294,7 +257,7 @@ function AddonsContent() {
 
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">

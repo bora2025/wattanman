@@ -9,6 +9,7 @@ import { adminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { formatDOB } from '../../../lib/dateUtils';
 import { useLanguage } from '../../../lib/i18n';
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 import {
   CardDesign,
   BLANK_CERTIFICATE_STUDENT,
@@ -188,6 +189,7 @@ const CERT_GRADE_MAP = [
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CertificatePage() {
+  const { accentColor } = useAccentColor()
   const { lang } = useLanguage();
   const [activeTab, setActiveTab] = useState<ActiveTab>('student');
 
@@ -518,7 +520,7 @@ export default function CertificatePage() {
         </div>
       )}
 
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
 
       <div className="page-content">
         <div className="h-14 lg:hidden" />

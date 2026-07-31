@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface BackupSummary {
   version: number
@@ -14,6 +15,7 @@ interface BackupSummary {
 }
 
 export default function BackupPage() {
+  const { accentColor } = useAccentColor()
   const fileRef = useRef<HTMLInputElement | null>(null)
   const [downloading, setDownloading] = useState(false)
   const [summary, setSummary] = useState<BackupSummary | null>(null)
@@ -119,7 +121,7 @@ export default function BackupPage() {
 
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">

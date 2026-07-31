@@ -7,6 +7,7 @@ import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface SalaryRecord {
@@ -66,6 +67,7 @@ function StatusBadge({ isPaid }: { isPaid: boolean }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function SalaryPage() {
+  const { accentColor } = useAccentColor()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [showForm, setShowForm] = useState(false)
@@ -98,7 +100,7 @@ export default function SalaryPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <main className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
           <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-3">
             <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">Salary Management</h1>

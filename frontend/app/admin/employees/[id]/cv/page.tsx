@@ -7,6 +7,7 @@ import AuthGuard from '../../../../../components/AuthGuard'
 import Sidebar from '../../../../../components/Sidebar'
 import { adminNav } from '../../../../../lib/admin-nav'
 import { apiFetch } from '../../../../../lib/api'
+import { useAccentColor } from '../../../../../lib/appearance/accentColor'
 
 interface CvUser {
   id: string
@@ -31,6 +32,7 @@ function toDateInput(iso: string | null): string {
 }
 
 export default function StaffCvEditorPage() {
+  const { accentColor } = useAccentColor()
   const params = useParams<{ id: string }>()
   const userId = params?.id as string
 
@@ -140,7 +142,7 @@ export default function StaffCvEditorPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800">
-        <Sidebar title="Admin" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
             <div className="flex items-center justify-between gap-3 flex-wrap">

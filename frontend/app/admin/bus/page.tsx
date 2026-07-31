@@ -7,6 +7,7 @@ import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface Bus { id: string; name: string; plateNumber: string; capacity: number; status: string; route: { id: string; name: string } | null }
 interface Route { id: string; name: string; description: string | null; stops: Stop[] }
@@ -19,6 +20,7 @@ const STATUS_COLOR: Record<string, string> = {
 }
 
 export default function BusAdminPage() {
+  const { accentColor } = useAccentColor()
   const [tab, setTab] = useState<'buses' | 'routes'>('buses')
   const [showBusForm, setShowBusForm] = useState(false)
   const [showRouteForm, setShowRouteForm] = useState(false)
@@ -45,7 +47,7 @@ export default function BusAdminPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <main className="flex-1 p-6 max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">🚌 School Bus Tracking</h1>

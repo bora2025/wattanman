@@ -7,6 +7,7 @@ import { adminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../lib/i18n';
 import { downloadStudentsCsv } from '../../../lib/exportCsv';
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 /* â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 interface StudyYear { id: string; year: number; label: string | null; isCurrent: boolean }
@@ -25,6 +26,7 @@ export default function ManageStudentsPage() {
 }
 
 function ManageStudents() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -317,7 +319,7 @@ function ManageStudents() {
   /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
 

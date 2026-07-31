@@ -5,6 +5,7 @@ import Sidebar from '../../../../components/Sidebar'
 import AuthGuard from '../../../../components/AuthGuard'
 import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
+import { useAccentColor } from '../../../../lib/appearance/accentColor'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -58,6 +59,7 @@ function badge(color: string | null, text: string) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function SchedulePage() {
+  const { accentColor } = useAccentColor()
   const [timetables, setTimetables] = useState<TimetableListItem[]>([])
   const [selectedId, setSelectedId] = useState('')
   const [tt, setTt] = useState<Timetable | null>(null)
@@ -385,7 +387,7 @@ export default function SchedulePage() {
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
       <div className="flex h-screen bg-gray-100 dark:bg-slate-800">
-        <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor={accentColor} />
 
         {/* Left Panel: Lesson Cards */}
         <div className="w-64 shrink-0 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 flex flex-col">

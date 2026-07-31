@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, LineChart, Line,
@@ -736,10 +737,11 @@ function PrintBudgetReportModal({
 /* ─── Page export ─────────────────────────────────────────── */
 
 export default function BudgetReportPage() {
+  const { accentColor } = useAccentColor()
   return (
     <AuthGuard>
       <div className="flex h-screen bg-gray-50 dark:bg-slate-800">
-        <Sidebar title="Admin" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin" navItems={adminNav} accentColor={accentColor} />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-6xl mx-auto px-6 py-8">
             <BudgetContent />
