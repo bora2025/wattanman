@@ -50,6 +50,8 @@ export class SchoolAddonsSelfServiceController {
         kind: d.kind,
         name: d.name,
         description: d.description,
+        detailDescription: d.detailDescription,
+        screenshotUrl: d.screenshotUrl,
         category: d.category,
         icon: d.icon,
         price: d.price,

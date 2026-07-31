@@ -11,6 +11,8 @@ interface DirectoryAddon {
   kind: string
   name: string
   description: string | null
+  detailDescription: string | null
+  screenshotUrl: string | null
   category: string | null
   icon: string | null
   price: number | null
@@ -191,7 +193,18 @@ function AddonDetailModal({ addon, onClose, onChanged }: { addon: DirectoryAddon
             </div>
           </div>
 
-          {addon.description && <p className="text-sm text-slate-600 leading-relaxed">{addon.description}</p>}
+          {addon.screenshotUrl && (
+            <img
+              src={addon.screenshotUrl}
+              alt={`${addon.name} screenshot`}
+              className="w-full rounded-xl border border-slate-200 object-contain max-h-64 bg-slate-50"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+            />
+          )}
+
+          {(addon.detailDescription || addon.description) && (
+            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{addon.detailDescription || addon.description}</p>
+          )}
 
           <div className="flex items-center justify-between pt-4 border-t border-slate-100">
             {addon.kind === 'ADDON' && <span className="text-base font-semibold text-slate-800">{priceLabel(addon)}</span>}
