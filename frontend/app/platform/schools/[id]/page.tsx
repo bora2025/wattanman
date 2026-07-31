@@ -228,6 +228,14 @@ function SchoolDetailContent() {
                     <span className="text-slate-400">→</span>
                   </Link>
 
+                  <Link href={`/platform/schools/${school.id}/usage`} className="card p-5 flex items-center justify-between gap-3 hover:shadow-md transition-all">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-700">Usage &amp; Speed</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">Daily activity and average request latency, to tell "busy" apart from "actually slow."</p>
+                    </div>
+                    <span className="text-slate-400">→</span>
+                  </Link>
+
                   <div className="card p-5">
                     <h3 className="text-sm font-semibold text-slate-700 mb-1">View as this school</h3>
                     <p className="text-xs text-slate-500 mb-3">Opens a new tab signed in as this school's admin. Every session is audit-logged with the reason you provide, and expires after 30 minutes.</p>
