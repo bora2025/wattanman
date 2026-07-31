@@ -60,6 +60,9 @@ export default function TeachersPage() {
   const [systemTeachers, setSystemTeachers] = useState<{id: string; name: string; email: string | null; phone: string | null}[]>([])
   const [systemTeachersLoading, setSystemTeachersLoading] = useState(false)
 
+  const [enabledModules, setEnabledModules] = useState<string[] | null>(null)
+  const partTimeTeacherEnabled = enabledModules === null || enabledModules.includes('PART_TIME_TEACHER')
+
   // Lesson modal
   const [showLessonModal, setShowLessonModal] = useState(false)
   const [editingLesson, setEditingLesson] = useState<TLesson | null>(null)
@@ -97,6 +100,12 @@ export default function TeachersPage() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
   useEffect(() => { fetchTimetableData() }, [fetchTimetableData])
+  useEffect(() => {
+    apiFetch('/api/school-addons')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => setEnabledModules(data?.enabled ?? []))
+      .catch(() => setEnabledModules([]))
+  }, [])
 
   function openTeacherModal(item?: TTeacher) {
     setEditingTeacher(item ?? null)
@@ -192,7 +201,7 @@ export default function TeachersPage() {
               <h1 className="text-xl font-bold text-gray-800">Teachers</h1>
               <p className="text-sm text-gray-500">Manage timetable teachers and their lesson contracts</p>
             </div>
-            <button onClick={() => openTeacherModal()} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700">+ New Teacher</button>
+            <button onClick={() => openTeacherModal()} disabled={!partTimeTeacherEnabled} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700 disabled:opacity-40 disabled:pointer-events-none">+ New Teacher</button>
           </div>
           <div className="bg-white border-b border-gray-200 px-6 py-2 flex items-center gap-3">
             <label className="text-sm text-gray-600 font-medium">Timetable:</label>
@@ -204,6 +213,11 @@ export default function TeachersPage() {
               Timetable teachers are separate from the school's main teacher accounts
             </span>
           </div>
+          {!partTimeTeacherEnabled && (
+            <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 text-xs text-amber-700">
+              The Part-Time Teacher module is disabled for this school — teacher records can't be added, edited, or removed until it's enabled in Add-ons.
+            </div>
+          )}
 
           <div className="flex-1 overflow-auto p-6">
             {loading ? <div className="text-gray-400 text-center py-20">Loading…</div>
@@ -267,9 +281,9 @@ export default function TeachersPage() {
                                   })()}
                                 </td>
                                 <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
-                                  <button onClick={() => openTeacherModal(t)} className="text-blue-600 hover:underline text-sm mr-2">Edit</button>
+                                  <button onClick={() => openTeacherModal(t)} disabled={!partTimeTeacherEnabled} className="text-blue-600 hover:underline text-sm mr-2 disabled:opacity-40 disabled:pointer-events-none">Edit</button>
                                   <button onClick={() => { setSelectedTeacher(t); openLessonModal(undefined, t.id) }} className="text-emerald-600 hover:underline text-sm mr-2">+ Lesson</button>
-                                  <button onClick={() => setDeleteTeacherId(t.id)} className="text-red-500 hover:underline text-sm">Remove</button>
+                                  <button onClick={() => setDeleteTeacherId(t.id)} disabled={!partTimeTeacherEnabled} className="text-red-500 hover:underline text-sm disabled:opacity-40 disabled:pointer-events-none">Remove</button>
                                 </td>
                               </tr>
                             ))}
@@ -495,7 +509,7 @@ export default function TeachersPage() {
               )}
               <div className="flex justify-end gap-2">
                 <button onClick={() => setShowTeacherModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Cancel</button>
-                <button onClick={saveTeacher} disabled={savingTeacher || !fFullName || !fShort}
+                <button onClick={saveTeacher} disabled={savingTeacher || !fFullName || !fShort || !partTimeTeacherEnabled}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
                   {savingTeacher ? 'Saving…' : 'OK'}
                 </button>

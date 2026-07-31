@@ -175,6 +175,14 @@ export default function TimetablePage() {
   const [generating, setGenerating] = useState(false)
   const [showOpenModal, setShowOpenModal] = useState(false)
   const [toasts, setToasts] = useState<Toast[]>([])
+  const [enabledModules, setEnabledModules] = useState<string[] | null>(null)
+  const partTimeTeacherEnabled = enabledModules === null || enabledModules.includes('PART_TIME_TEACHER')
+  useEffect(() => {
+    apiFetch('/api/school-addons')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => setEnabledModules(data?.enabled ?? []))
+      .catch(() => setEnabledModules([]))
+  }, [])
 
   function showToast(msg: string, ok = true) {
     const id = ++_toastId
@@ -1530,6 +1538,8 @@ export default function TimetablePage() {
                   extraAction={(t: TTeacher) => (
                     <button onClick={() => openContractPanel(t)} className="text-emerald-600 hover:underline mr-2 text-xs font-medium">Contract</button>
                   )}
+                  disabled={!partTimeTeacherEnabled}
+                  disabledMessage="The Part-Time Teacher module is disabled for this school — teacher records can't be added, edited, or removed until it's enabled in Add-ons."
                 />
               )}
             </div>
@@ -2452,22 +2462,26 @@ function PrintLayout({ timetable, mode, classId, orgName, headerLines, signers, 
 
 // ═══ Wizard List Step ════════════════════════════════════════════════════════
 
-function WizardListStep({ title, addLabel, items, onNew, columns, renderRow, onEdit, onRemove, extraAction }: {
+function WizardListStep({ title, addLabel, items, onNew, columns, renderRow, onEdit, onRemove, extraAction, disabled, disabledMessage }: {
   title: string; addLabel: string; items: any[]; onNew: () => void
   columns: string[]; renderRow: (item: any) => any[]
   onEdit: (item: any) => void; onRemove: (item: any) => void
   extraAction?: (item: any) => React.ReactNode
+  disabled?: boolean; disabledMessage?: string
 }) {
   return (
     <div className="space-y-3">
+      {disabled && disabledMessage && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">{disabledMessage}</div>
+      )}
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-gray-700">{addLabel} <span className="text-gray-400 font-normal text-xs ml-2">({items.length})</span></h3>
-        <button onClick={onNew} className="tt-btn bg-indigo-600 text-white text-xs">+ New</button>
+        <button onClick={onNew} disabled={disabled} className="tt-btn bg-indigo-600 text-white text-xs disabled:opacity-40 disabled:pointer-events-none">+ New</button>
       </div>
       {items.length === 0 ? (
         <div className="border-2 border-dashed border-gray-200 rounded-xl py-10 text-center text-gray-400 text-sm">
           No {title.toLowerCase()} added yet.<br/>
-          <button onClick={onNew} className="mt-2 text-indigo-600 hover:underline text-sm font-medium">+ Add first</button>
+          <button onClick={onNew} disabled={disabled} className="mt-2 text-indigo-600 hover:underline text-sm font-medium disabled:opacity-40 disabled:pointer-events-none">+ Add first</button>
         </div>
       ) : (
         <div className="rounded-xl border border-gray-200 overflow-hidden">
@@ -2487,9 +2501,9 @@ function WizardListStep({ title, addLabel, items, onNew, columns, renderRow, onE
                     <td key={ci} className="px-3 py-2">{cell}</td>
                   ))}
                   <td className="px-3 py-2 text-right whitespace-nowrap">
-                    {extraAction?.(item)}
-                    <button onClick={() => onEdit(item)} className="text-blue-600 hover:underline mr-2">Edit</button>
-                    <button onClick={() => onRemove(item)} className="text-red-500 hover:underline">Remove</button>
+                    {!disabled && extraAction?.(item)}
+                    <button onClick={() => onEdit(item)} disabled={disabled} className="text-blue-600 hover:underline mr-2 disabled:opacity-40 disabled:pointer-events-none">Edit</button>
+                    <button onClick={() => onRemove(item)} disabled={disabled} className="text-red-500 hover:underline disabled:opacity-40 disabled:pointer-events-none">Remove</button>
                   </td>
                 </tr>
               ))}
