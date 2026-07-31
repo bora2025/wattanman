@@ -56,6 +56,7 @@ model School {
   passwordResetTokens           PasswordResetToken[]
   auditLogs                    AuditLog[]
   auditCleanupSchedules        AuditCleanupSchedule[]
+  schoolDailyMetrics           SchoolDailyMetric[]
   cardTemplates                CardTemplate[]
   attendanceFormatRules        AttendanceFormatRule[]
   feeRecords                   FeeRecord[]
@@ -708,6 +709,32 @@ model AuditCleanupSchedule {
 
   @@index([schoolId])
   @@index([enabled])
+}
+
+/// Daily rollup of a school's activity/latency, one row per school per
+/// finalized (past) day. Populated by a nightly cron (SchoolMetricsService),
+/// not read from AuditLog live — this decouples usage history from each
+/// school's own AuditCleanupSchedule retention, which can be as short as a
+/// few days and hard-deletes old AuditLog rows.
+model SchoolDailyMetric {
+  id       String   @id @default(cuid())
+  schoolId String
+  school   School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  date     DateTime // UTC midnight — the day this row summarizes
+
+  /// Count of tracked (mutating) AuditLog events that day.
+  requestCount Int @default(0)
+  /// Of those, how many had success: false.
+  errorCount Int @default(0)
+  avgDurationMs Float?
+  p95DurationMs Float?
+  /// Distinct actorId count that day.
+  activeUserCount Int @default(0)
+
+  computedAt DateTime @default(now())
+
+  @@unique([schoolId, date])
+  @@index([date])
 }
 
 model CardTemplate {
