@@ -21,9 +21,9 @@ interface SchoolDetail {
 const SCHOOL_ROOT_DOMAIN = process.env.NEXT_PUBLIC_SCHOOL_ROOT_DOMAIN || 'wattaman.app'
 
 const STATUS_STYLES: Record<string, string> = {
-  ACTIVE: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  SUSPENDED: 'bg-red-50 text-red-700 border-red-200',
-  TRIAL: 'bg-amber-50 text-amber-700 border-amber-200',
+  ACTIVE: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900',
+  SUSPENDED: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900',
+  TRIAL: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
 }
 
 function SchoolDetailContent() {
@@ -167,11 +167,11 @@ function SchoolDetailContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <Link href="/platform/schools" className="text-xs text-slate-500 hover:text-slate-700 mb-2 inline-flex items-center gap-1">← Back to Schools</Link>
+          <Link href="/platform/schools" className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-2 inline-flex items-center gap-1">← Back to Schools</Link>
           {school && (
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold text-slate-800">{school.name}</h1>
-              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_STYLES[school.status] || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{school.name}</h1>
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_STYLES[school.status] || 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}>
                 {school.status}
               </span>
             </div>
@@ -179,18 +179,18 @@ function SchoolDetailContent() {
         </div>
 
         <div className="page-body space-y-4">
-          {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 text-red-800 border border-red-200">{error}</div>}
+          {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900">{error}</div>}
 
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-8 h-8 border-3 border-slate-300 border-t-slate-700 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-3 border-slate-300 dark:border-slate-600 border-t-slate-700 rounded-full animate-spin" />
             </div>
           ) : school && (
             <>
-              <div className="flex gap-1 border-b border-slate-200">
+              <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
                 {(['overview', 'danger'] as const).map(t => (
                   <button key={t} onClick={() => setTab(t)}
-                    className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${tab === t ? 'border-slate-700 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                    className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${tab === t ? 'border-slate-700 dark:border-slate-400 text-slate-800 dark:text-slate-100' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>
                     {t === 'overview' ? 'Overview' : 'Danger Zone'}
                   </button>
                 ))}
@@ -213,33 +213,33 @@ function SchoolDetailContent() {
                     </div>
                   </div>
                   <div className="card p-5 space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-slate-500">Subdomain</span><span className="font-medium text-slate-800">{school.subdomain}.{SCHOOL_ROOT_DOMAIN}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Subdomain</span><span className="font-medium text-slate-800 dark:text-slate-100">{school.subdomain}.{SCHOOL_ROOT_DOMAIN}</span></div>
                     {school.customDomain && (
-                      <div className="flex justify-between"><span className="text-slate-500">Custom domain</span><span className="font-medium text-slate-800">{school.customDomain}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Custom domain</span><span className="font-medium text-slate-800 dark:text-slate-100">{school.customDomain}</span></div>
                     )}
-                    <div className="flex justify-between"><span className="text-slate-500">Created</span><span className="font-medium text-slate-800">{new Date(school.createdAt).toLocaleString()}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Created</span><span className="font-medium text-slate-800 dark:text-slate-100">{new Date(school.createdAt).toLocaleString()}</span></div>
                   </div>
 
                   <Link href={`/platform/schools/${school.id}/addons`} className="card p-5 flex items-center justify-between gap-3 hover:shadow-md transition-all">
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-700">Modules & Add-ons</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">Manage free modules (Attendance, Fees, etc.) and billing-gated paid features.</p>
+                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Modules & Add-ons</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage free modules (Attendance, Fees, etc.) and billing-gated paid features.</p>
                     </div>
-                    <span className="text-slate-400">→</span>
+                    <span className="text-slate-400 dark:text-slate-500">→</span>
                   </Link>
 
                   <Link href={`/platform/schools/${school.id}/usage`} className="card p-5 flex items-center justify-between gap-3 hover:shadow-md transition-all">
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-700">Usage &amp; Speed</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">Daily activity and average request latency, to tell "busy" apart from "actually slow."</p>
+                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Usage &amp; Speed</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Daily activity and average request latency, to tell "busy" apart from "actually slow."</p>
                     </div>
-                    <span className="text-slate-400">→</span>
+                    <span className="text-slate-400 dark:text-slate-500">→</span>
                   </Link>
 
                   <div className="card p-5">
-                    <h3 className="text-sm font-semibold text-slate-700 mb-1">View as this school</h3>
-                    <p className="text-xs text-slate-500 mb-3">Opens a new tab signed in as this school's admin. Every session is audit-logged with the reason you provide, and expires after 30 minutes.</p>
-                    {impersonateError && <div className="text-xs text-red-600 mb-2">{impersonateError}</div>}
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">View as this school</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Opens a new tab signed in as this school's admin. Every session is audit-logged with the reason you provide, and expires after 30 minutes.</p>
+                    {impersonateError && <div className="text-xs text-red-600 dark:text-red-400 mb-2">{impersonateError}</div>}
                     <div className="flex flex-col sm:flex-row gap-2">
                       <input type="text" value={reason} onChange={e => setReason(e.target.value)}
                         placeholder="Reason (required — e.g. support ticket #1234)" className="flex-1" />
@@ -248,22 +248,22 @@ function SchoolDetailContent() {
                         {impersonating ? 'Opening…' : '👁 View as School'}
                       </button>
                     </div>
-                    {school.status === 'SUSPENDED' && <p className="text-xs text-amber-600 mt-2">Reactivate the school before impersonating — a suspended school blocks all access, including this.</p>}
+                    {school.status === 'SUSPENDED' && <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">Reactivate the school before impersonating — a suspended school blocks all access, including this.</p>}
                   </div>
 
                   <div className="card p-5">
-                    <h3 className="text-sm font-semibold text-slate-700 mb-1">Reset admin password</h3>
-                    <p className="text-xs text-slate-500 mb-3">Generates a new temporary password for this school's admin account (the same one used for impersonation) and shows it once. Audit-logged with the reason you provide.</p>
-                    {resetError && <div className="text-xs text-red-600 mb-2">{resetError}</div>}
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Reset admin password</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Generates a new temporary password for this school's admin account (the same one used for impersonation) and shows it once. Audit-logged with the reason you provide.</p>
+                    {resetError && <div className="text-xs text-red-600 dark:text-red-400 mb-2">{resetError}</div>}
                     {resetResult ? (
-                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
-                        <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">Temporary password — shown once</p>
-                        <div className="text-sm text-slate-700"><span className="text-slate-500">Email:</span> {resetResult.email}</div>
+                      <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl p-4 space-y-2">
+                        <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wide">Temporary password — shown once</p>
+                        <div className="text-sm text-slate-700 dark:text-slate-200"><span className="text-slate-500 dark:text-slate-400">Email:</span> {resetResult.email}</div>
                         <div className="flex items-center gap-2">
-                          <code className="bg-white border border-amber-200 rounded px-2 py-1 text-sm font-mono">{resetResult.temporaryPassword}</code>
+                          <code className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900 rounded px-2 py-1 text-sm font-mono">{resetResult.temporaryPassword}</code>
                           <button onClick={copyResetPassword} className="btn-outline btn-sm">{resetCopied ? 'Copied!' : 'Copy'}</button>
                         </div>
-                        <button onClick={() => setResetResult(null)} className="text-xs text-amber-700 underline mt-1">Reset again</button>
+                        <button onClick={() => setResetResult(null)} className="text-xs text-amber-700 dark:text-amber-300 underline mt-1">Reset again</button>
                       </div>
                     ) : (
                       <div className="flex flex-col sm:flex-row gap-2">
@@ -281,16 +281,16 @@ function SchoolDetailContent() {
 
               {tab === 'danger' && (
                 <div className="space-y-4">
-                  <div className="card p-5 border-2 border-amber-100">
-                    <h3 className="text-sm font-semibold text-amber-800 mb-1">
+                  <div className="card p-5 border-2 border-amber-100 dark:border-amber-900">
+                    <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">
                       {school.status === 'SUSPENDED' ? 'Reactivate school' : 'Suspend school'}
                     </h3>
-                    <p className="text-xs text-slate-500 mb-3">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
                       {school.status === 'SUSPENDED'
                         ? 'Restores access immediately for every user at this school.'
                         : 'Blocks all access for this school immediately, including already-logged-in users. Use for non-payment or policy violations.'}
                     </p>
-                    {statusMsg && <div className="text-xs text-slate-600 mb-2">{statusMsg}</div>}
+                    {statusMsg && <div className="text-xs text-slate-600 dark:text-slate-300 mb-2">{statusMsg}</div>}
                     <button
                       onClick={() => toggleStatus(school.status === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED')}
                       disabled={statusBusy}
@@ -299,13 +299,13 @@ function SchoolDetailContent() {
                     </button>
                   </div>
 
-                  <div className="card p-5 border-2 border-red-100">
-                    <h3 className="text-sm font-semibold text-red-700 mb-1">Delete school</h3>
-                    <p className="text-xs text-slate-600 mb-3">
-                      <strong className="text-red-700">Irreversible.</strong> Permanently deletes {school.name} and every record it owns —
+                  <div className="card p-5 border-2 border-red-100 dark:border-red-900">
+                    <h3 className="text-sm font-semibold text-red-700 dark:text-red-300 mb-1">Delete school</h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
+                      <strong className="text-red-700 dark:text-red-300">Irreversible.</strong> Permanently deletes {school.name} and every record it owns —
                       students, staff, attendance, fees, everything. Type the school's exact name to confirm.
                     </p>
-                    {deleteError && <div className="text-xs text-red-600 mb-2">{deleteError}</div>}
+                    {deleteError && <div className="text-xs text-red-600 dark:text-red-400 mb-2">{deleteError}</div>}
                     <div className="flex flex-col sm:flex-row gap-2">
                       <input type="text" value={confirmName} onChange={e => setConfirmName(e.target.value)}
                         placeholder={school.name} className="flex-1" />

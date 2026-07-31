@@ -89,16 +89,16 @@ function ScreenshotUploader({ value, onChange }: { value: string; onChange: (v: 
   return (
     <div className="space-y-2">
       {value ? (
-        <div className="relative rounded-lg overflow-hidden border border-slate-200 group">
-          <img src={value} alt="Screenshot preview" className="w-full max-h-56 object-contain bg-slate-50" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+        <div className="relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 group">
+          <img src={value} alt="Screenshot preview" className="w-full max-h-56 object-contain bg-slate-50 dark:bg-slate-800" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-            <button type="button" onClick={() => inputRef.current?.click()} className="px-3 py-1.5 bg-white text-slate-800 text-xs font-semibold rounded-lg shadow">Replace</button>
+            <button type="button" onClick={() => inputRef.current?.click()} className="px-3 py-1.5 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-lg shadow">Replace</button>
             <button type="button" onClick={() => { onChange(''); setUrlInput('') }} className="px-3 py-1.5 bg-red-500 text-white text-xs font-semibold rounded-lg shadow">Remove</button>
           </div>
         </div>
       ) : (
         <div
-          className={`border-2 border-dashed rounded-lg cursor-pointer transition-colors ${dragging ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+          className={`border-2 border-dashed rounded-lg cursor-pointer transition-colors ${dragging ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600'}`}
           onClick={() => inputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
           onDragLeave={() => setDragging(false)}
@@ -106,19 +106,19 @@ function ScreenshotUploader({ value, onChange }: { value: string; onChange: (v: 
         >
           <div className="flex flex-col items-center justify-center py-6 px-4 text-center gap-1">
             {compressing ? (
-              <p className="text-xs text-indigo-600 font-medium">Compressing…</p>
+              <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Compressing…</p>
             ) : (
               <>
-                <p className="text-xs font-semibold text-slate-600">Click to upload or drag & drop a screenshot</p>
-                <p className="text-[11px] text-slate-400">JPEG/PNG/WebP — max 15 MB</p>
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Click to upload or drag & drop a screenshot</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">JPEG/PNG/WebP — max 15 MB</p>
               </>
             )}
           </div>
         </div>
       )}
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
-      {error && <p className="text-[11px] text-red-600">{error}</p>}
-      <button type="button" onClick={() => setUrlMode(m => !m)} className="text-[11px] text-indigo-500 hover:text-indigo-700 underline">
+      {error && <p className="text-[11px] text-red-600 dark:text-red-400">{error}</p>}
+      <button type="button" onClick={() => setUrlMode(m => !m)} className="text-[11px] text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 underline">
         {urlMode ? 'Hide URL input' : 'Or paste an image URL instead'}
       </button>
       {urlMode && (
@@ -184,28 +184,28 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
   }
 
   return (
-    <div className="space-y-3 pt-3 border-t border-slate-100">
-      {error && <div className="text-xs text-red-600">{error}</div>}
+    <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+      {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Kind</label>
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Kind</label>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => setForm({ ...form, kind: 'MODULE' })}
-            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'MODULE' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200'}`}
+            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'MODULE' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
           >
             Module (free)
           </button>
           <button
             type="button"
             onClick={() => setForm({ ...form, kind: 'ADDON' })}
-            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'ADDON' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-200'}`}
+            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'ADDON' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
           >
             Paid add-on
           </button>
         </div>
         {kindChanged && (
-          <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 mt-2">
+          <p className="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-lg px-2.5 py-1.5 mt-2">
             {form.kind === 'ADDON'
               ? 'Schools that already have this enabled keep it, free, with no change — only new schools (and anyone requesting it fresh) will see it as paid going forward.'
               : 'Every school (including ones with a pending paid request) can now self-enable it for free from their own Add-ons page — nothing turns on by itself, but no approval is needed anymore either.'}
@@ -214,40 +214,40 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Name</label>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Name</label>
           <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full text-sm" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Category</label>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Category</label>
           <input type="text" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="e.g. Attendance" className="w-full text-sm" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Icon (emoji)</label>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Icon (emoji)</label>
           <input type="text" value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })} placeholder="✨" className="w-full text-sm" />
         </div>
         {form.kind === 'ADDON' && (
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Price ($)</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Price ($)</label>
               <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="29" className="w-full text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Price note</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Price note</label>
               <input type="text" value={form.priceNote} onChange={e => setForm({ ...form, priceNote: e.target.value })} placeholder="/month" className="w-full text-sm" />
             </div>
           </div>
         )}
       </div>
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Description <span className="font-normal text-slate-400">(short, shown in listing cards)</span></label>
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Description <span className="font-normal text-slate-400 dark:text-slate-500">(short, shown in listing cards)</span></label>
         <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={2} className="w-full text-sm" />
       </div>
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Detail description <span className="font-normal text-slate-400">(long-form, platform admin's own reference)</span></label>
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Detail description <span className="font-normal text-slate-400 dark:text-slate-500">(long-form, platform admin's own reference)</span></label>
         <textarea value={form.detailDescription} onChange={e => setForm({ ...form, detailDescription: e.target.value })} rows={6} className="w-full text-sm" placeholder="What this module/add-on does, key features, who it's for…" />
       </div>
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Screenshot</label>
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Screenshot</label>
         <ScreenshotUploader value={form.screenshotUrl} onChange={(v) => setForm({ ...form, screenshotUrl: v })} />
       </div>
       <div className="flex gap-2">
@@ -303,38 +303,38 @@ function AddonCard({ addon, onChanged }: { addon: AddonDefinition; onChanged: (a
     <div className="card p-5 space-y-1">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl shrink-0">{addon.icon || '🧩'}</div>
+          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl shrink-0">{addon.icon || '🧩'}</div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-slate-800">{addon.name}</span>
-              <code className="text-[10px] text-slate-400">{addon.key}</code>
-              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${addon.kind === 'MODULE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">{addon.name}</span>
+              <code className="text-[10px] text-slate-400 dark:text-slate-500">{addon.key}</code>
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${addon.kind === 'MODULE' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900'}`}>
                 {addon.kind === 'MODULE' ? 'Module' : 'Paid add-on'}
               </span>
-              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">{addon.category}</span>}
-              {!addon.isActive && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200">Deactivated — hidden from new schools</span>}
+              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900">{addon.category}</span>}
+              {!addon.isActive && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700">Deactivated — hidden from new schools</span>}
             </div>
-            {addon.description && <p className="text-xs text-slate-500 mt-1">{addon.description}</p>}
-            <p className="text-xs font-medium text-slate-600 mt-1">{priceLabel(addon)}</p>
+            {addon.description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{addon.description}</p>}
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-1">{priceLabel(addon)}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {addon.screenshotUrl && (
-            <img src={addon.screenshotUrl} alt={`${addon.name} screenshot`} className="w-20 h-14 object-cover rounded-lg border border-slate-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+            <img src={addon.screenshotUrl} alt={`${addon.name} screenshot`} className="w-20 h-14 object-cover rounded-lg border border-slate-200 dark:border-slate-700" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
           )}
           <button onClick={() => setEditing(!editing)} className="btn-outline btn-sm">{editing ? 'Close' : 'Edit'}</button>
           <button
             onClick={toggleActive}
             disabled={busy}
             title={addon.isActive ? 'Hide from new schools — existing schools keep access' : 'Offer this again to schools that don\'t have it yet'}
-            className={`btn btn-sm border ${addon.isActive ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-emerald-700 border-emerald-200 hover:bg-emerald-50'}`}
+            className={`btn btn-sm border ${addon.isActive ? 'text-red-600 dark:text-red-400 border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-950/40' : 'text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'}`}
           >
             {busy ? '…' : addon.isActive ? 'Deactivate' : 'Activate'}
           </button>
-          <button onClick={remove} disabled={busy} className="text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50">Delete</button>
+          <button onClick={remove} disabled={busy} className="text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50">Delete</button>
         </div>
       </div>
-      {error && <div className="text-xs text-red-600">{error}</div>}
+      {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
       {editing && <EditForm addon={addon} onCancel={() => setEditing(false)} onSaved={(a) => { onChanged(a); setEditing(false) }} />}
     </div>
   )
@@ -386,23 +386,23 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
   }
 
   return (
-    <div className="card p-5 space-y-3 border-2 border-indigo-100">
-      <h3 className="text-sm font-semibold text-slate-700">New Listing</h3>
-      {error && <div className="text-xs text-red-600">{error}</div>}
+    <div className="card p-5 space-y-3 border-2 border-indigo-100 dark:border-indigo-900">
+      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">New Listing</h3>
+      {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Kind</label>
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Kind</label>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => setForm({ ...form, kind: 'MODULE' })}
-            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'MODULE' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200'}`}
+            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'MODULE' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
           >
             Module (free, opt-in at school creation)
           </button>
           <button
             type="button"
             onClick={() => setForm({ ...form, kind: 'ADDON' })}
-            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'ADDON' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-200'}`}
+            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'ADDON' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
           >
             Paid add-on (billed, enabled later)
           </button>
@@ -410,43 +410,43 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Name</label>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Name</label>
           <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Face Recognition Attendance" className="w-full text-sm" autoFocus />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Category</label>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Category</label>
           <input type="text" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="e.g. Attendance" className="w-full text-sm" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Icon (emoji)</label>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Icon (emoji)</label>
           <input type="text" value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })} placeholder="✨" className="w-full text-sm" />
         </div>
         {form.kind === 'ADDON' && (
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Price ($)</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Price ($)</label>
               <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="29" className="w-full text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Price note</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Price note</label>
               <input type="text" value={form.priceNote} onChange={e => setForm({ ...form, priceNote: e.target.value })} placeholder="/month" className="w-full text-sm" />
             </div>
           </div>
         )}
       </div>
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Description <span className="font-normal text-slate-400">(short, shown in listing cards)</span></label>
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Description <span className="font-normal text-slate-400 dark:text-slate-500">(short, shown in listing cards)</span></label>
         <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={2} placeholder="What this add-on does, shown to schools browsing the directory." className="w-full text-sm" />
       </div>
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Detail description <span className="font-normal text-slate-400">(long-form, platform admin's own reference)</span></label>
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Detail description <span className="font-normal text-slate-400 dark:text-slate-500">(long-form, platform admin's own reference)</span></label>
         <textarea value={form.detailDescription} onChange={e => setForm({ ...form, detailDescription: e.target.value })} rows={5} placeholder="What this module/add-on does, key features, who it's for…" className="w-full text-sm" />
       </div>
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Screenshot</label>
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Screenshot</label>
         <ScreenshotUploader value={form.screenshotUrl} onChange={(v) => setForm({ ...form, screenshotUrl: v })} />
       </div>
-      <p className="text-[11px] text-slate-400">The internal key (e.g. FACE_RECOGNITION_ATTENDANCE) is derived automatically from the name.</p>
+      <p className="text-[11px] text-slate-400 dark:text-slate-500">The internal key (e.g. FACE_RECOGNITION_ATTENDANCE) is derived automatically from the name.</p>
       <div className="flex gap-2">
         <button onClick={create} disabled={!form.name.trim() || creating} className="btn-primary text-sm px-4 py-2 rounded-lg disabled:opacity-50">
           {creating ? 'Creating…' : 'Create'}
@@ -491,21 +491,21 @@ function AddonDirectoryContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">Modules &amp; Add-ons Directory</h1>
-          <p className="text-sm text-slate-500 mt-1">Free modules are offered at school creation; paid add-ons are browsed and billed per school afterward. Create listings, price the paid ones, retire ones no longer offered.</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Modules &amp; Add-ons Directory</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Free modules are offered at school creation; paid add-ons are browsed and billed per school afterward. Create listings, price the paid ones, retire ones no longer offered.</p>
         </div>
 
         <div className="page-body space-y-4">
-          {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 text-red-800 border border-red-200">{error}</div>}
+          {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900">{error}</div>}
 
           <NewAddonForm onCreated={(a) => setAddons(prev => [...prev, a])} />
 
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-8 h-8 border-3 border-slate-300 border-t-slate-700 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-3 border-slate-300 dark:border-slate-600 border-t-slate-700 rounded-full animate-spin" />
             </div>
           ) : addons.length === 0 ? (
-            <div className="card p-10 text-center text-slate-400 text-sm">No add-ons listed yet — create the first one above.</div>
+            <div className="card p-10 text-center text-slate-400 dark:text-slate-500 text-sm">No add-ons listed yet — create the first one above.</div>
           ) : (
             <div className="grid gap-3">
               {addons.map(a => (

@@ -30,10 +30,10 @@ interface Addon {
 const BILLING_STATUSES = ['PENDING', 'ACTIVE', 'OVERDUE', 'CANCELLED'] as const
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDING: 'bg-slate-50 text-slate-600 border-slate-200',
-  ACTIVE: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  OVERDUE: 'bg-red-50 text-red-700 border-red-200',
-  CANCELLED: 'bg-slate-100 text-slate-400 border-slate-200',
+  PENDING: 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+  ACTIVE: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900',
+  OVERDUE: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900',
+  CANCELLED: 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700',
 }
 
 function AddonCard({ addon, schoolId, onSaved }: { addon: Addon; schoolId: string; onSaved: (a: Addon) => void }) {
@@ -109,28 +109,28 @@ function AddonCard({ addon, schoolId, onSaved }: { addon: Addon; schoolId: strin
     <div className="card p-5 space-y-4">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-lg shrink-0">{addon.icon || '🧩'}</div>
+          <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-lg shrink-0">{addon.icon || '🧩'}</div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-slate-800">{addon.label}</span>
-              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${isModule ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">{addon.label}</span>
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${isModule ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900'}`}>
                 {isModule ? 'Module' : 'Paid add-on'}
               </span>
-              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">{addon.category}</span>}
+              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900">{addon.category}</span>}
               {!isModule && <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_STYLES[addon.billingStatus]}`}>{addon.billingStatus}</span>}
-              {addon.enabled && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">Feature ON</span>}
-              {requested && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200">Requested by school</span>}
-              {addon.retired && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200">Retired from directory</span>}
+              {addon.enabled && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900">Feature ON</span>}
+              {requested && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900">Requested by school</span>}
+              {addon.retired && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700">Retired from directory</span>}
             </div>
-            {addon.description && <p className="text-xs text-slate-500 mt-1">{addon.description}</p>}
-            {addon.price != null && <p className="text-xs font-medium text-slate-600 mt-1">${addon.price}{addon.priceNote ? ` ${addon.priceNote}` : ''}</p>}
+            {addon.description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{addon.description}</p>}
+            {addon.price != null && <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-1">${addon.price}{addon.priceNote ? ` ${addon.priceNote}` : ''}</p>}
             {addon.activatedAt && (
-              <p className="text-[11px] text-slate-400 mt-1">Last activated {new Date(addon.activatedAt).toLocaleString()}</p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Last activated {new Date(addon.activatedAt).toLocaleString()}</p>
             )}
             {requested && addon.requestedAt && (
-              <p className="text-[11px] text-amber-600 mt-1">
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
                 Requested {new Date(addon.requestedAt).toLocaleString()} —{' '}
-                <button onClick={dismissRequest} disabled={dismissing} className="underline hover:text-amber-800 disabled:opacity-50">
+                <button onClick={dismissRequest} disabled={dismissing} className="underline hover:text-amber-800 dark:hover:text-amber-300 disabled:opacity-50">
                   {dismissing ? 'Dismissing…' : 'Dismiss request'}
                 </button>
               </p>
@@ -140,26 +140,26 @@ function AddonCard({ addon, schoolId, onSaved }: { addon: Addon; schoolId: strin
         <button
           onClick={toggleEnabled}
           disabled={toggling}
-          className={`relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60 ${addon.enabled ? 'bg-emerald-500' : 'bg-slate-200'}`}
+          className={`relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-60 ${addon.enabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}
           aria-label={addon.enabled ? `Disable ${addon.label}` : `Enable ${addon.label}`}
         >
-          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${addon.enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white dark:bg-slate-200 shadow transition-transform ${addon.enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
         </button>
       </div>
 
-      {error && <div className="text-xs text-red-600">{error}</div>}
+      {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
 
       {!isModule && (
         <>
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Billing status</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Billing status</label>
               <select value={billingStatus} onChange={e => setBillingStatus(e.target.value as Addon['billingStatus'])} className="w-full text-sm">
                 {BILLING_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Notes (invoice ref, etc.)</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Notes (invoice ref, etc.)</label>
               <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. Invoice #4521, paid 2026-07-15" className="w-full text-sm" />
             </div>
           </div>
@@ -205,16 +205,16 @@ function AddonsContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <Link href={`/platform/schools/${id}`} className="text-xs text-slate-500 hover:text-slate-700 mb-2 inline-flex items-center gap-1">← Back to {schoolName || 'School'}</Link>
-          <h1 className="text-2xl font-bold text-slate-800">Modules &amp; Add-ons</h1>
-          <p className="text-sm text-slate-500 mt-1">Toggle a module on or off, or manage a paid add-on's billing. Billing is manual — invoice the school outside this system, then flip it on here once paid.</p>
+          <Link href={`/platform/schools/${id}`} className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-2 inline-flex items-center gap-1">← Back to {schoolName || 'School'}</Link>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Modules &amp; Add-ons</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Toggle a module on or off, or manage a paid add-on's billing. Billing is manual — invoice the school outside this system, then flip it on here once paid.</p>
         </div>
 
         <div className="page-body space-y-3">
-          {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 text-red-800 border border-red-200">{error}</div>}
+          {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900">{error}</div>}
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-8 h-8 border-3 border-slate-300 border-t-slate-700 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-3 border-slate-300 dark:border-slate-600 border-t-slate-700 rounded-full animate-spin" />
             </div>
           ) : (
             [...addons]

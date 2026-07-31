@@ -24,8 +24,8 @@ const RANGES = [30, 60, 90] as const
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="card p-4">
-      <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">{label}</div>
-      <div className="text-xl font-bold text-slate-800 mt-1">{value}</div>
+      <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</div>
+      <div className="text-xl font-bold text-slate-800 dark:text-slate-100 mt-1">{value}</div>
     </div>
   )
 }
@@ -97,14 +97,14 @@ function UsageTrendContent() {
         <div className="h-14 lg:hidden" />
         <div className="page-header flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
-            <Link href={`/platform/schools/${id}`} className="text-xs text-slate-500 hover:text-slate-700 mb-2 inline-flex items-center gap-1">← Back to {schoolName || 'School'}</Link>
-            <h1 className="text-2xl font-bold text-slate-800">Usage &amp; Speed</h1>
-            <p className="text-sm text-slate-500 mt-1">Daily activity and average request latency for the last {days} days.</p>
+            <Link href={`/platform/schools/${id}`} className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-2 inline-flex items-center gap-1">← Back to {schoolName || 'School'}</Link>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Usage &amp; Speed</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Daily activity and average request latency for the last {days} days.</p>
           </div>
           <div className="flex gap-2">
             {RANGES.map(r => (
               <button key={r} onClick={() => setDays(r)}
-                className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${days === r ? 'bg-slate-700 text-white border-slate-700' : 'bg-white text-slate-600 border-slate-200'}`}>
+                className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${days === r ? 'bg-slate-700 text-white border-slate-700' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}>
                 {r}d
               </button>
             ))}
@@ -112,14 +112,14 @@ function UsageTrendContent() {
         </div>
 
         <div className="page-body space-y-4">
-          {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 text-red-800 border border-red-200">{error}</div>}
+          {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900">{error}</div>}
 
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-8 h-8 border-3 border-slate-300 border-t-slate-700 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-3 border-slate-300 dark:border-slate-600 border-t-slate-700 rounded-full animate-spin" />
             </div>
           ) : rows.length === 0 ? (
-            <div className="card p-10 text-center text-slate-400 text-sm">
+            <div className="card p-10 text-center text-slate-400 dark:text-slate-500 text-sm">
               No usage data yet for this range — the daily rollup runs shortly after each UTC midnight, or use Recompute on the Usage Metrics page to backfill.
             </div>
           ) : (
@@ -134,9 +134,9 @@ function UsageTrendContent() {
                 </div>
               )}
 
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
                 <div className="px-5 pt-5">
-                  <h3 className="text-sm font-bold text-gray-700">Requests &amp; Latency</h3>
+                  <h3 className="text-sm font-bold text-gray-700 dark:text-slate-200">Requests &amp; Latency</h3>
                 </div>
                 <div className="px-5 pb-5 pt-2" style={{ height: '320px' }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -154,23 +154,23 @@ function UsageTrendContent() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200">
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase">Date</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Requests</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Errors</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Avg latency</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">P95 latency</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Active users</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Storage</th>
+                    <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Date</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Requests</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Errors</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Avg latency</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">P95 latency</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Active users</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Storage</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {[...rows].reverse().map(r => (
-                      <tr key={r.date} className="hover:bg-slate-50">
-                        <td className="px-4 py-2.5 text-slate-600">{r.date}</td>
+                      <tr key={r.date} className="hover:bg-slate-50 dark:hover:bg-slate-800">
+                        <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">{r.date}</td>
                         <td className="px-4 py-2.5 text-right tabular-nums">{r.requestCount}</td>
                         <td className="px-4 py-2.5 text-right tabular-nums">{r.errorCount}</td>
                         <td className="px-4 py-2.5 text-right tabular-nums">{fmtMs(r.avgDurationMs)}</td>
