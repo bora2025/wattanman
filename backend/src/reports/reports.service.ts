@@ -377,6 +377,20 @@ export class ReportsService {
     private holidaysService: HolidaysService,
   ) {}
 
+  /**
+   * Reports stays core/never-gated (a school always has API access to its
+   * own reports, unlike a real @RequiresAddon() gate) — but the attendance
+   * dashboard summary methods below are pure attendance computation, so
+   * there's genuinely nothing to compute for a school that doesn't have the
+   * ATTENDANCE module enabled. This is a performance short-circuit, not an
+   * access-control check: it skips the (multi-table, whole-school) queries
+   * and returns a cheap, correctly-shaped empty result instead of 403ing.
+   */
+  private async isAttendanceEnabled(): Promise<boolean> {
+    const row = await this.prisma.schoolAddon.findFirst({ where: { addonKey: 'ATTENDANCE' } });
+    return !!row?.enabled;
+  }
+
   /** Apply attendance format rules: convert accumulated lates/permissions into absences */
   private applyFormatRules(
     counts: { present: number; late: number; absent: number; dayOff: number },
@@ -513,6 +527,14 @@ export class ReportsService {
   }
 
   async getDashboardSummary(date?: Date, requesterUserId?: string) {
+    if (!(await this.isAttendanceEnabled())) {
+      return {
+        students: { total: 0, present: 0, absent: 0, late: 0, permission: 0 },
+        staff: { total: 0, present: 0, absent: 0, late: 0, permission: 0 },
+        details: [],
+        filters: { classes: [], departments: [] },
+      };
+    }
     const targetDate = date || new Date();
     const dayStart = toUTCMidnight(targetDate);
     const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
@@ -719,6 +741,10 @@ export class ReportsService {
    * Used by the admin dashboard to show real-time progress bars per class.
    */
   async getClassAttendanceProgress(date?: Date, requesterUserId?: string) {
+    if (!(await this.isAttendanceEnabled())) {
+      const dayStart = toUTCMidnight(date || new Date());
+      return { date: dayStart.toISOString().split('T')[0], rows: [] };
+    }
     const targetDate = date || new Date();
     const dayStart = toUTCMidnight(targetDate);
     const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
@@ -795,6 +821,9 @@ export class ReportsService {
   }
 
   async getMonthlyTrend(year: number, month: number) {
+    if (!(await this.isAttendanceEnabled())) {
+      return { year, month, data: [] };
+    }
     const start = new Date(Date.UTC(year, month - 1, 1));
     const end = new Date(Date.UTC(year, month, 0)); // last day of month
     const endPlusOne = new Date(Date.UTC(year, month, 1));
