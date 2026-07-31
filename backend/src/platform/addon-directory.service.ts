@@ -34,7 +34,7 @@ export class AddonDirectoryService {
     return this.prisma.addonDefinition.findMany({ orderBy: { createdAt: 'asc' } });
   }
 
-  async create(data: { name: string; kind?: string; description?: string; category?: string; icon?: string; price?: number; priceNote?: string }) {
+  async create(data: { name: string; kind?: string; description?: string; detailDescription?: string; screenshotUrl?: string; category?: string; icon?: string; price?: number; priceNote?: string }) {
     const name = (data.name || '').trim();
     if (!name) throw new BadRequestException('Name is required');
     const kind = data.kind || 'ADDON';
@@ -55,6 +55,8 @@ export class AddonDirectoryService {
         kind,
         name,
         description: data.description?.trim() || undefined,
+        detailDescription: data.detailDescription?.trim() || undefined,
+        screenshotUrl: data.screenshotUrl?.trim() || undefined,
         category: data.category?.trim() || undefined,
         icon: data.icon?.trim() || undefined,
         // MODULE listings are always free — ignore any price sent for one,
@@ -80,7 +82,7 @@ export class AddonDirectoryService {
    */
   async update(
     id: string,
-    data: { name?: string; kind?: string; description?: string; category?: string; icon?: string; price?: number | null; priceNote?: string; isActive?: boolean },
+    data: { name?: string; kind?: string; description?: string; detailDescription?: string; screenshotUrl?: string | null; category?: string; icon?: string; price?: number | null; priceNote?: string; isActive?: boolean },
   ) {
     const existing = await this.prisma.addonDefinition.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Add-on not found');
@@ -96,6 +98,8 @@ export class AddonDirectoryService {
         name: data.name?.trim() || undefined,
         kind: data.kind,
         description: data.description !== undefined ? data.description.trim() || null : undefined,
+        detailDescription: data.detailDescription !== undefined ? data.detailDescription.trim() || null : undefined,
+        screenshotUrl: data.screenshotUrl !== undefined ? (data.screenshotUrl?.trim() || null) : undefined,
         category: data.category !== undefined ? data.category.trim() || null : undefined,
         icon: data.icon !== undefined ? data.icon.trim() || null : undefined,
         // A MODULE is always free — clear any price the form still had

@@ -47,7 +47,7 @@ const BUS_SKIP_SUBDOMAINS = new Set(
 
 const MODULES: Array<{ key: string; name: string; description: string; category: string }> = [
   { key: 'ATTENDANCE', name: 'Attendance', description: 'Camera/QR gate scanning, manual attendance edits, staff attendance.', category: 'Academics' },
-  { key: 'CLASSES', name: 'Class Management', description: 'Classes, study years, and timetable.', category: 'Academics' },
+  { key: 'CLASSES', name: 'Class Management', description: 'Classes, study years, and roster management.', category: 'Academics' },
   { key: 'FEES', name: 'Fee Management', description: 'Student fee records, payments, and the finance/budget dashboard.', category: 'Finance' },
   { key: 'SALARY', name: 'Salary Management', description: 'Staff salary records and payment tracking.', category: 'Finance' },
   { key: 'EXAMS', name: 'Exams & Scoring', description: 'Exams, score sheets, and grading.', category: 'Academics' },
