@@ -27,7 +27,7 @@ export const adminNav = [
 
   // ── Communication ──
   { label: 'Communication Hub', href: '/admin/communication', icon: 'clipboard', section: 'Communication', badgeKey: 'messages' as const, moduleKey: 'CHAT' },
-  { label: 'Parent Link Requests', href: '/admin/parent-requests', icon: 'users' },
+  { label: 'Parent Link Requests', href: '/admin/parent-requests', icon: 'users', moduleKey: 'PARENT_PORTAL' },
   { label: 'Class Registrations', href: '/admin/class-registrations', icon: 'clipboard', badgeKey: 'class-registrations' as const },
 
   // ── Finance ──
