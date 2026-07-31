@@ -89,6 +89,23 @@ function ClassDetailContent() {
   const [cls, setCls] = useState<ClassDetail | null>(null)
   const [loadingClass, setLoadingClass] = useState(true)
 
+  // Examinations is the only tab here gated by a module (EXAMS) — Assignments
+  // and Courses aren't part of the module catalog. Hide the tab (and bounce
+  // off it if reached via ?tab=exams) rather than showing a panel whose
+  // fetch is destined to 403.
+  const [enabledModules, setEnabledModules] = useState<string[] | null>(null)
+  useEffect(() => {
+    apiFetch('/api/school-addons')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setEnabledModules(data?.enabled ?? []))
+      .catch(() => setEnabledModules([]))
+  }, [])
+  const examsEnabled = enabledModules === null || enabledModules.includes('EXAMS')
+  const visibleTabs = TABS.filter(t => t !== 'exams' || examsEnabled)
+  useEffect(() => {
+    if (enabledModules !== null && tab === 'exams' && !examsEnabled) setTab('assignments')
+  }, [enabledModules, examsEnabled, tab])
+
   useEffect(() => {
     if (!classId) return
     apiFetch('/api/classes').then(async r => {
@@ -128,8 +145,10 @@ function ClassDetailContent() {
                   {cls.studyYear && <> · {cls.studyYear.label}</>}
                 </p>
               </div>
-              <Link href={`/admin/attendance?classId=${classId}`}
-                className="btn-outline btn-sm">📋 Attendance</Link>
+              {(enabledModules === null || enabledModules.includes('ATTENDANCE')) && (
+                <Link href={`/admin/attendance?classId=${classId}`}
+                  className="btn-outline btn-sm">📋 Attendance</Link>
+              )}
             </div>
           )}
         </div>
@@ -140,7 +159,7 @@ function ClassDetailContent() {
               ['assignments', '📝 Assignments'],
               ['exams', '🎯 Examinations'],
               ['courses', '📚 Courses'],
-            ] as [Tab, string][]).map(([id, label]) => (
+            ] as [Tab, string][]).filter(([id]) => visibleTabs.includes(id)).map(([id, label]) => (
               <button key={id} onClick={() => setTab(id)}
                 className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
                   tab === id
@@ -153,7 +172,7 @@ function ClassDetailContent() {
           </div>
 
           {tab === 'assignments' && <AssignmentsPanel classId={classId} />}
-          {tab === 'exams' && <ExamsPanel classId={classId} />}
+          {tab === 'exams' && examsEnabled && <ExamsPanel classId={classId} />}
           {tab === 'courses' && <CoursesPanel classId={classId} />}
         </div>
       </div>
