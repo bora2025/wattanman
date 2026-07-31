@@ -3,9 +3,11 @@ import { ParentService } from './parent.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
+import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
 @Controller('parent')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
 export class ParentController {
   constructor(private svc: ParentService) {}
 
@@ -54,10 +56,12 @@ export class ParentController {
   }
 
   // ─── Admin: list & resolve link requests ───────────────────────────────
+  @RequiresAddon('PARENT_PORTAL')
   @Roles('ADMIN')
   @Get('admin/link-requests')
   listLinkRequests(@Query('status') status?: string) { return this.svc.listParentLinkRequests(status); }
 
+  @RequiresAddon('PARENT_PORTAL')
   @Roles('ADMIN')
   @Patch('admin/link-requests/:id')
   async resolveLinkRequest(
