@@ -21,7 +21,6 @@ export const adminNav = [
   { label: 'Teacher Portal', href: '/admin/teachers', icon: 'graduation', moduleKey: 'TEACHER_PORTAL' },
   { label: 'Student Portal', href: '/admin/students', icon: 'users', moduleKey: 'STUDENT_PORTAL' },
   { label: 'Parent Portal', href: '/admin/parents', icon: 'users', moduleKey: 'PARENT_PORTAL' },
-  { label: 'nav.manageHub', href: '/admin/manage-hub', icon: 'briefcase' },
   { label: 'nav.manageOfficer', href: '/admin/employees', icon: 'briefcase' },
   { label: 'nav.manageTeachers', href: '/wattaman/scheduled-teacher', icon: 'graduation', moduleKey: 'PART_TIME_TEACHER' },
 

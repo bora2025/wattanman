@@ -80,7 +80,6 @@ function pickBottomTabs(navItems: NavItem[], bottomTabs?: string[]): NavItem[] {
   }
 
   // UX-specific fixed tab order where camera stays centered.
-  const hasAdminRoot = navItems.some(n => n.href === '/admin');
   const hasTeacherRoot = navItems.some(n => n.href === '/teacher');
   const hasStudentRoot = navItems.some(n => n.href === '/student');
   const hasParentRoot = navItems.some(n => n.href === '/parent');
@@ -109,19 +108,13 @@ function pickBottomTabs(navItems: NavItem[], bottomTabs?: string[]): NavItem[] {
     }
   }
 
-  if (hasAdminRoot) {
-    const adminOrder = ['/admin', '/admin/manage-hub', '/admin/camera', '/admin/reports'];
-    const adminTabs = adminOrder.map(href => navItems.find(n => n.href === href)).filter(Boolean) as NavItem[];
-    if (adminTabs.length === 4) {
-      return [...adminTabs, { label: 'common.more', href: '__more__', icon: 'settings' }];
-    }
-  }
+  // Admin falls through to the generic auto-pick below (no fixed 4-tab order).
 
   // Auto-pick: first item (dashboard) + up to 3 most important + last (settings)
   if (navItems.length <= 5) return navItems;
   const picked = [navItems[0]];
   // Find scan/attendance, reports, classes/users
-  const priorities = ['camera', 'manage-hub', 'scan', 'reports', 'classes', 'users', 'search', 'attendance'];
+  const priorities = ['camera', 'scan', 'reports', 'classes', 'users', 'search', 'attendance'];
   for (const p of priorities) {
     if (picked.length >= 4) break;
     const match = navItems.find(n => n.href.includes(p) && !picked.includes(n));
