@@ -861,6 +861,7 @@ export class ReportsService {
   }
 
   async getStudentAttendance(studentId?: string, userId?: string) {
+    if (!(await this.isAttendanceEnabled())) return [];
     let resolvedStudentId = studentId;
     if (!resolvedStudentId && userId) {
       const student = await this.prisma.student.findFirst({ where: { userId }, select: { id: true } });
@@ -900,6 +901,7 @@ export class ReportsService {
   }
 
   async getClassSummaries(teacherId: string, date?: Date, session?: number) {
+    if (!(await this.isAttendanceEnabled())) return [];
     const classes = await this.prisma.class.findMany({
       where: { teacherId },
       include: { students: { include: { user: { select: { name: true } } } } },

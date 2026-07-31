@@ -41,6 +41,7 @@ export default function TeacherDashboard() {
   const [summaries, setSummaries] = useState<ClassSummary[]>([])
   const [selectedDate, setSelectedDate] = useState(() => todayCambodia())
   const [loadingSummary, setLoadingSummary] = useState(false)
+  const [attendanceEnabled, setAttendanceEnabled] = useState<boolean | null>(null)
   const { t } = useLanguage()
 
   useEffect(() => {
@@ -50,12 +51,22 @@ export default function TeacherDashboard() {
   }, [])
 
   useEffect(() => {
+    apiFetch('/api/school-addons')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => setAttendanceEnabled((data?.enabled ?? []).includes('ATTENDANCE')))
+      .catch(() => setAttendanceEnabled(false))
+  }, [])
+
+  useEffect(() => {
     if (teacherId) {
       fetchClasses()
-      fetchSummaries()
+      // Class summaries are pure attendance computation — skip the call
+      // entirely when the school doesn't have Attendance enabled, same
+      // reasoning as the admin dashboard's attendance gating.
+      if (attendanceEnabled) fetchSummaries()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teacherId, selectedDate])
+  }, [teacherId, selectedDate, attendanceEnabled])
 
   const fetchClasses = async () => {
     try {
