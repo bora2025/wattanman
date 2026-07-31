@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { platformNav } from '../../../lib/platform-nav'
@@ -12,6 +12,8 @@ interface AddonDefinition {
   kind: string
   name: string
   description: string | null
+  detailDescription: string | null
+  screenshotUrl: string | null
   category: string | null
   icon: string | null
   price: number | null
@@ -24,13 +26,110 @@ interface FormState {
   kind: 'MODULE' | 'ADDON'
   name: string
   description: string
+  detailDescription: string
+  screenshotUrl: string
   category: string
   icon: string
   price: string
   priceNote: string
 }
 
-const EMPTY_FORM: FormState = { kind: 'ADDON', name: '', description: '', category: '', icon: '', price: '', priceNote: '' }
+const EMPTY_FORM: FormState = { kind: 'ADDON', name: '', description: '', detailDescription: '', screenshotUrl: '', category: '', icon: '', price: '', priceNote: '' }
+
+/** Compress an image File to a JPEG data URL via <canvas>, same technique as
+ * the appearance banner uploader (admin/appearance/page.tsx) — this app has
+ * no server-side file storage, so uploads live as base64 in the DB. */
+function compressImage(file: File, maxW: number, maxH: number, quality = 0.82): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        let w = img.width, h = img.height
+        if (w > maxW) { h = Math.round((h * maxW) / w); w = maxW }
+        if (h > maxH) { w = Math.round((w * maxH) / h); h = maxH }
+        const canvas = document.createElement('canvas')
+        canvas.width = w; canvas.height = h
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.onerror = reject
+      img.src = e.target!.result as string
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+/** Screenshot picker for a module/add-on's detail view — click or drag to
+ * upload (compressed client-side), or paste an external URL instead. */
+function ScreenshotUploader({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
+  const [compressing, setCompressing] = useState(false)
+  const [urlMode, setUrlMode] = useState(!value.startsWith('data:') && value.startsWith('http'))
+  const [urlInput, setUrlInput] = useState(value.startsWith('http') ? value : '')
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleFile(file: File) {
+    if (!file.type.startsWith('image/')) { setError('Please select an image file.'); return }
+    if (file.size > 15 * 1024 * 1024) { setError('File is too large. Maximum 15 MB.'); return }
+    setError(null)
+    setCompressing(true)
+    try {
+      onChange(await compressImage(file, 1280, 900))
+      setUrlMode(false)
+    } catch {
+      setError('Could not process image. Try a different file.')
+    } finally {
+      setCompressing(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {value ? (
+        <div className="relative rounded-lg overflow-hidden border border-slate-200 group">
+          <img src={value} alt="Screenshot preview" className="w-full max-h-56 object-contain bg-slate-50" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+            <button type="button" onClick={() => inputRef.current?.click()} className="px-3 py-1.5 bg-white text-slate-800 text-xs font-semibold rounded-lg shadow">Replace</button>
+            <button type="button" onClick={() => { onChange(''); setUrlInput('') }} className="px-3 py-1.5 bg-red-500 text-white text-xs font-semibold rounded-lg shadow">Remove</button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className={`border-2 border-dashed rounded-lg cursor-pointer transition-colors ${dragging ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f) }}
+        >
+          <div className="flex flex-col items-center justify-center py-6 px-4 text-center gap-1">
+            {compressing ? (
+              <p className="text-xs text-indigo-600 font-medium">Compressing…</p>
+            ) : (
+              <>
+                <p className="text-xs font-semibold text-slate-600">Click to upload or drag & drop a screenshot</p>
+                <p className="text-[11px] text-slate-400">JPEG/PNG/WebP — max 15 MB</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
+      {error && <p className="text-[11px] text-red-600">{error}</p>}
+      <button type="button" onClick={() => setUrlMode(m => !m)} className="text-[11px] text-indigo-500 hover:text-indigo-700 underline">
+        {urlMode ? 'Hide URL input' : 'Or paste an image URL instead'}
+      </button>
+      {urlMode && (
+        <div className="flex gap-2">
+          <input type="text" value={urlInput} onChange={e => setUrlInput(e.target.value)} placeholder="https://…" className="flex-1 text-sm" />
+          <button type="button" onClick={() => urlInput.trim() && onChange(urlInput.trim())} className="btn-outline btn-sm shrink-0">Use URL</button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function priceLabel(a: AddonDefinition): string {
   if (a.kind === 'MODULE') return 'Free module'
@@ -43,6 +142,8 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
     kind: addon.kind === 'MODULE' ? 'MODULE' : 'ADDON',
     name: addon.name,
     description: addon.description ?? '',
+    detailDescription: addon.detailDescription ?? '',
+    screenshotUrl: addon.screenshotUrl ?? '',
     category: addon.category ?? '',
     icon: addon.icon ?? '',
     price: addon.price != null ? String(addon.price) : '',
@@ -64,6 +165,8 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
           name: form.name.trim(),
           kind: form.kind,
           description: form.description,
+          detailDescription: form.detailDescription,
+          screenshotUrl: form.screenshotUrl,
           category: form.category,
           icon: form.icon,
           price: form.kind === 'MODULE' ? null : (form.price.trim() === '' ? null : Number(form.price)),
@@ -136,8 +239,16 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
         )}
       </div>
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
+        <label className="block text-xs font-medium text-slate-600 mb-1">Description <span className="font-normal text-slate-400">(short, shown in listing cards)</span></label>
         <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={2} className="w-full text-sm" />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-slate-600 mb-1">Detail description <span className="font-normal text-slate-400">(long-form, platform admin's own reference)</span></label>
+        <textarea value={form.detailDescription} onChange={e => setForm({ ...form, detailDescription: e.target.value })} rows={6} className="w-full text-sm" placeholder="What this module/add-on does, key features, who it's for…" />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-slate-600 mb-1">Screenshot</label>
+        <ScreenshotUploader value={form.screenshotUrl} onChange={(v) => setForm({ ...form, screenshotUrl: v })} />
       </div>
       <div className="flex gap-2">
         <button onClick={save} disabled={!form.name.trim() || saving} className="btn-primary text-sm px-4 py-2 rounded-lg disabled:opacity-50">
@@ -207,7 +318,10 @@ function AddonCard({ addon, onChanged }: { addon: AddonDefinition; onChanged: (a
             <p className="text-xs font-medium text-slate-600 mt-1">{priceLabel(addon)}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
+          {addon.screenshotUrl && (
+            <img src={addon.screenshotUrl} alt={`${addon.name} screenshot`} className="w-20 h-14 object-cover rounded-lg border border-slate-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+          )}
           <button onClick={() => setEditing(!editing)} className="btn-outline btn-sm">{editing ? 'Close' : 'Edit'}</button>
           <button
             onClick={toggleActive}
@@ -243,6 +357,8 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
           kind: form.kind,
           name: form.name.trim(),
           description: form.description || undefined,
+          detailDescription: form.detailDescription || undefined,
+          screenshotUrl: form.screenshotUrl || undefined,
           category: form.category || undefined,
           icon: form.icon || undefined,
           price: form.kind === 'MODULE' || form.price.trim() === '' ? undefined : Number(form.price),
@@ -319,8 +435,16 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
         )}
       </div>
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
+        <label className="block text-xs font-medium text-slate-600 mb-1">Description <span className="font-normal text-slate-400">(short, shown in listing cards)</span></label>
         <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={2} placeholder="What this add-on does, shown to schools browsing the directory." className="w-full text-sm" />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-slate-600 mb-1">Detail description <span className="font-normal text-slate-400">(long-form, platform admin's own reference)</span></label>
+        <textarea value={form.detailDescription} onChange={e => setForm({ ...form, detailDescription: e.target.value })} rows={5} placeholder="What this module/add-on does, key features, who it's for…" className="w-full text-sm" />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-slate-600 mb-1">Screenshot</label>
+        <ScreenshotUploader value={form.screenshotUrl} onChange={(v) => setForm({ ...form, screenshotUrl: v })} />
       </div>
       <p className="text-[11px] text-slate-400">The internal key (e.g. FACE_RECOGNITION_ATTENDANCE) is derived automatically from the name.</p>
       <div className="flex gap-2">

@@ -611,18 +611,20 @@ model SchoolAddon {
 /// parallel systems — a MODULE row's `price`/`priceNote` just stay null, and
 /// its SchoolAddon rows leave `billingStatus` at its unused default.
 model AddonDefinition {
-  id          String   @id @default(cuid())
-  key         String   @unique // stable identifier, e.g. "FACE_RECOGNITION_ATTENDANCE" — set at creation, not editable after
-  kind        String   @default("ADDON") // MODULE | ADDON
-  name        String
-  description String?
-  category    String?
-  icon        String? // a single emoji, kept simple — no file upload system
-  price       Float?
-  priceNote   String? // free text, e.g. "/month", "one-time" — billing itself stays manual (Phase 7a), this is just the listed price
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  key               String   @unique // stable identifier, e.g. "FACE_RECOGNITION_ATTENDANCE" — set at creation, not editable after
+  kind              String   @default("ADDON") // MODULE | ADDON
+  name              String
+  description       String? // short blurb, shown in listing cards
+  detailDescription String? // long-form write-up for the platform admin's own detail view — separate from `description` so the card summary can stay short
+  screenshotUrl     String? // base64 data URL or external URL, same convention as other image fields (Student.photo, Class.thumbnail, etc.) — no server-side file storage in this app
+  category          String?
+  icon              String? // a single emoji, kept simple
+  price             Float?
+  priceNote         String? // free text, e.g. "/month", "one-time" — billing itself stays manual (Phase 7a), this is just the listed price
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   schoolAddons SchoolAddon[]
 }
