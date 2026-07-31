@@ -76,7 +76,7 @@ export class SchoolMetricsService {
 
   private async computeOneSchool(schoolId: string, dayStart: Date, dayEnd: Date): Promise<void> {
     const where = { schoolId, createdAt: { gte: dayStart, lt: dayEnd } };
-    const [requestCount, errorCount, actors, rows] = await Promise.all([
+    const [requestCount, errorCount, actors, rows, storageBytes] = await Promise.all([
       this.prisma.auditLog.count({ where }),
       this.prisma.auditLog.count({ where: { ...where, success: false } }),
       this.prisma.auditLog.findMany({
@@ -88,6 +88,7 @@ export class SchoolMetricsService {
       // a dedicated column — fine to extract here since this only ever reads
       // one school's one day of rows in a background job, off the hot path.
       this.prisma.auditLog.findMany({ where, select: { metadata: true } }),
+      this.computeStorageBytes(schoolId),
     ]);
 
     const durations = rows
@@ -116,6 +117,7 @@ export class SchoolMetricsService {
         avgDurationMs,
         p95DurationMs,
         activeUserCount: actors.length,
+        storageBytes,
       },
       update: {
         requestCount,
@@ -123,9 +125,46 @@ export class SchoolMetricsService {
         avgDurationMs,
         p95DurationMs,
         activeUserCount: actors.length,
+        storageBytes,
         computedAt: new Date(),
       },
     });
+  }
+
+  /**
+   * Sums octet_length() across every base64 image/logo/design column in the
+   * schema for one school. There's no object storage in this app (Railway's
+   * filesystem is ephemeral) — every "photo"/"screenshot"/"design" field is
+   * either a base64 data URL or a pasted external URL stored directly in a
+   * Postgres column, so this list *is* "school storage." Keep in sync with
+   * schema.prisma if a new image/logo/design column is added.
+   */
+  private async computeStorageBytes(schoolId: string): Promise<bigint> {
+    const rows = await this.prisma.$queryRaw<{ bytes: bigint | null }[]>`
+      WITH per_row AS (
+        SELECT octet_length(photo) AS bytes FROM "User" WHERE "schoolId" = ${schoolId} AND photo IS NOT NULL
+        UNION ALL
+        SELECT octet_length(photo) FROM "Student" WHERE "schoolId" = ${schoolId} AND photo IS NOT NULL
+        UNION ALL
+        SELECT octet_length(thumbnail) FROM "Class" WHERE "schoolId" = ${schoolId} AND thumbnail IS NOT NULL
+        UNION ALL
+        SELECT octet_length(photo) FROM "ClassRegistration" WHERE "schoolId" = ${schoolId} AND photo IS NOT NULL
+        UNION ALL
+        SELECT octet_length(photo) FROM "TimetableTeacher" WHERE "schoolId" = ${schoolId} AND photo IS NOT NULL
+        UNION ALL
+        SELECT octet_length("logoUrl") FROM "ScoreSheet" WHERE "schoolId" = ${schoolId} AND "logoUrl" IS NOT NULL
+        UNION ALL
+        SELECT octet_length("coverImageUrl") FROM "Course" WHERE "schoolId" = ${schoolId} AND "coverImageUrl" IS NOT NULL
+        UNION ALL
+        SELECT octet_length("imageUrl") FROM "Post" WHERE "schoolId" = ${schoolId} AND "imageUrl" IS NOT NULL AND "imageUrl" != ''
+        UNION ALL
+        SELECT octet_length("logoUrl") + octet_length("heroSlides") + octet_length("aboutImageUrl") FROM "SiteSetting" WHERE "schoolId" = ${schoolId}
+        UNION ALL
+        SELECT octet_length(design::text) FROM "CardTemplate" WHERE "schoolId" = ${schoolId}
+      )
+      SELECT COALESCE(SUM(bytes), 0) AS bytes FROM per_row;
+    `;
+    return rows[0]?.bytes ?? 0n;
   }
 
   // ── Reads for the platform dashboard ────────────────────────────────────
@@ -158,6 +197,7 @@ export class SchoolMetricsService {
           avgDurationMs: m?.avgDurationMs ?? null,
           p95DurationMs: m?.p95DurationMs ?? null,
           activeUserCount: m?.activeUserCount ?? 0,
+          storageBytes: Number(m?.storageBytes ?? 0n),
           computed: !!m,
         };
       }),
@@ -179,6 +219,7 @@ export class SchoolMetricsService {
       avgDurationMs: r.avgDurationMs,
       p95DurationMs: r.p95DurationMs,
       activeUserCount: r.activeUserCount,
+      storageBytes: Number(r.storageBytes),
     }));
   }
 }
