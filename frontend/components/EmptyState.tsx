@@ -16,7 +16,7 @@ export default function EmptyState({
   return (
     <div className={`flex flex-col items-center justify-center text-center py-12 px-6 ${className}`}>
       {icon && <div className="mb-3 text-4xl text-gray-300 flex items-center justify-center">{icon}</div>}
-      {title && <p className="text-sm font-semibold text-gray-700 mb-1">{title}</p>}
+      {title && <p className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-1">{title}</p>}
       <p className="text-sm text-gray-400">{message}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>

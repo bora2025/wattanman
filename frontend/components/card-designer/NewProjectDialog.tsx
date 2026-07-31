@@ -140,20 +140,20 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">New Project</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Create a blank canvas or start from a template</p>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">New Project</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Create a blank canvas or start from a template</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors text-lg">&times;</button>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-lg">&times;</button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-200 px-6">
+        <div className="flex border-b border-slate-200 dark:border-slate-700 px-6">
           <button
             onClick={() => setTab('blank')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px ${tab === 'blank' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
@@ -174,7 +174,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
             <div className="space-y-5">
               {/* Purpose / Data Source */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Purpose / Data Source</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Purpose / Data Source</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {PURPOSE_OPTIONS.map((p) => (
                     <button
@@ -187,21 +187,21 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                       }`}
                     >
                       <div className="text-2xl mb-1">{p.icon}</div>
-                      <div className="text-xs font-semibold text-slate-800 leading-tight">{p.label}</div>
-                      <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">{p.description}</div>
+                      <div className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-tight">{p.label}</div>
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">{p.description}</div>
                     </button>
                   ))}
                 </div>
                 {purpose !== 'general' && (
-                  <p className="mt-1.5 text-[11px] text-indigo-600 bg-indigo-50 rounded-lg px-3 py-1.5">
-                    Text placeholders like <code className="font-mono bg-white px-1 rounded">{'{{name}}'}</code>, <code className="font-mono bg-white px-1 rounded">{'{{class}}'}</code> will be replaced with real data when printing.
+                  <p className="mt-1.5 text-[11px] text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg px-3 py-1.5">
+                    Text placeholders like <code className="font-mono bg-white dark:bg-slate-900 px-1 rounded">{'{{name}}'}</code>, <code className="font-mono bg-white dark:bg-slate-900 px-1 rounded">{'{{class}}'}</code> will be replaced with real data when printing.
                   </p>
                 )}
               </div>
 
               {/* Preset Sizes */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Preset Size</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Preset Size</label>
                 <div className="grid grid-cols-3 gap-2">
                   {PRESET_SIZES.map((preset) => (
                     <button
@@ -213,8 +213,8 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                           : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
-                      <div className="text-sm font-medium text-slate-800">{preset.label}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{preset.description}</div>
+                      <div className="text-sm font-medium text-slate-800 dark:text-slate-100">{preset.label}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{preset.description}</div>
                     </button>
                   ))}
                   <button
@@ -225,41 +225,41 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                         : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
-                    <div className="text-sm font-medium text-slate-800">Custom</div>
-                    <div className="text-xs text-slate-500 mt-0.5">Set your own size</div>
+                    <div className="text-sm font-medium text-slate-800 dark:text-slate-100">Custom</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Set your own size</div>
                   </button>
                 </div>
               </div>
 
               {/* Dimensions */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Dimensions</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Dimensions</label>
                 <div className="flex gap-3 items-end">
                   <div className="flex-1">
-                    <span className="text-xs text-slate-500 mb-1 block">Width</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Width</span>
                     <input
                       type="number"
                       value={widthVal}
                       onChange={(e) => { setIsCustomSize(true); setSelectedPreset(''); setWidthVal(Number(e.target.value)); }}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     />
                   </div>
-                  <div className="pb-2 text-slate-400 font-medium">×</div>
+                  <div className="pb-2 text-slate-400 dark:text-slate-500 font-medium">×</div>
                   <div className="flex-1">
-                    <span className="text-xs text-slate-500 mb-1 block">Height</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Height</span>
                     <input
                       type="number"
                       value={heightVal}
                       onChange={(e) => { setIsCustomSize(true); setSelectedPreset(''); setHeightVal(Number(e.target.value)); }}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     />
                   </div>
                   <div className="flex-1">
-                    <span className="text-xs text-slate-500 mb-1 block">Unit</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Unit</span>
                     <select
                       value={unit}
                       onChange={(e) => handleUnitChange(e.target.value as Unit)}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     >
                       <option value="px">px</option>
                       <option value="cm">cm</option>
@@ -272,7 +272,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
 
               {/* DPI */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Resolution (DPI)</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Resolution (DPI)</label>
                 <div className="flex gap-2">
                   {([72, 96, 150, 300] as DPI[]).map((d) => (
                     <button
@@ -286,7 +286,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                   {dpi === 72 ? 'Screen / Web' : dpi === 96 ? 'Standard Web' : dpi === 150 ? 'Medium Quality Print' : 'High Quality Print'}
                 </p>
               </div>
@@ -294,29 +294,29 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
               {/* Background Color + Color Mode */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Background Color</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Background Color</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
                       value={bgColor}
                       onChange={(e) => setBgColor(e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border border-slate-300"
+                      className="w-10 h-10 rounded-lg cursor-pointer border border-slate-300 dark:border-slate-600"
                     />
-                    <span className="text-sm text-slate-600 font-mono">{bgColor.toUpperCase()}</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-300 font-mono">{bgColor.toUpperCase()}</span>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Color Mode</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Color Mode</label>
                   <div className="flex items-center gap-2 h-10">
-                    <span className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium">RGB</span>
-                    <span className="text-xs text-slate-400">ICC: sRGB</span>
+                    <span className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium">RGB</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500">ICC: sRGB</span>
                   </div>
                 </div>
               </div>
 
               {/* Bit Depth */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Bit Depth (per channel)</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Bit Depth (per channel)</label>
                 <div className="flex gap-2">
                   {([8, 16, 32] as BitDepth[]).map((b) => (
                     <button
@@ -330,24 +330,24 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                   {bitDepth === 8 ? 'Standard — suitable for most designs' : bitDepth === 16 ? 'Extended range — better gradients' : '32-bit HDR — maximum fidelity'}
                 </p>
               </div>
 
               {/* Preview Summary */}
-              <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
-                <div className="font-medium text-slate-800 mb-2">Project Summary</div>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-sm text-slate-600 dark:text-slate-300">
+                <div className="font-medium text-slate-800 dark:text-slate-100 mb-2">Project Summary</div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  <span className="text-slate-500">Canvas size:</span>
+                  <span className="text-slate-500 dark:text-slate-400">Canvas size:</span>
                   <span className="font-medium">{unitToPx(widthVal, unit, dpi)} × {unitToPx(heightVal, unit, dpi)} px</span>
-                  <span className="text-slate-500">Resolution:</span>
+                  <span className="text-slate-500 dark:text-slate-400">Resolution:</span>
                   <span className="font-medium">{dpi} DPI</span>
-                  <span className="text-slate-500">Color mode:</span>
+                  <span className="text-slate-500 dark:text-slate-400">Color mode:</span>
                   <span className="font-medium">RGB / sRGB</span>
-                  <span className="text-slate-500">Bit depth:</span>
+                  <span className="text-slate-500 dark:text-slate-400">Bit depth:</span>
                   <span className="font-medium">{bitDepth}-bit</span>
-                  <span className="text-slate-500">Purpose:</span>
+                  <span className="text-slate-500 dark:text-slate-400">Purpose:</span>
                   <span className="font-medium">{PURPOSE_OPTIONS.find((p) => p.id === purpose)?.label ?? purpose}</span>
                 </div>
               </div>
@@ -358,7 +358,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
             <div className="space-y-6">
               {/* Student Templates */}
               <div>
-                <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
                   <span>🎓</span> Student Templates
                 </h4>
                 <div className="grid grid-cols-3 gap-3">
@@ -366,14 +366,14 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                     <button
                       key={preset.key}
                       onClick={() => handleApplyTemplate(preset.design)}
-                      className="rounded-xl border-2 border-indigo-100 bg-white hover:border-indigo-400 hover:shadow-md transition-all text-left overflow-hidden group"
+                      className="rounded-xl border-2 border-indigo-100 dark:border-indigo-900 bg-white dark:bg-slate-900 hover:border-indigo-400 hover:shadow-md transition-all text-left overflow-hidden group"
                     >
                       <div className="h-20 bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center text-4xl">
                         {preset.emoji}
                       </div>
                       <div className="p-3">
-                        <div className="text-sm font-semibold text-slate-800">{preset.label}</div>
-                        <div className="mt-1 inline-block px-2 py-0.5 text-[10px] rounded-full bg-indigo-100 text-indigo-600 font-medium">Student</div>
+                        <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{preset.label}</div>
+                        <div className="mt-1 inline-block px-2 py-0.5 text-[10px] rounded-full bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-medium">Student</div>
                       </div>
                     </button>
                   ))}
@@ -382,7 +382,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
 
               {/* Staff Templates */}
               <div>
-                <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
                   <span>👨‍🏫</span> Staff Templates
                 </h4>
                 <div className="grid grid-cols-3 gap-3">
@@ -390,14 +390,14 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                     <button
                       key={preset.key}
                       onClick={() => handleApplyTemplate(preset.design)}
-                      className="rounded-xl border-2 border-emerald-100 bg-white hover:border-emerald-400 hover:shadow-md transition-all text-left overflow-hidden group"
+                      className="rounded-xl border-2 border-emerald-100 dark:border-emerald-900 bg-white dark:bg-slate-900 hover:border-emerald-400 hover:shadow-md transition-all text-left overflow-hidden group"
                     >
                       <div className="h-20 bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center text-4xl">
                         {preset.emoji}
                       </div>
                       <div className="p-3">
-                        <div className="text-sm font-semibold text-slate-800">{preset.label}</div>
-                        <div className="mt-1 inline-block px-2 py-0.5 text-[10px] rounded-full bg-emerald-100 text-emerald-600 font-medium">Staff</div>
+                        <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{preset.label}</div>
+                        <div className="mt-1 inline-block px-2 py-0.5 text-[10px] rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-medium">Staff</div>
                       </div>
                     </button>
                   ))}
@@ -409,8 +409,8 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
 
         {/* Footer (blank tab only) */}
         {tab === 'blank' && (
-          <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
-            <button onClick={onClose} className="px-5 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors">
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+            <button onClick={onClose} className="px-5 py-2 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
               Cancel
             </button>
             <button onClick={handleCreateBlank} className="px-5 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">

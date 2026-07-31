@@ -53,36 +53,36 @@ function uid() { return Math.random().toString(36).slice(2, 9) }
 
 function InvoicePreview({ s }: { s: FeeSettings }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 text-sm shadow-sm">
+    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-6 text-sm shadow-sm">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <p className="text-base font-bold text-gray-900">{s.schoolName || '—'}</p>
+          <p className="text-base font-bold text-gray-900 dark:text-slate-100">{s.schoolName || '—'}</p>
           {s.schoolAddress && <p className="text-[11px] text-gray-400 mt-0.5">{s.schoolAddress}</p>}
           {(s.schoolPhone || s.schoolEmail) && (
             <p className="text-[11px] text-gray-400">{[s.schoolPhone, s.schoolEmail].filter(Boolean).join(' · ')}</p>
           )}
-          <p className="text-[11px] text-gray-500 mt-1">{s.invoiceSubtitle || 'Student Fee Receipt'}</p>
+          <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1">{s.invoiceSubtitle || 'Student Fee Receipt'}</p>
         </div>
         <div className="text-right">
-          <p className="text-xl font-extrabold text-gray-900 tracking-tight">{s.invoiceTitle || 'INVOICE'}</p>
+          <p className="text-xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{s.invoiceTitle || 'INVOICE'}</p>
           <p className="text-[11px] text-gray-400 mt-1">No: #A1B2C3D4</p>
           <p className="text-[11px] text-gray-400">Date: 04 Jul 2026</p>
         </div>
       </div>
-      <hr className="border-gray-200 mb-4" />
+      <hr className="border-gray-200 dark:border-slate-700 mb-4" />
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-gray-50 rounded-lg p-3">
+        <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3">
           <p className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Bill To</p>
-          <p className="font-semibold text-gray-900 text-xs">Sample Student</p>
-          <p className="text-[11px] text-gray-500">Class: Grade 8A</p>
+          <p className="font-semibold text-gray-900 dark:text-slate-100 text-xs">Sample Student</p>
+          <p className="text-[11px] text-gray-500 dark:text-slate-400">Class: Grade 8A</p>
         </div>
-        <div className="bg-gray-50 rounded-lg p-3">
+        <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3">
           <p className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Fee Details</p>
-          <p className="text-[11px] text-gray-600">Term: <span className="font-medium text-gray-900">2025-26</span></p>
-          <p className="text-[11px] text-gray-600">Due Date: <span className="font-medium text-gray-900">2026-08-01</span></p>
+          <p className="text-[11px] text-gray-600 dark:text-slate-300">Term: <span className="font-medium text-gray-900 dark:text-slate-100">2025-26</span></p>
+          <p className="text-[11px] text-gray-600 dark:text-slate-300">Due Date: <span className="font-medium text-gray-900 dark:text-slate-100">2026-08-01</span></p>
         </div>
       </div>
-      <hr className="border-gray-100 mt-4 mb-2" />
+      <hr className="border-gray-100 dark:border-slate-800 mt-4 mb-2" />
       <p className="text-center text-[10px] text-gray-400">{s.invoiceFooter || '—'}</p>
     </div>
   )
@@ -96,23 +96,23 @@ function PresetRow({ preset, onChange, onDelete }: {
   onDelete: () => void
 }) {
   return (
-    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
+    <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl">
       <input
         type="text" value={preset.name} placeholder="Name (e.g. Scholarship)"
         onChange={e => onChange({ ...preset, name: e.target.value })}
-        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+        className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white dark:bg-slate-900"
       />
       <select value={preset.type} onChange={e => onChange({ ...preset, type: e.target.value as 'percent' | 'fixed' })}
-        className="px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white">
+        className="px-2 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white dark:bg-slate-900">
         <option value="percent">%</option>
         <option value="fixed">$</option>
       </select>
       <input
         type="number" min="0" step="0.1" value={preset.value} placeholder="0"
         onChange={e => onChange({ ...preset, value: parseFloat(e.target.value) || 0 })}
-        className="w-20 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white text-right"
+        className="w-20 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white dark:bg-slate-900 text-right"
       />
-      <button onClick={onDelete} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+      <button onClick={onDelete} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -134,19 +134,19 @@ function PromoRow({ promo, onChange, onDelete }: {
         <input
           type="text" value={promo.name} placeholder="Promotion name"
           onChange={e => onChange({ ...promo, name: e.target.value })}
-          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+          className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white dark:bg-slate-900"
         />
         <select value={promo.type} onChange={e => onChange({ ...promo, type: e.target.value as 'percent' | 'fixed' })}
-          className="px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white">
+          className="px-2 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white dark:bg-slate-900">
           <option value="percent">%</option>
           <option value="fixed">$</option>
         </select>
         <input
           type="number" min="0" step="0.1" value={promo.value} placeholder="0"
           onChange={e => onChange({ ...promo, value: parseFloat(e.target.value) || 0 })}
-          className="w-20 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white text-right"
+          className="w-20 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white dark:bg-slate-900 text-right"
         />
-        <button onClick={onDelete} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0">
+        <button onClick={onDelete} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition shrink-0">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -161,7 +161,7 @@ function PromoRow({ promo, onChange, onDelete }: {
         <span className="text-gray-400">Expires:</span>
         <input type="date" value={promo.expiresAt}
           onChange={e => onChange({ ...promo, expiresAt: e.target.value })}
-          className="px-2 py-1 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+          className="px-2 py-1 border border-gray-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white dark:bg-slate-900"
         />
         {promo.expiresAt && (
           <button onClick={() => onChange({ ...promo, expiresAt: '' })} className="text-gray-400 hover:text-gray-600 text-xs">
@@ -224,8 +224,8 @@ export function FeeSettingsDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Fee Settings</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Configure invoice, discounts and promotions</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fee Settings</h1>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Configure invoice, discounts and promotions</p>
           </div>
           <button onClick={handleSave} disabled={saving}
             className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 transition disabled:opacity-60">
@@ -237,14 +237,14 @@ export function FeeSettingsDashboard() {
           </button>
         </div>
 
-        {error && <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>}
+        {error && <p className="text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900 rounded-xl px-4 py-3">{error}</p>}
 
         {loading ? (
           <div className="flex items-center justify-center h-64 text-gray-400 text-sm">Loading…</div>
         ) : (
           <>
             {/* Tabs */}
-            <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+            <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-xl p-1 w-fit">
               {TABS.map(({ key, label }) => (
                 <button key={key} onClick={() => setTab(key)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition ${tab === key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -256,57 +256,57 @@ export function FeeSettingsDashboard() {
             {/* ── Invoice Tab ─────────────────────────────────────────────── */}
             {tab === 'invoice' && (
               <div className="grid lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-                  <h2 className="text-sm font-semibold text-gray-700 mb-1">School Information</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 space-y-4">
+                  <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-1">School Information</h2>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">School Name</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">School Name</label>
                     <input type="text" value={settings.schoolName}
                       onChange={e => setField('schoolName', e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                      className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">Address</label>
                     <input type="text" value={settings.schoolAddress}
                       onChange={e => setField('schoolAddress', e.target.value)}
                       placeholder="Optional"
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                      className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">Phone</label>
                       <input type="text" value={settings.schoolPhone}
                         onChange={e => setField('schoolPhone', e.target.value)}
                         placeholder="Optional"
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">Email</label>
                       <input type="email" value={settings.schoolEmail}
                         onChange={e => setField('schoolEmail', e.target.value)}
                         placeholder="Optional"
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
                     </div>
                   </div>
-                  <hr className="border-gray-100" />
-                  <h2 className="text-sm font-semibold text-gray-700">Invoice Header</h2>
+                  <hr className="border-gray-100 dark:border-slate-800" />
+                  <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Invoice Header</h2>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Invoice Title</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">Invoice Title</label>
                     <input type="text" value={settings.invoiceTitle}
                       onChange={e => setField('invoiceTitle', e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                      className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Subtitle</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">Subtitle</label>
                     <input type="text" value={settings.invoiceSubtitle}
                       onChange={e => setField('invoiceSubtitle', e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
+                      className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
                   </div>
-                  <hr className="border-gray-100" />
-                  <h2 className="text-sm font-semibold text-gray-700">Invoice Footer</h2>
+                  <hr className="border-gray-100 dark:border-slate-800" />
+                  <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Invoice Footer</h2>
                   <div>
                     <textarea value={settings.invoiceFooter} rows={3}
                       onChange={e => setField('invoiceFooter', e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none" />
+                      className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none" />
                   </div>
                 </div>
                 <div>
@@ -318,15 +318,15 @@ export function FeeSettingsDashboard() {
 
             {/* ── Discounts Tab ───────────────────────────────────────────── */}
             {tab === 'discounts' && (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-semibold text-gray-700">Discount Presets</h2>
+                    <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Discount Presets</h2>
                     <p className="text-xs text-gray-400 mt-0.5">Saved discounts selectable when creating fee records</p>
                   </div>
                   <button
                     onClick={() => setField('discountPresets', [...settings.discountPresets, { id: uid(), name: '', type: 'percent', value: 0 }])}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                    className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
                     Add Preset
                   </button>
@@ -345,7 +345,7 @@ export function FeeSettingsDashboard() {
                     ))}
                   </div>
                 )}
-                <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-xs text-blue-700">
+                <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 rounded-xl px-4 py-3 text-xs text-blue-700 dark:text-blue-300">
                   <strong>How it works:</strong> These presets appear as a dropdown when creating or editing a fee record, pre-filling the discount field. The actual discount applied is calculated based on the fee amount.
                 </div>
               </div>
@@ -353,22 +353,22 @@ export function FeeSettingsDashboard() {
 
             {/* ── Promotions Tab ──────────────────────────────────────────── */}
             {tab === 'promotions' && (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-semibold text-gray-700">Promotions</h2>
+                    <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Promotions</h2>
                     <p className="text-xs text-gray-400 mt-0.5">Time-limited discounts (e.g. Early-bird, Holiday special)</p>
                   </div>
                   <button
                     onClick={() => setField('promotions', [...settings.promotions, { id: uid(), name: '', type: 'percent', value: 0, expiresAt: '', active: true }])}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                    className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
                     Add Promotion
                   </button>
                 </div>
                 {settings.promotions.filter(p => p.active).length > 0 && (
-                  <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border border-emerald-100 rounded-xl text-xs text-emerald-700 font-medium">
-                    <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+                    <svg className="w-4 h-4 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
                     {settings.promotions.filter(p => p.active).length} active promotion{settings.promotions.filter(p => p.active).length !== 1 ? 's' : ''}
                   </div>
                 )}

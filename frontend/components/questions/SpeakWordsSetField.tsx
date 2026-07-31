@@ -18,15 +18,15 @@ export function SpeakWordsSetEditor({ data, onChange }: { data: any; onChange: (
   return (
     <div className="space-y-3">
       {items.map((it, i) => (
-        <div key={it.id} className="border rounded-lg p-2 bg-white space-y-1.5 relative">
+        <div key={it.id} className="border rounded-lg p-2 bg-white dark:bg-slate-900 space-y-1.5 relative">
           <button type="button" onClick={() => removeItem(i)} disabled={items.length <= 1} className="absolute top-1.5 right-1.5 text-red-400 text-xs disabled:opacity-30">✕</button>
-          <label className="block text-[11px] text-slate-500">Prompt {i + 1}
+          <label className="block text-[11px] text-slate-500 dark:text-slate-400">Prompt {i + 1}
             <input value={it.prompt} onChange={e => updateItem(i, { prompt: e.target.value })} className="mt-0.5 w-full border rounded-lg px-2 py-1.5 text-sm" />
           </label>
           <AcceptedAnswersEditor answers={it.acceptedAnswers} onChange={a => updateItem(i, { acceptedAnswers: a })} />
         </div>
       ))}
-      <button type="button" onClick={addItem} className="text-xs text-sky-600 hover:underline">+ Add prompt</button>
+      <button type="button" onClick={addItem} className="text-xs text-sky-600 dark:text-sky-400 hover:underline">+ Add prompt</button>
     </div>
   )
 }
@@ -40,8 +40,8 @@ export function SpeakWordsSetInput({ data, value, onChange, disabled }: { data: 
   return (
     <div className="space-y-4">
       {items.map((it, i) => (
-        <div key={it.id} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-          <p className="text-sm font-medium text-slate-800 mb-2">{i + 1}. <MathText as="span" text={it.prompt} /></p>
+        <div key={it.id} className="border-b border-slate-100 dark:border-slate-800 pb-3 last:border-0 last:pb-0">
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-100 mb-2">{i + 1}. <MathText as="span" text={it.prompt} /></p>
           <SpeechCaptureInput
             value={answers[it.id] || ''}
             onChange={v => onChange({ ...answers, [it.id]: v })}

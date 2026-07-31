@@ -144,8 +144,8 @@ export default function SettingsPage() {
         <div className="page-content">
           <div className="h-14 lg:hidden" />
           <div className="page-header">
-            <h1 className="text-2xl font-bold text-slate-800">{t('settings.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">{t('settings.subtitle')}</p>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('settings.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('settings.subtitle')}</p>
           </div>
 
           <div className="page-body space-y-6">
@@ -162,8 +162,8 @@ export default function SettingsPage() {
             <div className="card p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-800">{t('settings.storageOverview')}</h2>
-                  <p className="text-sm text-slate-500 mt-0.5">
+                  <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('settings.storageOverview')}</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                     {items.length} item{items.length !== 1 ? 's' : ''} stored &bull; {totalSize} total
                   </p>
                 </div>
@@ -173,13 +173,13 @@ export default function SettingsPage() {
               </div>
 
               {/* Storage bar */}
-              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-1">
+              <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-1">
                 <div
                   className="h-full bg-indigo-500 rounded-full transition-all"
                   style={{ width: `${Math.min(100, (items.length / 20) * 100)}%` }}
                 />
               </div>
-              <p className="text-xs text-slate-400">{items.length} / ~20 typical cached items</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{items.length} / ~20 typical cached items</p>
             </div>
 
             {/* Quick Actions */}
@@ -190,8 +190,8 @@ export default function SettingsPage() {
                     🧹
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-slate-800">{t('settings.clearAppCache')}</h3>
-                    <p className="text-sm text-slate-500 mt-1 mb-3">
+                    <h3 className="font-semibold text-slate-800 dark:text-slate-100">{t('settings.clearAppCache')}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">
                       Remove saved designs, settings, and temp data. Auth stays intact.
                     </p>
                     <button
@@ -211,8 +211,8 @@ export default function SettingsPage() {
                     🌐
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-slate-800">{t('settings.clearBrowserCache')}</h3>
-                    <p className="text-sm text-slate-500 mt-1 mb-3">
+                    <h3 className="font-semibold text-slate-800 dark:text-slate-100">{t('settings.clearBrowserCache')}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">
                       Remove cached pages and assets. May reload resources on next visit.
                     </p>
                     <button onClick={clearNextCache} className="btn-primary text-sm px-3 py-1.5">
@@ -230,8 +230,8 @@ export default function SettingsPage() {
                   🗑️
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-slate-800">Cleanup Orphaned Students</h3>
-                  <p className="text-sm text-slate-500 mt-1 mb-3">
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-100">Cleanup Orphaned Students</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">
                     Remove students that are not assigned to any class. This happens when classes are deleted but students remain in the database.
                   </p>
                   <button
@@ -248,21 +248,21 @@ export default function SettingsPage() {
             {/* Cached Data Items */}
             {removableItems.length > 0 && (
               <div className="card">
-                <div className="px-5 py-3 border-b border-slate-100">
-                  <h3 className="font-semibold text-slate-800">{t('settings.removableCache')}</h3>
+                <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-100">{t('settings.removableCache')}</h3>
                 </div>
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {removableItems.map(item => (
                     <div key={item.key} className="px-5 py-3 flex items-center justify-between gap-4">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-800 truncate">{item.label}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{item.description}</p>
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{item.label}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.description}</p>
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-xs text-slate-400 font-mono">{item.size}</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">{item.size}</span>
                         <button
                           onClick={() => clearItem(item.key)}
-                          className="text-red-500 hover:text-red-700 text-xs font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                          className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-xs font-medium px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                         >
                           {t('common.remove')}
                         </button>
@@ -276,19 +276,19 @@ export default function SettingsPage() {
             {/* Auth Items (protected) */}
             {authItems.length > 0 && (
               <div className="card">
-                <div className="px-5 py-3 border-b border-slate-100">
-                  <h3 className="font-semibold text-slate-800">{t('settings.protectedData')}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Auth and card designs are protected from cache cleanup.</p>
+                <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-100">{t('settings.protectedData')}</h3>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Auth and card designs are protected from cache cleanup.</p>
                 </div>
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {authItems.map(item => (
                     <div key={item.key} className="px-5 py-3 flex items-center justify-between gap-4">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-800 truncate">{item.label}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{item.description}</p>
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{item.label}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.description}</p>
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-xs text-slate-400 font-mono">{item.size}</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">{item.size}</span>
                         <span className="badge-blue text-xs">Protected</span>
                       </div>
                     </div>
@@ -300,7 +300,7 @@ export default function SettingsPage() {
             {items.length === 0 && (
               <div className="empty-state">
                 <p className="text-lg">No cached data</p>
-                <p className="text-sm text-slate-400 mt-1">Your app is clean!</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Your app is clean!</p>
               </div>
             )}
           </div>

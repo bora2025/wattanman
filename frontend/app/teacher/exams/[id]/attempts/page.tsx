@@ -126,56 +126,56 @@ export default function ExamGradebookPage() {
 
   return (
     <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
-      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title={isAdmin ? 'Admin Panel' : 'Teacher'} subtitle={isAdmin ? 'Wattanman' : 'Portal'} navItems={isAdmin ? adminNav : teacherNav} accentColor={isAdmin ? 'indigo' : 'sky'} />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
           <div className="flex items-center gap-3 flex-wrap">
-            <button onClick={() => router.push(isAdmin ? '/admin/exams' : '/teacher/exams')} className="text-sm text-gray-500 hover:text-gray-800">← Back</button>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+            <button onClick={() => router.push(isAdmin ? '/admin/exams' : '/teacher/exams')} className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-800">← Back</button>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">
               📊 Gradebook {exam ? `· ${exam.title}` : ''}
             </h1>
           </div>
 
           {examLoading || attemptsLoading ? (
-            <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />)}</div>
+            <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-20 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />)}</div>
           ) : !exam ? (
-            <div className="text-red-600">Exam not found.</div>
+            <div className="text-red-600 dark:text-red-400">Exam not found.</div>
           ) : (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard label="Total Marks" value={exam.totalMarks} decimals={0} prefix="" color="bg-indigo-100"
-                  icon={<svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>} />
+                  icon={<svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>} />
                 <StatCard label="Pass Mark" value={exam.passMark} decimals={0} prefix="" color="bg-emerald-100"
-                  icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+                  icon={<svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
                 <StatCard label="Questions" value={exam.questions.length} decimals={0} prefix="" color="bg-sky-100"
-                  icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+                  icon={<svg className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
                 <StatCard label="Need Manual Grading" value={manualQuestions.length} decimals={0} prefix="" color="bg-amber-100"
-                  icon={<svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>} />
+                  icon={<svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>} />
               </div>
 
               {attempts.length === 0 ? (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800">
                   <EmptyState icon="🧑‍🎓" message="No student has attempted this exam yet." />
                 </div>
               ) : (
                 <div className="space-y-3">
                   {attempts.map(att => (
-                    <div key={att.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div key={att.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
                       <div className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-semibold text-slate-800 truncate">{att.student.user.name}</p>
-                            {att.attemptNumber > 1 && <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-semibold">Attempt {att.attemptNumber}</span>}
+                            <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{att.student.user.name}</p>
+                            {att.attemptNumber > 1 && <span className="text-xs bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full font-semibold">Attempt {att.attemptNumber}</span>}
                           </div>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             Submitted: {att.submittedAt ? new Date(att.submittedAt).toLocaleString() : '—'}
                             {att.gradedAt && <> · Graded: {new Date(att.gradedAt).toLocaleString()}</>}
                           </p>
                         </div>
                         <div className="flex items-center justify-between gap-3 sm:flex-shrink-0">
                           <div className="text-left sm:text-right">
-                            <div className="text-sm font-semibold text-slate-800">
+                            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                               {att.score ?? 0} / {exam.totalMarks}
                               {att.grade && <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${att.grade === 'PASS' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{att.grade}</span>}
                             </div>
@@ -183,13 +183,13 @@ export default function ExamGradebookPage() {
                           </div>
                           <button
                             onClick={() => setOpenAttemptId(openAttemptId === att.id ? null : att.id)}
-                            className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md border border-sky-200 text-sky-700 hover:bg-sky-50 font-medium"
+                            className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md border border-sky-200 dark:border-sky-900 text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/40 font-medium"
                           >
                             {openAttemptId === att.id ? 'Close' : att.status === 'GRADED' ? 'Review' : 'Grade'}
                           </button>
                           <button
                             onClick={() => setResetTarget(att)}
-                            className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md border border-amber-200 text-amber-700 hover:bg-amber-50 font-medium"
+                            className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md border border-amber-200 dark:border-amber-900 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium"
                           >
                             ↻ Re-Attempt
                           </button>
@@ -277,7 +277,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
   })()
 
   return (
-    <div className="border-t border-slate-100 bg-slate-50/60 p-4 space-y-4">
+    <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 p-4 space-y-4">
       {exam.questions.map((q, idx) => {
         const studentAnswer = answers[q.id]
         const autoGraded = isAutoGraded(q.type)
@@ -293,10 +293,10 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
         return (
           <div key={q.id} className={`bg-white rounded-xl border-l-4 border border-slate-200 p-3 ${autoGraded ? 'border-l-emerald-400' : 'border-l-amber-400'}`}>
             <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5 mb-2">
-              <div className="text-sm font-semibold text-slate-800 min-w-0 break-words">
+              <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 min-w-0 break-words">
                 <span>{q.type === 'TEXT' ? '📖 Reading Passage' : `Q${displayNumbers[idx]}.`}</span>
                 <RichText as="div" html={q.text} />
-                <span className="text-xs text-slate-400 font-normal">({q.type} · {q.marks} marks)</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-normal">({q.type} · {q.marks} marks)</span>
               </div>
               {autoGraded && q.type !== 'TEXT' && (
                 <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold ${awarded === q.marks ? 'bg-emerald-100 text-emerald-700' : awarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
@@ -305,7 +305,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
               )}
             </div>
             {q.type === 'MCQ' && choices.length > 0 && (
-              <ul className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4">
+              <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-0.5 mb-2 ml-4">
                 {choices.map((c) => (
                   <li key={c.id} className={c.isCorrect ? 'text-emerald-700 font-semibold' : ''}>
                     {chosenIds.has(c.id) ? '☑' : '☐'} <MathText as="span" text={c.text} />{c.isCorrect ? ' (correct)' : ''}
@@ -314,61 +314,61 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
               </ul>
             )}
             {q.type === 'TF' && (
-              <div className="text-xs text-slate-600 mb-2 ml-4">
-                Correct answer: <span className="font-semibold text-emerald-700">{q.data?.correct ? 'True' : 'False'}</span>
+              <div className="text-xs text-slate-600 dark:text-slate-300 mb-2 ml-4">
+                Correct answer: <span className="font-semibold text-emerald-700 dark:text-emerald-300">{q.data?.correct ? 'True' : 'False'}</span>
               </div>
             )}
             {q.type === 'SORT_PARAGRAPHS' && paragraphs.length > 0 && (
-              <ol className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4 list-decimal list-inside">
-                {paragraphs.map((p) => <li key={p.id} className="text-emerald-700 font-semibold"><MathText as="span" text={p.text} /></li>)}
+              <ol className="text-xs text-slate-600 dark:text-slate-300 space-y-0.5 mb-2 ml-4 list-decimal list-inside">
+                {paragraphs.map((p) => <li key={p.id} className="text-emerald-700 dark:text-emerald-300 font-semibold"><MathText as="span" text={p.text} /></li>)}
               </ol>
             )}
             {q.type === 'DRAG_WORDS' && dragBlanks.length > 0 && (
-              <div className="text-xs text-slate-600 mb-2 ml-4">
-                Correct words: {dragBlanks.map((b) => <span key={b.id} className="text-emerald-700 font-semibold mr-2">[{b.answer}]</span>)}
+              <div className="text-xs text-slate-600 dark:text-slate-300 mb-2 ml-4">
+                Correct words: {dragBlanks.map((b) => <span key={b.id} className="text-emerald-700 dark:text-emerald-300 font-semibold mr-2">[{b.answer}]</span>)}
               </div>
             )}
             {q.type === 'FILL_BLANKS' && fillBlanks.length > 0 && (
-              <div className="text-xs text-slate-600 mb-2 ml-4">
-                Accepted answers: {fillBlanks.map((b) => <span key={b.id} className="text-emerald-700 font-semibold mr-2">[{b.answers.join(' / ')}]</span>)}
+              <div className="text-xs text-slate-600 dark:text-slate-300 mb-2 ml-4">
+                Accepted answers: {fillBlanks.map((b) => <span key={b.id} className="text-emerald-700 dark:text-emerald-300 font-semibold mr-2">[{b.answers.join(' / ')}]</span>)}
               </div>
             )}
             {q.type === 'DRAG_DROP' && dropItems.length > 0 && (
-              <ul className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4">
+              <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-0.5 mb-2 ml-4">
                 {dropItems.map((it) => (
-                  <li key={it.id} className="text-emerald-700 font-semibold">
+                  <li key={it.id} className="text-emerald-700 dark:text-emerald-300 font-semibold">
                     <MathText as="span" text={it.label} /> → Zone {dropZones.findIndex(z => z.id === it.correctZoneId) + 1}
                   </li>
                 ))}
               </ul>
             )}
             {q.type === 'SPEAK_WORDS' && (q.data?.acceptedAnswers ?? []).length > 0 && (
-              <div className="text-xs text-slate-600 mb-2 ml-4">
-                Accepted answers: {(q.data.acceptedAnswers as string[]).map((a, i) => <span key={i} className="text-emerald-700 font-semibold mr-2">[{a}]</span>)}
+              <div className="text-xs text-slate-600 dark:text-slate-300 mb-2 ml-4">
+                Accepted answers: {(q.data.acceptedAnswers as string[]).map((a, i) => <span key={i} className="text-emerald-700 dark:text-emerald-300 font-semibold mr-2">[{a}]</span>)}
               </div>
             )}
             {q.type === 'SPEAK_WORDS_SET' && swSetItems.length > 0 && (
-              <ul className="text-xs text-slate-600 space-y-0.5 mb-2 ml-4">
+              <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-0.5 mb-2 ml-4">
                 {swSetItems.map((it) => (
-                  <li key={it.id}><MathText as="span" text={it.prompt} />: <span className="text-emerald-700 font-semibold">{it.acceptedAnswers.join(' / ')}</span></li>
+                  <li key={it.id}><MathText as="span" text={it.prompt} />: <span className="text-emerald-700 dark:text-emerald-300 font-semibold">{it.acceptedAnswers.join(' / ')}</span></li>
                 ))}
               </ul>
             )}
             {q.type === 'DICTATION' && q.data?.script && (
-              <div className="text-xs text-slate-600 mb-2 ml-4">
-                Script: <MathText as="span" className="text-emerald-700 font-semibold" text={q.data.script} />
+              <div className="text-xs text-slate-600 dark:text-slate-300 mb-2 ml-4">
+                Script: <MathText as="span" className="text-emerald-700 dark:text-emerald-300 font-semibold" text={q.data.script} />
               </div>
             )}
             {q.type !== 'TEXT' && (
             <>
-            <div className="text-xs text-slate-500 mb-1">Student answer:</div>
-            <div className="text-sm bg-slate-50 border border-slate-200 rounded p-2 whitespace-pre-wrap">
+            <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Student answer:</div>
+            <div className="text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-2 whitespace-pre-wrap">
               {q.type === 'MCQ' ? (
                 choices.filter(c => chosenIds.has(c.id)).length > 0
                   ? <MathText as="span" text={choices.filter(c => chosenIds.has(c.id)).map(c => c.text).join(', ')} />
-                  : <span className="text-slate-400 italic">(no answer)</span>
+                  : <span className="text-slate-400 dark:text-slate-500 italic">(no answer)</span>
               ) : q.type === 'TF' ? (
-                studentAnswer == null ? <span className="text-slate-400 italic">(no answer)</span> : (studentAnswer ? 'True' : 'False')
+                studentAnswer == null ? <span className="text-slate-400 dark:text-slate-500 italic">(no answer)</span> : (studentAnswer ? 'True' : 'False')
               ) : q.type === 'SORT_PARAGRAPHS' ? (
                 Array.isArray(studentAnswer) && studentAnswer.length > 0 ? (
                   <ol className="list-decimal list-inside space-y-0.5">
@@ -378,7 +378,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                       return <li key={id} className={rightSpot ? 'text-emerald-700' : 'text-red-600'}>{p ? <MathText as="span" text={p.text} /> : '(unknown)'}</li>
                     })}
                   </ol>
-                ) : <span className="text-slate-400 italic">(no answer)</span>
+                ) : <span className="text-slate-400 dark:text-slate-500 italic">(no answer)</span>
               ) : q.type === 'DRAG_WORDS' ? (
                 dragBlanks.length > 0 ? (
                   <div className="space-y-0.5">
@@ -388,7 +388,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                       return <div key={b.id}>Blank &quot;{b.answer}&quot;: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{given || '(blank)'}</span></div>
                     })}
                   </div>
-                ) : <span className="text-slate-400 italic">(no answer)</span>
+                ) : <span className="text-slate-400 dark:text-slate-500 italic">(no answer)</span>
               ) : q.type === 'FILL_BLANKS' ? (
                 fillBlanks.length > 0 ? (
                   <div className="space-y-0.5">
@@ -398,7 +398,7 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                       return <div key={b.id}>Blank &quot;{b.answers.join(' / ')}&quot;: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{given || '(blank)'}</span></div>
                     })}
                   </div>
-                ) : <span className="text-slate-400 italic">(no answer)</span>
+                ) : <span className="text-slate-400 dark:text-slate-500 italic">(no answer)</span>
               ) : q.type === 'DRAG_DROP' ? (
                 dropItems.length > 0 ? (
                   <div className="space-y-0.5">
@@ -409,34 +409,34 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                       return <div key={it.id}><MathText as="span" text={it.label} />: <span className={ok ? 'text-emerald-700 font-semibold' : 'text-red-600'}>{given ? `Zone ${zoneIdx + 1}` : '(not placed)'}</span></div>
                     })}
                   </div>
-                ) : <span className="text-slate-400 italic">(no answer)</span>
+                ) : <span className="text-slate-400 dark:text-slate-500 italic">(no answer)</span>
               ) : q.type === 'SPEAK_WORDS' ? (
-                studentAnswer ? <MathText as="span" text={studentAnswer} /> : <span className="text-slate-400 italic">(no answer)</span>
+                studentAnswer ? <MathText as="span" text={studentAnswer} /> : <span className="text-slate-400 dark:text-slate-500 italic">(no answer)</span>
               ) : q.type === 'SPEAK_WORDS_SET' ? (
                 swSetItems.length > 0 ? (
                   <div className="space-y-0.5">
                     {swSetItems.map((it) => {
                       const given = studentAnswer && typeof studentAnswer === 'object' ? studentAnswer[it.id] : undefined
-                      return <div key={it.id}><MathText as="span" text={it.prompt} />: <span className="text-slate-700">{given || '(no answer)'}</span></div>
+                      return <div key={it.id}><MathText as="span" text={it.prompt} />: <span className="text-slate-700 dark:text-slate-200">{given || '(no answer)'}</span></div>
                     })}
                   </div>
-                ) : <span className="text-slate-400 italic">(no answer)</span>
+                ) : <span className="text-slate-400 dark:text-slate-500 italic">(no answer)</span>
               ) : q.type === 'DICTATION' ? (
                 <div className="space-y-1">
                   {diffWords(q.data?.script || '', studentAnswer || '').map((d, i) => (
                     <span key={i} className={`mr-1.5 ${d.match ? 'text-emerald-700' : 'text-red-600 line-through'}`}>{d.word}</span>
                   ))}
-                  {!studentAnswer && <span className="text-slate-400 italic block">(no answer)</span>}
+                  {!studentAnswer && <span className="text-slate-400 dark:text-slate-500 italic block">(no answer)</span>}
                 </div>
               ) : (
-                studentAnswer || <span className="text-slate-400 italic">(no answer)</span>
+                studentAnswer || <span className="text-slate-400 dark:text-slate-500 italic">(no answer)</span>
               )}
             </div>
             </>
             )}
             {!autoGraded && (
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <label className="text-xs text-slate-600">Marks:</label>
+                <label className="text-xs text-slate-600 dark:text-slate-300">Marks:</label>
                 <input
                   type="number"
                   min={0}
@@ -444,10 +444,10 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
                   step="0.5"
                   value={marks[q.id] ?? ''}
                   onChange={e => setMarks({ ...marks, [q.id]: e.target.value })}
-                  className="w-24 text-sm border border-slate-300 rounded-md px-2 py-1.5"
+                  className="w-24 text-sm border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1.5"
                   placeholder="0"
                 />
-                <span className="text-xs text-slate-400">/ {q.marks}</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">/ {q.marks}</span>
               </div>
             )}
           </div>
@@ -455,17 +455,17 @@ function GradePanel({ exam, attempt, onSaved }: { exam: Exam; attempt: Attempt; 
       })}
 
       <div>
-        <label className="text-xs text-slate-600 font-medium block mb-1">Overall feedback (optional)</label>
+        <label className="text-xs text-slate-600 dark:text-slate-300 font-medium block mb-1">Overall feedback (optional)</label>
         <textarea
           value={feedback}
           onChange={e => setFeedback(e.target.value)}
           rows={3}
-          className="w-full text-sm border border-slate-300 rounded-md px-2 py-1.5"
+          className="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1.5"
           placeholder="Comments for the student…"
         />
       </div>
 
-      {error && <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</div>}
+      {error && <div className="text-xs text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-md px-3 py-2">{error}</div>}
 
       <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
         <button

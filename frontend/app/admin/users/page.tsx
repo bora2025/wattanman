@@ -348,7 +348,7 @@ export default function ManageUsers() {
         <div className="h-14 lg:hidden" />
         <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">{t('users.title')}</h1>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('users.title')}</h1>
           </div>
           <div className="flex gap-2">
             <button onClick={() => { setShowBulk(!showBulk); setShowForm(false) }} className="btn-outline">
@@ -373,14 +373,14 @@ export default function ManageUsers() {
           {/* Add User Form */}
           {showForm && (
             <div className="card p-6">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">Add New User</h3>
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Add New User</h3>
               <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="sm:col-span-2 lg:col-span-4 flex items-center gap-3">
                   {newPhoto ? (
-                    <img src={normalizePhotoUrl(newPhoto)} alt="Preview" className="w-12 h-12 rounded-full object-cover border-2 border-slate-200 shrink-0" />
+                    <img src={normalizePhotoUrl(newPhoto)} alt="Preview" className="w-12 h-12 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700 shrink-0" />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center shrink-0">
-                      <span className="text-lg text-slate-400">📷</span>
+                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center shrink-0">
+                      <span className="text-lg text-slate-400 dark:text-slate-500">📷</span>
                     </div>
                   )}
                   <div className="flex-1">
@@ -399,7 +399,7 @@ export default function ManageUsers() {
                     }} />
                   </label>
                   {newPhoto && (
-                    <button type="button" onClick={() => setNewPhoto('')} className="text-xs text-red-500 hover:text-red-700 self-end mb-1">Remove</button>
+                    <button type="button" onClick={() => setNewPhoto('')} className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 self-end mb-1">Remove</button>
                   )}
                 </div>
                 <div>
@@ -448,14 +448,14 @@ export default function ManageUsers() {
                 />
               </div>
             </div>
-            <p className="text-xs text-slate-400 mt-2">Columns: Name, Email, Password, Possition, Photo (URL). Accepts CSV or HTML table.</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">Columns: Name, Email, Password, Possition, Photo (URL). Accepts CSV or HTML table.</p>
           </div>
 
           {/* Import Preview */}
           {showImportPreview && importPreview.length > 0 && (
             <div className="card p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-800">Import Preview ({importPreview.length} users)</h3>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Import Preview ({importPreview.length} users)</h3>
                 <div className="flex gap-2">
                   <button onClick={() => { setShowImportPreview(false); setImportPreview([]); setFile(null) }} className="btn-outline btn-sm">Cancel</button>
                   <button onClick={handleImport} disabled={importing} className="btn-primary btn-sm">
@@ -478,7 +478,7 @@ export default function ManageUsers() {
                   <tbody>
                     {importPreview.map((u, i) => (
                       <tr key={i}>
-                        <td className="text-slate-400">{i + 1}</td>
+                        <td className="text-slate-400 dark:text-slate-500">{i + 1}</td>
                         <td>
                           {u.photo ? (
                             <img src={u.photo} alt="" className="w-8 h-8 rounded-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
@@ -486,9 +486,9 @@ export default function ManageUsers() {
                             <span className="text-slate-300">—</span>
                           )}
                         </td>
-                        <td className="font-medium text-slate-800">{u.name}</td>
-                        <td className="text-slate-500">{u.email}</td>
-                        <td className="text-slate-400">{'•'.repeat(Math.min(u.password.length, 8))}</td>
+                        <td className="font-medium text-slate-800 dark:text-slate-100">{u.name}</td>
+                        <td className="text-slate-500 dark:text-slate-400">{u.email}</td>
+                        <td className="text-slate-400 dark:text-slate-500">{'•'.repeat(Math.min(u.password.length, 8))}</td>
                         <td><span className={getRoleBadgeClass(u.role)}>{getRoleLabel(u.role)}</span></td>
                       </tr>
                     ))}
@@ -541,13 +541,13 @@ export default function ManageUsers() {
                             {user.name.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <span className="font-medium text-slate-800">{user.name}</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-100">{user.name}</span>
                       </div>
                     </td>
-                    <td className="text-slate-500">{user.email}</td>
-                    <td className="text-slate-500">{user.phone || '—'}</td>
+                    <td className="text-slate-500 dark:text-slate-400">{user.email}</td>
+                    <td className="text-slate-500 dark:text-slate-400">{user.phone || '—'}</td>
                     <td><span className={getRoleBadgeClass(user.role)}>{getRoleLabel(user.role)}</span></td>
-                    <td className="text-slate-500">{new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td className="text-slate-500 dark:text-slate-400">{new Date(user.createdAt).toLocaleDateString()}</td>
                     <td>
                       <div className="flex items-center gap-2">
                         <button
@@ -570,7 +570,7 @@ export default function ManageUsers() {
                 ))}
                 {filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-slate-400">No users found</td>
+                    <td colSpan={6} className="text-center py-8 text-slate-400 dark:text-slate-500">No users found</td>
                   </tr>
                 )}
               </tbody>
@@ -582,18 +582,18 @@ export default function ManageUsers() {
       {/* Edit User Modal */}
       {editingUser && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-800">Edit User</h3>
-              <button onClick={() => setEditingUser(null)} className="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Edit User</h3>
+              <button onClick={() => setEditingUser(null)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xl">✕</button>
             </div>
             <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
               <div className="flex items-center gap-3">
                 {editPhoto ? (
-                  <img src={normalizePhotoUrl(editPhoto)} alt="User photo" className="w-12 h-12 rounded-full object-cover border-2 border-slate-200 shrink-0" />
+                  <img src={normalizePhotoUrl(editPhoto)} alt="User photo" className="w-12 h-12 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700 shrink-0" />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center shrink-0">
-                    <span className="text-lg text-slate-400">📷</span>
+                  <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center shrink-0">
+                    <span className="text-lg text-slate-400 dark:text-slate-500">📷</span>
                   </div>
                 )}
                 <div className="flex-1">
@@ -612,7 +612,7 @@ export default function ManageUsers() {
                   }} />
                 </label>
                 {editPhoto && (
-                  <button type="button" onClick={() => setEditPhoto('')} className="text-xs text-red-500 hover:text-red-700 self-end mb-1">Remove</button>
+                  <button type="button" onClick={() => setEditPhoto('')} className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 self-end mb-1">Remove</button>
                 )}
               </div>
               <div>
@@ -647,13 +647,13 @@ export default function ManageUsers() {
       {/* Delete Confirmation Modal */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-sm p-6">
             <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">⚠️</span>
               </div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-2">Delete User</h3>
-              <p className="text-sm text-slate-500 mb-6">Are you sure you want to delete this user? This action cannot be undone.</p>
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Delete User</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to delete this user? This action cannot be undone.</p>
               <div className="flex gap-3">
                 <button onClick={() => setDeleteId(null)} className="btn-outline flex-1">Cancel</button>
                 <button onClick={handleDelete} className="btn-danger flex-1">Delete</button>

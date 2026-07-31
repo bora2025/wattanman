@@ -128,30 +128,30 @@ export default function StudentAssignmentsPage() {
 
   return (
     <AuthGuard requiredRole="STUDENT">
-      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pb-[72px] lg:pb-0">
         <Sidebar title="Student" subtitle="Portal" navItems={studentNav} accentColor="emerald" />
         <div className="h-14 lg:hidden" />
         <main className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">📚 My Assignments</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Homework, quizzes, and projects for your classes</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">📚 My Assignments</h1>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Homework, quizzes, and projects for your classes</p>
           </div>
 
           {!isLoading && !isError && assignments.length > 0 && (
             <div className="grid grid-cols-3 gap-3">
               <StatCard label="Pending" value={assignments.filter(a => getStatus(a) === 'pending').length} decimals={0} prefix="" color="bg-amber-100"
-                icon={<svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+                icon={<svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
               <StatCard label="Submitted" value={assignments.filter(a => ['submitted','late'].includes(getStatus(a))).length} decimals={0} prefix="" color="bg-sky-100"
-                icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
+                icon={<svg className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
               <StatCard label="Graded" value={assignments.filter(a => getStatus(a) === 'graded').length} decimals={0} prefix="" color="bg-emerald-100"
-                icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+                icon={<svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
             </div>
           )}
 
-          <div className="bg-white rounded-2xl shadow-sm p-3 flex flex-wrap items-center gap-2 border border-gray-100">
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title…" className="flex-1 min-w-[160px] border border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300" />
-            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-3 flex flex-wrap items-center gap-2 border border-gray-100 dark:border-slate-800">
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title…" className="flex-1 min-w-[160px] border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)} className="border border-gray-200 dark:border-slate-700 rounded-xl px-2 py-1.5 text-sm bg-white dark:bg-slate-900">
               <option value="ALL">All</option>
               <option value="pending">Pending</option>
               <option value="submitted">Submitted</option>
@@ -160,21 +160,21 @@ export default function StudentAssignmentsPage() {
               <option value="missing">Missing</option>
               <option value="closed">Closed</option>
             </select>
-            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
+            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="border border-gray-200 dark:border-slate-700 rounded-xl px-2 py-1.5 text-sm bg-white dark:bg-slate-900">
               <option value="dueDate">Due date</option>
               <option value="title">Title</option>
             </select>
           </div>
 
           {isLoading ? (
-            <div className="space-y-3">{[1,2,3,4].map(i => <div key={i} className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />)}</div>
+            <div className="space-y-3">{[1,2,3,4].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-20 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />)}</div>
           ) : isError ? (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
-              <p className="text-red-600 mb-2">Failed to load assignments</p>
-              <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-2xl p-6 text-center">
+              <p className="text-red-600 dark:text-red-400 mb-2">Failed to load assignments</p>
+              <button onClick={() => refetch()} className="text-sm text-red-500 dark:text-red-400 underline">Retry</button>
             </div>
           ) : visible.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
               <EmptyState icon="📚" message={assignments.length === 0 ? 'No assignments assigned yet' : 'Nothing matches your filters'} />
             </div>
           ) : (
@@ -187,31 +187,31 @@ export default function StudentAssignmentsPage() {
                 const canResubmit = !!a.submission && a.status !== 'CLOSED' && attemptsRemain && (a.type === 'QUIZ' || a.submission.marks === null)
                 const canSubmit = !a.submission && a.status !== 'CLOSED'
                 return (
-                  <div key={a.id} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md transition-shadow">
+                  <div key={a.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-gray-100 dark:border-slate-800 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <p className="font-semibold text-gray-900">{a.title}</p>
+                          <p className="font-semibold text-gray-900 dark:text-slate-100">{a.title}</p>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${meta.color}`}>{meta.label}</span>
-                          <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-600">{a.type}</span>
+                          <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">{a.type}</span>
                         </div>
-                        <p className="text-xs text-gray-500">{[a.class?.name, a.class?.subject, a.createdBy?.name && `by ${a.createdBy.name}`].filter(Boolean).join(' · ')}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">{[a.class?.name, a.class?.subject, a.createdBy?.name && `by ${a.createdBy.name}`].filter(Boolean).join(' · ')}</p>
                         {a.dueDate && <p className="text-xs text-gray-400 mt-0.5">Due: {new Date(a.dueDate).toLocaleString()}</p>}
-                        {a.instructions && <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap line-clamp-3">{a.instructions}</p>}
+                        {a.instructions && <p className="text-xs text-gray-600 dark:text-slate-300 mt-1 whitespace-pre-wrap line-clamp-3">{a.instructions}</p>}
                         {a.attachmentUrl && (
-                          <a href={a.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-emerald-600 underline mt-1">📎 Resource link</a>
+                          <a href={a.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-emerald-600 dark:text-emerald-400 underline mt-1">📎 Resource link</a>
                         )}
                         {a.maxAttempts > 1 && <p className="text-xs text-gray-400 mt-1">Attempts: {attemptsUsed}/{a.maxAttempts}</p>}
-                        {a.latePenaltyPct > 0 && <p className="text-xs text-orange-600 mt-0.5">Late penalty: {a.latePenaltyPct}%</p>}
+                        {a.latePenaltyPct > 0 && <p className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">Late penalty: {a.latePenaltyPct}%</p>}
                         {a.submission?.marks !== null && a.submission && (
-                          <p className="text-xs font-semibold text-emerald-600 mt-1 bg-emerald-50 inline-block px-2 py-0.5 rounded-lg">
+                          <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1 bg-emerald-50 dark:bg-emerald-950/40 inline-block px-2 py-0.5 rounded-lg">
                             Score: {a.submission.marks}/{a.totalMarks}
                             {a.submission.latePenaltyApplied ? ` (after −${a.submission.latePenaltyApplied}% late)` : ''}
                           </p>
                         )}
-                        {a.submission?.feedback && <p className="text-xs text-gray-500 italic mt-1">Feedback: "{a.submission.feedback}"</p>}
+                        {a.submission?.feedback && <p className="text-xs text-gray-500 dark:text-slate-400 italic mt-1">Feedback: "{a.submission.feedback}"</p>}
                         {a.submission?.attachmentUrl && (
-                          <a href={a.submission.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-emerald-600 underline mt-1">📎 My submission link</a>
+                          <a href={a.submission.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-emerald-600 dark:text-emerald-400 underline mt-1">📎 My submission link</a>
                         )}
                       </div>
                       {(canSubmit || canResubmit) && (
@@ -237,22 +237,22 @@ export default function StudentAssignmentsPage() {
 
         {submitFor && (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md shadow-xl">
               <h2 className="text-lg font-bold mb-1">{submitFor.title}</h2>
-              <p className="text-xs text-slate-400 mb-4">{submitFor.class?.name ?? ''}{submitFor.maxAttempts > 1 ? ` · Attempt ${(submitFor.submission?.attemptNumber ?? 0) + 1} of ${submitFor.maxAttempts}` : ''}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">{submitFor.class?.name ?? ''}{submitFor.maxAttempts > 1 ? ` · Attempt ${(submitFor.submission?.attemptNumber ?? 0) + 1} of ${submitFor.maxAttempts}` : ''}</p>
               {submitError && (
-                <div className="mb-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{submitError}</div>
+                <div className="mb-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-sm rounded-lg px-3 py-2">{submitError}</div>
               )}
               <form onSubmit={handleSubmit(onSubmit)}>
                 <textarea {...register('content')}
                   rows={5}
                   placeholder="Write your answer (optional if you provide a link below)…"
                   className="w-full border rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-300 mb-3" />
-                <label className="block text-xs text-slate-500 mb-1">Google Drive / Dropbox / link</label>
+                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Google Drive / Dropbox / link</label>
                 <input {...register('attachmentUrl')}
                   placeholder="https://drive.google.com/…"
                   className="w-full border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 mb-4" />
-                <p className="text-[11px] text-slate-400 mb-3">Tip: in Google Drive, click Share → Anyone with the link → Viewer, then paste the link here.</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">Tip: in Google Drive, click Share → Anyone with the link → Viewer, then paste the link here.</p>
                 <div className="flex gap-2 justify-end">
                   <button type="button" onClick={() => { setSubmitFor(null); setSubmitError(null) }} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>
                   <button type="submit" disabled={submitMutation.isPending}

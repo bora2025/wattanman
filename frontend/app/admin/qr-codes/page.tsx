@@ -737,7 +737,7 @@ export default function GenerateQRCodes() {
           <div className="flex min-h-screen items-center justify-center">
             <div className="text-center">
               <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-sm text-slate-500 mt-3">Loading…</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
             </div>
           </div>
         </div>
@@ -749,9 +749,9 @@ export default function GenerateQRCodes() {
     <div className="page-shell">
       {exporting && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-lg px-4 sm:px-8 py-4 sm:py-6 flex flex-col items-center gap-3">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg px-4 sm:px-8 py-4 sm:py-6 flex flex-col items-center gap-3">
             <div className="animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
-            <p className="text-sm font-medium text-slate-700">Exporting, please wait…</p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Exporting, please wait…</p>
           </div>
         </div>
       )}
@@ -760,8 +760,8 @@ export default function GenerateQRCodes() {
         <div className="h-14 lg:hidden" />
         <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">{t('qrCodes.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('qrCodes.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               ID Cards · {cardType === 'students' ? 'Students' : 'Staff'}
             </p>
           </div>
@@ -833,7 +833,7 @@ export default function GenerateQRCodes() {
                   </button>
                   <Link
                     href="/admin/card-designer"
-                    className="px-3 py-2 rounded-lg text-xs font-medium border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+                    className="px-3 py-2 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                     title="Open full Card Designer page"
                   >
                     🎨 Full Designer
@@ -843,21 +843,21 @@ export default function GenerateQRCodes() {
 
               {/* Inline Card Editor */}
               {showEditor && (
-                <div className="card overflow-hidden border-2 border-amber-200">
-                  <div className="flex items-center justify-between px-5 py-3 bg-amber-50 border-b border-amber-200">
+                <div className="card overflow-hidden border-2 border-amber-200 dark:border-amber-900">
+                  <div className="flex items-center justify-between px-5 py-3 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900">
                     <div>
-                      <h3 className="font-semibold text-slate-800">
+                      <h3 className="font-semibold text-slate-800 dark:text-slate-100">
                         ✏️ Editing {cardType === 'students' ? 'Student' : 'Staff'} Card Design
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         Changes preview in real-time below · Click Save to persist
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => setShowTemplatePicker(true)} className="px-3 py-1.5 text-xs font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors">
+                      <button onClick={() => setShowTemplatePicker(true)} className="px-3 py-1.5 text-xs font-medium rounded-lg border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 transition-colors">
                         📂 Template
                       </button>
-                      <button onClick={() => setShowSaveTemplate(true)} className="px-3 py-1.5 text-xs font-medium rounded-lg border border-indigo-300 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+                      <button onClick={() => setShowSaveTemplate(true)} className="px-3 py-1.5 text-xs font-medium rounded-lg border border-indigo-300 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 transition-colors">
                         {templateSaved ? '✅ Saved!' : '📋 Save as Template'}
                       </button>
                       <button onClick={handleEditorSave} className="btn-success btn-sm">
@@ -865,7 +865,7 @@ export default function GenerateQRCodes() {
                       </button>
                       <button
                         onClick={handleEditorReset}
-                        className="btn-ghost btn-sm text-xs text-slate-400 hover:text-red-500"
+                        className="btn-ghost btn-sm text-xs text-slate-400 dark:text-slate-500 hover:text-red-500"
                       >
                         🗑️ Reset
                       </button>
@@ -877,20 +877,20 @@ export default function GenerateQRCodes() {
                   {/* Save Template Modal */}
                   {showSaveTemplate && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowSaveTemplate(false)}>
-                      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">💾 Save as Template</h3>
-                        <p className="text-sm text-slate-500 mb-3">Save the current card design as a reusable template.</p>
+                      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">💾 Save as Template</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Save the current card design as a reusable template.</p>
                         <input
                           type="text"
                           value={templateName}
                           onChange={(e) => setTemplateName(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && handleEditorSaveAsTemplate()}
                           placeholder="Template name"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 mb-4"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 mb-4"
                           autoFocus
                         />
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => setShowSaveTemplate(false)} className="px-4 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">Cancel</button>
+                          <button onClick={() => setShowSaveTemplate(false)} className="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Cancel</button>
                           <button onClick={handleEditorSaveAsTemplate} disabled={!templateName.trim()} className="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed">Save Template</button>
                         </div>
                       </div>
@@ -900,15 +900,15 @@ export default function GenerateQRCodes() {
                   {/* Template Picker Modal */}
                   {showTemplatePicker && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowTemplatePicker(false)}>
-                      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-bold text-slate-800">📂 Choose Template</h3>
-                          <button onClick={() => setShowTemplatePicker(false)} className="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+                          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">📂 Choose Template</h3>
+                          <button onClick={() => setShowTemplatePicker(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xl leading-none">&times;</button>
                         </div>
 
                         {/* Built-in Templates */}
                         <div className="mb-6">
-                          <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Built-in Templates</h4>
+                          <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Built-in Templates</h4>
                           <div className="grid grid-cols-3 gap-3">
                             {[
                               { key: '__builtin_blank', design: BLANK_TEMPLATE, label: 'Blank Card', icon: '📄', desc: 'Start from scratch', color: 'slate' },
@@ -920,19 +920,19 @@ export default function GenerateQRCodes() {
                                 onClick={() => { setEditorDesign({ ...tpl.design }); setSelectedId(null); setShowTemplatePicker(false); }}
                                 className={`rounded-xl border-2 border-${tpl.color}-200 bg-${tpl.color}-50/50 hover:border-${tpl.color}-400 hover:bg-${tpl.color}-50 transition-all text-left group overflow-hidden`}
                               >
-                                <div className="bg-slate-50 flex items-center justify-center p-3 border-b border-slate-100">
+                                <div className="bg-slate-50 dark:bg-slate-800 flex items-center justify-center p-3 border-b border-slate-100 dark:border-slate-800">
                                   {templatePreviews[tpl.key] ? (
                                     <img src={templatePreviews[tpl.key]} alt={tpl.label} className="rounded-lg shadow-sm max-h-36 object-contain" />
                                   ) : (
-                                    <div className="h-28 w-full flex items-center justify-center text-slate-400 text-sm">Loading...</div>
+                                    <div className="h-28 w-full flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">Loading...</div>
                                   )}
                                 </div>
                                 <div className="p-3">
                                   <div className="flex items-center gap-2 mb-1">
                                     <span className="text-lg">{tpl.icon}</span>
-                                    <span className="font-semibold text-slate-800">{tpl.label}</span>
+                                    <span className="font-semibold text-slate-800 dark:text-slate-100">{tpl.label}</span>
                                   </div>
-                                  <div className="text-xs text-slate-500">{tpl.desc}</div>
+                                  <div className="text-xs text-slate-500 dark:text-slate-400">{tpl.desc}</div>
                                   <div className={`mt-2 inline-block px-2 py-0.5 text-[10px] rounded-full bg-${tpl.color}-100 text-${tpl.color}-600 font-medium`}>Built-in</div>
                                 </div>
                               </button>
@@ -942,18 +942,18 @@ export default function GenerateQRCodes() {
 
                         {/* Saved Templates */}
                         <div>
-                          <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Your Saved Templates</h4>
+                          <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Your Saved Templates</h4>
                           {savedTemplates.length === 0 ? (
-                            <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                            <div className="text-center py-8 bg-slate-50 dark:bg-slate-800 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
                               <span className="text-3xl block mb-2">📭</span>
-                              <p className="text-sm text-slate-400">No saved templates yet.</p>
+                              <p className="text-sm text-slate-400 dark:text-slate-500">No saved templates yet.</p>
                             </div>
                           ) : (
                             <div className="grid grid-cols-2 gap-3">
                               {savedTemplates.map((tpl) => (
-                                <div key={tpl.id} className="rounded-xl border-2 border-slate-200 hover:border-slate-400 bg-white hover:bg-slate-50 transition-all text-left relative group overflow-hidden">
+                                <div key={tpl.id} className="rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-slate-400 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left relative group overflow-hidden">
                                   <button onClick={() => handleEditorLoadTemplate(tpl)} className="w-full text-left">
-                                    <div className="bg-slate-50 flex items-center justify-center p-3 border-b border-slate-100">
+                                    <div className="bg-slate-50 dark:bg-slate-800 flex items-center justify-center p-3 border-b border-slate-100 dark:border-slate-800">
                                       {templatePreviews[tpl.id] ? (
                                         <img src={templatePreviews[tpl.id]} alt={tpl.name} className="rounded-lg shadow-sm max-h-36 object-contain" />
                                       ) : (
@@ -963,19 +963,19 @@ export default function GenerateQRCodes() {
                                     <div className="p-3">
                                       <div className="flex items-center gap-2 mb-1">
                                         <span className="text-lg">{tpl.cardType === 'student' ? '🎓' : '👨‍🏫'}</span>
-                                        <span className="font-semibold text-slate-800 truncate">{tpl.name}</span>
+                                        <span className="font-semibold text-slate-800 dark:text-slate-100 truncate">{tpl.name}</span>
                                       </div>
                                       <div className="flex items-center gap-2 mt-1">
                                         <span className={`inline-block px-2 py-0.5 text-[10px] rounded-full font-medium ${
                                           tpl.cardType === 'student' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'
                                         }`}>{tpl.cardType}</span>
-                                        <span className="text-[10px] text-slate-400">{new Date(tpl.createdAt).toLocaleDateString()}</span>
+                                        <span className="text-[10px] text-slate-400 dark:text-slate-500">{new Date(tpl.createdAt).toLocaleDateString()}</span>
                                       </div>
                                     </div>
                                   </button>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleEditorDeleteTemplate(tpl.id); }}
-                                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-50 dark:bg-red-950/40 text-red-400 hover:bg-red-100 hover:text-red-600 dark:hover:text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                     title="Delete template"
                                   >
                                     ✕
@@ -1027,8 +1027,8 @@ export default function GenerateQRCodes() {
                     <div className="card p-12">
                       <div className="empty-state">
                         <p className="text-4xl mb-3">🪪</p>
-                        <p className="font-semibold text-slate-600">No classes found</p>
-                        <p className="text-sm text-slate-400 mt-1">Create classes and add students first.</p>
+                        <p className="font-semibold text-slate-600 dark:text-slate-300">No classes found</p>
+                        <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Create classes and add students first.</p>
                       </div>
                     </div>
                   ) : !selectedStudentClass ? (
@@ -1052,8 +1052,8 @@ export default function GenerateQRCodes() {
                               <p className="text-white/70 text-sm mt-0.5">{cls.subject}</p>
                             )}
                           </div>
-                          <div className="px-5 py-3 flex items-center justify-between bg-white">
-                            <div className="text-xs text-slate-500 truncate">
+                          <div className="px-5 py-3 flex items-center justify-between bg-white dark:bg-slate-900">
+                            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                               {cls.teacher ? `👤 ${cls.teacher.name}` : 'No teacher'}
                             </div>
                             <span className="text-indigo-400 group-hover:text-indigo-600 text-sm transition-colors">
@@ -1067,7 +1067,7 @@ export default function GenerateQRCodes() {
                     const cls = cardFilteredClasses.find((c) => c.id === selectedStudentClass);
                     if (!cls) return (
                       <div className="card p-8 text-center">
-                        <p className="text-slate-500">Class not found.</p>
+                        <p className="text-slate-500 dark:text-slate-400">Class not found.</p>
                         <button onClick={() => setSelectedStudentClass(null)} className="btn-primary btn-sm mt-3">← Back to Classes</button>
                       </div>
                     );
@@ -1084,15 +1084,15 @@ export default function GenerateQRCodes() {
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                             <button
                               onClick={() => setSelectedStudentClass(null)}
-                              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium text-sm transition-colors shrink-0"
+                              className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm transition-colors shrink-0"
                             >
                               ← Back to Classes
                             </button>
                             <div className="flex items-center gap-2 shrink-0">
                               <span className="text-lg">📖</span>
                               <div>
-                                <h3 className="font-bold text-slate-800 text-lg leading-tight">{cls.name}</h3>
-                                <p className="text-xs text-slate-500">
+                                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight">{cls.name}</h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
                                   {cls.subject && <span>{cls.subject} · </span>}
                                   {cls.teacher && <span>{cls.teacher.name} · </span>}
                                   {filtered.length} student{filtered.length !== 1 ? 's' : ''}
@@ -1102,13 +1102,13 @@ export default function GenerateQRCodes() {
                             <div className="sm:ml-auto flex items-center gap-2 flex-wrap">
                               {/* Student search */}
                               <div className="relative flex-1 min-w-0 sm:min-w-[180px]">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">🔍</span>
                                 <input
                                   type="text"
                                   placeholder="Search students..."
                                   value={studentSearch}
                                   onChange={(e) => { setStudentSearch(e.target.value); setStudentPage(1); }}
-                                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
                                 />
                               </div>
                               {/* Download actions */}
@@ -1141,7 +1141,7 @@ export default function GenerateQRCodes() {
                                         cls.students.map((s) => ({ name: s.name, id: s.id }))
                                       )
                                     }
-                                    className="btn-sm border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg font-medium text-xs transition-colors"
+                                    className="btn-sm border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg font-medium text-xs transition-colors"
                                     title="Download All QR Only"
                                   >
                                     📱 All QR
@@ -1155,7 +1155,7 @@ export default function GenerateQRCodes() {
                         {/* Student cards grid */}
                         {paged.length === 0 ? (
                           <div className="card p-8 text-center">
-                            <p className="text-slate-400 text-sm">
+                            <p className="text-slate-400 dark:text-slate-500 text-sm">
                               {studentSearch ? `No students matching "${studentSearch}"` : 'No students in this class'}
                             </p>
                           </div>
@@ -1206,14 +1206,14 @@ export default function GenerateQRCodes() {
                         {totalStudentPages > 1 && (
                           <div className="card px-4 py-3">
                             <div className="flex items-center justify-between">
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
                                 Showing {(safePage - 1) * studentPageSize + 1}–{Math.min(safePage * studentPageSize, filtered.length)} of {filtered.length}
                               </p>
                               <div className="flex items-center gap-1">
                                 <button
                                   onClick={() => setStudentPage((p) => Math.max(1, p - 1))}
                                   disabled={safePage <= 1}
-                                  className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                  className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                   ← Prev
                                 </button>
@@ -1226,7 +1226,7 @@ export default function GenerateQRCodes() {
                                   }, [])
                                   .map((p, i) =>
                                     typeof p === 'string' ? (
-                                      <span key={`dot-${i}`} className="px-1 text-xs text-slate-400">…</span>
+                                      <span key={`dot-${i}`} className="px-1 text-xs text-slate-400 dark:text-slate-500">…</span>
                                     ) : (
                                       <button
                                         key={p}
@@ -1244,7 +1244,7 @@ export default function GenerateQRCodes() {
                                 <button
                                   onClick={() => setStudentPage((p) => Math.min(totalStudentPages, p + 1))}
                                   disabled={safePage >= totalStudentPages}
-                                  className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                  className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                   Next →
                                 </button>
@@ -1266,21 +1266,21 @@ export default function GenerateQRCodes() {
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                       {/* Search */}
                       <div className="relative flex-1 min-w-0">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">🔍</span>
                         <input
                           type="text"
                           value={staffSearch}
                           onChange={(e) => { setStaffSearch(e.target.value); setStaffPage(1); }}
                           placeholder="Search staff by name or email..."
-                          className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                         />
                         {staffSearch && (
-                          <button onClick={() => { setStaffSearch(''); setStaffPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">✕</button>
+                          <button onClick={() => { setStaffSearch(''); setStaffPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xs">✕</button>
                         )}
                       </div>
 
                       {/* View toggle */}
-                      <div className="flex rounded-lg border border-slate-200 overflow-hidden shrink-0">
+                      <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0">
                         <button
                           onClick={() => setStaffViewMode('grid')}
                           className={`px-3 py-2 text-xs font-medium transition-colors ${staffViewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
@@ -1316,7 +1316,7 @@ export default function GenerateQRCodes() {
                           📥 Download All ▾
                         </button>
                         {staffDownloadMenuOpen === 'bulk' && (
-                          <div className="absolute right-0 top-full mt-1 z-20 bg-white rounded-xl shadow-lg border border-slate-200 py-1 w-56 animate-[fadeIn_0.15s_ease-out]">
+                          <div className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-1 w-56 animate-[fadeIn_0.15s_ease-out]">
                             <button
                               onClick={() => {
                                 downloadAllCardsPDFA4(
@@ -1328,7 +1328,7 @@ export default function GenerateQRCodes() {
                                 );
                                 setStaffDownloadMenuOpen(null);
                               }}
-                              className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                              className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                             >
                               📄 Download Card ({cardFilteredStaff.length})
                             </button>
@@ -1340,17 +1340,17 @@ export default function GenerateQRCodes() {
                                 );
                                 setStaffDownloadMenuOpen(null);
                               }}
-                              className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                              className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                             >
                               📱 All QR Codes ({cardFilteredStaff.length})
                             </button>
-                            <div className="border-t border-slate-100 my-1" />
+                            <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
                             <button
                               onClick={() => {
                                 downloadOfficerAttendanceQR();
                                 setStaffDownloadMenuOpen(null);
                               }}
-                              className="w-full text-left px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors font-medium"
+                              className="w-full text-left px-4 py-2.5 text-sm text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors font-medium"
                             >
                               🎫 Officer Attendance QR
                             </button>
@@ -1360,7 +1360,7 @@ export default function GenerateQRCodes() {
                     </div>
 
                     {/* Result count */}
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                       <span>
                         Showing {cardFilteredStaff.length === 0 ? 0 : (staffPageClamped - 1) * staffPageSize + 1}–{Math.min(staffPageClamped * staffPageSize, cardFilteredStaff.length)} of {cardFilteredStaff.length} staff
                         {staffSearch && ` matching "${staffSearch}"`}
@@ -1378,8 +1378,8 @@ export default function GenerateQRCodes() {
                     <div className="card p-12">
                       <div className="empty-state">
                         <p className="text-4xl mb-3">🪪</p>
-                        <p className="font-semibold text-slate-600">{staffSearch ? 'No staff match your search' : 'No staff found'}</p>
-                        <p className="text-sm text-slate-400 mt-1">{staffSearch ? 'Try a different search term.' : 'Add teachers or admins first.'}</p>
+                        <p className="font-semibold text-slate-600 dark:text-slate-300">{staffSearch ? 'No staff match your search' : 'No staff found'}</p>
+                        <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{staffSearch ? 'Try a different search term.' : 'Add teachers or admins first.'}</p>
                       </div>
                     </div>
                   ) : staffViewMode === 'grid' ? (
@@ -1420,7 +1420,7 @@ export default function GenerateQRCodes() {
                     <div className="card overflow-hidden">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="bg-slate-50 border-b border-slate-200 text-left text-xs text-slate-500 uppercase tracking-wider">
+                          <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-left text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                             <th className="px-4 py-3 font-semibold">#</th>
                             <th className="px-4 py-3 font-semibold">Staff</th>
                             <th className="px-4 py-3 font-semibold hidden sm:table-cell">Role</th>
@@ -1429,20 +1429,20 @@ export default function GenerateQRCodes() {
                             <th className="px-4 py-3 font-semibold text-right">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                           {staffPaginated.map((staff, idx) => (
                             <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-4 py-3 text-slate-400 text-xs">{(staffPageClamped - 1) * staffPageSize + idx + 1}</td>
+                              <td className="px-4 py-3 text-slate-400 dark:text-slate-500 text-xs">{(staffPageClamped - 1) * staffPageSize + idx + 1}</td>
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2.5">
-                                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 overflow-hidden shrink-0">
+                                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300 overflow-hidden shrink-0">
                                     {staff.photo ? (
                                       <img src={normalizePhotoUrl(staff.photo)} alt={staff.name} className="w-full h-full object-cover" />
                                     ) : (
                                       staff.name.charAt(0).toUpperCase()
                                     )}
                                   </div>
-                                  <span className="font-medium text-slate-800 truncate">{staff.name}</span>
+                                  <span className="font-medium text-slate-800 dark:text-slate-100 truncate">{staff.name}</span>
                                 </div>
                               </td>
                               <td className="px-4 py-3 hidden sm:table-cell">
@@ -1452,7 +1452,7 @@ export default function GenerateQRCodes() {
                                   {roleLabels[staff.role]?.icon} {staff.role}
                                 </span>
                               </td>
-                              <td className="px-4 py-3 text-slate-500 truncate hidden md:table-cell max-w-[180px]">{staff.email}</td>
+                              <td className="px-4 py-3 text-slate-500 dark:text-slate-400 truncate hidden md:table-cell max-w-[180px]">{staff.email}</td>
                               <td className="px-4 py-3 text-center">
                                 {qrCodes[staff.id] ? (
                                   <img src={qrCodes[staff.id]} alt="QR" className="w-10 h-10 mx-auto rounded" />
@@ -1465,7 +1465,7 @@ export default function GenerateQRCodes() {
                                   <button
                                     onClick={() => downloadCard(staff.name, roleLabels[staff.role]?.label || staff.role, qrCodes[staff.id], 'staff', staff.id, staff.photo)}
                                     disabled={!qrCodes[staff.id]}
-                                    className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
+                                    className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40"
                                     title="Download ID Card PNG"
                                   >
                                     📥 PNG
@@ -1473,7 +1473,7 @@ export default function GenerateQRCodes() {
                                   <button
                                     onClick={() => downloadCardPDF(staff.name, roleLabels[staff.role]?.label || staff.role, qrCodes[staff.id], 'staff', staff.id, staff.photo)}
                                     disabled={!qrCodes[staff.id]}
-                                    className="text-[11px] py-1 px-2 rounded-md font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
+                                    className="text-[11px] py-1 px-2 rounded-md font-medium border border-red-200 dark:border-red-900 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-40"
                                     title="Download ID Card PDF"
                                   >
                                     📄 PDF
@@ -1481,7 +1481,7 @@ export default function GenerateQRCodes() {
                                   <button
                                     onClick={() => downloadQROnly(staff.name, staff.id)}
                                     disabled={!qrCodes[staff.id]}
-                                    className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
+                                    className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40"
                                     title="Download QR only"
                                   >
                                     📱
@@ -1502,14 +1502,14 @@ export default function GenerateQRCodes() {
                       <button
                         onClick={() => setStaffPage(1)}
                         disabled={staffPageClamped <= 1}
-                        className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                       >
                         «
                       </button>
                       <button
                         onClick={() => setStaffPage(Math.max(1, staffPageClamped - 1))}
                         disabled={staffPageClamped <= 1}
-                        className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                       >
                         ‹ Prev
                       </button>
@@ -1522,7 +1522,7 @@ export default function GenerateQRCodes() {
                         }, [])
                         .map((p, i) =>
                           typeof p === 'string' ? (
-                            <span key={`dots-${i}`} className="px-1 text-xs text-slate-400">…</span>
+                            <span key={`dots-${i}`} className="px-1 text-xs text-slate-400 dark:text-slate-500">…</span>
                           ) : (
                             <button
                               key={p}
@@ -1541,14 +1541,14 @@ export default function GenerateQRCodes() {
                       <button
                         onClick={() => setStaffPage(Math.min(staffTotalPages, staffPageClamped + 1))}
                         disabled={staffPageClamped >= staffTotalPages}
-                        className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                       >
                         Next ›
                       </button>
                       <button
                         onClick={() => setStaffPage(staffTotalPages)}
                         disabled={staffPageClamped >= staffTotalPages}
-                        className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                       >
                         »
                       </button>
@@ -1575,11 +1575,11 @@ function QRGrid({ people, qrCodes }: { people: { id: string; name: string }[]; q
                 className="mx-auto w-full max-w-[160px]"
               />
             ) : (
-              <div className="w-full aspect-square bg-slate-100 rounded flex items-center justify-center text-slate-400 text-sm">
+              <div className="w-full aspect-square bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
                 No QR
               </div>
             )}
-            <p className="text-xs font-medium text-slate-700 mt-2 truncate">{person.name}</p>
+            <p className="text-xs font-medium text-slate-700 dark:text-slate-200 mt-2 truncate">{person.name}</p>
             <button
               onClick={() => {
                 if (!qrCodes[person.id]) return;
@@ -1676,7 +1676,7 @@ function IDCardPreview({
     <div className="group relative">
       <div
         ref={canvasContainerRef}
-        className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white"
+        className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-slate-900"
         style={{ aspectRatio: `${design.width} / ${design.height}` }}
       >
         {imgSrc ? (
@@ -1686,7 +1686,7 @@ function IDCardPreview({
             className="w-full h-full object-contain"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+          <div className="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500 text-xs">
             Rendering…
           </div>
         )}
@@ -1697,7 +1697,7 @@ function IDCardPreview({
         <button
           onClick={onDownload}
           disabled={!qrDataUrl}
-          className="flex-1 text-[10px] py-1 rounded font-medium border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight"
+          className="flex-1 text-[10px] py-1 rounded font-medium border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight"
           title="Download as PNG"
         >
           📥 PNG
@@ -1706,7 +1706,7 @@ function IDCardPreview({
           <button
             onClick={onDownloadPDF}
             disabled={!qrDataUrl}
-            className="flex-1 text-[10px] py-1 rounded font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight"
+            className="flex-1 text-[10px] py-1 rounded font-medium border border-red-200 dark:border-red-900 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight"
             title="Download as PDF"
           >
             📄 PDF
@@ -1716,7 +1716,7 @@ function IDCardPreview({
           <button
             onClick={onDownloadQR}
             disabled={!qrDataUrl}
-            className="text-[10px] py-1 px-1.5 rounded font-medium border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight"
+            className="text-[10px] py-1 px-1.5 rounded font-medium border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight"
             title="Download QR code only"
           >
             📱

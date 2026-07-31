@@ -60,13 +60,13 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
             <img src={result.studentPhoto} alt={result.studentName}
               className="w-20 h-20 sm:w-24 sm:h-24 object-cover" />
           ) : (
-            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white flex items-center justify-center text-5xl">👤</div>
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white dark:bg-slate-900 flex items-center justify-center text-5xl">👤</div>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-extrabold text-slate-800 text-lg sm:text-xl leading-tight truncate">{result.studentName}</p>
-          <p className="text-sm text-slate-500 truncate mt-0.5">{result.className}</p>
-          {isAlready && <p className="text-xs text-indigo-500 font-medium mt-1">Already recorded — no duplicate</p>}
+          <p className="font-extrabold text-slate-800 dark:text-slate-100 text-lg sm:text-xl leading-tight truncate">{result.studentName}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{result.className}</p>
+          {isAlready && <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium mt-1">Already recorded — no duplicate</p>}
         </div>
       </div>
 
@@ -76,7 +76,7 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
           style={{ background: meta.bgLight }}>
           <div className="flex items-center gap-2">
             <span className="text-base">🕐</span>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
               {isAlready ? 'First scan time' : result.action === 'CHECK_OUT' ? 'Check-out time' : 'Check-in time'}
             </span>
           </div>
@@ -92,7 +92,7 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
 
 function ScanSkeletonCard({ photo }: { photo?: string | null }) {
   return (
-    <div className="rounded-2xl overflow-hidden shadow-xl bg-white ring-2 ring-slate-200">
+    <div className="rounded-2xl overflow-hidden shadow-xl bg-white dark:bg-slate-900 ring-2 ring-slate-200">
       <div className="bg-slate-300 px-4 py-2.5 h-10 animate-pulse" />
       <div className="flex items-center gap-4 p-4">
         <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex-shrink-0 overflow-hidden bg-slate-200 ${!photo ? 'animate-pulse' : ''}`}>
@@ -100,8 +100,8 @@ function ScanSkeletonCard({ photo }: { photo?: string | null }) {
         </div>
         <div className="flex-1 space-y-2.5">
           <div className="h-5 bg-slate-300 rounded-lg animate-pulse w-3/4" />
-          <div className="h-3 bg-slate-200 rounded-lg animate-pulse w-1/2" />
-          <div className="h-3 bg-slate-200 rounded-lg animate-pulse w-2/5" />
+          <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse w-1/2" />
+          <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse w-2/5" />
         </div>
       </div>
     </div>
@@ -117,10 +117,10 @@ function StudentScanZone({ isLandscape }: { isLandscape: boolean }) {
           : 'w-[62vw] h-[62vw] max-w-xs max-h-[300px] sm:max-w-sm sm:max-h-[340px] md:max-w-md md:max-h-[380px]'
       }`}>
         <div className="absolute inset-0 rounded-2xl" style={{ boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }} />
-        <div className="absolute top-0 left-0 w-10 h-10 sm:w-12 sm:h-12 border-t-4 border-l-4 border-teal-400 rounded-tl-2xl" />
-        <div className="absolute top-0 right-0 w-10 h-10 sm:w-12 sm:h-12 border-t-4 border-r-4 border-teal-400 rounded-tr-2xl" />
-        <div className="absolute bottom-0 left-0 w-10 h-10 sm:w-12 sm:h-12 border-b-4 border-l-4 border-teal-400 rounded-bl-2xl" />
-        <div className="absolute bottom-0 right-0 w-10 h-10 sm:w-12 sm:h-12 border-b-4 border-r-4 border-teal-400 rounded-br-2xl" />
+        <div className="absolute top-0 left-0 w-10 h-10 sm:w-12 sm:h-12 border-t-4 border-l-4 border-teal-400 dark:border-teal-700 rounded-tl-2xl" />
+        <div className="absolute top-0 right-0 w-10 h-10 sm:w-12 sm:h-12 border-t-4 border-r-4 border-teal-400 dark:border-teal-700 rounded-tr-2xl" />
+        <div className="absolute bottom-0 left-0 w-10 h-10 sm:w-12 sm:h-12 border-b-4 border-l-4 border-teal-400 dark:border-teal-700 rounded-bl-2xl" />
+        <div className="absolute bottom-0 right-0 w-10 h-10 sm:w-12 sm:h-12 border-b-4 border-r-4 border-teal-400 dark:border-teal-700 rounded-br-2xl" />
         <div
           className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-teal-400 to-transparent drop-shadow-[0_0_6px_rgba(0,201,167,0.9)]"
           style={{ animation: 'scanLine 2s linear infinite' }}
@@ -967,11 +967,11 @@ function WattamanScanContent() {
         ═══════════════════════════════════════════════ */}
         <div className="page-header flex items-center justify-between">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Scan Student Attendance</h1>
-            <p className="text-sm text-slate-500 mt-1">Scan student or teacher QR codes — recorded instantly</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">Scan Student Attendance</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Scan student or teacher QR codes — recorded instantly</p>
           </div>
           <button onClick={handleLogout}
-            className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-500 transition-colors py-2 px-3 rounded-xl hover:bg-red-50 flex-shrink-0">
+            className="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors py-2 px-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 flex-shrink-0">
             <span className="text-base">⏻</span>
             <span className="hidden sm:inline">Sign out</span>
           </button>
@@ -1004,24 +1004,24 @@ function WattamanScanContent() {
 
           {/* Session stats */}
           {scanCount > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">This session</p>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+              <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-3">This session</p>
               <div className="grid grid-cols-3 gap-2">
-                <div className="text-center p-3 bg-slate-50 rounded-xl">
-                  <p className="text-2xl font-bold text-slate-800">{scanCount}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">Scanned</p>
+                <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{scanCount}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Scanned</p>
                 </div>
-                <div className="text-center p-3 bg-emerald-50 rounded-xl">
-                  <p className="text-2xl font-bold text-emerald-600">
+                <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl">
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {scanHistory.filter(r => r.status === 'PRESENT' && r.action !== 'ALREADY_RECORDED').length}
                   </p>
-                  <p className="text-xs text-slate-400 mt-0.5">Present</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Present</p>
                 </div>
-                <div className="text-center p-3 bg-amber-50 rounded-xl">
-                  <p className="text-2xl font-bold text-amber-500">
+                <div className="text-center p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl">
+                  <p className="text-2xl font-bold text-amber-500 dark:text-amber-400">
                     {scanHistory.filter(r => r.status === 'LATE').length}
                   </p>
-                  <p className="text-xs text-slate-400 mt-0.5">Late</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Late</p>
                 </div>
               </div>
             </div>
@@ -1029,12 +1029,12 @@ function WattamanScanContent() {
 
           {/* Scan history list */}
           {scanHistory.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-              <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                <h3 className="font-semibold text-slate-700 text-sm">Recent Scans ({scanHistory.length})</h3>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+              <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <h3 className="font-semibold text-slate-700 dark:text-slate-200 text-sm">Recent Scans ({scanHistory.length})</h3>
                 <button
                   onClick={() => { setScanHistory([]); setScanCount(0) }}
-                  className="text-xs text-slate-400 hover:text-red-400 transition-colors py-1 px-2 rounded-lg">
+                  className="text-xs text-slate-400 dark:text-slate-500 hover:text-red-400 transition-colors py-1 px-2 rounded-lg">
                   Clear
                 </button>
               </div>
@@ -1050,11 +1050,11 @@ function WattamanScanContent() {
                         <img src={r.studentPhoto} alt={r.studentName}
                           className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
                       ) : (
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg flex-shrink-0">👤</div>
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-lg flex-shrink-0">👤</div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-800 truncate">{r.studentName}</p>
-                        <p className="text-xs text-slate-400 truncate">{r.className}</p>
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{r.studentName}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{r.className}</p>
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold text-white ${meta.bg}`}>
@@ -1071,8 +1071,8 @@ function WattamanScanContent() {
 
           {/* How it works guide */}
           {scanHistory.length === 0 && (
-            <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm">
-              <h3 className="font-semibold text-slate-700 text-sm mb-3">How it works</h3>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm">
+              <h3 className="font-semibold text-slate-700 dark:text-slate-200 text-sm mb-3">How it works</h3>
               <div className="space-y-3">
                 {[
                   { icon: '📷', title: 'Open Scanner', desc: 'Tap the card above — camera starts automatically' },
@@ -1080,10 +1080,10 @@ function WattamanScanContent() {
                   { icon: '✅', title: 'Instant Record', desc: 'Profile displays and attendance is saved immediately' },
                 ].map((step, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-xl flex-shrink-0">{step.icon}</div>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-xl flex-shrink-0">{step.icon}</div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-700">{step.title}</p>
-                      <p className="text-xs text-slate-400">{step.desc}</p>
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{step.title}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">{step.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -1098,51 +1098,51 @@ function WattamanScanContent() {
       ═══════════════════════════════════════════════ */}
       {editSessionOpen && activeSession && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-slate-800">Edit Session {activeSession.session} Time</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Edit Session {activeSession.session} Time</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {activeSession.type === 'CHECK_IN' ? '↓ Check-In' : '↑ Check-Out'} window. Saves globally for all classes.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setEditSessionOpen(false)}
-                className="text-slate-400 hover:text-slate-700 text-2xl leading-none px-2"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 text-2xl leading-none px-2"
                 aria-label="Close"
               >×</button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Start Time (on time from)</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Start Time (on time from)</label>
                 <input
                   type="time"
                   value={editStart}
                   onChange={(e) => setEditStart(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">End Time (late after)</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">End Time (late after)</label>
                 <input
                   type="time"
                   value={editEnd}
                   onChange={(e) => setEditEnd(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                 />
-                <p className="text-xs text-slate-400 mt-1.5">Scans after this time are recorded as <strong>Late</strong>.</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">Scans after this time are recorded as <strong>Late</strong>.</p>
               </div>
               {editError && (
-                <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs px-3 py-2">{editError}</div>
+                <div className="rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs px-3 py-2">{editError}</div>
               )}
             </div>
-            <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2">
+            <div className="px-5 py-3 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setEditSessionOpen(false)}
                 disabled={editSaving}
-                className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-200 transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors disabled:opacity-50"
               >Cancel</button>
               <button
                 type="button"
@@ -1163,7 +1163,7 @@ function WattamanScanContent() {
             onClick={(e) => e.stopPropagation()}>
             <div className="px-5 pt-5 pb-3 border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 text-xl">
+                <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/40 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 text-xl">
                   ⚠️
                 </div>
                 <div className="flex-1 min-w-0">
@@ -1187,7 +1187,7 @@ function WattamanScanContent() {
                 placeholder="Search by name or student number…"
                 value={linkSearch}
                 onChange={(e) => setLinkSearch(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 disabled={linkSaving}
               />
               {linkError && (
@@ -1197,10 +1197,10 @@ function WattamanScanContent() {
 
             <div className="flex-1 overflow-y-auto px-2 py-2">
               {linkLoading && linkResults.length === 0 && (
-                <div className="px-3 py-6 text-center text-sm text-slate-500">Loading…</div>
+                <div className="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400">Loading…</div>
               )}
               {!linkLoading && linkResults.length === 0 && (
-                <div className="px-3 py-6 text-center text-sm text-slate-500">No students found</div>
+                <div className="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400">No students found</div>
               )}
               {linkResults.map((s) => {
                 const photo = s.photo || s.user?.photo
@@ -1209,13 +1209,13 @@ function WattamanScanContent() {
                     key={s.id}
                     onClick={() => linkCardToStudent(s.id)}
                     disabled={linkSaving}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-[0.98] transition-all text-left disabled:opacity-50"
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:bg-slate-800 active:scale-[0.98] transition-all text-left disabled:opacity-50"
                   >
                     {photo ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={photo} alt="" className="w-10 h-10 rounded-full object-cover bg-slate-200" />
+                      <img src={photo} alt="" className="w-10 h-10 rounded-full object-cover bg-slate-200 dark:bg-slate-700" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 font-semibold">
+                      <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 font-semibold">
                         {s.user?.name?.[0] ?? '?'}
                       </div>
                     )}
@@ -1235,7 +1235,7 @@ function WattamanScanContent() {
               <button
                 onClick={closeLinkModal}
                 disabled={linkSaving}
-                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 dark:hover:bg-slate-800 rounded-lg disabled:opacity-50"
               >
                 Cancel
               </button>

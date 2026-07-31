@@ -208,9 +208,9 @@ const DAY_COLORS: Record<string, string> = {
 const MAX_THUMBNAIL_BYTES = 3 * 1024 * 1024; // 3MB source file cap
 
 const REGISTRATION_STATUS_META: Record<string, { label: string; className: string }> = {
-  AVAILABLE: { label: '🟢 Open for Registration', className: 'bg-emerald-100 text-emerald-700' },
-  UNAVAILABLE: { label: '🟡 Registration Closed', className: 'bg-amber-100 text-amber-700' },
-  HIDDEN: { label: '⚪ Hidden', className: 'bg-slate-100 text-slate-500' },
+  AVAILABLE: { label: '🟢 Open for Registration', className: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
+  UNAVAILABLE: { label: '🟡 Registration Closed', className: 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300' },
+  HIDDEN: { label: '⚪ Hidden', className: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' },
 };
 
 export default function ManageClassesPage() {
@@ -826,31 +826,31 @@ function ManageClasses() {
           <div className="flex items-center gap-3">
             <span className="text-3xl">🏫</span>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-800">{t('classes.title')}</h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Organize classes, assign teachers, and manage student rosters</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">{t('classes.title')}</h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Organize classes, assign teachers, and manage student rosters</p>
             </div>
           </div>
 
           {/* Toolbar */}
           <div className="mt-4 flex flex-col lg:flex-row lg:items-center gap-3">
             <div className="relative flex-1 min-w-0">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by class name, subject, or teacher…"
-                className="w-full pl-9 pr-9 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full pl-9 pr-9 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-lg leading-none">×</button>
+                <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-lg leading-none">×</button>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <select
                 value={selectedStudyYearId}
                 onChange={(e) => setSelectedStudyYearId(e.target.value)}
-                className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white"
+                className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-900"
                 title="Filter by study year"
               >
                 <option value="">All Study Years</option>
@@ -863,7 +863,7 @@ function ManageClasses() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white"
+                className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-900"
                 title="Sort classes"
               >
                 <option value="name">Sort: Name</option>
@@ -871,7 +871,7 @@ function ManageClasses() {
                 <option value="teacher">Sort: Teacher</option>
                 <option value="students">Sort: Most Students</option>
               </select>
-              <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5">
+              <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-0.5">
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
@@ -897,8 +897,8 @@ function ManageClasses() {
           </div>
 
           {searchQuery && (
-            <div className="mt-2 text-xs text-slate-500">
-              Showing <span className="font-semibold text-slate-700">{filteredClasses.length}</span> of {classes.length} classes matching <span className="font-mono text-indigo-600">&quot;{searchQuery}&quot;</span>
+            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              Showing <span className="font-semibold text-slate-700 dark:text-slate-200">{filteredClasses.length}</span> of {classes.length} classes matching <span className="font-mono text-indigo-600 dark:text-indigo-400">&quot;{searchQuery}&quot;</span>
             </div>
           )}
         </div>
@@ -907,7 +907,7 @@ function ManageClasses() {
           {/* Class Form */}
           {showForm && (
             <div className="card p-6">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
                 {editingClass ? 'Edit Class' : 'New Class'}
               </h3>
               <form onSubmit={handleSubmit} className="grid sm:grid-cols-5 gap-4">
@@ -927,7 +927,7 @@ function ManageClasses() {
                   </select>
                 </div>
                 <div>
-                  <label className="form-label">Class Admin <span className="text-slate-400 font-normal text-xs">(optional)</span></label>
+                  <label className="form-label">Class Admin <span className="text-slate-400 dark:text-slate-500 font-normal text-xs">(optional)</span></label>
                   <select value={formData.classAdminId} onChange={(e) => setFormData({ ...formData, classAdminId: e.target.value })}>
                     <option value="">— None —</option>
                     {classAdmins.map((ca) => <option key={ca.id} value={ca.id}>{ca.name}</option>)}
@@ -943,7 +943,7 @@ function ManageClasses() {
                   </select>
                 </div>
                 <div>
-                  <label className="form-label">Registration Status <span className="text-slate-400 font-normal text-xs">(student self-registration)</span></label>
+                  <label className="form-label">Registration Status <span className="text-slate-400 dark:text-slate-500 font-normal text-xs">(student self-registration)</span></label>
                   <select value={formData.registrationStatus} onChange={(e) => setFormData({ ...formData, registrationStatus: e.target.value })}>
                     <option value="HIDDEN">Hidden — not shown publicly</option>
                     <option value="UNAVAILABLE">Unavailable — visible, closed</option>
@@ -952,15 +952,15 @@ function ManageClasses() {
                 </div>
 
                 {/* Public Class Card */}
-                <div className="sm:col-span-5 border-t border-slate-100 pt-4 mt-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Public Class Card <span className="text-slate-400 font-normal normal-case">(shown on the home page when open for registration)</span></p>
+                <div className="sm:col-span-5 border-t border-slate-100 dark:border-slate-800 pt-4 mt-1">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Public Class Card <span className="text-slate-400 dark:text-slate-500 font-normal normal-case">(shown on the home page when open for registration)</span></p>
                   <div className="grid sm:grid-cols-5 gap-4">
                     <div className="sm:col-span-2">
-                      <label className="form-label">Thumbnail <span className="text-slate-400 font-normal text-xs">(optional)</span></label>
+                      <label className="form-label">Thumbnail <span className="text-slate-400 dark:text-slate-500 font-normal text-xs">(optional)</span></label>
                       <input type="file" accept="image/*" onChange={handleThumbnailChange} className="text-sm" />
-                      {thumbnailError && <p className="text-xs text-red-600 mt-1">{thumbnailError}</p>}
+                      {thumbnailError && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{thumbnailError}</p>}
                       {formData.thumbnail && (
-                        <div className="mt-2 relative w-full max-w-[220px] aspect-video rounded-lg overflow-hidden border border-slate-200">
+                        <div className="mt-2 relative w-full max-w-[220px] aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
                           <img src={formData.thumbnail} alt="Thumbnail preview" className="w-full h-full object-cover" />
                           <button
                             type="button"
@@ -974,7 +974,7 @@ function ManageClasses() {
                       )}
                     </div>
                     <div className="sm:col-span-3">
-                      <label className="form-label">Description <span className="text-slate-400 font-normal text-xs">(optional)</span></label>
+                      <label className="form-label">Description <span className="text-slate-400 dark:text-slate-500 font-normal text-xs">(optional)</span></label>
                       <textarea
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -983,7 +983,7 @@ function ManageClasses() {
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="form-label">Price (USD) <span className="text-slate-400 font-normal text-xs">(optional)</span></label>
+                      <label className="form-label">Price (USD) <span className="text-slate-400 dark:text-slate-500 font-normal text-xs">(optional)</span></label>
                       <input
                         type="number"
                         min="0"
@@ -999,9 +999,9 @@ function ManageClasses() {
                           type="checkbox"
                           checked={formData.showPrice}
                           onChange={(e) => setFormData({ ...formData, showPrice: e.target.checked })}
-                          className="rounded border-slate-300"
+                          className="rounded border-slate-300 dark:border-slate-600"
                         />
-                        <span className="text-sm text-slate-600">Show price publicly on the card</span>
+                        <span className="text-sm text-slate-600 dark:text-slate-300">Show price publicly on the card</span>
                       </label>
                     </div>
                   </div>
@@ -1033,8 +1033,8 @@ function ManageClasses() {
                         }`}
                       >
                         <div className="text-xl mb-1">{preset.icon}</div>
-                        <div className="text-xs font-semibold text-slate-700">{preset.name}</div>
-                        <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">{preset.description}</div>
+                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">{preset.name}</div>
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">{preset.description}</div>
                       </button>
                     ))}
                   </div>
@@ -1042,7 +1042,7 @@ function ManageClasses() {
                   {selectedPreset !== 'global-default' && customConfigs.length > 0 && (
                     <div className="mt-3 space-y-2">
                       {selectedPreset === 'custom' && (
-                        <p className="text-xs text-amber-600 font-medium">🔧 Custom — times have been modified from preset</p>
+                        <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">🔧 Custom — times have been modified from preset</p>
                       )}
                       {customConfigs.map(cfg => {
                         const enabled = cfg.startTime !== cfg.endTime;
@@ -1064,37 +1064,37 @@ function ManageClasses() {
                                     setSelectedPreset('custom');
                                   }
                                 }}
-                                className="rounded border-slate-300"
+                                className="rounded border-slate-300 dark:border-slate-600"
                               />
-                              <span className="text-sm font-medium text-slate-700">{SESSION_LABELS[cfg.session]}</span>
+                              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{SESSION_LABELS[cfg.session]}</span>
                             </div>
                             <select
                               value={cfg.type}
                               onChange={(e) => updateCustomConfig(cfg.session, 'type', e.target.value)}
                               disabled={!enabled}
-                              className="text-xs px-2 py-1.5 rounded-lg border border-slate-200 bg-white"
+                              className="text-xs px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                             >
                               <option value="CHECK_IN">CHECK_IN</option>
                               <option value="CHECK_OUT">CHECK_OUT</option>
                             </select>
                             <div className="flex items-center gap-1">
-                              <label className="text-xs text-slate-500">Start</label>
+                              <label className="text-xs text-slate-500 dark:text-slate-400">Start</label>
                               <input
                                 type="time"
                                 value={cfg.startTime}
                                 onChange={(e) => updateCustomConfig(cfg.session, 'startTime', e.target.value)}
                                 disabled={!enabled}
-                                className="text-xs px-2 py-1.5 rounded-lg border border-slate-200"
+                                className="text-xs px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700"
                               />
                             </div>
                             <div className="flex items-center gap-1">
-                              <label className="text-xs text-slate-500">End</label>
+                              <label className="text-xs text-slate-500 dark:text-slate-400">End</label>
                               <input
                                 type="time"
                                 value={cfg.endTime}
                                 onChange={(e) => updateCustomConfig(cfg.session, 'endTime', e.target.value)}
                                 disabled={!enabled}
-                                className="text-xs px-2 py-1.5 rounded-lg border border-slate-200"
+                                className="text-xs px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700"
                               />
                             </div>
                           </div>
@@ -1115,30 +1115,30 @@ function ManageClasses() {
                           setShowWeekly(e.target.checked);
                           if (!e.target.checked) setWeeklySchedule({ ...DEFAULT_SCHEDULE });
                         }}
-                        className="rounded border-slate-300"
+                        className="rounded border-slate-300 dark:border-slate-600"
                       />
-                      <span className="text-xs text-slate-500">Different format per day</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">Different format per day</span>
                     </label>
                   </div>
                   {!showWeekly ? (
                     <div className="space-y-2">
-                      <p className="text-xs text-slate-400">Same attendance format every day. Enable checkbox above or pick a quick preset:</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">Same attendance format every day. Enable checkbox above or pick a quick preset:</p>
                       <div className="flex flex-wrap gap-1.5">
-                        <span className="text-[10px] text-slate-400 self-center mr-1">Quick:</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 self-center mr-1">Quick:</span>
                         <button type="button" onClick={() => { setShowWeekly(true); setWeeklySchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'day-off', SUN: 'day-off' }); }}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">
                           Mon–Fri / Sat–Sun Off
                         </button>
                         <button type="button" onClick={() => { setShowWeekly(true); setWeeklySchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'same', SUN: 'day-off' }); }}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">
                           Mon–Sat / Sun Off
                         </button>
                         <button type="button" onClick={() => { setShowWeekly(true); setWeeklySchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'morning-only', SUN: 'day-off' }); }}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">
                           Mon–Fri Full / Sat Morning
                         </button>
                         <button type="button" onClick={() => { setShowWeekly(true); setWeeklySchedule({ MON: 'day-off', TUE: 'day-off', WED: 'day-off', THU: 'day-off', FRI: 'day-off', SAT: 'same', SUN: 'same' }); }}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors">
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 transition-colors">
                           Weekend Only (Sat–Sun)
                         </button>
                       </div>
@@ -1151,7 +1151,7 @@ function ManageClasses() {
                           const opt = DAY_PRESETS.find(p => p.value === val);
                           return (
                             <div key={day.key} className="text-center">
-                              <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">{day.label}</div>
+                              <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{day.label}</div>
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1171,21 +1171,21 @@ function ManageClasses() {
                       </div>
                       {/* Quick actions */}
                       <div className="flex flex-wrap gap-1.5">
-                        <span className="text-[10px] text-slate-400 self-center mr-1">Quick:</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 self-center mr-1">Quick:</span>
                         <button type="button" onClick={() => setWeeklySchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'day-off', SUN: 'day-off' })}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">
                           Mon–Fri / Sat–Sun Off
                         </button>
                         <button type="button" onClick={() => setWeeklySchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'same', SUN: 'day-off' })}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">
                           Mon–Sat / Sun Off
                         </button>
                         <button type="button" onClick={() => setWeeklySchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'morning-only', SUN: 'day-off' })}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">
                           Mon–Fri Full / Sat Morning
                         </button>
                         <button type="button" onClick={() => setWeeklySchedule({ MON: 'day-off', TUE: 'day-off', WED: 'day-off', THU: 'day-off', FRI: 'day-off', SAT: 'same', SUN: 'same' })}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors">
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 transition-colors">
                           Weekend Only (Sat–Sun)
                         </button>
                         <button type="button" onClick={() => {
@@ -1193,12 +1193,12 @@ function ManageClasses() {
                             DAYS_OF_WEEK.forEach(d => all[d.key] = 'same');
                             setWeeklySchedule(all);
                           }}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">
                           All Same
                         </button>
                       </div>
                       {/* Legend */}
-                      <div className="flex flex-wrap gap-2 text-[10px] text-slate-500">
+                      <div className="flex flex-wrap gap-2 text-[10px] text-slate-500 dark:text-slate-400">
                         {DAY_PRESETS.map(p => (
                           <span key={p.value} className="inline-flex items-center gap-0.5">{p.icon} {p.label}</span>
                         ))}
@@ -1220,19 +1220,19 @@ function ManageClasses() {
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-start justify-center p-4 pt-16 overflow-y-auto">
               <div className="card w-full max-w-6xl shadow-xl">
                 {/* Modal Header */}
-                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700">
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-800">Manage Students</h3>
-                    <p className="text-sm text-slate-500">{selectedClass.name} &middot; {classStudents.length} student{classStudents.length !== 1 ? 's' : ''}</p>
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Manage Students</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{selectedClass.name} &middot; {classStudents.length} student{classStudents.length !== 1 ? 's' : ''}</p>
                   </div>
-                  <button onClick={() => { setShowStudentModal(false); setShowAddStudentForm(false); setEditingStudent(null); setCsvResult(null); }} className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600">
+                  <button onClick={() => { setShowStudentModal(false); setShowAddStudentForm(false); setEditingStudent(null); setCsvResult(null); }} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
 
                 <div className="p-6 space-y-6">
                   {!studentPortalEnabled && (
-                    <div className="card p-3 border-amber-200 bg-amber-50/50 text-sm text-amber-700">
+                    <div className="card p-3 border-amber-200 dark:border-amber-900 bg-amber-50/50 text-sm text-amber-700 dark:text-amber-300">
                       Student Portal is disabled for this school — you can view the roster, but adding, editing, and removing students is turned off. Enable it under Add-ons to manage students.
                     </div>
                   )}
@@ -1273,15 +1273,15 @@ function ManageClasses() {
 
                     {/* CSV Result */}
                     {csvResult && (
-                      <div className="mt-3 card p-4 border-blue-200 bg-blue-50/50 space-y-2">
+                      <div className="mt-3 card p-4 border-blue-200 dark:border-blue-900 bg-blue-50/50 space-y-2">
                         <div className="flex items-center justify-between">
-                          <h5 className="text-sm font-semibold text-slate-700">CSV Upload Results</h5>
-                          <button onClick={() => setCsvResult(null)} className="text-slate-400 hover:text-slate-600 text-xs">Dismiss</button>
+                          <h5 className="text-sm font-semibold text-slate-700 dark:text-slate-200">CSV Upload Results</h5>
+                          <button onClick={() => setCsvResult(null)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xs">Dismiss</button>
                         </div>
                         <div className="flex gap-3 text-sm">
-                          <span className="text-emerald-600 font-medium">✓ {csvResult.success} added</span>
-                          {csvResult.errors > 0 && <span className="text-red-600 font-medium">✗ {csvResult.errors} errors</span>}
-                          {csvResult.skipped > 0 && <span className="text-amber-600 font-medium">⚠ {csvResult.skipped} skipped</span>}
+                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">✓ {csvResult.success} added</span>
+                          {csvResult.errors > 0 && <span className="text-red-600 dark:text-red-400 font-medium">✗ {csvResult.errors} errors</span>}
+                          {csvResult.skipped > 0 && <span className="text-amber-600 dark:text-amber-400 font-medium">⚠ {csvResult.skipped} skipped</span>}
                         </div>
                         {csvResult.details.some(d => d.status !== 'success') && (
                           <div className="mt-2 max-h-32 overflow-y-auto text-xs space-y-1">
@@ -1292,14 +1292,14 @@ function ManageClasses() {
                             ))}
                           </div>
                         )}
-                        <p className="text-xs text-slate-500">CSV format: ID, Name, Sex, Date of Birth, Phone, Address, Photo, Generation (Google Drive links supported)</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">CSV format: ID, Name, Sex, Date of Birth, Phone, Address, Photo, Generation (Google Drive links supported)</p>
                       </div>
                     )}
                     {showAddStudentForm && (
-                      <form onSubmit={handleAddNewStudent} className="mt-4 card p-4 border-emerald-200 bg-emerald-50/50 space-y-3">
+                      <form onSubmit={handleAddNewStudent} className="mt-4 card p-4 border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 space-y-3">
                         <div className="grid sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="form-label">Student ID <span className="text-slate-400 text-xs">(optional — auto-generated if blank)</span></label>
+                            <label className="form-label">Student ID <span className="text-slate-400 dark:text-slate-500 text-xs">(optional — auto-generated if blank)</span></label>
                             <input type="text" value={newStudentForm.studentNumber} onChange={(e) => setNewStudentForm({ ...newStudentForm, studentNumber: e.target.value })} placeholder="e.g. 0001" className="font-mono" />
                           </div>
                           <div>
@@ -1311,11 +1311,11 @@ function ManageClasses() {
                             <input type="text" value={newStudentForm.nameKh} onChange={(e) => setNewStudentForm({ ...newStudentForm, nameKh: e.target.value })} placeholder="Khmer name" />
                           </div>
                           <div>
-                            <label className="form-label">Email <span className="text-slate-400 font-normal text-xs">(or phone below)</span></label>
+                            <label className="form-label">Email <span className="text-slate-400 dark:text-slate-500 font-normal text-xs">(or phone below)</span></label>
                             <input type="text" value={newStudentForm.email} onChange={(e) => setNewStudentForm({ ...newStudentForm, email: e.target.value })} placeholder="student@school.edu" />
                           </div>
                           <div>
-                            <label className="form-label">Password <span className="text-slate-400 text-xs">(optional — auto-generated if blank)</span></label>
+                            <label className="form-label">Password <span className="text-slate-400 dark:text-slate-500 text-xs">(optional — auto-generated if blank)</span></label>
                             <input type="text" value={newStudentForm.password} onChange={(e) => setNewStudentForm({ ...newStudentForm, password: e.target.value })} placeholder="Leave blank to auto-generate" />
                           </div>
                           <div>
@@ -1344,10 +1344,10 @@ function ManageClasses() {
                           <input type="text" value={newStudentForm.address} onChange={(e) => setNewStudentForm({ ...newStudentForm, address: e.target.value })} placeholder="Street, City, Province" />
                         </div>
                         <div>
-                          <label className="form-label">{t('student.generation') || 'Generation'} <span className="text-slate-400 text-xs">(ជំនាន់ទី)</span></label>
+                          <label className="form-label">{t('student.generation') || 'Generation'} <span className="text-slate-400 dark:text-slate-500 text-xs">(ជំនាន់ទី)</span></label>
                           <input type="number" min="1" value={newStudentForm.generation} onChange={(e) => setNewStudentForm({ ...newStudentForm, generation: e.target.value })} placeholder="1" />
                         </div>
-                        <p className="text-xs text-slate-400">If password is left blank, it will be auto-generated as: <span className="font-mono">student + email prefix</span> (e.g. <span className="font-mono">studentjohn</span>). Student ID auto-generates from class roster order if blank.</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">If password is left blank, it will be auto-generated as: <span className="font-mono">student + email prefix</span> (e.g. <span className="font-mono">studentjohn</span>). Student ID auto-generates from class roster order if blank.</p>
                         <button type="submit" disabled={!studentPortalEnabled} className="btn-success disabled:opacity-50 disabled:pointer-events-none">Add Student</button>
                       </form>
                     )}
@@ -1356,20 +1356,20 @@ function ManageClasses() {
                   <div className="space-y-6">
                     {/* Available Students */}
                     <div>
-                      <h4 className="text-sm font-semibold text-slate-600 uppercase tracking-wider mb-3">{t('classes.availableStudents')}</h4>
-                      <div className="card max-h-48 overflow-y-auto divide-y divide-slate-100">
+                      <h4 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">{t('classes.availableStudents')}</h4>
+                      <div className="card max-h-48 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
                         {availableStudents.length === 0 ? (
                           <div className="empty-state py-8"><p className="text-sm">{t('classes.noAvailableStudents')}</p></div>
                         ) : (
                           <div className="grid sm:grid-cols-2 lg:grid-cols-3">
                             {availableStudents.map((s) => (
-                              <div key={s.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors border-b border-r border-slate-100">
+                              <div key={s.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-r border-slate-100 dark:border-slate-800">
                                 <div className="avatar avatar-sm">
                                   {s.photo ? <img src={s.photo} alt={s.name} className="w-full h-full object-cover" /> : s.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-slate-800 truncate">{s.name}</p>
-                                  <p className="text-xs text-slate-500 truncate">{s.email}</p>
+                                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{s.name}</p>
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{s.email}</p>
                                 </div>
                                 <button onClick={() => handleAddStudent(s.id)} disabled={!studentPortalEnabled} className="btn-primary btn-sm disabled:opacity-50 disabled:pointer-events-none">Add</button>
                               </div>
@@ -1381,37 +1381,37 @@ function ManageClasses() {
 
                     {/* Class Students Table */}
                     <div>
-                      <h4 className="text-sm font-semibold text-slate-600 uppercase tracking-wider mb-3">
+                      <h4 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">
                         {t('classes.classStudents')} ({classStudents.length})
                       </h4>
                       <div className="card overflow-hidden">
                         <div className="max-h-[28rem] overflow-y-auto">
                           <table className="w-full text-sm">
-                            <thead className="bg-slate-50 sticky top-0 z-10">
+                            <thead className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10">
                               <tr>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase">ID</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Photo</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Name</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Sex</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase">DOB</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Phone</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Address</th>
-                                <th className="px-3 py-2 text-right text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">ID</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Photo</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Name</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Sex</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">DOB</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Phone</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Address</th>
+                                <th className="px-3 py-2 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Actions</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                               {classStudents.length === 0 ? (
-                                <tr><td colSpan={8} className="px-3 py-8 text-center text-slate-400">No students yet</td></tr>
+                                <tr><td colSpan={8} className="px-3 py-8 text-center text-slate-400 dark:text-slate-500">No students yet</td></tr>
                               ) : (
                                 classStudents.map((s, idx) => (
-                                  <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-3 py-2 text-slate-500 font-mono text-xs">{s.studentNumber || String(idx + 1).padStart(4, '0')}</td>
+                                  <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                    <td className="px-3 py-2 text-slate-500 dark:text-slate-400 font-mono text-xs">{s.studentNumber || String(idx + 1).padStart(4, '0')}</td>
                                     <td className="px-3 py-2">
-                                      <div className="w-9 h-9 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400">
+                                      <div className="w-9 h-9 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400 dark:text-slate-500">
                                         {s.photo ? <img src={s.photo} alt={s.name} className="w-full h-full object-cover" /> : s.name.charAt(0).toUpperCase()}
                                       </div>
                                     </td>
-                                    <td className="px-3 py-2 font-medium text-slate-800">{s.name}{s.nameKh && <span className="text-slate-400 font-normal"> · {s.nameKh}</span>}</td>
+                                    <td className="px-3 py-2 font-medium text-slate-800 dark:text-slate-100">{s.name}{s.nameKh && <span className="text-slate-400 dark:text-slate-500 font-normal"> · {s.nameKh}</span>}</td>
                                     <td className="px-3 py-2">
                                       {s.sex ? (
                                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${s.sex === 'MALE' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>
@@ -1419,9 +1419,9 @@ function ManageClasses() {
                                         </span>
                                       ) : <span className="text-slate-300">—</span>}
                                     </td>
-                                    <td className="px-3 py-2 text-slate-500 text-xs">{s.dateOfBirth ? new Date(s.dateOfBirth).toLocaleDateString() : <span className="text-slate-300">—</span>}</td>
-                                    <td className="px-3 py-2 text-slate-500 text-xs">{s.phone || <span className="text-slate-300">—</span>}</td>
-                                    <td className="px-3 py-2 text-slate-500 text-xs truncate max-w-[140px]">{s.address || <span className="text-slate-300">—</span>}</td>
+                                    <td className="px-3 py-2 text-slate-500 dark:text-slate-400 text-xs">{s.dateOfBirth ? new Date(s.dateOfBirth).toLocaleDateString() : <span className="text-slate-300">—</span>}</td>
+                                    <td className="px-3 py-2 text-slate-500 dark:text-slate-400 text-xs">{s.phone || <span className="text-slate-300">—</span>}</td>
+                                    <td className="px-3 py-2 text-slate-500 dark:text-slate-400 text-xs truncate max-w-[140px]">{s.address || <span className="text-slate-300">—</span>}</td>
                                     <td className="px-3 py-2 text-right">
                                       <div className="flex justify-end gap-1">
                                         <button onClick={() => handleEditStudent(s)} disabled={!studentPortalEnabled} className="btn-warning btn-sm disabled:opacity-50 disabled:pointer-events-none">Edit</button>
@@ -1440,25 +1440,25 @@ function ManageClasses() {
 
                   {/* Edit Student Inline Panel */}
                   {editingStudent && (
-                    <div className="relative mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200 space-y-3">
+                    <div className="relative mt-4 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 space-y-3">
                       {/* Full-viewport loading overlay (guaranteed visible) */}
                       {savingStudent && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-in fade-in" role="status" aria-live="polite">
-                          <div className="flex flex-col items-center gap-4 px-8 py-7 rounded-2xl bg-white border border-amber-200 shadow-2xl min-w-[280px]">
+                          <div className="flex flex-col items-center gap-4 px-8 py-7 rounded-2xl bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900 shadow-2xl min-w-[280px]">
                             <div className="relative">
-                              <svg className="w-14 h-14 text-amber-500 animate-spin" viewBox="0 0 24 24" fill="none">
+                              <svg className="w-14 h-14 text-amber-500 dark:text-amber-400 animate-spin" viewBox="0 0 24 24" fill="none">
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/>
                                 <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
                               </svg>
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-amber-600 text-lg">💾</span>
+                                <span className="text-amber-600 dark:text-amber-400 text-lg">💾</span>
                               </div>
                             </div>
                             <div className="text-center">
-                              <div className="text-base font-semibold text-slate-800">Saving student…</div>
-                              <div className="text-xs text-slate-500 mt-1">Please wait, applying your changes</div>
+                              <div className="text-base font-semibold text-slate-800 dark:text-slate-100">Saving student…</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Please wait, applying your changes</div>
                             </div>
-                            <div className="w-full h-1 bg-amber-100 rounded-full overflow-hidden">
+                            <div className="w-full h-1 bg-amber-100 dark:bg-amber-950/40 rounded-full overflow-hidden">
                               <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 animate-pulse" style={{ width: '70%' }} />
                             </div>
                           </div>
@@ -1468,12 +1468,12 @@ function ManageClasses() {
                       {/* Form content (dimmed/disabled while saving) */}
                       <fieldset disabled={savingStudent} className={`space-y-3 transition-opacity ${savingStudent ? 'opacity-50 pointer-events-none' : ''}`}>
                       <div className="flex items-center justify-between">
-                        <h5 className="text-sm font-semibold text-amber-800">Edit Student</h5>
-                        <button onClick={() => setEditingStudent(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
+                        <h5 className="text-sm font-semibold text-amber-800 dark:text-amber-300">Edit Student</h5>
+                        <button onClick={() => setEditingStudent(null)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xs">Cancel</button>
                       </div>
                       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         <div>
-                          <label className="form-label text-xs">Student ID <span className="text-slate-400">(លេខសម្គាល់)</span></label>
+                          <label className="form-label text-xs">Student ID <span className="text-slate-400 dark:text-slate-500">(លេខសម្គាល់)</span></label>
                           <input type="text" value={editStudentData.studentNumber} onChange={(e) => setEditStudentData({ ...editStudentData, studentNumber: e.target.value })} placeholder="e.g. 0001" className="font-mono" />
                         </div>
                         <div>
@@ -1505,11 +1505,11 @@ function ManageClasses() {
                           <input type="text" value={editStudentData.address} onChange={(e) => setEditStudentData({ ...editStudentData, address: e.target.value })} placeholder="Street, City, Province" />
                         </div>
                         <div>
-                          <label className="form-label text-xs">{t('student.generation') || 'Generation'} <span className="text-slate-400">(ជំនាន់ទី)</span></label>
+                          <label className="form-label text-xs">{t('student.generation') || 'Generation'} <span className="text-slate-400 dark:text-slate-500">(ជំនាន់ទី)</span></label>
                           <input type="number" min="1" value={editStudentData.generation} onChange={(e) => setEditStudentData({ ...editStudentData, generation: e.target.value })} placeholder="1" />
                         </div>
                         <div className="sm:col-span-2 lg:col-span-3">
-                          <label className="form-label text-xs">Parent <span className="text-slate-400">(ឪពុកម្តាយ)</span></label>
+                          <label className="form-label text-xs">Parent <span className="text-slate-400 dark:text-slate-500">(ឪពុកម្តាយ)</span></label>
                           <select
                             value={editStudentData.parentId}
                             onChange={(e) => setEditStudentData({ ...editStudentData, parentId: e.target.value })}
@@ -1522,11 +1522,11 @@ function ManageClasses() {
                             ))}
                           </select>
                           {parents.length === 0 && (
-                            <div className="text-xs text-slate-400 mt-1">No parent accounts found. Create one under Users → Parents first.</div>
+                            <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">No parent accounts found. Create one under Users → Parents first.</div>
                           )}
                         </div>
                         <div className="sm:col-span-2 lg:col-span-3">
-                          <label className="form-label text-xs">Photo URL <span className="text-slate-400">(Google Drive share links auto-converted)</span></label>
+                          <label className="form-label text-xs">Photo URL <span className="text-slate-400 dark:text-slate-500">(Google Drive share links auto-converted)</span></label>
                           <input type="text" value={editStudentData.photo} onChange={(e) => { setEditStudentData({ ...editStudentData, photo: e.target.value }); setPhotoPreviewError(false); }} placeholder="https://... or Google Drive share link" />
                         </div>
                         {customFieldDefs.map(f => (
@@ -1537,7 +1537,7 @@ function ManageClasses() {
                                 {(f.options || []).map(opt => {
                                   const selected = Array.isArray(editStudentCustomFields[f.key]) ? (editStudentCustomFields[f.key] as string[]) : []
                                   return (
-                                    <label key={opt} className="flex items-center gap-1.5 text-sm text-slate-700">
+                                    <label key={opt} className="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-200">
                                       <input
                                         type="checkbox"
                                         checked={selected.includes(opt)}
@@ -1572,16 +1572,16 @@ function ManageClasses() {
                       </div>
                       {editStudentData.photo && (
                         <div className="flex items-center gap-3">
-                          <span className="text-xs text-slate-500">Preview:</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">Preview:</span>
                           {!photoPreviewError ? (
-                            <img src={editStudentData.photo} alt="Preview" className="w-12 h-12 rounded-lg object-cover border border-slate-200" onError={() => setPhotoPreviewError(true)} onLoad={() => setPhotoPreviewError(false)} />
+                            <img src={editStudentData.photo} alt="Preview" className="w-12 h-12 rounded-lg object-cover border border-slate-200 dark:border-slate-700" onError={() => setPhotoPreviewError(true)} onLoad={() => setPhotoPreviewError(false)} />
                           ) : (
-                            <span className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-md px-2 py-1">⚠ Image failed to load. The URL may be invalid or restricted. Use a direct image link (.jpg/.png) or a public Google Drive share link.</span>
+                            <span className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-md px-2 py-1">⚠ Image failed to load. The URL may be invalid or restricted. Use a direct image link (.jpg/.png) or a public Google Drive share link.</span>
                           )}
                         </div>
                       )}
                       {saveError && (
-                        <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{saveError}</div>
+                        <div className="text-xs text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-md px-3 py-2">{saveError}</div>
                       )}
                       <div className="flex gap-2">
                         <button type="button" onClick={() => handleSaveStudent(editingStudent)} disabled={savingStudent} className="btn-success btn-sm inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
@@ -1609,17 +1609,17 @@ function ManageClasses() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="card p-5 animate-pulse">
                   <div className="flex items-start justify-between mb-3">
-                    <div className="w-12 h-12 rounded-xl bg-slate-200" />
-                    <div className="w-10 h-6 rounded-full bg-slate-200" />
+                    <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-700" />
+                    <div className="w-10 h-6 rounded-full bg-slate-200 dark:bg-slate-700" />
                   </div>
-                  <div className="h-5 w-3/4 bg-slate-200 rounded mb-2" />
-                  <div className="h-3 w-1/2 bg-slate-200 rounded mb-3" />
-                  <div className="h-3 w-2/3 bg-slate-100 rounded mb-2" />
-                  <div className="h-3 w-1/3 bg-slate-100 rounded" />
-                  <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
-                    <div className="h-8 flex-1 bg-slate-200 rounded" />
-                    <div className="h-8 flex-1 bg-slate-200 rounded" />
-                    <div className="h-8 flex-1 bg-slate-200 rounded" />
+                  <div className="h-5 w-3/4 bg-slate-200 dark:bg-slate-700 rounded mb-2" />
+                  <div className="h-3 w-1/2 bg-slate-200 dark:bg-slate-700 rounded mb-3" />
+                  <div className="h-3 w-2/3 bg-slate-100 dark:bg-slate-800 rounded mb-2" />
+                  <div className="h-3 w-1/3 bg-slate-100 dark:bg-slate-800 rounded" />
+                  <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div className="h-8 flex-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                    <div className="h-8 flex-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                    <div className="h-8 flex-1 bg-slate-200 dark:bg-slate-700 rounded" />
                   </div>
                 </div>
               ))}
@@ -1638,16 +1638,16 @@ function ManageClasses() {
                       </div>
                       {count !== undefined && (
                         <div className="flex flex-col items-end">
-                          <div className="text-2xl font-bold text-slate-800 leading-none">{count}</div>
-                          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">student{count !== 1 ? 's' : ''}</div>
+                          <div className="text-2xl font-bold text-slate-800 dark:text-slate-100 leading-none">{count}</div>
+                          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">student{count !== 1 ? 's' : ''}</div>
                         </div>
                       )}
                     </div>
-                    <h3 className="font-bold text-slate-800 text-lg leading-tight">{cls.name}</h3>
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight">{cls.name}</h3>
                     <p className={`inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${theme.chip}`}>{cls.subject}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {cls.studyYear && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-700">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300">
                           📅 {cls.studyYear.label || cls.studyYear.year}
                         </span>
                       )}
@@ -1657,26 +1657,26 @@ function ManageClasses() {
                         </span>
                       )}
                       {classFormats[cls.id] ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-100 text-indigo-700">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300">
                           {classFormats[cls.id].icon} {classFormats[cls.id].name}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                           🌐 Global
                         </span>
                       )}
                     </div>
                     {cls.teacher && (
-                      <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
-                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                      <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300">
                           {cls.teacher.name?.charAt(0).toUpperCase() || '?'}
                         </div>
                         <span className="truncate">{cls.teacher.name}</span>
                       </div>
                     )}
                     {cls.classAdmin && (
-                      <div className="mt-1.5 flex items-center gap-2 text-xs text-indigo-500">
-                        <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center text-[10px] font-bold text-indigo-600">
+                      <div className="mt-1.5 flex items-center gap-2 text-xs text-indigo-500 dark:text-indigo-400">
+                        <div className="w-6 h-6 rounded-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
                           {cls.classAdmin.name?.charAt(0).toUpperCase() || 'A'}
                         </div>
                         <span className="truncate">{cls.classAdmin.name}</span>
@@ -1704,7 +1704,7 @@ function ManageClasses() {
                         );
                       } catch { return null; }
                     })()}
-                    <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-slate-100">
+                    <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
                       <div className="flex gap-2">
                         <Link href={`/admin/classes/${cls.id}`} className={`btn-sm flex-1 text-center text-white bg-gradient-to-r ${theme.from} ${theme.to} shadow-sm hover:shadow-md transition-shadow`} title="Manage assignments, exams, courses">
                           📚 Manage
@@ -1714,10 +1714,10 @@ function ManageClasses() {
                       <div className="flex items-center gap-1.5">
                         <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-outline btn-sm flex-1 text-center">Attendance</Link>
                         <button onClick={() => handleEdit(cls)} className="btn-outline btn-sm flex-1">Edit</button>
-                        <button onClick={() => openAddToTT(cls)} title="Add to Timetable" className="btn-outline btn-sm px-2.5 text-indigo-600 border-indigo-200 hover:bg-indigo-50 flex-shrink-0">
+                        <button onClick={() => openAddToTT(cls)} title="Add to Timetable" className="btn-outline btn-sm px-2.5 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-900 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex-shrink-0">
                           🗓
                         </button>
-                        <button onClick={() => handleDelete(cls.id)} title="Delete class" className="btn-outline btn-sm px-2.5 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 flex-shrink-0">
+                        <button onClick={() => handleDelete(cls.id)} title="Delete class" className="btn-outline btn-sm px-2.5 text-red-500 dark:text-red-400 border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 flex-shrink-0">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                       </div>
@@ -1730,35 +1730,35 @@ function ManageClasses() {
             <div className="card overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-200">
+                  <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Class</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Subject</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Teacher</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Class Admin</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Year</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Registration</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Format</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Students</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Class</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subject</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Teacher</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Class Admin</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Year</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Registration</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Format</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Students</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {filteredClasses.map((cls) => {
                       const theme = themeFor(cls);
                       const count = classStudentCounts[cls.id];
                       return (
-                        <tr key={cls.id} className="hover:bg-slate-50 transition-colors">
+                        <tr key={cls.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                           <td className="px-4 py-2.5">
                             <div className="flex items-center gap-2.5">
                               <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${theme.from} ${theme.to} flex items-center justify-center text-white text-base shadow-sm flex-shrink-0`}>{theme.emoji}</div>
-                              <span className="font-medium text-slate-800 truncate">{cls.name}</span>
+                              <span className="font-medium text-slate-800 dark:text-slate-100 truncate">{cls.name}</span>
                             </div>
                           </td>
                           <td className="px-4 py-2.5"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${theme.chip}`}>{cls.subject}</span></td>
-                          <td className="px-4 py-2.5 text-slate-600">{cls.teacher?.name || <span className="text-slate-300">—</span>}</td>
-                          <td className="px-4 py-2.5 text-slate-600 text-xs">{cls.classAdmin?.name ? <span className="text-indigo-600">{cls.classAdmin.name}</span> : <span className="text-slate-300">—</span>}</td>
-                          <td className="px-4 py-2.5 text-slate-500 text-xs">{cls.studyYear ? (cls.studyYear.label || cls.studyYear.year) : <span className="text-slate-300">—</span>}</td>
+                          <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">{cls.teacher?.name || <span className="text-slate-300">—</span>}</td>
+                          <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300 text-xs">{cls.classAdmin?.name ? <span className="text-indigo-600 dark:text-indigo-400">{cls.classAdmin.name}</span> : <span className="text-slate-300">—</span>}</td>
+                          <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400 text-xs">{cls.studyYear ? (cls.studyYear.label || cls.studyYear.year) : <span className="text-slate-300">—</span>}</td>
                           <td className="px-4 py-2.5">
                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${REGISTRATION_STATUS_META[cls.registrationStatus || 'HIDDEN'].className}`}>
                               {REGISTRATION_STATUS_META[cls.registrationStatus || 'HIDDEN'].label}
@@ -1766,10 +1766,10 @@ function ManageClasses() {
                           </td>
                           <td className="px-4 py-2.5">
                             {classFormats[cls.id] ? (
-                              <span className="inline-flex items-center gap-1 text-xs text-slate-600">{classFormats[cls.id].icon} {classFormats[cls.id].name}</span>
-                            ) : <span className="text-slate-400 text-xs">🌐 Global</span>}
+                              <span className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">{classFormats[cls.id].icon} {classFormats[cls.id].name}</span>
+                            ) : <span className="text-slate-400 dark:text-slate-500 text-xs">🌐 Global</span>}
                           </td>
-                          <td className="px-4 py-2.5 text-right font-semibold text-slate-700">{count !== undefined ? count : '…'}</td>
+                          <td className="px-4 py-2.5 text-right font-semibold text-slate-700 dark:text-slate-200">{count !== undefined ? count : '…'}</td>
                           <td className="px-4 py-2.5 text-right">
                             <div className="inline-flex gap-1">
                               <Link href={`/admin/classes/${cls.id}`} className="btn-primary btn-sm" title="Manage assignments, exams, courses">📚 Manage</Link>
@@ -1792,8 +1792,8 @@ function ManageClasses() {
           {!loadingClasses && classes.length === 0 && (
             <div className="card p-12 text-center">
               <div className="text-6xl mb-3">📖</div>
-              <p className="text-lg font-semibold text-slate-700">{t('classes.noClasses')}</p>
-              <p className="text-sm text-slate-500 mt-1 mb-4">Get started by creating your first class.</p>
+              <p className="text-lg font-semibold text-slate-700 dark:text-slate-200">{t('classes.noClasses')}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">Get started by creating your first class.</p>
               <button onClick={() => { setShowForm(true); setEditingClass(null); setFormData({ name: '', subject: '', teacherId: '', classAdminId: '', studyYearId: selectedStudyYearId, registrationStatus: 'HIDDEN', thumbnail: '', description: '', price: '', showPrice: false }); setSelectedPreset('global-default'); setCustomConfigs([]); setWeeklySchedule({ ...DEFAULT_SCHEDULE }); setShowWeekly(false); }} className="btn-primary inline-flex items-center gap-1.5">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                 Create First Class
@@ -1803,8 +1803,8 @@ function ManageClasses() {
           {!loadingClasses && classes.length > 0 && filteredClasses.length === 0 && (
             <div className="card p-10 text-center">
               <div className="text-5xl mb-2">🔍</div>
-              <p className="text-base font-semibold text-slate-700">No classes match your search</p>
-              <p className="text-sm text-slate-500 mt-1">Try a different keyword or clear the filters.</p>
+              <p className="text-base font-semibold text-slate-700 dark:text-slate-200">No classes match your search</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Try a different keyword or clear the filters.</p>
               <button onClick={() => setSearchQuery('')} className="btn-outline btn-sm mt-3">Clear search</button>
             </div>
           )}
@@ -1814,17 +1814,17 @@ function ManageClasses() {
       {/* Add to Timetable Modal */}
       {showAddToTT && addToTTClass && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm">
+            <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
               <div>
-                <h2 className="font-bold text-slate-800">Add to Timetable</h2>
-                <p className="text-xs text-slate-500 mt-0.5">{addToTTClass.name}</p>
+                <h2 className="font-bold text-slate-800 dark:text-slate-100">Add to Timetable</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{addToTTClass.name}</p>
               </div>
-              <button onClick={() => setShowAddToTT(false)} className="text-slate-400 hover:text-slate-600 text-xl">×</button>
+              <button onClick={() => setShowAddToTT(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xl">×</button>
             </div>
             <div className="px-5 py-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Timetable</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Timetable</label>
                 <select
                   value={addToTTSelectedTT}
                   onChange={async e => {
@@ -1835,24 +1835,24 @@ function ManageClasses() {
                       if (res.ok) { const tt = await res.json(); setAddToTTExisting(tt.classes ?? []); }
                     }
                   }}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Select timetable…</option>
                   {timetables.map(tt => <option key={tt.id} value={tt.id}>{tt.name} · {tt.academicYear}</option>)}
                 </select>
                 {addToTTExisting.some(c => c.name.toLowerCase() === addToTTClass.name.toLowerCase()) && (
-                  <p className="text-xs text-amber-600 mt-1">⚠ This class already exists in the selected timetable.</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">⚠ This class already exists in the selected timetable.</p>
                 )}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Short Name</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Short Name</label>
                 <input
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={addToTTShort} onChange={e => setAddToTTShort(e.target.value)} maxLength={8} placeholder="e.g. G1A"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-2">Color</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">Color</label>
                 <div className="flex flex-wrap gap-2">
                   {['#ef4444','#f97316','#f59e0b','#22c55e','#14b8a6','#06b6d4','#3b82f6','#6366f1','#8b5cf6','#ec4899','#64748b'].map(c => (
                     <button key={c} type="button" onClick={() => setAddToTTColor(c)}
@@ -1863,8 +1863,8 @@ function ManageClasses() {
                 </div>
               </div>
             </div>
-            <div className="px-5 py-3 border-t border-slate-200 flex justify-end gap-2">
-              <button onClick={() => setShowAddToTT(false)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium">Cancel</button>
+            <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+              <button onClick={() => setShowAddToTT(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium">Cancel</button>
               <button
                 onClick={handleAddToTTSave}
                 disabled={addToTTSaving || !addToTTSelectedTT || !addToTTShort}

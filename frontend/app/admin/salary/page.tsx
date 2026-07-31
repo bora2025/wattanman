@@ -97,16 +97,16 @@ export default function SalaryPage() {
 
   return (
     <AuthGuard requiredRole="ADMIN">
-      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
         <main className="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
           <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Salary Management</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">Salary Management</h1>
             <div className="flex items-center gap-2 flex-wrap">
-              <select value={month} onChange={e => setMonth(Number(e.target.value))} className="border rounded-lg px-3 py-2 text-sm bg-white">
+              <select value={month} onChange={e => setMonth(Number(e.target.value))} className="border rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900">
                 {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
               </select>
-              <select value={year} onChange={e => setYear(Number(e.target.value))} className="border rounded-lg px-3 py-2 text-sm bg-white">
+              <select value={year} onChange={e => setYear(Number(e.target.value))} className="border rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900">
                 {years.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
               <button onClick={() => { setEditId(null); setShowForm(true) }}
@@ -126,30 +126,30 @@ export default function SalaryPage() {
                 <SumCard label="Unpaid" value={summary.unpaid} color="bg-amber-500" />
               </>
             ) : (
-              [1,2,3,4].map(i => <div key={i} className="rounded-xl bg-slate-200 animate-pulse h-20" />)
+              [1,2,3,4].map(i => <div key={i} className="rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse h-20" />)
             )}
           </div>
 
           {/* Table */}
           {isLoading ? (
             <div className="space-y-2">
-              {[1,2,3,4,5].map(i => <div key={i} className="bg-white rounded-xl h-14 animate-pulse" />)}
+              {[1,2,3,4,5].map(i => <div key={i} className="bg-white dark:bg-slate-900 rounded-xl h-14 animate-pulse" />)}
             </div>
           ) : isError ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-              <p className="text-red-600 font-medium mb-2">Failed to load salary data</p>
-              <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl p-6 text-center">
+              <p className="text-red-600 dark:text-red-400 font-medium mb-2">Failed to load salary data</p>
+              <button onClick={() => refetch()} className="text-sm text-red-500 dark:text-red-400 underline">Retry</button>
             </div>
           ) : salaries.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-              <p className="text-slate-400 text-lg">No salaries for {MONTHS[month - 1]} {year}</p>
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center shadow-sm">
+              <p className="text-slate-400 dark:text-slate-500 text-lg">No salaries for {MONTHS[month - 1]} {year}</p>
               <button onClick={() => { setEditId(null); setShowForm(true) }}
-                className="mt-4 text-sky-600 text-sm underline">Create first salary record</button>
+                className="mt-4 text-sky-600 dark:text-sky-400 text-sm underline">Create first salary record</button>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-600">
+                <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                   <tr>
                     <th className="text-left px-4 py-3">Staff</th>
                     <th className="text-left px-4 py-3">Role</th>
@@ -161,15 +161,15 @@ export default function SalaryPage() {
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {salaries.map(s => (
-                    <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-slate-800">{s.user.name}</td>
-                      <td className="px-4 py-3 text-slate-500">{s.user.role}</td>
+                    <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                      <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{s.user.name}</td>
+                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{s.user.role}</td>
                       <td className="px-4 py-3 text-right">${s.baseSalary.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right text-emerald-600">+${s.allowances.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right text-red-500">-${s.deductions.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right font-bold text-slate-800">${s.netSalary.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400">+${s.allowances.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right text-red-500 dark:text-red-400">-${s.deductions.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right font-bold text-slate-800 dark:text-slate-100">${s.netSalary.toLocaleString()}</td>
                       <td className="px-4 py-3 text-center">
                         <button onClick={() => paidMutation.mutate({ id: s.id, isPaid: !s.isPaid })}
                           disabled={paidMutation.isPending}
@@ -180,9 +180,9 @@ export default function SalaryPage() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex gap-2 justify-end">
                           <button onClick={() => { setEditId(s.id); setShowForm(true) }}
-                            className="text-sky-600 hover:underline text-xs">Edit</button>
+                            className="text-sky-600 dark:text-sky-400 hover:underline text-xs">Edit</button>
                           <button onClick={() => { if (confirm('Delete this record?')) deleteMutation.mutate(s.id) }}
-                            className="text-red-500 hover:underline text-xs">Delete</button>
+                            className="text-red-500 dark:text-red-400 hover:underline text-xs">Delete</button>
                         </div>
                       </td>
                     </tr>
@@ -243,48 +243,48 @@ function SalaryFormModal({ editId, staff, year, month, onClose, onSuccess }: {
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-bold text-slate-800 mb-4">{editId ? 'Edit' : 'Add'} Salary Record</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md p-6">
+        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">{editId ? 'Edit' : 'Add'} Salary Record</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {!editId && (
             <div>
-              <label className="text-sm font-medium text-slate-700">Staff Member</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Staff Member</label>
               <select {...register('userId', { required: true })}
                 className="w-full border rounded-lg px-3 py-2 text-sm mt-1">
                 <option value="">Select staff...</option>
                 {staff.map(s => <option key={s.id} value={s.id}>{s.name} — {s.role}</option>)}
               </select>
-              {errors.userId && <p className="text-red-500 text-xs mt-1">Required</p>}
+              {errors.userId && <p className="text-red-500 dark:text-red-400 text-xs mt-1">Required</p>}
             </div>
           )}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-sm font-medium text-slate-700">Base Salary</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Base Salary</label>
               <input type="number" min="0" {...register('baseSalary', { required: true, min: 0 })}
                 className="w-full border rounded-lg px-3 py-2 text-sm mt-1" />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Allowances</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Allowances</label>
               <input type="number" min="0" {...register('allowances')}
                 className="w-full border rounded-lg px-3 py-2 text-sm mt-1" />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Deductions</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Deductions</label>
               <input type="number" min="0" {...register('deductions')}
                 className="w-full border rounded-lg px-3 py-2 text-sm mt-1" />
             </div>
           </div>
-          <div className="bg-slate-50 rounded-lg p-3 text-sm">
-            Net Salary: <span className="font-bold text-slate-800">${net.toLocaleString()}</span>
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 text-sm">
+            Net Salary: <span className="font-bold text-slate-800 dark:text-slate-100">${net.toLocaleString()}</span>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">Notes</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Notes</label>
             <textarea {...register('notes')} rows={2}
               className="w-full border rounded-lg px-3 py-2 text-sm mt-1 resize-none" />
           </div>
           <div className="flex gap-3 justify-end">
             <button type="button" onClick={onClose}
-              className="px-4 py-2 text-sm border rounded-lg text-slate-600">Cancel</button>
+              className="px-4 py-2 text-sm border rounded-lg text-slate-600 dark:text-slate-300">Cancel</button>
             <button type="submit" disabled={isSubmitting}
               className="px-4 py-2 text-sm bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium disabled:opacity-60">
               {isSubmitting ? 'Saving...' : 'Save'}

@@ -41,18 +41,18 @@ export function SortParagraphsEditor({ data, onChange }: { data: any; onChange: 
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-slate-500">Enter paragraphs in the correct order — students see them shuffled and must drag to reorder.</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">Enter paragraphs in the correct order — students see them shuffled and must drag to reorder.</p>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={paragraphs.map(p => p.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-1.5">
             {paragraphs.map((p, i) => (
               <SortableRow key={p.id} id={p.id}>
                 {({ listeners, attributes }) => (
-                  <div className="flex items-start gap-2 bg-white border rounded-lg p-2">
-                    <span {...listeners} {...attributes} className="text-slate-400 cursor-grab active:cursor-grabbing pt-1.5 select-none touch-none" title="Drag to reorder">⠿</span>
-                    <span className="text-xs text-slate-400 pt-1.5">{i + 1}.</span>
+                  <div className="flex items-start gap-2 bg-white dark:bg-slate-900 border rounded-lg p-2">
+                    <span {...listeners} {...attributes} className="text-slate-400 dark:text-slate-500 cursor-grab active:cursor-grabbing pt-1.5 select-none touch-none" title="Drag to reorder">⠿</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 pt-1.5">{i + 1}.</span>
                     <textarea value={p.text} onChange={e => updateText(i, e.target.value)} rows={1} placeholder={`Paragraph ${i + 1}`} className="flex-1 border rounded px-2 py-1 text-sm resize-none" />
-                    <button type="button" onClick={() => removeParagraph(i)} disabled={paragraphs.length <= 2} className="text-xs text-red-500 disabled:opacity-30 pt-1.5">✕</button>
+                    <button type="button" onClick={() => removeParagraph(i)} disabled={paragraphs.length <= 2} className="text-xs text-red-500 dark:text-red-400 disabled:opacity-30 pt-1.5">✕</button>
                   </div>
                 )}
               </SortableRow>
@@ -60,7 +60,7 @@ export function SortParagraphsEditor({ data, onChange }: { data: any; onChange: 
           </div>
         </SortableContext>
       </DndContext>
-      <button type="button" onClick={addParagraph} className="text-xs text-sky-600 hover:underline">+ Add paragraph</button>
+      <button type="button" onClick={addParagraph} className="text-xs text-sky-600 dark:text-sky-400 hover:underline">+ Add paragraph</button>
     </div>
   )
 }
@@ -74,10 +74,10 @@ function SortableParagraphRow({ id, index, text }: { id: string; index: number; 
       style={style}
       {...attributes}
       {...listeners}
-      className="flex items-start gap-3 p-3 rounded-lg border-2 border-slate-200 bg-white cursor-grab active:cursor-grabbing touch-none"
+      className="flex items-start gap-3 p-3 rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 cursor-grab active:cursor-grabbing touch-none"
     >
-      <span className="text-slate-400 font-mono text-sm pt-0.5">{index + 1}</span>
-      <MathText as="span" className="text-sm text-slate-700 flex-1" text={text} />
+      <span className="text-slate-400 dark:text-slate-500 font-mono text-sm pt-0.5">{index + 1}</span>
+      <MathText as="span" className="text-sm text-slate-700 dark:text-slate-200 flex-1" text={text} />
       <span className="text-slate-300">⠿</span>
     </div>
   )
@@ -101,7 +101,7 @@ export function SortParagraphsInput({ data, value, onChange, disabled }: { data:
 
   return (
     <div className={disabled ? 'pointer-events-none opacity-60' : undefined}>
-      <p className="text-xs text-slate-500 mb-2">Drag to arrange in the correct order.</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Drag to arrange in the correct order.</p>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={order} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">

@@ -25,7 +25,7 @@ function BlockStyleToolbar({ style, onChange }: { style: BlockTextStyle; onChang
   const select = 'px-1.5 py-1 rounded text-xs border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-1 focus:ring-sky-400'
   const align = style.textAlign || 'left'
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-slate-100 bg-slate-50 px-2 py-1.5">
+    <div className="flex flex-wrap items-center gap-1 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-2 py-1.5">
       <select
         value={style.fontFamily || ''}
         onChange={e => (e.target.value ? set({ fontFamily: e.target.value }) : unset('fontFamily'))}
@@ -43,7 +43,7 @@ function BlockStyleToolbar({ style, onChange }: { style: BlockTextStyle; onChang
         <option value="">Size</option>
         {FONT_SIZES.map(s => <option key={s} value={s}>{s.replace('px', '')}</option>)}
       </select>
-      <span className="w-px h-4 bg-slate-200 mx-0.5" />
+      <span className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5" />
       <button type="button" onClick={() => set({ textAlign: 'left' })} className={btn(align === 'left')} title="Align left">
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h10.5M3.75 17.25h13.5" /></svg>
       </button>
@@ -56,7 +56,7 @@ function BlockStyleToolbar({ style, onChange }: { style: BlockTextStyle; onChang
       <button type="button" onClick={() => set({ textAlign: 'justify' })} className={btn(align === 'justify')} title="Justify">
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
       </button>
-      <span className="w-px h-4 bg-slate-200 mx-0.5" />
+      <span className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5" />
       <select
         value={style.lineHeight || ''}
         onChange={e => (e.target.value ? set({ lineHeight: e.target.value }) : unset('lineHeight'))}
@@ -66,7 +66,7 @@ function BlockStyleToolbar({ style, onChange }: { style: BlockTextStyle; onChang
         <option value="">Spacing</option>
         {LINE_HEIGHTS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
       </select>
-      <span className="w-px h-4 bg-slate-200 mx-0.5" />
+      <span className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5" />
       <button type="button" onClick={() => onChange({})} className={btn(false)} title="Clear formatting">✕ Format</button>
     </div>
   )
@@ -150,10 +150,10 @@ export function FillBlanksEditor({ data, onChange }: { data: any; onChange: (d: 
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-slate-500">
-        Type the text with <code className="bg-slate-100 px-1 rounded">___</code> where each blank goes, then fill in the accepted answer(s) below — e.g. &quot;Bilberries are also known as ___ berries.&quot;
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Type the text with <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded">___</code> where each blank goes, then fill in the accepted answer(s) below — e.g. &quot;Bilberries are also known as ___ berries.&quot;
       </p>
-      <div className="border border-slate-200 rounded-lg overflow-hidden">
+      <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
         <BlockStyleToolbar style={style} onChange={setStyle} />
         <textarea
           value={sentence}
@@ -168,8 +168,8 @@ export function FillBlanksEditor({ data, onChange }: { data: any; onChange: (d: 
       {answers.length > 0 && (
         <div className="space-y-2">
           {answers.map((a, i) => (
-            <div key={i} className="flex items-start gap-2 border rounded-lg p-2 bg-white">
-              <span className="text-xs text-slate-400 w-14 shrink-0 pt-1.5">Blank {i + 1}</span>
+            <div key={i} className="flex items-start gap-2 border rounded-lg p-2 bg-white dark:bg-slate-900">
+              <span className="text-xs text-slate-400 dark:text-slate-500 w-14 shrink-0 pt-1.5">Blank {i + 1}</span>
               <div className="flex-1">
                 <AcceptedAnswersEditor answers={a.answers} onChange={list => updateBlankAnswers(i, list)} />
               </div>
@@ -179,7 +179,7 @@ export function FillBlanksEditor({ data, onChange }: { data: any; onChange: (d: 
       )}
 
       {sentence && (
-        <div className="text-sm bg-white border rounded-lg p-2 leading-relaxed whitespace-pre-wrap" style={style}>
+        <div className="text-sm bg-white dark:bg-slate-900 border rounded-lg p-2 leading-relaxed whitespace-pre-wrap" style={style}>
           {(() => {
             const parts = sentence.split(BLANK_RE)
             const out: ReactNode[] = []
@@ -189,7 +189,7 @@ export function FillBlanksEditor({ data, onChange }: { data: any; onChange: (d: 
                 const a = answers[i]
                 const filled = (a?.answers || []).filter(Boolean).join(' / ')
                 out.push(
-                  <span key={`b${i}`} className="inline-block px-1.5 py-0.5 rounded mx-0.5 font-medium bg-sky-100 text-sky-700">
+                  <span key={`b${i}`} className="inline-block px-1.5 py-0.5 rounded mx-0.5 font-medium bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300">
                     {filled || `blank ${i + 1}`}
                   </span>
                 )
@@ -228,7 +228,7 @@ export function FillBlanksInput({ data, value, onChange, disabled }: { data: any
             autoCapitalize="off"
             spellCheck={false}
             style={{ width: `${Math.max(7, (filled[seg.id]?.length || 7) + 2)}ch` }}
-            className="inline-block mx-1 px-2 py-0.5 rounded-md border-2 border-slate-300 bg-white text-center align-middle focus:border-sky-500 focus:outline-none disabled:bg-slate-50"
+            className="inline-block mx-1 px-2 py-0.5 rounded-md border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-center align-middle focus:border-sky-500 focus:outline-none disabled:bg-slate-50"
           />
         )
       )}

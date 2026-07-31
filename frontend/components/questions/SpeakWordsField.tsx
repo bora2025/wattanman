@@ -10,7 +10,7 @@ export function AcceptedAnswersEditor({ answers, onChange }: { answers: string[]
   const list = answers.length ? answers : ['']
   return (
     <div className="space-y-1">
-      <label className="block text-[11px] text-slate-500">Accepted answers</label>
+      <label className="block text-[11px] text-slate-500 dark:text-slate-400">Accepted answers</label>
       {list.map((a, i) => (
         <div key={i} className="flex items-center gap-1.5">
           <input
@@ -20,11 +20,11 @@ export function AcceptedAnswersEditor({ answers, onChange }: { answers: string[]
             className="flex-1 border rounded-lg px-2 py-1 text-sm"
           />
           {list.length > 1 && (
-            <button type="button" onClick={() => onChange(list.filter((_, idx) => idx !== i))} className="text-xs text-red-500">✕</button>
+            <button type="button" onClick={() => onChange(list.filter((_, idx) => idx !== i))} className="text-xs text-red-500 dark:text-red-400">✕</button>
           )}
         </div>
       ))}
-      <button type="button" onClick={() => onChange([...list, ''])} className="text-xs text-sky-600 hover:underline">+ Add accepted answer</button>
+      <button type="button" onClick={() => onChange([...list, ''])} className="text-xs text-sky-600 dark:text-sky-400 hover:underline">+ Add accepted answer</button>
     </div>
   )
 }
@@ -33,7 +33,7 @@ export function AcceptedAnswersEditor({ answers, onChange }: { answers: string[]
 export function SpeakWordsEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
   return (
     <div className="space-y-2">
-      <label className="block text-xs text-slate-500">Prompt (what the student should say)
+      <label className="block text-xs text-slate-500 dark:text-slate-400">Prompt (what the student should say)
         <input value={data?.prompt ?? ''} onChange={e => onChange({ ...data, prompt: e.target.value })} placeholder="e.g. Say the word for 'apple' in French" className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
       </label>
       <AcceptedAnswersEditor answers={data?.acceptedAnswers ?? ['']} onChange={a => onChange({ ...data, acceptedAnswers: a })} />
@@ -64,12 +64,12 @@ export function SpeechCaptureInput({ value, onChange, disabled }: { value: strin
           >
             {listening ? '⏹ Stop' : '🎤 Record'}
           </button>
-          {listening && <span className="text-xs text-slate-400 animate-pulse">Listening…</span>}
+          {listening && <span className="text-xs text-slate-400 dark:text-slate-500 animate-pulse">Listening…</span>}
         </div>
       ) : (
-        <p className="text-xs text-amber-600">Your browser doesn&apos;t support voice input — try Chrome, or type your answer below.</p>
+        <p className="text-xs text-amber-600 dark:text-amber-400">Your browser doesn&apos;t support voice input — try Chrome, or type your answer below.</p>
       )}
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
       <input
         value={value || ''}
         onChange={e => onChange(e.target.value)}
@@ -77,7 +77,7 @@ export function SpeechCaptureInput({ value, onChange, disabled }: { value: strin
         placeholder="Your answer (spoken transcript appears here, or type it)"
         className="w-full border rounded-lg px-3 py-2 text-sm disabled:opacity-60 disabled:bg-slate-50"
       />
-      <p className="text-[11px] text-slate-400">Grading is based on what your browser&apos;s speech recognizer heard — it isn&apos;t always perfect.</p>
+      <p className="text-[11px] text-slate-400 dark:text-slate-500">Grading is based on what your browser&apos;s speech recognizer heard — it isn&apos;t always perfect.</p>
     </div>
   )
 }
@@ -86,7 +86,7 @@ export function SpeechCaptureInput({ value, onChange, disabled }: { value: strin
 export function SpeakWordsInput({ data, value, onChange, disabled }: { data: any; value: any; onChange: (v: any) => void; disabled?: boolean }) {
   return (
     <div>
-      <MathText as="p" className="text-sm font-medium text-slate-800 mb-2" text={data?.prompt} />
+      <MathText as="p" className="text-sm font-medium text-slate-800 dark:text-slate-100 mb-2" text={data?.prompt} />
       <SpeechCaptureInput value={typeof value === 'string' ? value : ''} onChange={onChange} disabled={disabled} />
     </div>
   )

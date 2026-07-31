@@ -17,7 +17,7 @@ export default function ProgressBar({
   return (
     <div>
       {(label || showPercent) && (
-        <div className="mb-1 flex justify-between text-[11px] text-slate-500">
+        <div className="mb-1 flex justify-between text-[11px] text-slate-500 dark:text-slate-400">
           <span>{label}</span>
           {showPercent && <span>{Math.round(clamped)}%</span>}
         </div>

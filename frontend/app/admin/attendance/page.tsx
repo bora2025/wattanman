@@ -832,7 +832,7 @@ function AdminTakeAttendance() {
   const progressPct = totalStudents > 0 ? ((presentCount + lateCount) / totalStudents) * 100 : 0
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-800">
       <div className="h-14 lg:hidden" />
 
       {/* ===== FULLSCREEN CAMERA MODE ===== */}
@@ -854,10 +854,10 @@ function AdminTakeAttendance() {
                 {/* Clear scanning area */}
                 <div className="absolute inset-0 bg-black/0 rounded-2xl" style={{ boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)' }} />
                 {/* Animated corner brackets */}
-                <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-teal-400 rounded-tl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
-                <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-teal-400 rounded-tr-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
-                <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-teal-400 rounded-bl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
-                <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-teal-400 rounded-br-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-teal-400 dark:border-teal-700 rounded-tl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-teal-400 dark:border-teal-700 rounded-tr-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-teal-400 dark:border-teal-700 rounded-bl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-teal-400 dark:border-teal-700 rounded-br-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
                 {/* Scanning line animation */}
                 <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-teal-400 to-transparent drop-shadow-[0_0_8px_rgba(0,201,167,0.6)]" style={{ animation: 'scanLine 2.5s ease-in-out infinite' }} />
               </div>
@@ -935,7 +935,7 @@ function AdminTakeAttendance() {
           onClick={dismissStudentInfo}
         >
           <div
-            className="w-full sm:max-w-md bg-white sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden animate-[slideUp_0.35s_ease-out]"
+            className="w-full sm:max-w-md bg-white dark:bg-slate-900 sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden animate-[slideUp_0.35s_ease-out]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Gradient header with pulse ring countdown */}
@@ -994,27 +994,27 @@ function AdminTakeAttendance() {
 
               {/* Info cards */}
               <div className="w-full space-y-2">
-                <div className="flex items-center gap-3 py-3 px-4 bg-slate-50 rounded-xl">
-                  <div className="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 text-sm">🏫</div>
+                <div className="flex items-center gap-3 py-3 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-sm">🏫</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Class</p>
-                    <p className="font-bold text-slate-800 truncate">{currentStudent.className || 'N/A'}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Class</p>
+                    <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{currentStudent.className || 'N/A'}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 py-3 px-4 bg-slate-50 rounded-xl">
-                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 text-sm">
+                <div className="flex items-center gap-3 py-3 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-950/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm">
                     {currentStudent.sex === 'MALE' ? '♂' : currentStudent.sex === 'FEMALE' ? '♀' : '?'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Sex</p>
-                    <p className="font-bold text-slate-800">{currentStudent.sex === 'MALE' ? 'Male' : currentStudent.sex === 'FEMALE' ? 'Female' : 'N/A'}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Sex</p>
+                    <p className="font-bold text-slate-800 dark:text-slate-100">{currentStudent.sex === 'MALE' ? 'Male' : currentStudent.sex === 'FEMALE' ? 'Female' : 'N/A'}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 py-3 px-4 bg-slate-50 rounded-xl">
-                  <div className="w-9 h-9 rounded-lg bg-sky-100 flex items-center justify-center text-sky-600 text-sm">✉</div>
+                <div className="flex items-center gap-3 py-3 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-950/40 flex items-center justify-center text-sky-600 dark:text-sky-400 text-sm">✉</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Email</p>
-                    <p className="font-semibold text-slate-800 text-sm truncate">{currentStudent.email}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Email</p>
+                    <p className="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate">{currentStudent.email}</p>
                   </div>
                 </div>
               </div>
@@ -1039,7 +1039,7 @@ function AdminTakeAttendance() {
                   )
                 })()}
                 {/* Animated progress bar */}
-                <div className="mt-3 bg-slate-200 rounded-full h-2 overflow-hidden">
+                <div className="mt-3 bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                   <div
                     className={`h-2 rounded-full transition-all duration-1000 ease-linear ${
                       isLateByConfig() ? 'bg-gradient-to-r from-amber-400 to-orange-500' : 'bg-gradient-to-r from-emerald-400 to-teal-500'
@@ -1068,7 +1068,7 @@ function AdminTakeAttendance() {
       {/* ===== STAFF INFO OVERLAY ===== */}
       {showStaffInfo && currentStaffScanned && staffScanResult && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-          <div className="w-full sm:max-w-sm bg-white sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden sm:mx-4 animate-[slideUp_0.35s_ease-out]">
+          <div className="w-full sm:max-w-sm bg-white dark:bg-slate-900 sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden sm:mx-4 animate-[slideUp_0.35s_ease-out]">
             <div className={`relative px-6 py-6 text-center overflow-hidden ${
               staffScanResult.action === 'CHECK_OUT'
                 ? 'bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-500'
@@ -1083,7 +1083,7 @@ function AdminTakeAttendance() {
             </div>
             <div className="px-6 py-5 flex flex-col items-center">
               <div className="relative -mt-12 mb-3">
-                <div className="w-20 h-20 rounded-full border-4 border-white shadow-xl bg-teal-50 text-teal-600 flex items-center justify-center text-3xl font-bold overflow-hidden">
+                <div className="w-20 h-20 rounded-full border-4 border-white shadow-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center text-3xl font-bold overflow-hidden">
                   {currentStaffScanned.photo ? (
                     <img src={currentStaffScanned.photo} alt={currentStaffScanned.name} className="w-full h-full object-cover" />
                   ) : (
@@ -1094,25 +1094,25 @@ function AdminTakeAttendance() {
                   staffScanResult.action === 'CHECK_OUT' ? 'bg-sky-500' : 'bg-emerald-500'
                 }`}>{staffScanResult.action === 'CHECK_OUT' ? '↑' : '✓'}</div>
               </div>
-              <p className="text-sm font-medium text-slate-700">💼 {t('role.' + (currentStaffScanned.role || '').toLowerCase()) || currentStaffScanned.role}</p>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">💼 {t('role.' + (currentStaffScanned.role || '').toLowerCase()) || currentStaffScanned.role}</p>
               {staffScanResult.userDepartment && (
-                <p className="text-xs text-slate-500 mt-0.5">🏢 {staffScanResult.userDepartment.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">🏢 {staffScanResult.userDepartment.name}</p>
               )}
               <div className="mt-3 w-full space-y-2">
-                <div className="flex items-center gap-3 py-2.5 px-4 bg-slate-50 rounded-xl">
-                  <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center text-teal-600 text-sm">📅</div>
+                <div className="flex items-center gap-3 py-2.5 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-950/40 flex items-center justify-center text-teal-600 dark:text-teal-400 text-sm">📅</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Date</p>
-                    <p className="font-bold text-slate-800 text-sm">{new Date(staffScanResult.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Date</p>
+                    <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{new Date(staffScanResult.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 py-2.5 px-4 bg-slate-50 rounded-xl">
+                <div className="flex items-center gap-3 py-2.5 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
                     staffScanResult.action === 'CHECK_OUT' ? 'bg-sky-100 text-sky-600' : 'bg-emerald-100 text-emerald-600'
                   }`}>{staffScanResult.action === 'CHECK_OUT' ? '📤' : '📥'}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Time</p>
-                    <p className="font-bold text-slate-800 text-sm">
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Time</p>
+                    <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">
                       {staffScanResult.action === 'CHECK_OUT' && staffScanResult.checkOutTime
                         ? formatCambodiaTime(staffScanResult.checkOutTime)
                         : staffScanResult.checkInTime
@@ -1140,25 +1140,25 @@ function AdminTakeAttendance() {
       )}
 
       {/* ===== TOP BAR ===== */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold text-slate-800">{t('attendance.title')}</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100">{t('attendance.title')}</h1>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
-              <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">{presentCount} {t('common.present').toLowerCase()}</span>
+              <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">{presentCount} {t('common.present').toLowerCase()}</span>
               <span className="text-slate-300 text-xs">·</span>
-              <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium">{lateCount} {t('common.late').toLowerCase()}</span>
+              <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-medium">{lateCount} {t('common.late').toLowerCase()}</span>
               <span className="text-slate-300 text-xs">·</span>
-              <span className="inline-flex items-center gap-1 text-xs text-slate-500">{totalStudents} total</span>
+              <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">{totalStudents} total</span>
               <span className="text-slate-300 text-xs hidden sm:inline">·</span>
-              <span className="text-xs text-slate-400 hidden sm:inline">Session {session} · {scanMode === 'check-in' ? '📥 Check-In' : '📤 Check-Out'}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 hidden sm:inline">Session {session} · {scanMode === 'check-in' ? '📥 Check-In' : '📤 Check-Out'}</span>
             </div>
           </div>
-          <Link href="/admin" className="shrink-0 text-sm text-slate-500 hover:text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors">
+          <Link href="/admin" className="shrink-0 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
             ← Back
           </Link>
         </div>
-        <div className="h-1 bg-slate-100">
+        <div className="h-1 bg-slate-100 dark:bg-slate-800">
           <div className="h-1 bg-indigo-500 transition-all duration-500 ease-out" style={{ width: `${progressPct}%` }} />
         </div>
       </div>
@@ -1166,7 +1166,7 @@ function AdminTakeAttendance() {
       <main className="max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Holiday warning banner */}
         {todayHoliday && (
-          <div className="px-4 py-3 rounded-xl text-sm font-medium shadow-sm bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-2">
+          <div className="px-4 py-3 rounded-xl text-sm font-medium shadow-sm bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900 flex items-center gap-2">
             <span className="text-lg">📅</span>
             <span>Today is <strong>{todayHoliday}</strong> — attendance taken today will be recorded on a holiday.</span>
           </div>
@@ -1174,7 +1174,7 @@ function AdminTakeAttendance() {
 
         {/* Scheduled day-off warning banner */}
         {scheduledDayOff && (
-          <div className="px-4 py-3 rounded-xl text-sm font-medium shadow-sm bg-red-50 text-red-800 border border-red-200 flex items-center justify-between gap-2">
+          <div className="px-4 py-3 rounded-xl text-sm font-medium shadow-sm bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-lg shrink-0">🚫</span>
               <span>Today is a <strong>scheduled day-off</strong> for this class. All students are auto-marked as PERMISSION. The backend will also enforce this.</span>
@@ -1200,11 +1200,11 @@ function AdminTakeAttendance() {
           {sessionConfigs.length > 0 && (() => {
             const fmt = detectAttendanceFormat(sessionConfigs)
             return (
-              <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                 <span className="text-lg">{fmt.icon}</span>
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-slate-700">Attendance Format: <span className="text-indigo-600">{fmt.name}</span></div>
-                  <div className="text-[11px] text-slate-500">{fmt.description}</div>
+                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">Attendance Format: <span className="text-indigo-600 dark:text-indigo-400">{fmt.name}</span></div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{fmt.description}</div>
                 </div>
               </div>
             )
@@ -1212,11 +1212,11 @@ function AdminTakeAttendance() {
 
           {/* Class selector */}
           <div className="mb-3">
-            <label className="block text-xs font-medium text-slate-500 mb-1.5">Class</label>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Class</label>
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="w-full sm:w-auto rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
+              className="w-full sm:w-auto rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-slate-900"
             >
               {classes.map(cls => (
                 <option key={cls.id} value={cls.id}>{cls.name} — {cls.subject || 'N/A'}</option>
@@ -1226,10 +1226,10 @@ function AdminTakeAttendance() {
 
           {/* Auto-detected current session */}
           {sessionConfigs.length === 0 ? (
-            <div className="px-3 py-2.5 text-sm text-slate-400 bg-slate-50 rounded-xl border border-slate-200">Loading sessions…</div>
+            <div className="px-3 py-2.5 text-sm text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">Loading sessions…</div>
           ) : (() => {
             const cfg = sessionConfigs.find(c => c.session === session && c.startTime !== c.endTime)
-            if (!cfg) return <div className="px-3 py-2.5 text-sm text-slate-400">No active session</div>
+            if (!cfg) return <div className="px-3 py-2.5 text-sm text-slate-400 dark:text-slate-500">No active session</div>
             const h = parseInt(cfg.startTime.split(':')[0])
             const period = h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : h < 21 ? 'Evening' : 'Night'
             return (
@@ -1261,7 +1261,7 @@ function AdminTakeAttendance() {
 
           {/* All sessions overview */}
           {sessionConfigs.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-2">
               {sessionConfigs.filter(c => c.startTime !== c.endTime).map(cfg => {
                 const h = parseInt(cfg.startTime.split(':')[0])
                 const period = h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : h < 21 ? 'Evening' : 'Night'
@@ -1311,7 +1311,7 @@ function AdminTakeAttendance() {
                   : 'Requesting location...'}
           </span>
           {(locationStatus === 'denied' || locationStatus === 'unavailable') && (
-            <button onClick={requestLocation} className="px-2.5 py-1 bg-white rounded-lg border border-current/20 text-xs font-bold hover:bg-slate-50 transition-colors">
+            <button onClick={requestLocation} className="px-2.5 py-1 bg-white dark:bg-slate-900 rounded-lg border border-current/20 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
               Retry
             </button>
           )}
@@ -1336,8 +1336,8 @@ function AdminTakeAttendance() {
         {/* ===== STUDENT ROSTER ===== */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-slate-700">{t('attendance.studentRoster')}</h2>
-            <span className="text-xs text-slate-400">{presentCount + lateCount}/{totalStudents} scanned</span>
+            <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200">{t('attendance.studentRoster')}</h2>
+            <span className="text-xs text-slate-400 dark:text-slate-500">{presentCount + lateCount}/{totalStudents} scanned</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {students.map(student => {
@@ -1366,15 +1366,15 @@ function AdminTakeAttendance() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-slate-800 truncate text-sm">{student.name}</h3>
-                      <p className="text-xs text-slate-400 truncate">
+                      <h3 className="font-medium text-slate-800 dark:text-slate-100 truncate text-sm">{student.name}</h3>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
                         {student.sex === 'MALE' ? '♂' : student.sex === 'FEMALE' ? '♀' : ''} {student.email}
                       </p>
                     </div>
                     {status === 'PRESENT' && <span className="badge-green text-[10px] sm:text-xs">{t('common.present')}</span>}
                     {status === 'LATE' && <span className="badge-yellow text-[10px] sm:text-xs">{t('common.late')}</span>}
                     {status === 'ABSENT' && <span className="badge-red text-[10px] sm:text-xs">{t('common.absent')}</span>}
-                    {status === 'PERMISSION' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-blue-100 text-blue-800">{t('common.permission')}</span>}
+                    {status === 'PERMISSION' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">{t('common.permission')}</span>}
                   </div>
                   <div className="flex items-center justify-between">
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -1382,14 +1382,14 @@ function AdminTakeAttendance() {
                         type="checkbox"
                         checked={status === 'PRESENT' || status === 'LATE'}
                         onChange={(e) => updateAttendance(student.id, e.target.checked ? 'PRESENT' : 'ABSENT')}
-                        className="w-5 h-5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+                        className="w-5 h-5 text-indigo-600 dark:text-indigo-400 rounded border-slate-300 dark:border-slate-600 focus:ring-indigo-500"
                       />
-                      <span className="text-sm text-slate-600">{t('common.present')}</span>
+                      <span className="text-sm text-slate-600 dark:text-slate-300">{t('common.present')}</span>
                     </label>
                     <select
                       value={status}
                       onChange={(e) => updateAttendance(student.id, e.target.value as 'PRESENT' | 'ABSENT' | 'LATE' | 'PERMISSION')}
-                      className="text-xs px-2 py-1.5 rounded-lg border border-slate-200"
+                      className="text-xs px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700"
                     >
                       <option value="PRESENT">{t('common.present')}</option>
                       <option value="ABSENT">{t('common.absent')}</option>
@@ -1401,7 +1401,7 @@ function AdminTakeAttendance() {
                     <select
                       value={record?.permissionType || 'FULL_DAY'}
                       onChange={(e) => updatePermissionType(student.id, e.target.value)}
-                      className="mt-2 w-full text-xs px-2 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 font-medium"
+                      className="mt-2 w-full text-xs px-2 py-1.5 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 font-medium"
                     >
                       <option value="HALF_DAY_MORNING">🌅 Half Day (Morning)</option>
                       <option value="HALF_DAY_AFTERNOON">🌤️ Half Day (Afternoon)</option>
@@ -1417,8 +1417,8 @@ function AdminTakeAttendance() {
             <div className="card p-12">
               <div className="empty-state">
                 <p className="text-5xl mb-3">📋</p>
-                <p className="font-semibold text-slate-600">No students found</p>
-                <p className="text-sm text-slate-400 mt-1">Select a class with students enrolled.</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-300">No students found</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Select a class with students enrolled.</p>
               </div>
             </div>
           )}

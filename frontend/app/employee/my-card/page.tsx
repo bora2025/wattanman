@@ -169,25 +169,25 @@ export default function MyIDCard() {
 
   return (
     <AuthGuard allowedRoles={['EMPLOYEE']}>
-      <div className="min-h-screen flex bg-slate-50">
+      <div className="min-h-screen flex bg-slate-50 dark:bg-slate-800">
         <Sidebar title="Employee" navItems={employeeNav} accentColor="emerald" />
         <main className="flex-1 p-4 md:p-8">
           <div className="max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold text-slate-800 mb-1">{t('myCard.title')}</h1>
-            <p className="text-slate-500 mb-6">{t('myCard.subtitle')}</p>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-1">{t('myCard.title')}</h1>
+            <p className="text-slate-500 dark:text-slate-400 mb-6">{t('myCard.subtitle')}</p>
 
             {loading ? (
-              <div className="text-center py-20 text-slate-400">Loading...</div>
+              <div className="text-center py-20 text-slate-400 dark:text-slate-500">Loading...</div>
             ) : !user ? (
-              <div className="text-center py-20 text-red-500">Failed to load user data</div>
+              <div className="text-center py-20 text-red-500 dark:text-red-400">Failed to load user data</div>
             ) : (
               <div className="space-y-6">
                 {/* Card Preview */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                  <h2 className="text-lg font-semibold text-slate-700 mb-4">Card Preview</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                  <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Card Preview</h2>
                   <div className="flex justify-center">
                     <div
-                      className="rounded-xl overflow-hidden shadow-lg bg-white"
+                      className="rounded-xl overflow-hidden shadow-lg bg-white dark:bg-slate-900"
                       style={{
                         width: '100%',
                         maxWidth: `${design.width * 1.5}px`,
@@ -201,7 +201,7 @@ export default function MyIDCard() {
                           className="w-full h-full object-contain"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500">
                           Rendering card...
                         </div>
                       )}
@@ -210,27 +210,27 @@ export default function MyIDCard() {
                 </div>
 
                 {/* Download Buttons */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                  <h2 className="text-lg font-semibold text-slate-700 mb-4">Download Options</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                  <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Download Options</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <button
                       onClick={downloadPNG}
                       disabled={!cardImgSrc || exporting}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium border-2 border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium border-2 border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       📥 Download PNG
                     </button>
                     <button
                       onClick={downloadPDF}
                       disabled={!cardImgSrc || exporting}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium border-2 border-red-200 text-red-700 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium border-2 border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       📄 Download PDF
                     </button>
                     <button
                       onClick={downloadQR}
                       disabled={!qrDataUrl || exporting}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium border-2 border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium border-2 border-purple-200 dark:border-purple-900 text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       📱 Download QR
                     </button>
@@ -238,29 +238,29 @@ export default function MyIDCard() {
                 </div>
 
                 {/* User Info */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                  <h2 className="text-lg font-semibold text-slate-700 mb-4">Card Details</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                  <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Card Details</h2>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-slate-400">Name</span>
-                      <p className="font-medium text-slate-700">{user.name}</p>
+                      <span className="text-slate-400 dark:text-slate-500">Name</span>
+                      <p className="font-medium text-slate-700 dark:text-slate-200">{user.name}</p>
                     </div>
                     <div>
-                      <span className="text-slate-400">Employee ID</span>
-                      <p className="font-medium text-slate-700">{empId}</p>
+                      <span className="text-slate-400 dark:text-slate-500">Employee ID</span>
+                      <p className="font-medium text-slate-700 dark:text-slate-200">{empId}</p>
                     </div>
                     <div>
-                      <span className="text-slate-400">Role / Position</span>
-                      <p className="font-medium text-slate-700">{user.role}</p>
+                      <span className="text-slate-400 dark:text-slate-500">Role / Position</span>
+                      <p className="font-medium text-slate-700 dark:text-slate-200">{user.role}</p>
                     </div>
                     <div>
-                      <span className="text-slate-400">Email</span>
-                      <p className="font-medium text-slate-700">{user.email}</p>
+                      <span className="text-slate-400 dark:text-slate-500">Email</span>
+                      <p className="font-medium text-slate-700 dark:text-slate-200">{user.email}</p>
                     </div>
                     {user.phone && (
                       <div>
-                        <span className="text-slate-400">Phone</span>
-                        <p className="font-medium text-slate-700">{user.phone}</p>
+                        <span className="text-slate-400 dark:text-slate-500">Phone</span>
+                        <p className="font-medium text-slate-700 dark:text-slate-200">{user.phone}</p>
                       </div>
                     )}
                   </div>

@@ -77,20 +77,20 @@ export default function ClassroomsPage() {
 
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex h-screen bg-gray-100 dark:bg-slate-800">
         <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
             <div>
-              <button onClick={() => router.push('/admin/timetable')} className="text-indigo-600 text-sm hover:underline mb-1">← Back to Timetable</button>
-              <h1 className="text-xl font-bold text-gray-800">Classrooms</h1>
-              <p className="text-sm text-gray-500">Manage classrooms for your timetable</p>
+              <button onClick={() => router.push('/admin/timetable')} className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline mb-1">← Back to Timetable</button>
+              <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Classrooms</h1>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Manage classrooms for your timetable</p>
             </div>
             <button onClick={() => openModal()} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700">+ New Classroom</button>
           </div>
-          <div className="bg-white border-b border-gray-200 px-6 py-2 flex items-center gap-3">
-            <label className="text-sm text-gray-600 font-medium">Timetable:</label>
-            <select className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-2 flex items-center gap-3">
+            <label className="text-sm text-gray-600 dark:text-slate-300 font-medium">Timetable:</label>
+            <select className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               value={selectedTT} onChange={e => setSelectedTT(e.target.value)}>
               {timetables.map(tt => <option key={tt.id} value={tt.id}>{tt.name} · {tt.academicYear}</option>)}
             </select>
@@ -103,28 +103,28 @@ export default function ClassroomsPage() {
                   <p className="text-sm">Click "+ New Classroom" to add one.</p>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
                   <table className="w-full text-sm">
-                    <thead><tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="px-4 py-3 text-left font-semibold text-gray-600">Name</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-600">Short</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-600">Color</th>
-                      <th className="px-4 py-3 text-right font-semibold text-gray-600">Actions</th>
+                    <thead><tr className="bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
+                      <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-slate-300">Name</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-slate-300">Short</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-slate-300">Color</th>
+                      <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-slate-300">Actions</th>
                     </tr></thead>
                     <tbody>
                       {classrooms.map(r => (
-                        <tr key={r.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="px-4 py-3 font-medium text-gray-800">{r.name}</td>
+                        <tr key={r.id} className="border-b border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800">
+                          <td className="px-4 py-3 font-medium text-gray-800 dark:text-slate-100">{r.name}</td>
                           <td className="px-4 py-3">
                             <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold text-white"
                               style={{ backgroundColor: r.color ?? '#14b8a6' }}>{r.short}</span>
                           </td>
                           <td className="px-4 py-3">
-                            <span className="inline-block w-5 h-5 rounded-full border border-gray-200" style={{ backgroundColor: r.color ?? '#14b8a6' }} />
+                            <span className="inline-block w-5 h-5 rounded-full border border-gray-200 dark:border-slate-700" style={{ backgroundColor: r.color ?? '#14b8a6' }} />
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button onClick={() => openModal(r)} className="text-blue-600 hover:underline text-sm mr-3">Edit</button>
-                            <button onClick={() => setDeleteId(r.id)} className="text-red-500 hover:underline text-sm">Remove</button>
+                            <button onClick={() => openModal(r)} className="text-blue-600 dark:text-blue-400 hover:underline text-sm mr-3">Edit</button>
+                            <button onClick={() => setDeleteId(r.id)} className="text-red-500 dark:text-red-400 hover:underline text-sm">Remove</button>
                           </td>
                         </tr>
                       ))}
@@ -138,24 +138,24 @@ export default function ClassroomsPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="font-bold text-gray-800">{editing ? 'Edit Classroom' : 'New Classroom'}</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+              <h2 className="font-bold text-gray-800 dark:text-slate-100">{editing ? 'Edit Classroom' : 'New Classroom'}</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
             <div className="px-5 py-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Classroom Name</label>
-                <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Classroom Name</label>
+                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={fName} onChange={e => setFName(e.target.value)} placeholder="e.g. Room 101" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Short Name</label>
-                <input className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Short Name</label>
+                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={fShort} onChange={e => setFShort(e.target.value)} maxLength={8} placeholder="e.g. R101" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-2">Color / Picture</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-2">Color / Picture</label>
                 <div className="flex flex-wrap gap-2 items-center">
                   {COLOR_PALETTE.map(c => (
                     <button key={c} type="button" onClick={() => setFColor(c)}
@@ -166,8 +166,8 @@ export default function ClassroomsPage() {
                 </div>
               </div>
             </div>
-            <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Cancel</button>
+            <div className="px-5 py-3 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-2">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium">Cancel</button>
               <button onClick={handleSave} disabled={saving || !fName || !fShort}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
                 {saving ? 'Saving…' : 'OK'}
@@ -179,10 +179,10 @@ export default function ClassroomsPage() {
 
       {deleteId && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
-            <p className="text-gray-800 font-semibold mb-4">Remove this classroom?</p>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
+            <p className="text-gray-800 dark:text-slate-100 font-semibold mb-4">Remove this classroom?</p>
             <div className="flex justify-center gap-3">
-              <button onClick={() => setDeleteId(null)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => setDeleteId(null)} className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm">Cancel</button>
               <button onClick={() => handleDelete(deleteId)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm">Remove</button>
             </div>
           </div>

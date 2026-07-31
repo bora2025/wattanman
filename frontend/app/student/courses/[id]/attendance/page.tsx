@@ -96,33 +96,33 @@ export default function StudentCourseAttendancePage() {
         <div className="flex items-center justify-between">
           <Link
             href={`/student/courses/${courseId}`}
-            className="text-sm text-sky-600 hover:underline"
+            className="text-sm text-sky-600 dark:text-sky-400 hover:underline"
           >
             ← Back to course
           </Link>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
           My Attendance · {course?.title || ''}
         </h1>
 
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <StatCard label="Sessions" value={stats.total} decimals={0} prefix="" color="bg-slate-100"
-            icon={<svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>} />
+            icon={<svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>} />
           <StatCard label="Present" value={stats.present} decimals={0} prefix="" color="bg-emerald-100"
-            icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+            icon={<svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
           <StatCard label="Late" value={stats.late} decimals={0} prefix="" color="bg-amber-100"
-            icon={<svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+            icon={<svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
           <StatCard label="Absent" value={stats.absent} decimals={0} prefix="" color="bg-rose-100"
-            icon={<svg className="w-5 h-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>} />
+            icon={<svg className="w-5 h-5 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>} />
           <StatCard label="Attendance %" value={`${stats.pct}%`} prefix="" color="bg-sky-100"
-            icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>} />
+            icon={<svg className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>} />
         </div>
 
-        {isLoading && <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white h-16 rounded-2xl animate-pulse border border-gray-100" />)}</div>}
+        {isLoading && <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-16 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />)}</div>}
 
         {!isLoading && rows.length === 0 && (
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <div className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
             <EmptyState icon="🗓️" message="No sessions scheduled yet." />
           </div>
         )}
@@ -131,17 +131,17 @@ export default function StudentCourseAttendancePage() {
           {rows.map((row) => (
             <li
               key={row.id}
-              className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+              className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="font-semibold text-slate-800">{row.title}</div>
-                  <div className="text-xs text-slate-500">
+                  <div className="font-semibold text-slate-800 dark:text-slate-100">{row.title}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     {fmt(row.scheduledAt)} · {row.durationMinutes} min
                     {row.location ? ` · ${row.location}` : ''}
                   </div>
                   {row.lesson && (
-                    <div className="mt-1 text-xs text-indigo-600">
+                    <div className="mt-1 text-xs text-indigo-600 dark:text-indigo-400">
                       🎯 Linked lesson: {row.lesson.title}
                     </div>
                   )}
@@ -154,7 +154,7 @@ export default function StudentCourseAttendancePage() {
                       >
                         {row.attendance.status}
                       </span>
-                      <div className="mt-1 text-[11px] text-slate-500">
+                      <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                         {SOURCE_LABEL[row.attendance.source]}
                         {row.attendance.checkInTime
                           ? ` · ${new Date(row.attendance.checkInTime).toLocaleTimeString()}`
@@ -162,7 +162,7 @@ export default function StudentCourseAttendancePage() {
                       </div>
                     </>
                   ) : (
-                    <span className="text-xs text-slate-400">— not marked —</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500">— not marked —</span>
                   )}
                 </div>
               </div>
@@ -217,13 +217,13 @@ function CheckInForm({
         e.preventDefault()
         if (code.trim()) m.mutate()
       }}
-      className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3"
+      className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 dark:border-slate-800 pt-3"
     >
       <input
         value={code}
         onChange={(e) => setCode(e.target.value.toUpperCase())}
         placeholder="Enter check-in code"
-        className="flex-1 rounded border border-slate-300 px-2 py-1.5 font-mono text-sm"
+        className="flex-1 rounded border border-slate-300 dark:border-slate-600 px-2 py-1.5 font-mono text-sm"
       />
       <button
         type="submit"
@@ -233,7 +233,7 @@ function CheckInForm({
         {m.isPending ? 'Checking in…' : 'Check in'}
       </button>
       {m.error && (
-        <div className="w-full text-xs text-rose-600">{(m.error as Error).message}</div>
+        <div className="w-full text-xs text-rose-600 dark:text-rose-400">{(m.error as Error).message}</div>
       )}
     </form>
   )

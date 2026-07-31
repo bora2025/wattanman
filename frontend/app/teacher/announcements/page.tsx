@@ -104,19 +104,19 @@ export default function TeacherAnnouncementsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
       <Sidebar title="Teacher Portal" subtitle="Wattanman" navItems={teacherNav} accentColor="emerald" />
       <main className="flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full">
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">Class Announcements</h1>
-        <p className="text-slate-500 mb-6 text-sm">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mb-1">Class Announcements</h1>
+        <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm">
           Broadcast to one of your classes — reaches students and their parents.
         </p>
 
-        <form onSubmit={submit} className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 shadow-sm">
+        <form onSubmit={submit} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-4 shadow-sm">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Class</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Class</label>
             <select
-              className="w-full border border-slate-300 rounded-lg px-3 py-2"
+              className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2"
               value={classId}
               onChange={(e) => setClassId(e.target.value)}
             >
@@ -130,9 +130,9 @@ export default function TeacherAnnouncementsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Title</label>
             <input
-              className="w-full border border-slate-300 rounded-lg px-3 py-2"
+              className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Quiz on Friday"
@@ -140,9 +140,9 @@ export default function TeacherAnnouncementsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Message</label>
             <textarea
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 min-h-[120px]"
+              className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 min-h-[120px]"
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Write your announcement..."
@@ -150,7 +150,7 @@ export default function TeacherAnnouncementsPage() {
           </div>
 
           <div className="flex flex-wrap gap-4 items-center">
-            <label className="text-sm font-medium text-slate-700">Channels:</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Channels:</label>
             {['IN_APP', 'EMAIL', 'SMS'].map((ch) => (
               <label key={ch} className="inline-flex items-center gap-2 text-sm">
                 <input
@@ -159,7 +159,7 @@ export default function TeacherAnnouncementsPage() {
                   onChange={() => toggleChannel(ch)}
                 />
                 {ch === 'IN_APP' ? 'In-app' : ch === 'EMAIL' ? 'Email' : 'SMS'}
-                {ch === 'SMS' && <span className="text-amber-600 text-xs">(billable)</span>}
+                {ch === 'SMS' && <span className="text-amber-600 dark:text-amber-400 text-xs">(billable)</span>}
               </label>
             ))}
           </div>
@@ -173,14 +173,14 @@ export default function TeacherAnnouncementsPage() {
               Schedule:
               <input
                 type="datetime-local"
-                className="border border-slate-300 rounded px-2 py-1 text-sm"
+                className="border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-sm"
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
               />
             </label>
           </div>
 
-          {msg && <p className="text-sm text-slate-600">{msg}</p>}
+          {msg && <p className="text-sm text-slate-600 dark:text-slate-300">{msg}</p>}
 
           <button
             type="submit"
@@ -191,25 +191,25 @@ export default function TeacherAnnouncementsPage() {
           </button>
         </form>
 
-        <h2 className="text-lg font-semibold text-slate-800 mt-8 mb-3">Recent class announcements</h2>
+        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mt-8 mb-3">Recent class announcements</h2>
         <div className="space-y-2">
           {history.length === 0 && (
-            <p className="text-sm text-slate-500">No class announcements yet.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">No class announcements yet.</p>
           )}
           {history.map((a) => (
-            <div key={a.id} className="bg-white border border-slate-200 rounded-lg p-4">
+            <div key={a.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
               <div className="flex items-center justify-between gap-2">
-                <div className="font-medium text-slate-800">
+                <div className="font-medium text-slate-800 dark:text-slate-100">
                   {a.pinned && <span className="mr-1">📌</span>}
                   {a.title}
                 </div>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-slate-500 dark:text-slate-400">
                   {formatCambodiaTime(a.sentAt || a.createdAt)}
                 </span>
               </div>
-              <div className="text-sm text-slate-600 mt-1">{a.body}</div>
+              <div className="text-sm text-slate-600 dark:text-slate-300 mt-1">{a.body}</div>
               {a.class && (
-                <div className="text-xs text-emerald-700 mt-1">{a.class.name}</div>
+                <div className="text-xs text-emerald-700 dark:text-emerald-300 mt-1">{a.class.name}</div>
               )}
             </div>
           ))}

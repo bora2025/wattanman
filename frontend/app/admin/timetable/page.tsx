@@ -138,21 +138,21 @@ function TimeOffEditor({ rules, onChange }: { rules: TimeOffRule[]; onChange: (r
   return (
     <div className="space-y-1.5">
       {rules.map((rule, i) => (
-        <div key={i} className="flex items-center gap-1.5 bg-gray-50 rounded-lg px-2 py-1.5">
-          <span className="text-xs text-gray-500 shrink-0">No lesson</span>
+        <div key={i} className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-800 rounded-lg px-2 py-1.5">
+          <span className="text-xs text-gray-500 dark:text-slate-400 shrink-0">No lesson</span>
           <input type="time" value={rule.from}
             onChange={e => { const n = [...rules]; n[i] = { ...rule, from: e.target.value }; onChange(n) }}
-            className="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 w-24" />
+            className="border border-gray-300 dark:border-slate-600 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 w-24" />
           <span className="text-xs text-gray-400">–</span>
           <input type="time" value={rule.to}
             onChange={e => { const n = [...rules]; n[i] = { ...rule, to: e.target.value }; onChange(n) }}
-            className="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 w-24" />
+            className="border border-gray-300 dark:border-slate-600 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 w-24" />
           <button type="button" onClick={() => onChange(rules.filter((_, j) => j !== i))}
-            className="ml-auto text-red-400 hover:text-red-600 font-bold text-sm leading-none">×</button>
+            className="ml-auto text-red-400 hover:text-red-600 dark:hover:text-red-400 font-bold text-sm leading-none">×</button>
         </div>
       ))}
       <button type="button" onClick={() => onChange([...rules, { from: '12:00', to: '13:00' }])}
-        className="w-full text-xs text-indigo-600 border border-dashed border-indigo-300 rounded-lg py-1.5 hover:bg-indigo-50 transition-colors">
+        className="w-full text-xs text-indigo-600 dark:text-indigo-400 border border-dashed border-indigo-300 dark:border-indigo-800 rounded-lg py-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors">
         + Add Time Off Slot
       </button>
     </div>
@@ -747,7 +747,7 @@ export default function TimetablePage() {
       // ── Blocked (time-off) cell ──────────────────────────────────────
       if (blocked) {
         return (
-          <td key={cellKey} className="border border-gray-200 p-0 text-center align-middle"
+          <td key={cellKey} className="border border-gray-200 dark:border-slate-700 p-0 text-center align-middle"
             style={{ minWidth: 56, height: 46, background: 'repeating-linear-gradient(135deg,#f3f4f6 0px,#f3f4f6 5px,#e5e7eb 5px,#e5e7eb 10px)' }}>
             {entry ? (
               // Entry exists in a blocked period – show it with warning outline so user can move it
@@ -888,12 +888,12 @@ export default function TimetablePage() {
           <tbody>
             {classes.map(cls => (
               <tr key={cls.id} className="even:bg-gray-50">
-                <td className="border border-gray-300 px-2 py-1 align-middle whitespace-nowrap">
+                <td className="border border-gray-300 dark:border-slate-600 px-2 py-1 align-middle whitespace-nowrap">
                   <div className="flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-[10px]"
                       style={{ backgroundColor: cls.color ?? '#6366f1' }}>{cls.short.slice(0, 2)}</span>
                     <div>
-                      <div className="font-semibold text-xs text-gray-800">{cls.short}</div>
+                      <div className="font-semibold text-xs text-gray-800 dark:text-slate-100">{cls.short}</div>
                       <div className="text-gray-400 text-[10px] leading-tight">{cls.name}</div>
                     </div>
                   </div>
@@ -901,7 +901,7 @@ export default function TimetablePage() {
                 {days.map(day => (
                   <Fragment key={day}>
                     {morningTimes.map((time, idx) => renderCell(cls, day, idx + 1, `${day}-m${idx}`, isBlocked(time)))}
-                    {hasBrk && <td className="border border-gray-200 bg-gray-100" style={{ width: 28 }} />}
+                    {hasBrk && <td className="border border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800" style={{ width: 28 }} />}
                     {afternoonTimes.map((time, idx) => renderCell(cls, day, morningCount + idx + 1, `${day}-a${idx}`, isBlocked(time)))}
                   </Fragment>
                 ))}
@@ -915,11 +915,11 @@ export default function TimetablePage() {
 
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
-      <div className="flex min-h-screen lg:h-screen bg-gray-100 print:bg-white print:h-auto print:block pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen lg:h-screen bg-gray-100 dark:bg-slate-800 print:bg-white print:h-auto print:block pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
         <div className="flex-1 flex flex-col overflow-hidden print:hidden">
           {/* Ribbon Toolbar */}
-          <div className="bg-white border-b-2 border-indigo-100 select-none">
+          <div className="bg-white dark:bg-slate-900 border-b-2 border-indigo-100 dark:border-indigo-900 select-none">
             {/* Timetable name bar */}
             {current && (
               <div className="bg-indigo-700 text-white text-xs px-4 py-0.5 flex items-center gap-2">
@@ -933,7 +933,7 @@ export default function TimetablePage() {
             <div className="flex items-stretch gap-0 overflow-x-auto">
 
               {/* ── Group: File ── */}
-              <div className="flex flex-col items-center border-r border-gray-200 px-1">
+              <div className="flex flex-col items-center border-r border-gray-200 dark:border-slate-700 px-1">
                 <div className="flex items-end gap-1 py-1.5 flex-1">
                   {/* New — big primary button */}
                   <button onClick={openWizard}
@@ -945,7 +945,7 @@ export default function TimetablePage() {
                   </button>
                   {/* Open */}
                   <button onClick={() => setShowOpenModal(true)}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 transition-colors min-w-[44px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 dark:text-slate-200 transition-colors min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.75h16.5m-16.5 0A2.25 2.25 0 016 7.5h2.25L9.75 6h4.5l1.5 1.5H18a2.25 2.25 0 012.25 2.25v8.25A2.25 2.25 0 0118 20.25H6a2.25 2.25 0 01-2.25-2.25V9.75z" />
                     </svg>
@@ -953,7 +953,7 @@ export default function TimetablePage() {
                   </button>
                   {/* Save */}
                   <button onClick={handleSave} disabled={!current}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 transition-colors disabled:opacity-35 min-w-[44px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 dark:text-slate-200 transition-colors disabled:opacity-35 min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25h12A2.25 2.25 0 0020.25 18V7.5L16.5 3.75z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 20.25v-6.75h7.5v6.75M15.75 3.75V8.25H9" />
@@ -962,7 +962,7 @@ export default function TimetablePage() {
                   </button>
                   {/* Print */}
                   <button onClick={() => { if (!current) return; setPrintClassId(''); setShowPrintModal(true) }} disabled={!current}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 transition-colors disabled:opacity-35 min-w-[44px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 dark:text-slate-200 transition-colors disabled:opacity-35 min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 15.75H5.25a2.25 2.25 0 01-2.25-2.25v-4.5A2.25 2.25 0 015.25 6.75h13.5A2.25 2.25 0 0121 9v4.5a2.25 2.25 0 01-2.25 2.25h-1.5" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75V3.75h10.5v3M6.75 15.75v4.5h10.5v-4.5" />
@@ -974,11 +974,11 @@ export default function TimetablePage() {
               </div>
 
               {/* ── Group: Data ── */}
-              <div className="flex flex-col items-center border-r border-gray-200 px-1">
+              <div className="flex flex-col items-center border-r border-gray-200 dark:border-slate-700 px-1">
                 <div className="flex items-end gap-1 py-1.5 flex-1">
                   {/* Subjects */}
                   <button onClick={() => router.push('/admin/timetable/subjects')}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-blue-50 text-blue-700 transition-colors min-w-[44px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-700 dark:text-blue-300 transition-colors min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                     </svg>
@@ -986,7 +986,7 @@ export default function TimetablePage() {
                   </button>
                   {/* Classes */}
                   <button onClick={() => router.push('/admin/timetable/classes')}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-blue-50 text-blue-700 transition-colors min-w-[44px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-700 dark:text-blue-300 transition-colors min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                     </svg>
@@ -994,7 +994,7 @@ export default function TimetablePage() {
                   </button>
                   {/* Classrooms */}
                   <button onClick={() => router.push('/admin/timetable/classrooms')}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-blue-50 text-blue-700 transition-colors min-w-[44px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-700 dark:text-blue-300 transition-colors min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
                     </svg>
@@ -1002,7 +1002,7 @@ export default function TimetablePage() {
                   </button>
                   {/* Teachers */}
                   <button onClick={() => router.push('/admin/timetable/teachers')}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-blue-50 text-blue-700 transition-colors min-w-[44px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-700 dark:text-blue-300 transition-colors min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
                     </svg>
@@ -1010,7 +1010,7 @@ export default function TimetablePage() {
                   </button>
                   {/* Lessons */}
                   <button onClick={() => router.push('/admin/timetable/lessons')}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-blue-50 text-blue-700 transition-colors min-w-[44px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-700 dark:text-blue-300 transition-colors min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                     </svg>
@@ -1021,7 +1021,7 @@ export default function TimetablePage() {
               </div>
 
               {/* ── Group: Configure ── */}
-              <div className="flex flex-col items-center border-r border-gray-200 px-1">
+              <div className="flex flex-col items-center border-r border-gray-200 dark:border-slate-700 px-1">
                 <div className="flex items-end gap-1 py-1.5 flex-1">
                   {/* Settings */}
                   <button onClick={() => {
@@ -1032,7 +1032,7 @@ export default function TimetablePage() {
                     setSTimeOffRules(parseTimeOffRules(current.timeOffRules))
                     setShowSettingsModal(true)
                   }} disabled={!current}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 transition-colors disabled:opacity-35 min-w-[44px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 dark:text-slate-200 transition-colors disabled:opacity-35 min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1045,7 +1045,7 @@ export default function TimetablePage() {
                     setPeriodInputs(getPeriodTimes(current))
                     setShowPeriodModal(true)
                   }} disabled={!current}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-purple-50 text-purple-700 transition-colors disabled:opacity-35 min-w-[44px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-700 dark:text-purple-300 transition-colors disabled:opacity-35 min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -1056,11 +1056,11 @@ export default function TimetablePage() {
               </div>
 
               {/* ── Group: View ── */}
-              <div className="flex flex-col items-center border-r border-gray-200 px-1">
+              <div className="flex flex-col items-center border-r border-gray-200 dark:border-slate-700 px-1">
                 <div className="flex items-end gap-1 py-1.5 flex-1">
                   {/* Zoom out */}
                   <button onClick={() => setZoom(z => Math.max(0.5, parseFloat((z - 0.1).toFixed(1))))}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 transition-colors min-w-[40px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 dark:text-slate-200 transition-colors min-w-[40px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM13.5 10.5h-6" />
                     </svg>
@@ -1068,13 +1068,13 @@ export default function TimetablePage() {
                   </button>
                   {/* Zoom reset */}
                   <button onClick={() => setZoom(1)}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-600 transition-colors min-w-[40px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-600 dark:text-slate-300 transition-colors min-w-[40px]">
                     <span className="text-sm font-bold leading-none mt-1">{Math.round(zoom * 100)}%</span>
                     <span className="text-[10px] leading-none mt-1">{t('timetable.zoom')}</span>
                   </button>
                   {/* Zoom in */}
                   <button onClick={() => setZoom(z => Math.min(2, parseFloat((z + 0.1).toFixed(1))))}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 transition-colors min-w-[40px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-gray-100 text-gray-700 dark:text-slate-200 transition-colors min-w-[40px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
                     </svg>
@@ -1085,7 +1085,7 @@ export default function TimetablePage() {
               </div>
 
               {/* ── Group: Tools ── */}
-              <div className="flex flex-col items-center border-r border-gray-200 px-1">
+              <div className="flex flex-col items-center border-r border-gray-200 dark:border-slate-700 px-1">
                 <div className="flex items-end gap-1 py-1.5 flex-1">
                   {/* Schedule */}
                   <button onClick={() => router.push('/admin/timetable/schedule')}
@@ -1097,7 +1097,7 @@ export default function TimetablePage() {
                   </button>
                   {/* Auto-generate */}
                   <button onClick={handleGenerate} disabled={!current || generating}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-emerald-50 text-emerald-700 transition-colors disabled:opacity-35 min-w-[48px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 transition-colors disabled:opacity-35 min-w-[48px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                     </svg>
@@ -1105,7 +1105,7 @@ export default function TimetablePage() {
                   </button>
                   {/* Workload */}
                   <button onClick={() => setShowWorkloadModal(true)} disabled={!current}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-emerald-50 text-emerald-700 transition-colors disabled:opacity-35 min-w-[52px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 transition-colors disabled:opacity-35 min-w-[52px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                     </svg>
@@ -1122,7 +1122,7 @@ export default function TimetablePage() {
                     onClick={() => current && handleDeleteTimetable(current.id, current.name, current.status)}
                     disabled={!current || current.status === 'PUBLISHED'}
                     title={current?.status === 'PUBLISHED' ? 'Unpublish before deleting' : 'Delete timetable'}
-                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-red-50 text-red-500 transition-colors disabled:opacity-35 disabled:cursor-not-allowed min-w-[44px]">
+                    className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 text-red-500 dark:text-red-400 transition-colors disabled:opacity-35 disabled:cursor-not-allowed min-w-[44px]">
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                     </svg>
@@ -1139,8 +1139,8 @@ export default function TimetablePage() {
             {/* Lesson Panel */}
             {current && (
               <div className={`flex-shrink-0 bg-white border-r border-gray-200 flex flex-col transition-all duration-200 print:hidden ${showLessonPanel ? 'w-48' : 'w-8'}`}>
-                <div className="flex items-center justify-between px-2 py-2 border-b border-gray-200">
-                  {showLessonPanel && <span className="text-xs font-semibold text-gray-600 truncate">{t('timetable.lessons')}</span>}
+                <div className="flex items-center justify-between px-2 py-2 border-b border-gray-200 dark:border-slate-700">
+                  {showLessonPanel && <span className="text-xs font-semibold text-gray-600 dark:text-slate-300 truncate">{t('timetable.lessons')}</span>}
                   <button onClick={() => setShowLessonPanel(p => !p)}
                     className="ml-auto text-gray-400 hover:text-gray-600 text-xs w-5 h-5 flex items-center justify-center rounded hover:bg-gray-100">
                     {showLessonPanel ? '◀' : '▶'}
@@ -1149,11 +1149,11 @@ export default function TimetablePage() {
                 {showLessonPanel && (
                   <>
                     {/* Class filter */}
-                    <div className="px-2 py-1.5 border-b border-gray-100">
+                    <div className="px-2 py-1.5 border-b border-gray-100 dark:border-slate-800">
                       <select
                         value={lessonFilterClass}
                         onChange={e => setLessonFilterClass(e.target.value)}
-                        className="w-full text-[10px] rounded border border-gray-200 bg-gray-50 px-1 py-0.5 text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                        className="w-full text-[10px] rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-1 py-0.5 text-gray-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                       >
                         <option value="ALL">{t('timetable.allClasses')}</option>
                         {[...current.classes]
@@ -1239,14 +1239,14 @@ export default function TimetablePage() {
             </div>
           </div>
           {/* Footer zoom */}
-          <div className="bg-white border-t border-gray-200 px-4 py-2 flex items-center gap-3 print:hidden">
-            <span className="text-xs text-gray-500">{t('timetable.zoom')}</span>
+          <div className="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-4 py-2 flex items-center gap-3 print:hidden">
+            <span className="text-xs text-gray-500 dark:text-slate-400">{t('timetable.zoom')}</span>
             <button onClick={() => setZoom(z => Math.max(0.4, +(z - 0.1).toFixed(1)))}
-              className="w-7 h-7 rounded border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold">−</button>
+              className="w-7 h-7 rounded border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-100 flex items-center justify-center font-bold">−</button>
             <span className="text-xs w-12 text-center">{Math.round(zoom * 100)}%</span>
             <button onClick={() => setZoom(z => Math.min(2, +(z + 0.1).toFixed(1)))}
-              className="w-7 h-7 rounded border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold">+</button>
-            <button onClick={() => setZoom(1)} className="text-xs text-indigo-600 hover:underline ml-1">{t('timetable.zoomReset')}</button>
+              className="w-7 h-7 rounded border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-100 flex items-center justify-center font-bold">+</button>
+            <button onClick={() => setZoom(1)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline ml-1">{t('timetable.zoomReset')}</button>
             {current && (
               <span className="ml-auto text-xs text-gray-400">
                 {current.classes.length} classes · {current.entries.length} entries · {current.periodsPerDay} periods/day
@@ -1259,29 +1259,29 @@ export default function TimetablePage() {
       {/* Timetable Settings Modal */}
       {showSettingsModal && current && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
-            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-sm">
+            <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
               <div>
-                <h2 className="font-bold text-gray-800">{t('timetable.timetableSettings')}</h2>
-                <p className="text-xs text-gray-500 mt-0.5">{current.name} · {current.academicYear}</p>
+                <h2 className="font-bold text-gray-800 dark:text-slate-100">{t('timetable.timetableSettings')}</h2>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{current.name} · {current.academicYear}</p>
               </div>
               <button onClick={() => setShowSettingsModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
             <div className="px-5 py-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">{t('timetable.periodsPerDay')}</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{t('timetable.periodsPerDay')}</label>
                 <input type="number" min={1} max={20}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={sPeriods} onChange={e => setSPeriods(+e.target.value)} />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">{t('timetable.numberOfDays')}</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{t('timetable.numberOfDays')}</label>
                 <input type="number" min={1} max={7}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={sDays} onChange={e => setSDays(+e.target.value)} />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">{t('timetable.weekendDays')}</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{t('timetable.weekendDays')}</label>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {WEEKENDS.map(d => (
                     <button key={d} type="button"
@@ -1294,15 +1294,15 @@ export default function TimetablePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">{t('timetable.timeOffRules')}</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{t('timetable.timeOffRules')}</label>
                 <TimeOffEditor rules={sTimeOffRules} onChange={setSTimeOffRules} />
               </div>
-              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+              <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded px-3 py-2">
                 {t('timetable.settingsWarning')}
               </p>
             </div>
-            <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
-              <button onClick={() => setShowSettingsModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">{t('common.cancel')}</button>
+            <div className="px-5 py-3 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-2">
+              <button onClick={() => setShowSettingsModal(false)} className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium">{t('common.cancel')}</button>
               <button onClick={saveSettings} disabled={savingSettings || sPeriods < 1 || sDays < 1}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
                 {savingSettings ? t('timetable.saving') : t('common.save')}
@@ -1315,24 +1315,24 @@ export default function TimetablePage() {
       {/* Period Times Config Modal */}
       {showPeriodModal && current && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
-            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-sm">
+            <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
               <div>
-                <h2 className="font-bold text-gray-800">{t('timetable.periodTimes')}</h2>
-                <p className="text-xs text-gray-500 mt-0.5">{t('timetable.setStartTime')}</p>
+                <h2 className="font-bold text-gray-800 dark:text-slate-100">{t('timetable.periodTimes')}</h2>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{t('timetable.setStartTime')}</p>
               </div>
               <button onClick={() => setShowPeriodModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
             <div className="px-5 py-4 space-y-2 max-h-80 overflow-y-auto">
               {periodInputs.map((time, idx) => (
                 <div key={idx} className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-indigo-600 w-16 flex-shrink-0">{t('timetable.period')} {idx + 1}</span>
+                  <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 w-16 flex-shrink-0">{t('timetable.period')} {idx + 1}</span>
                   <input
                     type="text"
                     placeholder="HH:MM"
                     pattern="[0-2][0-9]:[0-5][0-9]"
                     maxLength={5}
-                    className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                    className="flex-1 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
                     value={time}
                     onChange={e => {
                       const next = [...periodInputs]
@@ -1348,12 +1348,12 @@ export default function TimetablePage() {
                 </div>
               ))}
             </div>
-            <div className="px-5 py-3 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+            <div className="px-5 py-3 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 rounded-b-xl">
               <p className="text-xs text-gray-400 mb-3">
                 {t('timetable.periodTimesHint')}
               </p>
               <div className="flex justify-end gap-2">
-                <button onClick={() => setShowPeriodModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">{t('common.cancel')}</button>
+                <button onClick={() => setShowPeriodModal(false)} className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium">{t('common.cancel')}</button>
                 <button onClick={savePeriodTimes} disabled={savingPeriods}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-40">
                   {savingPeriods ? t('timetable.saving') : t('common.save')}
@@ -1370,16 +1370,16 @@ export default function TimetablePage() {
           <div className="space-y-1 max-h-80 overflow-y-auto">
             {timetableList.length === 0 && <p className="text-gray-400 text-sm text-center py-8">{t('timetable.noTimetables')}</p>}
             {timetableList.map(tt => (
-              <div key={tt.id} className="flex items-center gap-2 rounded border border-transparent hover:border-indigo-200 hover:bg-indigo-50 px-3 py-2 transition-colors">
+              <div key={tt.id} className="flex items-center gap-2 rounded border border-transparent hover:border-indigo-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 px-3 py-2 transition-colors">
                 <button className="flex-1 text-left"
                   onClick={async () => { await loadTimetable(tt.id); setShowOpenModal(false) }}>
-                  <div className="font-medium text-gray-800">{tt.name}</div>
-                  <div className="text-xs text-gray-500">{tt.academicYear} · {tt.status}</div>
+                  <div className="font-medium text-gray-800 dark:text-slate-100">{tt.name}</div>
+                  <div className="text-xs text-gray-500 dark:text-slate-400">{tt.academicYear} · {tt.status}</div>
                 </button>
                 {tt.status !== 'PUBLISHED' && (
                   <button
                     onClick={async () => { await handleDeleteTimetable(tt.id, tt.name, tt.status); }}
-                    className="shrink-0 px-2 py-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded border border-transparent hover:border-red-200">
+                    className="shrink-0 px-2 py-1 text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40 rounded border border-transparent hover:border-red-200">
                     {t('common.delete')}
                   </button>
                 )}
@@ -1392,12 +1392,12 @@ export default function TimetablePage() {
       {/* 5-Step Wizard */}
       {showWizard && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-indigo-50 rounded-t-xl flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-indigo-50 dark:bg-indigo-950/40 rounded-t-xl flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold text-indigo-800">{t('timetable.newTimetable')}</h2>
-                <p className="text-sm text-indigo-600 mt-0.5">{t('timetable.step')} {wizardStep + 1} {t('timetable.of')} {WIZARD_STEPS.length} — {WIZARD_STEPS[wizardStep]}</p>
+                <h2 className="text-lg font-bold text-indigo-800 dark:text-indigo-300">{t('timetable.newTimetable')}</h2>
+                <p className="text-sm text-indigo-600 dark:text-indigo-400 mt-0.5">{t('timetable.step')} {wizardStep + 1} {t('timetable.of')} {WIZARD_STEPS.length} — {WIZARD_STEPS[wizardStep]}</p>
               </div>
               <div className="flex items-center gap-1.5">
                 {WIZARD_STEPS.map((label, i) => (
@@ -1412,7 +1412,7 @@ export default function TimetablePage() {
             {/* Column labels for step 1 */}
             {wizardStep === 0 && (
               <div className="px-6 pt-3 pb-1">
-                <div className="grid grid-cols-8 gap-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100 pb-1">
+                <div className="grid grid-cols-8 gap-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100 dark:border-slate-800 pb-1">
                   <div className="col-span-2">Name</div>
                   <div>Short</div>
                   <div>Time Off</div>
@@ -1536,7 +1536,7 @@ export default function TimetablePage() {
                   onEdit={(t: TTeacher) => openTeacherModal(t)}
                   onRemove={(t: TTeacher) => removeTeacher(t.id, `${t.firstName} ${t.lastName}`.trim())}
                   extraAction={(t: TTeacher) => (
-                    <button onClick={() => openContractPanel(t)} className="text-emerald-600 hover:underline mr-2 text-xs font-medium">Contract</button>
+                    <button onClick={() => openContractPanel(t)} className="text-emerald-600 dark:text-emerald-400 hover:underline mr-2 text-xs font-medium">Contract</button>
                   )}
                   disabled={!partTimeTeacherEnabled}
                   disabledMessage="The Part-Time Teacher module is disabled for this school — teacher records can't be added, edited, or removed until it's enabled in Add-ons."
@@ -1546,17 +1546,17 @@ export default function TimetablePage() {
 
             {/* Error message */}
             {wizardError && (
-              <div className="mx-6 mb-1 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="mx-6 mb-1 px-3 py-2 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg text-red-700 dark:text-red-300 text-sm">
                 {wizardError}
               </div>
             )}
 
             {/* Footer */}
-            <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between bg-gray-50 rounded-b-xl">
-              <button onClick={() => setShowWizard(false)} className="tt-btn bg-white border border-gray-300 text-gray-700">{t('common.cancel')}</button>
+            <div className="px-6 py-3 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between bg-gray-50 dark:bg-slate-800 rounded-b-xl">
+              <button onClick={() => setShowWizard(false)} className="tt-btn bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-200">{t('common.cancel')}</button>
               <div className="flex gap-2">
                 {wizardStep > 0 && (
-                  <button onClick={wizardPrev} className="tt-btn bg-gray-100 text-gray-700">← Previous</button>
+                  <button onClick={wizardPrev} className="tt-btn bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200">← Previous</button>
                 )}
                 {wizardStep < WIZARD_STEPS.length - 1 ? (
                   <button onClick={wizardNext} disabled={wizardSaving} className="tt-btn bg-indigo-600 text-white disabled:opacity-50">
@@ -1574,11 +1574,11 @@ export default function TimetablePage() {
       {/* Contract Panel */}
       {showContractPanel && contractTeacher && current && (
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between bg-emerald-50 rounded-t-xl">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 rounded-t-xl">
               <div>
-                <h2 className="font-bold text-gray-800">{t('timetable.lessonContracts')}</h2>
-                <p className="text-sm text-gray-500">{contractTeacher.lastName} {contractTeacher.firstName}</p>
+                <h2 className="font-bold text-gray-800 dark:text-slate-100">{t('timetable.lessonContracts')}</h2>
+                <p className="text-sm text-gray-500 dark:text-slate-400">{contractTeacher.lastName} {contractTeacher.firstName}</p>
               </div>
               <button onClick={() => openLessonModal(undefined, contractTeacher)} className="tt-btn bg-emerald-600 text-white text-xs">{t('timetable.newLessonBtn')}</button>
             </div>
@@ -1588,22 +1588,22 @@ export default function TimetablePage() {
               ) : (
                 <table className="w-full text-xs border-collapse">
                   <thead>
-                    <tr className="bg-gray-50">
+                    <tr className="bg-gray-50 dark:bg-slate-800">
                       {['Subject','Class','Lessons/Week','Type',''].map(h => (
-                        <th key={h} className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-600">{h}</th>
+                        <th key={h} className="border-b border-gray-200 dark:border-slate-700 px-3 py-2 text-left font-semibold text-gray-600 dark:text-slate-300">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {current.lessons.filter(l => l.teacherId === contractTeacher.id).map(l => (
-                      <tr key={l.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <tr key={l.id} className="border-b border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800">
                         <td className="px-3 py-2">{colorBadge(l.subject.color, l.subject.short)} {l.subject.name}</td>
                         <td className="px-3 py-2">{colorBadge(l.class.color, l.class.short)} {l.class.name}</td>
                         <td className="px-3 py-2 text-center font-medium">{l.perWeek}x/week</td>
                         <td className="px-3 py-2">{l.lessonType}</td>
                         <td className="px-3 py-2 text-right whitespace-nowrap">
-                          <button onClick={() => openLessonModal(l)} className="text-blue-600 hover:underline mr-3">{t('timetable.editLesson')}</button>
-                          <button onClick={() => removeLesson(l.id)} className="text-red-500 hover:underline">{t('timetable.removeLesson')}</button>
+                          <button onClick={() => openLessonModal(l)} className="text-blue-600 dark:text-blue-400 hover:underline mr-3">{t('timetable.editLesson')}</button>
+                          <button onClick={() => removeLesson(l.id)} className="text-red-500 dark:text-red-400 hover:underline">{t('timetable.removeLesson')}</button>
                         </td>
                       </tr>
                     ))}
@@ -1611,8 +1611,8 @@ export default function TimetablePage() {
                 </table>
               )}
             </div>
-            <div className="px-5 py-3 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-xl">
-              <button onClick={() => setShowContractPanel(false)} className="tt-btn bg-gray-100 text-gray-700">{t('common.close')}</button>
+            <div className="px-5 py-3 border-t border-gray-200 dark:border-slate-700 flex justify-end bg-gray-50 dark:bg-slate-800 rounded-b-xl">
+              <button onClick={() => setShowContractPanel(false)} className="tt-btn bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200">{t('common.close')}</button>
             </div>
           </div>
         </div>
@@ -1632,10 +1632,10 @@ export default function TimetablePage() {
           </Field>
           <Field label="Color / Picture">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded border border-gray-300" style={{ backgroundColor: fSubColor }} />
+              <div className="w-8 h-8 rounded border border-gray-300 dark:border-slate-600" style={{ backgroundColor: fSubColor }} />
               <button type="button" onClick={async () => { const c = await openColorPicker(fSubColor); setFSubColor(c) }}
-                className="tt-btn bg-gray-100 text-gray-700 text-xs">Change</button>
-              <span className="text-xs text-gray-500">{fSubColor}</span>
+                className="tt-btn bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 text-xs">Change</button>
+              <span className="text-xs text-gray-500 dark:text-slate-400">{fSubColor}</span>
             </div>
           </Field>
           <Field label="Set for lessons of this subject">
@@ -1682,12 +1682,12 @@ export default function TimetablePage() {
           <Field label="Custom Fields"><input className="input-field" value={fClsCustom} onChange={e => setFClsCustom(e.target.value)} placeholder="Optional notes" /></Field>
           <Field label="Color / Picture">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded border border-gray-300" style={{ backgroundColor: fClsColor }} />
+              <div className="w-8 h-8 rounded border border-gray-300 dark:border-slate-600" style={{ backgroundColor: fClsColor }} />
               <button type="button" onClick={async () => { const c = await openColorPicker(fClsColor); setFClsColor(c) }}
-                className="tt-btn bg-gray-100 text-gray-700 text-xs">Change</button>
+                className="tt-btn bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 text-xs">Change</button>
             </div>
           </Field>
-          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer mt-1">
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200 cursor-pointer mt-1">
             <input type="checkbox" checked={fClsPrint} onChange={e => setFClsPrint(e.target.checked)} className="rounded" />
             Print subject picture on timetable
           </label>
@@ -1702,9 +1702,9 @@ export default function TimetablePage() {
           <Field label="Custom Fields"><input className="input-field" value={fRmCustom} onChange={e => setFRmCustom(e.target.value)} placeholder="Optional notes" /></Field>
           <Field label="Color / Picture">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded border border-gray-300" style={{ backgroundColor: fRmColor }} />
+              <div className="w-8 h-8 rounded border border-gray-300 dark:border-slate-600" style={{ backgroundColor: fRmColor }} />
               <button type="button" onClick={async () => { const c = await openColorPicker(fRmColor); setFRmColor(c) }}
-                className="tt-btn bg-gray-100 text-gray-700 text-xs">Change</button>
+                className="tt-btn bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 text-xs">Change</button>
             </div>
           </Field>
         </ItemModal>
@@ -1792,14 +1792,14 @@ export default function TimetablePage() {
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
-              <button type="button" onClick={() => setFTClassTeacher('')} className="tt-btn bg-gray-100 text-gray-700 text-xs whitespace-nowrap">Clear</button>
+              <button type="button" onClick={() => setFTClassTeacher('')} className="tt-btn bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 text-xs whitespace-nowrap">Clear</button>
             </div>
           </Field>
           <Field label="Color">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded border border-gray-300" style={{ backgroundColor: fTColor }} />
+              <div className="w-8 h-8 rounded border border-gray-300 dark:border-slate-600" style={{ backgroundColor: fTColor }} />
               <button type="button" onClick={async () => { const c = await openColorPicker(fTColor); setFTColor(c) }}
-                className="tt-btn bg-gray-100 text-gray-700 text-xs">Change</button>
+                className="tt-btn bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 text-xs">Change</button>
             </div>
           </Field>
         </ItemModal>
@@ -1875,18 +1875,18 @@ export default function TimetablePage() {
 
         return (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
               {/* Header */}
-              <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between bg-emerald-50 rounded-t-xl">
+              <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 rounded-t-xl">
                 <div>
-                  <h2 className="font-bold text-gray-800 text-base">{t('timetable.teacherWorkload')}</h2>
-                  <p className="text-xs text-gray-500 mt-0.5">{current.name} · {current.academicYear} · {current.teachers.length} teachers</p>
+                  <h2 className="font-bold text-gray-800 dark:text-slate-100 text-base">{t('timetable.teacherWorkload')}</h2>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{current.name} · {current.academicYear} · {current.teachers.length} teachers</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
-                    <label className="text-xs text-gray-600 font-medium">{t('timetable.weeksPerMonth')}</label>
+                    <label className="text-xs text-gray-600 dark:text-slate-300 font-medium">{t('timetable.weeksPerMonth')}</label>
                     <select value={weeksPerMonth} onChange={e => setWeeksPerMonth(+e.target.value)}
-                      className="border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      className="border border-gray-300 dark:border-slate-600 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                       {[3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
                     </select>
                   </div>
@@ -1895,24 +1895,24 @@ export default function TimetablePage() {
               </div>
 
               {/* Summary cards */}
-              <div className="px-5 py-3 grid grid-cols-3 gap-3 border-b border-gray-100">
-                <div className="bg-emerald-50 rounded-lg px-3 py-2 text-center">
-                  <div className="text-xl font-bold text-emerald-700">{totalWeek}</div>
-                  <div className="text-xs text-gray-500">{t('timetable.totalPeriodsWeek')}</div>
+              <div className="px-5 py-3 grid grid-cols-3 gap-3 border-b border-gray-100 dark:border-slate-800">
+                <div className="bg-emerald-50 dark:bg-emerald-950/40 rounded-lg px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{totalWeek}</div>
+                  <div className="text-xs text-gray-500 dark:text-slate-400">{t('timetable.totalPeriodsWeek')}</div>
                 </div>
-                <div className="bg-blue-50 rounded-lg px-3 py-2 text-center">
-                  <div className="text-xl font-bold text-blue-700">{totalMonth}</div>
-                  <div className="text-xs text-gray-500">{t('timetable.totalPeriodsMonth')} ({weeksPerMonth}w)</div>
+                <div className="bg-blue-50 dark:bg-blue-950/40 rounded-lg px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-blue-700 dark:text-blue-300">{totalMonth}</div>
+                  <div className="text-xs text-gray-500 dark:text-slate-400">{t('timetable.totalPeriodsMonth')} ({weeksPerMonth}w)</div>
                 </div>
-                <div className="bg-indigo-50 rounded-lg px-3 py-2 text-center">
-                  <div className="text-xl font-bold text-indigo-700">{current.teachers.length > 0 ? (totalWeek / current.teachers.length).toFixed(1) : 0}</div>
-                  <div className="text-xs text-gray-500">{t('timetable.avgPeriodsTeacher')}</div>
+                <div className="bg-indigo-50 dark:bg-indigo-950/40 rounded-lg px-3 py-2 text-center">
+                  <div className="text-xl font-bold text-indigo-700 dark:text-indigo-300">{current.teachers.length > 0 ? (totalWeek / current.teachers.length).toFixed(1) : 0}</div>
+                  <div className="text-xs text-gray-500 dark:text-slate-400">{t('timetable.avgPeriodsTeacher')}</div>
                 </div>
               </div>
 
               {/* Sort controls */}
-              <div className="px-5 py-2 flex items-center gap-2 border-b border-gray-100">
-                <span className="text-xs text-gray-500">{t('timetable.sortBy')}</span>
+              <div className="px-5 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-slate-800">
+                <span className="text-xs text-gray-500 dark:text-slate-400">{t('timetable.sortBy')}</span>
                 {(['name', 'week', 'month'] as const).map(s => (
                   <button key={s} onClick={() => setWorkloadSort(s)}
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
@@ -1929,14 +1929,14 @@ export default function TimetablePage() {
                   <p className="text-center text-gray-400 text-sm py-10">{t('timetable.noTeachers')}</p>
                 ) : (
                   <table className="w-full text-xs border-collapse">
-                    <thead className="sticky top-0 bg-gray-50">
+                    <thead className="sticky top-0 bg-gray-50 dark:bg-slate-800">
                       <tr>
-                        <th className="border-b border-gray-200 px-4 py-2 text-left font-semibold text-gray-600">{t('timetable.teacher')}</th>
-                        <th className="border-b border-gray-200 px-3 py-2 text-center font-semibold text-gray-600">{t('timetable.contractedPerWeek')}</th>
-                        <th className="border-b border-gray-200 px-3 py-2 text-center font-semibold text-gray-600">{t('timetable.scheduledPerWeek')}</th>
-                        <th className="border-b border-gray-200 px-3 py-2 text-center font-semibold text-gray-600">{t('timetable.periodsPerMonth')}</th>
-                        <th className="border-b border-gray-200 px-4 py-2 text-left font-semibold text-gray-600">{t('timetable.subjectsPlaced')}</th>
-                        <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-600 w-32">{t('timetable.loadBar')}</th>
+                        <th className="border-b border-gray-200 dark:border-slate-700 px-4 py-2 text-left font-semibold text-gray-600 dark:text-slate-300">{t('timetable.teacher')}</th>
+                        <th className="border-b border-gray-200 dark:border-slate-700 px-3 py-2 text-center font-semibold text-gray-600 dark:text-slate-300">{t('timetable.contractedPerWeek')}</th>
+                        <th className="border-b border-gray-200 dark:border-slate-700 px-3 py-2 text-center font-semibold text-gray-600 dark:text-slate-300">{t('timetable.scheduledPerWeek')}</th>
+                        <th className="border-b border-gray-200 dark:border-slate-700 px-3 py-2 text-center font-semibold text-gray-600 dark:text-slate-300">{t('timetable.periodsPerMonth')}</th>
+                        <th className="border-b border-gray-200 dark:border-slate-700 px-4 py-2 text-left font-semibold text-gray-600 dark:text-slate-300">{t('timetable.subjectsPlaced')}</th>
+                        <th className="border-b border-gray-200 dark:border-slate-700 px-3 py-2 text-left font-semibold text-gray-600 dark:text-slate-300 w-32">{t('timetable.loadBar')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1951,13 +1951,13 @@ export default function TimetablePage() {
                               <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: row.teacher.color ?? '#6366f1' }} />
                                 <div>
-                                  <div className="font-semibold text-gray-800">{row.teacher.lastName} {row.teacher.firstName}</div>
+                                  <div className="font-semibold text-gray-800 dark:text-slate-100">{row.teacher.lastName} {row.teacher.firstName}</div>
                                   <div className="text-[10px] text-gray-400">{row.teacher.short}</div>
                                 </div>
                               </div>
                             </td>
                             <td className="px-3 py-2.5 text-center">
-                              <span className="font-medium text-gray-700">{row.contractedPerWeek}</span>
+                              <span className="font-medium text-gray-700 dark:text-slate-200">{row.contractedPerWeek}</span>
                               <span className="text-gray-400"> /w</span>
                             </td>
                             <td className="px-3 py-2.5 text-center">
@@ -1971,7 +1971,7 @@ export default function TimetablePage() {
                               )}
                             </td>
                             <td className="px-3 py-2.5 text-center">
-                              <span className="font-bold text-blue-700">{row.periodsPerMonth}</span>
+                              <span className="font-bold text-blue-700 dark:text-blue-300">{row.periodsPerMonth}</span>
                             </td>
                             <td className="px-4 py-2.5">
                               <div className="flex flex-wrap gap-1">
@@ -1986,7 +1986,7 @@ export default function TimetablePage() {
                               </div>
                             </td>
                             <td className="px-3 py-2.5">
-                              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                              <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                                 <div className="h-2 rounded-full transition-all" style={{
                                   width: `${barPct}%`,
                                   backgroundColor: overload ? '#f97316' : underload ? '#ef4444' : '#10b981'
@@ -2003,14 +2003,14 @@ export default function TimetablePage() {
               </div>
 
               {/* Footer legend */}
-              <div className="px-5 py-3 border-t border-gray-200 bg-gray-50 rounded-b-xl flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 text-[10px] text-gray-500">
+              <div className="px-5 py-3 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 rounded-b-xl flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 text-[10px] text-gray-500 dark:text-slate-400">
                   <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-emerald-500 inline-block" /> {t('timetable.matchedContracted')}</span>
                   <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-orange-500 inline-block" /> {t('timetable.overContracted')}</span>
                   <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-red-500 inline-block" /> {t('timetable.underScheduled')}</span>
                 </div>
                 <button onClick={() => setShowWorkloadModal(false)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">{t('common.close')}</button>
+                  className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium hover:bg-gray-200">{t('common.close')}</button>
               </div>
             </div>
           </div>
@@ -2020,23 +2020,23 @@ export default function TimetablePage() {
       {/* ── Print Modal ── */}
       {showPrintModal && current && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
-            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
-              <h2 className="font-bold text-gray-800">{t('timetable.printTitle')}</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between flex-shrink-0">
+              <h2 className="font-bold text-gray-800 dark:text-slate-100">{t('timetable.printTitle')}</h2>
               <button onClick={() => setShowPrintModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
             <div className="px-5 py-5 space-y-5 overflow-y-auto">
               {/* What to print */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-2">{t('timetable.whatToPrint')}</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-2">{t('timetable.whatToPrint')}</label>
                 <div className="space-y-2">
                   <label className="flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors"
                     style={{ borderColor: printMode === 'all' ? '#6366f1' : '#e5e7eb', backgroundColor: printMode === 'all' ? '#eef2ff' : '' }}>
                     <input type="radio" name="printMode" value="all" checked={printMode === 'all'}
                       onChange={() => setPrintMode('all')} className="accent-indigo-600" />
                     <div>
-                      <div className="font-medium text-sm text-gray-800">{t('timetable.wholeTimetable')}</div>
-                      <div className="text-xs text-gray-500">{t('timetable.onePagePerClass')} — all {current.classes.length} classes</div>
+                      <div className="font-medium text-sm text-gray-800 dark:text-slate-100">{t('timetable.wholeTimetable')}</div>
+                      <div className="text-xs text-gray-500 dark:text-slate-400">{t('timetable.onePagePerClass')} — all {current.classes.length} classes</div>
                     </div>
                   </label>
                   <label className="flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors"
@@ -2045,15 +2045,15 @@ export default function TimetablePage() {
                       onChange={() => { setPrintMode('class'); if (!printClassId && current.classes.length > 0) setPrintClassId(current.classes[0].id) }}
                       className="accent-indigo-600" />
                     <div className="flex-1">
-                      <div className="font-medium text-sm text-gray-800">{t('timetable.singleClass')}</div>
-                      <div className="text-xs text-gray-500">{t('timetable.oneClassOnly')}</div>
+                      <div className="font-medium text-sm text-gray-800 dark:text-slate-100">{t('timetable.singleClass')}</div>
+                      <div className="text-xs text-gray-500 dark:text-slate-400">{t('timetable.oneClassOnly')}</div>
                     </div>
                   </label>
                 </div>
               </div>
               {printMode === 'class' && (
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">{t('timetable.selectClassLabel')}</label>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{t('timetable.selectClassLabel')}</label>
                   <select className="input-field" value={printClassId}
                     onChange={e => setPrintClassId(e.target.value)}>
                     {[...current.classes].sort((a,b) => a.name.localeCompare(b.name)).map(c => (
@@ -2065,7 +2065,7 @@ export default function TimetablePage() {
 
               {/* Org Name */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Organization Name</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Organization Name</label>
                 <input
                   className="input-field"
                   value={printOrgName}
@@ -2076,7 +2076,7 @@ export default function TimetablePage() {
 
               {/* Header Lines */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Header Lines <span className="text-gray-400 font-normal">(appear above org name)</span></label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Header Lines <span className="text-gray-400 font-normal">(appear above org name)</span></label>
                 <div className="space-y-1 mb-2">
                   {printHeaderLines.map((line, idx) => (
                     <div key={idx} className="flex items-center gap-2">
@@ -2087,7 +2087,7 @@ export default function TimetablePage() {
                       />
                       <button
                         onClick={() => setPrintHeaderLines(prev => prev.filter((_, i) => i !== idx))}
-                        className="text-red-400 hover:text-red-600 px-2 text-lg font-bold flex-shrink-0"
+                        className="text-red-400 hover:text-red-600 dark:hover:text-red-400 px-2 text-lg font-bold flex-shrink-0"
                       >×</button>
                     </div>
                   ))}
@@ -2109,7 +2109,7 @@ export default function TimetablePage() {
 
               {/* Signers */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Signers <span className="text-gray-400 font-normal">(signature blocks at bottom)</span></label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Signers <span className="text-gray-400 font-normal">(signature blocks at bottom)</span></label>
                 <div className="space-y-1 mb-2">
                   {printSigners.map((signer, idx) => (
                     <div key={idx} className="flex items-center gap-2">
@@ -2120,7 +2120,7 @@ export default function TimetablePage() {
                       />
                       <button
                         onClick={() => setPrintSigners(prev => prev.filter((_, i) => i !== idx))}
-                        className="text-red-400 hover:text-red-600 px-2 text-lg font-bold flex-shrink-0"
+                        className="text-red-400 hover:text-red-600 dark:hover:text-red-400 px-2 text-lg font-bold flex-shrink-0"
                       >×</button>
                     </div>
                   ))}
@@ -2142,7 +2142,7 @@ export default function TimetablePage() {
 
               {/* Footer Texts */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Footer <span className="text-gray-400 font-normal">(left and right info above signature lines)</span></label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Footer <span className="text-gray-400 font-normal">(left and right info above signature lines)</span></label>
                 <div className="flex gap-2">
                   <input
                     className="input-field flex-1"
@@ -2159,9 +2159,9 @@ export default function TimetablePage() {
                 </div>
               </div>
             </div>
-            <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2 flex-shrink-0">
+            <div className="px-5 py-3 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-2 flex-shrink-0">
               <button onClick={() => setShowPrintModal(false)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">{t('common.cancel')}</button>
+                className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium">{t('common.cancel')}</button>
               <button
                 onClick={() => {
                   setShowPrintModal(false)
@@ -2198,8 +2198,8 @@ export default function TimetablePage() {
       {/* Color Picker */}
       {showColorPicker && (
         <div className="fixed inset-0 bg-black/40 z-[70] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-72 p-5">
-            <h3 className="font-bold text-gray-800 mb-3">Choose Color</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-72 p-5">
+            <h3 className="font-bold text-gray-800 dark:text-slate-100 mb-3">Choose Color</h3>
             <div className="grid grid-cols-5 gap-2 mb-4">
               {COLOR_PALETTE.map(c => (
                 <button key={c} type="button" onClick={() => resolveColorPicker(c)}
@@ -2208,13 +2208,13 @@ export default function TimetablePage() {
               ))}
             </div>
             <div className="flex items-center gap-2 mb-4">
-              <label className="text-sm text-gray-600">Custom:</label>
+              <label className="text-sm text-gray-600 dark:text-slate-300">Custom:</label>
               <input type="color" value={colorPickerValue} onChange={e => setColorPickerValue(e.target.value)}
-                className="w-10 h-10 rounded cursor-pointer border border-gray-300" />
-              <span className="text-sm text-gray-500">{colorPickerValue}</span>
+                className="w-10 h-10 rounded cursor-pointer border border-gray-300 dark:border-slate-600" />
+              <span className="text-sm text-gray-500 dark:text-slate-400">{colorPickerValue}</span>
             </div>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowColorPicker(false)} className="tt-btn bg-gray-100 text-gray-700">Cancel</button>
+              <button onClick={() => setShowColorPicker(false)} className="tt-btn bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200">Cancel</button>
               <button onClick={() => resolveColorPicker(colorPickerValue)} className="tt-btn bg-indigo-600 text-white">OK</button>
             </div>
           </div>
@@ -2472,38 +2472,38 @@ function WizardListStep({ title, addLabel, items, onNew, columns, renderRow, onE
   return (
     <div className="space-y-3">
       {disabled && disabledMessage && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">{disabledMessage}</div>
+        <div className="rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">{disabledMessage}</div>
       )}
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-700">{addLabel} <span className="text-gray-400 font-normal text-xs ml-2">({items.length})</span></h3>
+        <h3 className="font-semibold text-gray-700 dark:text-slate-200">{addLabel} <span className="text-gray-400 font-normal text-xs ml-2">({items.length})</span></h3>
         <button onClick={onNew} disabled={disabled} className="tt-btn bg-indigo-600 text-white text-xs disabled:opacity-40 disabled:pointer-events-none">+ New</button>
       </div>
       {items.length === 0 ? (
-        <div className="border-2 border-dashed border-gray-200 rounded-xl py-10 text-center text-gray-400 text-sm">
+        <div className="border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl py-10 text-center text-gray-400 text-sm">
           No {title.toLowerCase()} added yet.<br/>
-          <button onClick={onNew} disabled={disabled} className="mt-2 text-indigo-600 hover:underline text-sm font-medium disabled:opacity-40 disabled:pointer-events-none">+ Add first</button>
+          <button onClick={onNew} disabled={disabled} className="mt-2 text-indigo-600 dark:text-indigo-400 hover:underline text-sm font-medium disabled:opacity-40 disabled:pointer-events-none">+ Add first</button>
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-200 overflow-hidden">
+        <div className="rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
+              <tr className="bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
                 {columns.map(c => (
-                  <th key={c} className="px-3 py-2 text-left font-semibold text-gray-600">{c}</th>
+                  <th key={c} className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-slate-300">{c}</th>
                 ))}
-                <th className="px-3 py-2 text-right font-semibold text-gray-600">Actions</th>
+                <th className="px-3 py-2 text-right font-semibold text-gray-600 dark:text-slate-300">Actions</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-b border-gray-100 last:border-0 hover:bg-indigo-50/40">
+                <tr key={item.id} className="border-b border-gray-100 dark:border-slate-800 last:border-0 hover:bg-indigo-50/40">
                   {renderRow(item).map((cell, ci) => (
                     <td key={ci} className="px-3 py-2">{cell}</td>
                   ))}
                   <td className="px-3 py-2 text-right whitespace-nowrap">
                     {!disabled && extraAction?.(item)}
-                    <button onClick={() => onEdit(item)} disabled={disabled} className="text-blue-600 hover:underline mr-2 disabled:opacity-40 disabled:pointer-events-none">Edit</button>
-                    <button onClick={() => onRemove(item)} disabled={disabled} className="text-red-500 hover:underline disabled:opacity-40 disabled:pointer-events-none">Remove</button>
+                    <button onClick={() => onEdit(item)} disabled={disabled} className="text-blue-600 dark:text-blue-400 hover:underline mr-2 disabled:opacity-40 disabled:pointer-events-none">Edit</button>
+                    <button onClick={() => onRemove(item)} disabled={disabled} className="text-red-500 dark:text-red-400 hover:underline disabled:opacity-40 disabled:pointer-events-none">Remove</button>
                   </td>
                 </tr>
               ))}
@@ -2524,13 +2524,13 @@ function ItemModal({ title, onOk, onCancel, children, width = 'max-w-md' }: {
   return (
     <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
       <div className={`bg-white rounded-xl shadow-2xl w-full ${width} max-h-[85vh] flex flex-col`}>
-        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="font-bold text-gray-800">{title}</h2>
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+          <h2 className="font-bold text-gray-800 dark:text-slate-100">{title}</h2>
           <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">x</button>
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">{children}</div>
-        <div className="px-5 py-3 border-t border-gray-100 flex justify-end gap-2 bg-gray-50 rounded-b-xl">
-          <button onClick={onCancel} className="tt-btn bg-white border border-gray-300 text-gray-700">Cancel</button>
+        <div className="px-5 py-3 border-t border-gray-100 dark:border-slate-800 flex justify-end gap-2 bg-gray-50 dark:bg-slate-800 rounded-b-xl">
+          <button onClick={onCancel} className="tt-btn bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-200">Cancel</button>
           <button onClick={onOk} className="tt-btn bg-indigo-600 text-white">OK</button>
         </div>
       </div>
@@ -2546,13 +2546,13 @@ function ModalShell({ title, onClose, children, width = 'max-w-md' }: {
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className={`bg-white rounded-xl shadow-2xl w-full ${width} max-h-[85vh] flex flex-col`}>
-        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="font-bold text-gray-800">{title}</h2>
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+          <h2 className="font-bold text-gray-800 dark:text-slate-100">{title}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">x</button>
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
-        <div className="px-5 py-3 border-t border-gray-100 flex justify-end gap-2 bg-gray-50 rounded-b-xl">
-          <button onClick={onClose} className="tt-btn bg-gray-100 text-gray-700">Close</button>
+        <div className="px-5 py-3 border-t border-gray-100 dark:border-slate-800 flex justify-end gap-2 bg-gray-50 dark:bg-slate-800 rounded-b-xl">
+          <button onClick={onClose} className="tt-btn bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200">Close</button>
         </div>
       </div>
     </div>

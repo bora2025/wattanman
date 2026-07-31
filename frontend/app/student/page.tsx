@@ -148,10 +148,10 @@ export default function StudentPortal() {
     : null;
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-800">
       <div className="text-center">
         <div className="w-10 h-10 border-3 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p className="text-sm text-slate-500 mt-3">{t('common.loading')}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">{t('common.loading')}</p>
       </div>
     </div>
   );
@@ -165,10 +165,10 @@ export default function StudentPortal() {
           <div className="page-content">
             <div className="h-14" />
             <div className="page-header">
-              <h1 className="text-xl font-bold text-slate-800">
+              <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                 👋 Hello{studentName ? `, ${studentName}` : ''}
               </h1>
-              <p className="text-sm text-slate-500 mt-1">{t('student.subtitle')}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('student.subtitle')}</p>
             </div>
             <div className="page-body space-y-4">
               {/* Quick actions */}
@@ -196,13 +196,13 @@ export default function StudentPortal() {
 
               {/* Announcements */}
               <div className="card p-4">
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">📣 Announcements</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">📣 Announcements</h3>
                 <AnnouncementFeed accent="emerald" limit={5} />
               </div>
 
               {/* My Schedule */}
               <div className="card p-4">
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">📅 My Schedule</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">📅 My Schedule</h3>
                 {studentUserId && <TimetableGrid userId={studentUserId} role="student" />}
               </div>
 
@@ -223,7 +223,7 @@ export default function StudentPortal() {
               </div>
 
               {/* Attendance list */}
-              <div className="card divide-y divide-slate-100">
+              <div className="card divide-y divide-slate-100 dark:divide-slate-800">
                 {attendance.map((record) => (
                   <div key={record.id} className="flex items-center gap-3 px-4 py-3">
                     <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
@@ -231,10 +231,10 @@ export default function StudentPortal() {
                       record.status === 'ABSENT' ? 'bg-red-500' : 'bg-amber-500'
                     }`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 truncate">
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
                         {record.class?.name ?? '—'} — {record.class?.subject ?? ''}
                       </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         {new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                       </p>
                     </div>
@@ -249,8 +249,8 @@ export default function StudentPortal() {
                 {attendance.length === 0 && (
                   <div className="empty-state py-12">
                     <p className="text-4xl mb-3">📋</p>
-                    <p className="font-semibold text-slate-600">{t('student.noRecords')}</p>
-                    <p className="text-sm text-slate-400 mt-1">Your records will appear here once attendance is taken.</p>
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">{t('student.noRecords')}</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Your records will appear here once attendance is taken.</p>
                   </div>
                 )}
               </div>
@@ -260,7 +260,7 @@ export default function StudentPortal() {
       </div>
 
       {/* ── Desktop layout (emerald root brand) ── */}
-      <div className="hidden lg:block min-h-screen bg-slate-50">
+      <div className="hidden lg:block min-h-screen bg-slate-50 dark:bg-slate-800">
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
           <div className="max-w-5xl mx-auto px-6 py-8">
@@ -296,17 +296,17 @@ export default function StudentPortal() {
         <main className="max-w-5xl mx-auto px-6 py-6 space-y-4">
           {/* My Schedule */}
           <div className="card p-5">
-            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">📅 My Schedule</h2>
+            <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide mb-3">📅 My Schedule</h2>
             {studentUserId && <TimetableGrid userId={studentUserId} role="student" />}
           </div>
 
           {/* Quick Access */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Assignments', href: '/student/assignments', icon: '📚', count: pendingAssignments.length, badge: overdueAssignments.length, badgeLabel: 'overdue', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-              { label: 'Exams', href: '/student/exams', icon: '📝', count: activeExams.length, badge: 0, color: 'bg-purple-50 text-purple-700 border-purple-200' },
-              { label: 'My Scores', href: '/student/scores', icon: '📊', count: gradedAssignments.length, badge: 0, color: 'bg-sky-50 text-sky-700 border-sky-200' },
-              { label: 'Messages', href: '/student/messages', icon: '💬', count: 0, badge: 0, color: 'bg-amber-50 text-amber-700 border-amber-200' },
+              { label: 'Assignments', href: '/student/assignments', icon: '📚', count: pendingAssignments.length, badge: overdueAssignments.length, badgeLabel: 'overdue', color: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900' },
+              { label: 'Exams', href: '/student/exams', icon: '📝', count: activeExams.length, badge: 0, color: 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-900' },
+              { label: 'My Scores', href: '/student/scores', icon: '📊', count: gradedAssignments.length, badge: 0, color: 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-900' },
+              { label: 'Messages', href: '/student/messages', icon: '💬', count: 0, badge: 0, color: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900' },
             ].map(item => (
               <Link key={item.href} href={item.href}
                 className={`flex flex-col items-start p-4 rounded-xl border ${item.color} hover:opacity-90 transition-opacity relative`}>
@@ -328,18 +328,18 @@ export default function StudentPortal() {
           {upcomingDeadlines.length > 0 && (
             <div className="card p-5">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">⏰ Upcoming Deadlines</h2>
-                <Link href="/student/assignments" className="text-xs text-emerald-600 hover:underline">View all</Link>
+                <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">⏰ Upcoming Deadlines</h2>
+                <Link href="/student/assignments" className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline">View all</Link>
               </div>
               <div className="space-y-2">
                 {upcomingDeadlines.map(a => {
                   const days = Math.ceil((new Date(a.dueDate!).getTime() - now) / (1000 * 60 * 60 * 24));
                   const urgency = days <= 1 ? 'text-red-600' : days <= 3 ? 'text-amber-600' : 'text-slate-500';
                   return (
-                    <Link key={a.id} href="/student/assignments" className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-slate-50">
+                    <Link key={a.id} href="/student/assignments" className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-800 truncate">{a.title}</p>
-                        <p className="text-xs text-slate-400 truncate">{a.class?.name ?? ''} · {a.class?.subject ?? ''}</p>
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{a.title}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{a.class?.name ?? ''} · {a.class?.subject ?? ''}</p>
                       </div>
                       <div className={`text-xs font-semibold ${urgency} flex-shrink-0`}>
                         {days <= 0 ? 'Today' : days === 1 ? 'Tomorrow' : `${days} days`}
@@ -353,15 +353,15 @@ export default function StudentPortal() {
 
           {/* Active Exams */}
           {activeExams.length > 0 && (
-            <div className="card p-5 border-2 border-purple-200 bg-purple-50/30">
-              <h2 className="text-sm font-bold text-purple-700 uppercase tracking-wide mb-3">📝 Active Exams — Take Now</h2>
+            <div className="card p-5 border-2 border-purple-200 dark:border-purple-900 bg-purple-50/30">
+              <h2 className="text-sm font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wide mb-3">📝 Active Exams — Take Now</h2>
               <div className="space-y-2">
                 {activeExams.map(e => (
                   <Link key={e.id} href={`/student/exams/${e.id}`}
-                    className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-white border border-purple-100 hover:border-purple-300">
+                    className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-purple-100 dark:border-purple-900 hover:border-purple-300 dark:hover:border-purple-600">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 truncate">{e.title}</p>
-                      <p className="text-xs text-slate-400">{e.class?.name ?? 'General'} · {e.duration} min · Pass {e.passMark}/{e.totalMarks}</p>
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{e.title}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">{e.class?.name ?? 'General'} · {e.duration} min · Pass {e.passMark}/{e.totalMarks}</p>
                     </div>
                     <span className="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-lg font-semibold">Start</span>
                   </Link>
@@ -377,10 +377,10 @@ export default function StudentPortal() {
                 {overallGrade}
               </div>
               <div className="flex-1">
-                <p className="font-bold text-slate-800">Overall Grade: {overallGrade}%</p>
-                <p className="text-xs text-slate-500">{gradedAssignments.length} graded assignment(s) — attendance rate {rate}%</p>
+                <p className="font-bold text-slate-800 dark:text-slate-100">Overall Grade: {overallGrade}%</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{gradedAssignments.length} graded assignment(s) — attendance rate {rate}%</p>
               </div>
-              <Link href="/student/scores" className="text-sm text-emerald-600 hover:underline">Details →</Link>
+              <Link href="/student/scores" className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline">Details →</Link>
             </div>
           )}
 
@@ -392,18 +392,18 @@ export default function StudentPortal() {
           </div>
 
           {/* Attendance List */}
-          <div className="card divide-y divide-slate-100">
+          <div className="card divide-y divide-slate-100 dark:divide-slate-800">
             {attendance.map((record) => (
-              <div key={record.id} className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors">
+              <div key={record.id} className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                 <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
                   record.status === 'PRESENT' ? 'bg-emerald-500' :
                   record.status === 'ABSENT' ? 'bg-red-500' : 'bg-amber-500'
                 }`} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800">
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
                     {record.class?.name ?? '—'} — {record.class?.subject ?? ''}
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                   </p>
                 </div>
@@ -418,8 +418,8 @@ export default function StudentPortal() {
             {attendance.length === 0 && (
               <div className="empty-state py-12">
                 <p className="text-4xl mb-3">📋</p>
-                <p className="font-semibold text-slate-600">{t('student.noRecords')}</p>
-                <p className="text-sm text-slate-400 mt-1">Your records will appear here once attendance is taken.</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-300">{t('student.noRecords')}</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Your records will appear here once attendance is taken.</p>
               </div>
             )}
           </div>

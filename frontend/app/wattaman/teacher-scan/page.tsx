@@ -55,12 +55,12 @@ function TeacherProfileCard({ result }: { result: TeacherScanResult }) {
           👨‍🏫
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-extrabold text-slate-800 text-lg sm:text-xl leading-tight truncate">{result.teacherName}</p>
+          <p className="font-extrabold text-slate-800 dark:text-slate-100 text-lg sm:text-xl leading-tight truncate">{result.teacherName}</p>
           {result.subjectName && (
-            <p className="text-sm text-slate-600 truncate mt-0.5">{result.subjectName}{result.className ? ` · ${result.className}` : ''}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 truncate mt-0.5">{result.subjectName}{result.className ? ` · ${result.className}` : ''}</p>
           )}
-          <p className="text-xs text-slate-400 mt-0.5">{result.timetableName}</p>
-          {isAlready && <p className="text-xs text-indigo-500 font-medium mt-1">Already recorded — no duplicate</p>}
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{result.timetableName}</p>
+          {isAlready && <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium mt-1">Already recorded — no duplicate</p>}
           {result.scheduledPeriods?.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
               {result.scheduledPeriods.map(p => (
@@ -80,7 +80,7 @@ function TeacherProfileCard({ result }: { result: TeacherScanResult }) {
           style={{ background: meta.bgLight }}>
           <div className="flex items-center gap-2">
             <span className="text-base">🕐</span>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
               {isAlready ? 'First check-in' : 'Check-in time'}
             </span>
           </div>
@@ -96,14 +96,14 @@ function TeacherProfileCard({ result }: { result: TeacherScanResult }) {
 
 function TeacherSkeletonCard() {
   return (
-    <div className="rounded-2xl overflow-hidden shadow-xl bg-white ring-2 ring-slate-200">
-      <div className="bg-slate-200 px-4 py-2.5 h-10 animate-pulse" />
+    <div className="rounded-2xl overflow-hidden shadow-xl bg-white dark:bg-slate-900 ring-2 ring-slate-200">
+      <div className="bg-slate-200 dark:bg-slate-700 px-4 py-2.5 h-10 animate-pulse" />
       <div className="flex items-center gap-4 p-4">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-200 animate-pulse flex-shrink-0" />
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-200 dark:bg-slate-700 animate-pulse flex-shrink-0" />
         <div className="flex-1 space-y-2.5">
-          <div className="h-5 bg-slate-200 rounded-lg animate-pulse w-3/4" />
-          <div className="h-3 bg-slate-100 rounded-lg animate-pulse w-1/2" />
-          <div className="h-3 bg-slate-100 rounded-lg animate-pulse w-2/5" />
+          <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse w-3/4" />
+          <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse w-1/2" />
+          <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse w-2/5" />
         </div>
       </div>
     </div>
@@ -119,10 +119,10 @@ function TeacherScanZone({ isLandscape }: { isLandscape: boolean }) {
           : 'w-[62vw] h-[62vw] max-w-xs max-h-[300px] sm:max-w-sm sm:max-h-[340px] md:max-w-md md:max-h-[380px]'
       }`}>
         <div className="absolute inset-0 rounded-2xl" style={{ boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)' }} />
-        <div className="absolute top-0 left-0 w-10 h-10 sm:w-12 sm:h-12 border-t-4 border-l-4 border-teal-400 rounded-tl-2xl" />
-        <div className="absolute top-0 right-0 w-10 h-10 sm:w-12 sm:h-12 border-t-4 border-r-4 border-teal-400 rounded-tr-2xl" />
-        <div className="absolute bottom-0 left-0 w-10 h-10 sm:w-12 sm:h-12 border-b-4 border-l-4 border-teal-400 rounded-bl-2xl" />
-        <div className="absolute bottom-0 right-0 w-10 h-10 sm:w-12 sm:h-12 border-b-4 border-r-4 border-teal-400 rounded-br-2xl" />
+        <div className="absolute top-0 left-0 w-10 h-10 sm:w-12 sm:h-12 border-t-4 border-l-4 border-teal-400 dark:border-teal-700 rounded-tl-2xl" />
+        <div className="absolute top-0 right-0 w-10 h-10 sm:w-12 sm:h-12 border-t-4 border-r-4 border-teal-400 dark:border-teal-700 rounded-tr-2xl" />
+        <div className="absolute bottom-0 left-0 w-10 h-10 sm:w-12 sm:h-12 border-b-4 border-l-4 border-teal-400 dark:border-teal-700 rounded-bl-2xl" />
+        <div className="absolute bottom-0 right-0 w-10 h-10 sm:w-12 sm:h-12 border-b-4 border-r-4 border-teal-400 dark:border-teal-700 rounded-br-2xl" />
         <div
           className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-teal-400 to-transparent drop-shadow-[0_0_6px_rgba(0,201,167,0.9)]"
           style={{ animation: 'scanLine 2s linear infinite' }}
@@ -588,17 +588,17 @@ function TeacherScanContent() {
             <div className="page-header pb-0">
               <div className="flex items-center gap-3">
                 <Link href="/wattaman/scheduled-teacher"
-                  className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors flex-shrink-0">
+                  className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors flex-shrink-0">
                   <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M15 18l-6-6 6-6" />
                   </svg>
                 </Link>
                 <div>
-                  <h1 className="text-xl font-bold text-slate-800">Scan Teacher QR</h1>
-                  <p className="text-xs text-slate-500 mt-0.5">Record teacher attendance from timetable</p>
+                  <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Scan Teacher QR</h1>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Record teacher attendance from timetable</p>
                 </div>
                 <button onClick={handleLogout} title="Sign out"
-                  className="ml-auto flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-500 transition-colors py-2 px-3 rounded-xl hover:bg-red-50 flex-shrink-0">
+                  className="ml-auto flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors py-2 px-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 flex-shrink-0">
                   <span className="text-base">⏻</span>
                   <span className="hidden sm:inline">Sign out</span>
                 </button>
@@ -627,24 +627,24 @@ function TeacherScanContent() {
 
             {/* Session stats */}
             {scanCount > 0 && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">This session</p>
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-3">This session</p>
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="text-center p-3 bg-slate-50 rounded-xl">
-                    <p className="text-2xl font-bold text-slate-800">{scanCount}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Scanned</p>
+                  <div className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                    <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{scanCount}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Scanned</p>
                   </div>
-                  <div className="text-center p-3 bg-emerald-50 rounded-xl">
-                    <p className="text-2xl font-bold text-emerald-600">
+                  <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl">
+                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                       {scanHistory.filter(r => r.status === 'PRESENT' && r.action !== 'ALREADY_RECORDED').length}
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">On Time</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">On Time</p>
                   </div>
-                  <div className="text-center p-3 bg-amber-50 rounded-xl">
-                    <p className="text-2xl font-bold text-amber-500">
+                  <div className="text-center p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl">
+                    <p className="text-2xl font-bold text-amber-500 dark:text-amber-400">
                       {scanHistory.filter(r => r.status === 'LATE').length}
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">Late</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Late</p>
                   </div>
                 </div>
               </div>
@@ -654,10 +654,10 @@ function TeacherScanContent() {
             {scanHistory.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Recent Scans</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Recent Scans</p>
                   <button
                     onClick={() => { setScanHistory([]); setScanCount(0) }}
-                    className="text-xs text-slate-400 hover:text-red-400 transition-colors">
+                    className="text-xs text-slate-400 dark:text-slate-500 hover:text-red-400 transition-colors">
                     Clear
                   </button>
                 </div>
@@ -665,16 +665,16 @@ function TeacherScanContent() {
                   {scanHistory.slice(0, 10).map((r, i) => {
                     const m = statusMeta(r.action, r.status)
                     return (
-                      <div key={i} className="bg-white rounded-xl border border-slate-100 px-4 py-3 flex items-center gap-3">
+                      <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 px-4 py-3 flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0 ${m.bg}`}>
                           {r.action === 'ALREADY_RECORDED' ? '↩' : r.status === 'LATE' ? 'L' : '✓'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-800 truncate">{r.teacherName}</p>
-                          <p className="text-xs text-slate-400 truncate">Period {r.period}{r.subjectName ? ` · ${r.subjectName}` : ''}{r.className ? ` · ${r.className}` : ''}</p>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{r.teacherName}</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 truncate">Period {r.period}{r.subjectName ? ` · ${r.subjectName}` : ''}{r.className ? ` · ${r.className}` : ''}</p>
                         </div>
                         {r.checkIn && (
-                          <span className="text-xs text-slate-400 flex-shrink-0">
+                          <span className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0">
                             {formatCambodiaTime(r.checkIn)}
                           </span>
                         )}
@@ -687,8 +687,8 @@ function TeacherScanContent() {
 
             {/* How it works */}
             {scanHistory.length === 0 && (
-              <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm">
-                <h3 className="font-semibold text-slate-700 text-sm mb-3">How it works</h3>
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm">
+                <h3 className="font-semibold text-slate-700 dark:text-slate-200 text-sm mb-3">How it works</h3>
                 <div className="space-y-3">
                   {[
                     { icon: '📷', title: 'Open Scanner', desc: 'Tap the button above' },
@@ -696,10 +696,10 @@ function TeacherScanContent() {
                     { icon: '✅', title: 'Instant Record', desc: 'Attendance recorded for the current period automatically' },
                   ].map((step, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-xl flex-shrink-0">{step.icon}</div>
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-xl flex-shrink-0">{step.icon}</div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-700">{step.title}</p>
-                        <p className="text-xs text-slate-400">{step.desc}</p>
+                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{step.title}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">{step.desc}</p>
                       </div>
                     </div>
                   ))}

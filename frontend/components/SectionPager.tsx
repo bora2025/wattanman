@@ -13,7 +13,7 @@ export default function SectionPager({
         type="button"
         onClick={() => onChange(Math.max(0, current - 1))}
         disabled={current === 0}
-        className="px-3 py-1.5 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+        className="px-3 py-1.5 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800"
       >
         ← Previous
       </button>
@@ -25,7 +25,7 @@ export default function SectionPager({
             onClick={() => onChange(i)}
             title={label}
             aria-current={i === current ? 'page' : undefined}
-            className={`w-8 h-8 rounded-full text-sm font-semibold transition-colors ${i === current ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            className={`w-8 h-8 rounded-full text-sm font-semibold transition-colors ${i === current ? 'bg-sky-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
           >
             {i + 1}
           </button>
@@ -35,7 +35,7 @@ export default function SectionPager({
         type="button"
         onClick={() => onChange(Math.min(labels.length - 1, current + 1))}
         disabled={current === labels.length - 1}
-        className="px-3 py-1.5 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+        className="px-3 py-1.5 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800"
       >
         Next →
       </button>

@@ -202,8 +202,8 @@ export default function HolidaysPage() {
         <div className="page-content lg:ml-0">
           <div className="h-14 lg:hidden" />
           <div className="page-header">
-            <h1 className="text-2xl font-bold text-slate-800">{t('holidays.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('holidays.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               {t('holidays.subtitle')}
             </p>
           </div>
@@ -216,10 +216,10 @@ export default function HolidaysPage() {
                   ← {t('common.previous')}
                 </button>
                 <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-bold text-slate-800">
+                  <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                     {MONTH_NAMES[currentMonth]} {currentYear}
                   </h2>
-                  <button onClick={goToday} className="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md font-medium hover:bg-indigo-100 transition">
+                  <button onClick={goToday} className="text-xs bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-2 py-1 rounded-md font-medium hover:bg-indigo-100 transition">
                     {t('common.today')}
                   </button>
                 </div>
@@ -232,9 +232,9 @@ export default function HolidaysPage() {
             {/* Calendar Grid */}
             <div className="card overflow-hidden">
               {/* Day headers */}
-              <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
+              <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                 {DAY_NAMES.map(d => (
-                  <div key={d} className="p-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <div key={d} className="p-2 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     {d}
                   </div>
                 ))}
@@ -244,7 +244,7 @@ export default function HolidaysPage() {
               <div className="grid grid-cols-7">
                 {/* Empty cells for days before the 1st */}
                 {Array.from({ length: firstDay }).map((_, i) => (
-                  <div key={`empty-${i}`} className="min-h-[80px] border-b border-r border-slate-100 bg-slate-50/50" />
+                  <div key={`empty-${i}`} className="min-h-[80px] border-b border-r border-slate-100 dark:border-slate-800 bg-slate-50/50" />
                 ))}
 
                 {cells.map(({ day, dateStr }) => {
@@ -275,7 +275,7 @@ export default function HolidaysPage() {
                         >
                           {day}
                         </span>
-                        <span className="opacity-0 group-hover:opacity-100 text-xs text-indigo-500 transition">+ Add</span>
+                        <span className="opacity-0 group-hover:opacity-100 text-xs text-indigo-500 dark:text-indigo-400 transition">+ Add</span>
                       </div>
                       {dayHolidays.map(h => (
                         <div
@@ -295,10 +295,10 @@ export default function HolidaysPage() {
 
             {/* Holiday List */}
             <div className="card">
-              <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-                <h3 className="font-semibold text-slate-800">
+              <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <h3 className="font-semibold text-slate-800 dark:text-slate-100">
                   Holidays in {MONTH_NAMES[currentMonth]} {currentYear}
-                  <span className="text-sm font-normal text-slate-400 ml-2">({holidays.length})</span>
+                  <span className="text-sm font-normal text-slate-400 dark:text-slate-500 ml-2">({holidays.length})</span>
                 </h3>
                 <button
                   onClick={() => openAddModal(toDateStr(getCambodiaDate()))}
@@ -308,42 +308,42 @@ export default function HolidaysPage() {
                 </button>
               </div>
               {loading ? (
-                <div className="p-8 text-center text-slate-400">Loading...</div>
+                <div className="p-8 text-center text-slate-400 dark:text-slate-500">Loading...</div>
               ) : holidays.length === 0 ? (
-                <div className="p-8 text-center text-slate-400">
+                <div className="p-8 text-center text-slate-400 dark:text-slate-500">
                   <div className="text-3xl mb-2">🎉</div>
                   <p>No holidays this month. Click a date on the calendar or press &quot;+ Add Holiday&quot; to add one.</p>
                 </div>
               ) : (
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {holidays.map(h => (
-                    <div key={h.id} className="p-4 flex items-center gap-4 hover:bg-slate-50 transition">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-slate-100 flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium text-slate-400">
+                    <div key={h.id} className="p-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center">
+                        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
                           {new Date(h.date).toLocaleDateString('en', { month: 'short', timeZone: 'UTC' })}
                         </span>
-                        <span className="text-lg font-bold text-slate-700 leading-tight">
+                        <span className="text-lg font-bold text-slate-700 dark:text-slate-200 leading-tight">
                           {new Date(h.date).getUTCDate()}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-slate-800">{h.name}</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-100">{h.name}</span>
                           <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeStyle(h.type)}`}>
                             {getTypeLabel(h.type)}
                           </span>
                         </div>
                         {h.description && (
-                          <p className="text-sm text-slate-500 mt-0.5 truncate">{h.description}</p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 truncate">{h.description}</p>
                         )}
-                        <p className="text-xs text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                           {new Date(h.date).toLocaleDateString('en', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <button
                           onClick={() => openEditModal(h)}
-                          className="text-sm text-indigo-600 hover:text-indigo-800 font-medium px-2 py-1 rounded hover:bg-indigo-50 transition"
+                          className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition"
                         >
                           {t('common.edit')}
                         </button>
@@ -351,13 +351,13 @@ export default function HolidaysPage() {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => handleDelete(h.id)}
-                              className="text-sm text-red-600 font-medium px-2 py-1 rounded bg-red-50 hover:bg-red-100 transition"
+                              className="text-sm text-red-600 dark:text-red-400 font-medium px-2 py-1 rounded bg-red-50 dark:bg-red-950/40 hover:bg-red-100 transition"
                             >
                               {t('common.confirm')}
                             </button>
                             <button
                               onClick={() => setDeleteId(null)}
-                              className="text-sm text-slate-500 font-medium px-2 py-1 rounded hover:bg-slate-100 transition"
+                              className="text-sm text-slate-500 dark:text-slate-400 font-medium px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition"
                             >
                               {t('common.cancel')}
                             </button>
@@ -365,7 +365,7 @@ export default function HolidaysPage() {
                         ) : (
                           <button
                             onClick={() => setDeleteId(h.id)}
-                            className="text-sm text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition"
+                            className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 transition"
                           >
                             Delete
                           </button>
@@ -383,46 +383,46 @@ export default function HolidaysPage() {
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">
+            <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">
                 {editingHoliday ? t('holidays.editHoliday') : t('holidays.addHoliday')}
               </h3>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1">{t('common.date')}</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">{t('common.date')}</label>
                   <input
                     type="date"
                     value={formDate}
                     onChange={e => setFormDate(e.target.value)}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1">{t('holidays.holidayName')}</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">{t('holidays.holidayName')}</label>
                   <input
                     type="text"
                     value={formName}
                     onChange={e => setFormName(e.target.value)}
                     placeholder="e.g., Khmer New Year"
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1">{t('common.description')}</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">{t('common.description')}</label>
                   <textarea
                     value={formDescription}
                     onChange={e => setFormDescription(e.target.value)}
                     rows={2}
                     placeholder="Add details about this holiday..."
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1">{t('common.type')}</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">{t('common.type')}</label>
                   <div className="flex flex-wrap gap-2">
                     {HOLIDAY_TYPES.map(t => (
                       <button
@@ -444,7 +444,7 @@ export default function HolidaysPage() {
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition"
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
                 >
                   {t('common.cancel')}
                 </button>

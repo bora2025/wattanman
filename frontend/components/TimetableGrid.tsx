@@ -64,14 +64,14 @@ export default function TimetableGrid({ userId, role }: TimetableGridProps) {
   if (loading) {
     return (
       <div className="flex justify-center py-6">
-        <div className="w-7 h-7 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+        <div className="w-7 h-7 border-2 border-emerald-400 dark:border-emerald-700 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   if (!data) {
     return (
-      <div className="text-center py-4 text-sm text-slate-400">
+      <div className="text-center py-4 text-sm text-slate-400 dark:text-slate-500">
         📅 {debug ?? 'No schedule found'}
       </div>
     )
@@ -87,7 +87,7 @@ export default function TimetableGrid({ userId, role }: TimetableGridProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-slate-500">{tt.name} · {tt.academicYear}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{tt.name} · {tt.academicYear}</p>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
           tt.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
         }`}>
@@ -98,9 +98,9 @@ export default function TimetableGrid({ userId, role }: TimetableGridProps) {
         <table className="w-full text-xs border-collapse min-w-[320px]">
           <thead>
             <tr>
-              <th className="px-2 py-1.5 bg-slate-50 border border-slate-200 text-slate-400 font-medium w-10 text-center">#</th>
+              <th className="px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 font-medium w-10 text-center">#</th>
               {dayNums.map(d => (
-                <th key={d} className="px-2 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 font-semibold text-center min-w-[68px]">
+                <th key={d} className="px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-center min-w-[68px]">
                   {ALL_DAYS[d - 1]}
                 </th>
               ))}
@@ -109,7 +109,7 @@ export default function TimetableGrid({ userId, role }: TimetableGridProps) {
           <tbody>
             {periods.map(p => (
               <tr key={p}>
-                <td className="px-2 py-1.5 border border-slate-200 text-center text-slate-400 font-medium bg-slate-50">
+                <td className="px-2 py-1.5 border border-slate-200 dark:border-slate-700 text-center text-slate-400 dark:text-slate-500 font-medium bg-slate-50 dark:bg-slate-800">
                   <div className="font-semibold">{p}</div>
                   {periodTimes[p - 1] && (
                     <div className="text-[9px] text-slate-300 leading-tight">{periodTimes[p - 1]}</div>
@@ -117,7 +117,7 @@ export default function TimetableGrid({ userId, role }: TimetableGridProps) {
                 </td>
                 {dayNums.map(d => {
                   const entry = entryMap[`${d}_${p}`]
-                  if (!entry) return <td key={d} className="px-1 py-1 border border-slate-100 bg-white" />
+                  if (!entry) return <td key={d} className="px-1 py-1 border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900" />
                   const bg = entry.subject.color ? `${entry.subject.color}22` : '#f1f5f9'
                   const fg = entry.subject.color || '#475569'
                   const secondLine =
@@ -127,10 +127,10 @@ export default function TimetableGrid({ userId, role }: TimetableGridProps) {
                       ? [entry.teacher.firstName, entry.teacher.lastName].filter(Boolean).join(' ')
                       : ''
                   return (
-                    <td key={d} className="px-1 py-1 border border-slate-100 align-top" style={{ backgroundColor: bg }}>
+                    <td key={d} className="px-1 py-1 border border-slate-100 dark:border-slate-800 align-top" style={{ backgroundColor: bg }}>
                       <div className="font-semibold truncate" style={{ color: fg }}>{entry.subject.short}</div>
-                      {secondLine && <div className="text-slate-500 truncate">{secondLine}</div>}
-                      {entry.classroom && <div className="text-slate-400 truncate">{entry.classroom.short}</div>}
+                      {secondLine && <div className="text-slate-500 dark:text-slate-400 truncate">{secondLine}</div>}
+                      {entry.classroom && <div className="text-slate-400 dark:text-slate-500 truncate">{entry.classroom.short}</div>}
                     </td>
                   )
                 })}
@@ -171,14 +171,14 @@ export function ChildTimetableGrid({ childUserId }: { childUserId: string }) {
   if (loading) {
     return (
       <div className="flex justify-center py-6">
-        <div className="w-7 h-7 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+        <div className="w-7 h-7 border-2 border-emerald-400 dark:border-emerald-700 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   if (!data) {
     return (
-      <div className="text-center py-4 text-sm text-slate-400">
+      <div className="text-center py-4 text-sm text-slate-400 dark:text-slate-500">
         📅 {debug ?? 'No schedule found'}
       </div>
     )
@@ -194,7 +194,7 @@ export function ChildTimetableGrid({ childUserId }: { childUserId: string }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-slate-500">{tt.name} · {tt.academicYear}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{tt.name} · {tt.academicYear}</p>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
           tt.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
         }`}>
@@ -205,9 +205,9 @@ export function ChildTimetableGrid({ childUserId }: { childUserId: string }) {
         <table className="w-full text-xs border-collapse min-w-[320px]">
           <thead>
             <tr>
-              <th className="px-2 py-1.5 bg-slate-50 border border-slate-200 text-slate-400 font-medium w-10 text-center">#</th>
+              <th className="px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 font-medium w-10 text-center">#</th>
               {dayNums.map(d => (
-                <th key={d} className="px-2 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 font-semibold text-center min-w-[68px]">
+                <th key={d} className="px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-center min-w-[68px]">
                   {ALL_DAYS[d - 1]}
                 </th>
               ))}
@@ -216,7 +216,7 @@ export function ChildTimetableGrid({ childUserId }: { childUserId: string }) {
           <tbody>
             {periods.map(p => (
               <tr key={p}>
-                <td className="px-2 py-1.5 border border-slate-200 text-center text-slate-400 font-medium bg-slate-50">
+                <td className="px-2 py-1.5 border border-slate-200 dark:border-slate-700 text-center text-slate-400 dark:text-slate-500 font-medium bg-slate-50 dark:bg-slate-800">
                   <div className="font-semibold">{p}</div>
                   {periodTimes[p - 1] && (
                     <div className="text-[9px] text-slate-300 leading-tight">{periodTimes[p - 1]}</div>
@@ -224,17 +224,17 @@ export function ChildTimetableGrid({ childUserId }: { childUserId: string }) {
                 </td>
                 {dayNums.map(d => {
                   const entry = entryMap[`${d}_${p}`]
-                  if (!entry) return <td key={d} className="px-1 py-1 border border-slate-100 bg-white" />
+                  if (!entry) return <td key={d} className="px-1 py-1 border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900" />
                   const bg = entry.subject.color ? `${entry.subject.color}22` : '#f1f5f9'
                   const fg = entry.subject.color || '#475569'
                   const teacherName = entry.teacher
                     ? [entry.teacher.firstName, entry.teacher.lastName].filter(Boolean).join(' ')
                     : ''
                   return (
-                    <td key={d} className="px-1 py-1 border border-slate-100 align-top" style={{ backgroundColor: bg }}>
+                    <td key={d} className="px-1 py-1 border border-slate-100 dark:border-slate-800 align-top" style={{ backgroundColor: bg }}>
                       <div className="font-semibold truncate" style={{ color: fg }}>{entry.subject.short}</div>
-                      {teacherName && <div className="text-slate-500 truncate">{teacherName}</div>}
-                      {entry.classroom && <div className="text-slate-400 truncate">{entry.classroom.short}</div>}
+                      {teacherName && <div className="text-slate-500 dark:text-slate-400 truncate">{teacherName}</div>}
+                      {entry.classroom && <div className="text-slate-400 dark:text-slate-500 truncate">{entry.classroom.short}</div>}
                     </td>
                   )
                 })}

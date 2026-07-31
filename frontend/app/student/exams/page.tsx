@@ -34,25 +34,25 @@ export default function StudentExamsPage() {
 
   return (
     <AuthGuard requiredRole="STUDENT">
-      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pb-[72px] lg:pb-0">
         <Sidebar title="Student" subtitle="Portal" navItems={studentNav} accentColor="emerald" />
         <div className="h-14 lg:hidden" />
         <main className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">📝 My Exams</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Exams available for your class</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">📝 My Exams</h1>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Exams available for your class</p>
           </div>
 
           {isLoading ? (
-            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />)}</div>
+            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-20 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />)}</div>
           ) : isError ? (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
-              <p className="text-red-600 mb-2">Failed to load exams</p>
-              <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-2xl p-6 text-center">
+              <p className="text-red-600 dark:text-red-400 mb-2">Failed to load exams</p>
+              <button onClick={() => refetch()} className="text-sm text-red-500 dark:text-red-400 underline">Retry</button>
             </div>
           ) : exams.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
               <EmptyState icon="📝" message="No exams available" />
             </div>
           ) : (
@@ -70,23 +70,23 @@ export default function StudentExamsPage() {
                 // grading on a mixed exam) would silently wipe the teacher's pending item.
                 const canRetake = exam.status === 'ACTIVE' && isGraded && attemptsLeft
                 return (
-                  <div key={exam.id} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                  <div key={exam.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-gray-100 dark:border-slate-800 flex items-center justify-between gap-4 hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-none bg-indigo-100">
-                        <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-none bg-indigo-100 dark:bg-indigo-950/40">
+                        <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <p className="font-semibold text-gray-900">{exam.title}</p>
+                          <p className="font-semibold text-gray-900 dark:text-slate-100">{exam.title}</p>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLOR[exam.status]}`}>{exam.status}</span>
                         </div>
-                        <p className="text-xs text-gray-500">{exam.class?.name ?? 'General'} · {exam.duration} min · Pass: {exam.passMark}/{exam.totalMarks}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">{exam.class?.name ?? 'General'} · {exam.duration} min · Pass: {exam.passMark}/{exam.totalMarks}</p>
                         {isGraded && attempt && (
                           <p className={`text-xs font-semibold mt-1 ${(attempt.score ?? 0) >= exam.passMark ? 'text-emerald-600' : 'text-red-600'}`}>
                             Score: {attempt.score}/{exam.totalMarks} — {(attempt.score ?? 0) >= exam.passMark ? 'PASSED' : 'FAILED'}
                           </p>
                         )}
-                        {hasAttempt && !isGraded && !isInProgress && <p className="text-xs text-amber-600 mt-1">Submitted · Awaiting result</p>}
+                        {hasAttempt && !isGraded && !isInProgress && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Submitted · Awaiting result</p>}
                         {!hasAttempt && exam.status === 'PUBLISHED' && <p className="text-xs text-gray-400 mt-1">Not open yet — check back once your teacher starts it</p>}
                         {!hasAttempt && exam.status === 'COMPLETED' && <p className="text-xs text-gray-400 mt-1">Closed — this exam is no longer open</p>}
                       </div>
@@ -110,7 +110,7 @@ export default function StudentExamsPage() {
                           Retake Exam
                         </Link>
                       )}
-                      {isGraded && !canRetake && <span className="text-xs text-emerald-600 font-semibold">✓ Completed</span>}
+                      {isGraded && !canRetake && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">✓ Completed</span>}
                     </div>
                   </div>
                 )

@@ -335,14 +335,14 @@ export default function SessionSettingsPage() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">{t('sessionSettings.title')}</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('sessionSettings.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             {t('sessionSettings.subtitle')}
           </p>
         </div>
         <div className="page-body space-y-6">
           {/* Tabs */}
-          <div className="flex gap-2 bg-slate-100 p-1 rounded-xl w-fit">
+          <div className="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
             <button
               onClick={() => setActiveTab('CLASS')}
               className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -366,13 +366,13 @@ export default function SessionSettingsPage() {
           </div>
 
           {/* Description */}
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-slate-500 dark:text-slate-400">
             {activeTab === 'CLASS'
               ? 'Configure global default time windows for student class attendance. Teachers can override these per-class.'
               : 'Configure time windows for staff check-in and check-out sessions.'}
           </div>
 
-          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900">
             <span>🏢</span>
             <span>Admin scope: {organizationName} organization</span>
           </div>
@@ -380,7 +380,7 @@ export default function SessionSettingsPage() {
           {/* Attendance Format Presets — Class Sessions only */}
           {activeTab === 'CLASS' && (
             <div>
-              <h3 className="text-sm font-semibold text-slate-700 mb-3">{t('sessionSettings.quickPresets')}</h3>
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">{t('sessionSettings.quickPresets')}</h3>
               <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
                 {ATTENDANCE_PRESETS.map(preset => (
                   <button
@@ -393,10 +393,10 @@ export default function SessionSettingsPage() {
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base mb-2 ${PRESET_ICON_BG[preset.color]}`}>
                       {preset.icon}
                     </div>
-                    <div className="font-semibold text-sm text-slate-800">{preset.name}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">{preset.description}</div>
+                    <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">{preset.name}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{preset.description}</div>
                     {selectedPreset === preset.id && (
-                      <div className="text-xs font-medium text-indigo-600 mt-1">✓ Active</div>
+                      <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mt-1">✓ Active</div>
                     )}
                   </button>
                 ))}
@@ -407,13 +407,13 @@ export default function SessionSettingsPage() {
                     selectedPreset === 'custom' ? 'ring-2 ring-slate-400 border-slate-400' : ''
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base mb-2 bg-slate-100 text-slate-600">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base mb-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                     🔧
                   </div>
-                  <div className="font-semibold text-sm text-slate-800">Custom</div>
-                  <div className="text-xs text-slate-500 mt-0.5">Set times manually</div>
+                  <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">Custom</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Set times manually</div>
                   {selectedPreset === 'custom' && (
-                    <div className="text-xs font-medium text-indigo-600 mt-1">✓ Active</div>
+                    <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mt-1">✓ Active</div>
                   )}
                 </button>
               </div>
@@ -434,13 +434,13 @@ export default function SessionSettingsPage() {
             <div className="card p-12">
               <div className="empty-state">
                 <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <p className="text-sm text-slate-500 mt-3">Loading settings…</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading settings…</p>
               </div>
             </div>
           ) : (
             <>
               {activeTab === 'CLASS' && visibleSessions.length < 4 && (
-                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm bg-amber-50 text-amber-700 border border-amber-200">
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900">
                   <span>💡</span>
                   <span>Showing {visibleSessions.length} of 4 sessions. Hidden sessions are auto-configured by the preset.</span>
                 </div>
@@ -457,18 +457,18 @@ export default function SessionSettingsPage() {
                         {cfg.type === 'CHECK_IN' ? '📥' : '📤'}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-slate-800">{getSessionName(cfg.session)}</h3>
-                        <p className="text-xs text-slate-500">Session {cfg.session}</p>
+                        <h3 className="font-semibold text-slate-800 dark:text-slate-100">{getSessionName(cfg.session)}</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Session {cfg.session}</p>
                       </div>
                     </div>
 
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">Type</label>
+                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Type</label>
                         <select
                           value={cfg.type}
                           onChange={(e) => updateConfig(cfg.session, 'type', e.target.value)}
-                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                         >
                           <option value="CHECK_IN">📥 Check-In</option>
                           <option value="CHECK_OUT">📤 Check-Out</option>
@@ -476,21 +476,21 @@ export default function SessionSettingsPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-medium text-slate-500 mb-1">Start Time</label>
+                          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Start Time</label>
                           <input
                             type="time"
                             value={cfg.startTime}
                             onChange={(e) => updateConfig(cfg.session, 'startTime', e.target.value)}
-                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-500 mb-1">End Time</label>
+                          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">End Time</label>
                           <input
                             type="time"
                             value={cfg.endTime}
                             onChange={(e) => updateConfig(cfg.session, 'endTime', e.target.value)}
-                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                           />
                         </div>
                       </div>
@@ -507,8 +507,8 @@ export default function SessionSettingsPage() {
                       📊
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-800">Attendance Format Rules</h3>
-                      <p className="text-xs text-slate-500">
+                      <h3 className="font-semibold text-slate-800 dark:text-slate-100">Attendance Format Rules</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         Convert accumulated lates/permissions into absences for {activeTab === 'STAFF' ? 'staff' : 'student'} reports
                       </p>
                     </div>
@@ -527,8 +527,8 @@ export default function SessionSettingsPage() {
                       }}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                    <span className="ml-2 text-sm font-medium text-slate-600">
+                    <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    <span className="ml-2 text-sm font-medium text-slate-600 dark:text-slate-300">
                       {(activeTab === 'STAFF' ? staffFormatRule.enabled : classFormatRule.enabled) ? 'Enabled' : 'Disabled'}
                     </span>
                   </label>
@@ -536,10 +536,10 @@ export default function SessionSettingsPage() {
 
                 {(activeTab === 'STAFF' ? staffFormatRule.enabled : classFormatRule.enabled) && (
                   <div className="grid gap-4 sm:grid-cols-2 mt-4">
-                    <div className="p-4 rounded-xl border border-orange-200 bg-orange-50">
+                    <div className="p-4 rounded-xl border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/40">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-lg">🔄</span>
-                        <h4 className="font-medium text-sm text-slate-800">Permissions → Absent (Full Day)</h4>
+                        <h4 className="font-medium text-sm text-slate-800 dark:text-slate-100">Permissions → Absent (Full Day)</h4>
                       </div>
                       <div className="flex items-center gap-2">
                         <input
@@ -555,19 +555,19 @@ export default function SessionSettingsPage() {
                               setClassFormatRule(prev => ({ ...prev, permissionsPerAbsent: val }))
                             }
                           }}
-                          className="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                         />
-                        <span className="text-sm text-slate-600">permissions = <strong>1 absent full day</strong></span>
+                        <span className="text-sm text-slate-600 dark:text-slate-300">permissions = <strong>1 absent full day</strong></span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-2">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         Every {activeTab === 'STAFF' ? staffFormatRule.permissionsPerAbsent : classFormatRule.permissionsPerAbsent} accumulated permissions will be converted to 1 full-day absence in reports
                       </p>
                     </div>
 
-                    <div className="p-4 rounded-xl border border-red-200 bg-red-50">
+                    <div className="p-4 rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-lg">⏰</span>
-                        <h4 className="font-medium text-sm text-slate-800">Lates → Absent (Half Day)</h4>
+                        <h4 className="font-medium text-sm text-slate-800 dark:text-slate-100">Lates → Absent (Half Day)</h4>
                       </div>
                       <div className="flex items-center gap-2">
                         <input
@@ -583,22 +583,22 @@ export default function SessionSettingsPage() {
                               setClassFormatRule(prev => ({ ...prev, latesPerAbsentHalf: val }))
                             }
                           }}
-                          className="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                         />
-                        <span className="text-sm text-slate-600">lates = <strong>1 absent half day</strong></span>
+                        <span className="text-sm text-slate-600 dark:text-slate-300">lates = <strong>1 absent half day</strong></span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-2">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         Every {activeTab === 'STAFF' ? staffFormatRule.latesPerAbsentHalf : classFormatRule.latesPerAbsentHalf} accumulated lates will be converted to 1 half-day absence in reports
                       </p>
                     </div>
 
-                    <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 sm:col-span-2">
+                    <div className="p-4 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 sm:col-span-2">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-lg">🚫</span>
-                        <h4 className="font-medium text-sm text-slate-800">Mostly Absent → Day Absent</h4>
+                        <h4 className="font-medium text-sm text-slate-800 dark:text-slate-100">Mostly Absent → Day Absent</h4>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-600">If a {activeTab === 'STAFF' ? 'staff member' : 'student'} is absent in</span>
+                        <span className="text-sm text-slate-600 dark:text-slate-300">If a {activeTab === 'STAFF' ? 'staff member' : 'student'} is absent in</span>
                         <input
                           type="number"
                           min={0}
@@ -612,23 +612,23 @@ export default function SessionSettingsPage() {
                               setClassFormatRule(prev => ({ ...prev, absentSessionsForDayAbsent: val }))
                             }
                           }}
-                          className="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                         />
-                        <span className="text-sm text-slate-600">or more sessions in a day → count whole day as <strong>Absent</strong></span>
+                        <span className="text-sm text-slate-600 dark:text-slate-300">or more sessions in a day → count whole day as <strong>Absent</strong></span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-2">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         Example: Absent 3 sessions + Present/Late 1 session = whole day counted as Absent. Set to <strong>0</strong> to disable this rule.
                       </p>
                     </div>
 
                     {activeTab === 'STAFF' && (
-                      <div className="p-4 rounded-xl border border-orange-200 bg-orange-50 sm:col-span-2">
+                      <div className="p-4 rounded-xl border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/40 sm:col-span-2">
                         <div className="flex items-center gap-2 mb-3">
                           <span className="text-lg">⏱️</span>
-                          <h4 className="font-medium text-sm text-slate-800">Teacher Scan — Late Grace Period</h4>
+                          <h4 className="font-medium text-sm text-slate-800 dark:text-slate-100">Teacher Scan — Late Grace Period</h4>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm text-slate-600">A teacher scanning more than</span>
+                          <span className="text-sm text-slate-600 dark:text-slate-300">A teacher scanning more than</span>
                           <input
                             type="number"
                             min={0}
@@ -638,24 +638,24 @@ export default function SessionSettingsPage() {
                               const val = Math.max(0, Math.min(120, parseInt(e.target.value) || 0))
                               setStaffFormatRule(prev => ({ ...prev, teacherLateGraceMinutes: val }))
                             }}
-                            className="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                           />
-                          <span className="text-sm text-slate-600">minutes after their period start time will be marked <strong>Late</strong>.</span>
+                          <span className="text-sm text-slate-600 dark:text-slate-300">minutes after their period start time will be marked <strong>Late</strong>.</span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-2">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                           Applies to the Wattaman Teacher Scan page only. Within the grace window the scan is recorded as <strong>Present</strong>.
                         </p>
                       </div>
                     )}
 
-                    <div className="p-4 rounded-xl border border-blue-200 bg-blue-50 sm:col-span-2">
+                    <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/40 sm:col-span-2">
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-lg">🧪</span>
-                            <h4 className="font-medium text-sm text-slate-800">Case Study A/B Mixed Session Rules</h4>
+                            <h4 className="font-medium text-sm text-slate-800 dark:text-slate-100">Case Study A/B Mixed Session Rules</h4>
                           </div>
-                          <p className="text-xs text-slate-600">Apply professional half-day mixed scoring for AM/PM blocks in reports and dashboard.</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-300">Apply professional half-day mixed scoring for AM/PM blocks in reports and dashboard.</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
@@ -671,10 +671,10 @@ export default function SessionSettingsPage() {
                             }}
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                          <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                         </label>
                       </div>
-                      <ul className="mt-3 text-xs text-slate-600 space-y-1">
+                      <ul className="mt-3 text-xs text-slate-600 dark:text-slate-300 space-y-1">
                         <li>Case A: AM absent + PM permission gives Absent 0.5, Permission 0.5</li>
                         <li>Case B: AM present + AM absent + PM permission gives Present 0.5, Absent 0, Permission 0.5</li>
                       </ul>
@@ -688,8 +688,8 @@ export default function SessionSettingsPage() {
                 <div className="card p-5">
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-800">📅 Staff Weekly Schedule</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">📅 Staff Weekly Schedule</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         Mark days when staff are NOT expected to work. Day-off days are excluded from
                         staff attendance reports (not counted as absent, not auto-marked ABSENT).
                       </p>
@@ -723,9 +723,9 @@ export default function SessionSettingsPage() {
                     })}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <button type="button" onClick={() => setStaffSchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'day-off', SUN: 'day-off' })} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">Mon–Fri</button>
-                    <button type="button" onClick={() => setStaffSchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'same', SUN: 'day-off' })} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">Mon–Sat</button>
-                    <button type="button" onClick={() => setStaffSchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'same', SUN: 'same' })} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">All 7 days</button>
+                    <button type="button" onClick={() => setStaffSchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'day-off', SUN: 'day-off' })} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200">Mon–Fri</button>
+                    <button type="button" onClick={() => setStaffSchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'same', SUN: 'day-off' })} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200">Mon–Sat</button>
+                    <button type="button" onClick={() => setStaffSchedule({ MON: 'same', TUE: 'same', WED: 'same', THU: 'same', FRI: 'same', SAT: 'same', SUN: 'same' })} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200">All 7 days</button>
                   </div>
                 </div>
               )}

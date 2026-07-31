@@ -307,8 +307,8 @@ export default function TeacherSessionSettingsPage() {
         <div className="page-content">
           <div className="h-14 lg:hidden" />
           <div className="page-header">
-            <h1 className="text-2xl font-bold text-slate-800">{t('sessionSettings.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('sessionSettings.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Override global session time windows for your classes (Cambodia Time GMT+7).
             </p>
           </div>
@@ -325,14 +325,14 @@ export default function TeacherSessionSettingsPage() {
 
             {/* Class Selector */}
             <div className="card p-3 sm:p-4">
-              <label className="block text-sm font-medium text-slate-700 mb-2">Select Class</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Select Class</label>
               {classes.length === 0 && !loading ? (
-                <p className="text-sm text-slate-400">No classes assigned to you.</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500">No classes assigned to you.</p>
               ) : (
                 <select
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white dark:bg-slate-900"
                 >
                   {classes.map(cls => (
                     <option key={cls.id} value={cls.id}>
@@ -342,7 +342,7 @@ export default function TeacherSessionSettingsPage() {
                 </select>
               )}
               {isClassOverride && (
-                <span className="mt-2 sm:mt-0 sm:ml-3 inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                <span className="mt-2 sm:mt-0 sm:ml-3 inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900">
                   ⚡ Custom overrides active
                 </span>
               )}
@@ -351,7 +351,7 @@ export default function TeacherSessionSettingsPage() {
             {/* Attendance Format Presets */}
             {selectedClassId && !loading && configs.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">📋 Quick Presets — Choose Attendance Format</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">📋 Quick Presets — Choose Attendance Format</h3>
                 <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
                   {ATTENDANCE_PRESETS.map(preset => (
                     <button
@@ -364,10 +364,10 @@ export default function TeacherSessionSettingsPage() {
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base mb-2 ${PRESET_ICON_BG[preset.color]}`}>
                         {preset.icon}
                       </div>
-                      <div className="font-semibold text-sm text-slate-800">{preset.name}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{preset.description}</div>
+                      <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">{preset.name}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{preset.description}</div>
                       {selectedPreset === preset.id && (
-                        <div className="text-xs font-medium text-emerald-600 mt-1">✓ Active</div>
+                        <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-1">✓ Active</div>
                       )}
                     </button>
                   ))}
@@ -377,13 +377,13 @@ export default function TeacherSessionSettingsPage() {
                       selectedPreset === 'custom' ? 'ring-2 ring-slate-400 border-slate-400' : ''
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base mb-2 bg-slate-100 text-slate-600">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base mb-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                       🔧
                     </div>
-                    <div className="font-semibold text-sm text-slate-800">Custom</div>
-                    <div className="text-xs text-slate-500 mt-0.5">Set times manually</div>
+                    <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">Custom</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Set times manually</div>
                     {selectedPreset === 'custom' && (
-                      <div className="text-xs font-medium text-emerald-600 mt-1">✓ Active</div>
+                      <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-1">✓ Active</div>
                     )}
                   </button>
                 </div>
@@ -394,13 +394,13 @@ export default function TeacherSessionSettingsPage() {
               <div className="card p-12">
                 <div className="empty-state">
                   <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="text-sm text-slate-500 mt-3">Loading settings…</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading settings…</p>
                 </div>
               </div>
             ) : selectedClassId && configs.length > 0 ? (
               <>
                 {visibleSessions.length < 4 && (
-                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm bg-amber-50 text-amber-700 border border-amber-200">
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900">
                     <span>💡</span>
                     <span>Showing {visibleSessions.length} of 4 sessions. Hidden sessions are auto-configured by the preset.</span>
                   </div>
@@ -417,18 +417,18 @@ export default function TeacherSessionSettingsPage() {
                           {cfg.type === 'CHECK_IN' ? '📥' : '📤'}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-slate-800">{getSessionName(cfg.session)}</h3>
-                          <p className="text-xs text-slate-500">Session {cfg.session}</p>
+                          <h3 className="font-semibold text-slate-800 dark:text-slate-100">{getSessionName(cfg.session)}</h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Session {cfg.session}</p>
                         </div>
                       </div>
 
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-xs font-medium text-slate-500 mb-1">Type</label>
+                          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Type</label>
                           <select
                             value={cfg.type}
                             onChange={(e) => updateConfig(cfg.session, 'type', e.target.value)}
-                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                           >
                             <option value="CHECK_IN">📥 Check-In</option>
                             <option value="CHECK_OUT">📤 Check-Out</option>
@@ -436,21 +436,21 @@ export default function TeacherSessionSettingsPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">Start Time</label>
+                            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Start Time</label>
                             <input
                               type="time"
                               value={cfg.startTime}
                               onChange={(e) => updateConfig(cfg.session, 'startTime', e.target.value)}
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">End Time</label>
+                            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">End Time</label>
                             <input
                               type="time"
                               value={cfg.endTime}
                               onChange={(e) => updateConfig(cfg.session, 'endTime', e.target.value)}
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                             />
                           </div>
                         </div>
@@ -470,7 +470,7 @@ export default function TeacherSessionSettingsPage() {
                   {isClassOverride && (
                     <button
                       onClick={handleResetToDefaults}
-                      className="w-full sm:w-auto px-6 py-3.5 sm:py-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 active:bg-slate-100 font-medium text-sm sm:text-base transition-colors"
+                      className="w-full sm:w-auto px-6 py-3.5 sm:py-3 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 font-medium text-sm sm:text-base transition-colors"
                     >
                       ↩ Reset to Global Defaults
                     </button>

@@ -131,16 +131,16 @@ export default function LessonsPage() {
 
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex h-screen bg-gray-100 dark:bg-slate-800">
         <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
         <div className="flex-1 flex flex-col overflow-hidden">
 
           {/* Header */}
-          <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
             <div>
-              <button onClick={() => router.push('/admin/timetable')} className="text-indigo-600 text-sm hover:underline mb-1">← Back to Timetable</button>
-              <h1 className="text-xl font-bold text-gray-800">Lesson Contracts</h1>
-              <p className="text-sm text-gray-500">Manage teacher–subject–class assignments and lessons per week</p>
+              <button onClick={() => router.push('/admin/timetable')} className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline mb-1">← Back to Timetable</button>
+              <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Lesson Contracts</h1>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Manage teacher–subject–class assignments and lessons per week</p>
             </div>
             <button onClick={() => openModal()} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700">
               + New Lesson
@@ -148,26 +148,26 @@ export default function LessonsPage() {
           </div>
 
           {/* Toolbar: timetable selector + teacher filter */}
-          <div className="bg-white border-b border-gray-200 px-6 py-2 flex items-center gap-4 flex-wrap">
+          <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-2 flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 font-medium">Timetable:</label>
+              <label className="text-sm text-gray-600 dark:text-slate-300 font-medium">Timetable:</label>
               <select
-                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={selectedTT} onChange={e => setSelectedTT(e.target.value)}>
                 {timetables.map(tt => <option key={tt.id} value={tt.id}>{tt.name} · {tt.academicYear}</option>)}
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 font-medium">Teacher:</label>
+              <label className="text-sm text-gray-600 dark:text-slate-300 font-medium">Teacher:</label>
               <select
-                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={filterTeacher} onChange={e => setFilterTeacher(e.target.value)}>
                 <option value="">All teachers</option>
                 {teachers.map(t => <option key={t.id} value={t.id}>{t.lastName} {t.firstName}</option>)}
               </select>
             </div>
             {filterTeacher && (
-              <span className="text-xs text-gray-500">{displayed.length} lesson{displayed.length !== 1 ? 's' : ''}</span>
+              <span className="text-xs text-gray-500 dark:text-slate-400">{displayed.length} lesson{displayed.length !== 1 ? 's' : ''}</span>
             )}
           </div>
 
@@ -181,52 +181,52 @@ export default function LessonsPage() {
                 <p className="text-sm">Click "+ New Lesson" to add the first contract.</p>
               </div>
             ) : (
-              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="px-4 py-3 text-left font-semibold text-gray-600">Teacher</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-600">Subject</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-600">Class</th>
-                      <th className="px-4 py-3 text-center font-semibold text-gray-600">Lessons/Week</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-600">Type</th>
-                      <th className="px-4 py-3 text-right font-semibold text-gray-600">Actions</th>
+                    <tr className="bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
+                      <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-slate-300">Teacher</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-slate-300">Subject</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-slate-300">Class</th>
+                      <th className="px-4 py-3 text-center font-semibold text-gray-600 dark:text-slate-300">Lessons/Week</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-slate-300">Type</th>
+                      <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-slate-300">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {displayed.map(l => (
-                      <tr key={l.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <tr key={l.id} className="border-b border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                               style={{ backgroundColor: l.teacher.color ?? '#22c55e' }} />
-                            <span className="text-gray-800">{l.teacher.lastName} {l.teacher.firstName}</span>
+                            <span className="text-gray-800 dark:text-slate-100">{l.teacher.lastName} {l.teacher.firstName}</span>
                             <span className="text-gray-400 text-xs">({l.teacher.short})</span>
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5">
                             {colorBadge(l.subject.color, l.subject.short)}
-                            <span className="text-gray-700">{l.subject.name}</span>
+                            <span className="text-gray-700 dark:text-slate-200">{l.subject.name}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5">
                             {colorBadge(l.class.color, l.class.short)}
-                            <span className="text-gray-700">{l.class.name}</span>
+                            <span className="text-gray-700 dark:text-slate-200">{l.class.name}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <span className="inline-block bg-indigo-50 text-indigo-700 font-semibold rounded px-2 py-0.5 text-xs">
+                          <span className="inline-block bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold rounded px-2 py-0.5 text-xs">
                             {l.perWeek}×/week
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-gray-600 text-xs capitalize">
+                        <td className="px-4 py-3 text-gray-600 dark:text-slate-300 text-xs capitalize">
                           {l.lessonType.toLowerCase()}
                         </td>
                         <td className="px-4 py-3 text-right whitespace-nowrap">
-                          <button onClick={() => openModal(l)} className="text-blue-600 hover:underline text-sm mr-3">Edit</button>
-                          <button onClick={() => setDeleteId(l.id)} className="text-red-500 hover:underline text-sm">Remove</button>
+                          <button onClick={() => openModal(l)} className="text-blue-600 dark:text-blue-400 hover:underline text-sm mr-3">Edit</button>
+                          <button onClick={() => setDeleteId(l.id)} className="text-red-500 dark:text-red-400 hover:underline text-sm">Remove</button>
                         </td>
                       </tr>
                     ))}
@@ -241,21 +241,21 @@ export default function LessonsPage() {
       {/* Add / Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="font-bold text-gray-800">{editing ? 'Edit Lesson' : 'New Lesson'}</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+              <h2 className="font-bold text-gray-800 dark:text-slate-100">{editing ? 'Edit Lesson' : 'New Lesson'}</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
             </div>
             <div className="px-5 py-4 space-y-4">
               {saveError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-sm">{saveError}</div>
+                <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-lg px-3 py-2 text-sm">{saveError}</div>
               )}
 
               {/* Teacher */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Teacher</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Teacher</label>
                 <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={fTeacher} onChange={e => setFTeacher(e.target.value)}>
                   <option value="">Select teacher</option>
                   {teachers.map(t => (
@@ -266,9 +266,9 @@ export default function LessonsPage() {
 
               {/* Subject */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Subject</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Subject</label>
                 <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={fSubject} onChange={e => setFSubject(e.target.value)}>
                   <option value="">Select subject</option>
                   {subjects.map(s => (
@@ -279,9 +279,9 @@ export default function LessonsPage() {
 
               {/* Class */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Class</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Class</label>
                 <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={fClass} onChange={e => setFClass(e.target.value)}>
                   <option value="">Select class</option>
                   {classes.map(c => (
@@ -292,9 +292,9 @@ export default function LessonsPage() {
 
               {/* Lessons per week */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Lessons / Week</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Lessons / Week</label>
                 <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={fPerWeek} onChange={e => setFPerWeek(+e.target.value)}>
                   {[1,2,3,4,5,6,7,8,9,10].map(n => (
                     <option key={n} value={n}>{n} {n === 1 ? 'time' : 'times'} per week</option>
@@ -304,9 +304,9 @@ export default function LessonsPage() {
 
               {/* Lesson Type */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Lesson Type</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Lesson Type</label>
                 <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={fType} onChange={e => setFType(e.target.value)}>
                   {LESSON_TYPES.map(lt => (
                     <option key={lt.value} value={lt.value}>{lt.label}</option>
@@ -314,8 +314,8 @@ export default function LessonsPage() {
                 </select>
               </div>
             </div>
-            <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Cancel</button>
+            <div className="px-5 py-3 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-2">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium">Cancel</button>
               <button
                 onClick={handleSave}
                 disabled={saving || !fTeacher || !fSubject || !fClass}
@@ -330,11 +330,11 @@ export default function LessonsPage() {
       {/* Delete confirmation */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
-            <p className="text-gray-800 font-semibold mb-2">Remove this lesson contract?</p>
-            <p className="text-xs text-gray-500 mb-4">Scheduled entries linked to this lesson will lose their lesson reference.</p>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
+            <p className="text-gray-800 dark:text-slate-100 font-semibold mb-2">Remove this lesson contract?</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">Scheduled entries linked to this lesson will lose their lesson reference.</p>
             <div className="flex justify-center gap-3">
-              <button onClick={() => setDeleteId(null)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => setDeleteId(null)} className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm">Cancel</button>
               <button onClick={() => handleDelete(deleteId)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm">Remove</button>
             </div>
           </div>

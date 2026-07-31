@@ -503,16 +503,16 @@ export default function CertificatePage() {
       {/* Exporting overlay */}
       {exporting && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-4">
             <div className="relative w-14 h-14">
-              <div className="w-14 h-14 rounded-full border-4 border-amber-100 flex items-center justify-center">
-                <IcCertificate className="w-7 h-7 text-amber-500" />
+              <div className="w-14 h-14 rounded-full border-4 border-amber-100 dark:border-amber-900 flex items-center justify-center">
+                <IcCertificate className="w-7 h-7 text-amber-500 dark:text-amber-400" />
               </div>
               <div className="absolute inset-0 rounded-full border-4 border-amber-500 border-t-transparent animate-spin" />
             </div>
             <div className="text-center">
-              <p className="font-semibold text-slate-800">Generating Certificates…</p>
-              <p className="text-xs text-slate-400 mt-1">Please wait</p>
+              <p className="font-semibold text-slate-800 dark:text-slate-100">Generating Certificates…</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Please wait</p>
             </div>
           </div>
         </div>
@@ -536,7 +536,7 @@ export default function CertificatePage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white tracking-tight">Certificate Dashboard</h1>
-                <p className="text-sm text-slate-400 mt-0.5">
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">
                   {isStudent
                     ? selectedYearObj
                       ? `${studyYearLabel} · ${classes.length} classes · ${totalStudents} students`
@@ -563,7 +563,7 @@ export default function CertificatePage() {
         {/* ══════════════════════════════════════════════════
             TABS + TOOLBAR BAR
         ══════════════════════════════════════════════════ */}
-        <div className="bg-white border-b border-slate-200 shadow-sm sticky top-14 z-30">
+        <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm sticky top-14 z-30">
           <div className="flex items-stretch justify-between px-2">
             {/* Tabs */}
             <div className="flex items-stretch">
@@ -575,7 +575,7 @@ export default function CertificatePage() {
               <ToolbarBtn icon={<IcSettings className="w-4 h-4" />} label="Settings" active={showSettings} onClick={() => setShowSettings((v) => !v)} />
               <ToolbarBtn
                 icon={designLoading
-                  ? <span className="w-4 h-4 flex items-center justify-center"><span className="w-3 h-3 rounded-full border-2 border-slate-300 border-t-amber-500 animate-spin inline-block" /></span>
+                  ? <span className="w-4 h-4 flex items-center justify-center"><span className="w-3 h-3 rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-amber-500 animate-spin inline-block" /></span>
                   : <IcRefresh className="w-4 h-4" />}
                 label="Refresh"
                 onClick={isStudent ? reloadStudentDesign : reloadStaffDesign}
@@ -603,8 +603,8 @@ export default function CertificatePage() {
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200/80 px-6 py-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2 shrink-0">
-                <IcTrophy className="w-4 h-4 text-amber-600" />
-                <span className="text-sm font-semibold text-slate-700">Generate Certificates for:</span>
+                <IcTrophy className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Generate Certificates for:</span>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 {(['all', 3, 4, 5] as const).map((opt) => (
@@ -624,12 +624,12 @@ export default function CertificatePage() {
                 ))}
               </div>
               {topRankFilter !== 'all' && hasScores && (
-                <span className="text-xs font-medium text-amber-700 bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-full">
+                <span className="text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 px-3 py-1.5 rounded-full">
                   {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''} shown
                 </span>
               )}
               {topRankFilter !== 'all' && !hasScores && (
-                <span className="text-xs text-slate-400 italic">Open a class to apply ranking filter</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 italic">Open a class to apply ranking filter</span>
               )}
             </div>
           </div>
@@ -658,9 +658,9 @@ export default function CertificatePage() {
               )}
 
               {selectedStudyYear && loadingClasses && (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center">
                   <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-sm text-slate-500 mt-3">Loading classes…</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading classes…</p>
                 </div>
               )}
 
@@ -672,8 +672,8 @@ export default function CertificatePage() {
                   ) : (
                     <>
                       <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
-                          Select a class <span className="normal-case font-normal text-slate-400 ml-1">({classes.length})</span>
+                        <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                          Select a class <span className="normal-case font-normal text-slate-400 dark:text-slate-500 ml-1">({classes.length})</span>
                         </h2>
                         {totalStudents > 0 && (
                           <button
@@ -690,7 +690,7 @@ export default function CertificatePage() {
                           <button
                             key={cls.id}
                             onClick={() => { setSelectedClassId(cls.id); setStudentSearch(''); setStudentPage(1); setSelectedStudentIds(new Set()); }}
-                            className="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:border-amber-300 hover:shadow-lg hover:shadow-amber-50 hover:-translate-y-0.5 transition-all duration-200 text-left"
+                            className="group bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-lg hover:shadow-amber-50 hover:-translate-y-0.5 transition-all duration-200 text-left"
                           >
                             <div className="bg-gradient-to-br from-amber-400 to-orange-500 px-5 py-5">
                               <div className="flex items-start justify-between">
@@ -705,8 +705,8 @@ export default function CertificatePage() {
                               {cls.subject && <p className="text-white/70 text-xs mt-0.5">{cls.subject}</p>}
                             </div>
                             <div className="px-5 py-3 flex items-center justify-between">
-                              <span className="text-xs text-slate-500 truncate">{cls.teacher ? cls.teacher.name : 'No teacher'}</span>
-                              <span className="text-xs font-semibold text-amber-500 group-hover:text-amber-600 transition-colors">Open →</span>
+                              <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{cls.teacher ? cls.teacher.name : 'No teacher'}</span>
+                              <span className="text-xs font-semibold text-amber-500 dark:text-amber-400 group-hover:text-amber-600 transition-colors">Open →</span>
                             </div>
                           </button>
                         ))}
@@ -720,11 +720,11 @@ export default function CertificatePage() {
               {selectedStudyYear && !loadingClasses && selectedClass && (
                 <div className="space-y-4">
                   {/* Action bar */}
-                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                     <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
                       <button
                         onClick={() => { setSelectedClassId(null); setSelectedStudentIds(new Set()); }}
-                        className="inline-flex items-center gap-1.5 text-slate-500 hover:text-amber-600 font-medium text-sm transition-colors shrink-0"
+                        className="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 font-medium text-sm transition-colors shrink-0"
                       >
                         <IcArrowLeft className="w-4 h-4" /> Back
                       </button>
@@ -733,33 +733,33 @@ export default function CertificatePage() {
                           <IcGraduate className="w-4 h-4 text-white" />
                         </div>
                         <div className="min-w-0">
-                          <h2 className="font-bold text-slate-800 text-base leading-tight truncate">{selectedClass.name}</h2>
-                          <p className="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap">
+                          <h2 className="font-bold text-slate-800 dark:text-slate-100 text-base leading-tight truncate">{selectedClass.name}</h2>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1.5 flex-wrap">
                             {selectedClass.teacher && <span>{selectedClass.teacher.name}</span>}
                             {studyYearLabel && <><span className="text-slate-300">·</span><span>{studyYearLabel}</span></>}
                             <span className="text-slate-300">·</span>
                             <span>{filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}</span>
                             {loadingScores && (
-                              <span className="inline-flex items-center gap-1 text-amber-500">
-                                <span className="w-2.5 h-2.5 rounded-full border-2 border-amber-300 border-t-amber-600 animate-spin" />
+                              <span className="inline-flex items-center gap-1 text-amber-500 dark:text-amber-400">
+                                <span className="w-2.5 h-2.5 rounded-full border-2 border-amber-300 dark:border-amber-800 border-t-amber-600 animate-spin" />
                                 Loading scores…
                               </span>
                             )}
-                            {!loadingScores && hasScores && <span className="text-emerald-500 font-medium">· Scores ready</span>}
+                            {!loadingScores && hasScores && <span className="text-emerald-500 dark:text-emerald-400 font-medium">· Scores ready</span>}
                           </p>
                         </div>
                       </div>
                       <div className="sm:ml-auto flex items-center gap-2 flex-wrap">
                         <div className="relative">
-                          <IcSearch className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <IcSearch className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                           <input
                             type="text" placeholder="Search…" value={studentSearch}
                             onChange={(e) => { setStudentSearch(e.target.value); setStudentPage(1); }}
-                            className="pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-amber-300 focus:ring-2 focus:ring-amber-100 outline-none transition-all w-40"
+                            className="pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 focus:border-amber-300 focus:ring-2 focus:ring-amber-100 outline-none transition-all w-40"
                           />
                         </div>
-                        <button onClick={() => setSelectedStudentIds(new Set(filteredStudents.map((s) => s.id)))} className="px-3 py-2 text-xs rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 font-medium transition-colors">☑ All</button>
-                        <button onClick={() => setSelectedStudentIds(new Set())} className="px-3 py-2 text-xs rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 font-medium transition-colors">☐ None</button>
+                        <button onClick={() => setSelectedStudentIds(new Set(filteredStudents.map((s) => s.id)))} className="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium transition-colors">☑ All</button>
+                        <button onClick={() => setSelectedStudentIds(new Set())} className="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium transition-colors">☐ None</button>
                         {filteredStudents.length > 0 && (
                           <button
                             onClick={() => {
@@ -776,12 +776,12 @@ export default function CertificatePage() {
                       </div>
                     </div>
                     {selectedStudentIds.size > 0 && (
-                      <div className="px-5 py-2.5 bg-amber-50 border-t border-amber-100 flex items-center gap-2">
+                      <div className="px-5 py-2.5 bg-amber-50 dark:bg-amber-950/40 border-t border-amber-100 dark:border-amber-900 flex items-center gap-2">
                         <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center shrink-0">
                           <IcCheck className="w-3 h-3 text-white" />
                         </div>
-                        <span className="text-xs font-medium text-amber-700">{selectedStudentIds.size} selected for export</span>
-                        <button onClick={() => setSelectedStudentIds(new Set())} className="ml-auto text-xs text-amber-500 hover:text-amber-700 font-medium">Clear</button>
+                        <span className="text-xs font-medium text-amber-700 dark:text-amber-300">{selectedStudentIds.size} selected for export</span>
+                        <button onClick={() => setSelectedStudentIds(new Set())} className="ml-auto text-xs text-amber-500 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium">Clear</button>
                       </div>
                     )}
                   </div>
@@ -824,26 +824,26 @@ export default function CertificatePage() {
           {/* ── STAFF TAB ── */}
           {!isStudent && (
             <div className="space-y-4">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-4">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm px-5 py-4">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex items-center gap-2 flex-1 flex-wrap">
                     <div className="relative flex-1 min-w-0 sm:min-w-[200px]">
-                      <IcSearch className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <IcSearch className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                       <input type="text" placeholder="Search staff…" value={staffSearch}
                         onChange={(e) => { setStaffSearch(e.target.value); setStaffPage(1); }}
-                        className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 outline-none transition-all"
+                        className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 outline-none transition-all"
                       />
                     </div>
                     <select value={staffRoleFilter}
                       onChange={(e) => { setStaffRoleFilter(e.target.value); setStaffPage(1); setSelectedStaffIds(new Set()); }}
-                      className="text-sm rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:border-emerald-300"
+                      className="text-sm rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 focus:outline-none focus:border-emerald-300"
                     >
                       {staffRoles.map((r) => <option key={r} value={r}>{r === 'ALL' ? 'All Roles' : r}</option>)}
                     </select>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <button onClick={() => setSelectedStaffIds(new Set(filteredStaff.map((s) => s.id)))} className="px-3 py-2 text-xs rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 font-medium transition-colors">☑ All</button>
-                    <button onClick={() => setSelectedStaffIds(new Set())} className="px-3 py-2 text-xs rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 font-medium transition-colors">☐ None</button>
+                    <button onClick={() => setSelectedStaffIds(new Set(filteredStaff.map((s) => s.id)))} className="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium transition-colors">☑ All</button>
+                    <button onClick={() => setSelectedStaffIds(new Set())} className="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium transition-colors">☐ None</button>
                     {filteredStaff.length > 0 && (
                       <button
                         onClick={() => exportAllStaffPDF(selectedStaffIds.size > 0 ? filteredStaff.filter((s) => selectedStaffIds.has(s.id)) : filteredStaff)}
@@ -857,20 +857,20 @@ export default function CertificatePage() {
                   </div>
                 </div>
                 {selectedStaffIds.size > 0 && (
-                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
                     <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
                       <IcCheck className="w-3 h-3 text-white" />
                     </div>
-                    <span className="text-xs font-medium text-emerald-700">{selectedStaffIds.size} selected for export</span>
-                    <button onClick={() => setSelectedStaffIds(new Set())} className="ml-auto text-xs text-emerald-500 hover:text-emerald-700 font-medium">Clear</button>
+                    <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">{selectedStaffIds.size} selected for export</span>
+                    <button onClick={() => setSelectedStaffIds(new Set())} className="ml-auto text-xs text-emerald-500 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium">Clear</button>
                   </div>
                 )}
               </div>
 
               {loadingStaff ? (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center">
                   <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-sm text-slate-500 mt-3">Loading staff…</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading staff…</p>
                 </div>
               ) : pagedStaff.length === 0 ? (
                 <EmptyState icon={<IcBriefcase className="w-10 h-10 text-slate-300" />} title="No staff found"
@@ -935,7 +935,7 @@ function ToolbarBtn({ icon, label, onClick, active, disabled, accent }: {
 }
 
 function ToolbarSep() {
-  return <div className="w-px h-8 bg-slate-200 mx-1 self-center" />;
+  return <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1 self-center" />;
 }
 
 function InlineEditor({ cardType, onSave, onClose }: {
@@ -944,14 +944,14 @@ function InlineEditor({ cardType, onSave, onClose }: {
   const CardEditor = dynamic(() => import('../../../components/card-designer/CardEditor'), { ssr: false });
   const label = cardType === 'certificate-student' ? 'Student Certificate' : 'Staff Certificate';
   return (
-    <div className="border-b border-slate-200 bg-slate-50">
-      <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-slate-200">
+    <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+      <div className="flex items-center justify-between px-6 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-2">
-          <IcEdit className="w-4 h-4 text-amber-500" />
-          <span className="font-semibold text-slate-800 text-sm">Editing {label} Design</span>
-          <span className="text-xs text-slate-400">· Save to apply changes</span>
+          <IcEdit className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+          <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">Editing {label} Design</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">· Save to apply changes</span>
         </div>
-        <button onClick={onClose} className="text-sm text-slate-400 hover:text-slate-600 font-medium px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">✕ Close</button>
+        <button onClick={onClose} className="text-sm text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">✕ Close</button>
       </div>
       <div className="p-3"><CardEditor initialCardType={cardType} onSave={onSave} /></div>
     </div>
@@ -960,11 +960,11 @@ function InlineEditor({ cardType, onSave, onClose }: {
 
 function EmptyState({ icon, title, desc }: { icon: ReactNode; title: string; desc: string }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-16">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-16">
       <div className="flex flex-col items-center text-center gap-3">
         <div className="mb-1">{icon}</div>
-        <p className="font-semibold text-slate-600 text-base">{title}</p>
-        <p className="text-sm text-slate-400 max-w-xs">{desc}</p>
+        <p className="font-semibold text-slate-600 dark:text-slate-300 text-base">{title}</p>
+        <p className="text-sm text-slate-400 dark:text-slate-500 max-w-xs">{desc}</p>
       </div>
     </div>
   );
@@ -975,11 +975,11 @@ function PaginationBar({ page, total, onPage, from, to, count, accentClass }: {
   from: number; to: number; count: number; accentClass: string;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 px-4 py-3">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500">Showing {from}–{to} of {count}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">Showing {from}–{to} of {count}</p>
         <div className="flex items-center gap-1">
-          <button onClick={() => onPage(Math.max(1, page - 1))} disabled={page <= 1} className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">← Prev</button>
+          <button onClick={() => onPage(Math.max(1, page - 1))} disabled={page <= 1} className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">← Prev</button>
           {Array.from({ length: total }, (_, i) => i + 1)
             .filter((p) => p === 1 || p === total || Math.abs(p - page) <= 1)
             .reduce<(number | string)[]>((acc, p, i, arr) => {
@@ -987,10 +987,10 @@ function PaginationBar({ page, total, onPage, from, to, count, accentClass }: {
               acc.push(p); return acc;
             }, [])
             .map((p, i) => typeof p === 'string'
-              ? <span key={`d${i}`} className="px-1 text-xs text-slate-400">…</span>
+              ? <span key={`d${i}`} className="px-1 text-xs text-slate-400 dark:text-slate-500">…</span>
               : <button key={p} onClick={() => onPage(p)} className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${p === page ? accentClass : 'border-slate-200 hover:bg-slate-50'}`}>{p}</button>
             )}
-          <button onClick={() => onPage(Math.min(total, page + 1))} disabled={page >= total} className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next →</button>
+          <button onClick={() => onPage(Math.min(total, page + 1))} disabled={page >= total} className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next →</button>
         </div>
       </div>
     </div>
@@ -1023,10 +1023,10 @@ function CertPreview({ name, subtitle, photo, design, fieldValues, isSelected, o
     <div className={`group flex flex-col rounded-2xl overflow-hidden border-2 transition-all duration-200 ${
       isSelected ? 'border-amber-400 shadow-lg shadow-amber-100' : 'border-slate-200 shadow-sm hover:border-amber-200 hover:shadow-md'
     }`}>
-      <div className="relative cursor-pointer bg-slate-100" style={{ aspectRatio: `${design.width} / ${design.height}` }} onClick={onToggleSelect} title="Click to select">
+      <div className="relative cursor-pointer bg-slate-100 dark:bg-slate-800" style={{ aspectRatio: `${design.width} / ${design.height}` }} onClick={onToggleSelect} title="Click to select">
         {rendering || !imgSrc ? (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-7 h-7 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+            <div className="w-7 h-7 border-2 border-amber-400 dark:border-amber-700 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <img src={imgSrc} alt={`${name} certificate`} className="w-full h-full object-contain" />
@@ -1042,31 +1042,31 @@ function CertPreview({ name, subtitle, photo, design, fieldValues, isSelected, o
           <div className="absolute top-2 left-2 bg-slate-700/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow leading-none pointer-events-none">#{ranking}</div>
         )}
       </div>
-      <div className="bg-white px-3 py-3">
+      <div className="bg-white dark:bg-slate-900 px-3 py-3">
         <div className="flex items-start justify-between gap-1">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-800 truncate">{name}</p>
-            <p className="text-xs text-slate-400 truncate">{subtitle}</p>
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{name}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{subtitle}</p>
           </div>
-          {ranking && <span className="text-xs font-bold text-amber-500 shrink-0">#{ranking}</span>}
+          {ranking && <span className="text-xs font-bold text-amber-500 dark:text-amber-400 shrink-0">#{ranking}</span>}
         </div>
         {stats && (
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
             <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${gradeColor}`}>{stats.grade}</span>
-            <span className="text-[11px] text-slate-500">GPA {stats.gpa.toFixed(2)}</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">GPA {stats.gpa.toFixed(2)}</span>
             <span className="text-[11px] text-slate-300">·</span>
-            <span className="text-[11px] text-slate-500">{stats.averagePct.toFixed(1)}%</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">{stats.averagePct.toFixed(1)}%</span>
             <span className="text-[11px] text-slate-300">·</span>
-            <span className="text-[11px] text-slate-500">{stats.total.toFixed(0)} pts</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">{stats.total.toFixed(0)} pts</span>
           </div>
         )}
         <div className="mt-2.5 flex gap-1.5">
           <button onClick={onDownloadPNG} disabled={!imgSrc}
-            className="flex-1 inline-flex items-center justify-center gap-1 text-[11px] px-2 py-1.5 rounded-lg font-medium border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-40">
+            className="flex-1 inline-flex items-center justify-center gap-1 text-[11px] px-2 py-1.5 rounded-lg font-medium border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40">
             <IcDownload className="w-3 h-3" /> PNG
           </button>
           <button onClick={onDownloadPDF} disabled={!imgSrc}
-            className="flex-1 inline-flex items-center justify-center gap-1 text-[11px] px-2 py-1.5 rounded-lg font-medium border border-amber-200 text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-40">
+            className="flex-1 inline-flex items-center justify-center gap-1 text-[11px] px-2 py-1.5 rounded-lg font-medium border border-amber-200 dark:border-amber-900 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors disabled:opacity-40">
             <IcPrint className="w-3 h-3" /> PDF
           </button>
         </div>

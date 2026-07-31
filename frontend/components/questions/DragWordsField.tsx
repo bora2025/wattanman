@@ -98,8 +98,8 @@ export function DragWordsEditor({ data, onChange }: { data: any; onChange: (d: a
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-slate-500">
-        Type the sentence with <code className="bg-slate-100 px-1 rounded">___</code> where each blank goes, then fill in the answer for each blank below — e.g. &quot;John likes ___ football with ___ friends.&quot;
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Type the sentence with <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded">___</code> where each blank goes, then fill in the answer for each blank below — e.g. &quot;John likes ___ football with ___ friends.&quot;
       </p>
       <textarea value={sentence} onChange={e => setSentence(e.target.value)} rows={3} placeholder="John likes ___ football with ___ friends." className="w-full border rounded-lg px-3 py-2 text-sm resize-none" />
 
@@ -107,7 +107,7 @@ export function DragWordsEditor({ data, onChange }: { data: any; onChange: (d: a
         <div className="space-y-1.5">
           {answers.map((a, i) => (
             <div key={i} className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 w-14 shrink-0">Blank {i + 1}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 w-14 shrink-0">Blank {i + 1}</span>
               <input
                 type="text"
                 value={a.word}
@@ -121,7 +121,7 @@ export function DragWordsEditor({ data, onChange }: { data: any; onChange: (d: a
       )}
 
       {sentence && (
-        <div className="text-sm bg-white border rounded-lg p-2 leading-relaxed">
+        <div className="text-sm bg-white dark:bg-slate-900 border rounded-lg p-2 leading-relaxed">
           {(() => {
             const parts = sentence.split(BLANK_RE)
             const out: ReactNode[] = []
@@ -143,7 +143,7 @@ export function DragWordsEditor({ data, onChange }: { data: any; onChange: (d: a
       )}
 
       <div>
-        <label className="text-xs text-slate-500 block mb-1">Extra decoy words <span className="text-slate-400">(optional, comma-separated — shown in the word bank but don&apos;t fit any blank)</span></label>
+        <label className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Extra decoy words <span className="text-slate-400 dark:text-slate-500">(optional, comma-separated — shown in the word bank but don&apos;t fit any blank)</span></label>
         <input
           type="text"
           value={distractors.join(',')}
@@ -192,9 +192,9 @@ export function DragWordsInput({ data, value, onChange, disabled }: { data: any;
               : <DroppableBlank key={seg.id} id={seg.id} group={seg.group} word={filled[seg.id]} onClear={() => clearBlank(seg.id)} />
           )}
         </div>
-        <p className="text-xs text-slate-500 mb-2">Drag a word into each blank (tap a filled blank to clear it).</p>
-        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg border border-dashed border-slate-300">
-          {wordBank.length === 0 && <span className="text-xs text-slate-400">No words</span>}
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Drag a word into each blank (tap a filled blank to clear it).</p>
+        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-dashed border-slate-300 dark:border-slate-600">
+          {wordBank.length === 0 && <span className="text-xs text-slate-400 dark:text-slate-500">No words</span>}
           {wordBank.map((w, i) => (
             <DraggableWord key={`${w.word}::${i}`} id={`${w.word}::${i}`} word={w.word} group={w.group} used={placedWords.includes(w.word)} />
           ))}

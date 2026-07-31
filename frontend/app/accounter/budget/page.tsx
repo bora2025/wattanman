@@ -92,7 +92,7 @@ function BarChart({ breakdown }: { breakdown: BreakdownItem[] }) {
   return (
     <div className="flex flex-col gap-3">
       {/* legend */}
-      <div className="flex gap-4 text-xs text-gray-500">
+      <div className="flex gap-4 text-xs text-gray-500 dark:text-slate-400">
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-emerald-400 inline-block" />Collected
         </span>
@@ -198,12 +198,12 @@ function BudgetDashboard() {
         {/* Page header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Budget Report</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Fee collection analytics</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Budget Report</h1>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Fee collection analytics</p>
           </div>
           {report && (
             <button onClick={exportCSV}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
@@ -213,9 +213,9 @@ function BudgetDashboard() {
         </div>
 
         {/* Period tabs + date navigator */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center gap-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 flex flex-wrap items-center gap-4">
           {/* Tabs */}
-          <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+          <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-xl p-1">
             {PERIODS.map(({ key, label }) => (
               <button key={key} onClick={() => setPeriod(key)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
@@ -228,20 +228,20 @@ function BudgetDashboard() {
           {/* Date nav */}
           <div className="flex items-center gap-1 ml-auto">
             <button onClick={() => setAnchor(a => navigateDate(period, a, -1))}
-              className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition">
+              className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 dark:text-slate-400 transition">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <span className="text-sm font-semibold text-gray-800 w-52 text-center">{rangeLabel}</span>
+            <span className="text-sm font-semibold text-gray-800 dark:text-slate-100 w-52 text-center">{rangeLabel}</span>
             <button onClick={() => setAnchor(a => navigateDate(period, a, 1))}
-              className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition">
+              className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 dark:text-slate-400 transition">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
             <button onClick={() => setAnchor(anchorToday())}
-              className="ml-2 px-3 py-1.5 text-xs font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+              className="ml-2 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition">
               Today
             </button>
           </div>
@@ -257,7 +257,7 @@ function BudgetDashboard() {
             Loading…
           </div>
         ) : error ? (
-          <div className="flex items-center justify-center h-32 text-red-500 text-sm">{error}</div>
+          <div className="flex items-center justify-center h-32 text-red-500 dark:text-red-400 text-sm">{error}</div>
         ) : s ? (
           <>
             {/* Summary stat cards */}
@@ -289,18 +289,18 @@ function BudgetDashboard() {
             </div>
 
             {/* Bar chart */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-sm font-semibold text-gray-700">Collection Overview</h2>
+                <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Collection Overview</h2>
                 <span className="text-xs text-gray-400">{rangeLabel}</span>
               </div>
               <BarChart breakdown={report!.breakdown} />
             </div>
 
             {/* Payment table */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-sm font-semibold text-gray-700">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800">
+                <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">
                   Payments
                   <span className="ml-2 text-gray-400 font-normal">({report!.payments.length})</span>
                 </h2>
@@ -312,21 +312,21 @@ function BudgetDashboard() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50 border-b border-gray-100">
+                    <thead className="bg-gray-50 dark:bg-slate-800 border-b border-gray-100 dark:border-slate-800">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Student</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Class</th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Note</th>
-                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Date / Time</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Student</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Class</th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Note</th>
+                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date / Time</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50">
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
                       {report!.payments.map(p => (
                         <tr key={p.id} className="hover:bg-gray-50/60 transition">
-                          <td className="px-6 py-3.5 font-medium text-gray-900">{p.studentName}</td>
-                          <td className="px-4 py-3.5 text-gray-500">{p.class || '—'}</td>
-                          <td className="px-4 py-3.5 text-right font-semibold text-emerald-700">{fmt(p.amount)}</td>
+                          <td className="px-6 py-3.5 font-medium text-gray-900 dark:text-slate-100">{p.studentName}</td>
+                          <td className="px-4 py-3.5 text-gray-500 dark:text-slate-400">{p.class || '—'}</td>
+                          <td className="px-4 py-3.5 text-right font-semibold text-emerald-700 dark:text-emerald-300">{fmt(p.amount)}</td>
                           <td className="px-4 py-3.5 text-gray-400 text-xs">{p.note || '—'}</td>
                           <td className="px-6 py-3.5 text-right text-xs text-gray-400 leading-relaxed">
                             {p.date}<br />{p.time}
@@ -334,12 +334,12 @@ function BudgetDashboard() {
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="bg-gray-50/70 border-t border-gray-200">
+                    <tfoot className="bg-gray-50/70 border-t border-gray-200 dark:border-slate-700">
                       <tr>
-                        <td colSpan={2} className="px-6 py-3 text-xs font-semibold text-gray-500">
+                        <td colSpan={2} className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400">
                           Total — {report!.payments.length} payment{report!.payments.length !== 1 ? 's' : ''}
                         </td>
-                        <td className="px-4 py-3 text-right font-bold text-emerald-800">{fmt(s.totalCollected)}</td>
+                        <td className="px-4 py-3 text-right font-bold text-emerald-800 dark:text-emerald-300">{fmt(s.totalCollected)}</td>
                         <td colSpan={2} />
                       </tr>
                     </tfoot>
@@ -359,7 +359,7 @@ function BudgetDashboard() {
 export default function BudgetPage() {
   return (
     <AuthGuard allowedRoles={['ACCOUNTER', 'ADMIN']}>
-      <div className="flex min-h-screen lg:h-screen bg-gray-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen lg:h-screen bg-gray-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Accounter" navItems={accounterNav} accentColor="emerald" />
         <BudgetDashboard />
       </div>

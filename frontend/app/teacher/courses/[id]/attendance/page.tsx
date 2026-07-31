@@ -145,12 +145,12 @@ export default function TeacherCourseAttendancePage() {
 
   return (
     <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-800">
         <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
           <div className="flex items-center justify-between">
             <Link
               href={`/teacher/courses/${courseId}`}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
             >
               ← Back to course
             </Link>
@@ -173,7 +173,7 @@ export default function TeacherCourseAttendancePage() {
                 )
                   generateFromLessons.mutate()
               }}
-              className="rounded-md border border-blue-300 bg-white px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-50 disabled:opacity-60"
+              className="rounded-md border border-blue-300 dark:border-blue-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 disabled:opacity-60"
             >
               {generateFromLessons.isPending
                 ? 'Generating…'
@@ -182,7 +182,7 @@ export default function TeacherCourseAttendancePage() {
             </div>
           </div>
 
-          <h1 className="text-2xl font-bold text-slate-800">
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
             Attendance · {course?.title || ''}
           </h1>
 
@@ -195,10 +195,10 @@ export default function TeacherCourseAttendancePage() {
             />
           )}
 
-          {isLoading && <div className="text-sm text-slate-500">Loading sessions…</div>}
+          {isLoading && <div className="text-sm text-slate-500 dark:text-slate-400">Loading sessions…</div>}
 
           {sessions.length === 0 && !isLoading && (
-            <div className="rounded-md border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+            <div className="rounded-md border border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 p-6 text-center text-sm text-slate-500 dark:text-slate-400">
               No sessions yet. Create one to start tracking attendance.
             </div>
           )}
@@ -207,27 +207,27 @@ export default function TeacherCourseAttendancePage() {
             {sessions.map((s) => (
               <li
                 key={s.id}
-                className="rounded-lg border border-slate-200 bg-white shadow-sm"
+                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3 p-4">
                   <div>
-                    <div className="font-semibold text-slate-800">{s.title}</div>
-                    <div className="text-xs text-slate-500">
+                    <div className="font-semibold text-slate-800 dark:text-slate-100">{s.title}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
                       {fmt(s.scheduledAt)} · {s.durationMinutes} min
                       {s.location ? ` · ${s.location}` : ''}
                     </div>
                     <div className="mt-1 flex flex-wrap gap-2 text-xs">
                       {s.lesson && (
-                        <span className="rounded bg-indigo-50 px-2 py-0.5 text-indigo-700">
+                        <span className="rounded bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 text-indigo-700 dark:text-indigo-300">
                           🎯 Auto: {s.lesson.title}
                         </span>
                       )}
                       {s.checkInCode && (
-                        <span className="rounded bg-amber-50 px-2 py-0.5 text-amber-700">
+                        <span className="rounded bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 text-amber-700 dark:text-amber-300">
                           🔑 Code: <code className="font-mono">{s.checkInCode}</code>
                         </span>
                       )}
-                      <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">
+                      <span className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-slate-600 dark:text-slate-300">
                         {s._count.attendances} marked
                       </span>
                     </div>
@@ -238,7 +238,7 @@ export default function TeacherCourseAttendancePage() {
                       onClick={() =>
                         setOpenSessionId((cur) => (cur === s.id ? null : s.id))
                       }
-                      className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 hover:bg-slate-50"
+                      className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
                     >
                       {openSessionId === s.id ? 'Hide roster' : 'Roster'}
                     </button>
@@ -249,7 +249,7 @@ export default function TeacherCourseAttendancePage() {
                           deleteSession.mutate(s.id)
                         }
                       }}
-                      className="rounded-md border border-rose-300 bg-white px-3 py-1 text-sm text-rose-600 hover:bg-rose-50"
+                      className="rounded-md border border-rose-300 dark:border-rose-800 bg-white dark:bg-slate-900 px-3 py-1 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                     >
                       Delete
                     </button>
@@ -301,54 +301,54 @@ function NewSessionForm({
           checkInCode: checkInCode.trim() || null,
         })
       }}
-      className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+      className="space-y-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm"
     >
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-sm">
-          <div className="mb-1 font-medium text-slate-700">Title *</div>
+          <div className="mb-1 font-medium text-slate-700 dark:text-slate-200">Title *</div>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            className="w-full rounded border border-slate-300 px-2 py-1.5"
+            className="w-full rounded border border-slate-300 dark:border-slate-600 px-2 py-1.5"
           />
         </label>
         <label className="text-sm">
-          <div className="mb-1 font-medium text-slate-700">When *</div>
+          <div className="mb-1 font-medium text-slate-700 dark:text-slate-200">When *</div>
           <input
             type="datetime-local"
             value={scheduledAt}
             onChange={(e) => setScheduledAt(e.target.value)}
             required
-            className="w-full rounded border border-slate-300 px-2 py-1.5"
+            className="w-full rounded border border-slate-300 dark:border-slate-600 px-2 py-1.5"
           />
         </label>
         <label className="text-sm">
-          <div className="mb-1 font-medium text-slate-700">Duration (min)</div>
+          <div className="mb-1 font-medium text-slate-700 dark:text-slate-200">Duration (min)</div>
           <input
             type="number"
             min={1}
             value={durationMinutes}
             onChange={(e) => setDuration(Number(e.target.value) || 60)}
-            className="w-full rounded border border-slate-300 px-2 py-1.5"
+            className="w-full rounded border border-slate-300 dark:border-slate-600 px-2 py-1.5"
           />
         </label>
         <label className="text-sm">
-          <div className="mb-1 font-medium text-slate-700">Location</div>
+          <div className="mb-1 font-medium text-slate-700 dark:text-slate-200">Location</div>
           <input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="w-full rounded border border-slate-300 px-2 py-1.5"
+            className="w-full rounded border border-slate-300 dark:border-slate-600 px-2 py-1.5"
           />
         </label>
         <label className="text-sm">
-          <div className="mb-1 font-medium text-slate-700">
+          <div className="mb-1 font-medium text-slate-700 dark:text-slate-200">
             Auto-mark on lesson (optional)
           </div>
           <select
             value={lessonId}
             onChange={(e) => setLessonId(e.target.value)}
-            className="w-full rounded border border-slate-300 px-2 py-1.5"
+            className="w-full rounded border border-slate-300 dark:border-slate-600 px-2 py-1.5"
           >
             <option value="">— none —</option>
             {publishedLessons.map((l) => (
@@ -359,19 +359,19 @@ function NewSessionForm({
           </select>
         </label>
         <label className="text-sm">
-          <div className="mb-1 font-medium text-slate-700">
+          <div className="mb-1 font-medium text-slate-700 dark:text-slate-200">
             Check-in code (optional)
           </div>
           <input
             value={checkInCode}
             onChange={(e) => setCheckInCode(e.target.value.toUpperCase())}
             placeholder="e.g. MATH-23"
-            className="w-full rounded border border-slate-300 px-2 py-1.5 font-mono"
+            className="w-full rounded border border-slate-300 dark:border-slate-600 px-2 py-1.5 font-mono"
           />
         </label>
       </div>
       {error && (
-        <div className="rounded border border-rose-200 bg-rose-50 p-2 text-sm text-rose-700">
+        <div className="rounded border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-2 text-sm text-rose-700 dark:text-rose-300">
           {error.message}
         </div>
       )}
@@ -415,13 +415,13 @@ function SessionRoster({ sessionId }: { sessionId: string }) {
     },
   })
 
-  if (isLoading) return <div className="p-4 text-sm text-slate-500">Loading roster…</div>
+  if (isLoading) return <div className="p-4 text-sm text-slate-500 dark:text-slate-400">Loading roster…</div>
   if (!data) return null
 
   return (
-    <div className="border-t border-slate-200 p-4">
+    <div className="border-t border-slate-200 dark:border-slate-700 p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="text-sm text-slate-600">
+        <div className="text-sm text-slate-600 dark:text-slate-300">
           {data.roster.length} enrolled
         </div>
         <button
@@ -434,14 +434,14 @@ function SessionRoster({ sessionId }: { sessionId: string }) {
                 markMutation.mutate({ studentId: r.studentId, status: 'PRESENT' }),
               )
           }}
-          className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1 text-sm text-emerald-700 hover:bg-emerald-100"
+          className="rounded-md border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 text-sm text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100"
         >
           ✓ Mark all PRESENT
         </button>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="text-left text-xs uppercase text-slate-500">
+          <thead className="text-left text-xs uppercase text-slate-500 dark:text-slate-400">
             <tr>
               <th className="px-2 py-1">Student</th>
               <th className="px-2 py-1">Status</th>
@@ -454,10 +454,10 @@ function SessionRoster({ sessionId }: { sessionId: string }) {
             {data.roster.map((row) => {
               const status = row.attendance?.status ?? null
               return (
-                <tr key={row.studentId} className="border-t border-slate-100">
+                <tr key={row.studentId} className="border-t border-slate-100 dark:border-slate-800">
                   <td className="px-2 py-1.5">
-                    <div className="font-medium text-slate-800">{row.name}</div>
-                    <div className="text-xs text-slate-500">
+                    <div className="font-medium text-slate-800 dark:text-slate-100">{row.name}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
                       {row.studentNumber ? `#${row.studentNumber} · ` : ''}
                       {row.email}
                     </div>
@@ -470,13 +470,13 @@ function SessionRoster({ sessionId }: { sessionId: string }) {
                         {status}
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-400">— not marked —</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">— not marked —</span>
                     )}
                   </td>
-                  <td className="px-2 py-1.5 text-xs text-slate-500">
+                  <td className="px-2 py-1.5 text-xs text-slate-500 dark:text-slate-400">
                     {row.attendance ? SOURCE_LABEL[row.attendance.source] : '—'}
                   </td>
-                  <td className="px-2 py-1.5 text-xs text-slate-500">
+                  <td className="px-2 py-1.5 text-xs text-slate-500 dark:text-slate-400">
                     {row.attendance?.checkInTime
                       ? new Date(row.attendance.checkInTime).toLocaleTimeString()
                       : '—'}

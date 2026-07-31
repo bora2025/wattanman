@@ -43,11 +43,11 @@ export default function ParentAttendancePage() {
 
   return (
     <AuthGuard requiredRole="PARENT">
-      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pb-[72px] lg:pb-0">
         <Sidebar title="Parent" subtitle="Portal" navItems={parentNav} accentColor="emerald" />
         <div className="h-14 lg:hidden" />
-        <aside className="hidden lg:block w-44 bg-white border-r border-slate-200 p-4">
-          <p className="text-sm font-bold text-slate-600 mb-2">Select Child</p>
+        <aside className="hidden lg:block w-44 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 p-4">
+          <p className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">Select Child</p>
           {children.map(c => (
             <button key={c.id} onClick={() => setChildId(c.id)}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 ${childId === c.id ? 'bg-emerald-100 text-emerald-700 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}>
@@ -57,7 +57,7 @@ export default function ParentAttendancePage() {
         </aside>
 
         <main className="flex-1 p-4 sm:p-6 max-w-3xl mx-auto w-full">
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-4">📅 Attendance History</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">📅 Attendance History</h1>
 
           {/* Mobile child chips */}
           {children.length > 1 && (
@@ -72,44 +72,44 @@ export default function ParentAttendancePage() {
           )}
 
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-emerald-700">{present}</p>
-              <p className="text-sm text-emerald-600">Present</p>
+            <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{present}</p>
+              <p className="text-sm text-emerald-600 dark:text-emerald-400">Present</p>
             </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-amber-700">{late}</p>
-              <p className="text-sm text-amber-600">Late</p>
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{late}</p>
+              <p className="text-sm text-amber-600 dark:text-amber-400">Late</p>
             </div>
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-red-700">{absent}</p>
-              <p className="text-sm text-red-600">Absent</p>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-red-700 dark:text-red-300">{absent}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">Absent</p>
             </div>
           </div>
 
           {!childId ? (
-            <p className="text-slate-400 text-center py-12">Select a child to view attendance</p>
+            <p className="text-slate-400 dark:text-slate-500 text-center py-12">Select a child to view attendance</p>
           ) : isLoading ? (
-            <div className="space-y-2">{[1,2,3,4,5].map(i => <div key={i} className="bg-white h-12 rounded-xl animate-pulse" />)}</div>
+            <div className="space-y-2">{[1,2,3,4,5].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-12 rounded-xl animate-pulse" />)}</div>
           ) : isError ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-              <p className="text-red-600 text-sm mb-1">Failed to load attendance</p>
-              <button onClick={() => refetch()} className="text-xs text-red-500 underline">Retry</button>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl p-4 text-center">
+              <p className="text-red-600 dark:text-red-400 text-sm mb-1">Failed to load attendance</p>
+              <button onClick={() => refetch()} className="text-xs text-red-500 dark:text-red-400 underline">Retry</button>
             </div>
           ) : attendance.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-              <p className="text-slate-400">No attendance records found</p>
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center shadow-sm">
+              <p className="text-slate-400 dark:text-slate-500">No attendance records found</p>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm overflow-hidden">
               {attendance.map(record => {
                 const meta = STATUS[record.status as keyof typeof STATUS] ?? { label: record.status, color: 'bg-slate-300' }
                 return (
-                  <div key={record.id} className="flex items-center justify-between px-4 py-3 border-b border-slate-100 last:border-0">
+                  <div key={record.id} className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
                     <div className="flex items-center gap-3">
                       <div className={`w-2 h-2 rounded-full ${meta.color}`} />
                       <div>
-                        <p className="text-sm font-medium text-slate-700">{new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
-                        <p className="text-xs text-slate-400">{record.class?.name}</p>
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">{record.class?.name}</p>
                       </div>
                     </div>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${meta.color} text-white`}>{meta.label}</span>

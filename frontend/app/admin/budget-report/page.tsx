@@ -84,13 +84,13 @@ function periodLabel(period: Period, dateRange: { start: string; end: string }) 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-sm">
-      <p className="font-semibold text-gray-700 mb-1">{label}</p>
+    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg p-3 text-sm">
+      <p className="font-semibold text-gray-700 dark:text-slate-200 mb-1">{label}</p>
       {payload.map((p: any) => (
         <p key={p.name} className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: p.color }} />
-          <span className="text-gray-500">{p.name}:</span>
-          <span className="font-semibold text-gray-800">${fmt(p.value)}</span>
+          <span className="text-gray-500 dark:text-slate-400">{p.name}:</span>
+          <span className="font-semibold text-gray-800 dark:text-slate-100">${fmt(p.value)}</span>
         </p>
       ))}
     </div>
@@ -150,14 +150,14 @@ function BudgetContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">💰 Finance Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">💰 Finance Dashboard</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
             {report ? periodLabel(period, report.dateRange) : '—'}
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           {/* Period tabs */}
-          <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+          <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
             {periodTabs.map((t) => (
               <button
                 key={t.id}
@@ -175,7 +175,7 @@ function BudgetContent() {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900"
           />
           <button
             onClick={loadData}
@@ -193,7 +193,7 @@ function BudgetContent() {
           </button>
           <button
             onClick={() => setShowPrintModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-xl transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 text-sm font-medium rounded-xl transition-colors"
           >
             🖨️ Print
           </button>
@@ -248,7 +248,7 @@ function BudgetContent() {
                   <p className={`text-sm font-semibold ${net >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                     Net Balance — {net >= 0 ? 'Surplus' : 'Deficit'}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5">Income collected – salary payout this period</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Income collected – salary payout this period</p>
                 </div>
               </div>
               <p className={`text-3xl font-extrabold tabular-nums ${net >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
@@ -266,21 +266,21 @@ function BudgetContent() {
                 value={s?.totalCollected ?? 0}
                 sub={`${s?.paymentsCount ?? 0} payments`}
                 color="bg-emerald-100"
-                icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
+                icon={<svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
               />
               <StatCard
                 label="Outstanding"
                 value={s?.outstanding ?? 0}
                 sub="unpaid balances"
                 color="bg-red-100"
-                icon={<svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
+                icon={<svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
               />
               <StatCard
                 label="Discount Given"
                 value={s?.discountGiven ?? 0}
                 sub={`on ${s?.feeRecordsCreated ?? 0} records`}
                 color="bg-blue-100"
-                icon={<svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M17 17h.01M3 21l18-18"/></svg>}
+                icon={<svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M17 17h.01M3 21l18-18"/></svg>}
               />
               <StatCard
                 label="Collection Rate"
@@ -288,7 +288,7 @@ function BudgetContent() {
                 sub="of effective amount"
                 color="bg-violet-100"
                 prefix=""
-                icon={<svg className="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>}
+                icon={<svg className="w-5 h-5 text-violet-600 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>}
               />
             </div>
           </div>
@@ -303,7 +303,7 @@ function BudgetContent() {
                   value={salary.totalNet}
                   sub={`${salary.total} staff records`}
                   color="bg-orange-100"
-                  icon={<svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>}
+                  icon={<svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>}
                 />
                 <StatCard
                   label="Paid Salaries"
@@ -311,7 +311,7 @@ function BudgetContent() {
                   sub="disbursed this month"
                   color="bg-emerald-100"
                   prefix=""
-                  icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
+                  icon={<svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
                 />
                 <StatCard
                   label="Unpaid Salaries"
@@ -319,7 +319,7 @@ function BudgetContent() {
                   sub="pending disbursement"
                   color="bg-amber-100"
                   prefix=""
-                  icon={<svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
+                  icon={<svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
                 />
                 {allTime && (
                   <StatCard
@@ -327,7 +327,7 @@ function BudgetContent() {
                     value={allTime.totalRevenue}
                     sub={`${allTime.collectionRate}% collection rate`}
                     color="bg-indigo-100"
-                    icon={<svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>}
+                    icon={<svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>}
                   />
                 )}
               </div>
@@ -335,9 +335,9 @@ function BudgetContent() {
           )}
 
           {/* ── Chart + Payments tab ── */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800">
+              <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
                 {(['chart', 'payments'] as const).map((t) => (
                   <button
                     key={t}
@@ -401,7 +401,7 @@ function BudgetContent() {
                   </div>
                 ) : (
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
+                    <thead className="bg-gray-50 dark:bg-slate-800 text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                       <tr>
                         <th className="px-5 py-3 text-left font-semibold">Student</th>
                         <th className="px-5 py-3 text-left font-semibold">Class</th>
@@ -411,22 +411,22 @@ function BudgetContent() {
                         <th className="px-5 py-3 text-left font-semibold">Note</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
                       {report.payments.map((p) => (
-                        <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-5 py-3 font-medium text-gray-900">{p.studentName}</td>
-                          <td className="px-5 py-3 text-gray-500">{p.class || '—'}</td>
-                          <td className="px-5 py-3 text-gray-500">{p.date}</td>
-                          <td className="px-5 py-3 text-gray-500">{p.time}</td>
-                          <td className="px-5 py-3 text-right font-bold text-emerald-700">${fmt(p.amount)}</td>
+                        <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                          <td className="px-5 py-3 font-medium text-gray-900 dark:text-slate-100">{p.studentName}</td>
+                          <td className="px-5 py-3 text-gray-500 dark:text-slate-400">{p.class || '—'}</td>
+                          <td className="px-5 py-3 text-gray-500 dark:text-slate-400">{p.date}</td>
+                          <td className="px-5 py-3 text-gray-500 dark:text-slate-400">{p.time}</td>
+                          <td className="px-5 py-3 text-right font-bold text-emerald-700 dark:text-emerald-300">${fmt(p.amount)}</td>
                           <td className="px-5 py-3 text-gray-400 text-xs max-w-[160px] truncate">{p.note || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="bg-gray-50 border-t border-gray-200">
+                    <tfoot className="bg-gray-50 dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700">
                       <tr>
-                        <td colSpan={4} className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider">Total</td>
-                        <td className="px-5 py-3 text-right font-extrabold text-emerald-700">
+                        <td colSpan={4} className="px-5 py-3 text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">Total</td>
+                        <td className="px-5 py-3 text-right font-extrabold text-emerald-700 dark:text-emerald-300">
                           ${fmt(report.payments.reduce((s, p) => s + p.amount, 0))}
                         </td>
                         <td />
@@ -514,20 +514,20 @@ function PrintBudgetReportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-white rounded-t-2xl">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-indigo-50 to-white rounded-t-2xl">
           <div>
-            <h2 className="text-lg font-bold text-slate-800">🖨️ Print Budget Report</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Customize the letterhead and print</p>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">🖨️ Print Budget Report</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Customize the letterhead and print</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm">✕</button>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 flex items-center justify-center text-slate-500 dark:text-slate-400 text-sm">✕</button>
         </div>
 
         <div className="p-6 space-y-5">
           {/* Period Selector */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📋 Report Period</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📋 Report Period</label>
             <div className="grid grid-cols-4 gap-2">
               {periodOptions.map(opt => (
                 <button
@@ -548,18 +548,18 @@ function PrintBudgetReportModal({
 
           {/* Date Picker */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📆 Date</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📆 Date</label>
             <input
               type="date"
               value={printDate}
               onChange={e => setPrintDate(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
             />
           </div>
 
           {/* Paper Size */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📄 Paper Size</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📄 Paper Size</label>
             <div className="flex gap-2">
               {paperOptions.map(opt => (
                 <button
@@ -572,40 +572,40 @@ function PrintBudgetReportModal({
                   }`}
                 >
                   <div className={`text-sm font-semibold ${paperSize === opt.value ? 'text-indigo-700' : 'text-slate-700'}`}>{opt.label}</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">{opt.desc}</div>
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{opt.desc}</div>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Letter Header Customization */}
-          <div className="space-y-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200">
-            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">📜 Letter Header</h3>
+          <div className="space-y-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200 dark:border-amber-900">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">📜 Letter Header</h3>
 
             {/* Logo URL */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Business Logo URL</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Business Logo URL</label>
               <input
                 type="text"
                 value={logoUrl}
                 onChange={e => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
               />
             </div>
 
             {/* Spacing below logo */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo (px)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Logo (px)</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={logoGap} onChange={e => setLogoGap(e.target.value)} className="flex-1 accent-indigo-500" />
-                <span className="text-xs text-slate-500 w-8 text-center">{logoGap}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{logoGap}</span>
               </div>
             </div>
 
             {/* Logo Text Lines (below logo) */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Text Below Logo</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Text Below Logo</label>
               <div className="space-y-1.5">
                 {logoTextLines.map((line, idx) => (
                   <div key={idx} className="flex items-center gap-1.5">
@@ -613,30 +613,30 @@ function PrintBudgetReportModal({
                       type="text"
                       value={line}
                       onChange={e => { const l = [...logoTextLines]; l[idx] = e.target.value; setLogoTextLines(l) }}
-                      className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                      className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                       placeholder={`Line ${idx + 1}`}
                     />
                     {logoTextLines.length > 1 && (
-                      <button onClick={() => setLogoTextLines(logoTextLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-xs">✕</button>
+                      <button onClick={() => setLogoTextLines(logoTextLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 flex items-center justify-center text-xs">✕</button>
                     )}
                   </div>
                 ))}
-                <button onClick={() => setLogoTextLines([...logoTextLines, ''])} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">+ Add line</button>
+                <button onClick={() => setLogoTextLines([...logoTextLines, ''])} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">+ Add line</button>
               </div>
             </div>
 
             {/* Spacing below logo text */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo Text (px)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Logo Text (px)</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={logoTextGap} onChange={e => setLogoTextGap(e.target.value)} className="flex-1 accent-indigo-500" />
-                <span className="text-xs text-slate-500 w-8 text-center">{logoTextGap}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{logoTextGap}</span>
               </div>
             </div>
 
             {/* Header Lines */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Header Lines (top → bottom)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Header Lines (top → bottom)</label>
               <div className="space-y-1.5">
                 {headerLines.map((line, idx) => (
                   <div key={idx} className="flex items-center gap-1.5">
@@ -644,42 +644,42 @@ function PrintBudgetReportModal({
                       type="text"
                       value={line}
                       onChange={e => { const h = [...headerLines]; h[idx] = e.target.value; setHeaderLines(h) }}
-                      className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-center"
+                      className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-center"
                       placeholder={`Line ${idx + 1}`}
                     />
                     {headerLines.length > 1 && (
-                      <button onClick={() => setHeaderLines(headerLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-xs">✕</button>
+                      <button onClick={() => setHeaderLines(headerLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 flex items-center justify-center text-xs">✕</button>
                     )}
                   </div>
                 ))}
-                <button onClick={() => setHeaderLines([...headerLines, ''])} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">+ Add line</button>
+                <button onClick={() => setHeaderLines([...headerLines, ''])} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">+ Add line</button>
               </div>
             </div>
 
             {/* Spacing below header lines */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Header Lines (px)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Header Lines (px)</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={headerGap} onChange={e => setHeaderGap(e.target.value)} className="flex-1 accent-indigo-500" />
-                <span className="text-xs text-slate-500 w-8 text-center">{headerGap}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{headerGap}</span>
               </div>
             </div>
 
             {/* Organization Name */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Business / Organization Name</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Business / Organization Name</label>
               <input
                 type="text"
                 value={orgName}
                 onChange={e => setOrgName(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
               />
             </div>
           </div>
 
           {/* Signers */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">✍️ Signers</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">✍️ Signers</label>
             <div className="space-y-2">
               {signers.map((signer, idx) => (
                 <div key={idx} className="flex items-center gap-2">
@@ -687,17 +687,17 @@ function PrintBudgetReportModal({
                     type="text"
                     value={signer}
                     onChange={e => { const s = [...signers]; s[idx] = e.target.value; setSigners(s) }}
-                    className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                     placeholder={`Signer ${idx + 1}`}
                   />
                   {signers.length > 1 && (
-                    <button onClick={() => setSigners(signers.filter((_, i) => i !== idx))} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-sm">✕</button>
+                    <button onClick={() => setSigners(signers.filter((_, i) => i !== idx))} className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 flex items-center justify-center text-sm">✕</button>
                   )}
                 </div>
               ))}
               <button
                 onClick={() => setSigners([...signers, ''])}
-                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
+                className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center gap-1"
               >
                 + Add signer
               </button>
@@ -705,19 +705,19 @@ function PrintBudgetReportModal({
           </div>
 
           {/* Preview/Summary */}
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-2">
-            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400">Preview</h4>
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2">
+            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Preview</h4>
             <div className="grid grid-cols-2 gap-y-1.5 text-sm">
-              <span className="text-slate-500">Period:</span>
-              <span className="font-medium text-slate-800 capitalize">{printPeriod} — {printDate}</span>
-              <span className="text-slate-500">Paper Size:</span>
-              <span className="font-medium text-indigo-600">{paperSize}</span>
+              <span className="text-slate-500 dark:text-slate-400">Period:</span>
+              <span className="font-medium text-slate-800 dark:text-slate-100 capitalize">{printPeriod} — {printDate}</span>
+              <span className="text-slate-500 dark:text-slate-400">Paper Size:</span>
+              <span className="font-medium text-indigo-600 dark:text-indigo-400">{paperSize}</span>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-1">
-            <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+            <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
               Cancel
             </button>
             <button
@@ -738,7 +738,7 @@ function PrintBudgetReportModal({
 export default function BudgetReportPage() {
   return (
     <AuthGuard>
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-gray-50 dark:bg-slate-800">
         <Sidebar title="Admin" navItems={adminNav} accentColor="indigo" />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-6xl mx-auto px-6 py-8">

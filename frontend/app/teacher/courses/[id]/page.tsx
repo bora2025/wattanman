@@ -160,41 +160,41 @@ export default function CourseDetailPage() {
   if (isLoading) {
     return (
       <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
-        <div className="p-8 text-center text-slate-500">Loading course…</div>
+        <div className="p-8 text-center text-slate-500 dark:text-slate-400">Loading course…</div>
       </AuthGuard>
     )
   }
   if (!course) {
     return (
       <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
-        <div className="p-8 text-center text-rose-600">Course not found.</div>
+        <div className="p-8 text-center text-rose-600 dark:text-rose-400">Course not found.</div>
       </AuthGuard>
     )
   }
 
   return (
     <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-800">
         <div className="mx-auto max-w-7xl px-4 py-6">
           {/* Header */}
           <div className="mb-6">
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/teacher/courses"
-                className="text-sm text-blue-600 hover:underline"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
               >
                 ← All Courses
               </Link>
               <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
               <Link
                 href={`/teacher/courses/${courseId}/attendance`}
-                className="text-sm rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-sky-700 hover:bg-sky-100"
+                className="text-sm rounded-md border border-sky-200 dark:border-sky-900 bg-sky-50 dark:bg-sky-950/40 px-3 py-1 text-sky-700 dark:text-sky-300 hover:bg-sky-100"
               >
                 📋 Attendance
               </Link>
               <Link
                 href={`/teacher/courses/${courseId}/engagement`}
-                className="text-sm rounded-md border border-violet-200 bg-violet-50 px-3 py-1 text-violet-700 hover:bg-violet-100"
+                className="text-sm rounded-md border border-violet-200 dark:border-violet-900 bg-violet-50 dark:bg-violet-950/40 px-3 py-1 text-violet-700 dark:text-violet-300 hover:bg-violet-100"
               >
                 📊 Engagement
               </Link>
@@ -203,25 +203,25 @@ export default function CourseDetailPage() {
             <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-bold text-slate-800">{course.title}</h1>
+                  <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{course.title}</h1>
                   <span
                     className={`rounded-full px-2 py-1 text-[11px] font-medium ${STATUS_BADGES[course.status] || 'bg-slate-100 text-slate-700'}`}
                   >
                     {course.status}
                   </span>
                 </div>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   {course.class.name}
                   {course.class.subject ? ` • ${course.class.subject}` : ''} • by{' '}
                   {course.createdBy.name}
                 </p>
                 {course.description && (
-                  <p className="mt-2 max-w-2xl text-sm text-slate-700">
+                  <p className="mt-2 max-w-2xl text-sm text-slate-700 dark:text-slate-200">
                     {course.description}
                   </p>
                 )}
               </div>
-              <div className="text-right text-sm text-slate-600">
+              <div className="text-right text-sm text-slate-600 dark:text-slate-300">
                 <div>📚 {course.lessons.length} lessons</div>
                 <div>👥 {course._count.enrollments} enrolled</div>
               </div>
@@ -236,7 +236,7 @@ export default function CourseDetailPage() {
               }`}
             >
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-gray-700">Lessons</h2>
+                <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Lessons</h2>
                 <button
                   onClick={() => setShowNewLesson(true)}
                   className="rounded-lg bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700"
@@ -254,7 +254,7 @@ export default function CourseDetailPage() {
               )}
 
               {course.lessons.length === 0 ? (
-                <div className="bg-gray-50 rounded-xl">
+                <div className="bg-gray-50 dark:bg-slate-800 rounded-xl">
                   <EmptyState icon="📚" message="No lessons yet. Add the first one to get started." />
                 </div>
               ) : (
@@ -270,10 +270,10 @@ export default function CourseDetailPage() {
                         }`}
                       >
                         <div className="min-w-0">
-                          <div className="truncate font-medium text-slate-800">
+                          <div className="truncate font-medium text-slate-800 dark:text-slate-100">
                             {l.order + 1}. {l.title}
                           </div>
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
                             {l._count.pages} page{l._count.pages === 1 ? '' : 's'}
                           </div>
                         </div>
@@ -308,7 +308,7 @@ export default function CourseDetailPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedLessonId(null)}
-                  className="mb-3 text-sm text-blue-600 hover:underline lg:hidden"
+                  className="mb-3 text-sm text-blue-600 dark:text-blue-400 hover:underline lg:hidden"
                 >
                   ← Back to lessons
                 </button>
@@ -355,24 +355,24 @@ function NewLessonForm({
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   return (
-    <div className="mb-3 space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3">
+    <div className="mb-3 space-y-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3">
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Lesson title"
-        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+        className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
       />
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Optional description"
         rows={2}
-        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+        className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
       />
       <div className="flex justify-end gap-2">
         <button
           onClick={onCancel}
-          className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-white"
+          className="rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-white"
         >
           Cancel
         </button>
@@ -522,8 +522,8 @@ function LessonEditor({
   return (
     <div className="space-y-5">
       {/* Lesson settings */}
-      <section className="rounded-2xl border border-gray-100 bg-white p-4 space-y-5">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+      <section className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-5">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
           Lesson settings
         </h3>
 
@@ -532,30 +532,30 @@ function LessonEditor({
           <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gray-400">Basics</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-gray-600">Title</label>
+              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-slate-300">Title</label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-gray-600">
+              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-slate-300">
                 Description
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">Status</label>
+              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-slate-300">Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as LessonStatus)}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white"
+                className="w-full rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm bg-white dark:bg-slate-900"
               >
                 <option value="DRAFT">Draft</option>
                 <option value="PUBLISHED">Published</option>
@@ -565,17 +565,17 @@ function LessonEditor({
         </div>
 
         {/* Grading */}
-        <div className="pt-4 border-t border-gray-100">
+        <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
           <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gray-400">Grading</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">
+              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-slate-300">
                 Grading mode
               </label>
               <select
                 value={gradingMode}
                 onChange={(e) => setGradingMode(e.target.value as GradingMode)}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white"
+                className="w-full rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm bg-white dark:bg-slate-900"
               >
                 <option value="GRADED">Graded</option>
                 <option value="PRACTICE">Practice</option>
@@ -583,7 +583,7 @@ function LessonEditor({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">
+              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-slate-300">
                 Passing score
               </label>
               <input
@@ -591,11 +591,11 @@ function LessonEditor({
                 min={0}
                 value={passingScore}
                 onChange={(e) => setPassingScore(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
                 placeholder="Optional"
               />
             </div>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
               <input
                 type="checkbox"
                 checked={showProgressBar}
@@ -603,7 +603,7 @@ function LessonEditor({
               />
               Show progress bar
             </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
               <input
                 type="checkbox"
                 checked={limitAttempts}
@@ -613,7 +613,7 @@ function LessonEditor({
             </label>
             {limitAttempts && (
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">
+                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-slate-300">
                   Max attempts
                 </label>
                 <input
@@ -621,7 +621,7 @@ function LessonEditor({
                   min={1}
                   value={maxAttempts}
                   onChange={(e) => setMaxAttempts(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
                 />
               </div>
             )}
@@ -632,10 +632,10 @@ function LessonEditor({
         </div>
 
         {/* Branching & video */}
-        <div className="pt-4 border-t border-gray-100">
+        <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
           <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gray-400">Branching & video</p>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
               <input
                 type="checkbox"
                 checked={branchingEnabled}
@@ -643,7 +643,7 @@ function LessonEditor({
               />
               Allow branching pages
             </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
               <input
                 type="checkbox"
                 checked={requireVideoWatch}
@@ -653,7 +653,7 @@ function LessonEditor({
             </label>
             {requireVideoWatch && (
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-gray-600">
+                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-slate-300">
                   Minimum watched %
                 </label>
                 <input
@@ -662,9 +662,9 @@ function LessonEditor({
                   max={100}
                   value={videoWatchPct}
                   onChange={(e) => setVideoWatchPct(e.target.value)}
-                  className="w-full sm:w-40 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full sm:w-40 rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
                 />
-                <p className="mt-1 text-[11px] text-gray-500">
+                <p className="mt-1 text-[11px] text-gray-500 dark:text-slate-400">
                   Tracked for uploaded videos (HTML5). YouTube/Vimeo embeds cannot be
                   tracked automatically.
                 </p>
@@ -673,10 +673,10 @@ function LessonEditor({
           </div>
         </div>
 
-        <div className="pt-4 border-t border-gray-100 flex justify-between">
+        <div className="pt-4 border-t border-gray-100 dark:border-slate-800 flex justify-between">
           <button
             onClick={onDeleteLesson}
-            className="rounded-xl px-3 py-1.5 text-sm font-medium text-rose-600 hover:bg-rose-50"
+            className="rounded-xl px-3 py-1.5 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
           >
             Delete lesson
           </button>
@@ -690,34 +690,34 @@ function LessonEditor({
       </section>
 
       {/* Pages */}
-      <section className="rounded-2xl border border-gray-100 bg-white p-4">
+      <section className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
             Pages
           </h3>
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/teacher/courses/${lesson.courseId}/lessons/${lesson.id}/grading`}
-              className="rounded-md bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-200"
+              className="rounded-md bg-amber-100 dark:bg-amber-950/40 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-200"
             >
               📝 Grade pending
             </Link>
             <button
               onClick={() => setNewPageType('CONTENT')}
-              className="rounded-md bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
+              className="rounded-md bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200"
             >
               + Content
             </button>
             <button
               onClick={() => setNewPageType('QUESTION')}
-              className="rounded-md bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700 hover:bg-violet-200"
+              className="rounded-md bg-violet-100 dark:bg-violet-950/40 px-3 py-1 text-xs font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-200"
             >
               + Question
             </button>
             <button
               onClick={() => setNewPageType('BRANCH')}
               disabled={!branchingEnabled}
-              className="rounded-md bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-200 disabled:opacity-40"
+              className="rounded-md bg-amber-100 dark:bg-amber-950/40 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-200 disabled:opacity-40"
               title={branchingEnabled ? '' : 'Enable branching in lesson settings first'}
             >
               + Branch
@@ -726,9 +726,9 @@ function LessonEditor({
         </div>
 
         {pagesLoading ? (
-          <div className="space-y-2">{[1,2].map(i => <div key={i} className="bg-gray-50 h-14 rounded-xl animate-pulse" />)}</div>
+          <div className="space-y-2">{[1,2].map(i => <div key={i} className="bg-gray-50 dark:bg-slate-800 h-14 rounded-xl animate-pulse" />)}</div>
         ) : pages.length === 0 ? (
-          <div className="bg-gray-50 rounded-xl">
+          <div className="bg-gray-50 dark:bg-slate-800 rounded-xl">
             <EmptyState icon="📄" message="No pages yet. Add a Content, Question or Branch page above." />
           </div>
         ) : (
@@ -785,19 +785,19 @@ function NewPageModal({
   const [title, setTitle] = useState('')
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) onCancel() }}>
-      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-        <h2 className="text-lg font-bold text-gray-900 mb-1">New {PAGE_TYPE_LABEL[pageType]} page</h2>
-        <p className="text-sm text-gray-500 mb-4">Give this page a title students will see in the lesson outline.</p>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-1">New {PAGE_TYPE_LABEL[pageType]} page</h2>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">Give this page a title students will see in the lesson outline.</p>
         <input
           autoFocus
           value={title}
           onChange={e => setTitle(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && title.trim()) onCreate(title.trim()) }}
           placeholder="Page title"
-          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 mb-4"
+          className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 mb-4"
         />
         <div className="flex gap-2 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button onClick={onCancel} className="px-4 py-2 text-sm font-medium border border-gray-200 dark:border-slate-700 rounded-xl text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800">Cancel</button>
           <button
             onClick={() => title.trim() && onCreate(title.trim())}
             disabled={!title.trim() || pending}
@@ -829,11 +829,11 @@ function PageRow({
   const [content, setContent] = useState<any>(() => normalizeContent(page))
 
   return (
-    <li className="rounded-md border border-slate-200">
+    <li className="rounded-md border border-slate-200 dark:border-slate-700">
       <div className="flex items-center justify-between gap-2 px-3 py-2">
         <button
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2 text-left text-sm font-medium text-slate-800"
+          className="flex items-center gap-2 text-left text-sm font-medium text-slate-800 dark:text-slate-100"
         >
           <span>{open ? '▾' : '▸'}</span>
           <span>{PAGE_TYPE_LABEL[page.pageType]}</span>
@@ -841,19 +841,19 @@ function PageRow({
         </button>
         <button
           onClick={onDelete}
-          className="text-xs font-medium text-rose-600 hover:underline"
+          className="text-xs font-medium text-rose-600 dark:text-rose-400 hover:underline"
         >
           Delete
         </button>
       </div>
       {open && (
-        <div className="space-y-3 border-t border-slate-100 px-3 py-3">
+        <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 px-3 py-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Title</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Title</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
             />
           </div>
 
@@ -961,18 +961,18 @@ function ContentEditor({
   return (
     <div className="space-y-2">
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600">Body</label>
+        <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Body</label>
         <textarea
           value={value.body ?? ''}
           onChange={(e) => onChange({ ...value, body: e.target.value })}
           rows={6}
-          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
           placeholder="Lesson content (plain text or markdown)…"
         />
       </div>
       <div className="grid gap-2 sm:grid-cols-[1fr_140px]">
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
+          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
             Media URL (optional)
           </label>
           <input
@@ -980,12 +980,12 @@ function ContentEditor({
             onChange={(e) =>
               onChange({ ...value, mediaUrl: e.target.value || null })
             }
-            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
             placeholder="https://…"
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
+          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
             Media type
           </label>
           <select
@@ -993,7 +993,7 @@ function ContentEditor({
             onChange={(e) =>
               onChange({ ...value, mediaType: e.target.value || null })
             }
-            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
           >
             <option value="">—</option>
             <option value="image">Image</option>
@@ -1043,7 +1043,7 @@ function QuestionEditor({
     <div className="space-y-3">
       <div className="grid gap-2 sm:grid-cols-[1fr_120px]">
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
+          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
             Question type
           </label>
           <select
@@ -1056,7 +1056,7 @@ function QuestionEditor({
                   : { ...value, questionType: nextType },
               )
             }}
-            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
           >
             <option value="MCQ_SINGLE">Multiple choice (single)</option>
             <option value="MCQ_MULTI">Multiple choice (multi)</option>
@@ -1069,19 +1069,19 @@ function QuestionEditor({
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Points</label>
+          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Points</label>
           <input
             type="number"
             min={0}
             value={value.points ?? 1}
             onChange={(e) => onChange({ ...value, points: Number(e.target.value) })}
-            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
           />
         </div>
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600">Prompt</label>
+        <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Prompt</label>
         <RichTextEditor
           value={value.prompt ?? ''}
           onChange={(prompt) => onChange({ ...value, prompt })}
@@ -1091,7 +1091,7 @@ function QuestionEditor({
 
       {(qt === 'MCQ_SINGLE' || qt === 'MCQ_MULTI') && (
         <div className="space-y-1">
-          <label className="block text-xs font-medium text-slate-600">Choices</label>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">Choices</label>
           {(value.choices || []).map((ch: any, idx: number) => {
             const isCorrect =
               qt === 'MCQ_SINGLE'
@@ -1119,12 +1119,12 @@ function QuestionEditor({
                   value={ch.text}
                   onChange={(e) => updateChoice(idx, { text: e.target.value })}
                   placeholder={`Choice ${idx + 1}`}
-                  className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  className="flex-1 rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => removeChoice(idx)}
-                  className="rounded px-2 py-1 text-xs text-rose-600 hover:bg-rose-50"
+                  className="rounded px-2 py-1 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                 >
                   ✕
                 </button>
@@ -1134,11 +1134,11 @@ function QuestionEditor({
           <button
             type="button"
             onClick={addChoice}
-            className="mt-1 rounded-md border border-dashed border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+            className="mt-1 rounded-md border border-dashed border-slate-300 dark:border-slate-600 px-2 py-1 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
             + Add choice
           </button>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">
             {qt === 'MCQ_SINGLE'
               ? 'Tick the single correct choice.'
               : 'Tick every correct choice (all required, no extras).'}
@@ -1148,7 +1148,7 @@ function QuestionEditor({
 
       {qt === 'TRUE_FALSE' && (
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
+          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
             Correct answer
           </label>
           <div className="flex gap-3 text-sm">
@@ -1175,7 +1175,7 @@ function QuestionEditor({
       {qt === 'SHORT_ANSWER' && (
         <div className="space-y-2">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
               Accepted answers (one per line)
             </label>
             <textarea
@@ -1190,10 +1190,10 @@ function QuestionEditor({
                 })
               }
               rows={3}
-              className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
             />
           </div>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
             <input
               type="checkbox"
               checked={!!value.caseSensitive}
@@ -1207,7 +1207,7 @@ function QuestionEditor({
       {qt === 'NUMERIC' && (
         <div className="grid gap-2 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
               Correct value
             </label>
             <input
@@ -1216,11 +1216,11 @@ function QuestionEditor({
               onChange={(e) =>
                 onChange({ ...value, correctValue: Number(e.target.value) })
               }
-              className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
+            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
               Tolerance (±)
             </label>
             <input
@@ -1230,7 +1230,7 @@ function QuestionEditor({
               onChange={(e) =>
                 onChange({ ...value, tolerance: Number(e.target.value) })
               }
-              className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
             />
           </div>
         </div>
@@ -1262,14 +1262,14 @@ function QuestionEditor({
       )}
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600">
+        <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
           Explanation (shown after answering)
         </label>
         <textarea
           value={value.explanation ?? ''}
           onChange={(e) => onChange({ ...value, explanation: e.target.value })}
           rows={2}
-          className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
         />
       </div>
     </div>
@@ -1305,14 +1305,14 @@ function BranchEditor({
   return (
     <div className="space-y-2">
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-600">Prompt</label>
+        <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Prompt</label>
         <RichTextEditor
           value={value.prompt ?? ''}
           onChange={(prompt) => onChange({ ...value, prompt })}
           placeholder="Question prompt"
         />
       </div>
-      <label className="block text-xs font-medium text-slate-600">
+      <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
         Choices → next page
       </label>
       {(value.choices || []).map((ch: any, idx: number) => (
@@ -1321,14 +1321,14 @@ function BranchEditor({
             value={ch.text}
             onChange={(e) => updateChoice(idx, { text: e.target.value })}
             placeholder={`Choice ${idx + 1}`}
-            className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            className="rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
           />
           <select
             value={ch.nextPageId ?? ''}
             onChange={(e) =>
               updateChoice(idx, { nextPageId: e.target.value || null })
             }
-            className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            className="rounded-md border border-slate-300 dark:border-slate-600 px-2 py-1.5 text-sm"
           >
             <option value="">— next in order —</option>
             {otherPages.map((p) => (
@@ -1340,7 +1340,7 @@ function BranchEditor({
           <button
             type="button"
             onClick={() => removeChoice(idx)}
-            className="rounded px-2 py-1 text-xs text-rose-600 hover:bg-rose-50"
+            className="rounded px-2 py-1 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
           >
             ✕
           </button>
@@ -1349,7 +1349,7 @@ function BranchEditor({
       <button
         type="button"
         onClick={addChoice}
-        className="rounded-md border border-dashed border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+        className="rounded-md border border-dashed border-slate-300 dark:border-slate-600 px-2 py-1 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
       >
         + Add choice
       </button>

@@ -27,16 +27,16 @@ export default function StatCard({
     <Tag
       onClick={onClick}
       type={onClick ? 'button' : undefined}
-      className={`bg-white rounded-2xl border shadow-sm p-5 flex items-start gap-4 text-left w-full ${
+      className={`bg-white dark:bg-slate-900 rounded-2xl border shadow-sm p-5 flex items-start gap-4 text-left w-full ${
         onClick ? 'transition-all hover:shadow-md' : ''
-      } ${active ? 'border-indigo-400 ring-2 ring-indigo-100' : 'border-gray-100'}`}
+      } ${active ? 'border-indigo-400 dark:border-indigo-500 ring-2 ring-indigo-100 dark:ring-indigo-900/40' : 'border-gray-100 dark:border-slate-700'}`}
     >
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-none ${color}`}>
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-gray-500 font-medium">{label}</p>
-        <p className="text-xl font-extrabold text-gray-900 mt-0.5 truncate">{display}</p>
+        <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">{label}</p>
+        <p className="text-xl font-extrabold text-gray-900 dark:text-slate-100 mt-0.5 truncate">{display}</p>
         {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
       </div>
     </Tag>

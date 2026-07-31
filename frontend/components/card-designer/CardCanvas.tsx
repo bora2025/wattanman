@@ -539,7 +539,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                         src={previewQrUrl}
                         alt="QR"
                         draggable={false}
-                        className="w-full h-full object-contain pointer-events-none bg-white"
+                        className="w-full h-full object-contain pointer-events-none bg-white dark:bg-slate-900"
                         style={{ borderRadius: Math.max(0, qr.borderRadius - qr.borderWidth) }}
                       />
                     ) : (
@@ -671,7 +671,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
 
           {/* Empty state */}
           {!hasElements && (
-            <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm pointer-events-none">
+            <div className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm pointer-events-none">
               Add elements using the toolbar →
             </div>
           )}
@@ -697,14 +697,14 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
             >
               {/* Dashed selection border */}
               <div
-                className="absolute inset-0 border-2 border-dashed border-indigo-400 rounded-sm pointer-events-none"
+                className="absolute inset-0 border-2 border-dashed border-indigo-400 dark:border-indigo-700 rounded-sm pointer-events-none"
               />
 
               {/* Resize handles */}
               {handlePositions.map(({ key, cursor, style }) => (
                 <div
                   key={key}
-                  className="absolute bg-white border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 hover:scale-125 transition-transform"
+                  className="absolute bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:scale-125 transition-transform"
                   style={{
                     width: HANDLE_SIZE,
                     height: HANDLE_SIZE,
@@ -730,7 +730,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
 
               {/* Size label */}
               <div
-                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
+                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 dark:text-indigo-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
               >
                 {Math.round(selectedShape.width)} × {Math.round(selectedShape.height)}
                 {selectedShape.rotation ? ` · ${Math.round(selectedShape.rotation)}°` : ''}
@@ -754,11 +754,11 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 zIndex: 50,
               }}
             >
-              <div className="absolute inset-0 border-2 border-dashed border-indigo-400 rounded-sm pointer-events-none" />
+              <div className="absolute inset-0 border-2 border-dashed border-indigo-400 dark:border-indigo-700 rounded-sm pointer-events-none" />
               {handlePositions.map(({ key, cursor, style }) => (
                 <div
                   key={key}
-                  className="absolute bg-white border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 hover:scale-125 transition-transform"
+                  className="absolute bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:scale-125 transition-transform"
                   style={{
                     width: HANDLE_SIZE,
                     height: HANDLE_SIZE,
@@ -769,7 +769,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 />
               ))}
               <div
-                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
+                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 dark:text-indigo-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
               >
                 {Math.round(photo.width)} × {Math.round(photo.height)}
               </div>
@@ -792,11 +792,11 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 zIndex: 50,
               }}
             >
-              <div className="absolute inset-0 border-2 border-dashed border-indigo-400 rounded-sm pointer-events-none" />
+              <div className="absolute inset-0 border-2 border-dashed border-indigo-400 dark:border-indigo-700 rounded-sm pointer-events-none" />
               {handlePositions.map(({ key, cursor, style }) => (
                 <div
                   key={key}
-                  className="absolute bg-white border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 hover:scale-125 transition-transform"
+                  className="absolute bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:scale-125 transition-transform"
                   style={{
                     width: HANDLE_SIZE,
                     height: HANDLE_SIZE,
@@ -807,7 +807,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 />
               ))}
               <div
-                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
+                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 dark:text-indigo-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
               >
                 {Math.round(qr.width)} × {Math.round(qr.height)}
               </div>
@@ -830,11 +830,11 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 zIndex: 50,
               }}
             >
-              <div className="absolute inset-0 border-2 border-dashed border-indigo-400 rounded-sm pointer-events-none" />
+              <div className="absolute inset-0 border-2 border-dashed border-indigo-400 dark:border-indigo-700 rounded-sm pointer-events-none" />
               {handlePositions.map(({ key, cursor, style }) => (
                 <div
                   key={key}
-                  className="absolute bg-white border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 hover:scale-125 transition-transform"
+                  className="absolute bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:scale-125 transition-transform"
                   style={{
                     width: HANDLE_SIZE,
                     height: HANDLE_SIZE,
@@ -845,7 +845,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 />
               ))}
               <div
-                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
+                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 dark:text-indigo-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
               >
                 {Math.round(selectedLogo.width)} × {Math.round(selectedLogo.height)}
               </div>
@@ -856,8 +856,8 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
 
       {/* Card info label */}
       <div className="mt-3 text-center">
-        <span className="inline-flex items-center gap-2 text-xs text-slate-500 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-sm border border-slate-200">
-          <span className="font-medium text-slate-600">
+        <span className="inline-flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-sm border border-slate-200 dark:border-slate-700">
+          <span className="font-medium text-slate-600 dark:text-slate-300">
             {design.cardType === 'student' ? '🎓 Student' :
              design.cardType === 'staff' ? '👨‍🏫 Staff' :
              design.cardType === 'certificate-student' ? '📜 Student Cert.' :

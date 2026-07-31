@@ -167,7 +167,7 @@ function ImageUploader({
     <div className="space-y-3">
       {/* Current image preview */}
       {hasImage && (
-        <div className="relative rounded-xl overflow-hidden border border-gray-200 group">
+        <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 group">
           <img
             src={value}
             alt="preview"
@@ -179,7 +179,7 @@ function ImageUploader({
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-800 text-xs font-semibold rounded-lg shadow hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 text-xs font-semibold rounded-lg shadow hover:bg-gray-100 transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
@@ -221,17 +221,17 @@ function ImageUploader({
             {compressing ? (
               <>
                 <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-indigo-600 font-medium">Compressing image…</p>
+                <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">Compressing image…</p>
               </>
             ) : (
               <>
-                <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-700">
+                  <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">
                     Click to upload or drag & drop
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
@@ -249,7 +249,7 @@ function ImageUploader({
         <button
           type="button"
           onClick={() => setUrlMode((m) => !m)}
-          className="text-xs text-indigo-500 hover:text-indigo-700 underline transition-colors"
+          className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 underline transition-colors"
         >
           {urlMode ? 'Hide URL input' : 'Or paste an image URL instead'}
         </button>
@@ -257,7 +257,7 @@ function ImageUploader({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="text-xs text-gray-500 hover:text-gray-700 underline transition-colors"
+            className="text-xs text-gray-500 dark:text-slate-400 hover:text-gray-700 underline transition-colors"
           >
             Upload different image
           </button>
@@ -273,7 +273,7 @@ function ImageUploader({
             onChange={(e) => setUrlInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyUrl() } }}
             placeholder="https://example.com/banner.jpg"
-            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900"
           />
           <button
             type="button"
@@ -287,7 +287,7 @@ function ImageUploader({
 
       {/* Error */}
       {error && (
-        <p className="text-xs text-red-500 flex items-center gap-1">
+        <p className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
           </svg>
@@ -311,9 +311,9 @@ function ImageUploader({
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-        <h2 className="text-base font-semibold text-gray-800">{title}</h2>
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800">
+        <h2 className="text-base font-semibold text-gray-800 dark:text-slate-100">{title}</h2>
       </div>
       <div className="p-6 space-y-4">{children}</div>
     </div>
@@ -331,7 +331,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">{label}</label>
       {hint && <p className="text-xs text-gray-400 mb-1">{hint}</p>}
       {children}
     </div>
@@ -355,7 +355,7 @@ function Input({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+      className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-slate-900"
     />
   )
 }
@@ -382,10 +382,10 @@ function SlideCard({
   }
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden">
+    <div className="border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
       {/* Header row */}
       <div
-        className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+        className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-gray-100 transition-colors"
         onClick={() => setOpen((o) => !o)}
       >
         <div className="flex items-center gap-3">
@@ -399,14 +399,14 @@ function SlideCard({
               }}
             />
           ) : (
-            <div className="w-10 h-7 rounded bg-gray-200 flex items-center justify-center">
+            <div className="w-10 h-7 rounded bg-gray-200 dark:bg-slate-700 flex items-center justify-center">
               <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </div>
           )}
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-gray-700 dark:text-slate-200">
             Slide {index + 1}{slide.title ? ` — ${slide.title}` : ''}
           </span>
         </div>
@@ -417,7 +417,7 @@ function SlideCard({
             title="Move up"
             className="p-1 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors"
           >
-            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-gray-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7"/>
             </svg>
           </button>
@@ -427,14 +427,14 @@ function SlideCard({
             title="Move down"
             className="p-1 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors"
           >
-            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-gray-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
             </svg>
           </button>
           <button
             onClick={onDelete}
             title="Remove slide"
-            className="p-1 rounded hover:bg-red-50 text-red-500 transition-colors"
+            className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 text-red-500 dark:text-red-400 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -610,19 +610,19 @@ function AppearanceContent() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Appearance</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Customize the public-facing web frontend</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Appearance</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Customize the public-facing web frontend</p>
         </div>
         <div className="flex items-center gap-3">
           {saved && (
-            <span className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium">
+            <span className="flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
               </svg>
               Saved
             </span>
           )}
-          {error && <span className="text-sm text-red-600">{error}</span>}
+          {error && <span className="text-sm text-red-600 dark:text-red-400">{error}</span>}
           <button
             onClick={save}
             disabled={saving}
@@ -641,7 +641,7 @@ function AppearanceContent() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -662,12 +662,12 @@ function AppearanceContent() {
       {activeTab === 'hero' && (
         <div className="space-y-4">
           <SectionCard title="Hero Banner Slides">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-slate-400">
               These slides rotate automatically on the homepage. Drag to reorder or click the arrows.
             </p>
             <div className="space-y-3">
               {settings.heroSlides.length === 0 && (
-                <div className="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+                <div className="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl">
                   <svg className="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                   </svg>
@@ -688,7 +688,7 @@ function AppearanceContent() {
             </div>
             <button
               onClick={addSlide}
-              className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-indigo-300 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors w-full justify-center"
+              className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-indigo-300 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-sm font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors w-full justify-center"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
@@ -762,7 +762,7 @@ function AppearanceContent() {
             />
           </Field>
           {settings.logoUrl && (
-            <div className="mt-2 flex items-center gap-4 p-4 border border-gray-200 rounded-xl bg-gray-50">
+            <div className="mt-2 flex items-center gap-4 p-4 border border-gray-200 dark:border-slate-700 rounded-xl bg-gray-50 dark:bg-slate-800">
               <img
                 src={settings.logoUrl}
                 alt="logo preview"
@@ -772,8 +772,8 @@ function AppearanceContent() {
                 }}
               />
               <div>
-                <p className="text-sm font-semibold text-gray-800">{settings.siteName}</p>
-                <p className="text-xs text-gray-500">{settings.siteTagline}</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-slate-100">{settings.siteName}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400">{settings.siteTagline}</p>
               </div>
             </div>
           )}
@@ -805,12 +805,12 @@ function AppearanceContent() {
           </SectionCard>
 
           <SectionCard title="Social Media Links">
-            <p className="text-sm text-gray-500">Leave blank to hide the social icon in the footer.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">Leave blank to hide the social icon in the footer.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Facebook">
                 <div className="flex items-center gap-2">
-                  <span className="flex-none w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100">
-                    <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                  <span className="flex-none w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950/40">
+                    <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
                     </svg>
                   </span>
@@ -819,8 +819,8 @@ function AppearanceContent() {
               </Field>
               <Field label="Instagram">
                 <div className="flex items-center gap-2">
-                  <span className="flex-none w-8 h-8 flex items-center justify-center rounded-lg bg-pink-100">
-                    <svg className="w-4 h-4 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <span className="flex-none w-8 h-8 flex items-center justify-center rounded-lg bg-pink-100 dark:bg-pink-950/40">
+                    <svg className="w-4 h-4 text-pink-600 dark:text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <rect x="2" y="2" width="20" height="20" rx="5" ry="5" strokeWidth={1.5}/>
                       <circle cx="12" cy="12" r="4" strokeWidth={1.5}/>
                       <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" strokeWidth={0}/>
@@ -831,8 +831,8 @@ function AppearanceContent() {
               </Field>
               <Field label="Twitter / X">
                 <div className="flex items-center gap-2">
-                  <span className="flex-none w-8 h-8 flex items-center justify-center rounded-lg bg-sky-100">
-                    <svg className="w-4 h-4 text-sky-600" fill="currentColor" viewBox="0 0 24 24">
+                  <span className="flex-none w-8 h-8 flex items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-950/40">
+                    <svg className="w-4 h-4 text-sky-600 dark:text-sky-400" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
                   </span>
@@ -841,8 +841,8 @@ function AppearanceContent() {
               </Field>
               <Field label="YouTube">
                 <div className="flex items-center gap-2">
-                  <span className="flex-none w-8 h-8 flex items-center justify-center rounded-lg bg-red-100">
-                    <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                  <span className="flex-none w-8 h-8 flex items-center justify-center rounded-lg bg-red-100 dark:bg-red-950/40">
+                    <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 001.46 6.42 29 29 0 001 12a29 29 0 00.46 5.58 2.78 2.78 0 001.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.96A29 29 0 0023 12a29 29 0 00-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/>
                     </svg>
                   </span>
@@ -896,7 +896,7 @@ function AppearanceContent() {
                   )}
                 </div>
               </div>
-              <div className="border-t border-gray-700 pt-4 text-center text-gray-500 text-xs">
+              <div className="border-t border-gray-700 pt-4 text-center text-gray-500 dark:text-slate-400 text-xs">
                 {settings.footerCopyright || `© ${new Date().getFullYear()} Wattaman School. All rights reserved.`}
               </div>
             </div>
@@ -914,7 +914,7 @@ function AppearanceContent() {
                   type="color"
                   value={settings.primaryColor}
                   onChange={(e) => patch('primaryColor', e.target.value)}
-                  className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5 bg-white"
+                  className="w-10 h-10 rounded-lg border border-gray-200 dark:border-slate-700 cursor-pointer p-0.5 bg-white dark:bg-slate-900"
                 />
                 <Input
                   value={settings.primaryColor}
@@ -922,7 +922,7 @@ function AppearanceContent() {
                   placeholder="#4f46e5"
                 />
                 <div
-                  className="flex-none w-10 h-10 rounded-lg border border-gray-200"
+                  className="flex-none w-10 h-10 rounded-lg border border-gray-200 dark:border-slate-700"
                   style={{ backgroundColor: settings.primaryColor }}
                 />
               </div>
@@ -950,7 +950,7 @@ function AppearanceContent() {
                 onChange={(e) => patch('customCss', e.target.value)}
                 rows={10}
                 placeholder={`:root {\n  /* Override CSS variables here */\n}`}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 resize-y"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-slate-800 resize-y"
               />
             </Field>
           </SectionCard>
@@ -958,13 +958,13 @@ function AppearanceContent() {
       )}
 
       {/* Bottom save bar */}
-      <div className="sticky bottom-0 bg-white/90 backdrop-blur border-t border-gray-200 -mx-6 px-6 py-4 flex items-center justify-between">
-        <p className="text-sm text-gray-500">
+      <div className="sticky bottom-0 bg-white/90 backdrop-blur border-t border-gray-200 dark:border-slate-700 -mx-6 px-6 py-4 flex items-center justify-between">
+        <p className="text-sm text-gray-500 dark:text-slate-400">
           Changes are applied site-wide after saving.
         </p>
         <div className="flex items-center gap-3">
           {saved && (
-            <span className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium">
+            <span className="flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
               </svg>
@@ -992,7 +992,7 @@ function AppearanceContent() {
 export default function AppearancePage() {
   return (
     <AuthGuard>
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-gray-50 dark:bg-slate-800">
         <Sidebar
           title="Admin"
           navItems={adminNav}

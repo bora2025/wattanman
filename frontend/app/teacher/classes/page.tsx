@@ -145,8 +145,8 @@ export default function MyClasses() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-800">{t('teacherClasses.title')}</h1>
-          <p className="text-sm text-slate-500 mt-1">{classes.length} class{classes.length !== 1 ? 'es' : ''} assigned</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">{t('teacherClasses.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{classes.length} class{classes.length !== 1 ? 'es' : ''} assigned</p>
         </div>
 
         <div className="page-body space-y-6">
@@ -154,37 +154,37 @@ export default function MyClasses() {
           {showStudentModal && selectedClass && (
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-start justify-center sm:p-4 sm:pt-16 overflow-y-auto">
               <div className="card w-full sm:max-w-4xl sm:rounded-2xl rounded-t-3xl shadow-xl max-h-[90vh] sm:max-h-none overflow-y-auto">
-                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700">
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-800">Manage Students</h3>
-                    <p className="text-sm text-slate-500">{selectedClass.name} &middot; {classStudents.length} student{classStudents.length !== 1 ? 's' : ''}</p>
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Manage Students</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{selectedClass.name} &middot; {classStudents.length} student{classStudents.length !== 1 ? 's' : ''}</p>
                   </div>
-                  <button onClick={() => { setShowStudentModal(false); setEditingStudent(null); }} className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600">
+                  <button onClick={() => { setShowStudentModal(false); setEditingStudent(null); }} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
                 <div className="p-6">
                   {!studentPortalEnabled && (
-                    <div className="card p-3 border-amber-200 bg-amber-50/50 text-sm text-amber-700 mb-4">
+                    <div className="card p-3 border-amber-200 dark:border-amber-900 bg-amber-50/50 text-sm text-amber-700 dark:text-amber-300 mb-4">
                       Student Portal is disabled for this school — you can view the roster, but adding, editing, and removing students is turned off.
                     </div>
                   )}
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Available */}
                     <div>
-                      <h4 className="text-sm font-semibold text-slate-600 uppercase tracking-wider mb-3">Available Students</h4>
-                      <div className="card max-h-72 overflow-y-auto divide-y divide-slate-100">
+                      <h4 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">Available Students</h4>
+                      <div className="card max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
                         {availableStudents.length === 0 ? (
                           <div className="empty-state py-8"><p className="text-sm">No available students</p></div>
                         ) : (
                           availableStudents.map((s) => (
-                            <div key={s.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
+                            <div key={s.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                               <div className="avatar avatar-sm">
                                 {s.photo ? <img src={s.photo} alt={s.name} className="w-full h-full object-cover" /> : s.name.charAt(0).toUpperCase()}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-slate-800 truncate">{s.name}</p>
-                                <p className="text-xs text-slate-500 truncate">{s.email}</p>
+                                <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{s.name}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{s.email}</p>
                               </div>
                               <button onClick={() => handleAddStudent(s.id)} disabled={!studentPortalEnabled} className="btn-primary btn-sm disabled:opacity-50 disabled:pointer-events-none">Add</button>
                             </div>
@@ -194,10 +194,10 @@ export default function MyClasses() {
                     </div>
                     {/* Class Students */}
                     <div>
-                      <h4 className="text-sm font-semibold text-slate-600 uppercase tracking-wider mb-3">
+                      <h4 className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">
                         Class Students ({classStudents.length})
                       </h4>
-                      <div className="card max-h-96 overflow-y-auto divide-y divide-slate-100">
+                      <div className="card max-h-96 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
                         {classStudents.length === 0 ? (
                           <div className="empty-state py-8"><p className="text-sm">No students yet</p></div>
                         ) : (
@@ -208,10 +208,10 @@ export default function MyClasses() {
                                   {s.photo ? <img src={s.photo} alt={s.name} className="w-full h-full object-cover" /> : s.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-slate-800">{s.name}</p>
+                                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{s.name}</p>
                                   <div className="flex items-center gap-2 mt-0.5">
                                     {s.sex && <span className="badge-blue">{s.sex === 'MALE' ? '♂ Male' : '♀ Female'}</span>}
-                                    <span className="text-xs text-slate-400 truncate">{s.email}</span>
+                                    <span className="text-xs text-slate-400 dark:text-slate-500 truncate">{s.email}</span>
                                   </div>
                                 </div>
                                 <div className="flex gap-1">
@@ -220,7 +220,7 @@ export default function MyClasses() {
                                 </div>
                               </div>
                               {editingStudent === s.id && (
-                                <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-3">
+                                <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 space-y-3">
                                   <div className="grid grid-cols-2 gap-3">
                                     <div>
                                       <label className="form-label text-xs">Sex</label>
@@ -281,9 +281,9 @@ export default function MyClasses() {
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-lg shadow-sm mb-3">
                   📖
                 </div>
-                <h3 className="font-semibold text-slate-800 text-base sm:text-lg">{cls.name}</h3>
-                <p className="text-sm text-slate-500 mt-0.5">{cls.subject}</p>
-                <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
+                <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-base sm:text-lg">{cls.name}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{cls.subject}</p>
+                <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
                   <button onClick={() => handleManageStudents(cls)} className="btn-outline btn-sm flex-1 py-2.5 sm:py-1.5">Students</button>
                   <Link href={`/teacher/attendance?classId=${cls.id}`} className="flex-1">
                     <button className="btn-success btn-sm w-full py-2.5 sm:py-1.5">Attendance</button>
@@ -296,8 +296,8 @@ export default function MyClasses() {
             <div className="card p-12">
               <div className="empty-state">
                 <p className="text-4xl mb-3">📖</p>
-                <p className="font-semibold text-slate-600">No classes assigned</p>
-                <p className="text-sm text-slate-400 mt-1">Contact your admin to get classes assigned.</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-300">No classes assigned</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Contact your admin to get classes assigned.</p>
               </div>
             </div>
           )}

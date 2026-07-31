@@ -42,13 +42,13 @@ function NewExamPageContent() {
 
   return (
     <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
-      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title={isAdmin ? 'Admin Panel' : 'Teacher'} subtitle={isAdmin ? 'Wattanman' : 'Portal'} navItems={isAdmin ? adminNav : teacherNav} accentColor={isAdmin ? 'indigo' : 'sky'} />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
             <div className="flex items-center gap-3 mb-6">
-              <button onClick={goBack} className="text-sm text-gray-500 hover:text-gray-800">← Back</button>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">📝 Create Exam</h1>
+              <button onClick={goBack} className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-800">← Back</button>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">📝 Create Exam</h1>
             </div>
             <ExamForm
               classes={classes}

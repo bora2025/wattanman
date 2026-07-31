@@ -66,11 +66,11 @@ function WattamanDashboardContent() {
         <div className="page-header pb-0">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-emerald-600">{greeting} 👋</p>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mt-0.5">
+              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{greeting} 👋</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mt-0.5">
                 {userName ? userName.charAt(0).toUpperCase() + userName.slice(1) : 'Wattaman'}
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">{todayLabel}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{todayLabel}</p>
             </div>
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-lg" style={{ background: 'linear-gradient(135deg,#00C9A7,#00a88a)' }}>
               📷
@@ -103,8 +103,8 @@ function WattamanDashboardContent() {
           {/* Today's stats */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Today's scans</p>
-              <button onClick={loadStats} className="text-xs text-emerald-600 font-medium active:scale-95 transition-transform">↻ Refresh</button>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Today's scans</p>
+              <button onClick={loadStats} className="text-xs text-emerald-600 dark:text-emerald-400 font-medium active:scale-95 transition-transform">↻ Refresh</button>
             </div>
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
             {[
@@ -123,8 +123,8 @@ function WattamanDashboardContent() {
           </div>
 
           {/* Guide */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm">
-            <h3 className="font-semibold text-slate-700 text-sm mb-3">How it works</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm">
+            <h3 className="font-semibold text-slate-700 dark:text-slate-200 text-sm mb-3">How it works</h3>
             <div className="space-y-3">
               {[
                 { icon: '📷', title: 'Open Scanner', desc: 'Tap the button above' },
@@ -132,10 +132,10 @@ function WattamanDashboardContent() {
                 { icon: '✅', title: 'Instant Record', desc: 'Attendance recorded automatically — session & status included' },
               ].map((step, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-lg flex-shrink-0">{step.icon}</div>
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-lg flex-shrink-0">{step.icon}</div>
                   <div>
-                    <p className="text-sm font-medium text-slate-700">{step.title}</p>
-                    <p className="text-xs text-slate-400">{step.desc}</p>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{step.title}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">{step.desc}</p>
                   </div>
                 </div>
               ))}

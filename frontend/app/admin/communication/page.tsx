@@ -52,13 +52,13 @@ export default function AdminCommunicationPage() {
         <div className="page-content">
           <div className="h-14 lg:hidden" />
           <div className="page-header">
-            <h1 className="text-2xl font-bold text-slate-800">Communication Hub</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Communication Hub</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Direct messages, school-wide broadcasts, portal activity, and audit log.
             </p>
           </div>
           <div className="page-body">
-            <div className="flex gap-1 border-b border-slate-200 mb-6">
+            <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 mb-6">
               {([
                 ['inbox', 'Inbox'],
                 ['broadcast', 'New Broadcast'],
@@ -143,13 +143,13 @@ function InboxTab() {
 
   return (
     <div className="card overflow-hidden flex h-[70vh]">
-      <div className="w-72 border-r border-slate-200 flex flex-col bg-slate-50">
-        <div className="p-3 border-b border-slate-200">
-          <button onClick={() => setShowPicker(s => !s)} className="w-full text-sm text-indigo-600 font-medium hover:underline">
+      <div className="w-72 border-r border-slate-200 dark:border-slate-700 flex flex-col bg-slate-50 dark:bg-slate-800">
+        <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+          <button onClick={() => setShowPicker(s => !s)} className="w-full text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
             + New Message
           </button>
           {showPicker && (
-            <div className="mt-2 bg-white rounded border border-slate-200 p-2">
+            <div className="mt-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 p-2">
               <input
                 type="search" value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search…"
@@ -166,9 +166,9 @@ function InboxTab() {
               <div className="max-h-56 overflow-y-auto">
                 {filtered.slice(0, 50).map(c => (
                   <button key={c.id} onClick={() => onPick(c.id)}
-                    className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-50 flex justify-between gap-2">
+                    className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-50 dark:hover:bg-slate-800 flex justify-between gap-2">
                     <span className="truncate">{c.name}</span>
-                    <span className="text-[9px] font-bold text-slate-400">{c.role}</span>
+                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">{c.role}</span>
                   </button>
                 ))}
               </div>
@@ -177,7 +177,7 @@ function InboxTab() {
         </div>
         <div className="flex-1 overflow-y-auto p-2">
           {inbox.length === 0 && (
-            <p className="text-xs text-slate-400 px-3 py-6 text-center">No conversations yet.</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 px-3 py-6 text-center">No conversations yet.</p>
           )}
           {inbox.map(item => {
             const lm = item.lastMessage
@@ -190,7 +190,7 @@ function InboxTab() {
                   <p className={`truncate ${unread ? 'font-bold text-slate-800' : 'font-medium'}`}>{item.partner.name}</p>
                   {unread && <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0" />}
                 </div>
-                <p className="text-xs truncate text-slate-400">{lm?.content ?? ''}</p>
+                <p className="text-xs truncate text-slate-400 dark:text-slate-500">{lm?.content ?? ''}</p>
               </button>
             )
           })}
@@ -199,7 +199,7 @@ function InboxTab() {
 
       <div className="flex-1 flex flex-col">
         {!partnerId ? (
-          <div className="flex-1 flex items-center justify-center text-slate-400">
+          <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500">
             <div className="text-center">
               <p className="text-4xl mb-3">💬</p>
               <p>Select a conversation or start a new one</p>
@@ -207,13 +207,13 @@ function InboxTab() {
           </div>
         ) : (
           <>
-            <div className="bg-white border-b border-slate-200 px-6 py-3">
-              <p className="font-semibold text-slate-800">{partner?.name ?? 'Chat'}</p>
-              <p className="text-xs text-slate-400">{partner?.role ?? ''}</p>
+            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 py-3">
+              <p className="font-semibold text-slate-800 dark:text-slate-100">{partner?.name ?? 'Chat'}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{partner?.role ?? ''}</p>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-3 bg-slate-50">
+            <div className="flex-1 overflow-y-auto p-6 space-y-3 bg-slate-50 dark:bg-slate-800">
               {conversation.length === 0 && (
-                <p className="text-center text-sm text-slate-400 mt-8">No messages yet.</p>
+                <p className="text-center text-sm text-slate-400 dark:text-slate-500 mt-8">No messages yet.</p>
               )}
               {conversation.map(msg => {
                 const fromPartner = msg.sender?.id === partnerId
@@ -229,7 +229,7 @@ function InboxTab() {
                 )
               })}
             </div>
-            <form onSubmit={handleSubmit(onSend)} className="bg-white border-t border-slate-200 p-4 flex gap-3">
+            <form onSubmit={handleSubmit(onSend)} className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-4 flex gap-3">
               <input {...register('content', { required: true })} autoComplete="off"
                 placeholder="Type a message…"
                 className="flex-1 border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
@@ -294,21 +294,21 @@ function BroadcastTab() {
 
   return (
     <form onSubmit={handleSubmit(d => create.mutate(d))} className="card p-6 max-w-3xl">
-      <h3 className="text-lg font-semibold text-slate-800 mb-4">Compose Broadcast</h3>
+      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Compose Broadcast</h3>
 
-      <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Title</label>
       <input {...register('title', { required: 'Title required', maxLength: 120 })}
         className="w-full border rounded-lg px-3 py-2 mb-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-      {errors.title && <p className="text-xs text-red-600 mb-2">{errors.title.message}</p>}
+      {errors.title && <p className="text-xs text-red-600 dark:text-red-400 mb-2">{errors.title.message}</p>}
 
-      <label className="block text-sm font-medium text-slate-700 mb-1 mt-3">Message</label>
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1 mt-3">Message</label>
       <textarea rows={5} {...register('body', { required: 'Message required' })}
         className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-      {errors.body && <p className="text-xs text-red-600 mb-2">{errors.body.message}</p>}
+      {errors.body && <p className="text-xs text-red-600 dark:text-red-400 mb-2">{errors.body.message}</p>}
 
       <div className="grid sm:grid-cols-2 gap-4 mt-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Audience</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Audience</label>
           <select {...register('audience')}
             className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
             <option value="SCHOOL">Entire school</option>
@@ -318,7 +318,7 @@ function BroadcastTab() {
         </div>
         {audience === 'ROLE' && (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Role</label>
             <select {...register('targetRole')}
               className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
               <option value="ALL">All staff & families</option>
@@ -330,7 +330,7 @@ function BroadcastTab() {
         )}
         {audience === 'CLASS' && (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Class</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Class</label>
             <select {...register('classId', { required: audience === 'CLASS' })}
               className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
               <option value="">— select class —</option>
@@ -341,47 +341,47 @@ function BroadcastTab() {
       </div>
 
       <fieldset className="mt-4">
-        <legend className="text-sm font-medium text-slate-700 mb-1">Delivery channels</legend>
+        <legend className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Delivery channels</legend>
         <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
             <input type="checkbox" {...register('channelInApp')} className="h-4 w-4" />
             In-app
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
             <input type="checkbox" {...register('channelEmail')} className="h-4 w-4" />
-            Email <span className="text-xs text-slate-400">(SendGrid)</span>
+            Email <span className="text-xs text-slate-400 dark:text-slate-500">(SendGrid)</span>
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
             <input type="checkbox" {...register('channelSms')} className="h-4 w-4" />
-            SMS <span className="text-xs text-amber-600">(billable — Twilio)</span>
+            SMS <span className="text-xs text-amber-600 dark:text-amber-400">(billable — Twilio)</span>
           </label>
         </div>
       </fieldset>
 
       <div className="grid sm:grid-cols-2 gap-4 mt-4">
-        <label className="flex items-center gap-2 text-sm text-slate-700">
+        <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
           <input type="checkbox" {...register('pinned')} className="h-4 w-4" />
           Pin to top of feed
         </label>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Schedule (optional)</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Schedule (optional)</label>
           <input type="datetime-local" {...register('scheduledAt')}
             className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
         </div>
       </div>
 
       {create.isError && (
-        <p className="mt-3 text-sm text-red-600">Failed to send broadcast.</p>
+        <p className="mt-3 text-sm text-red-600 dark:text-red-400">Failed to send broadcast.</p>
       )}
       {create.isSuccess && (
-        <p className="mt-3 text-sm text-emerald-600">Broadcast sent.</p>
+        <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">Broadcast sent.</p>
       )}
 
       <div className="mt-6 flex gap-3">
         <button type="submit" disabled={create.isPending} className="btn-primary disabled:opacity-60">
           {create.isPending ? 'Sending…' : 'Send broadcast'}
         </button>
-        <button type="button" onClick={() => reset()} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800">
+        <button type="button" onClick={() => reset()} className="px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800">
           Reset
         </button>
       </div>
@@ -401,13 +401,13 @@ function HistoryTab() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-announcements'] }),
   })
 
-  if (isLoading) return <p className="text-sm text-slate-400">Loading…</p>
-  if (list.length === 0) return <p className="text-sm text-slate-400">No broadcasts yet.</p>
+  if (isLoading) return <p className="text-sm text-slate-400 dark:text-slate-500">Loading…</p>
+  if (list.length === 0) return <p className="text-sm text-slate-400 dark:text-slate-500">No broadcasts yet.</p>
 
   return (
     <div className="card overflow-hidden">
       <table className="w-full text-sm">
-        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+        <thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500 dark:text-slate-400">
           <tr>
             <th className="px-4 py-2 text-left">Title</th>
             <th className="px-4 py-2 text-left">Audience</th>
@@ -420,28 +420,28 @@ function HistoryTab() {
         </thead>
         <tbody>
           {list.map(a => (
-            <tr key={a.id} className="border-t border-slate-100">
+            <tr key={a.id} className="border-t border-slate-100 dark:border-slate-800">
               <td className="px-4 py-2">
-                <div className="font-medium text-slate-800 flex items-center gap-2">
-                  {a.pinned && <span className="text-amber-500" title="Pinned">📌</span>}
+                <div className="font-medium text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  {a.pinned && <span className="text-amber-500 dark:text-amber-400" title="Pinned">📌</span>}
                   {a.title}
                 </div>
-                <p className="text-xs text-slate-400 truncate max-w-md">{a.body}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 truncate max-w-md">{a.body}</p>
               </td>
-              <td className="px-4 py-2 text-slate-600">
+              <td className="px-4 py-2 text-slate-600 dark:text-slate-300">
                 {a.audience === 'SCHOOL' && 'School'}
                 {a.audience === 'ROLE' && `Role: ${a.targetRole}`}
                 {a.audience === 'CLASS' && `Class: ${a.class?.name ?? '—'}`}
               </td>
-              <td className="px-4 py-2 text-xs text-slate-600">{a.channels}</td>
-              <td className="px-4 py-2 text-slate-600">{a.author.name}</td>
-              <td className="px-4 py-2 text-xs text-slate-500">
+              <td className="px-4 py-2 text-xs text-slate-600 dark:text-slate-300">{a.channels}</td>
+              <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{a.author.name}</td>
+              <td className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400">
                 {a.sentAt ? formatCambodiaTime(a.sentAt) : a.scheduledAt ? `⏰ ${formatCambodiaTime(a.scheduledAt)}` : '—'}
               </td>
-              <td className="px-4 py-2 text-slate-600">{a._count.reads}</td>
+              <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{a._count.reads}</td>
               <td className="px-4 py-2 text-right">
                 <button onClick={() => { if (confirm('Delete this broadcast?')) del.mutate(a.id) }}
-                  className="text-xs text-red-600 hover:underline">Delete</button>
+                  className="text-xs text-red-600 dark:text-red-400 hover:underline">Delete</button>
               </td>
             </tr>
           ))}
@@ -515,13 +515,13 @@ function PortalActivityTab() {
       {/* Controls */}
       <div className="card p-4 flex flex-wrap items-center gap-3">
         <div>
-          <p className="text-sm font-semibold text-slate-800">Portal Activity Monitor</p>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Portal Activity Monitor</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Live view of what teachers, students, and parents are doing across the platform.
           </p>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
+          <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
             {(['1h', '24h', '7d'] as const).map(w => (
               <button key={w} onClick={() => setWindow(w)}
                 className={`px-3 py-1.5 text-xs font-semibold transition ${
@@ -532,16 +532,16 @@ function PortalActivityTab() {
             ))}
           </div>
           <button onClick={() => refetch()} disabled={isFetching}
-            className="text-xs text-indigo-600 font-medium hover:underline disabled:opacity-60">
+            className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline disabled:opacity-60">
             {isFetching ? 'Refreshing…' : '↻ Refresh'}
           </button>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="card p-12 text-center text-slate-400 text-sm">Loading portal activity…</div>
+        <div className="card p-12 text-center text-slate-400 dark:text-slate-500 text-sm">Loading portal activity…</div>
       ) : !data ? (
-        <div className="card p-12 text-center text-red-500 text-sm">Failed to load portal activity.</div>
+        <div className="card p-12 text-center text-red-500 dark:text-red-400 text-sm">Failed to load portal activity.</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {data.portals.map(p => {
@@ -550,17 +550,17 @@ function PortalActivityTab() {
               <div key={p.key} className="card p-5 space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                    <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl">
                       {p.icon}
                     </div>
                     <div>
-                      <h3 className="text-base font-semibold text-slate-800">{p.label}</h3>
-                      <p className="text-xs text-slate-500">
+                      <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">{p.label}</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {p.actorCount} active user{p.actorCount === 1 ? '' : 's'}
                         {' · '}
                         {p.eventCount} event{p.eventCount === 1 ? '' : 's'}
                         {p.failureCount > 0 && (
-                          <span className="text-red-600 ml-1">· {p.failureCount} failed</span>
+                          <span className="text-red-600 dark:text-red-400 ml-1">· {p.failureCount} failed</span>
                         )}
                       </p>
                     </div>
@@ -574,28 +574,28 @@ function PortalActivityTab() {
                 {(p.byAction.length > 0 || p.byResource.length > 0) && (
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <p className="font-semibold text-slate-500 uppercase text-[10px] mb-1.5">Top actions</p>
+                      <p className="font-semibold text-slate-500 dark:text-slate-400 uppercase text-[10px] mb-1.5">Top actions</p>
                       <div className="space-y-1">
                         {p.byAction.length === 0
-                          ? <p className="text-slate-400">—</p>
+                          ? <p className="text-slate-400 dark:text-slate-500">—</p>
                           : p.byAction.map(a => (
                             <div key={a.action} className="flex items-center justify-between">
                               <span className={`inline-block px-2 py-0.5 rounded font-semibold ${actionBadge(a.action)}`}>{a.action}</span>
-                              <span className="text-slate-600 font-mono">{a.count}</span>
+                              <span className="text-slate-600 dark:text-slate-300 font-mono">{a.count}</span>
                             </div>
                           ))
                         }
                       </div>
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-500 uppercase text-[10px] mb-1.5">Top resources</p>
+                      <p className="font-semibold text-slate-500 dark:text-slate-400 uppercase text-[10px] mb-1.5">Top resources</p>
                       <div className="space-y-1">
                         {p.byResource.length === 0
-                          ? <p className="text-slate-400">—</p>
+                          ? <p className="text-slate-400 dark:text-slate-500">—</p>
                           : p.byResource.map(r => (
                             <div key={r.resource} className="flex items-center justify-between">
-                              <span className="text-slate-700 truncate">{r.resource}</span>
-                              <span className="text-slate-600 font-mono">{r.count}</span>
+                              <span className="text-slate-700 dark:text-slate-200 truncate">{r.resource}</span>
+                              <span className="text-slate-600 dark:text-slate-300 font-mono">{r.count}</span>
                             </div>
                           ))
                         }
@@ -606,9 +606,9 @@ function PortalActivityTab() {
 
                 {/* Recent events */}
                 <div>
-                  <p className="font-semibold text-slate-500 uppercase text-[10px] mb-1.5">Recent events</p>
+                  <p className="font-semibold text-slate-500 dark:text-slate-400 uppercase text-[10px] mb-1.5">Recent events</p>
                   {p.recent.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic">No activity in this window.</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 italic">No activity in this window.</p>
                   ) : (
                     <ul className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
                       {p.recent.map(ev => (
@@ -617,17 +617,17 @@ function PortalActivityTab() {
                             {ev.action}
                           </span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-slate-700 truncate">
+                            <p className="text-slate-700 dark:text-slate-200 truncate">
                               <span className="font-medium">{ev.actorName ?? 'System'}</span>
-                              {ev.actorRole && <span className="text-slate-400"> · {ev.actorRole}</span>}
+                              {ev.actorRole && <span className="text-slate-400 dark:text-slate-500"> · {ev.actorRole}</span>}
                               {' → '}
-                              <span className="text-slate-600">{ev.resource}</span>
-                              {ev.resourceLabel && <span className="text-slate-500"> · {ev.resourceLabel}</span>}
+                              <span className="text-slate-600 dark:text-slate-300">{ev.resource}</span>
+                              {ev.resourceLabel && <span className="text-slate-500 dark:text-slate-400"> · {ev.resourceLabel}</span>}
                             </p>
-                            <p className="text-[10px] text-slate-400">
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500">
                               {formatCambodiaTime(ev.createdAt)}
                               {!ev.success && (
-                                <span className="ml-2 text-red-600 font-semibold">
+                                <span className="ml-2 text-red-600 dark:text-red-400 font-semibold">
                                   ⚠ {ev.statusCode ?? ''} {ev.errorMessage ?? 'failed'}
                                 </span>
                               )}
@@ -639,9 +639,9 @@ function PortalActivityTab() {
                   )}
                 </div>
 
-                <div className="flex items-center justify-end pt-1 border-t border-slate-100">
+                <div className="flex items-center justify-end pt-1 border-t border-slate-100 dark:border-slate-800">
                   <Link href={`/admin/audit?resource=${encodeURIComponent(p.byResource[0]?.resource ?? '')}`}
-                    className="text-xs text-indigo-600 font-medium hover:underline">
+                    className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
                     View full audit log →
                   </Link>
                 </div>

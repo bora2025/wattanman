@@ -86,21 +86,21 @@ export function DragDropEditor({ data, onChange }: { data: any; onChange: (d: an
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs text-slate-500 mb-1">Background image</label>
+        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Background image</label>
         <input type="file" accept="image/*" onChange={handleImageChange} className="text-xs" />
-        {imageError && <p className="text-xs text-red-500 mt-1">{imageError}</p>}
+        {imageError && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{imageError}</p>}
       </div>
 
       {backgroundImage && (
         <>
-          <p className="text-xs text-slate-500">Click and drag over the image to draw a drop zone.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Click and drag over the image to draw a drop zone.</p>
           <div
             ref={canvasRef}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={() => { draftRef.current = null; setDraft(null) }}
-            className="relative select-none cursor-crosshair border rounded-lg overflow-hidden bg-slate-100"
+            className="relative select-none cursor-crosshair border rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800"
             style={{ touchAction: 'none' }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -111,13 +111,13 @@ export function DragDropEditor({ data, onChange }: { data: any; onChange: (d: an
                 className="absolute border-2 border-sky-500 bg-sky-500/10 flex items-start justify-end"
                 style={{ left: `${z.x}%`, top: `${z.y}%`, width: `${z.width}%`, height: `${z.height}%` }}
               >
-                <button type="button" onClick={(e) => { e.stopPropagation(); removeZone(z.id) }} className="bg-white text-red-500 text-[10px] w-4 h-4 rounded-bl leading-none">✕</button>
-                <span className="absolute -top-4 left-0 text-[10px] text-sky-700 font-semibold">Zone {i + 1}</span>
+                <button type="button" onClick={(e) => { e.stopPropagation(); removeZone(z.id) }} className="bg-white dark:bg-slate-900 text-red-500 dark:text-red-400 text-[10px] w-4 h-4 rounded-bl leading-none">✕</button>
+                <span className="absolute -top-4 left-0 text-[10px] text-sky-700 dark:text-sky-300 font-semibold">Zone {i + 1}</span>
               </div>
             ))}
             {draft && (
               <div
-                className="absolute border-2 border-dashed border-sky-400 bg-sky-400/10"
+                className="absolute border-2 border-dashed border-sky-400 dark:border-sky-700 bg-sky-400/10"
                 style={{ left: `${draft.x}%`, top: `${draft.y}%`, width: `${draft.width}%`, height: `${draft.height}%` }}
               />
             )}
@@ -126,7 +126,7 @@ export function DragDropEditor({ data, onChange }: { data: any; onChange: (d: an
       )}
 
       <div className="space-y-1.5">
-        <p className="text-xs text-slate-500">Items — each must be assigned to a zone.</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">Items — each must be assigned to a zone.</p>
         {items.map((it, i) => (
           <div key={it.id} className="flex items-center gap-2">
             <input value={it.label} onChange={e => updateItem(i, { label: e.target.value })} placeholder={`Item ${i + 1} label`} className="flex-1 border rounded-lg px-3 py-1.5 text-sm" />
@@ -134,10 +134,10 @@ export function DragDropEditor({ data, onChange }: { data: any; onChange: (d: an
               <option value="">— zone —</option>
               {zones.map((z, zi) => <option key={z.id} value={z.id}>Zone {zi + 1}</option>)}
             </select>
-            <button type="button" onClick={() => removeItem(i)} className="text-xs text-red-500">✕</button>
+            <button type="button" onClick={() => removeItem(i)} className="text-xs text-red-500 dark:text-red-400">✕</button>
           </div>
         ))}
-        <button type="button" onClick={addItem} disabled={zones.length === 0} className="text-xs text-sky-600 hover:underline disabled:opacity-40">+ Add item</button>
+        <button type="button" onClick={addItem} disabled={zones.length === 0} className="text-xs text-sky-600 dark:text-sky-400 hover:underline disabled:opacity-40">+ Add item</button>
       </div>
     </div>
   )
@@ -176,7 +176,7 @@ export function DragDropInput({ data, value, onChange, disabled }: { data: any; 
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <div className={disabled ? 'pointer-events-none opacity-60' : undefined}>
-        <div className="relative select-none border rounded-lg overflow-hidden bg-slate-100">
+        <div className="relative select-none border rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={backgroundImage} alt="Drag and drop" className="w-full h-auto block pointer-events-none" draggable={false} />
           {zones.map(z => {
@@ -187,9 +187,9 @@ export function DragDropInput({ data, value, onChange, disabled }: { data: any; 
             )
           })}
         </div>
-        <p className="text-xs text-slate-500 mt-3 mb-2">Drag each item onto the matching spot on the image.</p>
-        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-lg border border-dashed border-slate-300">
-          {unplacedItems.length === 0 && <span className="text-xs text-slate-400">All items placed</span>}
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-3 mb-2">Drag each item onto the matching spot on the image.</p>
+        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-dashed border-slate-300 dark:border-slate-600">
+          {unplacedItems.length === 0 && <span className="text-xs text-slate-400 dark:text-slate-500">All items placed</span>}
           {unplacedItems.map(it => <DraggableItem key={it.id} id={it.id} label={it.label} />)}
         </div>
       </div>
@@ -207,7 +207,7 @@ function DroppableZone({ zone, item, onClear }: { zone: Zone; item?: { id: strin
       style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%` }}
       title={item ? 'Click to remove' : 'Drop here'}
     >
-      {item && <MathText as="span" className="text-xs font-medium text-emerald-700 truncate" text={item.label} />}
+      {item && <MathText as="span" className="text-xs font-medium text-emerald-700 dark:text-emerald-300 truncate" text={item.label} />}
     </div>
   )
 }

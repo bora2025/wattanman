@@ -268,7 +268,7 @@ export default function SchedulePage() {
           <tbody>
             {tt.classes.map(cls => (
               <tr key={cls.id} className="even:bg-gray-50 hover:bg-indigo-50/30 transition-colors">
-                <td className="border border-gray-200 px-2 py-1 font-semibold align-middle whitespace-nowrap sticky left-0 bg-white z-[5] shadow-sm">
+                <td className="border border-gray-200 dark:border-slate-700 px-2 py-1 font-semibold align-middle whitespace-nowrap sticky left-0 bg-white dark:bg-slate-900 z-[5] shadow-sm">
                   <div className="flex flex-col gap-0.5">
                     {badge(cls.color, cls.short)}
                     <span className="text-gray-400 text-[10px]">{cls.name}</span>
@@ -340,7 +340,7 @@ export default function SchedulePage() {
           <tbody>
             {tt.teachers.map(tch => (
               <tr key={tch.id} className="even:bg-gray-50">
-                <td className="border border-gray-200 px-2 py-1 font-semibold align-middle whitespace-nowrap sticky left-0 bg-white z-[5] shadow-sm">
+                <td className="border border-gray-200 dark:border-slate-700 px-2 py-1 font-semibold align-middle whitespace-nowrap sticky left-0 bg-white dark:bg-slate-900 z-[5] shadow-sm">
                   <div className="flex flex-col gap-0.5">
                     {badge(tch.color, tch.short)}
                     <span className="text-gray-400 text-[10px]">{tch.lastName}</span>
@@ -351,7 +351,7 @@ export default function SchedulePage() {
                     const entries = tt.entries.filter(e => e.teacherId === tch.id && e.day === day && e.period === period)
                     return (
                       <td key={`${tch.id}_${day}_${period}`}
-                        className="border border-gray-200 align-top p-0.5 min-h-[56px] w-24">
+                        className="border border-gray-200 dark:border-slate-700 align-top p-0.5 min-h-[56px] w-24">
                         {entries.map(entry => (
                           <div key={entry.id}
                             className="rounded mb-0.5 px-1 py-0.5 text-white text-[10px] leading-tight"
@@ -384,20 +384,20 @@ export default function SchedulePage() {
 
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex h-screen bg-gray-100 dark:bg-slate-800">
         <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
 
         {/* Left Panel: Lesson Cards */}
-        <div className="w-64 shrink-0 bg-white border-r border-gray-200 flex flex-col">
-          <div className="px-3 py-3 border-b border-gray-100 bg-indigo-50">
-            <h2 className="font-bold text-indigo-800 text-sm">Lesson Cards</h2>
-            <p className="text-xs text-indigo-500 mt-0.5">Drag → grid to schedule</p>
+        <div className="w-64 shrink-0 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 flex flex-col">
+          <div className="px-3 py-3 border-b border-gray-100 dark:border-slate-800 bg-indigo-50 dark:bg-indigo-950/40">
+            <h2 className="font-bold text-indigo-800 dark:text-indigo-300 text-sm">Lesson Cards</h2>
+            <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-0.5">Drag → grid to schedule</p>
           </div>
 
           {/* Timetable selector */}
-          <div className="px-3 py-2 border-b border-gray-100">
+          <div className="px-3 py-2 border-b border-gray-100 dark:border-slate-800">
             <select
-              className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-indigo-400"
+              className="w-full border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-indigo-400"
               value={selectedId}
               onChange={e => setSelectedId(e.target.value)}
             >
@@ -410,19 +410,19 @@ export default function SchedulePage() {
 
           {/* Progress bar */}
           {tt && (
-            <div className="px-3 py-2 border-b border-gray-100">
-              <div className="flex justify-between text-[10px] text-gray-500 mb-1">
+            <div className="px-3 py-2 border-b border-gray-100 dark:border-slate-800">
+              <div className="flex justify-between text-[10px] text-gray-500 dark:text-slate-400 mb-1">
                 <span>Placed: {totalPlaced} / {totalNeeded}</span>
                 <span>{pct}%</span>
               </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
               {unplaced.length === 0 && totalNeeded > 0 && (
-                <div className="mt-1.5 text-[10px] text-emerald-600 font-semibold text-center">✓ All lessons placed!</div>
+                <div className="mt-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold text-center">✓ All lessons placed!</div>
               )}
             </div>
           )}
@@ -459,7 +459,7 @@ export default function SchedulePage() {
 
           {/* By-class / by-teacher grouped legend */}
           {tt && (
-            <div className="px-2 py-2 border-t border-gray-100">
+            <div className="px-2 py-2 border-t border-gray-100 dark:border-slate-800">
               <p className="text-[10px] text-gray-400 font-semibold mb-1">TEACHERS</p>
               <div className="flex flex-wrap gap-1">
                 {tt.teachers.map(t => (
@@ -477,12 +477,12 @@ export default function SchedulePage() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Toolbar */}
-          <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-sm text-gray-700">
+          <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-4 py-2 flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-sm text-gray-700 dark:text-slate-200">
               {tt ? `${tt.name} · ${tt.academicYear}` : 'Scheduling Board'}
             </span>
-            <div className="w-px h-5 bg-gray-200 mx-1" />
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs">
+            <div className="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1" />
+            <div className="flex rounded-lg border border-gray-200 dark:border-slate-700 overflow-hidden text-xs">
               <button
                 onClick={() => setViewMode('class')}
                 className={`px-3 py-1.5 transition-colors ${viewMode === 'class' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
@@ -492,14 +492,14 @@ export default function SchedulePage() {
                 className={`px-3 py-1.5 border-l border-gray-200 transition-colors ${viewMode === 'teacher' ? 'bg-emerald-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
               >By Teacher</button>
             </div>
-            <div className="w-px h-5 bg-gray-200 mx-1" />
+            <div className="w-px h-5 bg-gray-200 dark:bg-slate-700 mx-1" />
             <div className="flex items-center gap-1 text-xs">
               <button onClick={() => setZoom(z => Math.max(0.4, +(z - 0.1).toFixed(1)))}
-                className="w-6 h-6 rounded border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold">−</button>
-              <span className="w-10 text-center text-gray-500">{Math.round(zoom * 100)}%</span>
+                className="w-6 h-6 rounded border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-100 flex items-center justify-center font-bold">−</button>
+              <span className="w-10 text-center text-gray-500 dark:text-slate-400">{Math.round(zoom * 100)}%</span>
               <button onClick={() => setZoom(z => Math.min(2, +(z + 0.1).toFixed(1)))}
-                className="w-6 h-6 rounded border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold">+</button>
-              <button onClick={() => setZoom(1)} className="text-indigo-500 hover:underline ml-1">100%</button>
+                className="w-6 h-6 rounded border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-100 flex items-center justify-center font-bold">+</button>
+              <button onClick={() => setZoom(1)} className="text-indigo-500 dark:text-indigo-400 hover:underline ml-1">100%</button>
             </div>
             <div className="ml-auto flex items-center gap-2">
               {saving && (
@@ -511,7 +511,7 @@ export default function SchedulePage() {
                   Saving…
                 </span>
               )}
-              <a href="/admin/timetable" className="text-xs text-indigo-600 hover:underline">← Back to Timetable</a>
+              <a href="/admin/timetable" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">← Back to Timetable</a>
             </div>
           </div>
 
@@ -542,8 +542,8 @@ export default function SchedulePage() {
 
           {/* Legend */}
           {tt && (
-            <div className="bg-white border-t border-gray-100 px-4 py-2 flex items-center gap-4 text-[10px] text-gray-400">
-              <span className="font-semibold text-gray-500 uppercase tracking-wide">Subjects:</span>
+            <div className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 px-4 py-2 flex items-center gap-4 text-[10px] text-gray-400">
+              <span className="font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Subjects:</span>
               {tt.subjects.map(s => (
                 <span key={s.id} className="flex items-center gap-1">
                   <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: s.color ?? '#6366f1' }}/>
@@ -559,9 +559,9 @@ export default function SchedulePage() {
       {/* Classroom assignment modal */}
       {assignEntry && tt && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-72 p-5">
-            <h3 className="font-bold text-gray-800 mb-1">Assign Classroom</h3>
-            <p className="text-xs text-gray-500 mb-3">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-72 p-5">
+            <h3 className="font-bold text-gray-800 dark:text-slate-100 mb-1">Assign Classroom</h3>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">
               {assignEntry.subject.name} · {assignEntry.class.name} · {DAY_LABELS[assignEntry.day - 1]} P{assignEntry.period}
             </p>
             <div className="space-y-1 max-h-48 overflow-y-auto mb-3">
@@ -583,7 +583,7 @@ export default function SchedulePage() {
               ))}
             </div>
             <button onClick={() => setAssignEntry(null)}
-              className="w-full py-1.5 text-sm text-gray-600 border border-gray-200 rounded hover:bg-gray-50">
+              className="w-full py-1.5 text-sm text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700 rounded hover:bg-gray-50 dark:hover:bg-slate-800">
               Cancel
             </button>
           </div>
@@ -644,20 +644,20 @@ function EntryCard({
       </div>
 
       {showMenu && (
-        <div className="absolute z-50 top-full left-0 mt-0.5 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[130px]">
-          <div className="px-3 py-1.5 text-[11px] font-semibold text-gray-700 border-b border-gray-100">
+        <div className="absolute z-50 top-full left-0 mt-0.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl py-1 min-w-[130px]">
+          <div className="px-3 py-1.5 text-[11px] font-semibold text-gray-700 dark:text-slate-200 border-b border-gray-100 dark:border-slate-800">
             {entry.subject.name}
           </div>
           <div className="px-3 py-1 text-[10px] text-gray-400">{entry.teacher.lastName}</div>
           <div className="px-3 py-1 text-[10px] text-gray-400">{entry.class.name}</div>
           <button
             onClick={() => { setShowMenu(false); onAssign() }}
-            className="w-full text-left px-3 py-1.5 text-[11px] text-blue-600 hover:bg-blue-50 transition-colors">
+            className="w-full text-left px-3 py-1.5 text-[11px] text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors">
             📍 Assign classroom
           </button>
           <button
             onClick={() => { setShowMenu(false); onRemove(entry.id) }}
-            className="w-full text-left px-3 py-1.5 text-[11px] text-red-600 hover:bg-red-50 transition-colors">
+            className="w-full text-left px-3 py-1.5 text-[11px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors">
             ✕ Remove from schedule
           </button>
         </div>

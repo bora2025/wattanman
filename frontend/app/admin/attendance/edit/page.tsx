@@ -345,19 +345,19 @@ function EditAttendanceContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">{t('editAttendance.title')}</h1>
-          <p className="text-sm text-slate-500 mt-1">{t('editAttendance.updateStudentDesc')}</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('editAttendance.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('editAttendance.updateStudentDesc')}</p>
         </div>
         <div className="page-body space-y-6">
           {/* Controls */}
           <div className="card p-4">
             <div className="flex flex-wrap gap-4 items-end">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Class</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Class</label>
                 <select
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 >
                   {classes.map(cls => (
                     <option key={cls.id} value={cls.id}>{cls.name} — {cls.subject || 'N/A'}</option>
@@ -365,37 +365,37 @@ function EditAttendanceContent() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Date</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Date</label>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => goDay(-1)} className="px-2 py-2 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm">◀</button>
+                  <button onClick={() => goDay(-1)} className="px-2 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">◀</button>
                   <input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                   />
-                  <button onClick={() => goDay(1)} className="px-2 py-2 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm">▶</button>
+                  <button onClick={() => goDay(1)} className="px-2 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">▶</button>
                 </div>
               </div>
               <button onClick={() => setSelectedDate(todayCambodia())} className="btn-ghost btn-sm">
                 📅 Today
               </button>
               <div className="flex-1 min-w-[200px]">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Search</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Search</label>
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by name or student ID…"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 />
               </div>
             </div>
-            <p className="mt-2 text-sm font-medium text-slate-700">{dayLabel} — {selectedClassName}</p>
+            <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-200">{dayLabel} — {selectedClassName}</p>
           </div>
 
           {isHoliday && (
-            <div className="bg-purple-50 border border-purple-200 text-purple-800 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
+            <div className="bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900 text-purple-800 dark:text-purple-300 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
               <span>🎉</span> This date is a holiday — unrecorded sessions are not counted as absent in reports.
             </div>
           )}
@@ -404,71 +404,71 @@ function EditAttendanceContent() {
           {!loading && filteredRows.length > 0 && (
             <div className="card p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-slate-700">Day Status Summary</h3>
-                <span className="text-xs text-slate-500">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Day Status Summary</h3>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
                   Total {filteredRows.length}
-                  {absentThreshold > 0 && <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">Mostly-Absent rule: ≥{absentThreshold} sessions</span>}
+                  {absentThreshold > 0 && <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900">Mostly-Absent rule: ≥{absentThreshold} sessions</span>}
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-center">
-                  <div className="text-xs text-emerald-700 font-medium">{t('common.present')}</div>
-                  <div className="text-xl font-bold text-emerald-800">{summary.present}</div>
+                <div className="rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-2 text-center">
+                  <div className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">{t('common.present')}</div>
+                  <div className="text-xl font-bold text-emerald-800 dark:text-emerald-300">{summary.present}</div>
                 </div>
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-center">
-                  <div className="text-xs text-amber-700 font-medium">{t('common.late')}</div>
-                  <div className="text-xl font-bold text-amber-800">{summary.late}</div>
+                <div className="rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-center">
+                  <div className="text-xs text-amber-700 dark:text-amber-300 font-medium">{t('common.late')}</div>
+                  <div className="text-xl font-bold text-amber-800 dark:text-amber-300">{summary.late}</div>
                 </div>
-                <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center">
-                  <div className="text-xs text-blue-700 font-medium">{t('common.permission')}</div>
-                  <div className="text-xl font-bold text-blue-800">{summary.permission}</div>
+                <div className="rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/40 px-3 py-2 text-center">
+                  <div className="text-xs text-blue-700 dark:text-blue-300 font-medium">{t('common.permission')}</div>
+                  <div className="text-xl font-bold text-blue-800 dark:text-blue-300">{summary.permission}</div>
                 </div>
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center">
-                  <div className="text-xs text-red-700 font-medium">{t('common.absent')}</div>
-                  <div className="text-xl font-bold text-red-800">{summary.absent}</div>
+                <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 px-3 py-2 text-center">
+                  <div className="text-xs text-red-700 dark:text-red-300 font-medium">{t('common.absent')}</div>
+                  <div className="text-xl font-bold text-red-800 dark:text-red-300">{summary.absent}</div>
                 </div>
               </div>
             </div>
           )}
 
           {success && (
-            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
+            <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
               <span>✅</span> {success}
             </div>
           )}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">{error}</div>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-xl px-4 py-3 text-sm font-medium">{error}</div>
           )}
 
           {loading ? (
             <div className="card p-12">
               <div className="empty-state">
                 <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <p className="text-sm text-slate-500 mt-3">Loading…</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
               </div>
             </div>
           ) : rows.length === 0 ? (
             <div className="card p-12">
               <div className="empty-state">
                 <p className="text-4xl mb-3">📋</p>
-                <p className="font-semibold text-slate-600">{t('editAttendance.noStudentsFound')}</p>
-                <p className="text-sm text-slate-400 mt-1">{t('editAttendance.selectClassToEdit')}</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-300">{t('editAttendance.noStudentsFound')}</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('editAttendance.selectClassToEdit')}</p>
               </div>
             </div>
           ) : filteredRows.length === 0 ? (
             <div className="card p-12">
               <div className="empty-state">
                 <p className="text-4xl mb-3">🔍</p>
-                <p className="font-semibold text-slate-600">No matches</p>
-                <p className="text-sm text-slate-400 mt-1">Try a different search term.</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-300">No matches</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Try a different search term.</p>
               </div>
             </div>
           ) : (
             <div className="card overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50">
-                    <tr className="text-left text-xs text-slate-500 uppercase tracking-wide">
+                  <thead className="bg-slate-50 dark:bg-slate-800">
+                    <tr className="text-left text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                       <th className="px-3 py-3 font-semibold">ID</th>
                       <th className="px-3 py-3 font-semibold">{t('editAttendance.studentName')}</th>
                       {[1, 2, 3, 4].map(s => (
@@ -487,8 +487,8 @@ function EditAttendanceContent() {
                       const thresholdHit = absentThreshold > 0 && absentSessionCount >= absentThreshold
                       return (
                       <tr key={row.studentId} className={`border-t border-slate-100 ${thresholdHit ? 'bg-rose-50/50' : 'hover:bg-slate-50'}`}>
-                        <td className="px-3 py-2.5 text-slate-600 font-mono text-xs">{row.studentNumber}</td>
-                        <td className="px-3 py-2.5 text-slate-800 font-medium">{row.studentName}</td>
+                        <td className="px-3 py-2.5 text-slate-600 dark:text-slate-300 font-mono text-xs">{row.studentNumber}</td>
+                        <td className="px-3 py-2.5 text-slate-800 dark:text-slate-100 font-medium">{row.studentName}</td>
                         {row.sessions.map(sess => (
                           <td key={sess.session} className="px-3 py-2.5 text-center">
                             <select
@@ -512,7 +512,7 @@ function EditAttendanceContent() {
                                value={permissionTypes[row.studentId] || 'FULL_DAY'}
                                onChange={(e) => handlePermissionTypeChange(row, e.target.value)}
                                disabled={saving !== null}
-                               className="rounded-lg border border-blue-200 bg-blue-50 text-blue-800 px-2 py-1.5 text-xs font-semibold outline-none cursor-pointer disabled:opacity-50"
+                               className="rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 px-2 py-1.5 text-xs font-semibold outline-none cursor-pointer disabled:opacity-50"
                              >
                                <option value="HALF_DAY_MORNING">🌅 Half Day (AM)</option>
                                <option value="HALF_DAY_AFTERNOON">🌤️ Half Day (PM)</option>

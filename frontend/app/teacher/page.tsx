@@ -126,10 +126,10 @@ export default function TeacherDashboard() {
         <div className="page-content">
           <div className="h-14 lg:hidden" />
           <div className="page-header">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">
               {teacherName ? `👋 ${t('common.hello') || 'Hello'}, ${teacherName}` : t('teacher.title')}
             </h1>
-            <p className="text-sm text-slate-500 mt-1">{t('teacher.subtitle')}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('teacher.subtitle')}</p>
           </div>
 
           <div className="page-body space-y-4 sm:space-y-6">
@@ -152,7 +152,7 @@ export default function TeacherDashboard() {
             {/* Announcements */}
             <div className="card p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-slate-700">📣 Announcements</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">📣 Announcements</h3>
               </div>
               <AnnouncementFeed accent="emerald" limit={5} />
             </div>
@@ -160,14 +160,14 @@ export default function TeacherDashboard() {
             {classes.length > 0 && <div className="card p-4 space-y-4">
               {/* Date navigation */}
               <div className="flex items-center gap-2">
-                <button onClick={() => goDay(-1)} className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 active:bg-slate-100 text-sm transition-colors">◀</button>
+                <button onClick={() => goDay(-1)} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 text-sm transition-colors">◀</button>
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={e => setSelectedDate(e.target.value)}
-                  className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white dark:bg-slate-900"
                 />
-                <button onClick={() => goDay(1)} className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 active:bg-slate-100 text-sm transition-colors">▶</button>
+                <button onClick={() => goDay(1)} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 text-sm transition-colors">▶</button>
               </div>
 
               {loadingSummary ? (
@@ -178,21 +178,21 @@ export default function TeacherDashboard() {
                 <>
                   {/* Aggregate stat cards */}
                   <div className="grid grid-cols-4 gap-2 sm:gap-3">
-                    <div className="rounded-2xl bg-emerald-50 p-3 text-center">
-                      <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wide mb-1">{t('common.present')}</p>
-                      <p className="text-2xl font-extrabold text-emerald-700">{totals.present}</p>
+                    <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 p-3 text-center">
+                      <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">{t('common.present')}</p>
+                      <p className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">{totals.present}</p>
                     </div>
-                    <div className="rounded-2xl bg-amber-50 p-3 text-center">
-                      <p className="text-[10px] font-semibold text-amber-600 uppercase tracking-wide mb-1">{t('common.late')}</p>
-                      <p className="text-2xl font-extrabold text-amber-700">{totals.late}</p>
+                    <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/40 p-3 text-center">
+                      <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">{t('common.late')}</p>
+                      <p className="text-2xl font-extrabold text-amber-700 dark:text-amber-300">{totals.late}</p>
                     </div>
-                    <div className="rounded-2xl bg-red-50 p-3 text-center">
-                      <p className="text-[10px] font-semibold text-red-600 uppercase tracking-wide mb-1">{t('common.absent')}</p>
-                      <p className="text-2xl font-extrabold text-red-700">{totals.absent}</p>
+                    <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 p-3 text-center">
+                      <p className="text-[10px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">{t('common.absent')}</p>
+                      <p className="text-2xl font-extrabold text-red-700 dark:text-red-300">{totals.absent}</p>
                     </div>
-                    <div className="rounded-2xl bg-blue-50 p-3 text-center">
-                      <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide mb-1">{t('common.dayOff')}</p>
-                      <p className="text-2xl font-extrabold text-blue-700">{totals.permission}</p>
+                    <div className="rounded-2xl bg-blue-50 dark:bg-blue-950/40 p-3 text-center">
+                      <p className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">{t('common.dayOff')}</p>
+                      <p className="text-2xl font-extrabold text-blue-700 dark:text-blue-300">{totals.permission}</p>
                     </div>
                   </div>
 
@@ -200,25 +200,25 @@ export default function TeacherDashboard() {
                   {summaries.length > 0 ? (
                     <div className="space-y-2 pt-1">
                       {summaries.map(cls => (
-                        <div key={cls.classId} className="border border-slate-100 rounded-xl overflow-hidden">
-                          <div className="flex items-center justify-between px-3 py-2 bg-slate-50">
+                        <div key={cls.classId} className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden">
+                          <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800">
                             <div>
-                              <span className="font-semibold text-slate-800 text-sm">{cls.className}</span>
-                              {cls.subject && <span className="text-xs text-slate-400 ml-2">{cls.subject}</span>}
+                              <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{cls.className}</span>
+                              {cls.subject && <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">{cls.subject}</span>}
                             </div>
-                            <span className="text-xs text-slate-400">{cls.totalStudents} {t('teacher.students') || 'students'}</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500">{cls.totalStudents} {t('teacher.students') || 'students'}</span>
                           </div>
                           <div className="px-3 py-2 flex gap-4 text-xs">
-                            <span className="text-emerald-600 font-semibold">✓ {cls.present}</span>
-                            <span className="text-amber-600 font-semibold">⏰ {cls.late}</span>
-                            <span className="text-red-600 font-semibold">✗ {cls.absent}</span>
-                            <span className="text-blue-600 font-semibold">📋 {cls.permission}</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">✓ {cls.present}</span>
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold">⏰ {cls.late}</span>
+                            <span className="text-red-600 dark:text-red-400 font-semibold">✗ {cls.absent}</span>
+                            <span className="text-blue-600 dark:text-blue-400 font-semibold">📋 {cls.permission}</span>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-4 text-sm text-slate-400">{t('reports.noAttendanceData') || 'No attendance data'}</div>
+                    <div className="text-center py-4 text-sm text-slate-400 dark:text-slate-500">{t('reports.noAttendanceData') || 'No attendance data'}</div>
                   )}
                 </>
               )}
@@ -243,7 +243,7 @@ export default function TeacherDashboard() {
             {/* My Timetable Schedule */}
             {teacherId && (
               <div className="card p-4">
-                <h3 className="text-sm font-semibold text-slate-700 mb-3">📅 My Teaching Schedule</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">📅 My Teaching Schedule</h3>
                 <TimetableGrid userId={teacherId} role="teacher" />
               </div>
             )}
@@ -260,13 +260,13 @@ export default function TeacherDashboard() {
 
             {/* My Classes */}
             <div>
-              <h2 className="text-lg font-semibold text-slate-700 mb-3 sm:mb-4">{t('teacher.myClasses')}</h2>
+              <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-3 sm:mb-4">{t('teacher.myClasses')}</h2>
               {classes.length === 0 ? (
                 <div className="card p-8 sm:p-12">
                   <div className="empty-state">
                     <p className="text-5xl mb-3">📚</p>
-                    <p className="font-semibold text-slate-600">{t('teacher.noClasses')}</p>
-                    <p className="text-sm text-slate-400 mt-1">{t('teacher.noClassesHint')}</p>
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">{t('teacher.noClasses')}</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('teacher.noClassesHint')}</p>
                   </div>
                 </div>
               ) : (
@@ -276,12 +276,12 @@ export default function TeacherDashboard() {
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-lg shadow-sm mb-3">
                         📖
                       </div>
-                      <h3 className="font-semibold text-slate-800 text-base sm:text-lg">{cls.name}</h3>
-                      <p className="text-sm text-slate-500 mt-0.5">{cls.subject}</p>
+                      <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-base sm:text-lg">{cls.name}</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{cls.subject}</p>
                       {cls.schedule && (
-                        <p className="text-xs text-slate-400 mt-2">🕐 {formatSchedule(cls.schedule)}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">🕐 {formatSchedule(cls.schedule)}</p>
                       )}
-                      <div className="mt-4 pt-3 border-t border-slate-100">
+                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
                         <Link href={`/teacher/attendance?classId=${cls.id}`}>
                           <button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-3 sm:py-2.5 px-4 rounded-xl shadow-md shadow-emerald-200 active:scale-[0.98] transition-all text-sm">
                             📷 {t('teacher.takeAttendance')}

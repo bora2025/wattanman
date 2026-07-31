@@ -131,31 +131,31 @@ export default function StudentCourseDetailPage() {
         <div className="flex items-center justify-between">
           <Link
             href="/student/courses"
-            className="text-sm text-sky-600 hover:underline"
+            className="text-sm text-sky-600 dark:text-sky-400 hover:underline"
           >
             ← All courses
           </Link>
           <Link
             href={`/student/courses/${courseId}/attendance`}
-            className="text-sm rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-sky-700 hover:bg-sky-100"
+            className="text-sm rounded-md border border-sky-200 dark:border-sky-900 bg-sky-50 dark:bg-sky-950/40 px-3 py-1 text-sky-700 dark:text-sky-300 hover:bg-sky-100"
           >
             📋 Attendance
           </Link>
         </div>
 
         {isLoading && (
-          <div className="bg-white h-40 rounded-2xl animate-pulse border border-gray-100" />
+          <div className="bg-white dark:bg-slate-900 h-40 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />
         )}
 
         {isError && (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-4 text-sm text-rose-700 dark:text-rose-300">
             {(error as Error)?.message || 'Failed to load course.'}
           </div>
         )}
 
         {course && (
           <>
-            <header className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <header className="overflow-hidden rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
               {course.coverImageUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -172,27 +172,27 @@ export default function StudentCourseDetailPage() {
                     {course.status}
                   </span>
                   {course.category && (
-                    <span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                    <span className="inline-block rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300">
                       {course.category}
                     </span>
                   )}
                 </div>
-                <h1 className="text-2xl font-bold text-slate-800">{course.title}</h1>
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{course.title}</h1>
                 {course.description && (
-                  <p className="text-sm text-slate-600">{course.description}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">{course.description}</p>
                 )}
-                <div className="grid gap-2 text-xs text-slate-500 sm:grid-cols-3">
+                <div className="grid gap-2 text-xs text-slate-500 dark:text-slate-400 sm:grid-cols-3">
                   <div>
-                    <span className="font-medium text-slate-600">Class:</span>{' '}
+                    <span className="font-medium text-slate-600 dark:text-slate-300">Class:</span>{' '}
                     {course.class.name}
                     {course.class.subject ? ` · ${course.class.subject}` : ''}
                   </div>
                   <div>
-                    <span className="font-medium text-slate-600">Teacher:</span>{' '}
+                    <span className="font-medium text-slate-600 dark:text-slate-300">Teacher:</span>{' '}
                     {course.createdBy.name}
                   </div>
                   <div>
-                    <span className="font-medium text-slate-600">Dates:</span>{' '}
+                    <span className="font-medium text-slate-600 dark:text-slate-300">Dates:</span>{' '}
                     {formatDate(course.startDate)} → {formatDate(course.endDate)}
                   </div>
                 </div>
@@ -205,11 +205,11 @@ export default function StudentCourseDetailPage() {
                   selectedLessonId ? 'hidden' : 'block'
                 }`}
               >
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   Lessons ({visibleLessons.length})
                 </h2>
                 {visibleLessons.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-gray-200 bg-white">
+                  <div className="rounded-2xl border border-dashed border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
                     <EmptyState message="No lessons published yet." />
                   </div>
                 )}
@@ -244,7 +244,7 @@ export default function StudentCourseDetailPage() {
                               <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${badge.color}`}>{badge.label}</span>
                             )}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-slate-400">
                             {l._count.pages} page{l._count.pages === 1 ? '' : 's'} ·{' '}
                             {l.totalPoints} pts
                           </div>
@@ -261,7 +261,7 @@ export default function StudentCourseDetailPage() {
                 }`}
               >
                 {!selectedLesson && (
-                  <div className="text-sm text-slate-500">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
                     Select a lesson to view its pages.
                   </div>
                 )}
@@ -270,16 +270,16 @@ export default function StudentCourseDetailPage() {
                     <button
                       type="button"
                       onClick={() => setSelectedLessonId(null)}
-                      className="text-sm text-sky-600 hover:underline lg:hidden"
+                      className="text-sm text-sky-600 dark:text-sky-400 hover:underline lg:hidden"
                     >
                       ← Back to lessons
                     </button>
-                    <div className="sticky top-0 -mx-5 -mt-5 mb-2 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-white/95 px-5 py-3 backdrop-blur lg:static lg:mx-0 lg:mt-0 lg:border-0 lg:p-0">
+                    <div className="sticky top-0 -mx-5 -mt-5 mb-2 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 bg-white/95 px-5 py-3 backdrop-blur lg:static lg:mx-0 lg:mt-0 lg:border-0 lg:p-0">
                       <div className="min-w-0">
-                        <h3 className="truncate text-base font-semibold text-slate-800 sm:text-lg">
+                        <h3 className="truncate text-base font-semibold text-slate-800 dark:text-slate-100 sm:text-lg">
                           {selectedLesson.title}
                         </h3>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
                           {selectedLesson._count.pages} page
                           {selectedLesson._count.pages === 1 ? '' : 's'} ·{' '}
                           {selectedLesson.totalPoints} pts
@@ -293,17 +293,17 @@ export default function StudentCourseDetailPage() {
                       </Link>
                     </div>
                     {selectedLesson.description && (
-                      <p className="text-sm text-slate-600">
+                      <p className="text-sm text-slate-600 dark:text-slate-300">
                         {selectedLesson.description}
                       </p>
                     )}
 
                     {pagesLoading && (
-                      <div className="text-sm text-slate-500">Loading pages…</div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">Loading pages…</div>
                     )}
 
                     {!pagesLoading && pages.length === 0 && (
-                      <div className="rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-500">
+                      <div className="rounded-xl border border-dashed border-gray-200 dark:border-slate-700 p-4 text-sm text-gray-500 dark:text-slate-400">
                         This lesson has no pages yet.
                       </div>
                     )}
@@ -312,13 +312,13 @@ export default function StudentCourseDetailPage() {
                       {pages.map((p) => (
                         <li
                           key={p.id}
-                          className="rounded-xl border border-gray-200 bg-gray-50 p-3"
+                          className="rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-3"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <div className="font-medium text-slate-800">
+                            <div className="font-medium text-slate-800 dark:text-slate-100">
                               {p.order}. {p.title}
                             </div>
-                            <span className="text-xs text-slate-500">
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
                               {PAGE_TYPE_LABEL[p.pageType]}
                             </span>
                           </div>

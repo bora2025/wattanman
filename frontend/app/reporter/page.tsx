@@ -31,10 +31,10 @@ function StatCard({
 }) {
   const pct = total > 0 ? Math.round((value / total) * 100) : 0
   const styles = {
-    green: { bg: 'from-emerald-50 to-emerald-100/50 border-emerald-200/60 hover:border-emerald-300', num: 'text-emerald-700', bar: 'bg-emerald-500' },
-    red:   { bg: 'from-red-50 to-red-100/50 border-red-200/60 hover:border-red-300',                 num: 'text-red-700',     bar: 'bg-red-500' },
-    amber: { bg: 'from-amber-50 to-amber-100/50 border-amber-200/60 hover:border-amber-300',         num: 'text-amber-700',   bar: 'bg-amber-500' },
-    blue:  { bg: 'from-blue-50 to-blue-100/50 border-blue-200/60 hover:border-blue-300',             num: 'text-blue-700',    bar: 'bg-blue-500' },
+    green: { bg: 'from-emerald-50 dark:from-emerald-950/40 to-emerald-100/50 dark:to-emerald-900/30 border-emerald-200/60 dark:border-emerald-900 hover:border-emerald-300 dark:hover:border-emerald-700', num: 'text-emerald-700 dark:text-emerald-300', bar: 'bg-emerald-500' },
+    red:   { bg: 'from-red-50 dark:from-red-950/40 to-red-100/50 dark:to-red-900/30 border-red-200/60 dark:border-red-900 hover:border-red-300 dark:hover:border-red-700',                 num: 'text-red-700 dark:text-red-300',     bar: 'bg-red-500' },
+    amber: { bg: 'from-amber-50 dark:from-amber-950/40 to-amber-100/50 dark:to-amber-900/30 border-amber-200/60 dark:border-amber-900 hover:border-amber-300 dark:hover:border-amber-700',         num: 'text-amber-700 dark:text-amber-300',   bar: 'bg-amber-500' },
+    blue:  { bg: 'from-blue-50 dark:from-blue-950/40 to-blue-100/50 dark:to-blue-900/30 border-blue-200/60 dark:border-blue-900 hover:border-blue-300 dark:hover:border-blue-700',             num: 'text-blue-700 dark:text-blue-300',    bar: 'bg-blue-500' },
   }
   const s = styles[color]
   const Tag = onClick ? 'button' : 'div'
@@ -44,14 +44,14 @@ function StatCard({
       className={`bg-gradient-to-br ${s.bg} border rounded-2xl p-4 flex flex-col gap-2 text-left w-full transition-all duration-200 ${onClick ? 'cursor-pointer hover:shadow-md active:scale-[0.97]' : ''}`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-slate-500">{icon} {label}</span>
-        <span className="text-xs text-slate-400">{pct}%</span>
+        <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{icon} {label}</span>
+        <span className="text-xs text-slate-400 dark:text-slate-500">{pct}%</span>
       </div>
       <div className={`text-3xl font-extrabold tracking-tight ${s.num}`}>{value}</div>
       <div className="h-1.5 bg-white/60 rounded-full overflow-hidden">
         <div className={`h-full ${s.bar} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
       </div>
-      <div className="text-[11px] text-slate-400">of {total} total{onClick ? ' · tap to view' : ''}</div>
+      <div className="text-[11px] text-slate-400 dark:text-slate-500">of {total} total{onClick ? ' · tap to view' : ''}</div>
     </Tag>
   )
 }
@@ -141,21 +141,21 @@ function ReporterDashboardContent() {
         <div className="page-header">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
                 {userName ? `Welcome, ${userName}` : 'Reporter Portal'}
               </h1>
-              <p className="text-sm text-slate-500 mt-1">Attendance overview and reports</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Attendance overview and reports</p>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="date"
                 value={selectedDate}
                 onChange={e => setSelectedDate(e.target.value)}
-                className="appearance-none bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400 outline-none"
+                className="appearance-none bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400 outline-none"
               />
               <button
                 onClick={() => setSelectedDate(todayCambodia())}
-                className="px-3 py-2 text-xs font-semibold text-teal-600 bg-teal-50 rounded-xl hover:bg-teal-100 transition-colors"
+                className="px-3 py-2 text-xs font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 rounded-xl hover:bg-teal-100 transition-colors"
               >
                 Today
               </button>
@@ -169,12 +169,12 @@ function ReporterDashboardContent() {
           <section>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-5 rounded-full bg-purple-500" />
-              <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Students</h2>
-              <span className="text-xs bg-slate-100 text-slate-500 font-semibold px-2 py-0.5 rounded-full">{stu.total}</span>
+              <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Students</h2>
+              <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold px-2 py-0.5 rounded-full">{stu.total}</span>
             </div>
             {loading ? (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {[1,2,3,4].map(i => <div key={i} className="h-28 rounded-2xl bg-slate-100 animate-pulse" />)}
+                {[1,2,3,4].map(i => <div key={i} className="h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />)}
               </div>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -190,12 +190,12 @@ function ReporterDashboardContent() {
           <section>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-5 rounded-full bg-cyan-500" />
-              <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Staff</h2>
-              <span className="text-xs bg-slate-100 text-slate-500 font-semibold px-2 py-0.5 rounded-full">{stf.total}</span>
+              <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Staff</h2>
+              <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold px-2 py-0.5 rounded-full">{stf.total}</span>
             </div>
             {loading ? (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {[1,2,3,4].map(i => <div key={i} className="h-28 rounded-2xl bg-slate-100 animate-pulse" />)}
+                {[1,2,3,4].map(i => <div key={i} className="h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />)}
               </div>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -211,15 +211,15 @@ function ReporterDashboardContent() {
           <section>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-5 rounded-full bg-teal-500" />
-              <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Quick Access</h2>
+              <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Quick Access</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {reports.map(r => (
                 <Link key={r.href} href={r.href} className="card p-5 hover:shadow-md transition-shadow group block">
                   <div className="text-2xl mb-2">{r.icon}</div>
-                  <h3 className="text-sm font-semibold text-slate-800 group-hover:text-teal-600 transition-colors mb-1">{r.title}</h3>
-                  <p className="text-xs text-slate-500">{r.desc}</p>
-                  <div className="mt-3 text-xs font-medium text-teal-600 group-hover:underline">Open →</div>
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 group-hover:text-teal-600 transition-colors mb-1">{r.title}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{r.desc}</p>
+                  <div className="mt-3 text-xs font-medium text-teal-600 dark:text-teal-400 group-hover:underline">Open →</div>
                 </Link>
               ))}
             </div>
@@ -232,15 +232,15 @@ function ReporterDashboardContent() {
       {absentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setAbsentModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+          <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h2 className="text-base font-bold text-slate-800">
+                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
                   Absent {absentModalRole === 'Student' ? 'Students' : 'Staff'}
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">{selectedDate} · {absentRows.length} record{absentRows.length !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{selectedDate} · {absentRows.length} record{absentRows.length !== 1 ? 's' : ''}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -251,16 +251,16 @@ function ReporterDashboardContent() {
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                   Export CSV
                 </button>
-                <button onClick={() => setAbsentModal(false)} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors">
+                <button onClick={() => setAbsentModal(false)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
               </div>
             </div>
 
             {/* Filter bar */}
-            <div className="px-5 py-3 border-b border-slate-100 flex flex-wrap gap-2 items-center">
-              <div className="flex flex-1 min-w-[200px] items-center gap-0 rounded-xl border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-500/20 transition-all overflow-hidden">
-                <span className="flex items-center justify-center w-10 h-10 shrink-0 text-slate-400">
+            <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex flex-wrap gap-2 items-center">
+              <div className="flex flex-1 min-w-[200px] items-center gap-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus-within:bg-white focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-500/20 transition-all overflow-hidden">
+                <span className="flex items-center justify-center w-10 h-10 shrink-0 text-slate-400 dark:text-slate-500">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 </span>
                 <input
@@ -268,10 +268,10 @@ function ReporterDashboardContent() {
                   placeholder="Filter by address..."
                   value={absentAddressFilter}
                   onChange={e => setAbsentAddressFilter(e.target.value)}
-                  className="flex-1 bg-transparent py-2 pr-3 text-sm text-slate-700 placeholder:text-slate-400 outline-none"
+                  className="flex-1 bg-transparent py-2 pr-3 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                 />
                 {absentAddressFilter && (
-                  <button onClick={() => setAbsentAddressFilter('')} className="flex items-center justify-center w-8 h-8 mr-1 shrink-0 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors">
+                  <button onClick={() => setAbsentAddressFilter('')} className="flex items-center justify-center w-8 h-8 mr-1 shrink-0 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 transition-colors">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
                 )}
@@ -279,7 +279,7 @@ function ReporterDashboardContent() {
               <div className="flex gap-1.5">
                 {(['Student', 'Staff'] as const).map(r => (
                   <button key={r} onClick={() => setAbsentModalRole(r)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold ring-1 transition-all ${absentModalRole === r ? 'bg-rose-600 text-white ring-rose-600' : 'bg-rose-50 text-rose-700 ring-rose-200 hover:ring-2'}`}>
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold ring-1 transition-all ${absentModalRole === r ? 'bg-rose-600 text-white ring-rose-600' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 ring-rose-200 dark:ring-rose-900 hover:ring-2'}`}>
                     {r === 'Student' ? 'Students' : 'Staff'}
                   </button>
                 ))}
@@ -291,29 +291,29 @@ function ReporterDashboardContent() {
               {absentRows.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-2">
                   <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  <span className="text-sm text-slate-400">No absent {absentModalRole === 'Student' ? 'students' : 'staff'} found</span>
+                  <span className="text-sm text-slate-400 dark:text-slate-500">No absent {absentModalRole === 'Student' ? 'students' : 'staff'} found</span>
                 </div>
               ) : (
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-slate-50 border-b border-slate-100">
+                  <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-800">
                     <tr>
-                      <th className="text-left px-5 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Name</th>
-                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{absentModalRole === 'Student' ? 'Class' : 'Dept'}</th>
-                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Address</th>
-                      <th className="text-center px-3 py-2.5 text-[11px] font-semibold text-rose-500 uppercase tracking-wider">Absent</th>
+                      <th className="text-left px-5 py-2.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Name</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">{absentModalRole === 'Student' ? 'Class' : 'Dept'}</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Address</th>
+                      <th className="text-center px-3 py-2.5 text-[11px] font-semibold text-rose-500 dark:text-rose-400 uppercase tracking-wider">Absent</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                     {absentRows.map((row, i) => (
                       <tr key={`${row.id}-${i}`} className="hover:bg-rose-50/40 transition-colors">
                         <td className="px-5 py-3">
-                          <div className="font-medium text-slate-800">{row.name}</div>
-                          <div className="text-[11px] text-slate-400 sm:hidden">{row.group || '-'}</div>
+                          <div className="font-medium text-slate-800 dark:text-slate-100">{row.name}</div>
+                          <div className="text-[11px] text-slate-400 dark:text-slate-500 sm:hidden">{row.group || '-'}</div>
                         </td>
-                        <td className="px-3 py-3 text-xs text-slate-500 hidden sm:table-cell">{row.group || '-'}</td>
-                        <td className="px-3 py-3 text-xs text-slate-500">{row.address || <span className="text-slate-300 italic">—</span>}</td>
+                        <td className="px-3 py-3 text-xs text-slate-500 dark:text-slate-400 hidden sm:table-cell">{row.group || '-'}</td>
+                        <td className="px-3 py-3 text-xs text-slate-500 dark:text-slate-400">{row.address || <span className="text-slate-300 italic">—</span>}</td>
                         <td className="text-center px-3 py-3">
-                          <span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-red-50 text-red-700 text-xs font-bold ring-1 ring-red-200/50">{row.absent}</span>
+                          <span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-xs font-bold ring-1 ring-red-200/50">{row.absent}</span>
                         </td>
                       </tr>
                     ))}
@@ -323,11 +323,11 @@ function ReporterDashboardContent() {
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs text-slate-400">
+            <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs text-slate-400 dark:text-slate-500">
                 {absentRows.length} record{absentRows.length !== 1 ? 's' : ''}{absentAddressFilter ? ' (filtered by address)' : ''}
               </span>
-              <button onClick={() => setAbsentModal(false)} className="text-xs font-semibold text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-xl hover:bg-slate-100 transition-colors">Close</button>
+              <button onClick={() => setAbsentModal(false)} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Close</button>
             </div>
           </div>
         </div>
