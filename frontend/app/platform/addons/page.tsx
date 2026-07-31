@@ -5,6 +5,13 @@ import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { platformNav } from '../../../lib/platform-nav'
 import { apiFetch } from '../../../lib/api'
+import { AccentColor, ACCENT_SWATCHES } from '../../../lib/appearance/accentColor'
+
+interface ThemeConfig {
+  mode: 'light' | 'dark'
+  accentColor: AccentColor
+  primaryColor: string
+}
 
 interface AddonDefinition {
   id: string
@@ -18,12 +25,13 @@ interface AddonDefinition {
   icon: string | null
   price: number | null
   priceNote: string | null
+  themeConfig: ThemeConfig | null
   isActive: boolean
   createdAt: string
 }
 
 interface FormState {
-  kind: 'MODULE' | 'ADDON'
+  kind: 'MODULE' | 'ADDON' | 'THEME'
   name: string
   description: string
   detailDescription: string
@@ -32,9 +40,15 @@ interface FormState {
   icon: string
   price: string
   priceNote: string
+  themeMode: 'light' | 'dark'
+  themeAccentColor: AccentColor
+  themePrimaryColor: string
 }
 
-const EMPTY_FORM: FormState = { kind: 'ADDON', name: '', description: '', detailDescription: '', screenshotUrl: '', category: '', icon: '', price: '', priceNote: '' }
+const EMPTY_FORM: FormState = {
+  kind: 'ADDON', name: '', description: '', detailDescription: '', screenshotUrl: '', category: '', icon: '', price: '', priceNote: '',
+  themeMode: 'light', themeAccentColor: 'indigo', themePrimaryColor: '#4f46e5',
+}
 
 /** Compress an image File to a JPEG data URL via <canvas>, same technique as
  * the appearance banner uploader (admin/appearance/page.tsx) — this app has
@@ -133,13 +147,77 @@ function ScreenshotUploader({ value, onChange }: { value: string; onChange: (v: 
 
 function priceLabel(a: AddonDefinition): string {
   if (a.kind === 'MODULE') return 'Free module'
+  if (a.kind === 'THEME' && a.price == null) return 'Free theme'
   if (a.price == null) return 'No price set'
   return `$${a.price}${a.priceNote ? ` ${a.priceNote}` : ''}`
 }
 
+/** Kind toggle used by both the create and edit forms — a single small
+ * component rather than duplicating the 3-button markup twice. */
+function KindToggle({ kind, onChange, moduleLabel, addonLabel }: { kind: FormState['kind']; onChange: (k: FormState['kind']) => void; moduleLabel: string; addonLabel: string }) {
+  const options: { id: FormState['kind']; label: string; active: string }[] = [
+    { id: 'MODULE', label: moduleLabel, active: 'bg-emerald-600 text-white border-emerald-600' },
+    { id: 'ADDON', label: addonLabel, active: 'bg-amber-600 text-white border-amber-600' },
+    { id: 'THEME', label: 'Theme', active: 'bg-violet-600 text-white border-violet-600' },
+  ]
+  return (
+    <div className="flex gap-2 flex-wrap">
+      {options.map(o => (
+        <button
+          key={o.id}
+          type="button"
+          onClick={() => onChange(o.id)}
+          className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${kind === o.id ? o.active : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** THEME-only preset fields — light/dark, one of the 10 accent colors, and
+ * the public-site primary color. Shared by the create and edit forms. */
+function ThemeConfigFields({ mode, accentColor, primaryColor, onChange }: {
+  mode: 'light' | 'dark'; accentColor: AccentColor; primaryColor: string
+  onChange: (next: { mode?: 'light' | 'dark'; accentColor?: AccentColor; primaryColor?: string }) => void
+}) {
+  return (
+    <div className="space-y-3 p-3 rounded-lg bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900">
+      <div>
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Dashboard mode</label>
+        <div className="flex gap-2">
+          {(['light', 'dark'] as const).map(m => (
+            <button key={m} type="button" onClick={() => onChange({ mode: m })}
+              className={`text-sm px-3 py-1.5 rounded-lg border font-medium capitalize ${mode === m ? 'bg-slate-700 text-white border-slate-700' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}>
+              {m}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Sidebar accent color</label>
+        <div className="grid grid-cols-5 gap-2 max-w-xs">
+          {ACCENT_SWATCHES.map(s => (
+            <button key={s.id} type="button" onClick={() => onChange({ accentColor: s.id })} title={s.label}
+              className={`aspect-square rounded-lg bg-gradient-to-br ${s.gradient} transition-all ${accentColor === s.id ? 'ring-2 ring-offset-1 ring-slate-400' : 'hover:opacity-80'}`} />
+          ))}
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Public site primary color</label>
+        <div className="flex items-center gap-2">
+          <input type="color" value={primaryColor} onChange={e => onChange({ primaryColor: e.target.value })} className="w-9 h-9 rounded cursor-pointer border border-slate-200 dark:border-slate-700" />
+          <input type="text" value={primaryColor} onChange={e => onChange({ primaryColor: e.target.value })} placeholder="#4f46e5" className="w-28 text-sm" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCancel: () => void; onSaved: (a: AddonDefinition) => void }) {
   const [form, setForm] = useState<FormState>({
-    kind: addon.kind === 'MODULE' ? 'MODULE' : 'ADDON',
+    kind: addon.kind === 'MODULE' || addon.kind === 'THEME' ? addon.kind : 'ADDON',
     name: addon.name,
     description: addon.description ?? '',
     detailDescription: addon.detailDescription ?? '',
@@ -148,6 +226,9 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
     icon: addon.icon ?? '',
     price: addon.price != null ? String(addon.price) : '',
     priceNote: addon.priceNote ?? '',
+    themeMode: addon.themeConfig?.mode ?? 'light',
+    themeAccentColor: addon.themeConfig?.accentColor ?? 'indigo',
+    themePrimaryColor: addon.themeConfig?.primaryColor ?? '#4f46e5',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -171,6 +252,7 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
           icon: form.icon,
           price: form.kind === 'MODULE' ? null : (form.price.trim() === '' ? null : Number(form.price)),
           priceNote: form.kind === 'MODULE' ? '' : form.priceNote,
+          themeConfig: form.kind === 'THEME' ? { mode: form.themeMode, accentColor: form.themeAccentColor, primaryColor: form.themePrimaryColor } : undefined,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -188,25 +270,10 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
       {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
       <div>
         <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Kind</label>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, kind: 'MODULE' })}
-            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'MODULE' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
-          >
-            Module (free)
-          </button>
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, kind: 'ADDON' })}
-            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'ADDON' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
-          >
-            Paid add-on
-          </button>
-        </div>
+        <KindToggle kind={form.kind} onChange={(kind) => setForm({ ...form, kind })} moduleLabel="Module (free)" addonLabel="Paid add-on" />
         {kindChanged && (
           <p className="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-lg px-2.5 py-1.5 mt-2">
-            {form.kind === 'ADDON'
+            {form.kind === 'ADDON' || (form.kind === 'THEME' && form.price.trim() !== '')
               ? 'Schools that already have this enabled keep it, free, with no change — only new schools (and anyone requesting it fresh) will see it as paid going forward.'
               : 'Every school (including ones with a pending paid request) can now self-enable it for free from their own Add-ons page — nothing turns on by itself, but no approval is needed anymore either.'}
           </p>
@@ -225,10 +292,10 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
           <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Icon (emoji)</label>
           <input type="text" value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })} placeholder="✨" className="w-full text-sm" />
         </div>
-        {form.kind === 'ADDON' && (
+        {form.kind !== 'MODULE' && (
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Price ($)</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Price ($, blank = free)</label>
               <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="29" className="w-full text-sm" />
             </div>
             <div>
@@ -238,6 +305,12 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
           </div>
         )}
       </div>
+      {form.kind === 'THEME' && (
+        <ThemeConfigFields
+          mode={form.themeMode} accentColor={form.themeAccentColor} primaryColor={form.themePrimaryColor}
+          onChange={(next) => setForm({ ...form, ...(next.mode !== undefined && { themeMode: next.mode }), ...(next.accentColor !== undefined && { themeAccentColor: next.accentColor }), ...(next.primaryColor !== undefined && { themePrimaryColor: next.primaryColor }) })}
+        />
+      )}
       <div>
         <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Description <span className="font-normal text-slate-400 dark:text-slate-500">(short, shown in listing cards)</span></label>
         <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={2} className="w-full text-sm" />
@@ -308,8 +381,12 @@ function AddonCard({ addon, onChanged }: { addon: AddonDefinition; onChanged: (a
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-slate-800 dark:text-slate-100">{addon.name}</span>
               <code className="text-[10px] text-slate-400 dark:text-slate-500">{addon.key}</code>
-              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${addon.kind === 'MODULE' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900'}`}>
-                {addon.kind === 'MODULE' ? 'Module' : 'Paid add-on'}
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+                addon.kind === 'MODULE' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900'
+                  : addon.kind === 'THEME' ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-900'
+                  : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900'
+              }`}>
+                {addon.kind === 'MODULE' ? 'Module' : addon.kind === 'THEME' ? 'Theme' : 'Paid add-on'}
               </span>
               {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900">{addon.category}</span>}
               {!addon.isActive && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700">Deactivated — hidden from new schools</span>}
@@ -363,6 +440,7 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
           icon: form.icon || undefined,
           price: form.kind === 'MODULE' || form.price.trim() === '' ? undefined : Number(form.price),
           priceNote: form.kind === 'MODULE' ? undefined : (form.priceNote || undefined),
+          themeConfig: form.kind === 'THEME' ? { mode: form.themeMode, accentColor: form.themeAccentColor, primaryColor: form.themePrimaryColor } : undefined,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -391,22 +469,7 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
       {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
       <div>
         <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Kind</label>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, kind: 'MODULE' })}
-            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'MODULE' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
-          >
-            Module (free, opt-in at school creation)
-          </button>
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, kind: 'ADDON' })}
-            className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${form.kind === 'ADDON' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
-          >
-            Paid add-on (billed, enabled later)
-          </button>
-        </div>
+        <KindToggle kind={form.kind} onChange={(kind) => setForm({ ...form, kind })} moduleLabel="Module (free, opt-in at school creation)" addonLabel="Paid add-on (billed, enabled later)" />
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
@@ -421,10 +484,10 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
           <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Icon (emoji)</label>
           <input type="text" value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })} placeholder="✨" className="w-full text-sm" />
         </div>
-        {form.kind === 'ADDON' && (
+        {form.kind !== 'MODULE' && (
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Price ($)</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Price ($, blank = free)</label>
               <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="29" className="w-full text-sm" />
             </div>
             <div>
@@ -434,6 +497,12 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
           </div>
         )}
       </div>
+      {form.kind === 'THEME' && (
+        <ThemeConfigFields
+          mode={form.themeMode} accentColor={form.themeAccentColor} primaryColor={form.themePrimaryColor}
+          onChange={(next) => setForm({ ...form, ...(next.mode !== undefined && { themeMode: next.mode }), ...(next.accentColor !== undefined && { themeAccentColor: next.accentColor }), ...(next.primaryColor !== undefined && { themePrimaryColor: next.primaryColor }) })}
+        />
+      )}
       <div>
         <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Description <span className="font-normal text-slate-400 dark:text-slate-500">(short, shown in listing cards)</span></label>
         <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={2} placeholder="What this add-on does, shown to schools browsing the directory." className="w-full text-sm" />
@@ -492,7 +561,7 @@ function AddonDirectoryContent() {
         <div className="h-14 lg:hidden" />
         <div className="page-header">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Modules &amp; Add-ons Directory</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Free modules are offered at school creation; paid add-ons are browsed and billed per school afterward. Create listings, price the paid ones, retire ones no longer offered.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Free modules are offered at school creation; paid add-ons and themes are browsed and billed per school afterward. Create listings, price the paid ones, retire ones no longer offered.</p>
         </div>
 
         <div className="page-body space-y-4">
