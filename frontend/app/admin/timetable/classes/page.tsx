@@ -6,6 +6,7 @@ import Sidebar from '../../../../components/Sidebar'
 import AuthGuard from '../../../../components/AuthGuard'
 import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
+import { useAccentColor } from '../../../../lib/accentColor'
 
 interface TimetableListItem { id: string; name: string; academicYear: string }
 interface SystemClass { id: string; name: string; studyYear?: { label?: string | null; year: number } | null }
@@ -24,6 +25,7 @@ const COLOR_PALETTE = [
 ]
 
 export default function ClassesPage() {
+  const { accentColor } = useAccentColor()
   const router = useRouter()
   const [timetables, setTimetables] = useState<TimetableListItem[]>([])
   const [selectedTT, setSelectedTT] = useState('')
@@ -147,7 +149,7 @@ export default function ClassesPage() {
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
       <div className="flex h-screen bg-gray-100 dark:bg-slate-800">
-        <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor={accentColor} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
             <div>

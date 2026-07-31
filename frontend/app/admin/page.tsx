@@ -11,6 +11,7 @@ import { adminNav, classAdminNav } from '../../lib/admin-nav'
 import { apiFetch } from '../../lib/api'
 import { useLanguage } from '../../lib/i18n'
 import { todayCambodia } from '../../lib/dateUtils'
+import { useAccentColor } from '../../lib/accentColor'
 
 interface PermissionBreakdown { halfDayMorning: number; halfDayAfternoon: number; fullDay: number; multiDay: number; unknown: number }
 interface GroupSummary {
@@ -78,6 +79,7 @@ function CardIcon({ color }: { color: string }) {
 }
 
 function DashboardContent() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage()
   const router = useRouter()
   const [data, setData] = useState<DashboardData | null>(null)
@@ -438,7 +440,7 @@ function DashboardContent() {
 
   if (!mounted || loading) return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={currentNav} accentColor="indigo"/>
+      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={currentNav} accentColor={accentColor}/>
       <div className="page-content">
         <div className="h-14 lg:hidden"/>
         <div className="flex flex-col items-center justify-center h-64 gap-3">
@@ -487,7 +489,7 @@ function DashboardContent() {
 
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={currentNav} accentColor="indigo"/>
+      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={currentNav} accentColor={accentColor}/>
       <div className="page-content">
         <div className="h-14 lg:hidden"/>
 

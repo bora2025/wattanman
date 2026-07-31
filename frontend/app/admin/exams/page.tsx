@@ -9,6 +9,7 @@ import StatCard from '../../../components/StatCard'
 import EmptyState from '../../../components/EmptyState'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
+import { useAccentColor } from '../../../lib/accentColor'
 
 interface Exam {
   id: string; title: string; description: string | null; status: string
@@ -27,6 +28,7 @@ const STATUS_COLOR: Record<string, string> = {
 }
 
 export default function ExamAdminPage() {
+  const { accentColor } = useAccentColor()
   const qc = useQueryClient()
 
   const { data: exams = [], isLoading, isError, refetch } = useQuery({
@@ -54,7 +56,7 @@ export default function ExamAdminPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

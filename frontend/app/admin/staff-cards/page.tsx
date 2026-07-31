@@ -11,6 +11,7 @@ import { useLanguage } from '../../../lib/i18n';
 import { CardDesign, STAFF_TEMPLATE, DESIGN_STORAGE_KEY, loadSavedDesign, apiGetActiveDesign, saveDesign } from '../../../components/card-designer/types';
 import { renderDesignToCanvas } from '../../../components/card-designer/renderDesignToCanvas';
 import { downloadSingleCardPDF, downloadA4CardsPDF } from '../../../components/card-designer/generateCardPDF';
+import { useAccentColor } from '../../../lib/accentColor'
 
 // Lazy-load the heavy card editor (QRCode + jsPDF + canvas + ~50KB) so the
 // staff-cards page itself loads instantly. The editor only mounts when the
@@ -66,6 +67,7 @@ const ROLE_ICONS: Record<string, string> = {
 };
 
 export default function StaffCardsPage() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage();
   const getRoleLabel = (role: string) => t('role.' + role.toLowerCase()) || role;
   const getRoleIcon = (role: string) => ROLE_ICONS[role] ?? '👤';
@@ -294,7 +296,7 @@ export default function StaffCardsPage() {
   if (loading) {
     return (
       <div className="page-shell">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <div className="page-content">
           <div className="flex min-h-screen items-center justify-center">
             <div className="text-center">
@@ -317,7 +319,7 @@ export default function StaffCardsPage() {
           </div>
         </div>
       )}
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

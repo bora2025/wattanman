@@ -8,6 +8,7 @@ import { adminNav, classAdminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../lib/i18n';
 import { downloadStudentsCsv } from '../../../lib/exportCsv';
+import { useAccentColor } from '../../../lib/accentColor'
 
 interface StudyYear {
   id: string;
@@ -222,6 +223,7 @@ export default function ManageClassesPage() {
 }
 
 function ManageClasses() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const urlStudyYearId = searchParams.get('studyYearId');
@@ -818,7 +820,7 @@ function ManageClasses() {
 
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={isClassAdmin ? classAdminNav : adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={isClassAdmin ? classAdminNav : adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         {/* Header */}

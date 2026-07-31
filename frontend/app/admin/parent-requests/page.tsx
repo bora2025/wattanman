@@ -7,6 +7,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
+import { useAccentColor } from '../../../lib/accentColor'
 
 interface LinkRequest {
   id: string
@@ -28,6 +29,7 @@ interface LinkRequest {
 type Tab = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ALL'
 
 export default function AdminParentRequestsPage() {
+  const { accentColor } = useAccentColor()
   const qc = useQueryClient()
   const [tab, setTab] = useState<Tab>('PENDING')
   const [errorMap, setErrorMap] = useState<Record<string, string>>({})
@@ -75,7 +77,7 @@ export default function AdminParentRequestsPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
-        <Sidebar title="Admin" subtitle="Portal" navItems={adminNav as any} accentColor="indigo" />
+        <Sidebar title="Admin" subtitle="Portal" navItems={adminNav as any} accentColor={accentColor} />
         <main className="flex-1 p-6">
           <div className="mb-4">
             <Link href="/admin" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">← Dashboard</Link>

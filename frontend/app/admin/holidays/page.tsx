@@ -6,6 +6,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch, getCurrentUser } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
+import { useAccentColor } from '../../../lib/accentColor'
 
 interface Holiday {
   id: string
@@ -58,6 +59,7 @@ const MONTH_NAMES = [
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export default function HolidaysPage() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage()
   const cambodiaToday = getCambodiaDate()
   const [currentYear, setCurrentYear] = useState(cambodiaToday.getFullYear())
@@ -198,7 +200,7 @@ export default function HolidaysPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="page-shell">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <div className="page-content lg:ml-0">
           <div className="h-14 lg:hidden" />
           <div className="page-header">

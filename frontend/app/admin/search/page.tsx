@@ -6,6 +6,7 @@ import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
+import { useAccentColor } from '../../../lib/accentColor'
 
 interface StudentProfile {
   id: string
@@ -156,6 +157,7 @@ function normalizePhotoUrl(url: string): string {
 }
 
 export default function SearchPage() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage()
   const [query, setQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('ALL')
@@ -274,7 +276,7 @@ export default function SearchPage() {
 
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">

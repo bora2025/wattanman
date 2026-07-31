@@ -5,6 +5,7 @@ import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
+import { useAccentColor } from '../../../lib/accentColor'
 
 /* ─── Types ─────────────────────────────────────────────── */
 
@@ -990,13 +991,14 @@ function AppearanceContent() {
 /* ─── Page export ─────────────────────────────────────────── */
 
 export default function AppearancePage() {
+  const { accentColor } = useAccentColor()
   return (
     <AuthGuard>
       <div className="flex h-screen bg-gray-50 dark:bg-slate-800">
         <Sidebar
           title="Admin"
           navItems={adminNav}
-          accentColor="indigo"
+          accentColor={accentColor}
         />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto px-6 py-8">

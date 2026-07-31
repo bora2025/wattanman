@@ -8,6 +8,7 @@ import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
 import { formatCambodiaTime } from '../../../../lib/dateUtils'
+import { useAccentColor } from '../../../../lib/accentColor'
 
 type Tab = 'assignments' | 'exams' | 'courses'
 const TABS: Tab[] = ['assignments', 'exams', 'courses']
@@ -79,6 +80,7 @@ function statusColor(s: string) {
 }
 
 function ClassDetailContent() {
+  const { accentColor } = useAccentColor()
   const params = useParams<{ id: string }>()
   const classId = params?.id as string
   const searchParams = useSearchParams()
@@ -120,7 +122,7 @@ function ClassDetailContent() {
 
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">

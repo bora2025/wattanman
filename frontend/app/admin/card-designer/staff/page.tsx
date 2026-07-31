@@ -5,8 +5,10 @@ import AuthGuard from '../../../../components/AuthGuard';
 import Sidebar from '../../../../components/Sidebar';
 import CardEditor from '../../../../components/card-designer/CardEditor';
 import { adminNav } from '../../../../lib/admin-nav';
+import { useAccentColor } from '../../../../lib/accentColor'
 
 export default function StaffCardDesignerPage() {
+  const { accentColor } = useAccentColor()
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="page-shell">
@@ -14,7 +16,7 @@ export default function StaffCardDesignerPage() {
           title="Admin Panel"
           subtitle="Wattanman"
           navItems={adminNav}
-          accentColor="indigo"
+          accentColor={accentColor}
         />
         <div className="page-content lg:ml-0 flex flex-col">
           <div className="h-14 lg:hidden" />

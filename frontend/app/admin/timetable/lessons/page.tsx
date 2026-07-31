@@ -6,6 +6,7 @@ import Sidebar from '../../../../components/Sidebar'
 import AuthGuard from '../../../../components/AuthGuard'
 import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
+import { useAccentColor } from '../../../../lib/accentColor'
 
 interface TimetableListItem { id: string; name: string; academicYear: string }
 interface TTeacher { id: string; lastName: string; firstName: string; short: string; color: string | null }
@@ -25,6 +26,7 @@ const LESSON_TYPES = [
 ]
 
 export default function LessonsPage() {
+  const { accentColor } = useAccentColor()
   const router = useRouter()
   const [timetables, setTimetables] = useState<TimetableListItem[]>([])
   const [selectedTT, setSelectedTT] = useState('')
@@ -132,7 +134,7 @@ export default function LessonsPage() {
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
       <div className="flex h-screen bg-gray-100 dark:bg-slate-800">
-        <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattaman" navItems={adminNav} accentColor={accentColor} />
         <div className="flex-1 flex flex-col overflow-hidden">
 
           {/* Header */}

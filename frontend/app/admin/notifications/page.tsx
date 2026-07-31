@@ -7,8 +7,10 @@ import Sidebar from '../../../components/Sidebar';
 import AuthGuard from '../../../components/AuthGuard';
 import { adminNav } from '../../../lib/admin-nav';
 import { useLanguage } from '../../../lib/i18n';
+import { useAccentColor } from '../../../lib/accentColor'
 
 export default function NotificationSettings() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage();
   const [settings, setSettings] = useState({
     emailEnabled: true,
@@ -38,7 +40,7 @@ export default function NotificationSettings() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="page-shell">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <div className="page-content">
           <div className="h-14 lg:hidden" />
           <div className="page-header">

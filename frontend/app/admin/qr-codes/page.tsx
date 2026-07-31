@@ -13,6 +13,7 @@ import { renderDesignToCanvas } from '../../../components/card-designer/renderDe
 import CardCanvas from '../../../components/card-designer/CardCanvas';
 import Toolbar from '../../../components/card-designer/Toolbar';
 import { downloadSingleCardPDF, downloadA4CardsPDF } from '../../../components/card-designer/generateCardPDF';
+import { useAccentColor } from '../../../lib/accentColor'
 
 interface Student {
   id: string;
@@ -61,6 +62,7 @@ function normalizePhotoUrl(url: string): string {
 }
 
 export default function GenerateQRCodes() {
+  const { accentColor } = useAccentColor()
   const { t, lang } = useLanguage();
   const [classes, setClasses] = useState<ClassWithStudents[]>([]);
   const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
@@ -732,7 +734,7 @@ export default function GenerateQRCodes() {
   if (loading) {
     return (
       <div className="page-shell">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <div className="page-content">
           <div className="flex min-h-screen items-center justify-center">
             <div className="text-center">
@@ -755,7 +757,7 @@ export default function GenerateQRCodes() {
           </div>
         </div>
       )}
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

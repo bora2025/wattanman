@@ -9,6 +9,7 @@ import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { formatCambodiaTime } from '../../../lib/dateUtils'
+import { useAccentColor } from '../../../lib/accentColor'
 
 type Tab = 'inbox' | 'broadcast' | 'history' | 'activity'
 
@@ -43,12 +44,13 @@ interface BroadcastForm {
 }
 
 export default function AdminCommunicationPage() {
+  const { accentColor } = useAccentColor()
   const [tab, setTab] = useState<Tab>('inbox')
 
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="page-shell">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <div className="page-content">
           <div className="h-14 lg:hidden" />
           <div className="page-header">

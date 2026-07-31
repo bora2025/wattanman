@@ -6,6 +6,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { useLanguage } from '../../../lib/i18n'
 import { apiFetch } from '../../../lib/api'
+import { useAccentColor } from '../../../lib/accentColor'
 
 interface CacheItem {
   key: string
@@ -63,6 +64,7 @@ function getCacheItems(): CacheItem[] {
 }
 
 export default function SettingsPage() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage()
   const [items, setItems] = useState<CacheItem[]>([])
   const [totalSize, setTotalSize] = useState('')
@@ -140,7 +142,7 @@ export default function SettingsPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="page-shell">
-        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+        <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
         <div className="page-content">
           <div className="h-14 lg:hidden" />
           <div className="page-header">

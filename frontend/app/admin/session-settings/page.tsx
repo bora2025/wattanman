@@ -5,6 +5,7 @@ import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch, getCurrentUser } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
+import { useAccentColor } from '../../../lib/accentColor'
 
 const SESSION_NAMES: Record<number, string> = {
   1: 'Morning 1',
@@ -148,6 +149,7 @@ const PRESET_ACTIVE: Record<string, string> = {
 }
 
 export default function SessionSettingsPage() {
+  const { accentColor } = useAccentColor()
   const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState<'CLASS' | 'STAFF'>('CLASS')
   const [configs, setConfigs] = useState<SessionConfigItem[]>(DEFAULT_CONFIGS)
@@ -331,7 +333,7 @@ export default function SessionSettingsPage() {
 
   return (
     <div className="page-shell">
-      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
+      <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor={accentColor} />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">

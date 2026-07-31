@@ -7,6 +7,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { todayCambodia } from '../../../lib/dateUtils'
+import { useAccentColor } from '../../../lib/accentColor'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1594,13 +1595,14 @@ function FeeManagementContent() {
 }
 
 export default function FeeManagementPage() {
+  const { accentColor } = useAccentColor()
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
       <div className="flex min-h-screen lg:h-screen bg-gray-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar
           title="Admin"
           navItems={adminNav}
-          accentColor="indigo"
+          accentColor={accentColor}
         />
         <FeeManagementContent />
       </div>
