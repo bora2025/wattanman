@@ -16,6 +16,7 @@ interface DailyRow {
   avgDurationMs: number | null
   p95DurationMs: number | null
   activeUserCount: number
+  storageBytes: number
 }
 
 const RANGES = [30, 60, 90] as const
@@ -32,6 +33,13 @@ function StatCard({ label, value }: { label: string; value: string }) {
 function fmtMs(v: number | null): string {
   if (v === null) return '—'
   return v >= 1000 ? `${(v / 1000).toFixed(2)}s` : `${Math.round(v)}ms`
+}
+
+function fmtBytes(v: number): string {
+  if (v <= 0) return '—'
+  if (v >= 1024 * 1024 * 1024) return `${(v / (1024 * 1024 * 1024)).toFixed(2)} GB`
+  if (v >= 1024 * 1024) return `${(v / (1024 * 1024)).toFixed(1)} MB`
+  return `${(v / 1024).toFixed(1)} KB`
 }
 
 function UsageTrendContent() {
@@ -71,7 +79,10 @@ function UsageTrendContent() {
       ? withLatency.reduce((s, r) => s + (r.avgDurationMs ?? 0), 0) / withLatency.length
       : null
     const peakActive = Math.max(0, ...rows.map(r => r.activeUserCount))
-    return { totalRequests, totalErrors, avgLatency, peakActive }
+    // storageBytes is a current snapshot, not a daily delta — use the most
+    // recent row (rows is ascending by date), not a sum across the range.
+    const currentStorage = rows[rows.length - 1].storageBytes
+    return { totalRequests, totalErrors, avgLatency, peakActive, currentStorage }
   }, [rows])
 
   const chartData = rows.map(r => ({
@@ -114,11 +125,12 @@ function UsageTrendContent() {
           ) : (
             <>
               {summary && (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                   <StatCard label={`Requests (${days}d)`} value={String(summary.totalRequests)} />
                   <StatCard label={`Errors (${days}d)`} value={String(summary.totalErrors)} />
                   <StatCard label="Avg latency" value={fmtMs(summary.avgLatency)} />
                   <StatCard label="Peak active users/day" value={String(summary.peakActive)} />
+                  <StatCard label="Storage (current)" value={fmtBytes(summary.currentStorage)} />
                 </div>
               )}
 
@@ -152,6 +164,7 @@ function UsageTrendContent() {
                       <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Avg latency</th>
                       <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">P95 latency</th>
                       <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Active users</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase">Storage</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -163,6 +176,7 @@ function UsageTrendContent() {
                         <td className="px-4 py-2.5 text-right tabular-nums">{fmtMs(r.avgDurationMs)}</td>
                         <td className="px-4 py-2.5 text-right tabular-nums">{fmtMs(r.p95DurationMs)}</td>
                         <td className="px-4 py-2.5 text-right tabular-nums">{r.activeUserCount}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums">{fmtBytes(r.storageBytes)}</td>
                       </tr>
                     ))}
                   </tbody>

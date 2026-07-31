@@ -16,10 +16,11 @@ interface SchoolMetricRow {
   avgDurationMs: number | null
   p95DurationMs: number | null
   activeUserCount: number
+  storageBytes: number
   computed: boolean
 }
 
-type SortKey = 'schoolName' | 'requestCount' | 'errorCount' | 'avgDurationMs' | 'p95DurationMs' | 'activeUserCount'
+type SortKey = 'schoolName' | 'requestCount' | 'errorCount' | 'avgDurationMs' | 'p95DurationMs' | 'activeUserCount' | 'storageBytes'
 
 function yesterday(): string {
   const d = new Date(Date.now() - 24 * 60 * 60 * 1000)
@@ -37,6 +38,13 @@ function statusFor(row: SchoolMetricRow): { label: string; className: string } {
 function fmtMs(v: number | null): string {
   if (v === null) return '—'
   return v >= 1000 ? `${(v / 1000).toFixed(2)}s` : `${Math.round(v)}ms`
+}
+
+function fmtBytes(v: number): string {
+  if (v <= 0) return '—'
+  if (v >= 1024 * 1024 * 1024) return `${(v / (1024 * 1024 * 1024)).toFixed(2)} GB`
+  if (v >= 1024 * 1024) return `${(v / (1024 * 1024)).toFixed(1)} MB`
+  return `${(v / 1024).toFixed(1)} KB`
 }
 
 function UsageContent() {
@@ -105,6 +113,7 @@ function UsageContent() {
     { key: 'avgDurationMs', label: 'Avg latency' },
     { key: 'p95DurationMs', label: 'P95 latency' },
     { key: 'activeUserCount', label: 'Active users' },
+    { key: 'storageBytes', label: 'Storage' },
   ]
 
   return (
@@ -166,6 +175,7 @@ function UsageContent() {
                         <td className="px-4 py-3 text-right tabular-nums">{fmtMs(row.avgDurationMs)}</td>
                         <td className="px-4 py-3 text-right tabular-nums">{fmtMs(row.p95DurationMs)}</td>
                         <td className="px-4 py-3 text-right tabular-nums">{row.activeUserCount}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">{fmtBytes(row.storageBytes)}</td>
                       </tr>
                     )
                   })}

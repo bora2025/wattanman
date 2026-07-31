@@ -730,6 +730,9 @@ model SchoolDailyMetric {
   p95DurationMs Float?
   /// Distinct actorId count that day.
   activeUserCount Int @default(0)
+  /// Snapshot (not a daily delta) of total bytes stored across all base64 image/logo/design
+  /// columns for this school, as of computedAt — see SchoolMetricsService for the exact column list.
+  storageBytes BigInt @default(0)
 
   computedAt DateTime @default(now())
 
