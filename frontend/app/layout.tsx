@@ -50,6 +50,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Applies a saved dark-mode preference before first paint, so there's
+            no flash of the light theme while React hydrates. Default stays
+            light if nothing is saved — see lib/theme.tsx. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}`,
+          }}
+        />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

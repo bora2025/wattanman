@@ -177,6 +177,20 @@ export const IconGlobe = multi([
   'M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z',
 ]);
 
+export const IconSun = multi([
+  'M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z',
+  'M12 1v2',
+  'M12 21v2',
+  'M4.22 4.22l1.42 1.42',
+  'M18.36 18.36l1.42 1.42',
+  'M1 12h2',
+  'M21 12h2',
+  'M4.22 19.78l1.42-1.42',
+  'M18.36 5.64l1.42-1.42',
+]);
+
+export const IconMoon = icon('M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z');
+
 export const IconCheck = icon('M20 6L9 17l-5-5');
 
 export const IconStar = icon(
