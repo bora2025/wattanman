@@ -198,24 +198,24 @@ function StaffReportsContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">{t('reports.staffTitle')}</h1>
-          <p className="text-sm text-slate-500 mt-1">{t('reports.cambodiaTime')} · {t('reports.staffAndAdmin')}</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('reports.staffTitle')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('reports.cambodiaTime')} · {t('reports.staffAndAdmin')}</p>
         </div>
         <div className="page-body space-y-6">
           {/* Controls */}
           <div className="card p-3 sm:p-4">
             <div className="space-y-3 lg:space-y-0 lg:flex lg:flex-wrap lg:gap-4 lg:items-end">
               <div className="w-full lg:w-auto">
-                <label className="block text-xs font-medium text-slate-500 mb-1">{t('common.date')}</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('common.date')}</label>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => goDay(-1)} className="flex-shrink-0 px-2 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm">◀</button>
+                  <button onClick={() => goDay(-1)} className="flex-shrink-0 px-2 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">◀</button>
                   <input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                    className="flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
                   />
-                  <button onClick={() => goDay(1)} className="flex-shrink-0 px-2 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm">▶</button>
+                  <button onClick={() => goDay(1)} className="flex-shrink-0 px-2 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">▶</button>
                   <button onClick={() => setSelectedDate(todayCambodia())} className="flex-shrink-0 btn-ghost btn-sm py-2.5">
                     📅 {t('common.today')}
                   </button>
@@ -228,22 +228,22 @@ function StaffReportsContent() {
                 📊 {t('common.exportReport')}
               </button>
             </div>
-            <p className="mt-2 text-xs sm:text-sm font-medium text-slate-700">{dayLabel}</p>
+            <p className="mt-2 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200">{dayLabel}</p>
           </div>
 
           {isHolidayDate && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
               <span className="text-lg">📅</span>
               <span dangerouslySetInnerHTML={{ __html: t('reports.holidayNotice') }} />
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">{error}</div>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-xl px-4 py-3 text-sm font-medium">{error}</div>
           )}
 
           {/* Tabs */}
-          <div className="flex overflow-x-auto border-b border-slate-200 -mx-1 px-1 scrollbar-hide">
+          <div className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-700 -mx-1 px-1 scrollbar-hide">
             {(['daily', 'weekly', 'monthly', 'yearly'] as const).map(tab => (
               <button
                 key={tab}
@@ -261,7 +261,7 @@ function StaffReportsContent() {
             <div className="card p-12">
               <div className="empty-state">
                 <div className="w-10 h-10 border-3 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <p className="text-sm text-slate-500 mt-3">Loading…</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
               </div>
             </div>
           ) : activeTab === 'daily' ? (
@@ -269,41 +269,41 @@ function StaffReportsContent() {
               {/* Stats */}
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
                 <div className="stat-card col-span-3 sm:col-span-1"><p className="stat-label">{t('reports.totalStaff')}</p><p className="stat-value">{totalStaff}</p></div>
-                <div className="stat-card"><p className="stat-label">{t('common.present')}</p><p className="stat-value text-emerald-600">{dailyPresent}</p></div>
-                <div className="stat-card"><p className="stat-label">{t('reports.presentLate')}</p><p className="stat-value text-amber-600">{dailyLate}</p></div>
-                <div className="stat-card"><p className="stat-label">{t('common.absent')}</p><p className="stat-value text-red-600">{dailyAbsent}</p></div>
-                <div className="stat-card"><p className="stat-label">{t('common.permission')}</p><p className="stat-value text-purple-600">{dailyPermission}</p></div>
+                <div className="stat-card"><p className="stat-label">{t('common.present')}</p><p className="stat-value text-emerald-600 dark:text-emerald-400">{dailyPresent}</p></div>
+                <div className="stat-card"><p className="stat-label">{t('reports.presentLate')}</p><p className="stat-value text-amber-600 dark:text-amber-400">{dailyLate}</p></div>
+                <div className="stat-card"><p className="stat-label">{t('common.absent')}</p><p className="stat-value text-red-600 dark:text-red-400">{dailyAbsent}</p></div>
+                <div className="stat-card"><p className="stat-label">{t('common.permission')}</p><p className="stat-value text-purple-600 dark:text-purple-400">{dailyPermission}</p></div>
               </div>
 
               {grid.length === 0 ? (
                 <div className="card p-12">
                   <div className="empty-state">
                     <p className="text-4xl mb-3">👔</p>
-                    <p className="font-semibold text-slate-600">{t('reports.noStaffData')}</p>
-                    <p className="text-sm text-slate-400 mt-1">{t('reports.noRecordsDay')}</p>
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">{t('reports.noStaffData')}</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('reports.noRecordsDay')}</p>
                   </div>
                 </div>
               ) : (
                 <div className="card overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs sm:text-sm">
-                      <thead className="bg-slate-50">
-                        <tr className="text-left text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide">
+                      <thead className="bg-slate-50 dark:bg-slate-800">
+                        <tr className="text-left text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold hidden sm:table-cell">{t('common.day')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.id')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.staffName')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold hidden sm:table-cell">{t('common.position')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center">
-                            <div className="text-[10px] sm:text-xs">{t('common.checkIn')}</div><div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 hidden sm:block">{t('reports.morning')}</div>
+                            <div className="text-[10px] sm:text-xs">{t('common.checkIn')}</div><div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 dark:text-slate-500 hidden sm:block">{t('reports.morning')}</div>
                           </th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center">
-                            <div className="text-[10px] sm:text-xs">{t('common.checkOut')}</div><div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 hidden sm:block">{t('reports.morning')}</div>
+                            <div className="text-[10px] sm:text-xs">{t('common.checkOut')}</div><div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 dark:text-slate-500 hidden sm:block">{t('reports.morning')}</div>
                           </th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center">
-                            <div className="text-[10px] sm:text-xs">{t('common.checkIn')}</div><div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 hidden sm:block">{t('reports.afternoon')}</div>
+                            <div className="text-[10px] sm:text-xs">{t('common.checkIn')}</div><div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 dark:text-slate-500 hidden sm:block">{t('reports.afternoon')}</div>
                           </th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center">
-                            <div className="text-[10px] sm:text-xs">{t('common.checkOut')}</div><div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 hidden sm:block">{t('reports.afternoon')}</div>
+                            <div className="text-[10px] sm:text-xs">{t('common.checkOut')}</div><div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 dark:text-slate-500 hidden sm:block">{t('reports.afternoon')}</div>
                           </th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center hidden sm:table-cell">
                             <div>📍 {t('common.location')}</div>
@@ -312,14 +312,14 @@ function StaffReportsContent() {
                       </thead>
                       <tbody>
                         {grid.map((row) => (
-                          <tr key={row.userId} className="border-t border-slate-100 hover:bg-slate-50">
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-500 text-[10px] sm:text-xs hidden sm:table-cell">
+                          <tr key={row.userId} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs hidden sm:table-cell">
                               {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
                             </td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 font-mono text-[10px] sm:text-xs">{row.staffNumber}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 font-medium text-xs sm:text-sm">{row.staffName}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 dark:text-slate-300 font-mono text-[10px] sm:text-xs">{row.staffNumber}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 dark:text-slate-100 font-medium text-xs sm:text-sm">{row.staffName}</td>
                             <td className="px-2 sm:px-3 py-2 sm:py-2.5 hidden sm:table-cell">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
                                 {t('role.' + (row.role || '').toLowerCase()) || row.role}
                               </span>
                             </td>
@@ -333,7 +333,7 @@ function StaffReportsContent() {
                                   href={`https://www.google.com/maps?q=${row.scanLatitude},${row.scanLongitude}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
                                   title={`${row.scanLatitude}, ${row.scanLongitude}`}
                                 >
                                   📍 {row.scanLocation}
@@ -343,12 +343,12 @@ function StaffReportsContent() {
                                   href={`https://www.google.com/maps?q=${row.scanLatitude},${row.scanLongitude}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
                                 >
                                   📍 {row.scanLatitude?.toFixed(4)}, {row.scanLongitude?.toFixed(4)}
                                 </a>
                               ) : (
-                                <span className="text-xs text-slate-400">—</span>
+                                <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
                               )}
                             </td>
                           </tr>
@@ -366,8 +366,8 @@ function StaffReportsContent() {
                 <div className="card p-12">
                   <div className="empty-state">
                     <p className="text-4xl mb-3">📊</p>
-                    <p className="font-semibold text-slate-600">{t('common.noData')}</p>
-                    <p className="text-sm text-slate-400 mt-1">{t('reports.noStaffTotals')}</p>
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">{t('common.noData')}</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('reports.noStaffTotals')}</p>
                   </div>
                 </div>
               ) : (() => {
@@ -375,16 +375,16 @@ function StaffReportsContent() {
                 const periodLabel = activeTab === 'weekly' ? t('reports.weekly') : activeTab === 'monthly' ? t('reports.monthly') : t('reports.yearly');
                 return (
                   <div className="card overflow-hidden">
-                    <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border-b border-slate-200">
-                      <h3 className="text-xs sm:text-sm font-semibold text-slate-700">{periodLabel} {t('reports.attendanceTotals')}</h3>
+                    <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                      <h3 className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">{periodLabel} {t('reports.attendanceTotals')}</h3>
                     </div>
                     <div className="overflow-x-auto">
                       {(() => {
                         const hasFormatRules = totals.length > 0 && totals.some(r => (r[periodKey].convertedAbsentFromPermission || 0) > 0 || (r[periodKey].convertedAbsentHalfFromLate || 0) > 0);
                         return (
                       <table className="w-full text-xs sm:text-sm">
-                        <thead className="bg-slate-50">
-                          <tr className="text-left text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide">
+                        <thead className="bg-slate-50 dark:bg-slate-800">
+                          <tr className="text-left text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                             <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.id')}</th>
                             <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.name')}</th>
                             <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold hidden sm:table-cell">{t('common.position')}</th>
@@ -394,41 +394,41 @@ function StaffReportsContent() {
                             <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center">{t('reports.totalPermission')}</th>
                             {hasFormatRules && (
                               <>
-                                <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center text-orange-600 text-[10px] sm:text-xs">Perm→Absent</th>
-                                <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center text-orange-600 text-[10px] sm:text-xs">Late→½Absent</th>
+                                <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center text-orange-600 dark:text-orange-400 text-[10px] sm:text-xs">Perm→Absent</th>
+                                <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center text-orange-600 dark:text-orange-400 text-[10px] sm:text-xs">Late→½Absent</th>
                               </>
                             )}
                           </tr>
                         </thead>
                         <tbody>
                           {totals.map(row => (
-                            <tr key={row.userId} className="border-t border-slate-100 hover:bg-slate-50">
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 font-mono text-[10px] sm:text-xs">{row.staffNumber}</td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 font-medium text-xs sm:text-sm">{row.staffName}</td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 hidden sm:table-cell"><span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700">{t('role.' + (row.role || '').toLowerCase()) || row.role}</span></td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 font-semibold">{row[periodKey].present}</td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 font-semibold">{row[periodKey].late}</td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 font-semibold">{row[periodKey].absent}</td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 font-semibold">{row[periodKey].dayOff || 0}</td>
+                            <tr key={row.userId} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 dark:text-slate-300 font-mono text-[10px] sm:text-xs">{row.staffNumber}</td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 dark:text-slate-100 font-medium text-xs sm:text-sm">{row.staffName}</td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 hidden sm:table-cell"><span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">{t('role.' + (row.role || '').toLowerCase()) || row.role}</span></td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 dark:text-emerald-300 font-semibold">{row[periodKey].present}</td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 dark:text-amber-400 font-semibold">{row[periodKey].late}</td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 dark:text-red-400 font-semibold">{row[periodKey].absent}</td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 dark:text-purple-400 font-semibold">{row[periodKey].dayOff || 0}</td>
                               {hasFormatRules && (
                                 <>
-                                  <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-700 font-semibold">{row[periodKey].convertedAbsentFromPermission || 0}</td>
-                                  <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-600 font-semibold">{row[periodKey].convertedAbsentHalfFromLate || 0}</td>
+                                  <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-700 dark:text-orange-300 font-semibold">{row[periodKey].convertedAbsentFromPermission || 0}</td>
+                                  <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-600 dark:text-orange-400 font-semibold">{row[periodKey].convertedAbsentHalfFromLate || 0}</td>
                                 </>
                               )}
                             </tr>
                           ))}
-                          <tr className="border-t-2 border-slate-300 bg-slate-50 font-bold text-slate-700">
+                          <tr className="border-t-2 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">
                             <td className="px-2 sm:px-3 py-2 sm:py-2.5" colSpan={2}>{t('common.total')}</td>
                             <td className="px-2 sm:px-3 py-2 sm:py-2.5 hidden sm:table-cell"></td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700">{totals.reduce((s, r) => s + r[periodKey].present, 0)}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600">{totals.reduce((s, r) => s + r[periodKey].late, 0)}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600">{totals.reduce((s, r) => s + r[periodKey].absent, 0)}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600">{totals.reduce((s, r) => s + (r[periodKey].dayOff || 0), 0)}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 dark:text-emerald-300">{totals.reduce((s, r) => s + r[periodKey].present, 0)}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 dark:text-amber-400">{totals.reduce((s, r) => s + r[periodKey].late, 0)}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 dark:text-red-400">{totals.reduce((s, r) => s + r[periodKey].absent, 0)}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 dark:text-purple-400">{totals.reduce((s, r) => s + (r[periodKey].dayOff || 0), 0)}</td>
                             {hasFormatRules && (
                               <>
-                                <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-700">{totals.reduce((s, r) => s + (r[periodKey].convertedAbsentFromPermission || 0), 0)}</td>
-                                <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-600">{totals.reduce((s, r) => s + (r[periodKey].convertedAbsentHalfFromLate || 0), 0)}</td>
+                                <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-700 dark:text-orange-300">{totals.reduce((s, r) => s + (r[periodKey].convertedAbsentFromPermission || 0), 0)}</td>
+                                <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-600 dark:text-orange-400">{totals.reduce((s, r) => s + (r[periodKey].convertedAbsentHalfFromLate || 0), 0)}</td>
                               </>
                             )}
                           </tr>
@@ -448,20 +448,20 @@ function StaffReportsContent() {
       {/* Export Report Modal */}
       {showExportForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => { setShowExportForm(false); setExportMessage('') }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             {/* Header */}
-            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 bg-gradient-to-r from-purple-50 to-white rounded-t-2xl">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-purple-50 to-white rounded-t-2xl">
               <div>
-                <h2 className="text-lg font-bold text-slate-800">📊 {t('reports.exportStaffReport')}</h2>
-                <p className="text-xs text-slate-500 mt-0.5">{t('reports.choosePeriodCSV')}</p>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">📊 {t('reports.exportStaffReport')}</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('reports.choosePeriodCSV')}</p>
               </div>
-              <button onClick={() => { setShowExportForm(false); setExportMessage('') }} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm">✕</button>
+              <button onClick={() => { setShowExportForm(false); setExportMessage('') }} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 flex items-center justify-center text-slate-500 dark:text-slate-400 text-sm">✕</button>
             </div>
 
             <div className="p-6 space-y-5">
               {/* Period Selector */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">📅 {t('reports.period')}</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📅 {t('reports.period')}</label>
                 <div className="grid grid-cols-4 gap-2">
                   {(['daily', 'weekly', 'monthly', 'yearly'] as const).map(p => (
                     <button
@@ -483,32 +483,32 @@ function StaffReportsContent() {
                     type="checkbox"
                     checked={exportUseCustomRange}
                     onChange={e => setExportUseCustomRange(e.target.checked)}
-                    className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                    className="rounded border-slate-300 dark:border-slate-600 text-purple-600 dark:text-purple-400 focus:ring-purple-500"
                   />
-                  <span className="text-sm text-slate-600">{t('reports.customDateRange')}</span>
+                  <span className="text-sm text-slate-600 dark:text-slate-300">{t('reports.customDateRange')}</span>
                 </label>
               </div>
 
               {/* Date Picker(s) */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                   {exportUseCustomRange ? `📆 ${t('reports.startDate')}` : `📆 ${t('common.date')}`}
                 </label>
                 <input
                   type="date"
                   value={exportDate}
                   onChange={e => setExportDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
                 />
                 {exportUseCustomRange && (
                   <div className="mt-3">
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">📆 {t('reports.endDate')}</label>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📆 {t('reports.endDate')}</label>
                     <input
                       type="date"
                       value={exportDateEnd}
                       onChange={e => setExportDateEnd(e.target.value)}
                       min={exportDate}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                      className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
                     />
                   </div>
                 )}
@@ -518,15 +518,15 @@ function StaffReportsContent() {
               {(() => {
                 const range = getExportDateRange()
                 return (
-                  <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-2">
-                    <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400">{t('reports.exportPreview')}</h4>
+                  <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2">
+                    <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">{t('reports.exportPreview')}</h4>
                     <div className="grid grid-cols-2 gap-y-1.5 text-sm">
-                      <span className="text-slate-500">{t('reports.type')}:</span>
-                      <span className="font-medium text-slate-800">{t('reports.staffAttendance')}</span>
-                      <span className="text-slate-500">{t('reports.period')}:</span>
-                      <span className="font-medium text-slate-800">{exportUseCustomRange ? t('reports.customRange') : exportPeriod.charAt(0).toUpperCase() + exportPeriod.slice(1)}</span>
-                      <span className="text-slate-500">{t('reports.dateRange')}:</span>
-                      <span className="font-medium text-slate-800">{range.label}</span>
+                      <span className="text-slate-500 dark:text-slate-400">{t('reports.type')}:</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-100">{t('reports.staffAttendance')}</span>
+                      <span className="text-slate-500 dark:text-slate-400">{t('reports.period')}:</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-100">{exportUseCustomRange ? t('reports.customRange') : exportPeriod.charAt(0).toUpperCase() + exportPeriod.slice(1)}</span>
+                      <span className="text-slate-500 dark:text-slate-400">{t('reports.dateRange')}:</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-100">{range.label}</span>
                     </div>
                   </div>
                 )
@@ -543,7 +543,7 @@ function StaffReportsContent() {
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-1">
-                <button onClick={() => { setShowExportForm(false); setExportMessage('') }} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                <button onClick={() => { setShowExportForm(false); setExportMessage('') }} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                   {t('common.cancel')}
                 </button>
                 <button
@@ -668,20 +668,20 @@ function StaffPrintReportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-white rounded-t-2xl">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-emerald-50 to-white rounded-t-2xl">
           <div>
-            <h2 className="text-lg font-bold text-slate-800">🖨️ {t('reports.printAttendanceReport')}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">{t('reports.selectOptionsAndPrint')} — {t('reports.staffAttendance')}</p>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">🖨️ {t('reports.printAttendanceReport')}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('reports.selectOptionsAndPrint')} — {t('reports.staffAttendance')}</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm">✕</button>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 flex items-center justify-center text-slate-500 dark:text-slate-400 text-sm">✕</button>
         </div>
 
         <div className="p-6 space-y-5">
           {/* Period Selector */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📋 {t('reports.reportPeriod')}</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📋 {t('reports.reportPeriod')}</label>
             <div className="grid grid-cols-3 gap-2">
               {periodOptions.map(opt => (
                 <button
@@ -704,39 +704,39 @@ function StaffPrintReportModal({
           {printPeriod === 'custom' ? (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('reports.startDate')}</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">{t('reports.startDate')}</label>
                 <input
                   type="date"
                   value={printStartDate}
                   onChange={e => setPrintStartDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('reports.endDate')}</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">{t('reports.endDate')}</label>
                 <input
                   type="date"
                   value={printEndDate}
                   onChange={e => setPrintEndDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                 />
               </div>
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">📆 {t('common.date')}</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📆 {t('common.date')}</label>
               <input
                 type="date"
                 value={printDate}
                 onChange={e => setPrintDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
               />
             </div>
           )}
 
           {/* Paper Size */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📄 {t('reports.paperSize')}</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📄 {t('reports.paperSize')}</label>
             <div className="flex gap-2">
               {paperOptions.map(opt => (
                 <button
@@ -749,40 +749,40 @@ function StaffPrintReportModal({
                   }`}
                 >
                   <div className={`text-sm font-semibold ${paperSize === opt.value ? 'text-emerald-700' : 'text-slate-700'}`}>{opt.label}</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">{opt.desc}</div>
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{opt.desc}</div>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Letter Header Customization */}
-          <div className="space-y-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200">
-            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">📜 Letter Header</h3>
+          <div className="space-y-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200 dark:border-amber-900">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">📜 Letter Header</h3>
 
             {/* Logo URL */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Logo URL</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Logo URL</label>
               <input
                 type="text"
                 value={logoUrl}
                 onChange={e => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
               />
             </div>
 
             {/* Spacing below logo */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo (px)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Logo (px)</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={logoGap} onChange={e => setLogoGap(e.target.value)} className="flex-1 accent-emerald-500" />
-                <span className="text-xs text-slate-500 w-8 text-center">{logoGap}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{logoGap}</span>
               </div>
             </div>
 
             {/* Logo Text Lines (below logo) */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Text Below Logo</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Text Below Logo</label>
               <div className="space-y-1.5">
                 {logoTextLines.map((line, idx) => (
                   <div key={idx} className="flex items-center gap-1.5">
@@ -790,30 +790,30 @@ function StaffPrintReportModal({
                       type="text"
                       value={line}
                       onChange={e => { const l = [...logoTextLines]; l[idx] = e.target.value; setLogoTextLines(l) }}
-                      className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                      className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                       placeholder={`Line ${idx + 1}`}
                     />
                     {logoTextLines.length > 1 && (
-                      <button onClick={() => setLogoTextLines(logoTextLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-xs">✕</button>
+                      <button onClick={() => setLogoTextLines(logoTextLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 flex items-center justify-center text-xs">✕</button>
                     )}
                   </div>
                 ))}
-                <button onClick={() => setLogoTextLines([...logoTextLines, ''])} className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">+ Add line</button>
+                <button onClick={() => setLogoTextLines([...logoTextLines, ''])} className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium">+ Add line</button>
               </div>
             </div>
 
             {/* Spacing below logo text */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo Text (px)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Logo Text (px)</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={logoTextGap} onChange={e => setLogoTextGap(e.target.value)} className="flex-1 accent-emerald-500" />
-                <span className="text-xs text-slate-500 w-8 text-center">{logoTextGap}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{logoTextGap}</span>
               </div>
             </div>
 
             {/* Header Lines */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Header Lines (top → bottom)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Header Lines (top → bottom)</label>
               <div className="space-y-1.5">
                 {headerLines.map((line, idx) => (
                   <div key={idx} className="flex items-center gap-1.5">
@@ -821,42 +821,42 @@ function StaffPrintReportModal({
                       type="text"
                       value={line}
                       onChange={e => { const h = [...headerLines]; h[idx] = e.target.value; setHeaderLines(h) }}
-                      className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-center"
+                      className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-center"
                       placeholder={`Line ${idx + 1}`}
                     />
                     {headerLines.length > 1 && (
-                      <button onClick={() => setHeaderLines(headerLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-xs">✕</button>
+                      <button onClick={() => setHeaderLines(headerLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 flex items-center justify-center text-xs">✕</button>
                     )}
                   </div>
                 ))}
-                <button onClick={() => setHeaderLines([...headerLines, ''])} className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">+ Add line</button>
+                <button onClick={() => setHeaderLines([...headerLines, ''])} className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium">+ Add line</button>
               </div>
             </div>
 
             {/* Spacing below header lines */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Header Lines (px)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Header Lines (px)</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={headerGap} onChange={e => setHeaderGap(e.target.value)} className="flex-1 accent-emerald-500" />
-                <span className="text-xs text-slate-500 w-8 text-center">{headerGap}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{headerGap}</span>
               </div>
             </div>
 
             {/* Organization Name */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Organization Name</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Organization Name</label>
               <input
                 type="text"
                 value={orgName}
                 onChange={e => setOrgName(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
               />
             </div>
           </div>
 
           {/* Signers */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">✍️ Signers</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">✍️ Signers</label>
             <div className="space-y-2">
               {signers.map((signer, idx) => (
                 <div key={idx} className="flex items-center gap-2">
@@ -864,17 +864,17 @@ function StaffPrintReportModal({
                     type="text"
                     value={signer}
                     onChange={e => { const s = [...signers]; s[idx] = e.target.value; setSigners(s) }}
-                    className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                    className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                     placeholder={`Signer ${idx + 1}`}
                   />
                   {signers.length > 1 && (
-                    <button onClick={() => setSigners(signers.filter((_, i) => i !== idx))} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-sm">✕</button>
+                    <button onClick={() => setSigners(signers.filter((_, i) => i !== idx))} className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 flex items-center justify-center text-sm">✕</button>
                   )}
                 </div>
               ))}
               <button
                 onClick={() => setSigners([...signers, ''])}
-                className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+                className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium flex items-center gap-1"
               >
                 + Add signer
               </button>
@@ -882,23 +882,23 @@ function StaffPrintReportModal({
           </div>
 
           {/* Preview/Summary */}
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-2">
-            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400">{t('reports.exportPreview')}</h4>
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2">
+            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">{t('reports.exportPreview')}</h4>
             <div className="grid grid-cols-2 gap-y-1.5 text-sm">
-              <span className="text-slate-500">{t('reports.type')}:</span>
-              <span className="font-medium text-slate-800">{t('reports.staffAttendance')}</span>
-              <span className="text-slate-500">{t('reports.dateRange')}:</span>
-              <span className="font-medium text-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">{t('reports.type')}:</span>
+              <span className="font-medium text-slate-800 dark:text-slate-100">{t('reports.staffAttendance')}</span>
+              <span className="text-slate-500 dark:text-slate-400">{t('reports.dateRange')}:</span>
+              <span className="font-medium text-slate-800 dark:text-slate-100">
                 {previewStart === previewEnd ? previewStart : `${previewStart} → ${previewEnd}`}
               </span>
-              <span className="text-slate-500">{t('reports.paperSize')}:</span>
-              <span className="font-medium text-emerald-600">{paperSize}</span>
+              <span className="text-slate-500 dark:text-slate-400">{t('reports.paperSize')}:</span>
+              <span className="font-medium text-emerald-600 dark:text-emerald-400">{paperSize}</span>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-1">
-            <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+            <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
               {t('common.cancel')}
             </button>
             <button
@@ -929,7 +929,7 @@ function SessionCell({ time, status }: { time: string | null; status: string | n
         {time || '✓'}
       </span>
       {status === 'LATE' && (
-        <div className="text-[9px] sm:text-[10px] text-amber-500 font-medium">Late</div>
+        <div className="text-[9px] sm:text-[10px] text-amber-500 dark:text-amber-400 font-medium">Late</div>
       )}
     </td>
   )

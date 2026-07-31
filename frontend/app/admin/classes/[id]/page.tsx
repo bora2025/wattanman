@@ -124,24 +124,24 @@ function ClassDetailContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <nav className="flex items-center gap-1 text-xs text-slate-500 mb-2" aria-label="Breadcrumb">
-            <Link href="/admin" className="hover:text-indigo-600 hover:underline">🏠 Dashboard</Link>
+          <nav className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mb-2" aria-label="Breadcrumb">
+            <Link href="/admin" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline">🏠 Dashboard</Link>
             <span className="text-slate-300">/</span>
-            <Link href="/admin/classes" className="hover:text-indigo-600 hover:underline">Classes</Link>
+            <Link href="/admin/classes" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline">Classes</Link>
             <span className="text-slate-300">/</span>
-            <span className="text-slate-700 font-medium truncate max-w-[200px]">{cls?.name ?? '…'}</span>
+            <span className="text-slate-700 dark:text-slate-200 font-medium truncate max-w-[200px]">{cls?.name ?? '…'}</span>
           </nav>
           {loadingClass ? (
-            <p className="text-sm text-slate-400">Loading class…</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">Loading class…</p>
           ) : !cls ? (
-            <p className="text-sm text-red-600">Class not found.</p>
+            <p className="text-sm text-red-600 dark:text-red-400">Class not found.</p>
           ) : (
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
-                <h1 className="text-2xl font-bold text-slate-800">{cls.name}</h1>
-                <p className="text-sm text-slate-500 mt-1">
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{cls.name}</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                   {cls.subject ?? 'No subject'}
-                  {cls.teacher && <> · Teacher: <span className="font-medium text-slate-700">{cls.teacher.name}</span></>}
+                  {cls.teacher && <> · Teacher: <span className="font-medium text-slate-700 dark:text-slate-200">{cls.teacher.name}</span></>}
                   {cls.studyYear && <> · {cls.studyYear.label}</>}
                 </p>
               </div>
@@ -154,7 +154,7 @@ function ClassDetailContent() {
         </div>
 
         <div className="page-body">
-          <div className="flex gap-1 border-b border-slate-200 mb-6">
+          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 mb-6">
             {([
               ['assignments', '📝 Assignments'],
               ['exams', '🎯 Examinations'],
@@ -285,8 +285,8 @@ function AssignmentsPanel({ classId }: { classId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-sm text-slate-600">
-          <span className="font-semibold text-slate-800">{rows.length}</span> assignment{rows.length === 1 ? '' : 's'} in this class
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          <span className="font-semibold text-slate-800 dark:text-slate-100">{rows.length}</span> assignment{rows.length === 1 ? '' : 's'} in this class
         </p>
         <button onClick={() => { setEditing(null); setCreating(s => !s) }} className="btn-primary btn-sm">
           {creating ? '× Cancel' : '+ New Assignment'}
@@ -294,34 +294,34 @@ function AssignmentsPanel({ classId }: { classId: string }) {
       </div>
 
       {creating && (
-        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-indigo-50/30 border-indigo-200">
-          <h3 className="text-sm font-semibold text-slate-800">New assignment</h3>
+        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-indigo-50/30 border-indigo-200 dark:border-indigo-900">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">New assignment</h3>
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Title *</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Title *</label>
               <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Type</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Type</label>
               <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
                 className="w-full border rounded-lg px-3 py-2 text-sm">
                 {ASSIGNMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Total marks</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Total marks</label>
               <input type="number" value={form.totalMarks} onChange={e => setForm(f => ({ ...f, totalMarks: Number(e.target.value) }))}
                 className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Due date</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Due date</label>
               <input type="datetime-local" value={form.dueDate} onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
                 className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Description</label>
             <textarea rows={2} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className="w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
@@ -335,34 +335,34 @@ function AssignmentsPanel({ classId }: { classId: string }) {
       )}
 
       {editing && (
-        <form onSubmit={handleSaveEdit} className="card p-4 space-y-3 bg-emerald-50/30 border-emerald-200">
-          <h3 className="text-sm font-semibold text-slate-800">Edit assignment</h3>
+        <form onSubmit={handleSaveEdit} className="card p-4 space-y-3 bg-emerald-50/30 border-emerald-200 dark:border-emerald-900">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Edit assignment</h3>
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Title *</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Title *</label>
               <input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} required
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Type</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Type</label>
               <select value={editForm.type} onChange={e => setEditForm(f => ({ ...f, type: e.target.value }))}
                 className="w-full border rounded-lg px-3 py-2 text-sm">
                 {ASSIGNMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Total marks</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Total marks</label>
               <input type="number" value={editForm.totalMarks} onChange={e => setEditForm(f => ({ ...f, totalMarks: Number(e.target.value) }))}
                 className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Due date</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Due date</label>
               <input type="datetime-local" value={editForm.dueDate} onChange={e => setEditForm(f => ({ ...f, dueDate: e.target.value }))}
                 className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Description</label>
             <textarea rows={2} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
               className="w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
@@ -375,16 +375,16 @@ function AssignmentsPanel({ classId }: { classId: string }) {
         </form>
       )}
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-sm">{error}</div>}
+      {error && <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-lg px-3 py-2 text-sm">{error}</div>}
 
       {loading ? (
-        <div className="card p-8 text-center text-slate-400 text-sm">Loading…</div>
+        <div className="card p-8 text-center text-slate-400 dark:text-slate-500 text-sm">Loading…</div>
       ) : rows.length === 0 ? (
-        <div className="card p-8 text-center text-slate-400 text-sm">No assignments yet for this class.</div>
+        <div className="card p-8 text-center text-slate-400 dark:text-slate-500 text-sm">No assignments yet for this class.</div>
       ) : (
         <div className="card overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 text-left">Title</th>
                 <th className="px-4 py-2 text-left">Type</th>
@@ -397,15 +397,15 @@ function AssignmentsPanel({ classId }: { classId: string }) {
             </thead>
             <tbody>
               {rows.map(r => (
-                <tr key={r.id} className="border-t border-slate-100">
-                  <td className="px-4 py-2 font-medium text-slate-800">
+                <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800">
+                  <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">
                     {r.title}
-                    {r.description && <p className="text-xs text-slate-400 truncate max-w-xs">{r.description}</p>}
+                    {r.description && <p className="text-xs text-slate-400 dark:text-slate-500 truncate max-w-xs">{r.description}</p>}
                   </td>
-                  <td className="px-4 py-2 text-xs text-slate-600">{r.type}</td>
-                  <td className="px-4 py-2 text-xs text-slate-500">{r.dueDate ? formatCambodiaTime(r.dueDate) : '—'}</td>
-                  <td className="px-4 py-2 text-slate-600">{r.totalMarks}</td>
-                  <td className="px-4 py-2 text-slate-600">{r._count?.submissions ?? 0}</td>
+                  <td className="px-4 py-2 text-xs text-slate-600 dark:text-slate-300">{r.type}</td>
+                  <td className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400">{r.dueDate ? formatCambodiaTime(r.dueDate) : '—'}</td>
+                  <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{r.totalMarks}</td>
+                  <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{r._count?.submissions ?? 0}</td>
                   <td className="px-4 py-2">
                     <select value={r.status} onChange={e => handleStatusChange(r, e.target.value)}
                       className={`text-xs font-semibold px-2 py-1 rounded-full border outline-none ${statusColor(r.status)}`}>
@@ -413,14 +413,14 @@ function AssignmentsPanel({ classId }: { classId: string }) {
                     </select>
                   </td>
                   <td className="px-4 py-2 text-right whitespace-nowrap">
-                    <button onClick={() => openEdit(r)} className="text-xs text-emerald-700 hover:underline mr-3">Edit</button>
+                    <button onClick={() => openEdit(r)} className="text-xs text-emerald-700 dark:text-emerald-300 hover:underline mr-3">Edit</button>
                     {r.type === 'QUIZ' && (
                       <Link href={`/teacher/assignments/${r.id}/quiz`} target="_blank" rel="noopener noreferrer"
-                        className="text-xs text-violet-600 hover:underline mr-3">Quiz Questions ↗</Link>
+                        className="text-xs text-violet-600 dark:text-violet-400 hover:underline mr-3">Quiz Questions ↗</Link>
                     )}
                     <Link href={`/teacher/assignments/${r.id}`} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-indigo-600 hover:underline mr-3">Grade ↗</Link>
-                    <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
+                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mr-3">Grade ↗</Link>
+                    <button onClick={() => handleDelete(r)} className="text-xs text-red-600 dark:text-red-400 hover:underline">Delete</button>
                   </td>
                 </tr>
               ))}
@@ -479,22 +479,22 @@ function ExamsPanel({ classId }: { classId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-sm text-slate-600">
-          <span className="font-semibold text-slate-800">{rows.length}</span> exam{rows.length === 1 ? '' : 's'} in this class
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          <span className="font-semibold text-slate-800 dark:text-slate-100">{rows.length}</span> exam{rows.length === 1 ? '' : 's'} in this class
         </p>
         <Link href={`/teacher/exams/new?classId=${classId}&returnTo=${returnTo}`} className="btn-primary btn-sm">+ New Exam</Link>
       </div>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-sm">{error}</div>}
+      {error && <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-lg px-3 py-2 text-sm">{error}</div>}
 
       {loading ? (
-        <div className="card p-8 text-center text-slate-400 text-sm">Loading…</div>
+        <div className="card p-8 text-center text-slate-400 dark:text-slate-500 text-sm">Loading…</div>
       ) : rows.length === 0 ? (
-        <div className="card p-8 text-center text-slate-400 text-sm">No exams yet for this class.</div>
+        <div className="card p-8 text-center text-slate-400 dark:text-slate-500 text-sm">No exams yet for this class.</div>
       ) : (
         <div className="card overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 text-left">Title</th>
                 <th className="px-4 py-2 text-left">Duration</th>
@@ -507,17 +507,17 @@ function ExamsPanel({ classId }: { classId: string }) {
             </thead>
             <tbody>
               {rows.map(r => (
-                <tr key={r.id} className="border-t border-slate-100">
-                  <td className="px-4 py-2 font-medium text-slate-800">
+                <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800">
+                  <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">
                     {r.title}
-                    {r.createdBy && <p className="text-xs text-slate-400">by {r.createdBy.name}</p>}
+                    {r.createdBy && <p className="text-xs text-slate-400 dark:text-slate-500">by {r.createdBy.name}</p>}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{r.duration} min</td>
-                  <td className="px-4 py-2 text-slate-600">{r.totalMarks} · {r.passMark}</td>
-                  <td className="px-4 py-2 text-slate-600">{r._count?.questions ?? 0}</td>
-                  <td className="px-4 py-2 text-slate-600">
+                  <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{r.duration} min</td>
+                  <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{r.totalMarks} · {r.passMark}</td>
+                  <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{r._count?.questions ?? 0}</td>
+                  <td className="px-4 py-2 text-slate-600 dark:text-slate-300">
                     {r._count?.attempts ?? 0}
-                    {r.maxAttempts !== 1 && <p className="text-[10px] text-slate-400">{r.maxAttempts === 0 ? 'unlimited' : `up to ${r.maxAttempts}`} allowed</p>}
+                    {r.maxAttempts !== 1 && <p className="text-[10px] text-slate-400 dark:text-slate-500">{r.maxAttempts === 0 ? 'unlimited' : `up to ${r.maxAttempts}`} allowed</p>}
                   </td>
                   <td className="px-4 py-2">
                     <select value={r.status} onChange={e => handleStatusChange(r, e.target.value)}
@@ -527,10 +527,10 @@ function ExamsPanel({ classId }: { classId: string }) {
                   </td>
                   <td className="px-4 py-2 text-right whitespace-nowrap">
                     <Link href={`/teacher/exams/${r.id}/edit?returnTo=${returnTo}`}
-                      className="text-xs text-emerald-700 hover:underline mr-3">Edit</Link>
+                      className="text-xs text-emerald-700 dark:text-emerald-300 hover:underline mr-3">Edit</Link>
                     <Link href={`/teacher/exams/${r.id}/attempts`} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-indigo-600 hover:underline mr-3">Grade ↗</Link>
-                    <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
+                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mr-3">Grade ↗</Link>
+                    <button onClick={() => handleDelete(r)} className="text-xs text-red-600 dark:text-red-400 hover:underline">Delete</button>
                   </td>
                 </tr>
               ))}
@@ -635,8 +635,8 @@ function CoursesPanel({ classId }: { classId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-sm text-slate-600">
-          <span className="font-semibold text-slate-800">{rows.length}</span> course{rows.length === 1 ? '' : 's'} in this class
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          <span className="font-semibold text-slate-800 dark:text-slate-100">{rows.length}</span> course{rows.length === 1 ? '' : 's'} in this class
         </p>
         <button onClick={() => { setEditing(null); setCreating(s => !s) }} className="btn-primary btn-sm">
           {creating ? '× Cancel' : '+ New Course'}
@@ -644,15 +644,15 @@ function CoursesPanel({ classId }: { classId: string }) {
       </div>
 
       {creating && (
-        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-indigo-50/30 border-indigo-200">
-          <h3 className="text-sm font-semibold text-slate-800">New course</h3>
+        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-indigo-50/30 border-indigo-200 dark:border-indigo-900">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">New course</h3>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Title *</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Title *</label>
             <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required
               className="w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Description</label>
             <textarea rows={2} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               className="w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
@@ -666,15 +666,15 @@ function CoursesPanel({ classId }: { classId: string }) {
       )}
 
       {editing && (
-        <form onSubmit={handleSaveEdit} className="card p-4 space-y-3 bg-emerald-50/30 border-emerald-200">
-          <h3 className="text-sm font-semibold text-slate-800">Edit course</h3>
+        <form onSubmit={handleSaveEdit} className="card p-4 space-y-3 bg-emerald-50/30 border-emerald-200 dark:border-emerald-900">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Edit course</h3>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Title *</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Title *</label>
             <input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} required
               className="w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Description</label>
             <textarea rows={2} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
               className="w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
@@ -687,16 +687,16 @@ function CoursesPanel({ classId }: { classId: string }) {
         </form>
       )}
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-sm">{error}</div>}
+      {error && <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-lg px-3 py-2 text-sm">{error}</div>}
 
       {loading ? (
-        <div className="card p-8 text-center text-slate-400 text-sm">Loading…</div>
+        <div className="card p-8 text-center text-slate-400 dark:text-slate-500 text-sm">Loading…</div>
       ) : rows.length === 0 ? (
-        <div className="card p-8 text-center text-slate-400 text-sm">No courses yet for this class.</div>
+        <div className="card p-8 text-center text-slate-400 dark:text-slate-500 text-sm">No courses yet for this class.</div>
       ) : (
         <div className="card overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 text-left">Title</th>
                 <th className="px-4 py-2 text-left">Lessons</th>
@@ -708,14 +708,14 @@ function CoursesPanel({ classId }: { classId: string }) {
             </thead>
             <tbody>
               {rows.map(r => (
-                <tr key={r.id} className="border-t border-slate-100">
-                  <td className="px-4 py-2 font-medium text-slate-800">
+                <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800">
+                  <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">
                     {r.title}
-                    {r.createdBy && <p className="text-xs text-slate-400">by {r.createdBy.name}</p>}
+                    {r.createdBy && <p className="text-xs text-slate-400 dark:text-slate-500">by {r.createdBy.name}</p>}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{r._count?.lessons ?? 0}</td>
-                  <td className="px-4 py-2 text-slate-600">{r._count?.enrollments ?? 0}</td>
-                  <td className="px-4 py-2 text-xs text-slate-500">{formatCambodiaTime(r.updatedAt)}</td>
+                  <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{r._count?.lessons ?? 0}</td>
+                  <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{r._count?.enrollments ?? 0}</td>
+                  <td className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400">{formatCambodiaTime(r.updatedAt)}</td>
                   <td className="px-4 py-2">
                     <select value={r.status} onChange={e => handleStatusChange(r, e.target.value)}
                       className={`text-xs font-semibold px-2 py-1 rounded-full border outline-none ${statusColor(r.status)}`}>
@@ -723,10 +723,10 @@ function CoursesPanel({ classId }: { classId: string }) {
                     </select>
                   </td>
                   <td className="px-4 py-2 text-right whitespace-nowrap">
-                    <button onClick={() => openEdit(r)} className="text-xs text-emerald-700 hover:underline mr-3">Edit</button>
+                    <button onClick={() => openEdit(r)} className="text-xs text-emerald-700 dark:text-emerald-300 hover:underline mr-3">Edit</button>
                     <Link href={`/teacher/courses/${r.id}`} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-indigo-600 hover:underline mr-3">Lessons ↗</Link>
-                    <button onClick={() => handleDelete(r)} className="text-xs text-red-600 hover:underline">Delete</button>
+                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mr-3">Lessons ↗</Link>
+                    <button onClick={() => handleDelete(r)} className="text-xs text-red-600 dark:text-red-400 hover:underline">Delete</button>
                   </td>
                 </tr>
               ))}

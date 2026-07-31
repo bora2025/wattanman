@@ -64,7 +64,7 @@ function ModuleToggle({ addon, onChanged, size = 'md' }: { addon: DirectoryAddon
       >
         <span className={`${knob} inline-block rounded-full bg-white shadow transform transition-transform ${addon.enabled ? slide : 'translate-x-0'}`} />
       </button>
-      {error && <span className="text-[11px] text-red-600">{error}</span>}
+      {error && <span className="text-[11px] text-red-600 dark:text-red-400">{error}</span>}
     </div>
   )
 }
@@ -119,11 +119,11 @@ function PaidAddonAction({ addon, onChanged, size = 'md' }: { addon: DirectoryAd
   return (
     <div className="flex flex-col items-end gap-1">
       {addon.enabled ? (
-        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">✓ Enabled</span>
+        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900">✓ Enabled</span>
       ) : addon.requested ? (
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-200">Requested — pending approval</span>
-          <button onClick={cancel} disabled={busy} className="text-xs font-medium text-slate-500 hover:text-red-600 disabled:opacity-50">
+          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full border bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900">Requested — pending approval</span>
+          <button onClick={cancel} disabled={busy} className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50">
             {busy ? '…' : 'Cancel'}
           </button>
         </div>
@@ -132,7 +132,7 @@ function PaidAddonAction({ addon, onChanged, size = 'md' }: { addon: DirectoryAd
           {busy ? 'Requesting…' : 'Request this add-on'}
         </button>
       )}
-      {error && <span className="text-[11px] text-red-600">{error}</span>}
+      {error && <span className="text-[11px] text-red-600 dark:text-red-400">{error}</span>}
     </div>
   )
 }
@@ -149,17 +149,17 @@ function AddonCard({ addon, onChanged, onOpen }: { addon: DirectoryAddon; onChan
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${isModule ? 'bg-emerald-50' : 'bg-amber-50'}`}>{addon.icon || '🧩'}</div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-slate-800">{addon.name}</span>
-              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">{addon.category}</span>}
+              <span className="font-semibold text-slate-800 dark:text-slate-100">{addon.name}</span>
+              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900">{addon.category}</span>}
             </div>
-            {addon.description && <p className="text-xs text-slate-500 mt-1 line-clamp-2">{addon.description}</p>}
+            {addon.description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{addon.description}</p>}
           </div>
         </div>
         {isModule ? <ModuleToggle addon={addon} onChanged={onChanged} /> : null}
       </div>
       {!isModule && (
-        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-          <span className="text-sm font-medium text-slate-700">{priceLabel(addon)}</span>
+        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{priceLabel(addon)}</span>
           <PaidAddonAction addon={addon} onChanged={onChanged} />
         </div>
       )}
@@ -172,12 +172,12 @@ function AddonDetailModal({ addon, onClose, onChanged }: { addon: DirectoryAddon
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40" />
       <div
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto"
+        className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 flex items-center justify-center text-slate-500 dark:text-slate-400"
           aria-label="Close"
         >✕</button>
 
@@ -185,10 +185,10 @@ function AddonDetailModal({ addon, onClose, onChanged }: { addon: DirectoryAddon
           <div className="flex items-start gap-4">
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shrink-0 ${addon.kind === 'MODULE' ? 'bg-emerald-50' : 'bg-amber-50'}`}>{addon.icon || '🧩'}</div>
             <div className="min-w-0 pt-1">
-              <h2 className="text-xl font-bold text-slate-800">{addon.name}</h2>
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{addon.name}</h2>
               <div className="flex items-center gap-2 flex-wrap mt-1.5">
                 <KindBadge kind={addon.kind} />
-                {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">{addon.category}</span>}
+                {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900">{addon.category}</span>}
               </div>
             </div>
           </div>
@@ -197,17 +197,17 @@ function AddonDetailModal({ addon, onClose, onChanged }: { addon: DirectoryAddon
             <img
               src={addon.screenshotUrl}
               alt={`${addon.name} screenshot`}
-              className="w-full rounded-xl border border-slate-200 object-contain max-h-64 bg-slate-50"
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 object-contain max-h-64 bg-slate-50 dark:bg-slate-800"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
             />
           )}
 
           {(addon.detailDescription || addon.description) && (
-            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{addon.detailDescription || addon.description}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">{addon.detailDescription || addon.description}</p>
           )}
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-            {addon.kind === 'ADDON' && <span className="text-base font-semibold text-slate-800">{priceLabel(addon)}</span>}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+            {addon.kind === 'ADDON' && <span className="text-base font-semibold text-slate-800 dark:text-slate-100">{priceLabel(addon)}</span>}
             <div className={addon.kind === 'MODULE' ? 'w-full flex justify-end' : ''}>
               {addon.kind === 'MODULE'
                 ? <ModuleToggle addon={addon} onChanged={onChanged} size="lg" />
@@ -250,25 +250,25 @@ function AddonsContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">Modules &amp; Add-ons</h1>
-          <p className="text-sm text-slate-500 mt-1">Turn free modules on or off yourself. Paid add-ons need a quick approval — request one and we'll follow up to enable it once billing is sorted. Click any card for details.</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Modules &amp; Add-ons</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Turn free modules on or off yourself. Paid add-ons need a quick approval — request one and we'll follow up to enable it once billing is sorted. Click any card for details.</p>
         </div>
 
         <div className="page-body space-y-6">
-          {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 text-red-800 border border-red-200">{error}</div>}
+          {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900">{error}</div>}
 
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-8 h-8 border-3 border-indigo-100 border-t-indigo-500 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-3 border-indigo-100 dark:border-indigo-900 border-t-indigo-500 rounded-full animate-spin" />
             </div>
           ) : addons.length === 0 ? (
-            <div className="card p-10 text-center text-slate-400 text-sm">No modules or add-ons available yet — check back later.</div>
+            <div className="card p-10 text-center text-slate-400 dark:text-slate-500 text-sm">No modules or add-ons available yet — check back later.</div>
           ) : (
             <>
               <div>
-                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Modules</h2>
+                <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Modules</h2>
                 {modules.length === 0 ? (
-                  <p className="text-xs text-slate-400">No modules in the catalog yet.</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">No modules in the catalog yet.</p>
                 ) : (
                   <div className="grid sm:grid-cols-2 gap-3">
                     {modules.map(a => <AddonCard key={a.addonKey} addon={a} onChanged={handleChanged} onOpen={() => setOpenKey(a.addonKey)} />)}
@@ -277,9 +277,9 @@ function AddonsContent() {
               </div>
 
               <div>
-                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Paid Add-ons</h2>
+                <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Paid Add-ons</h2>
                 {paidAddons.length === 0 ? (
-                  <p className="text-xs text-slate-400">No paid add-ons available yet.</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">No paid add-ons available yet.</p>
                 ) : (
                   <div className="grid sm:grid-cols-2 gap-3">
                     {paidAddons.map(a => <AddonCard key={a.addonKey} addon={a} onChanged={handleChanged} onOpen={() => setOpenKey(a.addonKey)} />)}

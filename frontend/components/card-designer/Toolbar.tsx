@@ -57,13 +57,13 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 
 /* ── Shared small components ─────────────────────────────────────────────── */
 function PanelLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">{children}</p>;
+  return <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 px-1">{children}</p>;
 }
 
 function PropRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-14 shrink-0 text-[10px] text-slate-400 uppercase tracking-wide">{label}</span>
+      <span className="w-14 shrink-0 text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">{label}</span>
       <div className="flex-1 flex items-center gap-1">{children}</div>
     </div>
   );
@@ -87,7 +87,7 @@ function SliderRow({ label, value, min, max, onChange, unit = '' }: { label: str
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] text-slate-400 uppercase tracking-wide">{label}</span>
+        <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">{label}</span>
         <span className="text-[10px] font-mono text-slate-300">{value}{unit}</span>
       </div>
       <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))}
@@ -298,14 +298,14 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
               <div>
                 <PanelLabel>Dimensions</PanelLabel>
                 <div className="flex gap-2">
-                  <div className="flex-1"><p className="text-[9px] text-slate-500 mb-1 text-center">W</p><NumInput value={design.width} onChange={(v) => update({ width: Math.max(100, v) })} min={100} /></div>
-                  <div className="flex items-end pb-1.5 text-slate-600 text-xs">×</div>
-                  <div className="flex-1"><p className="text-[9px] text-slate-500 mb-1 text-center">H</p><NumInput value={design.height} onChange={(v) => update({ height: Math.max(100, v) })} min={100} /></div>
+                  <div className="flex-1"><p className="text-[9px] text-slate-500 dark:text-slate-400 mb-1 text-center">W</p><NumInput value={design.width} onChange={(v) => update({ width: Math.max(100, v) })} min={100} /></div>
+                  <div className="flex items-end pb-1.5 text-slate-600 dark:text-slate-300 text-xs">×</div>
+                  <div className="flex-1"><p className="text-[9px] text-slate-500 dark:text-slate-400 mb-1 text-center">H</p><NumInput value={design.height} onChange={(v) => update({ height: Math.max(100, v) })} min={100} /></div>
                 </div>
               </div>
             )}
             <div className="pt-1 border-t border-slate-800">
-              <p className="text-[10px] text-slate-500 text-center">{design.width} × {design.height} px</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center">{design.width} × {design.height} px</p>
             </div>
           </div>
         )}
@@ -334,7 +334,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
           <div className="p-2.5 space-y-2">
             <div className="flex items-center justify-between px-0.5 mb-1">
               <PanelLabel>Text Layers</PanelLabel>
-              <span className="text-[9px] text-slate-600 bg-slate-800 px-1.5 py-0.5 rounded font-mono">{design.texts.length}</span>
+              <span className="text-[9px] text-slate-600 dark:text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded font-mono">{design.texts.length}</span>
             </div>
             <button onClick={addText}
               className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors shadow-sm shadow-indigo-900/40">
@@ -345,7 +345,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
             {design.texts.length === 0 && (
               <div className="py-8 text-center">
                 <div className="text-3xl mb-2 opacity-30">T</div>
-                <p className="text-[11px] text-slate-600">No text elements yet.</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300">No text elements yet.</p>
               </div>
             )}
 
@@ -359,9 +359,9 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                   <div className="flex items-center gap-2 px-2.5 py-2 cursor-pointer group" onClick={() => onSelect?.(isSel ? null : text.id)}>
                     <svg viewBox="0 0 16 16" className={`w-3 h-3 shrink-0 ${isSel ? 'text-indigo-400' : 'text-slate-600'}`} fill="currentColor"><path d="M2 3h12v1.8H9v7.2H7V4.8H2z"/></svg>
                     <span className="flex-1 text-xs truncate text-slate-300">{text.content || '(empty)'}</span>
-                    <span className="text-[9px] font-mono text-slate-600 shrink-0">{text.fontSize}px</span>
+                    <span className="text-[9px] font-mono text-slate-600 dark:text-slate-300 shrink-0">{text.fontSize}px</span>
                     <button onClick={(e) => { e.stopPropagation(); deleteText(text.id); }}
-                      className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded text-red-500 hover:bg-red-500/20 transition-all text-[10px]">×</button>
+                      className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded text-red-500 dark:text-red-400 hover:bg-red-500/20 transition-all text-[10px]">×</button>
                   </div>
 
                   {/* Inline editor */}
@@ -369,14 +369,14 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                     <div className="px-2.5 pb-3 pt-2 border-t border-slate-700/60 space-y-3">
                       {/* Content */}
                       <div>
-                        <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Content</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Content</p>
                         <textarea value={selectedText.content} onChange={(e) => updateText(selectedText.id, { content: e.target.value })} rows={2}
                           className="w-full text-xs rounded-md border border-slate-700 bg-slate-800 text-slate-200 px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-indigo-500" />
                       </div>
 
                       {/* Font */}
                       <div>
-                        <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Font Family</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Font Family</p>
                         <select value={selectedText.fontFamily ?? 'Inter, sans-serif'} onChange={(e) => updateText(selectedText.id, { fontFamily: e.target.value })}
                           className="w-full text-xs rounded-md border border-slate-700 bg-slate-800 text-slate-200 px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                           {FONT_OPTIONS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
@@ -413,10 +413,10 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
 
                       {/* X / Y */}
                       <div>
-                        <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Position</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Position</p>
                         <div className="flex gap-2">
-                          <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">X</p><NumInput value={Math.round(selectedText.x)} onChange={(v) => updateText(selectedText.id, { x: v })} /></div>
-                          <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">Y</p><NumInput value={Math.round(selectedText.y)} onChange={(v) => updateText(selectedText.id, { y: v })} /></div>
+                          <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">X</p><NumInput value={Math.round(selectedText.x)} onChange={(v) => updateText(selectedText.id, { x: v })} /></div>
+                          <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">Y</p><NumInput value={Math.round(selectedText.y)} onChange={(v) => updateText(selectedText.id, { y: v })} /></div>
                         </div>
                       </div>
                     </div>
@@ -444,7 +444,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
               ))}
             </div>
 
-            {(design.shapes ?? []).length === 0 && <div className="py-6 text-center text-[11px] text-slate-600">No shapes yet.</div>}
+            {(design.shapes ?? []).length === 0 && <div className="py-6 text-center text-[11px] text-slate-600 dark:text-slate-300">No shapes yet.</div>}
 
             {(design.shapes ?? []).map((shape) => {
               const isSel = selectedId === shape.id;
@@ -460,33 +460,33 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                     <span className="w-4 h-4 rounded shrink-0 border border-slate-700"
                       style={{ backgroundColor: gradBg ? undefined : shape.color, backgroundImage: gradBg, borderRadius: shape.type === 'circle' ? '50%' : shape.borderRadius }} />
                     <span className="flex-1 text-xs capitalize text-slate-300">{shape.type}</span>
-                    <span className="text-[9px] font-mono text-slate-600">{shape.width}×{shape.height}</span>
+                    <span className="text-[9px] font-mono text-slate-600 dark:text-slate-300">{shape.width}×{shape.height}</span>
                     <button onClick={(e) => { e.stopPropagation(); deleteShape(shape.id); }}
-                      className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded text-red-500 hover:bg-red-500/20 transition-all text-[10px]">×</button>
+                      className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded text-red-500 dark:text-red-400 hover:bg-red-500/20 transition-all text-[10px]">×</button>
                   </div>
 
                   {isSel && selectedShape && (
                     <div className="px-2.5 pb-3 pt-2 border-t border-slate-700/60 space-y-3">
                       {/* W H */}
                       <div>
-                        <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Size</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Size</p>
                         <div className="flex gap-2">
-                          <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">W</p><NumInput value={selectedShape.width} onChange={(v) => updateShape(selectedShape.id, { width: Math.max(2, v) })} min={2} /></div>
-                          <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">H</p><NumInput value={selectedShape.height} onChange={(v) => updateShape(selectedShape.id, { height: Math.max(2, v) })} min={2} /></div>
+                          <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">W</p><NumInput value={selectedShape.width} onChange={(v) => updateShape(selectedShape.id, { width: Math.max(2, v) })} min={2} /></div>
+                          <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">H</p><NumInput value={selectedShape.height} onChange={(v) => updateShape(selectedShape.id, { height: Math.max(2, v) })} min={2} /></div>
                         </div>
                       </div>
                       {/* X Y */}
                       <div>
-                        <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Position</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Position</p>
                         <div className="flex gap-2">
-                          <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">X</p><NumInput value={Math.round(selectedShape.x)} onChange={(v) => updateShape(selectedShape.id, { x: v })} /></div>
-                          <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">Y</p><NumInput value={Math.round(selectedShape.y)} onChange={(v) => updateShape(selectedShape.id, { y: v })} /></div>
+                          <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">X</p><NumInput value={Math.round(selectedShape.x)} onChange={(v) => updateShape(selectedShape.id, { x: v })} /></div>
+                          <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">Y</p><NumInput value={Math.round(selectedShape.y)} onChange={(v) => updateShape(selectedShape.id, { y: v })} /></div>
                         </div>
                       </div>
                       {/* Fill */}
                       {selectedShape.type !== 'line' && (
                         <div>
-                          <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Fill</p>
+                          <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Fill</p>
                           <div className="flex items-center gap-2">
                             <ColorSwatch value={selectedShape.color ?? '#6366f1'} onChange={(v) => updateShape(selectedShape.id, { color: v })} />
                             <HexInput value={selectedShape.color ?? '#6366f1'} onChange={(v) => updateShape(selectedShape.id, { color: v })} />
@@ -496,7 +496,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                       {/* Border */}
                       {selectedShape.type !== 'line' && (
                         <div>
-                          <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Border</p>
+                          <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Border</p>
                           <div className="flex items-center gap-2 mb-2">
                             <ColorSwatch value={selectedShape.borderColor ?? '#1e293b'} onChange={(v) => updateShape(selectedShape.id, { borderColor: v })} />
                             <HexInput value={selectedShape.borderColor ?? '#1e293b'} onChange={(v) => updateShape(selectedShape.id, { borderColor: v })} />
@@ -512,14 +512,14 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                       {/* Line */}
                       {selectedShape.type === 'line' && (
                         <div className="space-y-2">
-                          <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Line Color</p>
+                          <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Line Color</p>
                           <div className="flex items-center gap-2 mb-1">
                             <ColorSwatch value={selectedShape.borderColor ?? '#94a3b8'} onChange={(v) => updateShape(selectedShape.id, { borderColor: v })} />
                             <HexInput value={selectedShape.borderColor ?? '#94a3b8'} onChange={(v) => updateShape(selectedShape.id, { borderColor: v })} />
                           </div>
                           <SliderRow label="Thickness" value={selectedShape.borderWidth ?? 1} min={0.5} max={20} onChange={(v) => updateShape(selectedShape.id, { borderWidth: v })} unit="pt" />
                           <div>
-                            <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Style</p>
+                            <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Style</p>
                             <div className="flex gap-1">
                               {(['solid', 'dashed', 'dotted'] as const).map((s) => (
                                 <button key={s} onClick={() => updateShape(selectedShape.id, { lineStyle: s })}
@@ -551,13 +551,13 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                               <SliderRow label="Angle" value={selectedShape.gradient.angle} min={0} max={360} onChange={(v) => updateShape(selectedShape.id, { gradient: { ...selectedShape.gradient, angle: v } })} unit="°" />
                             )}
                             <div className="space-y-1.5">
-                              <p className="text-[9px] text-slate-500 uppercase tracking-widest">Stops</p>
+                              <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Stops</p>
                               {selectedShape.gradient.stops.map((stop, idx) => (
                                 <div key={idx} className="flex items-center gap-1.5">
                                   <input type="color" value={stop.color} onChange={(e) => updateGradStop(selectedShape.id, idx, { color: e.target.value })} className="w-5 h-5 rounded cursor-pointer border border-slate-700 bg-transparent" />
                                   <input type="range" min={0} max={100} value={Math.round(stop.offset * 100)} onChange={(e) => updateGradStop(selectedShape.id, idx, { offset: Number(e.target.value) / 100 })} className="flex-1 accent-indigo-500 h-1.5" />
-                                  <span className="text-[9px] text-slate-500 w-5">{Math.round(stop.offset * 100)}%</span>
-                                  {selectedShape.gradient.stops.length > 2 && <button onClick={() => removeGradStop(selectedShape.id, idx)} className="text-red-500 text-xs w-4">×</button>}
+                                  <span className="text-[9px] text-slate-500 dark:text-slate-400 w-5">{Math.round(stop.offset * 100)}%</span>
+                                  {selectedShape.gradient.stops.length > 2 && <button onClick={() => removeGradStop(selectedShape.id, idx)} className="text-red-500 dark:text-red-400 text-xs w-4">×</button>}
                                 </div>
                               ))}
                               <button onClick={() => addGradStop(selectedShape.id)} className="text-[10px] text-indigo-400 hover:text-indigo-300">+ Add Stop</button>
@@ -584,7 +584,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
               <svg viewBox="0 0 14 14" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M7 2v10M2 7h10"/></svg>
               Upload Image
             </button>
-            {design.logos.length === 0 && <div className="py-6 text-center text-[11px] text-slate-600">No images uploaded yet.</div>}
+            {design.logos.length === 0 && <div className="py-6 text-center text-[11px] text-slate-600 dark:text-slate-300">No images uploaded yet.</div>}
             {design.logos.map((logo) => {
               const isSel = selectedId === logo.id;
               return (
@@ -596,7 +596,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                     <span className="flex-1 text-xs truncate text-slate-300">{logo.name}</span>
                     {isSel && <span className="text-[9px] text-indigo-400 shrink-0">Selected</span>}
                     <button onClick={(e) => { e.stopPropagation(); deleteLogo(logo.id); }}
-                      className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded text-red-500 hover:bg-red-500/20 transition-all text-[10px] shrink-0">×</button>
+                      className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded text-red-500 dark:text-red-400 hover:bg-red-500/20 transition-all text-[10px] shrink-0">×</button>
                   </div>
 
                   {/* ── Per-image properties (shown when selected) ── */}
@@ -605,11 +605,11 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
 
                       {/* Size & Position */}
                       <div>
-                        <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Size & Position</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Size & Position</p>
                         <div className="grid grid-cols-4 gap-1">
                           {([['width','W'],['height','H'],['x','X'],['y','Y']] as [keyof typeof logo, string][]).map(([k, label]) => (
                             <div key={k}>
-                              <p className="text-[9px] text-slate-600 mb-0.5 text-center">{label}</p>
+                              <p className="text-[9px] text-slate-600 dark:text-slate-300 mb-0.5 text-center">{label}</p>
                               <NumInput value={logo[k] as number} onChange={(v) => updateLogo(logo.id, { [k]: (k === 'width' || k === 'height') ? Math.max(4, v) : v })} min={(k === 'width' || k === 'height') ? 4 : undefined} />
                             </div>
                           ))}
@@ -627,7 +627,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
 
                       {/* Remove Background */}
                       <div>
-                        <p className="text-[9px] text-slate-500 uppercase tracking-widest mb-1.5">Background Removal</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Background Removal</p>
                         {removingBg[logo.id] ? (
                           <div className="flex items-center justify-center gap-2 py-2 rounded-lg bg-slate-800 border border-slate-700">
                             <svg className="w-3.5 h-3.5 text-indigo-400 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
@@ -641,7 +641,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                             </div>
                             <button
                               onClick={() => updateLogo(logo.id, { src: logo.originalSrc!, originalSrc: undefined })}
-                              className="px-2 py-1.5 rounded-lg text-[10px] text-slate-400 hover:text-red-400 bg-slate-800 hover:bg-red-500/10 border border-slate-700 transition-colors"
+                              className="px-2 py-1.5 rounded-lg text-[10px] text-slate-400 dark:text-slate-500 hover:text-red-400 bg-slate-800 hover:bg-red-500/10 border border-slate-700 transition-colors"
                               title="Restore original image"
                             >Restore</button>
                           </div>
@@ -664,7 +664,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                       {/* Crop */}
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-[9px] text-slate-500 uppercase tracking-widest">Crop</p>
+                          <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Crop</p>
                           {((logo.cropX ?? 0) > 0 || (logo.cropY ?? 0) > 0 || (logo.cropW ?? 1) < 1 || (logo.cropH ?? 1) < 1) && (
                             <button onClick={() => updateLogo(logo.id, { cropX: 0, cropY: 0, cropW: 1, cropH: 1 })} className="text-[9px] text-red-400 hover:text-red-300 transition-colors">Reset</button>
                           )}
@@ -699,17 +699,17 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
               </div>
               <div className="flex-1">
                 <p className="text-xs font-semibold text-slate-200">Photo Area</p>
-                <p className="text-[10px] text-slate-500">{design.photo ? 'Active on canvas' : 'Not placed'}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">{design.photo ? 'Active on canvas' : 'Not placed'}</p>
               </div>
               <TogglePill active={!!design.photo} onToggle={togglePhoto} label="" />
             </div>
             {design.photo && (
               <div className="space-y-3">
                 <div className="flex gap-2">
-                  <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">W</p><NumInput value={design.photo.width} onChange={(v) => updatePhoto({ width: Math.max(20, v) })} min={20} /></div>
-                  <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">H</p><NumInput value={design.photo.height} onChange={(v) => updatePhoto({ height: Math.max(20, v) })} min={20} /></div>
-                  <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">X</p><NumInput value={design.photo.x} onChange={(v) => updatePhoto({ x: v })} /></div>
-                  <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">Y</p><NumInput value={design.photo.y} onChange={(v) => updatePhoto({ y: v })} /></div>
+                  <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">W</p><NumInput value={design.photo.width} onChange={(v) => updatePhoto({ width: Math.max(20, v) })} min={20} /></div>
+                  <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">H</p><NumInput value={design.photo.height} onChange={(v) => updatePhoto({ height: Math.max(20, v) })} min={20} /></div>
+                  <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">X</p><NumInput value={design.photo.x} onChange={(v) => updatePhoto({ x: v })} /></div>
+                  <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">Y</p><NumInput value={design.photo.y} onChange={(v) => updatePhoto({ y: v })} /></div>
                 </div>
                 <div className="flex items-center gap-2">
                   <ColorSwatch value={design.photo.borderColor ?? '#000'} onChange={(v) => updatePhoto({ borderColor: v })} label="Border Color" />
@@ -732,17 +732,17 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
               </div>
               <div className="flex-1">
                 <p className="text-xs font-semibold text-slate-200">QR Code</p>
-                <p className="text-[10px] text-slate-500">{design.qr ? 'Active on canvas' : 'Not placed'}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">{design.qr ? 'Active on canvas' : 'Not placed'}</p>
               </div>
               <TogglePill active={!!design.qr} onToggle={toggleQr} label="" />
             </div>
             {design.qr && (
               <div className="space-y-3">
                 <div className="flex gap-2">
-                  <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">W</p><NumInput value={design.qr.width} onChange={(v) => updateQr({ width: Math.max(20, v) })} min={20} /></div>
-                  <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">H</p><NumInput value={design.qr.height} onChange={(v) => updateQr({ height: Math.max(20, v) })} min={20} /></div>
-                  <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">X</p><NumInput value={design.qr.x} onChange={(v) => updateQr({ x: v })} /></div>
-                  <div className="flex-1"><p className="text-[9px] text-slate-600 mb-1 text-center">Y</p><NumInput value={design.qr.y} onChange={(v) => updateQr({ y: v })} /></div>
+                  <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">W</p><NumInput value={design.qr.width} onChange={(v) => updateQr({ width: Math.max(20, v) })} min={20} /></div>
+                  <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">H</p><NumInput value={design.qr.height} onChange={(v) => updateQr({ height: Math.max(20, v) })} min={20} /></div>
+                  <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">X</p><NumInput value={design.qr.x} onChange={(v) => updateQr({ x: v })} /></div>
+                  <div className="flex-1"><p className="text-[9px] text-slate-600 dark:text-slate-300 mb-1 text-center">Y</p><NumInput value={design.qr.y} onChange={(v) => updateQr({ y: v })} /></div>
                 </div>
                 <div className="flex items-center gap-2">
                   <ColorSwatch value={design.qr.borderColor ?? '#64748b'} onChange={(v) => updateQr({ borderColor: v })} label="Border Color" />
@@ -777,7 +777,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                       : lockedType === 'certificate-student' ? 'Student Certificate'
                       : lockedType === 'certificate-staff' ? 'Staff Certificate' : lockedType}
                   </p>
-                  <p className="text-[9px] text-slate-500">Locked workspace</p>
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400">Locked workspace</p>
                 </div>
               </div>
             ) : (
@@ -811,8 +811,8 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                 return (
                   <div className="py-6 text-center space-y-2">
                     <div className="text-2xl opacity-20">🔗</div>
-                    <p className="text-xs text-slate-500 font-medium">No data source linked</p>
-                    <p className="text-[10px] text-slate-600 leading-relaxed px-2">Pick <strong className="text-indigo-400">Student</strong>, <strong className="text-emerald-400">Staff</strong>, or a Certificate type above to enable drag-and-drop fields like <code className="font-mono text-indigo-400">{'{{name}}'}</code>.</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No data source linked</p>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed px-2">Pick <strong className="text-indigo-400">Student</strong>, <strong className="text-emerald-400">Staff</strong>, or a Certificate type above to enable drag-and-drop fields like <code className="font-mono text-indigo-400">{'{{name}}'}</code>.</p>
                   </div>
                 );
               }
@@ -823,7 +823,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                     <svg viewBox="0 0 14 14" className="w-3.5 h-3.5 text-indigo-400 shrink-0" fill="currentColor"><circle cx="7" cy="7" r="6"/><path d="M7 5v5M7 3.5v1" fill="none" stroke="white" strokeWidth={1.5} strokeLinecap="round"/></svg>
                     <span className="text-[10px] text-indigo-300 font-medium">{purposeLabel[design.cardType] ?? design.cardType}</span>
                   </div>
-                  <p className="text-[10px] text-slate-500 leading-relaxed px-0.5">Click to insert at top-left, or <strong className="text-indigo-400">drag &amp; drop</strong> onto the card to place at any position. Placeholders are replaced with real data when printing.</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed px-0.5">Click to insert at top-left, or <strong className="text-indigo-400">drag &amp; drop</strong> onto the card to place at any position. Placeholders are replaced with real data when printing.</p>
                   <div className="space-y-1">
                     {fields.map((field) => (
                       <button key={field.key}
@@ -845,9 +845,9 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                         <code className="text-[9px] font-mono bg-slate-800 group-hover:bg-indigo-600/20 text-indigo-400 px-1.5 py-0.5 rounded shrink-0 border border-slate-700 group-hover:border-indigo-500/50">{field.key}</code>
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] font-medium text-slate-300 truncate">{field.label}</p>
-                          <p className="text-[9px] text-slate-600 truncate">{field.example}</p>
+                          <p className="text-[9px] text-slate-600 dark:text-slate-300 truncate">{field.example}</p>
                         </div>
-                        <svg viewBox="0 0 12 12" className="w-3 h-3 text-slate-700 group-hover:text-indigo-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M6 2v8M2 6h8"/></svg>
+                        <svg viewBox="0 0 12 12" className="w-3 h-3 text-slate-700 dark:text-slate-200 group-hover:text-indigo-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M6 2v8M2 6h8"/></svg>
                       </button>
                     ))}
                   </div>

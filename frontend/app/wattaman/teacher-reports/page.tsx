@@ -41,10 +41,10 @@ interface TimetableInfo {
 }
 
 function statusBadge(status: string) {
-  if (status === 'PRESENT') return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">✓ Present</span>
-  if (status === 'LATE') return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">⚠ Late</span>
-  if (status === 'ABSENT') return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700">✗ Absent</span>
-  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">{status}</span>
+  if (status === 'PRESENT') return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300">✓ Present</span>
+  if (status === 'LATE') return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300">⚠ Late</span>
+  if (status === 'ABSENT') return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300">✗ Absent</span>
+  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">{status}</span>
 }
 
 function TeacherReportsContent() {
@@ -135,8 +135,8 @@ function TeacherReportsContent() {
         <div className="page-header">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Teacher Attendance Reports</h1>
-              <p className="text-sm text-slate-500 mt-1">Monthly totals · Based on timetable schedule</p>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Teacher Attendance Reports</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Monthly totals · Based on timetable schedule</p>
             </div>
             <Link
               href={printUrl}
@@ -158,11 +158,11 @@ function TeacherReportsContent() {
             <div className="space-y-3 lg:space-y-0 lg:flex lg:flex-wrap lg:gap-4 lg:items-end">
               {/* Timetable selector */}
               <div className="w-full lg:w-auto">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Timetable</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Timetable</label>
                 <select
                   value={selectedTimetableId}
                   onChange={e => setSelectedTimetableId(e.target.value)}
-                  className="w-full lg:w-56 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 outline-none"
+                  className="w-full lg:w-56 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 outline-none"
                 >
                   {timetables.map(tt => (
                     <option key={tt.id} value={tt.id}>{tt.name} ({tt.academicYear}) {tt.status === 'PUBLISHED' ? '✓' : '(draft)'}</option>
@@ -172,9 +172,9 @@ function TeacherReportsContent() {
 
               {/* Month selector */}
               <div className="w-full lg:w-auto">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Month</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Month</label>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => goMonth(-1)} className="flex-shrink-0 px-2 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm">◀</button>
+                  <button onClick={() => goMonth(-1)} className="flex-shrink-0 px-2 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">◀</button>
                   <input
                     type="date"
                     value={startDate}
@@ -185,28 +185,28 @@ function TeacherReportsContent() {
                       setStartDate(first.toISOString().split('T')[0])
                       setEndDate(last.toISOString().split('T')[0])
                     }}
-                    className="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 outline-none"
+                    className="flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 outline-none"
                   />
-                  <button onClick={() => goMonth(1)} className="flex-shrink-0 px-2 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm">▶</button>
+                  <button onClick={() => goMonth(1)} className="flex-shrink-0 px-2 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">▶</button>
                 </div>
               </div>
 
               {/* Custom date range */}
               <div className="w-full lg:w-auto">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Custom End</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Custom End</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={e => setEndDate(e.target.value)}
-                  className="w-full lg:w-40 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 outline-none"
+                  className="w-full lg:w-40 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-400 outline-none"
                 />
               </div>
             </div>
-            <p className="mt-2 text-xs sm:text-sm font-medium text-slate-700">{monthLabel} · {startDate} → {endDate}</p>
+            <p className="mt-2 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200">{monthLabel} · {startDate} → {endDate}</p>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">{error}</div>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-xl px-4 py-3 text-sm">{error}</div>
           )}
 
           {/* Summary stats */}
@@ -218,7 +218,7 @@ function TeacherReportsContent() {
               { label: 'Absent', value: totalAbsent, color: 'text-red-600' },
             ].map(s => (
               <div key={s.label} className="card p-3 sm:p-4">
-                <p className="text-xs text-slate-500 font-medium">{s.label}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{s.label}</p>
                 <p className={`text-2xl font-bold mt-1 ${s.color}`}>{s.value}</p>
               </div>
             ))}
@@ -232,8 +232,8 @@ function TeacherReportsContent() {
           ) : teachers.length === 0 ? (
             <div className="card p-12 text-center">
               <div className="text-4xl mb-3">📋</div>
-              <p className="font-semibold text-slate-600">No attendance records</p>
-              <p className="text-sm text-slate-400 mt-1">No teacher attendance found for this period.</p>
+              <p className="font-semibold text-slate-600 dark:text-slate-300">No attendance records</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">No teacher attendance found for this period.</p>
             </div>
           ) : (
             <>
@@ -241,13 +241,13 @@ function TeacherReportsContent() {
               <div className="card overflow-hidden hidden sm:block">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-slate-50">
-                      <tr className="text-left text-xs text-slate-500 uppercase tracking-wide">
+                    <thead className="bg-slate-50 dark:bg-slate-800">
+                      <tr className="text-left text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                         <th className="px-4 py-3 font-semibold">Teacher</th>
                         <th className="px-4 py-3 font-semibold text-center">Lessons/wk</th>
-                        <th className="px-4 py-3 font-semibold text-center text-emerald-700">Present</th>
-                        <th className="px-4 py-3 font-semibold text-center text-amber-700">Late</th>
-                        <th className="px-4 py-3 font-semibold text-center text-red-700">Absent</th>
+                        <th className="px-4 py-3 font-semibold text-center text-emerald-700 dark:text-emerald-300">Present</th>
+                        <th className="px-4 py-3 font-semibold text-center text-amber-700 dark:text-amber-300">Late</th>
+                        <th className="px-4 py-3 font-semibold text-center text-red-700 dark:text-red-300">Absent</th>
                         <th className="px-4 py-3 font-semibold text-center">Total</th>
                         <th className="px-4 py-3 font-semibold text-center">Details</th>
                       </tr>
@@ -255,50 +255,50 @@ function TeacherReportsContent() {
                     <tbody>
                       {teachers.map(t => (
                         <>
-                          <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50">
+                          <tr key={t.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ background: t.color || '#00C9A7' }}>
                                   {t.short?.charAt(0) ?? t.name.charAt(0)}
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-slate-800">{t.name}</p>
-                                  <p className="text-xs text-slate-400">{t.lessons.map(l => `${l.subjectName}/${l.className}`).join(', ')}</p>
+                                  <p className="font-semibold text-slate-800 dark:text-slate-100">{t.name}</p>
+                                  <p className="text-xs text-slate-400 dark:text-slate-500">{t.lessons.map(l => `${l.subjectName}/${l.className}`).join(', ')}</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-center font-semibold text-slate-600">{t.weeklyLessons}</td>
+                            <td className="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-300">{t.weeklyLessons}</td>
                             <td className="px-4 py-3 text-center">
-                              <span className="text-lg font-bold text-emerald-600">{t.present}</span>
+                              <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{t.present}</span>
                             </td>
                             <td className="px-4 py-3 text-center">
-                              <span className="text-lg font-bold text-amber-600">{t.late}</span>
+                              <span className="text-lg font-bold text-amber-600 dark:text-amber-400">{t.late}</span>
                             </td>
                             <td className="px-4 py-3 text-center">
-                              <span className="text-lg font-bold text-red-600">{t.absent}</span>
+                              <span className="text-lg font-bold text-red-600 dark:text-red-400">{t.absent}</span>
                             </td>
-                            <td className="px-4 py-3 text-center font-semibold text-slate-600">{t.total}</td>
+                            <td className="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-300">{t.total}</td>
                             <td className="px-4 py-3 text-center">
                               <button
                                 onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
-                                className="text-xs text-emerald-600 hover:text-emerald-800 font-medium underline"
+                                className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-medium underline"
                               >
                                 {expandedId === t.id ? 'Hide' : 'Show'} ({t.attendances.length})
                               </button>
                             </td>
                           </tr>
                           {expandedId === t.id && t.attendances.length > 0 && (
-                            <tr key={`${t.id}-detail`} className="bg-slate-50 border-t border-slate-100">
+                            <tr key={`${t.id}-detail`} className="bg-slate-50 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-800">
                               <td colSpan={7} className="px-4 py-3">
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                                   {t.attendances.map(a => (
-                                    <div key={a.id} className="bg-white rounded-lg border border-slate-200 px-2.5 py-2 text-xs">
-                                      <p className="text-slate-500 mb-1">
+                                    <div key={a.id} className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-2 text-xs">
+                                      <p className="text-slate-500 dark:text-slate-400 mb-1">
                                         {new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · P{a.period}
                                       </p>
                                       {statusBadge(a.status)}
                                       {a.checkIn && (
-                                        <p className="text-slate-400 mt-1">{formatCambodiaTime(a.checkIn)}</p>
+                                        <p className="text-slate-400 dark:text-slate-500 mt-1">{formatCambodiaTime(a.checkIn)}</p>
                                       )}
                                     </div>
                                   ))}
@@ -309,14 +309,14 @@ function TeacherReportsContent() {
                         </>
                       ))}
                     </tbody>
-                    <tfoot className="bg-slate-50 border-t-2 border-slate-200">
+                    <tfoot className="bg-slate-50 dark:bg-slate-800 border-t-2 border-slate-200 dark:border-slate-700">
                       <tr className="text-sm font-semibold">
-                        <td className="px-4 py-3 text-slate-700">Total ({teachers.length} teachers)</td>
-                        <td className="px-4 py-3 text-center text-slate-600">—</td>
-                        <td className="px-4 py-3 text-center text-emerald-700">{totalPresent}</td>
-                        <td className="px-4 py-3 text-center text-amber-700">{totalLate}</td>
-                        <td className="px-4 py-3 text-center text-red-700">{totalAbsent}</td>
-                        <td className="px-4 py-3 text-center text-slate-700">{totalScans}</td>
+                        <td className="px-4 py-3 text-slate-700 dark:text-slate-200">Total ({teachers.length} teachers)</td>
+                        <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-300">—</td>
+                        <td className="px-4 py-3 text-center text-emerald-700 dark:text-emerald-300">{totalPresent}</td>
+                        <td className="px-4 py-3 text-center text-amber-700 dark:text-amber-300">{totalLate}</td>
+                        <td className="px-4 py-3 text-center text-red-700 dark:text-red-300">{totalAbsent}</td>
+                        <td className="px-4 py-3 text-center text-slate-700 dark:text-slate-200">{totalScans}</td>
                         <td />
                       </tr>
                     </tfoot>
@@ -336,12 +336,12 @@ function TeacherReportsContent() {
                         {t.short?.charAt(0) ?? t.name.charAt(0)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-800 truncate">{t.name}</p>
+                        <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{t.name}</p>
                         <div className="flex gap-2 mt-1 text-xs">
-                          <span className="text-emerald-600 font-semibold">{t.present}P</span>
-                          <span className="text-amber-600 font-semibold">{t.late}L</span>
-                          <span className="text-red-600 font-semibold">{t.absent}A</span>
-                          <span className="text-slate-400">· {t.total} total</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{t.present}P</span>
+                          <span className="text-amber-600 dark:text-amber-400 font-semibold">{t.late}L</span>
+                          <span className="text-red-600 dark:text-red-400 font-semibold">{t.absent}A</span>
+                          <span className="text-slate-400 dark:text-slate-500">· {t.total} total</span>
                         </div>
                       </div>
                       <svg className={`flex-shrink-0 text-slate-400 transition-transform ${expandedId === t.id ? 'rotate-180' : ''}`} width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -349,16 +349,16 @@ function TeacherReportsContent() {
                       </svg>
                     </button>
                     {expandedId === t.id && t.attendances.length > 0 && (
-                      <div className="border-t border-slate-100 p-4">
+                      <div className="border-t border-slate-100 dark:border-slate-800 p-4">
                         <div className="grid grid-cols-2 gap-2">
                           {t.attendances.map(a => (
-                            <div key={a.id} className="bg-slate-50 rounded-lg px-2.5 py-2 text-xs">
-                              <p className="text-slate-500 mb-1">
+                            <div key={a.id} className="bg-slate-50 dark:bg-slate-800 rounded-lg px-2.5 py-2 text-xs">
+                              <p className="text-slate-500 dark:text-slate-400 mb-1">
                                 {new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · P{a.period}
                               </p>
                               {statusBadge(a.status)}
                               {a.checkIn && (
-                                <p className="text-slate-400 mt-1">{formatCambodiaTime(a.checkIn)}</p>
+                                <p className="text-slate-400 dark:text-slate-500 mt-1">{formatCambodiaTime(a.checkIn)}</p>
                               )}
                             </div>
                           ))}
@@ -373,7 +373,7 @@ function TeacherReportsContent() {
 
           {/* Quick link to scan */}
           <Link href="/wattaman/teacher-scan" className="block">
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
+            <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-2xl p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center flex-shrink-0">
                 <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -381,8 +381,8 @@ function TeacherReportsContent() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-emerald-800">Scan Teacher Now</p>
-                <p className="text-xs text-emerald-600">Open camera to record teacher attendance</p>
+                <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">Scan Teacher Now</p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400">Open camera to record teacher attendance</p>
               </div>
               <svg className="ml-auto text-emerald-400" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 18l6-6-6-6" />

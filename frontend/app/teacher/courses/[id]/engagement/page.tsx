@@ -88,26 +88,26 @@ export default function CourseEngagementPage() {
 
   return (
     <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-800">
         <div className="mx-auto max-w-7xl px-4 py-6 space-y-4">
           <div className="flex items-center justify-between">
             <Link
               href={`/teacher/courses/${courseId}`}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
             >
               ← Back to course
             </Link>
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
             Lesson engagement
           </h1>
 
           {isLoading && (
-            <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white h-16 rounded-2xl animate-pulse border border-gray-100" />)}</div>
+            <div className="space-y-3">{[1,2].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-16 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />)}</div>
           )}
           {error && (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+            <div className="rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-4 text-sm text-rose-700 dark:text-rose-300">
               {(error as Error).message}
             </div>
           )}
@@ -116,17 +116,17 @@ export default function CourseEngagementPage() {
             <>
               <div className="grid grid-cols-3 gap-4">
                 <StatCard label="Published Lessons" value={data.course.lessonCount} decimals={0} prefix="" color="bg-sky-100"
-                  icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.332.477 5.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>} />
+                  icon={<svg className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.332.477 5.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>} />
                 <StatCard label="Sessions" value={data.course.sessionCount} decimals={0} prefix="" color="bg-violet-100"
-                  icon={<svg className="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>} />
+                  icon={<svg className="w-5 h-5 text-violet-600 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>} />
                 <StatCard label="Students" value={data.students.length} decimals={0} prefix="" color="bg-emerald-100"
-                  icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>} />
+                  icon={<svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>} />
               </div>
 
               {/* Summary table */}
-              <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white shadow-sm">
+              <div className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                  <thead className="bg-gray-50 dark:bg-slate-800 text-xs uppercase text-gray-500 dark:text-slate-400">
                     <tr>
                       <th className="px-3 py-2 text-left">Student</th>
                       <th className="px-3 py-2 text-left">Progress</th>
@@ -144,10 +144,10 @@ export default function CourseEngagementPage() {
                       </tr>
                     )}
                     {data.students.map((s) => (
-                      <tr key={s.studentId} className="border-t border-gray-100">
+                      <tr key={s.studentId} className="border-t border-gray-100 dark:border-slate-800">
                         <td className="px-3 py-2">
-                          <div className="font-medium text-gray-800">{s.name}</div>
-                          <div className="text-xs text-gray-500">
+                          <div className="font-medium text-gray-800 dark:text-slate-100">{s.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-slate-400">
                             {s.studentNumber || s.email}
                           </div>
                         </td>
@@ -167,11 +167,11 @@ export default function CourseEngagementPage() {
 
               {/* Per-lesson matrix */}
               {data.students.length > 0 && data.lessons.length > 0 && (
-                <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white shadow-sm">
+                <div className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
                   <table className="min-w-full text-xs">
-                    <thead className="bg-gray-50 uppercase text-gray-500">
+                    <thead className="bg-gray-50 dark:bg-slate-800 uppercase text-gray-500 dark:text-slate-400">
                       <tr>
-                        <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left">
+                        <th className="sticky left-0 z-10 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-left">
                           Student
                         </th>
                         {data.lessons.map((l) => (
@@ -181,7 +181,7 @@ export default function CourseEngagementPage() {
                           >
                             {l.title}
                             {l.requireVideoWatch && (
-                              <span className="ml-1 text-[10px] text-amber-600">
+                              <span className="ml-1 text-[10px] text-amber-600 dark:text-amber-400">
                                 ▶ {l.videoWatchPct}%
                               </span>
                             )}
@@ -191,19 +191,19 @@ export default function CourseEngagementPage() {
                     </thead>
                     <tbody>
                       {data.students.map((s) => (
-                        <tr key={s.studentId} className="border-t border-slate-100">
-                          <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-slate-800">
+                        <tr key={s.studentId} className="border-t border-slate-100 dark:border-slate-800">
+                          <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 px-3 py-2 font-medium text-slate-800 dark:text-slate-100">
                             {s.name}
                           </td>
                           {s.lessons.map((row) => (
                             <td key={row.lessonId} className="px-2 py-2">
                               {!row.opened ? (
-                                <span className="text-slate-400">—</span>
+                                <span className="text-slate-400 dark:text-slate-500">—</span>
                               ) : (
                                 <div className="space-y-0.5">
-                                  <div className="text-slate-700">
+                                  <div className="text-slate-700 dark:text-slate-200">
                                     {row.attemptStatus === 'COMPLETED' ? (
-                                      <span className="text-emerald-700">
+                                      <span className="text-emerald-700 dark:text-emerald-300">
                                         ✓ Done
                                         {row.attemptScore != null &&
                                         row.attemptMaxScore
@@ -211,12 +211,12 @@ export default function CourseEngagementPage() {
                                           : ''}
                                       </span>
                                     ) : (
-                                      <span className="text-sky-700">
+                                      <span className="text-sky-700 dark:text-sky-300">
                                         In progress
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-[10px] text-slate-500">
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
                                     Opens: {row.openCount}
                                   </div>
                                   {row.attemptId && (
@@ -226,7 +226,7 @@ export default function CourseEngagementPage() {
                                         studentName: s.name,
                                         lessonTitle: data.lessons.find(l => l.id === row.lessonId)?.title ?? 'this lesson',
                                       })}
-                                      className="text-[10px] text-amber-600 hover:underline"
+                                      className="text-[10px] text-amber-600 dark:text-amber-400 hover:underline"
                                     >
                                       ↻ Reset
                                     </button>

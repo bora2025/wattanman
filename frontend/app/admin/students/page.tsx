@@ -329,24 +329,24 @@ function ManageStudents() {
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Student Management</h1>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Manage students organized by grade / class</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">Student Management</h1>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage students organized by grade / class</p>
               </div>
             </div>
             {/* Summary chips */}
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                 {grades.length} Grades
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-50 border border-violet-100 text-violet-700 text-xs font-semibold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-50 dark:bg-violet-950/40 border border-violet-100 dark:border-violet-900 text-violet-700 dark:text-violet-300 text-xs font-semibold">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" /></svg>
                 {totalStudentsAll} Students
               </div>
               {selectedGrade && (
                 <>
-                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold">M {maleCount}</div>
-                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-50 border border-pink-100 text-pink-700 text-xs font-semibold">F {femaleCount}</div>
+                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 text-blue-700 dark:text-blue-300 text-xs font-semibold">M {maleCount}</div>
+                  <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-50 dark:bg-pink-950/40 border border-pink-100 dark:border-pink-900 text-pink-700 dark:text-pink-300 text-xs font-semibold">F {femaleCount}</div>
                 </>
               )}
             </div>
@@ -365,7 +365,7 @@ function ManageStudents() {
               <select
                 value={selectedStudyYearId}
                 onChange={e => setSelectedStudyYearId(e.target.value)}
-                className="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-white shadow-sm w-full focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="text-sm border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 bg-white dark:bg-slate-900 shadow-sm w-full focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               >
                 <option value="">All Study Years</option>
                 {studyYears.map(sy => (
@@ -375,24 +375,24 @@ function ManageStudents() {
 
               {/* Grade search */}
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
                 <input
                   type="text" value={gradeSearch} onChange={e => setGradeSearch(e.target.value)}
                   placeholder="Search grade..."
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 bg-white shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 />
-                {gradeSearch && <button onClick={() => setGradeSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>}
+                {gradeSearch && <button onClick={() => setGradeSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"><svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>}
               </div>
 
               {/* Grade list */}
-              <div className="flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex-1 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
                 {loadingGrades ? (
-                  <div className="py-12 flex flex-col items-center gap-3 text-slate-400">
+                  <div className="py-12 flex flex-col items-center gap-3 text-slate-400 dark:text-slate-500">
                     <svg className="w-8 h-8 animate-spin text-indigo-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
                     <span className="text-sm">Loading grades...</span>
                   </div>
                 ) : filteredGrades.length === 0 ? (
-                  <div className="py-12 text-center text-slate-400 text-sm">No grades found</div>
+                  <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-sm">No grades found</div>
                 ) : filteredGrades.map(g => {
                   const isActive = selectedGrade?.id === g.id;
                   const count = gradeCounts[g.id];
@@ -428,7 +428,7 @@ function ManageStudents() {
               </div>
 
               {/* Summary footer */}
-              <div className="text-xs text-slate-400 text-center pb-1">
+              <div className="text-xs text-slate-400 dark:text-slate-500 text-center pb-1">
                 {filteredGrades.length} grade{filteredGrades.length !== 1 ? 's' : ''} / {totalStudentsAll} total students
               </div>
             </div>
@@ -439,12 +439,12 @@ function ManageStudents() {
             <div className="flex-1 min-w-0 flex flex-col gap-3 overflow-hidden">
               {!selectedGrade ? (
                 /* Empty state */
-                <div className="flex-1 flex flex-col items-center justify-center gap-4 text-slate-400">
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 text-slate-400 dark:text-slate-500">
                   <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center">
                     <svg className="w-12 h-12 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   </div>
                   <div className="text-center">
-                    <p className="text-base font-semibold text-slate-600">Select a Grade</p>
+                    <p className="text-base font-semibold text-slate-600 dark:text-slate-300">Select a Grade</p>
                     <p className="text-sm mt-1">Choose a class from the left panel to view and manage its students</p>
                   </div>
                 </div>
@@ -475,18 +475,18 @@ function ManageStudents() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     {/* Search */}
                     <div className="relative">
-                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
+                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-slate-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
                       <input
                         type="text" value={studentSearch} onChange={e => setStudentSearch(e.target.value)}
                         placeholder="Search by name, ID, email..."
-                        className="pl-8 pr-8 py-1.5 text-sm rounded-xl border border-slate-200 bg-white shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 w-56"
+                        className="pl-8 pr-8 py-1.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 w-56"
                       />
-                      {studentSearch && <button onClick={() => setStudentSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>}
+                      {studentSearch && <button onClick={() => setStudentSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"><svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>}
                     </div>
 
                     <div className="flex items-center gap-2">
                       {/* View toggle */}
-                      <div className="inline-flex rounded-xl border border-slate-200 bg-white shadow-sm p-0.5">
+                      <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-0.5">
                         <button onClick={() => setStudentViewMode('cards')} title="Card view"
                           className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${studentViewMode === 'cards' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" strokeWidth={2} strokeLinecap="round"/><rect x="14" y="3" width="7" height="7" rx="1" strokeWidth={2} strokeLinecap="round"/><rect x="3" y="14" width="7" height="7" rx="1" strokeWidth={2} strokeLinecap="round"/><rect x="14" y="14" width="7" height="7" rx="1" strokeWidth={2} strokeLinecap="round"/></svg>
@@ -500,7 +500,7 @@ function ManageStudents() {
                       {/* CSV upload */}
                       <label title="Import CSV" className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white shadow-sm text-sm font-medium text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors ${csvUploading ? 'opacity-50 pointer-events-none' : ''}`}>
                         {csvUploading ? (
-                          <svg className="w-4 h-4 animate-spin text-indigo-500" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
+                          <svg className="w-4 h-4 animate-spin text-indigo-500 dark:text-indigo-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
                         ) : (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" /></svg>
                         )}
@@ -518,7 +518,7 @@ function ManageStudents() {
                           customFieldDefs,
                           `${selectedGrade?.name || 'students'}.csv`,
                         )}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white shadow-sm text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M7 10l5 5 5-5M12 15V3" /></svg>
                         Export CSV
@@ -538,17 +538,17 @@ function ManageStudents() {
 
                   {/* CSV result banner */}
                   {csvResult && (
-                    <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2.5 text-sm text-emerald-800 flex items-center justify-between">
+                    <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 px-4 py-2.5 text-sm text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
                       <span>CSV imported: <b>{csvResult.success}</b> added / {csvResult.skipped} skipped / {csvResult.errors} errors / {csvResult.total} total</span>
-                      <button onClick={() => setCsvResult(null)} className="text-emerald-400 hover:text-emerald-600 ml-3"><svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>
+                      <button onClick={() => setCsvResult(null)} className="text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 ml-3"><svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>
                     </div>
                   )}
 
                   {/* Add student form */}
                   {showAddForm && (
-                    <form onSubmit={handleAddStudent} className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-violet-50 p-4 space-y-3 shadow-sm">
+                    <form onSubmit={handleAddStudent} className="rounded-2xl border border-indigo-200 dark:border-indigo-900 bg-gradient-to-br from-indigo-50 to-violet-50 p-4 space-y-3 shadow-sm">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-bold text-indigo-800 flex items-center gap-1.5">
+                        <h4 className="text-sm font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
                           <span className="w-6 h-6 rounded-lg bg-indigo-500 text-white flex items-center justify-center text-xs">+</span>
                           New Student
                         </h4>
@@ -563,11 +563,11 @@ function ManageStudents() {
                           <input type="text" value={newForm.nameKh} onChange={e => setNewForm({ ...newForm, nameKh: e.target.value })} placeholder="Khmer name" />
                         </div>
                         <div className="sm:col-span-2">
-                          <label className="form-label text-xs">Email <span className="text-slate-400 font-normal">(or phone below)</span></label>
+                          <label className="form-label text-xs">Email <span className="text-slate-400 dark:text-slate-500 font-normal">(or phone below)</span></label>
                           <input type="text" value={newForm.email} onChange={e => setNewForm({ ...newForm, email: e.target.value })} placeholder="student@school.edu" />
                         </div>
                         <div>
-                          <label className="form-label text-xs">Password <span className="text-slate-400 font-normal">(auto)</span></label>
+                          <label className="form-label text-xs">Password <span className="text-slate-400 dark:text-slate-500 font-normal">(auto)</span></label>
                           <input type="text" value={newForm.password} onChange={e => setNewForm({ ...newForm, password: e.target.value })} placeholder="leave blank" />
                         </div>
                         <div>
@@ -611,27 +611,27 @@ function ManageStudents() {
                   {/* â”€â”€ Student Content â”€â”€ */}
                   <div className="flex-1 overflow-auto">
                     {loadingStudents ? (
-                      <div className="py-20 flex flex-col items-center gap-3 text-slate-400">
+                      <div className="py-20 flex flex-col items-center gap-3 text-slate-400 dark:text-slate-500">
                         <svg className="w-10 h-10 animate-spin text-indigo-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
                         <span className="text-sm">Loading students...</span>
                       </div>
                     ) : filteredStudents.length === 0 ? (
-                      <div className="py-20 flex flex-col items-center gap-3 text-slate-400">
-                        <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center">
+                      <div className="py-20 flex flex-col items-center gap-3 text-slate-400 dark:text-slate-500">
+                        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                           {studentSearch
-                            ? <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
-                            : <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            ? <svg className="w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
+                            : <svg className="w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                           }
                         </div>
-                        <p className="text-sm font-medium text-slate-500">{studentSearch ? 'No students match your search' : 'No students in this grade yet'}</p>
-                        {!studentSearch && <button onClick={() => setShowAddForm(true)} className="text-xs text-indigo-500 hover:text-indigo-700 font-medium">+ Add the first student</button>}
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{studentSearch ? 'No students match your search' : 'No students in this grade yet'}</p>
+                        {!studentSearch && <button onClick={() => setShowAddForm(true)} className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">+ Add the first student</button>}
                       </div>
                     ) : studentViewMode === 'cards' ? (
 
                       /* â”€â”€ Card Grid View â”€â”€ */
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 pb-2">
                         {filteredStudents.map((s, idx) => (
-                          <div key={s.id} className="group relative bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all overflow-hidden flex flex-col">
+                          <div key={s.id} className="group relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all overflow-hidden flex flex-col">
                             {/* Photo area */}
                             <div className="relative h-28 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center overflow-hidden">
                               {s.photo ? (
@@ -655,25 +655,25 @@ function ManageStudents() {
 
                             {/* Info */}
                             <div className="p-2.5 flex-1 flex flex-col gap-0.5 min-w-0">
-                              <p className="text-xs font-bold text-slate-800 truncate leading-tight">{s.name}</p>
-                              {s.nameKh && <p className="text-[10px] text-slate-500 truncate">{s.nameKh}</p>}
-                              <p className="text-[10px] text-slate-400 truncate">{s.email}</p>
-                              {s.generation && <p className="text-[10px] text-violet-500 font-medium">Gen {s.generation}</p>}
+                              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate leading-tight">{s.name}</p>
+                              {s.nameKh && <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{s.nameKh}</p>}
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{s.email}</p>
+                              {s.generation && <p className="text-[10px] text-violet-500 dark:text-violet-400 font-medium">Gen {s.generation}</p>}
                             </div>
 
                             {/* Actions â€” visible on hover */}
                             <div className="px-2.5 pb-2.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button onClick={() => handleEdit(s)} title="Edit"
-                                className="flex-1 flex items-center justify-center gap-1 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 text-[10px] font-semibold transition-colors">
+                                className="flex-1 flex items-center justify-center gap-1 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-600 dark:text-amber-400 text-[10px] font-semibold transition-colors">
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                 Edit
                               </button>
                               <button onClick={() => { setResetStudent(s); setResetPwd(''); setResetMsg(null); }} title="Reset password"
-                                className="flex items-center justify-center p-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors">
+                                className="flex items-center justify-center p-1 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors">
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
                               </button>
                               <button onClick={() => handleDelete(s)} title="Delete"
-                                className="flex items-center justify-center p-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors">
+                                className="flex items-center justify-center p-1 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 transition-colors">
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                               </button>
                             </div>
@@ -685,29 +685,29 @@ function ManageStudents() {
 
                       /* â”€â”€ Table View â”€â”€ */
                       <table className="w-full text-sm">
-                        <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                        <thead className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10 shadow-sm">
                           <tr>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-16">#ID</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Student</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Sex</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">DOB</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone</th>
-                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Gen</th>
-                            <th className="px-3 py-2.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16">#ID</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Sex</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">DOB</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Phone</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Gen</th>
+                            <th className="px-3 py-2.5 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                           {filteredStudents.map((s, idx) => (
                             <tr key={s.id} className="hover:bg-indigo-50/40 transition-colors group">
-                              <td className="px-3 py-2.5 text-slate-400 font-mono text-xs">{s.studentNumber || String(idx + 1).padStart(4, '0')}</td>
+                              <td className="px-3 py-2.5 text-slate-400 dark:text-slate-500 font-mono text-xs">{s.studentNumber || String(idx + 1).padStart(4, '0')}</td>
                               <td className="px-3 py-2.5">
                                 <div className="flex items-center gap-2.5">
                                   <div className={`w-8 h-8 rounded-xl overflow-hidden ${s.photo ? 'bg-slate-100' : avatarColor(s.name)} flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm`}>
                                     {s.photo ? <img src={s.photo} alt={s.name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} /> : avatarInitials(s.name)}
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="font-semibold text-slate-800 truncate text-sm">{s.name}{s.nameKh && <span className="text-slate-400 font-normal"> · {s.nameKh}</span>}</p>
-                                    <p className="text-xs text-slate-400 truncate">{s.email}</p>
+                                    <p className="font-semibold text-slate-800 dark:text-slate-100 truncate text-sm">{s.name}{s.nameKh && <span className="text-slate-400 dark:text-slate-500 font-normal"> · {s.nameKh}</span>}</p>
+                                    <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{s.email}</p>
                                   </div>
                                 </div>
                               </td>
@@ -718,18 +718,18 @@ function ManageStudents() {
                                   </span>
                               ) : <span className="text-slate-300 text-xs">-</span>}
                               </td>
-                              <td className="px-3 py-2.5 text-slate-500 text-xs">{s.dateOfBirth ? new Date(s.dateOfBirth).toLocaleDateString() : <span className="text-slate-300">-</span>}</td>
-                              <td className="px-3 py-2.5 text-slate-500 text-xs">{s.phone || <span className="text-slate-300">-</span>}</td>
-                              <td className="px-3 py-2.5 text-xs">{s.generation ? <span className="px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium">G{s.generation}</span> : <span className="text-slate-300">-</span>}</td>
+                              <td className="px-3 py-2.5 text-slate-500 dark:text-slate-400 text-xs">{s.dateOfBirth ? new Date(s.dateOfBirth).toLocaleDateString() : <span className="text-slate-300">-</span>}</td>
+                              <td className="px-3 py-2.5 text-slate-500 dark:text-slate-400 text-xs">{s.phone || <span className="text-slate-300">-</span>}</td>
+                              <td className="px-3 py-2.5 text-xs">{s.generation ? <span className="px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-medium">G{s.generation}</span> : <span className="text-slate-300">-</span>}</td>
                               <td className="px-3 py-2.5 text-right">
                                 <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={() => handleEdit(s)} title="Edit" className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors">
+                                  <button onClick={() => handleEdit(s)} title="Edit" className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-600 dark:text-amber-400 transition-colors">
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                   </button>
-                                  <button onClick={() => { setResetStudent(s); setResetPwd(''); setResetMsg(null); }} title="Reset password" className="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-500 transition-colors">
+                                  <button onClick={() => { setResetStudent(s); setResetPwd(''); setResetMsg(null); }} title="Reset password" className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors">
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
                                   </button>
-                                  <button onClick={() => handleDelete(s)} title="Delete" className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors">
+                                  <button onClick={() => handleDelete(s)} title="Delete" className="p-1.5 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 transition-colors">
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                   </button>
                                 </div>
@@ -742,7 +742,7 @@ function ManageStudents() {
 
                     {/* Footer — sits right below the cards/table */}
                     {filteredStudents.length > 0 && (
-                      <p className="text-xs text-slate-400 text-right pt-2 pb-1">
+                      <p className="text-xs text-slate-400 dark:text-slate-500 text-right pt-2 pb-1">
                         {filteredStudents.length} of {students.length} students shown
                       </p>
                     )}
@@ -759,32 +759,32 @@ function ManageStudents() {
       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {editModalOpen && editingId && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => { setEditModalOpen(false); setEditingId(null); }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
             {/* Modal header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">Edit Student</h3>
-                  <p className="text-xs text-slate-400">{students.find(s => s.id === editingId)?.name}</p>
+                  <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Edit Student</h3>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">{students.find(s => s.id === editingId)?.name}</p>
                 </div>
               </div>
-              <button onClick={() => { setEditModalOpen(false); setEditingId(null); }} className="text-slate-400 hover:text-slate-600"><svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>
+              <button onClick={() => { setEditModalOpen(false); setEditingId(null); }} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"><svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>
             </div>
 
             {/* Modal body */}
             <div className="overflow-y-auto flex-1 px-6 py-4">
               {saving && (
                 <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-                  <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-2xl bg-white border border-amber-100 shadow-2xl">
-                    <svg className="w-10 h-10 text-amber-500 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
-                    <p className="text-sm font-semibold text-slate-700">Saving...</p>
+                  <div className="flex flex-col items-center gap-3 px-8 py-6 rounded-2xl bg-white dark:bg-slate-900 border border-amber-100 dark:border-amber-900 shadow-2xl">
+                    <svg className="w-10 h-10 text-amber-500 dark:text-amber-400 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Saving...</p>
                   </div>
                 </div>
               )}
-              {saveError && <div className="mb-3 px-3 py-2 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">{saveError}</div>}
+              {saveError && <div className="mb-3 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-sm text-red-700 dark:text-red-300">{saveError}</div>}
 
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
@@ -827,7 +827,7 @@ function ManageStudents() {
                   <label className="form-label text-xs">Photo URL</label>
                   <input type="text" value={editData.photo} onChange={e => setEditData({ ...editData, photo: e.target.value })} placeholder="https://..." />
                   {editData.photo && (
-                    <img src={editData.photo} alt="preview" className="mt-2 w-16 h-16 rounded-xl object-cover border border-slate-200" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    <img src={editData.photo} alt="preview" className="mt-2 w-16 h-16 rounded-xl object-cover border border-slate-200 dark:border-slate-700" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   )}
                 </div>
                 <div className="sm:col-span-2">
@@ -847,7 +847,7 @@ function ManageStudents() {
                         {(f.options || []).map(opt => {
                           const selected = Array.isArray(editCustomFields[f.key]) ? (editCustomFields[f.key] as string[]) : []
                           return (
-                            <label key={opt} className="flex items-center gap-1.5 text-sm text-slate-700">
+                            <label key={opt} className="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-200">
                               <input
                                 type="checkbox"
                                 checked={selected.includes(opt)}
@@ -883,8 +883,8 @@ function ManageStudents() {
             </div>
 
             {/* Modal footer */}
-            <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-100">
-              <button onClick={() => { setEditModalOpen(false); setEditingId(null); }} className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Cancel</button>
+            <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-100 dark:border-slate-800">
+              <button onClick={() => { setEditModalOpen(false); setEditingId(null); }} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800">Cancel</button>
               <button onClick={handleSave} disabled={saving}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-semibold shadow-sm hover:shadow-md disabled:opacity-60">
                 Save Changes
@@ -899,27 +899,27 @@ function ManageStudents() {
       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {resetStudent && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => { setResetStudent(null); setResetMsg(null); }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
                 </div>
-                <h3 className="text-base font-bold text-slate-800">Reset Password</h3>
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Reset Password</h3>
               </div>
-              <button onClick={() => { setResetStudent(null); setResetMsg(null); }} className="text-slate-400 hover:text-slate-600"><svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>
+              <button onClick={() => { setResetStudent(null); setResetMsg(null); }} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"><svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>
             </div>
             <form onSubmit={handleResetPwd} className="px-6 py-4 space-y-4">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                 <div className={`w-10 h-10 rounded-xl ${avatarColor(resetStudent.name)} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
                   {avatarInitials(resetStudent.name)}
                 </div>
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-800 text-sm">{resetStudent.name}</p>
-                  <p className="text-xs text-slate-400 truncate">{resetStudent.email}</p>
+                  <p className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{resetStudent.name}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{resetStudent.email}</p>
                 </div>
               </div>
-              <p className="text-xs text-slate-500">Existing sessions will be revoked after password reset.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Existing sessions will be revoked after password reset.</p>
               <div>
                 <label className="form-label text-xs">New Password</label>
                 <input
@@ -934,7 +934,7 @@ function ManageStudents() {
                 </div>
               )}
               <div className="flex justify-end gap-2 pt-1">
-                <button type="button" onClick={() => { setResetStudent(null); setResetMsg(null); }} className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Cancel</button>
+                <button type="button" onClick={() => { setResetStudent(null); setResetMsg(null); }} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800">Cancel</button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-semibold shadow-sm hover:shadow-md">Reset Password</button>
               </div>
             </form>

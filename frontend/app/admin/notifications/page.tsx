@@ -42,17 +42,17 @@ export default function NotificationSettings() {
         <div className="page-content">
           <div className="h-14 lg:hidden" />
           <div className="page-header">
-            <h1 className="text-2xl font-bold text-slate-800">{t('notifications.title')}</h1>
-            <p className="text-sm text-slate-500 mt-1">{t('notifications.subtitle')}</p>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('notifications.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('notifications.subtitle')}</p>
           </div>
           <div className="page-body">
             {message && (
-              <div className="mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <div className="mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">
                 {message}
               </div>
             )}
             <div className="card p-6">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
                 Notification Preferences
               </h3>
               <div className="space-y-4">
@@ -67,9 +67,9 @@ export default function NotificationSettings() {
                       type="checkbox"
                       checked={settings[key as keyof typeof settings]}
                       onChange={(e) => updateSetting(key, e.target.checked)}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded"
+                      className="h-4 w-4 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 border-slate-300 dark:border-slate-600 rounded"
                     />
-                    <span className="text-sm text-slate-700">{label}</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-200">{label}</span>
                   </label>
                 ))}
               </div>

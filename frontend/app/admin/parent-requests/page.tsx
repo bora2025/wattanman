@@ -74,13 +74,13 @@ export default function AdminParentRequestsPage() {
 
   return (
     <AuthGuard requiredRole="ADMIN">
-      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Admin" subtitle="Portal" navItems={adminNav as any} accentColor="indigo" />
         <main className="flex-1 p-6">
           <div className="mb-4">
-            <Link href="/admin" className="text-xs text-indigo-600 hover:underline">← Dashboard</Link>
-            <h1 className="text-2xl font-bold text-slate-800 mt-2">Parent Link Requests</h1>
-            <p className="text-sm text-slate-500 mt-1">Approve or reject student-submitted requests to link a parent account.</p>
+            <Link href="/admin" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">← Dashboard</Link>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-2">Parent Link Requests</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Approve or reject student-submitted requests to link a parent account.</p>
           </div>
 
           <div className="flex gap-2 mb-4">
@@ -96,13 +96,13 @@ export default function AdminParentRequestsPage() {
           </div>
 
           {isLoading ? (
-            <div className="text-slate-500 text-sm">Loading…</div>
+            <div className="text-slate-500 dark:text-slate-400 text-sm">Loading…</div>
           ) : !data?.length ? (
-            <div className="bg-white border border-slate-100 rounded-xl p-6 text-sm text-slate-500">No requests.</div>
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-6 text-sm text-slate-500 dark:text-slate-400">No requests.</div>
           ) : (
-            <div className="bg-white border border-slate-100 rounded-xl overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-600 text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs">
                   <tr>
                     <th className="text-left px-4 py-2">Student</th>
                     <th className="text-left px-4 py-2">Class</th>
@@ -113,24 +113,24 @@ export default function AdminParentRequestsPage() {
                     <th className="text-right px-4 py-2">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {data.map(r => (
-                    <tr key={r.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-2 font-medium text-slate-800">{r.student?.user?.name ?? '—'}</td>
-                      <td className="px-4 py-2 text-slate-600">{r.student?.class?.name ?? '—'}</td>
-                      <td className="px-4 py-2 text-slate-700">{r.parentEmail}</td>
-                      <td className="px-4 py-2 text-slate-600">
+                    <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
+                      <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">{r.student?.user?.name ?? '—'}</td>
+                      <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{r.student?.class?.name ?? '—'}</td>
+                      <td className="px-4 py-2 text-slate-700 dark:text-slate-200">{r.parentEmail}</td>
+                      <td className="px-4 py-2 text-slate-600 dark:text-slate-300">
                         {r.parentName || '—'}
-                        {r.parentPhone && <div className="text-xs text-slate-400">{r.parentPhone}</div>}
-                        {r.note && <div className="text-xs italic text-slate-400">“{r.note}”</div>}
+                        {r.parentPhone && <div className="text-xs text-slate-400 dark:text-slate-500">{r.parentPhone}</div>}
+                        {r.note && <div className="text-xs italic text-slate-400 dark:text-slate-500">“{r.note}”</div>}
                       </td>
-                      <td className="px-4 py-2 text-xs text-slate-500">{new Date(r.createdAt).toLocaleString()}</td>
+                      <td className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400">{new Date(r.createdAt).toLocaleString()}</td>
                       <td className="px-4 py-2">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded ${r.status === 'PENDING' ? 'bg-amber-100 text-amber-800' : r.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
                           {r.status}
                         </span>
                         {r.status === 'REJECTED' && r.rejectReason && (
-                          <div className="text-xs text-red-600 mt-1">{r.rejectReason}</div>
+                          <div className="text-xs text-red-600 dark:text-red-400 mt-1">{r.rejectReason}</div>
                         )}
                       </td>
                       <td className="px-4 py-2 text-right">
@@ -152,9 +152,9 @@ export default function AdminParentRequestsPage() {
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-400">—</span>
+                          <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
                         )}
-                        {errorMap[r.id] && <div className="text-xs text-red-600 mt-1">{errorMap[r.id]}</div>}
+                        {errorMap[r.id] && <div className="text-xs text-red-600 dark:text-red-400 mt-1">{errorMap[r.id]}</div>}
                       </td>
                     </tr>
                   ))}

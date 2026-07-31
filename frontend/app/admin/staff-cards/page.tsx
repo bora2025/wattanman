@@ -299,7 +299,7 @@ export default function StaffCardsPage() {
           <div className="flex min-h-screen items-center justify-center">
             <div className="text-center">
               <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-sm text-slate-500 mt-3">Loading…</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
             </div>
           </div>
         </div>
@@ -311,9 +311,9 @@ export default function StaffCardsPage() {
     <div className="page-shell">
       {exporting && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-lg px-4 sm:px-8 py-4 sm:py-6 flex flex-col items-center gap-3">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg px-4 sm:px-8 py-4 sm:py-6 flex flex-col items-center gap-3">
             <div className="animate-spin h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full" />
-            <p className="text-sm font-medium text-slate-700">Exporting, please wait…</p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Exporting, please wait…</p>
           </div>
         </div>
       )}
@@ -322,8 +322,8 @@ export default function StaffCardsPage() {
         <div className="h-14 lg:hidden" />
         <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">👥 Staff ID Cards</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">👥 Staff ID Cards</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               {staffUsers.length} staff member{staffUsers.length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -349,14 +349,14 @@ export default function StaffCardsPage() {
             <div className="ml-auto flex items-center gap-2">
               {/* Design sync status */}
               {designLoading ? (
-                <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <span className="inline-block w-3 h-3 rounded-full border-2 border-slate-300 border-t-transparent animate-spin" />
+                <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                  <span className="inline-block w-3 h-3 rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-transparent animate-spin" />
                   Loading template…
                 </span>
               ) : (
                 <button
                   onClick={reloadDesign}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   title="Re-fetch the active template from the server"
                 >
                   🔄 Refresh Template
@@ -368,7 +368,7 @@ export default function StaffCardsPage() {
               >
                 {showEditor ? '✕ Close Editor' : '✏️ Edit Card Design'}
               </button>
-              <Link href="/admin/card-designer" className="px-3 py-2 rounded-lg text-xs font-medium border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors" title="Open full Card Designer page">
+              <Link href="/admin/card-designer" className="px-3 py-2 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" title="Open full Card Designer page">
                 🎨 Full Designer
               </Link>
             </div>
@@ -376,11 +376,11 @@ export default function StaffCardsPage() {
 
           {/* Inline Card Editor */}
           {showEditor && (
-            <div className="card overflow-hidden border-2 border-amber-200">
-              <div className="flex items-center justify-between px-5 py-3 bg-amber-50 border-b border-amber-200">
+            <div className="card overflow-hidden border-2 border-amber-200 dark:border-amber-900">
+              <div className="flex items-center justify-between px-5 py-3 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900">
                 <div>
-                  <h3 className="font-semibold text-slate-800">✏️ Editing Staff Card Design</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Save design here to apply changes to all staff ID cards below</p>
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-100">✏️ Editing Staff Card Design</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Save design here to apply changes to all staff ID cards below</p>
                 </div>
                 <button onClick={handleEditorClose} className="btn-ghost btn-sm">✕ Close</button>
               </div>
@@ -394,11 +394,11 @@ export default function StaffCardsPage() {
           <div className="card p-4">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="relative flex-1 min-w-0">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
-                <input type="text" value={staffSearch} onChange={(e) => { setStaffSearch(e.target.value); setStaffPage(1); }} placeholder="Search staff by name or email..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
-                {staffSearch && <button onClick={() => { setStaffSearch(''); setStaffPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">✕</button>}
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">🔍</span>
+                <input type="text" value={staffSearch} onChange={(e) => { setStaffSearch(e.target.value); setStaffPage(1); }} placeholder="Search staff by name or email..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                {staffSearch && <button onClick={() => { setStaffSearch(''); setStaffPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xs">✕</button>}
               </div>
-              <div className="flex rounded-lg border border-slate-200 overflow-hidden shrink-0">
+              <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0">
                 <button onClick={() => setStaffViewMode('grid')} className={`px-3 py-2 text-xs font-medium transition-colors ${staffViewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>▦ Grid</button>
                 <button onClick={() => setStaffViewMode('list')} className={`px-3 py-2 text-xs font-medium transition-colors ${staffViewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>☰ List</button>
               </div>
@@ -411,16 +411,16 @@ export default function StaffCardsPage() {
               <div className="relative shrink-0">
                 <button onClick={() => setStaffDownloadMenuOpen(staffDownloadMenuOpen === 'bulk' ? null : 'bulk')} className="btn-primary btn-sm whitespace-nowrap">📥 Download All ▾</button>
                 {staffDownloadMenuOpen === 'bulk' && (
-                  <div className="absolute right-0 top-full mt-1 z-20 bg-white rounded-xl shadow-lg border border-slate-200 py-1 w-56 animate-[fadeIn_0.15s_ease-out]">
-                    <button onClick={() => { downloadAllCardsPDFA4('All Staff - ID Cards', cardFilteredStaff.map((m) => ({ name: m.name, subtitle: getRoleLabel(m.role), id: m.id, displayId: m.id, photo: m.photo, phone: m.phone, email: m.email }))); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">📄 Download Card ({cardFilteredStaff.length})</button>
-                    <button onClick={() => { downloadAllQRCodes('All Staff - QR Codes', cardFilteredStaff.map((m) => ({ name: m.name, id: m.id }))); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">📱 All QR Codes ({cardFilteredStaff.length})</button>
-                    <div className="border-t border-slate-100 my-1" />
-                    <button onClick={() => { downloadOfficerAttendanceQR(); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors font-medium">🎫 Officer Attendance QR</button>
+                  <div className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-1 w-56 animate-[fadeIn_0.15s_ease-out]">
+                    <button onClick={() => { downloadAllCardsPDFA4('All Staff - ID Cards', cardFilteredStaff.map((m) => ({ name: m.name, subtitle: getRoleLabel(m.role), id: m.id, displayId: m.id, photo: m.photo, phone: m.phone, email: m.email }))); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">📄 Download Card ({cardFilteredStaff.length})</button>
+                    <button onClick={() => { downloadAllQRCodes('All Staff - QR Codes', cardFilteredStaff.map((m) => ({ name: m.name, id: m.id }))); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">📱 All QR Codes ({cardFilteredStaff.length})</button>
+                    <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+                    <button onClick={() => { downloadOfficerAttendanceQR(); setStaffDownloadMenuOpen(null); }} className="w-full text-left px-4 py-2.5 text-sm text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors font-medium">🎫 Officer Attendance QR</button>
                   </div>
                 )}
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+            <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Showing {cardFilteredStaff.length === 0 ? 0 : (staffPageClamped - 1) * staffPageSize + 1}–{Math.min(staffPageClamped * staffPageSize, cardFilteredStaff.length)} of {cardFilteredStaff.length} staff{staffSearch && ` matching "${staffSearch}"`}</span>
               <span>{staffTotalPages} page{staffTotalPages !== 1 ? 's' : ''}</span>
             </div>
@@ -432,8 +432,8 @@ export default function StaffCardsPage() {
             <div className="card p-12">
               <div className="empty-state">
                 <p className="text-4xl mb-3">🪪</p>
-                <p className="font-semibold text-slate-600">{staffSearch ? 'No staff match your search' : 'No staff found'}</p>
-                <p className="text-sm text-slate-400 mt-1">{staffSearch ? 'Try a different search term.' : 'Add teachers or admins first.'}</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-300">{staffSearch ? 'No staff match your search' : 'No staff found'}</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{staffSearch ? 'Try a different search term.' : 'Add teachers or admins first.'}</p>
               </div>
             </div>
           ) : staffViewMode === 'grid' ? (
@@ -462,7 +462,7 @@ export default function StaffCardsPage() {
             <div className="card overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-left text-xs text-slate-500 uppercase tracking-wider">
+                  <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-left text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     <th className="px-4 py-3 font-semibold">#</th>
                     <th className="px-4 py-3 font-semibold">Staff</th>
                     <th className="px-4 py-3 font-semibold hidden sm:table-cell">Role</th>
@@ -471,16 +471,16 @@ export default function StaffCardsPage() {
                     <th className="px-4 py-3 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {staffPaginated.map((staff, idx) => (
                     <tr key={staff.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-4 py-3 text-slate-400 text-xs">{(staffPageClamped - 1) * staffPageSize + idx + 1}</td>
+                      <td className="px-4 py-3 text-slate-400 dark:text-slate-500 text-xs">{(staffPageClamped - 1) * staffPageSize + idx + 1}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 overflow-hidden shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300 overflow-hidden shrink-0">
                             {staff.photo ? <img src={normalizePhotoUrl(staff.photo)} alt={staff.name} className="w-full h-full object-cover" /> : staff.name.charAt(0).toUpperCase()}
                           </div>
-                          <span className="font-medium text-slate-800 truncate">{staff.name}</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-100 truncate">{staff.name}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">
@@ -488,15 +488,15 @@ export default function StaffCardsPage() {
                           {getRoleIcon(staff.role)} {getRoleLabel(staff.role)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-slate-500 truncate hidden md:table-cell max-w-[180px]">{staff.email}</td>
+                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400 truncate hidden md:table-cell max-w-[180px]">{staff.email}</td>
                       <td className="px-4 py-3 text-center">
                         {qrCodes[staff.id] ? <img src={qrCodes[staff.id]} alt="QR" className="w-10 h-10 mx-auto rounded" /> : <span className="text-slate-300 text-xs">—</span>}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => downloadCard(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone, staff.email)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40" title="Download ID Card PNG">📥 PNG</button>
-                          <button onClick={() => downloadCardPDF(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone, staff.email)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40" title="Download ID Card PDF">📄 PDF</button>
-                          <button onClick={() => downloadQROnly(staff.name, staff.id)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40" title="Download QR only">📱</button>
+                          <button onClick={() => downloadCard(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone, staff.email)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40" title="Download ID Card PNG">📥 PNG</button>
+                          <button onClick={() => downloadCardPDF(staff.name, getRoleLabel(staff.role), qrCodes[staff.id], staff.id, staff.photo, staff.phone, staff.email)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-red-200 dark:border-red-900 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-40" title="Download ID Card PDF">📄 PDF</button>
+                          <button onClick={() => downloadQROnly(staff.name, staff.id)} disabled={!qrCodes[staff.id]} className="text-[11px] py-1 px-2 rounded-md font-medium border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40" title="Download QR only">📱</button>
                         </div>
                       </td>
                     </tr>
@@ -509,14 +509,14 @@ export default function StaffCardsPage() {
           {/* Pagination */}
           {staffTotalPages > 1 && (
             <div className="flex items-center justify-center gap-1 pt-2">
-              <button onClick={() => setStaffPage(1)} disabled={staffPageClamped <= 1} className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">«</button>
-              <button onClick={() => setStaffPage(Math.max(1, staffPageClamped - 1))} disabled={staffPageClamped <= 1} className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">‹ Prev</button>
+              <button onClick={() => setStaffPage(1)} disabled={staffPageClamped <= 1} className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">«</button>
+              <button onClick={() => setStaffPage(Math.max(1, staffPageClamped - 1))} disabled={staffPageClamped <= 1} className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">‹ Prev</button>
               {Array.from({ length: staffTotalPages }, (_, i) => i + 1)
                 .filter(p => p === 1 || p === staffTotalPages || Math.abs(p - staffPageClamped) <= 2)
                 .reduce<(number | string)[]>((acc, p, i, arr) => { if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('...'); acc.push(p); return acc; }, [])
-                .map((p, i) => typeof p === 'string' ? <span key={`dots-${i}`} className="px-1 text-xs text-slate-400">…</span> : <button key={p} onClick={() => setStaffPage(p)} className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${p === staffPageClamped ? 'bg-indigo-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{p}</button>)}
-              <button onClick={() => setStaffPage(Math.min(staffTotalPages, staffPageClamped + 1))} disabled={staffPageClamped >= staffTotalPages} className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next ›</button>
-              <button onClick={() => setStaffPage(staffTotalPages)} disabled={staffPageClamped >= staffTotalPages} className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">»</button>
+                .map((p, i) => typeof p === 'string' ? <span key={`dots-${i}`} className="px-1 text-xs text-slate-400 dark:text-slate-500">…</span> : <button key={p} onClick={() => setStaffPage(p)} className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${p === staffPageClamped ? 'bg-indigo-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{p}</button>)}
+              <button onClick={() => setStaffPage(Math.min(staffTotalPages, staffPageClamped + 1))} disabled={staffPageClamped >= staffTotalPages} className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next ›</button>
+              <button onClick={() => setStaffPage(staffTotalPages)} disabled={staffPageClamped >= staffTotalPages} className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">»</button>
             </div>
           )}
         </div>
@@ -549,13 +549,13 @@ function IDCardPreview({
 
   return (
     <div className="group relative">
-      <div className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white" style={{ aspectRatio: `${design.width} / ${design.height}` }}>
-        {imgSrc ? <img src={imgSrc} alt={`${name} ID Card`} className="w-full h-full object-contain" /> : <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">Rendering…</div>}
+      <div className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-slate-900" style={{ aspectRatio: `${design.width} / ${design.height}` }}>
+        {imgSrc ? <img src={imgSrc} alt={`${name} ID Card`} className="w-full h-full object-contain" /> : <div className="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500 text-xs">Rendering…</div>}
       </div>
       <div className="mt-1.5 flex gap-0.5">
-        <button onClick={onDownload} disabled={!qrDataUrl} className="flex-1 text-[10px] py-1 rounded font-medium border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download as PNG">📥 PNG</button>
-        {onDownloadPDF && <button onClick={onDownloadPDF} disabled={!qrDataUrl} className="flex-1 text-[10px] py-1 rounded font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download as PDF">📄 PDF</button>}
-        {onDownloadQR && <button onClick={onDownloadQR} disabled={!qrDataUrl} className="text-[10px] py-1 px-1.5 rounded font-medium border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download QR only">📱</button>}
+        <button onClick={onDownload} disabled={!qrDataUrl} className="flex-1 text-[10px] py-1 rounded font-medium border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download as PNG">📥 PNG</button>
+        {onDownloadPDF && <button onClick={onDownloadPDF} disabled={!qrDataUrl} className="flex-1 text-[10px] py-1 rounded font-medium border border-red-200 dark:border-red-900 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download as PDF">📄 PDF</button>}
+        {onDownloadQR && <button onClick={onDownloadQR} disabled={!qrDataUrl} className="text-[10px] py-1 px-1.5 rounded font-medium border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download QR only">📱</button>}
       </div>
     </div>
   );

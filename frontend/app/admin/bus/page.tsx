@@ -44,13 +44,13 @@ export default function BusAdminPage() {
 
   return (
     <AuthGuard requiredRole="ADMIN">
-      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Admin Panel" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
         <main className="flex-1 p-6 max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-slate-800">🚌 School Bus Tracking</h1>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">🚌 School Bus Tracking</h1>
             <div className="flex gap-2">
-              <a href="/admin/bus/map" className="border border-sky-600 text-sky-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-50">
+              <a href="/admin/bus/map" className="border border-sky-600 text-sky-600 dark:text-sky-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-sky-50 dark:hover:bg-sky-950/40">
                 Live Map
               </a>
               {tab === 'buses'
@@ -61,7 +61,7 @@ export default function BusAdminPage() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 border-b border-slate-200 mb-6">
+          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 mb-6">
             {(['buses', 'routes'] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
                 className={`px-4 py-2 text-sm font-medium capitalize ${tab === t ? 'border-b-2 border-sky-600 text-sky-600' : 'text-slate-500 hover:text-slate-700'}`}>
@@ -72,37 +72,37 @@ export default function BusAdminPage() {
 
           {/* Buses Tab */}
           {tab === 'buses' && (
-            busLoading ? <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="bg-white h-16 rounded-xl animate-pulse" />)}</div>
+            busLoading ? <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-16 rounded-xl animate-pulse" />)}</div>
             : busError ? (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-                <p className="text-red-600 mb-2">Failed to load buses</p>
-                <button onClick={() => refetchBuses()} className="text-sm text-red-500 underline">Retry</button>
+              <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl p-6 text-center">
+                <p className="text-red-600 dark:text-red-400 mb-2">Failed to load buses</p>
+                <button onClick={() => refetchBuses()} className="text-sm text-red-500 dark:text-red-400 underline">Retry</button>
               </div>
             ) : buses.length === 0 ? (
-              <div className="bg-white rounded-xl p-12 text-center shadow-sm">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center shadow-sm">
                 <p className="text-5xl mb-4">🚌</p>
-                <p className="text-slate-400">No buses configured</p>
-                <button onClick={() => setShowBusForm(true)} className="mt-4 text-sky-600 text-sm underline">Add first bus</button>
+                <p className="text-slate-400 dark:text-slate-500">No buses configured</p>
+                <button onClick={() => setShowBusForm(true)} className="mt-4 text-sky-600 dark:text-sky-400 text-sm underline">Add first bus</button>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {buses.map(bus => (
-                  <div key={bus.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
+                  <div key={bus.id} className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-4 border border-slate-100 dark:border-slate-800">
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="font-bold text-slate-800">{bus.name}</p>
-                        <p className="text-sm text-slate-500">{bus.plateNumber}</p>
-                        <p className="text-xs text-slate-400 mt-1">Capacity: {bus.capacity} seats</p>
-                        {bus.route && <p className="text-xs text-sky-600 mt-1">Route: {bus.route.name}</p>}
+                        <p className="font-bold text-slate-800 dark:text-slate-100">{bus.name}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{bus.plateNumber}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Capacity: {bus.capacity} seats</p>
+                        {bus.route && <p className="text-xs text-sky-600 dark:text-sky-400 mt-1">Route: {bus.route.name}</p>}
                       </div>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLOR[bus.status] ?? ''}`}>
                         {bus.status}
                       </span>
                     </div>
                     <div className="flex gap-2 mt-3">
-                      <a href={`/admin/bus/live/${bus.id}`} className="text-xs text-sky-600 hover:underline">Live</a>
+                      <a href={`/admin/bus/live/${bus.id}`} className="text-xs text-sky-600 dark:text-sky-400 hover:underline">Live</a>
                       <button onClick={() => { if (confirm('Delete bus?')) deleteBus.mutate(bus.id) }}
-                        className="text-xs text-red-500 hover:underline">Delete</button>
+                        className="text-xs text-red-500 dark:text-red-400 hover:underline">Delete</button>
                     </div>
                   </div>
                 ))}
@@ -112,31 +112,31 @@ export default function BusAdminPage() {
 
           {/* Routes Tab */}
           {tab === 'routes' && (
-            routeLoading ? <div className="space-y-2">{[1,2].map(i => <div key={i} className="bg-white h-20 rounded-xl animate-pulse" />)}</div>
+            routeLoading ? <div className="space-y-2">{[1,2].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-20 rounded-xl animate-pulse" />)}</div>
             : routes.length === 0 ? (
-              <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-                <p className="text-slate-400">No routes configured</p>
-                <button onClick={() => setShowRouteForm(true)} className="mt-4 text-sky-600 text-sm underline">Add first route</button>
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center shadow-sm">
+                <p className="text-slate-400 dark:text-slate-500">No routes configured</p>
+                <button onClick={() => setShowRouteForm(true)} className="mt-4 text-sky-600 dark:text-sky-400 text-sm underline">Add first route</button>
               </div>
             ) : (
               <div className="space-y-4">
                 {routes.map(route => (
-                  <div key={route.id} className="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
+                  <div key={route.id} className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-4 border border-slate-100 dark:border-slate-800">
                     <div className="flex items-center justify-between mb-2">
                       <div>
-                        <p className="font-bold text-slate-800">{route.name}</p>
-                        {route.description && <p className="text-sm text-slate-500">{route.description}</p>}
+                        <p className="font-bold text-slate-800 dark:text-slate-100">{route.name}</p>
+                        {route.description && <p className="text-sm text-slate-500 dark:text-slate-400">{route.description}</p>}
                       </div>
                       <button onClick={() => { if (confirm('Delete route?')) deleteRoute.mutate(route.id) }}
-                        className="text-xs text-red-500 hover:underline">Delete</button>
+                        className="text-xs text-red-500 dark:text-red-400 hover:underline">Delete</button>
                     </div>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {route.stops.map((stop, i) => (
-                        <span key={stop.id} className="text-xs bg-slate-100 px-2 py-1 rounded-full text-slate-600">
+                        <span key={stop.id} className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full text-slate-600 dark:text-slate-300">
                           {i + 1}. {stop.name}
                         </span>
                       ))}
-                      {route.stops.length === 0 && <span className="text-xs text-slate-400">No stops</span>}
+                      {route.stops.length === 0 && <span className="text-xs text-slate-400 dark:text-slate-500">No stops</span>}
                     </div>
                   </div>
                 ))}
@@ -166,7 +166,7 @@ function BusFormModal({ routes, onClose, onSuccess }: { routes: Route[]; onClose
   }
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md shadow-xl">
         <h2 className="text-lg font-bold mb-4">Add Bus</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
           <input {...register('name', { required: true })} placeholder="Bus name" className="w-full border rounded-lg px-3 py-2 text-sm" />
@@ -196,7 +196,7 @@ function RouteFormModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
   }
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md shadow-xl">
         <h2 className="text-lg font-bold mb-4">Add Route</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
           <input {...register('name', { required: true })} placeholder="Route name" className="w-full border rounded-lg px-3 py-2 text-sm" />

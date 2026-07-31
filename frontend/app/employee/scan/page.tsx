@@ -242,7 +242,7 @@ export default function EmployeeScanPage() {
 
   return (
     <AuthGuard allowedRoles={['EMPLOYEE', 'ADMIN', 'TEACHER', 'WATTAMAN_REPORTER', 'CLASS_ADMIN']}>
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800">
         <Sidebar
           title={userRole === 'ADMIN' ? 'Admin' : userRole === 'CLASS_ADMIN' ? 'Class Admin' : userRole === 'TEACHER' ? 'Teacher' : userRole === 'WATTAMAN_REPORTER' ? 'Reporter' : 'Employee'}
           subtitle={userName || 'Portal'}
@@ -258,7 +258,7 @@ export default function EmployeeScanPage() {
               <div className="page-header">
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900">{t('scan.title')}</h1>
-                  <p className="text-sm text-slate-500 mt-1">Scan QR code to mark your attendance</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Scan QR code to mark your attendance</p>
                 </div>
               </div>
 
@@ -268,7 +268,7 @@ export default function EmployeeScanPage() {
                   {/* User Info Card */}
                   <div className="card p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-14 h-14 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 font-bold text-xl overflow-hidden ring-2 ring-teal-200">
+                      <div className="w-14 h-14 rounded-full bg-teal-100 dark:bg-teal-950/40 flex items-center justify-center text-teal-600 dark:text-teal-400 font-bold text-xl overflow-hidden ring-2 ring-teal-200">
                         {userPhoto ? (
                           <img src={userPhoto} alt={userName} className="w-full h-full object-cover" />
                         ) : (
@@ -276,55 +276,55 @@ export default function EmployeeScanPage() {
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-slate-800 truncate">{userName || 'Loading...'}</p>
-                        <p className="text-xs text-slate-500">💼 {t('role.' + (userRole || '').toLowerCase()) || userRole}</p>
-                        {userDepartment && <p className="text-xs text-slate-400">🏢 {userDepartment}</p>}
+                        <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{userName || 'Loading...'}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">💼 {t('role.' + (userRole || '').toLowerCase()) || userRole}</p>
+                        {userDepartment && <p className="text-xs text-slate-400 dark:text-slate-500">🏢 {userDepartment}</p>}
                       </div>
                       <div className="ml-auto flex items-center gap-1.5 shrink-0">
                         <span className={`w-2 h-2 rounded-full ${gpsLocation ? 'bg-teal-500' : 'bg-slate-300'}`} />
-                        <span className="text-xs text-slate-400">{gpsLocation ? 'GPS Active' : 'No GPS'}</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">{gpsLocation ? 'GPS Active' : 'No GPS'}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Success Overlay */}
                   {scanStatus === 'success' && result && (
-                    <div className="card p-6 border-2 border-emerald-400 bg-emerald-50 text-center animate-in fade-in">
-                      <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center text-3xl font-bold mx-auto mb-3 overflow-hidden ring-4 ring-emerald-200">
+                    <div className="card p-6 border-2 border-emerald-400 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 text-center animate-in fade-in">
+                      <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-3xl font-bold mx-auto mb-3 overflow-hidden ring-4 ring-emerald-200">
                         {(result.userPhoto || userPhoto) ? (
                           <img src={result.userPhoto || userPhoto!} alt={result.userName || userName} className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-emerald-600">{(result.userName || userName || '?').charAt(0).toUpperCase()}</span>
+                          <span className="text-emerald-600 dark:text-emerald-400">{(result.userName || userName || '?').charAt(0).toUpperCase()}</span>
                         )}
                       </div>
-                      <h3 className="text-lg font-bold text-slate-800">{result.userName || userName}</h3>
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{result.userName || userName}</h3>
                       <div className="mt-1 space-y-0.5">
                         {(result.userDepartment || userDepartment) && (
-                          <p className="text-sm text-slate-600">🏢 {result.userDepartment?.name || userDepartment}</p>
+                          <p className="text-sm text-slate-600 dark:text-slate-300">🏢 {result.userDepartment?.name || userDepartment}</p>
                         )}
-                        <p className="text-sm text-slate-500">💼 {t('role.' + ((result.userRole || userRole) || '').toLowerCase()) || result.userRole || userRole}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">💼 {t('role.' + ((result.userRole || userRole) || '').toLowerCase()) || result.userRole || userRole}</p>
                       </div>
-                      <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                      <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">
                         ✅ {result.action === 'CHECK_IN' ? 'Check In' : 'Check Out'} — {result.sessionName}
                       </div>
-                      <p className="text-sm text-emerald-600 mt-2">
+                      <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-2">
                         Status: <span className="font-semibold">{result.status}</span>
                       </p>
                       {result.checkInTime && (
-                        <p className="text-sm text-emerald-600 mt-1">Time: {formatTime(result.checkInTime)}</p>
+                        <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">Time: {formatTime(result.checkInTime)}</p>
                       )}
                       {result.checkOutTime && (
-                        <p className="text-sm text-emerald-600 mt-1">Check Out: {formatTime(result.checkOutTime)}</p>
+                        <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">Check Out: {formatTime(result.checkOutTime)}</p>
                       )}
-                      <p className="text-xs text-emerald-500 mt-3">Auto-closing in 5 seconds...</p>
+                      <p className="text-xs text-emerald-500 dark:text-emerald-400 mt-3">Auto-closing in 5 seconds...</p>
                     </div>
                   )}
 
                   {/* Error Message */}
                   {scanStatus === 'error' && error && (
-                    <div className="card p-4 border-2 border-red-300 bg-red-50 text-center">
+                    <div className="card p-4 border-2 border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 text-center">
                       <div className="text-3xl mb-2">❌</div>
-                      <p className="text-red-700 font-medium">{error}</p>
+                      <p className="text-red-700 dark:text-red-300 font-medium">{error}</p>
                       <button onClick={() => { setScanStatus('idle'); setError('') }} className="btn-outline btn-sm mt-3">
                         Try Again
                       </button>
@@ -346,19 +346,19 @@ export default function EmployeeScanPage() {
                           {/* Scan crosshair overlay */}
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <div className="w-52 h-52 rounded-2xl relative">
-                              <div className="absolute -top-0.5 -left-0.5 w-10 h-10 border-t-4 border-l-4 border-teal-400 rounded-tl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
-                              <div className="absolute -top-0.5 -right-0.5 w-10 h-10 border-t-4 border-r-4 border-teal-400 rounded-tr-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
-                              <div className="absolute -bottom-0.5 -left-0.5 w-10 h-10 border-b-4 border-l-4 border-teal-400 rounded-bl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
-                              <div className="absolute -bottom-0.5 -right-0.5 w-10 h-10 border-b-4 border-r-4 border-teal-400 rounded-br-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                              <div className="absolute -top-0.5 -left-0.5 w-10 h-10 border-t-4 border-l-4 border-teal-400 dark:border-teal-700 rounded-tl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                              <div className="absolute -top-0.5 -right-0.5 w-10 h-10 border-t-4 border-r-4 border-teal-400 dark:border-teal-700 rounded-tr-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                              <div className="absolute -bottom-0.5 -left-0.5 w-10 h-10 border-b-4 border-l-4 border-teal-400 dark:border-teal-700 rounded-bl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                              <div className="absolute -bottom-0.5 -right-0.5 w-10 h-10 border-b-4 border-r-4 border-teal-400 dark:border-teal-700 rounded-br-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
                               <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-teal-400 to-transparent drop-shadow-[0_0_8px_rgba(0,201,167,0.6)]" style={{ animation: 'scanLine 2.5s ease-in-out infinite' }} />
                             </div>
                           </div>
                           {/* Scanning indicator */}
                           {scanStatus === 'scanning' && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                              <div className="bg-white rounded-xl p-4 shadow-lg text-center">
+                              <div className="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-lg text-center">
                                 <div className="w-8 h-8 border-3 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                                <p className="text-sm font-medium text-slate-700 mt-2">Recording...</p>
+                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mt-2">Recording...</p>
                               </div>
                             </div>
                           )}
@@ -379,18 +379,18 @@ export default function EmployeeScanPage() {
                         </div>
                       ) : (
                         <div className="p-8 text-center">
-                          <div className="w-20 h-20 rounded-full bg-teal-100 flex items-center justify-center text-4xl mx-auto mb-4">
+                          <div className="w-20 h-20 rounded-full bg-teal-100 dark:bg-teal-950/40 flex items-center justify-center text-4xl mx-auto mb-4">
                             📷
                           </div>
-                          <h3 className="text-lg font-semibold text-slate-800 mb-2">Ready to Scan</h3>
-                          <p className="text-sm text-slate-500 mb-6">
+                          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Ready to Scan</h3>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                             Open your camera and scan the attendance QR code
                           </p>
                         </div>
                       )}
 
                       {/* Action Buttons */}
-                      <div className="p-4 border-t border-slate-100 flex gap-3">
+                      <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex gap-3">
                         {!cameraActive ? (
                           <button onClick={startCamera} className="btn-primary flex-1 py-3 text-base font-semibold">
                             📷 Open Camera
@@ -411,14 +411,14 @@ export default function EmployeeScanPage() {
 
                   {/* Instructions */}
                   <div className="card p-4">
-                    <h3 className="text-sm font-semibold text-slate-700 mb-2">📋 How to scan</h3>
-                    <ol className="text-sm text-slate-500 space-y-1.5 list-decimal list-inside">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">📋 How to scan</h3>
+                    <ol className="text-sm text-slate-500 dark:text-slate-400 space-y-1.5 list-decimal list-inside">
                       <li>Tap <strong>"Open Camera"</strong> to start</li>
                       <li>Point your camera at the attendance QR code</li>
                       <li>Attendance is recorded automatically</li>
                       <li>Wait for the <strong>green confirmation</strong></li>
                     </ol>
-                    <p className="text-xs text-slate-400 mt-3">
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
                       💡 You can also tap <strong>"Quick Scan"</strong> to record without scanning a QR code
                     </p>
                   </div>

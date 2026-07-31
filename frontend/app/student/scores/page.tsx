@@ -96,38 +96,38 @@ export default function StudentScoresPage() {
 
   return (
     <AuthGuard requiredRole="STUDENT">
-      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pb-[72px] lg:pb-0">
         <Sidebar title="Student" subtitle="Portal" navItems={studentNav} accentColor="emerald" />
         <div className="h-14 lg:hidden" />
         <main className="flex-1 p-4 sm:p-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-6">📊 My Scores</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">📊 My Scores</h1>
 
           {isLoading ? (
-            <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="bg-white h-16 rounded-xl animate-pulse" />)}</div>
+            <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-16 rounded-xl animate-pulse" />)}</div>
           ) : isError ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-              <p className="text-red-600 mb-2">Failed to load scores</p>
-              <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl p-6 text-center">
+              <p className="text-red-600 dark:text-red-400 mb-2">Failed to load scores</p>
+              <button onClick={() => refetch()} className="text-sm text-red-500 dark:text-red-400 underline">Retry</button>
             </div>
           ) : scores.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center shadow-sm">
               <p className="text-4xl mb-3">📊</p>
-              <p className="text-slate-400">No graded assignments or exams yet</p>
+              <p className="text-slate-400 dark:text-slate-500">No graded assignments or exams yet</p>
               {pendingExams > 0 && (
-                <p className="text-xs text-amber-600 mt-2">{pendingExams} exam(s) submitted — awaiting teacher grading.</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">{pendingExams} exam(s) submitted — awaiting teacher grading.</p>
               )}
             </div>
           ) : (
             <>
               {avg !== null && (
-                <div className="bg-white rounded-xl shadow-sm p-5 mb-6 flex items-center gap-4 border border-slate-100">
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-5 mb-6 flex items-center gap-4 border border-slate-100 dark:border-slate-800">
                   <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white ${avg >= 70 ? 'bg-emerald-500' : avg >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}>
                     {avg}
                   </div>
                   <div>
-                    <p className="font-bold text-slate-800 text-lg">Overall: {avg}%</p>
-                    <p className="text-sm text-slate-400">
+                    <p className="font-bold text-slate-800 dark:text-slate-100 text-lg">Overall: {avg}%</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500">
                       {assignmentScores.length} assignment(s) · {examScores.length} exam(s) · {Object.keys(bySubject).length} subject(s)
                     </p>
                   </div>
@@ -135,7 +135,7 @@ export default function StudentScoresPage() {
               )}
 
               {pendingExams > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-sm text-amber-800">
+                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl p-3 mb-4 text-sm text-amber-800 dark:text-amber-300">
                   ⏳ {pendingExams} exam(s) submitted — awaiting teacher grading.
                 </div>
               )}
@@ -143,9 +143,9 @@ export default function StudentScoresPage() {
               {Object.entries(bySubject).map(([subject, subjectScores]) => {
                 const subAvg = Math.round(subjectScores.reduce((s, g) => s + (g.marks / g.totalMarks) * 100, 0) / subjectScores.length)
                 return (
-                  <div key={subject} className="bg-white rounded-xl shadow-sm p-4 mb-4 border border-slate-100">
+                  <div key={subject} className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-4 mb-4 border border-slate-100 dark:border-slate-800">
                     <div className="flex items-center justify-between mb-3">
-                      <p className="font-semibold text-slate-700">{subject}</p>
+                      <p className="font-semibold text-slate-700 dark:text-slate-200">{subject}</p>
                       <span className={`text-sm font-bold ${subAvg >= 70 ? 'text-emerald-600' : subAvg >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{subAvg}%</span>
                     </div>
                     <div className="space-y-2">
@@ -154,16 +154,16 @@ export default function StudentScoresPage() {
                         return (
                           <div key={g.id} className="flex items-center gap-3">
                             <div className="w-40 truncate">
-                              <p className="text-xs text-slate-600 truncate">{g.title}</p>
-                              <p className="text-[10px] text-slate-400 uppercase tracking-wide">
+                              <p className="text-xs text-slate-600 dark:text-slate-300 truncate">{g.title}</p>
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide">
                                 {g.kind === 'exam' ? '📝 Exam' : '📚 Assignment'}
                                 {g.status && <span className="ml-1">· {g.status}</span>}
                               </p>
                             </div>
-                            <div className="flex-1 bg-slate-100 rounded-full h-1.5">
+                            <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full h-1.5">
                               <div className={`h-1.5 rounded-full ${pct >= 70 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-400' : 'bg-red-500'}`} style={{ width: `${pct}%` }} />
                             </div>
-                            <p className="text-xs font-semibold text-slate-700 w-14 text-right">{g.marks}/{g.totalMarks}</p>
+                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 w-14 text-right">{g.marks}/{g.totalMarks}</p>
                           </div>
                         )
                       })}

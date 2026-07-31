@@ -101,17 +101,17 @@ export default function AdminClassRegistrationsPage() {
 
   return (
     <AuthGuard requiredRole="CLASS_ADMIN">
-      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Admin" subtitle="Portal" navItems={isClassAdmin ? classAdminNav : adminNav} accentColor="indigo" />
         <main className="flex-1 p-6">
           <div className="mb-4">
-            <Link href="/admin" className="text-xs text-indigo-600 hover:underline">← Dashboard</Link>
-            <h1 className="text-2xl font-bold text-slate-800 mt-2">Class Registrations</h1>
-            <p className="text-sm text-slate-500 mt-1">Approve or reject student self-registration requests submitted from the public registration page.</p>
+            <Link href="/admin" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">← Dashboard</Link>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-2">Class Registrations</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Approve or reject student self-registration requests submitted from the public registration page.</p>
           </div>
 
           {!isClassAdmin && (
-            <div className="flex gap-2 mb-4 border-b border-slate-200">
+            <div className="flex gap-2 mb-4 border-b border-slate-200 dark:border-slate-700">
               {([{ id: 'requests', label: 'Requests' }, { id: 'form', label: 'Form Settings' }] as { id: View; label: string }[]).map(v => (
                 <button
                   key={v.id}
@@ -141,13 +141,13 @@ export default function AdminClassRegistrationsPage() {
           </div>
 
           {isLoading ? (
-            <div className="text-slate-500 text-sm">Loading…</div>
+            <div className="text-slate-500 dark:text-slate-400 text-sm">Loading…</div>
           ) : !data?.length ? (
-            <div className="bg-white border border-slate-100 rounded-xl p-6 text-sm text-slate-500">No registrations.</div>
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-6 text-sm text-slate-500 dark:text-slate-400">No registrations.</div>
           ) : (
-            <div className="bg-white border border-slate-100 rounded-xl overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-600 text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs">
                   <tr>
                     <th className="text-left px-4 py-2">Photo</th>
                     <th className="text-left px-4 py-2">Name</th>
@@ -160,37 +160,37 @@ export default function AdminClassRegistrationsPage() {
                     <th className="text-right px-4 py-2">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {data.map(r => (
-                    <tr key={r.id} className="hover:bg-slate-50">
+                    <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
                       <td className="px-4 py-2">
-                        <div className="w-9 h-9 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center text-xs font-bold text-slate-500">
+                        <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400">
                           {r.photo ? <img src={r.photo} alt={r.nameEn} className="w-full h-full object-cover" /> : r.nameEn.charAt(0).toUpperCase()}
                         </div>
                       </td>
                       <td className="px-4 py-2">
-                        <div className="font-medium text-slate-800">{r.nameEn}</div>
-                        <div className="text-xs text-slate-500">{r.nameKh}</div>
+                        <div className="font-medium text-slate-800 dark:text-slate-100">{r.nameEn}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{r.nameKh}</div>
                       </td>
-                      <td className="px-4 py-2 text-slate-600">{r.class?.name ?? '—'}</td>
-                      <td className="px-4 py-2 text-slate-700">{r.email}</td>
-                      <td className="px-4 py-2 text-slate-600">{r.phone}</td>
+                      <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{r.class?.name ?? '—'}</td>
+                      <td className="px-4 py-2 text-slate-700 dark:text-slate-200">{r.email}</td>
+                      <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{r.phone}</td>
                       <td className="px-4 py-2">
                         {r.generatedPassword ? (
-                          <span className="inline-flex items-center gap-1 font-mono text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded px-1.5 py-0.5" title="Auto-generated — share this with the student">
+                          <span className="inline-flex items-center gap-1 font-mono text-xs bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900 rounded px-1.5 py-0.5" title="Auto-generated — share this with the student">
                             🔑 {r.generatedPassword}
                           </span>
                         ) : (
                           <span className="text-xs text-slate-300">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-2 text-xs text-slate-500">{new Date(r.createdAt).toLocaleString()}</td>
+                      <td className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400">{new Date(r.createdAt).toLocaleString()}</td>
                       <td className="px-4 py-2">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded ${r.status === 'PENDING' ? 'bg-amber-100 text-amber-800' : r.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
                           {r.status}
                         </span>
                         {r.status === 'REJECTED' && r.rejectReason && (
-                          <div className="text-xs text-red-600 mt-1">{r.rejectReason}</div>
+                          <div className="text-xs text-red-600 dark:text-red-400 mt-1">{r.rejectReason}</div>
                         )}
                       </td>
                       <td className="px-4 py-2 text-right">
@@ -212,9 +212,9 @@ export default function AdminClassRegistrationsPage() {
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-400">—</span>
+                          <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
                         )}
-                        {errorMap[r.id] && <div className="text-xs text-red-600 mt-1">{errorMap[r.id]}</div>}
+                        {errorMap[r.id] && <div className="text-xs text-red-600 dark:text-red-400 mt-1">{errorMap[r.id]}</div>}
                       </td>
                     </tr>
                   ))}
@@ -234,9 +234,9 @@ const MODE_LABELS: Record<FieldMode, string> = { REQUIRED: 'Required', OPTIONAL:
 
 function ModeToggle({ label, value, onChange, disableHidden }: { label: string; value: FieldMode; onChange: (m: FieldMode) => void; disableHidden?: boolean }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3 border-b border-slate-100 last:border-0">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+    <div className="flex items-center justify-between gap-4 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
+      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{label}</span>
+      <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
         {(['REQUIRED', 'OPTIONAL', 'HIDDEN'] as FieldMode[]).map(m => {
           const disabled = m === 'HIDDEN' && disableHidden && value !== 'HIDDEN'
           return (
@@ -258,9 +258,9 @@ function ModeToggle({ label, value, onChange, disableHidden }: { label: string; 
 
 function LockedFieldRow({ label, note }: { label: string; note?: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3 border-b border-slate-100 last:border-0">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-400">
+    <div className="flex items-center justify-between gap-4 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
+      <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{label}</span>
+      <span className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
         {note || 'Always required'}
       </span>
     </div>
@@ -432,12 +432,12 @@ function FormSettingsView() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div className="bg-white border border-slate-100 rounded-xl p-4">
-        <h2 className="text-sm font-semibold text-slate-800 mb-1">Built-in fields</h2>
-        <p className="text-xs text-slate-500 mb-2">Listed in the same order students see them. Class and English Name are always required to create a student's account and can't be changed. Email and Phone can each be set independently, but not both Hidden at once — a student needs at least one to log in. If Password isn't Required and a student leaves it blank, one is auto-generated — check the Requests tab to see it.</p>
-        {settingsError && <div className="mb-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{settingsError}</div>}
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">Built-in fields</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Listed in the same order students see them. Class and English Name are always required to create a student's account and can't be changed. Email and Phone can each be set independently, but not both Hidden at once — a student needs at least one to log in. If Password isn't Required and a student leaves it blank, one is auto-generated — check the Requests tab to see it.</p>
+        {settingsError && <div className="mb-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-xs text-red-700 dark:text-red-300">{settingsError}</div>}
         {settingsLoading || !settings ? (
-          <div className="text-sm text-slate-400 py-4">Loading…</div>
+          <div className="text-sm text-slate-400 dark:text-slate-500 py-4">Loading…</div>
         ) : (
           <div>
             <LockedFieldRow label="Class" />
@@ -455,18 +455,18 @@ function FormSettingsView() {
         )}
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-xl p-4">
-        <h2 className="text-sm font-semibold text-slate-800 mb-1">Custom fields</h2>
-        <p className="text-xs text-slate-500 mb-3">Extra fields shown on the registration form, in this order — free text or a choose box with fixed options.</p>
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4">
+        <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">Custom fields</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Extra fields shown on the registration form, in this order — free text or a choose box with fixed options.</p>
 
         {fieldsLoading ? (
-          <div className="text-sm text-slate-400 py-4">Loading…</div>
+          <div className="text-sm text-slate-400 dark:text-slate-500 py-4">Loading…</div>
         ) : fields.length === 0 ? (
-          <div className="text-sm text-slate-400 py-2">No custom fields yet.</div>
+          <div className="text-sm text-slate-400 dark:text-slate-500 py-2">No custom fields yet.</div>
         ) : (
           <ul className="space-y-2 mb-4">
             {fields.map((f, i) => (
-              <li key={f.id} className="border border-slate-200 rounded-lg px-3 py-2">
+              <li key={f.id} className="border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2">
                 {editingFieldId === f.id ? (
                   <div className="space-y-2">
                     <input
@@ -474,12 +474,12 @@ function FormSettingsView() {
                       value={editLabel}
                       onChange={(e) => setEditLabel(e.target.value)}
                       placeholder="Field label"
-                      className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+                      className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm"
                     />
                     <select
                       value={editFieldType}
                       onChange={(e) => setEditFieldType(e.target.value as 'TEXT' | 'SELECT' | 'MULTI_SELECT')}
-                      className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white"
+                      className="border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-900"
                     >
                       <option value="TEXT">Text</option>
                       <option value="SELECT">Choose box (single)</option>
@@ -491,12 +491,12 @@ function FormSettingsView() {
                         value={editOptions}
                         onChange={(e) => setEditOptions(e.target.value)}
                         placeholder="Options, comma-separated — e.g. Online, Class"
-                        className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm"
                       />
                     )}
-                    {editError && <p className="text-xs text-red-600">{editError}</p>}
+                    {editError && <p className="text-xs text-red-600 dark:text-red-400">{editError}</p>}
                     <div className="flex gap-2 justify-end">
-                      <button onClick={() => setEditingFieldId(null)} className="text-xs px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600">Cancel</button>
+                      <button onClick={() => setEditingFieldId(null)} className="text-xs px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300">Cancel</button>
                       <button
                         onClick={() => saveEdit(f.id)}
                         disabled={!editLabel.trim() || updateField.isPending}
@@ -509,33 +509,33 @@ function FormSettingsView() {
                 ) : (
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col">
-                      <button onClick={() => move(i, -1)} disabled={i === 0} className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none">▲</button>
-                      <button onClick={() => move(i, 1)} disabled={i === fields.length - 1} className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none">▼</button>
+                      <button onClick={() => move(i, -1)} disabled={i === 0} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 text-xs leading-none">▲</button>
+                      <button onClick={() => move(i, 1)} disabled={i === fields.length - 1} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 text-xs leading-none">▼</button>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-sm text-slate-800">{f.label}</span>
+                        <span className="text-sm text-slate-800 dark:text-slate-100">{f.label}</span>
                         {f.fieldType === 'SELECT' && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">Choose box</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-medium">Choose box</span>
                         )}
                         {f.fieldType === 'MULTI_SELECT' && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-700 font-medium">Multi-choice</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-medium">Multi-choice</span>
                         )}
                       </div>
                       {(f.fieldType === 'SELECT' || f.fieldType === 'MULTI_SELECT') && (f.options?.length ?? 0) > 0 && (
-                        <p className="text-[11px] text-slate-400 mt-0.5">{f.options!.join(' · ')}</p>
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{f.options!.join(' · ')}</p>
                       )}
                     </div>
-                    <label className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
+                    <label className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 shrink-0">
                       <input type="checkbox" checked={f.required} onChange={(e) => updateField.mutate({ id: f.id, patch: { required: e.target.checked } })} />
                       Required
                     </label>
-                    <label className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
+                    <label className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 shrink-0">
                       <input type="checkbox" checked={f.enabled} onChange={(e) => updateField.mutate({ id: f.id, patch: { enabled: e.target.checked } })} />
                       Enabled
                     </label>
-                    <button onClick={() => startEdit(f)} className="text-xs text-indigo-600 hover:underline shrink-0">Edit</button>
-                    <button onClick={() => setDeleteTarget(f)} className="text-xs text-red-600 hover:underline shrink-0">Delete</button>
+                    <button onClick={() => startEdit(f)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline shrink-0">Edit</button>
+                    <button onClick={() => setDeleteTarget(f)} className="text-xs text-red-600 dark:text-red-400 hover:underline shrink-0">Delete</button>
                   </div>
                 )}
               </li>
@@ -545,26 +545,26 @@ function FormSettingsView() {
 
         <form
           onSubmit={(e) => { e.preventDefault(); if (newLabel.trim()) createField.mutate() }}
-          className="space-y-2 pt-3 border-t border-slate-100"
+          className="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800"
         >
           <input
             type="text"
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
             placeholder="New field label, e.g. Course Study Mode"
-            className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+            className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm"
           />
           <div className="flex items-center gap-2 flex-wrap">
             <select
               value={newFieldType}
               onChange={(e) => setNewFieldType(e.target.value as 'TEXT' | 'SELECT' | 'MULTI_SELECT')}
-              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-white shrink-0"
+              className="border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-900 shrink-0"
             >
               <option value="TEXT">Text</option>
               <option value="SELECT">Choose box (single)</option>
               <option value="MULTI_SELECT">Multi-choice</option>
             </select>
-            <label className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
+            <label className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 shrink-0">
               <input type="checkbox" checked={newRequired} onChange={(e) => setNewRequired(e.target.checked)} />
               Required
             </label>
@@ -582,10 +582,10 @@ function FormSettingsView() {
               value={newOptions}
               onChange={(e) => setNewOptions(e.target.value)}
               placeholder="Options, comma-separated — e.g. Online, Class"
-              className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+              className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm"
             />
           )}
-          {createFieldError && <p className="text-xs text-red-600">{createFieldError}</p>}
+          {createFieldError && <p className="text-xs text-red-600 dark:text-red-400">{createFieldError}</p>}
         </form>
       </div>
 

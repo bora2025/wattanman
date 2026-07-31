@@ -89,14 +89,14 @@ export default function StudentCoursesPage() {
       <div className="mx-auto max-w-6xl p-4 sm:p-6 space-y-6">
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">My Courses</h1>
-            <p className="text-sm text-slate-500">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">My Courses</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Browse courses available to you, plus the ones you’re enrolled in.
             </p>
           </div>
           <Link
             href="/student"
-            className="text-sm text-sky-600 hover:underline self-start sm:self-auto"
+            className="text-sm text-sky-600 dark:text-sky-400 hover:underline self-start sm:self-auto"
           >
             ← Back to dashboard
           </Link>
@@ -108,12 +108,12 @@ export default function StudentCoursesPage() {
             placeholder="Search title, class, category…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
+            className="flex-1 rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
           />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as 'ALL' | CourseStatus)}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
+            className="rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
           >
             <option value="ALL">All statuses</option>
             <option value="PUBLISHED">Published</option>
@@ -124,17 +124,17 @@ export default function StudentCoursesPage() {
         </div>
 
         {isLoading && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <div key={i} className="bg-white h-64 rounded-2xl animate-pulse border border-gray-100" />)}</div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-64 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />)}</div>
         )}
 
         {isError && (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-4 text-sm text-rose-700 dark:text-rose-300">
             {(error as Error)?.message || 'Failed to load courses.'}
           </div>
         )}
 
         {!isLoading && !isError && filtered.length === 0 && (
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <div className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
             <EmptyState icon="📖" message="No courses to show yet." />
           </div>
         )}
@@ -146,7 +146,7 @@ export default function StudentCoursesPage() {
               <Link
                 key={c.id}
                 href={`/student/courses/${c.id}`}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
+                className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
               >
                 {c.coverImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -156,7 +156,7 @@ export default function StudentCoursesPage() {
                     className="h-32 w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-32 items-center justify-center bg-gradient-to-br from-sky-100 to-violet-100 text-slate-400 text-sm">
+                  <div className="flex h-32 items-center justify-center bg-gradient-to-br from-sky-100 to-violet-100 text-slate-400 dark:text-slate-500 text-sm">
                     {c.category || 'Course'}
                   </div>
                 )}
@@ -168,25 +168,25 @@ export default function StudentCoursesPage() {
                       {STATUS_LABEL[c.status]}
                     </span>
                     {enrolled && (
-                      <span className="inline-block rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                      <span className="inline-block rounded bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
                         Enrolled
                       </span>
                     )}
                   </div>
-                  <h2 className="font-semibold text-slate-800 group-hover:text-sky-600">
+                  <h2 className="font-semibold text-slate-800 dark:text-slate-100 group-hover:text-sky-600">
                     {c.title}
                   </h2>
                   {c.description && (
-                    <p className="line-clamp-2 text-sm text-slate-600">{c.description}</p>
+                    <p className="line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{c.description}</p>
                   )}
-                  <div className="mt-auto space-y-1 text-xs text-slate-500">
+                  <div className="mt-auto space-y-1 text-xs text-slate-500 dark:text-slate-400">
                     <div>
-                      <span className="font-medium text-slate-600">Class:</span>{' '}
+                      <span className="font-medium text-slate-600 dark:text-slate-300">Class:</span>{' '}
                       {c.class.name}
                       {c.class.subject ? ` · ${c.class.subject}` : ''}
                     </div>
                     <div>
-                      <span className="font-medium text-slate-600">Teacher:</span>{' '}
+                      <span className="font-medium text-slate-600 dark:text-slate-300">Teacher:</span>{' '}
                       {c.createdBy.name}
                     </div>
                     <div className="flex justify-between">

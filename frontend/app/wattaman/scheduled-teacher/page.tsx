@@ -208,15 +208,15 @@ function EditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-auto overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-3xl mx-auto overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h3 className="text-lg font-bold text-slate-800">Edit Teacher ID Card</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Changes preview instantly on the card</p>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Edit Teacher ID Card</h3>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Changes preview instantly on the card</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100">
+          <button onClick={onClose} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
         </div>
@@ -225,8 +225,8 @@ function EditModal({
         <div className="flex flex-col md:flex-row overflow-auto max-h-[80vh]">
 
           {/* Left: Live card preview */}
-          <div className="md:w-80 flex-shrink-0 bg-slate-50 flex flex-col items-center justify-start gap-4 p-6 border-b md:border-b-0 md:border-r border-slate-100">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide self-start">Card Preview</p>
+          <div className="md:w-80 flex-shrink-0 bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-start gap-4 p-6 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800">
+            <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide self-start">Card Preview</p>
             {/* Scale card to fit the panel */}
             <div style={{ transform: 'scale(0.85)', transformOrigin: 'top center', width: '85.6mm' }}>
               <CardPreview
@@ -241,7 +241,7 @@ function EditModal({
               />
             </div>
             <div className="mt-2 text-center">
-              <p className="text-xs text-slate-400">85.6 × 54 mm (credit card size)</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">85.6 × 54 mm (credit card size)</p>
             </div>
           </div>
 
@@ -250,18 +250,18 @@ function EditModal({
 
             {/* Name */}
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Name</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Name</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="form-label">First Name *</label>
                   <input value={form.firstName} onChange={e => set('firstName', e.target.value)} required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     placeholder="First name" />
                 </div>
                 <div>
                   <label className="form-label">Last Name *</label>
                   <input value={form.lastName} onChange={e => set('lastName', e.target.value)} required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     placeholder="Last name" />
                 </div>
               </div>
@@ -272,7 +272,7 @@ function EditModal({
               <input
                 value={form.khmerName}
                 onChange={e => set('khmerName', e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 placeholder="ឧ. សុខ ដារ៉ា"
                 style={{ fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}
               />
@@ -280,7 +280,7 @@ function EditModal({
 
             {/* Short + Sex */}
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Card Badge</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Card Badge</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="form-label">Short Code *</label>
@@ -289,14 +289,14 @@ function EditModal({
                     onChange={e => set('short', e.target.value.toUpperCase())}
                     maxLength={6}
                     required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     placeholder="e.g. SMITH"
                   />
                 </div>
                 <div>
                   <label className="form-label">Sex</label>
                   <select value={form.sex} onChange={e => set('sex', e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
                     <option value="">— unset —</option>
                     <option value="MALE">Male</option>
                     <option value="FEMALE">Female</option>
@@ -307,7 +307,7 @@ function EditModal({
 
             {/* Card color */}
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Card Color</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Card Color</p>
               <div className="flex flex-wrap gap-2">
                 {COLORS.map(c => (
                   <button
@@ -319,40 +319,40 @@ function EditModal({
                     title={c}
                   />
                 ))}
-                <label className="w-8 h-8 rounded-full border-2 border-slate-200 overflow-hidden cursor-pointer hover:scale-110 transition-all" title="Custom color">
+                <label className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-700 overflow-hidden cursor-pointer hover:scale-110 transition-all" title="Custom color">
                   <input type="color" value={form.color} onChange={e => set('color', e.target.value)} className="opacity-0 w-full h-full cursor-pointer" />
                   <div className="w-8 h-8 -mt-8 rounded-full" style={{ background: COLORS.includes(form.color) ? 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)' : form.color }} />
                 </label>
               </div>
-              <p className="text-xs text-slate-400 mt-1.5">Selected: <span className="font-mono">{form.color}</span></p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">Selected: <span className="font-mono">{form.color}</span></p>
             </div>
 
             {/* Contact */}
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Contact</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Contact</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="form-label">Email</label>
                   <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     placeholder="teacher@school.edu" />
                 </div>
                 <div>
                   <label className="form-label">Phone</label>
                   <input value={form.phone} onChange={e => set('phone', e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     placeholder="+855..." />
                 </div>
               </div>
             </div>
 
-            {error && <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+            {error && <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2">{error}</p>}
           </form>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50">
-          <p className="text-xs text-slate-400">Card updates live as you type</p>
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800">
+          <p className="text-xs text-slate-400 dark:text-slate-500">Card updates live as you type</p>
           <div className="flex gap-2">
             <button type="button" onClick={onClose} className="btn-outline btn-sm">Cancel</button>
             <button type="submit" form="card-edit-form" disabled={saving} className="btn-primary btn-sm min-w-[100px]">
@@ -452,7 +452,7 @@ function ManageTeachersContent() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800">
       <Sidebar title="Admin" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
 
       <main className="flex-1 lg:ml-0">
@@ -465,14 +465,14 @@ function ManageTeachersContent() {
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">Manage Part Time Teacher</h1>
                 <p className="text-sm font-medium mt-0.5" style={{ fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif', color: '#64748b' }}>គ្រូជួលក្រៅម៉ោង</p>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                   {filtered.length} teacher{filtered.length !== 1 ? 's' : ''} · {timetables.length} timetable{timetables.length !== 1 ? 's' : ''}
                 </p>
               </div>
             </div>
 
             {/* Toolbar */}
-            <div className="mx-4 mb-1 bg-white border border-slate-200 rounded-xl shadow-sm flex items-stretch overflow-visible">
+            <div className="mx-4 mb-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm flex items-stretch overflow-visible">
 
               {/* Report */}
               <button
@@ -482,26 +482,26 @@ function ManageTeachersContent() {
                 }}
                 disabled={timetables.length === 0}
                 title="View attendance report"
-                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors rounded-l-xl"
+                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-700 dark:hover:text-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors rounded-l-xl"
               >
                 <IconBarChart size={20} />
                 <span className="text-[10px] font-semibold leading-none tracking-wide uppercase">Report</span>
               </button>
 
-              <div className="w-px bg-slate-100 my-2" />
+              <div className="w-px bg-slate-100 dark:bg-slate-800 my-2" />
 
               {/* ID Cards */}
               <button
                 onClick={() => printCards(filtered.map(t => t.id))}
                 disabled={filtered.length === 0}
                 title="Print ID cards for visible teachers"
-                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-700 dark:hover:text-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <IconIdCard size={20} />
                 <span className="text-[10px] font-semibold leading-none tracking-wide uppercase">ID Cards</span>
               </button>
 
-              <div className="w-px bg-slate-100 my-2" />
+              <div className="w-px bg-slate-100 dark:bg-slate-800 my-2" />
 
               {/* Teacher dropdown */}
               <div className="relative" ref={teacherMenuRef}>
@@ -521,11 +521,11 @@ function ManageTeachersContent() {
                   </span>
                 </button>
                 {teacherMenuOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-200 z-30 py-1 overflow-hidden">
+                  <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 z-30 py-1 overflow-hidden">
                     <Link
                       href="/admin/timetable/teachers"
                       onClick={() => setTeacherMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                     >
                       <IconUsers size={15} />
                       List
@@ -537,16 +537,16 @@ function ManageTeachersContent() {
                         setTeacherMenuOpen(false)
                       }}
                       disabled={filtered.length === 0}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <IconEdit size={15} />
                       Edit
                     </button>
-                    <div className="h-px bg-slate-100 my-1" />
+                    <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
                     <Link
                       href={`/admin/timetable/classes${timetableFilter !== 'ALL' ? '?timetableId=' + timetableFilter : ''}`}
                       onClick={() => setTeacherMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                     >
                       <IconCalendar size={15} />
                       Class
@@ -554,7 +554,7 @@ function ManageTeachersContent() {
                     <Link
                       href={`/admin/timetable/lessons${timetableFilter !== 'ALL' ? '?timetableId=' + timetableFilter : ''}`}
                       onClick={() => setTeacherMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                     >
                       <IconBook size={15} />
                       Lesson
@@ -563,7 +563,7 @@ function ManageTeachersContent() {
                 )}
               </div>
 
-              <div className="w-px bg-slate-100 my-2" />
+              <div className="w-px bg-slate-100 dark:bg-slate-800 my-2" />
 
               {/* Print attendance */}
               <button
@@ -573,7 +573,7 @@ function ManageTeachersContent() {
                   window.open(url, '_blank')
                 }}
                 title="Print attendance report"
-                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors rounded-r-xl"
+                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors rounded-r-xl"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6 9 6 2 18 2 18 9" />
@@ -622,7 +622,7 @@ function ManageTeachersContent() {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search name, short code, email..."
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm w-64"
+                  className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm w-64"
                 />
                 {timetableFilter !== 'ALL' && (
                   <Link
@@ -642,8 +642,8 @@ function ManageTeachersContent() {
               ) : teachers.length === 0 ? (
                 <div className="card p-12 text-center">
                   <p className="text-4xl mb-3">No teachers found</p>
-                  <p className="font-semibold text-slate-600">No scheduled teachers</p>
-                  <p className="text-sm text-slate-400 mt-1">Add teachers to a timetable first.</p>
+                  <p className="font-semibold text-slate-600 dark:text-slate-300">No scheduled teachers</p>
+                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Add teachers to a timetable first.</p>
                 </div>
               ) : (
                 <div className="card">
@@ -672,13 +672,13 @@ function ManageTeachersContent() {
                                 >
                                   {teacher.short.charAt(0)}
                                 </div>
-                                <span className="font-medium text-slate-800">{teacher.name}</span>
+                                <span className="font-medium text-slate-800 dark:text-slate-100">{teacher.name}</span>
                               </div>
                             </td>
                             <td>
                               <span className="badge-gray font-mono text-xs">{teacher.short}</span>
                             </td>
-                            <td className="text-slate-500">
+                            <td className="text-slate-500 dark:text-slate-400">
                               <div className="flex items-center gap-1.5">
                                 {teacher.timetableName}
                                 <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${teacher.timetableStatus === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
@@ -686,12 +686,12 @@ function ManageTeachersContent() {
                                 </span>
                               </div>
                             </td>
-                            <td className="text-slate-500">
+                            <td className="text-slate-500 dark:text-slate-400">
                               {teacher.sex === 'MALE' ? 'Male' : teacher.sex === 'FEMALE' ? 'Female' : '—'}
                             </td>
-                            <td className="text-slate-500">{teacher.email || '—'}</td>
-                            <td className="text-slate-500">{teacher.phone || '—'}</td>
-                            <td className="text-slate-500">{teacher.weeklyLessons}</td>
+                            <td className="text-slate-500 dark:text-slate-400">{teacher.email || '—'}</td>
+                            <td className="text-slate-500 dark:text-slate-400">{teacher.phone || '—'}</td>
+                            <td className="text-slate-500 dark:text-slate-400">{teacher.weeklyLessons}</td>
                             <td>
                               <div className="flex gap-1">
                                 <button onClick={() => setEditTeacher(teacher)} className="btn-outline btn-sm">Edit</button>
@@ -703,7 +703,7 @@ function ManageTeachersContent() {
                         ))}
                         {filtered.length === 0 && (
                           <tr>
-                            <td colSpan={8} className="text-center text-slate-400 py-8">No teachers match your search.</td>
+                            <td colSpan={8} className="text-center text-slate-400 dark:text-slate-500 py-8">No teachers match your search.</td>
                           </tr>
                         )}
                       </tbody>

@@ -436,19 +436,19 @@ export default function AdminReports() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">{t('reports.title')}</h1>
-          <p className="text-sm text-slate-500 mt-1">{t('reports.cambodiaTime')}</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('reports.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('reports.cambodiaTime')}</p>
         </div>
         <div className="page-body space-y-4 lg:space-y-6">
           {/* Controls */}
           <div className="card p-3 sm:p-4">
             <div className="space-y-3 lg:space-y-0 lg:flex lg:flex-wrap lg:gap-4 lg:items-end">
               <div className="w-full lg:w-auto">
-                <label className="block text-xs font-medium text-slate-500 mb-1">{t('common.class')}</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('common.class')}</label>
                 <select
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="w-full lg:w-auto rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  className="w-full lg:w-auto rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 >
                   {classes.map(cls => (
                     <option key={cls.id} value={cls.id}>{cls.name} — {cls.subject || 'N/A'}</option>
@@ -456,17 +456,17 @@ export default function AdminReports() {
                 </select>
               </div>
               <div className="w-full lg:w-auto">
-                <label className="block text-xs font-medium text-slate-500 mb-1">{t('common.date')}</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('common.date')}</label>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => goDay(-1)} className="px-3 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm flex-shrink-0">◀</button>
+                  <button onClick={() => goDay(-1)} className="px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm flex-shrink-0">◀</button>
                   <input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="flex-1 lg:flex-none rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    className="flex-1 lg:flex-none rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                   />
-                  <button onClick={() => goDay(1)} className="px-3 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm flex-shrink-0">▶</button>
-                  <button onClick={() => setSelectedDate(todayCambodia())} className="px-3 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm flex-shrink-0 whitespace-nowrap">
+                  <button onClick={() => goDay(1)} className="px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm flex-shrink-0">▶</button>
+                  <button onClick={() => setSelectedDate(todayCambodia())} className="px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm flex-shrink-0 whitespace-nowrap">
                     📅 {t('common.today')}
                   </button>
                 </div>
@@ -480,7 +480,7 @@ export default function AdminReports() {
                 </button>
               </div>
             </div>
-            <p className="mt-2 text-xs sm:text-sm font-medium text-slate-700">{dayLabel} — {selectedClassName}</p>
+            <p className="mt-2 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200">{dayLabel} — {selectedClassName}</p>
           </div>
 
           {/* Class Config Info Card */}
@@ -489,7 +489,7 @@ export default function AdminReports() {
               <div className="space-y-3 lg:space-y-0 lg:flex lg:flex-wrap lg:items-center lg:gap-4">
                 {/* Attendance Format Badge */}
                 <div className="flex items-center gap-3 lg:block">
-                  <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold lg:mb-1">{t('reports.attendanceFormat')}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 font-semibold lg:mb-1">{t('reports.attendanceFormat')}</p>
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold ${classPreset.color}`}>
                     <span>{classPreset.icon}</span> {classPreset.name}
                   </span>
@@ -497,16 +497,16 @@ export default function AdminReports() {
 
                 {/* Session Time Ranges */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1.5">{t('reports.sessionTimes')}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 font-semibold mb-1.5">{t('reports.sessionTimes')}</p>
                   <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
                     {activeSessions.map(sd => {
                       const cfg = sessionConfigs.find(c => c.session === sd.session)
                       if (!cfg) return null
                       return (
-                        <span key={sd.session} className="inline-flex items-center gap-1 text-[11px] sm:text-xs px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600">
+                        <span key={sd.session} className="inline-flex items-center gap-1 text-[11px] sm:text-xs px-2 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
                           <span className="font-medium">{cfg.type === 'CHECK_OUT' ? '🔴' : '🟢'}</span>
                           <span className="font-semibold">{cfg.type === 'CHECK_OUT' ? t('common.checkOut') : t('common.checkIn')}</span>
-                          <span className="text-slate-400">{cfg.startTime}–{cfg.endTime}</span>
+                          <span className="text-slate-400 dark:text-slate-500">{cfg.startTime}–{cfg.endTime}</span>
                         </span>
                       )
                     })}
@@ -516,7 +516,7 @@ export default function AdminReports() {
                 {/* Weekly Schedule Strip */}
                 {weeklySchedule && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1.5">{t('reports.weeklySchedule')}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 font-semibold mb-1.5">{t('reports.weeklySchedule')}</p>
                     <div className="flex gap-1">
                       {DAYS_OF_WEEK.map(day => {
                         const fmt = weeklySchedule[day.key] || 'same'
@@ -539,7 +539,7 @@ export default function AdminReports() {
                 {/* Today's Format Indicator */}
                 {todayDayFormat && todayDayFormat !== 'same' && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold mb-1">{t('reports.todayFormat')}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 font-semibold mb-1">{t('reports.todayFormat')}</p>
                     <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${DAY_FORMAT_STYLES[todayDayFormat]?.bg || 'bg-slate-100 text-slate-600'}`}>
                       {DAY_FORMAT_STYLES[todayDayFormat]?.icon} {DAY_FORMAT_STYLES[todayDayFormat]?.label || todayDayFormat}
                     </span>
@@ -550,14 +550,14 @@ export default function AdminReports() {
           )}
 
           {isHolidayDate && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
               <span className="text-lg">📅</span>
               <span dangerouslySetInnerHTML={{ __html: t('reports.holidayNotice') }} />
             </div>
           )}
 
           {isScheduleDayOff && !isHolidayDate && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium flex items-center justify-between gap-2">
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-xl px-4 py-3 text-sm font-medium flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-lg shrink-0">🚫</span>
                 <span dangerouslySetInnerHTML={{ __html: `${t('reports.scheduledDayOff')} <strong>${selectedClassName}</strong> ${t('reports.perWeeklySchedule')}` }} />
@@ -569,11 +569,11 @@ export default function AdminReports() {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">{error}</div>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-xl px-4 py-3 text-sm font-medium">{error}</div>
           )}
 
           {/* Tabs */}
-          <div className="flex overflow-x-auto border-b border-slate-200 -mx-1 px-1 scrollbar-hide">
+          <div className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-700 -mx-1 px-1 scrollbar-hide">
             {(['daily', 'weekly', 'monthly', 'yearly'] as const).map(tab => (
               <button
                 key={tab}
@@ -591,7 +591,7 @@ export default function AdminReports() {
             <div className="card p-12">
               <div className="empty-state">
                 <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <p className="text-sm text-slate-500 mt-3">Loading…</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
               </div>
             </div>
           ) : activeTab === 'daily' ? (
@@ -599,26 +599,26 @@ export default function AdminReports() {
               {/* Day stats */}
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
                 <div className="stat-card col-span-3 sm:col-span-1"><p className="stat-label">{t('reports.totalStudents')}</p><p className="stat-value">{totalStudents}</p></div>
-                <div className="stat-card"><p className="stat-label">{t('common.present')}</p><p className="stat-value text-emerald-600">{dailyPresent}</p></div>
-                <div className="stat-card"><p className="stat-label">{t('reports.presentLate')}</p><p className="stat-value text-amber-600">{dailyLate}</p></div>
-                <div className="stat-card"><p className="stat-label">{t('common.absent')}</p><p className="stat-value text-red-600">{dailyAbsent}</p></div>
-                <div className="stat-card"><p className="stat-label">{t('common.permission')}</p><p className="stat-value text-purple-600">{dailyPermission}</p></div>
+                <div className="stat-card"><p className="stat-label">{t('common.present')}</p><p className="stat-value text-emerald-600 dark:text-emerald-400">{dailyPresent}</p></div>
+                <div className="stat-card"><p className="stat-label">{t('reports.presentLate')}</p><p className="stat-value text-amber-600 dark:text-amber-400">{dailyLate}</p></div>
+                <div className="stat-card"><p className="stat-label">{t('common.absent')}</p><p className="stat-value text-red-600 dark:text-red-400">{dailyAbsent}</p></div>
+                <div className="stat-card"><p className="stat-label">{t('common.permission')}</p><p className="stat-value text-purple-600 dark:text-purple-400">{dailyPermission}</p></div>
               </div>
 
               {grid.length === 0 ? (
                 <div className="card p-12">
                   <div className="empty-state">
                     <p className="text-4xl mb-3">📊</p>
-                    <p className="font-semibold text-slate-600">{t('reports.noAttendanceData')}</p>
-                    <p className="text-sm text-slate-400 mt-1">{t('reports.noRecordsDay')}</p>
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">{t('reports.noAttendanceData')}</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('reports.noRecordsDay')}</p>
                   </div>
                 </div>
               ) : (
                 <div className="card overflow-hidden">
                   <div className="overflow-x-auto -mx-0">
                     <table className="w-full text-xs sm:text-sm">
-                      <thead className="bg-slate-50">
-                        <tr className="text-left text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide">
+                      <thead className="bg-slate-50 dark:bg-slate-800">
+                        <tr className="text-left text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold hidden sm:table-cell">{t('common.day')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.id')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.studentName')}</th>
@@ -628,7 +628,7 @@ export default function AdminReports() {
                             return (
                               <th key={sd.session} className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center">
                                 <div className="text-[10px] sm:text-xs">{cfg?.type === 'CHECK_OUT' ? t('common.checkOut') : t('common.checkIn')}</div>
-                                <div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 hidden sm:block">{getSessionLabel(sd.session)}</div>
+                                <div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 dark:text-slate-500 hidden sm:block">{getSessionLabel(sd.session)}</div>
                                 {cfg && <div className="text-[8px] sm:text-[9px] normal-case font-normal text-slate-300 hidden sm:block">{cfg.startTime}–{cfg.endTime}</div>}
                               </th>
                             )
@@ -639,12 +639,12 @@ export default function AdminReports() {
                       <tbody>
                         {grid.map((row) => (
                           <tr key={row.studentId} className={`border-t border-slate-100 ${row.dayOff ? 'bg-red-50/40' : 'hover:bg-slate-50'}`}>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-500 text-[10px] sm:text-xs hidden sm:table-cell">
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs hidden sm:table-cell">
                               {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
                             </td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 font-mono text-[10px] sm:text-xs">{row.studentNumber}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 font-medium text-xs sm:text-sm">{row.studentName}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 text-[10px] sm:text-xs hidden sm:table-cell">{row.address || '—'}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 dark:text-slate-300 font-mono text-[10px] sm:text-xs">{row.studentNumber}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 dark:text-slate-100 font-medium text-xs sm:text-sm">{row.studentName}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 dark:text-slate-300 text-[10px] sm:text-xs hidden sm:table-cell">{row.address || '—'}</td>
                             {activeSessions.map(sd => (
                               <SessionCell key={sd.session} time={(row as any)[sd.field]} status={(row as any)[sd.statusField]} />
                             ))}
@@ -652,9 +652,9 @@ export default function AdminReports() {
                               {(() => {
                                 const label = getRowPermissionLabel(row)
                                 return label ? (
-                                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">📋 {label}</span>
+                                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300">📋 {label}</span>
                                 ) : (
-                                  <span className="text-[10px] sm:text-xs text-slate-400">—</span>
+                                  <span className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">—</span>
                                 )
                               })()}
                             </td>
@@ -673,8 +673,8 @@ export default function AdminReports() {
                 <div className="card p-12">
                   <div className="empty-state">
                     <p className="text-4xl mb-3">📊</p>
-                    <p className="font-semibold text-slate-600">{t('common.noData')}</p>
-                    <p className="text-sm text-slate-400 mt-1">{t('reports.selectClassTotals')}</p>
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">{t('common.noData')}</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('reports.selectClassTotals')}</p>
                   </div>
                 </div>
               ) : (() => {
@@ -682,16 +682,16 @@ export default function AdminReports() {
                 const periodLabel = activeTab === 'weekly' ? t('reports.weekly') : activeTab === 'monthly' ? t('reports.monthly') : t('reports.yearly');
                 return (
                   <div className="card overflow-hidden">
-                    <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border-b border-slate-200">
-                      <h3 className="text-xs sm:text-sm font-semibold text-slate-700">{periodLabel} {t('reports.attendanceTotals')}</h3>
+                    <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                      <h3 className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">{periodLabel} {t('reports.attendanceTotals')}</h3>
                     </div>
                     <div className="overflow-x-auto">
                       {(() => {
                         const hasFormatRules = totals.length > 0 && totals[0][periodKey].convertedAbsentFromPermission !== undefined && (totals[0][periodKey].convertedAbsentFromPermission! > 0 || totals[0][periodKey].convertedAbsentHalfFromLate! > 0 || totals.some(r => (r[periodKey].convertedAbsentFromPermission || 0) > 0 || (r[periodKey].convertedAbsentHalfFromLate || 0) > 0));
                         return (
                       <table className="w-full text-xs sm:text-sm">
-                        <thead className="bg-slate-50">
-                          <tr className="text-left text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide">
+                        <thead className="bg-slate-50 dark:bg-slate-800">
+                          <tr className="text-left text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                             <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.id')}</th>
                             <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.name')}</th>
                             <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center">{t('reports.totalPresent')}</th>
@@ -700,39 +700,39 @@ export default function AdminReports() {
                             <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center">{t('reports.totalPermission')}</th>
                             {hasFormatRules && (
                               <>
-                                <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center text-orange-600 text-[10px] sm:text-xs">Perm→Absent</th>
-                                <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center text-orange-600 text-[10px] sm:text-xs">Late→½Absent</th>
+                                <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center text-orange-600 dark:text-orange-400 text-[10px] sm:text-xs">Perm→Absent</th>
+                                <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center text-orange-600 dark:text-orange-400 text-[10px] sm:text-xs">Late→½Absent</th>
                               </>
                             )}
                           </tr>
                         </thead>
                         <tbody>
                           {totals.map(row => (
-                            <tr key={row.studentId} className="border-t border-slate-100 hover:bg-slate-50">
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 font-mono text-[10px] sm:text-xs">{row.studentNumber}</td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 font-medium text-xs sm:text-sm">{row.studentName}</td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 font-semibold">{row[periodKey].present}</td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 font-semibold">{row[periodKey].late || 0}</td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 font-semibold">{row[periodKey].absent}</td>
-                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 font-semibold">{row[periodKey].dayOff || 0}</td>
+                            <tr key={row.studentId} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 dark:text-slate-300 font-mono text-[10px] sm:text-xs">{row.studentNumber}</td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 dark:text-slate-100 font-medium text-xs sm:text-sm">{row.studentName}</td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 dark:text-emerald-300 font-semibold">{row[periodKey].present}</td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 dark:text-amber-400 font-semibold">{row[periodKey].late || 0}</td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 dark:text-red-400 font-semibold">{row[periodKey].absent}</td>
+                              <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 dark:text-purple-400 font-semibold">{row[periodKey].dayOff || 0}</td>
                               {hasFormatRules && (
                                 <>
-                                  <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-700 font-semibold">{row[periodKey].convertedAbsentFromPermission || 0}</td>
-                                  <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-600 font-semibold">{row[periodKey].convertedAbsentHalfFromLate || 0}</td>
+                                  <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-700 dark:text-orange-300 font-semibold">{row[periodKey].convertedAbsentFromPermission || 0}</td>
+                                  <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-600 dark:text-orange-400 font-semibold">{row[periodKey].convertedAbsentHalfFromLate || 0}</td>
                                 </>
                               )}
                             </tr>
                           ))}
-                          <tr className="border-t-2 border-slate-300 bg-slate-50 font-bold text-slate-700">
+                          <tr className="border-t-2 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">
                             <td className="px-2 sm:px-3 py-2 sm:py-2.5" colSpan={2}>{t('common.total')}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700">{totals.reduce((s, r) => s + r[periodKey].present, 0)}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600">{totals.reduce((s, r) => s + (r[periodKey].late || 0), 0)}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600">{totals.reduce((s, r) => s + r[periodKey].absent, 0)}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600">{totals.reduce((s, r) => s + (r[periodKey].dayOff || 0), 0)}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 dark:text-emerald-300">{totals.reduce((s, r) => s + r[periodKey].present, 0)}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 dark:text-amber-400">{totals.reduce((s, r) => s + (r[periodKey].late || 0), 0)}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 dark:text-red-400">{totals.reduce((s, r) => s + r[periodKey].absent, 0)}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 dark:text-purple-400">{totals.reduce((s, r) => s + (r[periodKey].dayOff || 0), 0)}</td>
                             {hasFormatRules && (
                               <>
-                                <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-700">{totals.reduce((s, r) => s + (r[periodKey].convertedAbsentFromPermission || 0), 0)}</td>
-                                <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-600">{totals.reduce((s, r) => s + (r[periodKey].convertedAbsentHalfFromLate || 0), 0)}</td>
+                                <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-700 dark:text-orange-300">{totals.reduce((s, r) => s + (r[periodKey].convertedAbsentFromPermission || 0), 0)}</td>
+                                <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-orange-600 dark:text-orange-400">{totals.reduce((s, r) => s + (r[periodKey].convertedAbsentHalfFromLate || 0), 0)}</td>
                               </>
                             )}
                           </tr>
@@ -805,24 +805,24 @@ function ExportReportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-white rounded-t-2xl">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-indigo-50 to-white rounded-t-2xl">
           <div>
-            <h2 className="text-lg font-bold text-slate-800">📊 {t('reports.exportAttendanceReport')}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">{t('reports.selectPeriodDownload')}</p>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">📊 {t('reports.exportAttendanceReport')}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('reports.selectPeriodDownload')}</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm">✕</button>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 flex items-center justify-center text-slate-500 dark:text-slate-400 text-sm">✕</button>
         </div>
 
         <div className="p-6 space-y-5">
           {/* Class Selector */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📖 {t('common.class')}</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📖 {t('common.class')}</label>
             <select
               value={exportClassId}
               onChange={e => setExportClassId(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-slate-900"
             >
               <option value="">{t('reports.allClasses')} ({classes.length})</option>
               {classes.map(cls => (
@@ -833,7 +833,7 @@ function ExportReportModal({
 
           {/* Period Selector */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📋 {t('reports.reportPeriod')}</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📋 {t('reports.reportPeriod')}</label>
             <div className="grid grid-cols-2 gap-2">
               {periodOptions.map(opt => (
                 <button
@@ -848,7 +848,7 @@ function ExportReportModal({
                   <span className="text-lg">{opt.icon}</span>
                   <div>
                     <div className={`text-sm font-semibold ${exportPeriod === opt.value ? 'text-indigo-700' : 'text-slate-700'}`}>{opt.label}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">{opt.desc}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{opt.desc}</div>
                   </div>
                 </button>
               ))}
@@ -857,31 +857,31 @@ function ExportReportModal({
 
           {/* Date Picker */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📆 {t('common.date')}</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📆 {t('common.date')}</label>
             <input
               type="date"
               value={exportDate}
               onChange={e => setExportDate(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
             />
           </div>
 
           {/* Preview/Summary */}
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-2">
-            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400">{t('reports.exportPreview')}</h4>
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2">
+            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">{t('reports.exportPreview')}</h4>
             <div className="grid grid-cols-2 gap-y-1.5 text-sm">
-              <span className="text-slate-500">{t('common.class')}:</span>
-              <span className="font-medium text-slate-800">{selectedClassName}</span>
-              <span className="text-slate-500">{t('common.date')}:</span>
-              <span className="font-medium text-slate-800">{exportDate}</span>
-              <span className="text-slate-500">{t('reports.reportPeriod')}:</span>
-              <span className="font-medium text-indigo-600 capitalize">{exportPeriod}</span>
-              <span className="text-slate-500">{t('reports.format')}:</span>
-              <span className="font-medium text-indigo-600">XLSX</span>
+              <span className="text-slate-500 dark:text-slate-400">{t('common.class')}:</span>
+              <span className="font-medium text-slate-800 dark:text-slate-100">{selectedClassName}</span>
+              <span className="text-slate-500 dark:text-slate-400">{t('common.date')}:</span>
+              <span className="font-medium text-slate-800 dark:text-slate-100">{exportDate}</span>
+              <span className="text-slate-500 dark:text-slate-400">{t('reports.reportPeriod')}:</span>
+              <span className="font-medium text-indigo-600 dark:text-indigo-400 capitalize">{exportPeriod}</span>
+              <span className="text-slate-500 dark:text-slate-400">{t('reports.format')}:</span>
+              <span className="font-medium text-indigo-600 dark:text-indigo-400">XLSX</span>
               {!exportClassId && (
                 <>
-                  <span className="text-slate-500">{t('reports.files')}:</span>
-                  <span className="font-medium text-indigo-600">{classes.length} XLSX {t('reports.files')}</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('reports.files')}:</span>
+                  <span className="font-medium text-indigo-600 dark:text-indigo-400">{classes.length} XLSX {t('reports.files')}</span>
                 </>
               )}
             </div>
@@ -898,7 +898,7 @@ function ExportReportModal({
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-1">
-            <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+            <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
               {t('common.cancel')}
             </button>
             <button
@@ -927,7 +927,7 @@ function SessionCell({ time, status }: { time: string | null; status: string | n
     return <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center"><span className="text-[10px] sm:text-xs text-red-400">✗</span></td>
   }
   if (status === 'DAY_OFF' || status === 'PERMISSION') {
-    return <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center"><span className="text-[10px] sm:text-xs text-purple-500 font-medium">🏖</span></td>
+    return <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center"><span className="text-[10px] sm:text-xs text-purple-500 dark:text-purple-400 font-medium">🏖</span></td>
   }
   return (
     <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center">
@@ -937,7 +937,7 @@ function SessionCell({ time, status }: { time: string | null; status: string | n
         {time || '✓'}
       </span>
       {status === 'LATE' && (
-        <div className="text-[9px] sm:text-[10px] text-amber-500 font-medium">Late</div>
+        <div className="text-[9px] sm:text-[10px] text-amber-500 dark:text-amber-400 font-medium">Late</div>
       )}
     </td>
   )
@@ -1054,24 +1054,24 @@ function PrintReportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-white rounded-t-2xl">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-emerald-50 to-white rounded-t-2xl">
           <div>
-            <h2 className="text-lg font-bold text-slate-800">🖨️ {t('reports.printAttendanceReport')}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">{t('reports.selectOptionsAndPrint')}</p>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">🖨️ {t('reports.printAttendanceReport')}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('reports.selectOptionsAndPrint')}</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm">✕</button>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 flex items-center justify-center text-slate-500 dark:text-slate-400 text-sm">✕</button>
         </div>
 
         <div className="p-6 space-y-5">
           {/* Class Selector */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📖 {t('common.class')}</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📖 {t('common.class')}</label>
             <select
               value={printClassId}
               onChange={e => setPrintClassId(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white dark:bg-slate-900"
             >
               <option value="">— {t('common.class')} —</option>
               {classes.map(cls => (
@@ -1082,7 +1082,7 @@ function PrintReportModal({
 
           {/* Period Selector */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📋 {t('reports.reportPeriod')}</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📋 {t('reports.reportPeriod')}</label>
             <div className="grid grid-cols-3 gap-2">
               {periodOptions.map(opt => (
                 <button
@@ -1105,32 +1105,32 @@ function PrintReportModal({
           {printPeriod === 'custom' ? (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('reports.startDate')}</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">{t('reports.startDate')}</label>
                 <input
                   type="date"
                   value={printStartDate}
                   onChange={e => setPrintStartDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('reports.endDate')}</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">{t('reports.endDate')}</label>
                 <input
                   type="date"
                   value={printEndDate}
                   onChange={e => setPrintEndDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                 />
               </div>
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">📆 {t('common.date')}</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📆 {t('common.date')}</label>
               <input
                 type="date"
                 value={printDate}
                 onChange={e => setPrintDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
               />
               {printPeriod === 'yearly' && (() => {
                 const base = new Date(printDate + 'T00:00:00Z')
@@ -1139,7 +1139,7 @@ function PrintReportModal({
                 const start = sy?.startDate ? new Date(sy.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : `Jan 1, ${y}`
                 const end = sy?.endDate ? new Date(sy.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : `Dec 31, ${y}`
                 return (
-                  <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5 mt-2">
+                  <p className="text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-lg px-3 py-1.5 mt-2">
                     📅 Study Year {y}{sy?.endDate ? `–${new Date(sy.endDate).getUTCFullYear()}` : ''}: {start} – {end}
                   </p>
                 )
@@ -1149,7 +1149,7 @@ function PrintReportModal({
 
           {/* Paper Size */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">📄 {t('reports.paperSize')}</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📄 {t('reports.paperSize')}</label>
             <div className="flex gap-2">
               {paperOptions.map(opt => (
                 <button
@@ -1162,40 +1162,40 @@ function PrintReportModal({
                   }`}
                 >
                   <div className={`text-sm font-semibold ${paperSize === opt.value ? 'text-emerald-700' : 'text-slate-700'}`}>{opt.label}</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">{opt.desc}</div>
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{opt.desc}</div>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Letter Header Customization */}
-          <div className="space-y-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200">
-            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">📜 Letter Header</h3>
+          <div className="space-y-3 p-4 bg-amber-50/50 rounded-xl border border-amber-200 dark:border-amber-900">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">📜 Letter Header</h3>
 
             {/* Logo URL */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Logo URL</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Logo URL</label>
               <input
                 type="text"
                 value={logoUrl}
                 onChange={e => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
               />
             </div>
 
             {/* Spacing below logo */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo (px)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Logo (px)</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={logoGap} onChange={e => setLogoGap(e.target.value)} className="flex-1 accent-emerald-500" />
-                <span className="text-xs text-slate-500 w-8 text-center">{logoGap}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{logoGap}</span>
               </div>
             </div>
 
             {/* Logo Text Lines (below logo) */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Text Below Logo</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Text Below Logo</label>
               <div className="space-y-1.5">
                 {logoTextLines.map((line, idx) => (
                   <div key={idx} className="flex items-center gap-1.5">
@@ -1203,30 +1203,30 @@ function PrintReportModal({
                       type="text"
                       value={line}
                       onChange={e => { const l = [...logoTextLines]; l[idx] = e.target.value; setLogoTextLines(l) }}
-                      className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                      className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                       placeholder={`Line ${idx + 1}`}
                     />
                     {logoTextLines.length > 1 && (
-                      <button onClick={() => setLogoTextLines(logoTextLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-xs">✕</button>
+                      <button onClick={() => setLogoTextLines(logoTextLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 flex items-center justify-center text-xs">✕</button>
                     )}
                   </div>
                 ))}
-                <button onClick={() => setLogoTextLines([...logoTextLines, ''])} className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">+ Add line</button>
+                <button onClick={() => setLogoTextLines([...logoTextLines, ''])} className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium">+ Add line</button>
               </div>
             </div>
 
             {/* Spacing below logo text */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Logo Text (px)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Logo Text (px)</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={logoTextGap} onChange={e => setLogoTextGap(e.target.value)} className="flex-1 accent-emerald-500" />
-                <span className="text-xs text-slate-500 w-8 text-center">{logoTextGap}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{logoTextGap}</span>
               </div>
             </div>
 
             {/* Header Lines */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Header Lines (top → bottom)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Header Lines (top → bottom)</label>
               <div className="space-y-1.5">
                 {headerLines.map((line, idx) => (
                   <div key={idx} className="flex items-center gap-1.5">
@@ -1234,42 +1234,42 @@ function PrintReportModal({
                       type="text"
                       value={line}
                       onChange={e => { const h = [...headerLines]; h[idx] = e.target.value; setHeaderLines(h) }}
-                      className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-center"
+                      className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-center"
                       placeholder={`Line ${idx + 1}`}
                     />
                     {headerLines.length > 1 && (
-                      <button onClick={() => setHeaderLines(headerLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-xs">✕</button>
+                      <button onClick={() => setHeaderLines(headerLines.filter((_, i) => i !== idx))} className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 flex items-center justify-center text-xs">✕</button>
                     )}
                   </div>
                 ))}
-                <button onClick={() => setHeaderLines([...headerLines, ''])} className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">+ Add line</button>
+                <button onClick={() => setHeaderLines([...headerLines, ''])} className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium">+ Add line</button>
               </div>
             </div>
 
             {/* Spacing below header lines */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Spacing Below Header Lines (px)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Header Lines (px)</label>
               <div className="flex items-center gap-2">
                 <input type="range" min="0" max="20" step="1" value={headerGap} onChange={e => setHeaderGap(e.target.value)} className="flex-1 accent-emerald-500" />
-                <span className="text-xs text-slate-500 w-8 text-center">{headerGap}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{headerGap}</span>
               </div>
             </div>
 
             {/* Organization Name */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Organization Name</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Organization Name</label>
               <input
                 type="text"
                 value={orgName}
                 onChange={e => setOrgName(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
               />
             </div>
           </div>
 
           {/* Signers */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">✍️ Signers</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">✍️ Signers</label>
             <div className="space-y-2">
               {signers.map((signer, idx) => (
                 <div key={idx} className="flex items-center gap-2">
@@ -1277,17 +1277,17 @@ function PrintReportModal({
                     type="text"
                     value={signer}
                     onChange={e => { const s = [...signers]; s[idx] = e.target.value; setSigners(s) }}
-                    className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                    className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                     placeholder={`Signer ${idx + 1}`}
                   />
                   {signers.length > 1 && (
-                    <button onClick={() => setSigners(signers.filter((_, i) => i !== idx))} className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center text-sm">✕</button>
+                    <button onClick={() => setSigners(signers.filter((_, i) => i !== idx))} className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-500 dark:text-red-400 flex items-center justify-center text-sm">✕</button>
                   )}
                 </div>
               ))}
               <button
                 onClick={() => setSigners([...signers, ''])}
-                className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
+                className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium flex items-center gap-1"
               >
                 + Add signer
               </button>
@@ -1295,23 +1295,23 @@ function PrintReportModal({
           </div>
 
           {/* Preview/Summary */}
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-2">
-            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400">{t('reports.exportPreview')}</h4>
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2">
+            <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">{t('reports.exportPreview')}</h4>
             <div className="grid grid-cols-2 gap-y-1.5 text-sm">
-              <span className="text-slate-500">{t('common.class')}:</span>
-              <span className="font-medium text-slate-800">{selectedClassName || '—'}</span>
-              <span className="text-slate-500">{t('reports.dateRange')}:</span>
-              <span className="font-medium text-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">{t('common.class')}:</span>
+              <span className="font-medium text-slate-800 dark:text-slate-100">{selectedClassName || '—'}</span>
+              <span className="text-slate-500 dark:text-slate-400">{t('reports.dateRange')}:</span>
+              <span className="font-medium text-slate-800 dark:text-slate-100">
                 {previewStart === previewEnd ? previewStart : `${previewStart} → ${previewEnd}`}
               </span>
-              <span className="text-slate-500">{t('reports.paperSize')}:</span>
-              <span className="font-medium text-emerald-600">{paperSize}</span>
+              <span className="text-slate-500 dark:text-slate-400">{t('reports.paperSize')}:</span>
+              <span className="font-medium text-emerald-600 dark:text-emerald-400">{paperSize}</span>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-1">
-            <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+            <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
               {t('common.cancel')}
             </button>
             <button

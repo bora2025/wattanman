@@ -94,7 +94,7 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
 
   if (notFound) {
     return (
-      <div className="text-center py-20 text-gray-500">
+      <div className="text-center py-20 text-gray-500 dark:text-slate-400">
         <p className="text-lg font-semibold mb-2">Post not found</p>
         <Link href="/admin/appearance/posts" className="text-[#2271b1] hover:underline">← Back to Posts</Link>
       </div>
@@ -110,18 +110,18 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
   return (
     <div className="space-y-4">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500">
+      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
         <Link href="/admin/appearance" className="hover:text-[#2271b1] transition-colors">Appearance</Link>
         <span>›</span>
         <Link href="/admin/appearance/posts" className="hover:text-[#2271b1] transition-colors">Posts</Link>
         <span>›</span>
-        <span className="text-gray-900 font-medium">{isNew ? 'Add New' : 'Edit'}</span>
+        <span className="text-gray-900 dark:text-slate-100 font-medium">{isNew ? 'Add New' : 'Edit'}</span>
       </div>
 
-      <h1 className="text-2xl font-normal text-gray-800">{isNew ? 'Add New Post' : 'Edit Post'}</h1>
+      <h1 className="text-2xl font-normal text-gray-800 dark:text-slate-100">{isNew ? 'Add New Post' : 'Edit Post'}</h1>
 
       {error && (
-        <div className="px-4 py-2.5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-sm">
+        <div className="px-4 py-2.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-sm rounded-sm">
           {error}
         </div>
       )}
@@ -133,12 +133,12 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
             value={form.title}
             onChange={(e) => set('title', e.target.value)}
             placeholder="Add title"
-            className="w-full text-2xl font-normal px-3 py-3 border border-gray-300 rounded-sm focus:outline-none focus:ring-1 focus:ring-[#2271b1] focus:border-[#2271b1]"
+            className="w-full text-2xl font-normal px-3 py-3 border border-gray-300 dark:border-slate-600 rounded-sm focus:outline-none focus:ring-1 focus:ring-[#2271b1] focus:border-[#2271b1]"
           />
 
           {/* Content box */}
-          <div className="bg-white border border-gray-300 rounded-sm">
-            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-sm">
+            <div className="px-3 py-2 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
               Content
             </div>
             <textarea
@@ -152,8 +152,8 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
 
           {/* Video URL — for video posts */}
           {form.type === 'video' && (
-            <div className="bg-white border border-gray-300 rounded-sm">
-              <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-sm">
+              <div className="px-3 py-2 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 Video
               </div>
               <div className="p-3 space-y-2">
@@ -162,7 +162,7 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
                   value={form.videoUrl}
                   onChange={(e) => set('videoUrl', e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=…"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-[#2271b1]"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-[#2271b1]"
                 />
                 {form.videoUrl && <VideoEmbed url={form.videoUrl} />}
               </div>
@@ -170,8 +170,8 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
           )}
 
           {/* Excerpt box */}
-          <div className="bg-white border border-gray-300 rounded-sm">
-            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-sm">
+            <div className="px-3 py-2 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
               Excerpt
             </div>
             <div className="p-3">
@@ -180,7 +180,7 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
                 onChange={(e) => set('excerpt', e.target.value)}
                 rows={2}
                 placeholder="Short summary shown in cards & feeds…"
-                className="w-full px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-[#2271b1] resize-none"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-[#2271b1] resize-none"
               />
             </div>
           </div>
@@ -189,37 +189,37 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
         {/* ── Sidebar ── */}
         <div className="space-y-4">
           {/* Publish box */}
-          <div className="bg-white border border-gray-300 rounded-sm">
-            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-sm">
+            <div className="px-3 py-2 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
               Publish
             </div>
             <div className="p-3 space-y-2.5 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-gray-500">Status:</span>
+                <span className="text-gray-500 dark:text-slate-400">Status:</span>
                 <button type="button" onClick={() => set('published', !form.published)}
                   className="text-[#2271b1] hover:underline font-medium">
                   {form.published ? 'Published' : 'Draft'}
                 </button>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-500">Visibility:</span>
-                <span className="text-gray-700">Public</span>
+                <span className="text-gray-500 dark:text-slate-400">Visibility:</span>
+                <span className="text-gray-700 dark:text-slate-200">Public</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-500">{isNew ? 'Publish:' : 'Published:'}</span>
-                <span className="text-gray-700">
+                <span className="text-gray-500 dark:text-slate-400">{isNew ? 'Publish:' : 'Published:'}</span>
+                <span className="text-gray-700 dark:text-slate-200">
                   {isNew ? 'Immediately' : createdAt ? new Date(createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                 </span>
               </div>
               <label className="flex items-center gap-2 pt-1 cursor-pointer select-none">
                 <input type="checkbox" checked={form.pinned} onChange={(e) => set('pinned', e.target.checked)} />
-                <span className="text-gray-700">📌 Pin to top</span>
+                <span className="text-gray-700 dark:text-slate-200">📌 Pin to top</span>
               </label>
 
-              <div className="flex items-center justify-between pt-3 mt-1 border-t border-gray-200">
+              <div className="flex items-center justify-between pt-3 mt-1 border-t border-gray-200 dark:border-slate-700">
                 {!isNew ? (
                   <button type="button" onClick={() => setConfirmTrash(true)}
-                    className="text-red-600 hover:text-red-800 hover:underline text-sm">
+                    className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:underline text-sm">
                     Move to Trash
                   </button>
                 ) : <span />}
@@ -234,7 +234,7 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
               </div>
               {isNew && (
                 <button type="button" onClick={() => save(false)} disabled={saving}
-                  className="w-full mt-1 px-4 py-1.5 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm rounded-sm disabled:opacity-60">
+                  className="w-full mt-1 px-4 py-1.5 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 text-sm rounded-sm disabled:opacity-60">
                   Save Draft
                 </button>
               )}
@@ -242,8 +242,8 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
           </div>
 
           {/* Format box */}
-          <div className="bg-white border border-gray-300 rounded-sm">
-            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-sm">
+            <div className="px-3 py-2 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
               Format
             </div>
             <div className="p-3 space-y-1.5">
@@ -257,8 +257,8 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
           </div>
 
           {/* Tags box */}
-          <div className="bg-white border border-gray-300 rounded-sm">
-            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-sm">
+            <div className="px-3 py-2 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
               Tags
             </div>
             <div className="p-3 space-y-2">
@@ -268,16 +268,16 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
                   placeholder="Add new tag"
-                  className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-[#2271b1]"
+                  className="flex-1 px-2.5 py-1.5 border border-gray-300 dark:border-slate-600 rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-[#2271b1]"
                 />
                 <button type="button" onClick={addTag}
-                  className="px-2.5 py-1.5 border border-gray-300 text-gray-700 text-sm rounded-sm hover:bg-gray-50">
+                  className="px-2.5 py-1.5 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-200 text-sm rounded-sm hover:bg-gray-50 dark:hover:bg-slate-800">
                   Add
                 </button>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {form.tags.map((tag) => (
-                  <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full">
+                  <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 text-xs rounded-full">
                     {tag}
                     <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-500">×</button>
                   </span>
@@ -288,8 +288,8 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
 
           {/* Featured image box — for text/image posts */}
           {(form.type === 'image' || form.type === 'text') && (
-            <div className="bg-white border border-gray-300 rounded-sm">
-              <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded-sm">
+              <div className="px-3 py-2 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 Featured Image
               </div>
               <div className="p-3">
@@ -303,12 +303,12 @@ export default function PostEditorForm({ postId }: { postId?: string }) {
       {/* Trash confirm dialog */}
       {confirmTrash && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full space-y-4">
-            <h3 className="font-bold text-gray-900">Delete Post?</h3>
-            <p className="text-sm text-gray-500">This action cannot be undone.</p>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl p-6 max-w-sm w-full space-y-4">
+            <h3 className="font-bold text-gray-900 dark:text-slate-100">Delete Post?</h3>
+            <p className="text-sm text-gray-500 dark:text-slate-400">This action cannot be undone.</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmTrash(false)}
-                className="flex-1 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
+                className="flex-1 px-4 py-2 text-sm text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">
                 Cancel
               </button>
               <button onClick={handleDelete}

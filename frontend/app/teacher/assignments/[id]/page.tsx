@@ -87,20 +87,20 @@ export default function TeacherGradingPage() {
 
   return (
     <AuthGuard allowedRoles={['TEACHER', 'ADMIN', 'SUPER_ADMIN']}>
-      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
         <main className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
           <div>
-            <Link href="/teacher/assignments" className="text-sm text-gray-500 hover:text-gray-800 mb-2 block">← Back to Assignments</Link>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Grade Submissions</h1>
+            <Link href="/teacher/assignments" className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-800 mb-2 block">← Back to Assignments</Link>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">Grade Submissions</h1>
             {assignment && (
               <div className="mt-1">
-                <p className="text-sm text-gray-500">{assignment.title} · {assignment.class?.name} · {assignment.totalMarks} marks · {assignment.type}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400">{assignment.title} · {assignment.class?.name} · {assignment.totalMarks} marks · {assignment.type}</p>
                 {assignment.dueDate && <p className="text-xs text-gray-400 mt-0.5">Due: {new Date(assignment.dueDate).toLocaleString()}</p>}
-                {assignment.latePenaltyPct > 0 && <p className="text-xs text-orange-600 mt-0.5">Late penalty: {assignment.latePenaltyPct}% off final score</p>}
+                {assignment.latePenaltyPct > 0 && <p className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">Late penalty: {assignment.latePenaltyPct}% off final score</p>}
                 {assignment.attachmentUrl && (
-                  <a href={assignment.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 underline mt-1">📎 Reference attachment</a>
+                  <a href={assignment.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 dark:text-sky-400 underline mt-1">📎 Reference attachment</a>
                 )}
                 {assignment.type === 'QUIZ' && (
                   <Link href={`/teacher/assignments/${assignmentId}/quiz`} className="inline-block mt-3 bg-violet-600 text-white text-xs font-semibold px-3 py-1.5 rounded-xl hover:bg-violet-700">📝 Manage Quiz Questions</Link>
@@ -112,60 +112,60 @@ export default function TeacherGradingPage() {
           {!isLoading && !isError && submissions.length > 0 && (
             <div className="grid grid-cols-3 gap-4">
               <StatCard label="Submissions" value={submissions.length} decimals={0} prefix="" color="bg-sky-100"
-                icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
+                icon={<svg className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
               <StatCard label="Graded" value={gradedCount} decimals={0} prefix="" color="bg-emerald-100"
-                icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+                icon={<svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
               <StatCard label="Late" value={lateCount} decimals={0} prefix="" color="bg-orange-100"
-                icon={<svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+                icon={<svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
             </div>
           )}
 
           {isLoading ? (
-            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-24 rounded-2xl animate-pulse border border-gray-100" />)}</div>
+            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-24 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />)}</div>
           ) : isError ? (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
-              <p className="text-red-600 mb-2">Failed to load submissions</p>
-              <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-2xl p-6 text-center">
+              <p className="text-red-600 dark:text-red-400 mb-2">Failed to load submissions</p>
+              <button onClick={() => refetch()} className="text-sm text-red-500 dark:text-red-400 underline">Retry</button>
             </div>
           ) : submissions.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
               <EmptyState icon="📭" message="No submissions yet" />
             </div>
           ) : (
             <div className="space-y-3">
               {submissions.map(sub => (
-                <div key={sub.id} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100">
+                <div key={sub.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-gray-100 dark:border-slate-800">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <p className="font-semibold text-gray-900">{sub.student?.user?.name}</p>
-                        {sub.status === 'LATE' && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">Late</span>}
-                        {sub.attemptNumber > 1 && <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-semibold">Attempt {sub.attemptNumber}</span>}
-                        {sub.marks !== null && <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Graded: {sub.marks}/{assignment?.totalMarks}</span>}
+                        <p className="font-semibold text-gray-900 dark:text-slate-100">{sub.student?.user?.name}</p>
+                        {sub.status === 'LATE' && <span className="text-xs bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full font-semibold">Late</span>}
+                        {sub.attemptNumber > 1 && <span className="text-xs bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full font-semibold">Attempt {sub.attemptNumber}</span>}
+                        {sub.marks !== null && <span className="text-xs bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full font-semibold">Graded: {sub.marks}/{assignment?.totalMarks}</span>}
                         {sub.latePenaltyApplied != null && sub.latePenaltyApplied > 0 && (
-                          <span className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full font-semibold">−{sub.latePenaltyApplied}% applied</span>
+                          <span className="text-xs bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full font-semibold">−{sub.latePenaltyApplied}% applied</span>
                         )}
                       </div>
                       <p className="text-xs text-gray-400 mb-2">Submitted: {new Date(sub.submittedAt).toLocaleString()}</p>
-                      {sub.content && <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3 whitespace-pre-wrap line-clamp-4">{sub.content}</p>}
+                      {sub.content && <p className="text-sm text-gray-700 dark:text-slate-200 bg-gray-50 dark:bg-slate-800 rounded-xl p-3 whitespace-pre-wrap line-clamp-4">{sub.content}</p>}
                       {sub.attachmentUrl && (
-                        <a href={sub.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 underline mt-1">📎 View attachment</a>
+                        <a href={sub.attachmentUrl} target="_blank" rel="noreferrer" className="inline-block text-xs text-sky-600 dark:text-sky-400 underline mt-1">📎 View attachment</a>
                       )}
-                      {sub.feedback && <p className="text-xs text-gray-500 italic mt-1">Feedback: "{sub.feedback}"</p>}
+                      {sub.feedback && <p className="text-xs text-gray-500 dark:text-slate-400 italic mt-1">Feedback: "{sub.feedback}"</p>}
                     </div>
                     <div className="flex flex-col gap-2 flex-shrink-0">
                       <button onClick={() => setGradingId(sub.id === gradingId ? null : sub.id)}
-                        className="text-xs bg-sky-100 text-sky-700 px-3 py-1.5 rounded-lg font-medium hover:bg-sky-200">
+                        className="text-xs bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 px-3 py-1.5 rounded-lg font-medium hover:bg-sky-200">
                         {sub.marks !== null ? 'Re-grade total' : 'Grade total'}
                       </button>
                       {assignment?.type === 'QUIZ' && (
                         <button onClick={() => setPerQId(sub.id === perQId ? null : sub.id)}
-                          className="text-xs bg-violet-100 text-violet-700 px-3 py-1.5 rounded-lg font-medium hover:bg-violet-200">
+                          className="text-xs bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 px-3 py-1.5 rounded-lg font-medium hover:bg-violet-200">
                           {perQId === sub.id ? 'Hide answers' : 'Grade per Q'}
                         </button>
                       )}
                       <button onClick={() => setResetTarget(sub)}
-                        className="text-xs bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg font-medium hover:bg-amber-200">
+                        className="text-xs bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 px-3 py-1.5 rounded-lg font-medium hover:bg-amber-200">
                         ↻ Re-Attempt
                       </button>
                     </div>
@@ -176,15 +176,15 @@ export default function TeacherGradingPage() {
                   )}
 
                   {gradingId === sub.id && (
-                    <form onSubmit={handleSubmit(onGrade)} className="mt-4 border-t border-gray-100 pt-4 flex gap-3 items-end">
+                    <form onSubmit={handleSubmit(onGrade)} className="mt-4 border-t border-gray-100 dark:border-slate-800 pt-4 flex gap-3 items-end">
                       <div className="flex-1">
                         <input type="number" {...register('marks', { required: true, min: 0, max: assignment?.totalMarks })}
                           placeholder={`Marks (0–${assignment?.totalMarks})`}
-                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-sky-300" />
-                        <input {...register('feedback')} placeholder="Feedback (optional)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                          className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                        <input {...register('feedback')} placeholder="Feedback (optional)" className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
                       </div>
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => setGradingId(null)} className="text-xs border border-gray-200 rounded-xl px-3 py-2">Cancel</button>
+                        <button type="button" onClick={() => setGradingId(null)} className="text-xs border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2">Cancel</button>
                         <button type="submit" disabled={isSubmitting} className="text-xs bg-emerald-600 text-white px-3 py-2 rounded-xl font-medium disabled:opacity-60">Save</button>
                       </div>
                     </form>
@@ -245,13 +245,13 @@ function PerQuestionGrader({ submissionId, totalMarks, onGraded }: { submissionI
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['submission-detail', submissionId] }); onGraded() },
   })
 
-  if (isLoading) return <div className="mt-4 border-t border-slate-100 pt-4 text-xs text-slate-400">Loading answers…</div>
-  if (isError || !data) return <div className="mt-4 border-t border-slate-100 pt-4 text-xs text-red-500">Failed to load answers.</div>
+  if (isLoading) return <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-4 text-xs text-slate-400 dark:text-slate-500">Loading answers…</div>
+  if (isError || !data) return <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-4 text-xs text-red-500 dark:text-red-400">Failed to load answers.</div>
 
   const answerByQ = new Map(data.answers.map(a => [a.questionId, a]))
 
   return (
-    <div className="mt-4 border-t border-slate-100 pt-4 space-y-3">
+    <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
       {data.questions.map((q, i) => {
         const a = answerByQ.get(q.id)
         return (
@@ -264,7 +264,7 @@ function PerQuestionGrader({ submissionId, totalMarks, onGraded }: { submissionI
           />
         )
       })}
-      <p className="text-xs text-slate-500">Total: <strong>{data.submission.marks ?? '—'}</strong> / {data.assignmentTotalMarks}{data.submission.latePenaltyApplied ? ` (late −${data.submission.latePenaltyApplied}%)` : ''}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">Total: <strong>{data.submission.marks ?? '—'}</strong> / {data.assignmentTotalMarks}{data.submission.latePenaltyApplied ? ` (late −${data.submission.latePenaltyApplied}%)` : ''}</p>
     </div>
   )
 }
@@ -278,7 +278,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
 
   function renderResponse() {
     const r = answer?.response
-    if (r == null || r === '') return <span className="italic text-slate-400">(no answer)</span>
+    if (r == null || r === '') return <span className="italic text-slate-400 dark:text-slate-500">(no answer)</span>
     if (question.type === 'MCQ') {
       const sel = Array.isArray(r) ? r : [r]
       const choices = question.data?.choices ?? []
@@ -300,7 +300,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
       const rightMap = Object.fromEntries((question.data?.right ?? []).map((r: any) => [r.id, r.text]))
       return <ul className="text-xs space-y-0.5">{pairs.map((p: any, i: number) => <li key={i}>{leftMap[p.leftId] ?? '?'} → {rightMap[p.rightId] ?? '(none)'}</li>)}</ul>
     }
-    if (question.type === 'ESSAY') return <div className="text-xs bg-slate-50 rounded p-2 whitespace-pre-wrap max-h-40 overflow-auto">{String(r)}</div>
+    if (question.type === 'ESSAY') return <div className="text-xs bg-slate-50 dark:bg-slate-800 rounded p-2 whitespace-pre-wrap max-h-40 overflow-auto">{String(r)}</div>
     if (question.type === 'SORT_PARAGRAPHS') {
       const correctOrder: string[] = (question.data?.paragraphs ?? []).map((p: any) => p.id)
       const byId = Object.fromEntries((question.data?.paragraphs ?? []).map((p: any) => [p.id, p.text]))
@@ -361,7 +361,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
       const given: Record<string, string> = r && typeof r === 'object' ? r : {}
       return (
         <div className="text-xs space-y-0.5">
-          {items.map(it => <div key={it.id}><MathText as="span" text={it.prompt} />: <span className="text-slate-700">{given[it.id] || '(no answer)'}</span></div>)}
+          {items.map(it => <div key={it.id}><MathText as="span" text={it.prompt} />: <span className="text-slate-700 dark:text-slate-200">{given[it.id] || '(no answer)'}</span></div>)}
         </div>
       )
     }
@@ -379,15 +379,15 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
 
   const needsManualGrading = !answer?.autoGraded
   return (
-    <div className="border border-slate-200 rounded-lg p-3">
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-3">
       <div className="flex items-center gap-2 mb-1 flex-wrap">
-        <span className="text-[10px] uppercase font-semibold bg-slate-100 px-1.5 py-0.5 rounded">Q{index}</span>
-        <span className="text-[10px] uppercase font-semibold bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">{Q_TYPE_LABEL[question.type] ?? question.type}</span>
-        <span className="text-[10px] uppercase font-semibold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">{question.points} pt</span>
-        {answer?.autoGraded && <span className="text-[10px] uppercase font-semibold bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded">auto</span>}
-        {answer?.pointsAwarded == null && <span className="text-[10px] uppercase font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">needs grading</span>}
+        <span className="text-[10px] uppercase font-semibold bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Q{index}</span>
+        <span className="text-[10px] uppercase font-semibold bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 px-1.5 py-0.5 rounded">{Q_TYPE_LABEL[question.type] ?? question.type}</span>
+        <span className="text-[10px] uppercase font-semibold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">{question.points} pt</span>
+        {answer?.autoGraded && <span className="text-[10px] uppercase font-semibold bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 px-1.5 py-0.5 rounded">auto</span>}
+        {answer?.pointsAwarded == null && <span className="text-[10px] uppercase font-semibold bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">needs grading</span>}
       </div>
-      <RichText as="div" className="text-sm text-slate-800 mb-2 whitespace-pre-wrap" html={question.prompt} />
+      <RichText as="div" className="text-sm text-slate-800 dark:text-slate-100 mb-2 whitespace-pre-wrap" html={question.prompt} />
       <div className="mb-2">{renderResponse()}</div>
       <div className="flex gap-2 items-center mt-2">
         <input
@@ -397,7 +397,7 @@ function AnswerRow({ index, question, answer, onSave }: { index: number; questio
           placeholder={`/ ${question.points}`}
           className={`w-20 border rounded-lg px-2 py-1 text-xs ${needsManualGrading ? 'border-amber-300' : ''}`}
         />
-        <span className="text-xs text-slate-400">/ {question.points}</span>
+        <span className="text-xs text-slate-400 dark:text-slate-500">/ {question.points}</span>
         <input
           value={fb}
           onChange={e => setFb(e.target.value)}

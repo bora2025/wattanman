@@ -239,11 +239,11 @@ export default function SearchPage() {
   }
 
   const InfoBox = ({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) => (
-    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-2.5">
-      {icon && <span className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-indigo-500 flex items-center justify-center flex-shrink-0 mt-0.5">{icon}</span>}
+    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 flex items-start gap-2.5">
+      {icon && <span className="w-7 h-7 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-indigo-500 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 mt-0.5">{icon}</span>}
       <div className="min-w-0">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 mb-0.5">{label}</p>
-        <p className="text-sm font-semibold text-slate-700 break-all">{value}</p>
+        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-0.5">{label}</p>
+        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 break-all">{value}</p>
       </div>
     </div>
   )
@@ -283,8 +283,8 @@ export default function SearchPage() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">{t('search.title')}</h1>
-              <p className="text-sm text-slate-500 mt-0.5">{t('search.subtitle')}</p>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('search.title')}</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t('search.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -293,19 +293,19 @@ export default function SearchPage() {
           {/* Search Bar */}
           <div className="card p-1.5 sm:p-2">
             <div className="flex items-center gap-3 px-3">
-              <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
+              <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
               <input
                 type="text"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder={t('search.placeholder')}
-                className="flex-1 py-3 bg-transparent border-0 outline-none focus:ring-0 text-sm text-slate-800 placeholder:text-slate-400"
+                className="flex-1 py-3 bg-transparent border-0 outline-none focus:ring-0 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 autoFocus
               />
               {query && (
                 <button
                   onClick={() => setQuery('')}
-                  className="text-slate-400 hover:text-slate-600 flex-shrink-0 w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
+                  className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 flex-shrink-0 w-6 h-6 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
@@ -335,14 +335,14 @@ export default function SearchPage() {
 
           {/* Results */}
           {loading ? (
-            <div className="text-center py-12 text-slate-400">
-              <div className="inline-block w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin mb-2" />
+            <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+              <div className="inline-block w-6 h-6 border-2 border-indigo-300 dark:border-indigo-800 border-t-indigo-600 rounded-full animate-spin mb-2" />
               <p className="text-sm">{t('search.searching')}</p>
             </div>
           ) : hasSearched && results.length === 0 ? (
             <div className="empty-state">
               <p className="text-lg">{t('search.noResults')}</p>
-              <p className="text-sm text-slate-400 mt-1">{t('search.noResultsHint')}</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('search.noResultsHint')}</p>
             </div>
           ) : results.length > 0 ? (
             (() => {
@@ -368,7 +368,7 @@ export default function SearchPage() {
             <>
               {/* Duplicate student warning */}
               {hasDuplicates && (
-                <div className="mb-3 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+                <div className="mb-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl px-4 py-3 text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
                   <span className="text-base shrink-0">⚠️</span>
                   <div>
                     <strong>Duplicate students detected.</strong> Students highlighted in orange share the same name and class — likely caused by a CSV re-import. The QR scanner may identify the wrong student. Please remove the old duplicate record from Admin → Students.
@@ -389,7 +389,7 @@ export default function SearchPage() {
                           src={normalizePhotoUrl(user.photo || user.studentProfile?.photo || '')}
                           alt={user.name}
                           loading="lazy"
-                          className="w-12 h-12 rounded-xl object-cover border border-slate-200"
+                          className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700"
                           onError={e => {
                             e.currentTarget.style.display = 'none';
                             const el = e.currentTarget.nextElementSibling as HTMLElement | null;
@@ -398,7 +398,7 @@ export default function SearchPage() {
                         />
                       ) : null}
                       <div
-                        className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg font-bold"
+                        className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg font-bold"
                         style={{ display: (user.photo || user.studentProfile?.photo) ? 'none' : 'flex' }}
                       >
                         {user.name.charAt(0).toUpperCase()}
@@ -406,16 +406,16 @@ export default function SearchPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-slate-800 text-sm truncate">{user.name}</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate">{user.name}</span>
                         <span className={`${roleBadge[user.role] || 'badge-gray'} text-[10px] flex-shrink-0`}>{t(roleKeyMap[user.role] || '')}</span>
                       </div>
-                      <p className="text-xs text-slate-400 truncate mt-0.5">{user.email}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">{user.email}</p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {(user.studentProfile?.class?.name || user.department?.name) && (
-                          <span className="text-[11px] text-slate-500">{user.studentProfile?.class?.name || user.department?.name}</span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">{user.studentProfile?.class?.name || user.department?.name}</span>
                         )}
                         {user.phone && (
-                          <a href={`tel:${user.phone}`} onClick={e => e.stopPropagation()} className="text-[11px] text-indigo-500 font-medium inline-flex items-center gap-1">
+                          <a href={`tel:${user.phone}`} onClick={e => e.stopPropagation()} className="text-[11px] text-indigo-500 dark:text-indigo-400 font-medium inline-flex items-center gap-1">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                             {user.phone}
                           </a>
@@ -425,7 +425,7 @@ export default function SearchPage() {
                     <svg className="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                   </button>
                 ))}
-                <p className="text-center text-xs text-slate-400 py-1">{t('common.showing')} {results.length} {results.length !== 1 ? t('common.results') : t('common.result')}</p>
+                <p className="text-center text-xs text-slate-400 dark:text-slate-500 py-1">{t('common.showing')} {results.length} {results.length !== 1 ? t('common.results') : t('common.result')}</p>
               </div>
 
               {/* Desktop table */}
@@ -451,7 +451,7 @@ export default function SearchPage() {
                                 src={normalizePhotoUrl(user.photo || user.studentProfile?.photo || '')}
                                 alt={user.name}
                                 loading="lazy"
-                                className="w-9 h-9 rounded-full object-cover border-2 border-slate-200"
+                                className="w-9 h-9 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
                                 onError={e => {
                                   e.currentTarget.style.display = 'none'
                                   const el = e.currentTarget.nextElementSibling as HTMLElement | null
@@ -467,27 +467,27 @@ export default function SearchPage() {
                             </div>
                             <div>
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-medium text-slate-800">{user.name}</span>
-                                {isDup(user) && <span className="text-[10px] font-semibold bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">DUPLICATE</span>}
+                                <span className="font-medium text-slate-800 dark:text-slate-100">{user.name}</span>
+                                {isDup(user) && <span className="text-[10px] font-semibold bg-amber-200 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-full">DUPLICATE</span>}
                               </div>
                               {user.studentProfile?.studentNumber && (
-                                <p className="text-xs text-slate-400">#{user.studentProfile.studentNumber}</p>
+                                <p className="text-xs text-slate-400 dark:text-slate-500">#{user.studentProfile.studentNumber}</p>
                               )}
                             </div>
                           </div>
                         </td>
-                        <td className="text-slate-500 text-sm">{user.email}</td>
-                        <td className="text-slate-500 text-sm" onClick={e => e.stopPropagation()}>
+                        <td className="text-slate-500 dark:text-slate-400 text-sm">{user.email}</td>
+                        <td className="text-slate-500 dark:text-slate-400 text-sm" onClick={e => e.stopPropagation()}>
                           {user.phone
-                            ? <a href={`tel:${user.phone}`} className="text-indigo-600 hover:underline font-medium">{user.phone}</a>
+                            ? <a href={`tel:${user.phone}`} className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">{user.phone}</a>
                             : '—'}
                         </td>
                         <td><span className={roleBadge[user.role] || 'badge-gray'}>{t(roleKeyMap[user.role] || '')}</span></td>
-                        <td className="text-slate-500 text-sm">{user.studentProfile?.class?.name || user.department?.name || '—'}</td>
+                        <td className="text-slate-500 dark:text-slate-400 text-sm">{user.studentProfile?.class?.name || user.department?.name || '—'}</td>
                         <td>
                           <button
                             onClick={e => { e.stopPropagation(); handleSelectUser(user) }}
-                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm font-medium"
                           >
                             {t('common.view')}
                           </button>
@@ -496,7 +496,7 @@ export default function SearchPage() {
                     ))}
                   </tbody>
                 </table>
-                <div className="px-4 py-2 text-xs text-slate-400 border-t border-slate-100">
+                <div className="px-4 py-2 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800">
                   {t('common.showing')} {results.length} {results.length !== 1 ? t('common.results') : t('common.result')}
                 </div>
               </div>
@@ -514,7 +514,7 @@ export default function SearchPage() {
           onClick={() => { setSelected(null); setFullProfile(null) }}
         >
           <div
-            className="bg-white w-full sm:w-[440px] h-full flex flex-col shadow-2xl animate-drawer-in overflow-hidden"
+            className="bg-white dark:bg-slate-900 w-full sm:w-[440px] h-full flex flex-col shadow-2xl animate-drawer-in overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -595,7 +595,7 @@ export default function SearchPage() {
               ]
               return (
                 <>
-                  <div className="border-b border-slate-100 px-3 sm:px-4 py-2 flex-shrink-0 bg-slate-50/60">
+                  <div className="border-b border-slate-100 dark:border-slate-800 px-3 sm:px-4 py-2 flex-shrink-0 bg-slate-50/60">
                     <div className="flex gap-1 overflow-x-auto scrollbar-none">
                       {tabs.map(tab => (
                         <button
@@ -615,8 +615,8 @@ export default function SearchPage() {
                   <div className="p-4 sm:p-5 overflow-y-auto flex-1 min-h-0">
                     {fullProfileLoading ? (
                       <div className="text-center py-10">
-                        <div className="inline-block w-7 h-7 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
-                        <p className="text-sm text-slate-400 mt-2">Loading…</p>
+                        <div className="inline-block w-7 h-7 border-2 border-indigo-300 dark:border-indigo-800 border-t-indigo-600 rounded-full animate-spin" />
+                        <p className="text-sm text-slate-400 dark:text-slate-500 mt-2">Loading…</p>
                       </div>
                     ) : fullProfile ? (
                       <>
@@ -624,13 +624,13 @@ export default function SearchPage() {
                         {activeTab === 'profile' && (
                           <div className="grid grid-cols-2 gap-3">
                             <InfoBox icon={infoIcons.email} label={t('common.email')} value={fullProfile.email} />
-                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-2.5">
-                              <span className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-indigo-500 flex items-center justify-center flex-shrink-0 mt-0.5">{infoIcons.phone}</span>
+                            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 flex items-start gap-2.5">
+                              <span className="w-7 h-7 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-indigo-500 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 mt-0.5">{infoIcons.phone}</span>
                               <div className="min-w-0">
-                                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 mb-0.5">{t('common.phone')}</p>
+                                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-0.5">{t('common.phone')}</p>
                                 {fullProfile.phone
-                                  ? <a href={`tel:${fullProfile.phone}`} className="text-sm font-semibold text-indigo-600 hover:underline">{fullProfile.phone}</a>
-                                  : <p className="text-sm font-semibold text-slate-700">—</p>}
+                                  ? <a href={`tel:${fullProfile.phone}`} className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">{fullProfile.phone}</a>
+                                  : <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">—</p>}
                               </div>
                             </div>
                             {fullProfile.studentProfile ? (
@@ -689,12 +689,12 @@ export default function SearchPage() {
                                 ))}
                               </div>
                               {days.length === 0 ? (
-                                <p className="text-center text-sm text-slate-400 py-4">{t('search.noAttendanceData')}</p>
+                                <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-4">{t('search.noAttendanceData')}</p>
                               ) : (
                                 <div className="space-y-1">
                                   {days.map(day => (
                                     <div key={day} className="flex items-center gap-3 py-1.5 border-b border-slate-50 last:border-0">
-                                      <span className="text-xs text-slate-500 w-28 flex-shrink-0">
+                                      <span className="text-xs text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">
                                         {new Date(day + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' })}
                                       </span>
                                       <div className="flex gap-1 flex-wrap">
@@ -735,47 +735,47 @@ export default function SearchPage() {
                           return (
                             <div className="space-y-4">
                               <div className="grid grid-cols-3 gap-3">
-                                <div className="bg-slate-50 rounded-xl p-3 text-center">
-                                  <p className="text-xl font-bold text-slate-700">{records.length}</p>
-                                  <p className="text-xs text-slate-400">Records</p>
+                                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-center">
+                                  <p className="text-xl font-bold text-slate-700 dark:text-slate-200">{records.length}</p>
+                                  <p className="text-xs text-slate-400 dark:text-slate-500">Records</p>
                                 </div>
-                                <div className="bg-blue-50 rounded-xl p-3 text-center">
-                                  <p className="text-xl font-bold text-blue-700">${totalBilled.toFixed(0)}</p>
+                                <div className="bg-blue-50 dark:bg-blue-950/40 rounded-xl p-3 text-center">
+                                  <p className="text-xl font-bold text-blue-700 dark:text-blue-300">${totalBilled.toFixed(0)}</p>
                                   <p className="text-xs text-blue-400">Billed</p>
                                 </div>
-                                <div className="bg-emerald-50 rounded-xl p-3 text-center">
-                                  <p className="text-xl font-bold text-emerald-700">${totalPaid.toFixed(0)}</p>
+                                <div className="bg-emerald-50 dark:bg-emerald-950/40 rounded-xl p-3 text-center">
+                                  <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">${totalPaid.toFixed(0)}</p>
                                   <p className="text-xs text-emerald-400">Paid</p>
                                 </div>
                               </div>
                               {records.length === 0 ? (
-                                <p className="text-center text-sm text-slate-400 py-4">No fee records</p>
+                                <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-4">No fee records</p>
                               ) : (
                                 <div className="space-y-2">
                                   {records.map(r => {
                                     const st = getFeeStatus(r)
                                     const pct = r.totalAmount > 0 ? Math.min(100, Math.round((r.paidAmount / r.totalAmount) * 100)) : 0
                                     return (
-                                      <div key={r.id} className="border border-slate-200 rounded-xl p-3">
+                                      <div key={r.id} className="border border-slate-200 dark:border-slate-700 rounded-xl p-3">
                                         <div className="flex items-start justify-between gap-2 mb-2">
                                           <div>
-                                            <p className="text-sm font-semibold text-slate-700">{r.term || 'General'}</p>
-                                            <p className="text-xs text-slate-400">Due: {new Date(r.dueDate).toLocaleDateString()}</p>
+                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{r.term || 'General'}</p>
+                                            <p className="text-xs text-slate-400 dark:text-slate-500">Due: {new Date(r.dueDate).toLocaleDateString()}</p>
                                           </div>
                                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${feeStatusColor[st]}`}>{st}</span>
                                         </div>
                                         <div className="flex items-center gap-2 mb-1.5">
-                                          <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                          <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                             <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
                                           </div>
-                                          <span className="text-xs text-slate-500 flex-shrink-0">${r.paidAmount.toFixed(0)} / ${r.totalAmount.toFixed(0)}</span>
+                                          <span className="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">${r.paidAmount.toFixed(0)} / ${r.totalAmount.toFixed(0)}</span>
                                         </div>
                                         {r.payments.length > 0 && (
-                                          <div className="mt-2 space-y-1 border-t border-slate-100 pt-2">
+                                          <div className="mt-2 space-y-1 border-t border-slate-100 dark:border-slate-800 pt-2">
                                             {r.payments.map(p => (
-                                              <div key={p.id} className="flex items-center justify-between text-xs text-slate-500">
+                                              <div key={p.id} className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                                                 <span>{new Date(p.createdAt).toLocaleDateString()}{p.note ? ` — ${p.note}` : ''}</span>
-                                                <span className="text-emerald-600 font-medium">+${p.amount.toFixed(0)}</span>
+                                                <span className="text-emerald-600 dark:text-emerald-400 font-medium">+${p.amount.toFixed(0)}</span>
                                               </div>
                                             ))}
                                           </div>
@@ -793,7 +793,7 @@ export default function SearchPage() {
                         {activeTab === 'scores' && fullProfile.studentProfile && (() => {
                           const entries = fullProfile.scoreEntries
                           if (entries.length === 0) {
-                            return <p className="text-center text-sm text-slate-400 py-4">No score data</p>
+                            return <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-4">No score data</p>
                           }
                           type SheetMap = Record<string, { sheetName: string; tabs: Record<string, { tabLabel: string; tabId: string; order: number; entries: ScoreEntryData[] }> }>
                           const bySheet: SheetMap = {}
@@ -808,23 +808,23 @@ export default function SearchPage() {
                             <div className="space-y-5">
                               {Object.values(bySheet).map(sheet => (
                                 <div key={sheet.sheetName}>
-                                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{sheet.sheetName}</p>
+                                  <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">{sheet.sheetName}</p>
                                   <div className="space-y-3">
                                     {Object.values(sheet.tabs).sort((a, b) => a.order - b.order).map(tab => {
                                       const ranking = fullProfile.rankingMap[tab.tabId]
                                       const totalScore = tab.entries.reduce((s, e) => s + (e.score ?? 0), 0)
                                       const maxTotal = tab.entries.reduce((s, e) => s + e.subject.maxScore, 0)
                                       return (
-                                        <div key={tab.tabId} className="border border-slate-200 rounded-xl p-3">
+                                        <div key={tab.tabId} className="border border-slate-200 dark:border-slate-700 rounded-xl p-3">
                                           <div className="flex items-center justify-between mb-3">
-                                            <p className="text-sm font-semibold text-slate-700">{tab.tabLabel}</p>
+                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{tab.tabLabel}</p>
                                             <div className="flex items-center gap-2">
                                               {ranking && ranking.rank > 0 && (
-                                                <span className="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded-full">
+                                                <span className="text-xs bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2 py-0.5 rounded-full">
                                                   🏆 #{ranking.rank}/{ranking.total}
                                                 </span>
                                               )}
-                                              <span className="text-sm font-bold text-slate-700">{totalScore.toFixed(1)}/{maxTotal}</span>
+                                              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{totalScore.toFixed(1)}/{maxTotal}</span>
                                             </div>
                                           </div>
                                           <div className="space-y-1.5">
@@ -832,11 +832,11 @@ export default function SearchPage() {
                                               const pct = e.subject.maxScore > 0 ? Math.min(100, (e.score ?? 0) / e.subject.maxScore * 100) : 0
                                               return (
                                                 <div key={i} className="flex items-center gap-2">
-                                                  <span className="text-xs text-slate-600 w-28 truncate flex-shrink-0">{e.subject.name}</span>
-                                                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                  <span className="text-xs text-slate-600 dark:text-slate-300 w-28 truncate flex-shrink-0">{e.subject.name}</span>
+                                                  <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                                     <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: e.subject.color || '#6366f1' }} />
                                                   </div>
-                                                  <span className="text-xs text-slate-700 font-medium w-14 text-right flex-shrink-0">
+                                                  <span className="text-xs text-slate-700 dark:text-slate-200 font-medium w-14 text-right flex-shrink-0">
                                                     {e.score !== null ? e.score : '—'}/{e.subject.maxScore}
                                                   </span>
                                                 </div>
@@ -856,29 +856,29 @@ export default function SearchPage() {
                         {activeTab === 'schedule' && fullProfile.studentProfile && (() => {
                           if (scheduleLoading || scheduleData === undefined) return (
                             <div className="text-center py-10">
-                              <div className="inline-block w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
-                              <p className="text-sm text-slate-400 mt-2">Loading schedule…</p>
+                              <div className="inline-block w-6 h-6 border-2 border-indigo-300 dark:border-indigo-800 border-t-indigo-600 rounded-full animate-spin" />
+                              <p className="text-sm text-slate-400 dark:text-slate-500 mt-2">Loading schedule…</p>
                             </div>
                           )
                           if (!scheduleData) return (
                             <div className="space-y-3">
-                              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                                <p className="text-sm font-semibold text-amber-800 mb-1">No timetable schedule found</p>
+                              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl p-4">
+                                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">No timetable schedule found</p>
                                 {scheduleDebug?.studentClass ? (
-                                  <p className="text-xs text-amber-700">Student class: <strong>{scheduleDebug.studentClass}</strong></p>
+                                  <p className="text-xs text-amber-700 dark:text-amber-300">Student class: <strong>{scheduleDebug.studentClass}</strong></p>
                                 ) : (
-                                  <p className="text-xs text-amber-700">Student has no class assigned.</p>
+                                  <p className="text-xs text-amber-700 dark:text-amber-300">Student has no class assigned.</p>
                                 )}
-                                <p className="text-xs text-amber-600 mt-1">{scheduleDebug?.reason}</p>
+                                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{scheduleDebug?.reason}</p>
                               </div>
                               {scheduleDebug?.allClasses && scheduleDebug.allClasses.length > 0 && (
                                 <div>
-                                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Available timetable classes</p>
+                                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Available timetable classes</p>
                                   <div className="space-y-1 max-h-48 overflow-y-auto">
                                     {scheduleDebug.allClasses.map((c, i) => (
-                                      <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg text-xs">
-                                        <span className="font-medium text-slate-700">{c.className}</span>
-                                        <div className="flex items-center gap-2 text-slate-400">
+                                      <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs">
+                                        <span className="font-medium text-slate-700 dark:text-slate-200">{c.className}</span>
+                                        <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                                           <span>{c.timetableName}</span>
                                           <span className={`px-1.5 py-0.5 rounded font-semibold ${
                                             c.status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
@@ -887,7 +887,7 @@ export default function SearchPage() {
                                       </div>
                                     ))}
                                   </div>
-                                  <p className="text-[11px] text-slate-400 mt-2">
+                                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
                                     To fix: rename the timetable class to match <strong>{scheduleDebug.studentClass}</strong>, or publish the timetable.
                                   </p>
                                 </div>
@@ -904,7 +904,7 @@ export default function SearchPage() {
                           return (
                             <div>
                               <div className="flex items-center justify-between mb-3">
-                                <p className="text-xs text-slate-500">{tt.name} · {tt.academicYear}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">{tt.name} · {tt.academicYear}</p>
                                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                                   scheduleData.timetable.status === 'PUBLISHED'
                                     ? 'bg-emerald-100 text-emerald-700'
@@ -915,31 +915,31 @@ export default function SearchPage() {
                                 <table className="w-full text-xs border-collapse">
                                   <thead>
                                     <tr>
-                                      <th className="px-2 py-1.5 bg-slate-50 border border-slate-200 text-slate-400 font-medium w-10 text-center">#</th>
+                                      <th className="px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 font-medium w-10 text-center">#</th>
                                       {dayNums.map(d => (
-                                        <th key={d} className="px-2 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 font-semibold text-center">{allDays[d - 1]}</th>
+                                        <th key={d} className="px-2 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-center">{allDays[d - 1]}</th>
                                       ))}
                                     </tr>
                                   </thead>
                                   <tbody>
                                     {periods.map(p => (
                                       <tr key={p}>
-                                        <td className="px-2 py-1.5 border border-slate-200 text-center text-slate-400 font-medium bg-slate-50">
+                                        <td className="px-2 py-1.5 border border-slate-200 dark:border-slate-700 text-center text-slate-400 dark:text-slate-500 font-medium bg-slate-50 dark:bg-slate-800">
                                           <div>{p}</div>
                                           {periodTimes[p - 1] && <div className="text-[9px] text-slate-300">{periodTimes[p - 1]}</div>}
                                         </td>
                                         {dayNums.map(d => {
                                           const entry = entryMap[`${d}_${p}`]
                                           if (!entry) return (
-                                            <td key={d} className="px-1 py-1 border border-slate-100 bg-white" />
+                                            <td key={d} className="px-1 py-1 border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900" />
                                           )
                                           const bg = entry.subject.color ? `${entry.subject.color}22` : '#f1f5f9'
                                           const fg = entry.subject.color || '#475569'
                                           return (
-                                            <td key={d} className="px-1 py-1 border border-slate-100" style={{ backgroundColor: bg }}>
+                                            <td key={d} className="px-1 py-1 border border-slate-100 dark:border-slate-800" style={{ backgroundColor: bg }}>
                                               <div className="font-semibold truncate" style={{ color: fg }}>{entry.subject.short}</div>
-                                              <div className="text-slate-500 truncate">{[entry.teacher.firstName, entry.teacher.lastName].filter(Boolean).join(' ')}</div>
-                                              {entry.classroom && <div className="text-slate-400 truncate">{entry.classroom.short}</div>}
+                                              <div className="text-slate-500 dark:text-slate-400 truncate">{[entry.teacher.firstName, entry.teacher.lastName].filter(Boolean).join(' ')}</div>
+                                              {entry.classroom && <div className="text-slate-400 dark:text-slate-500 truncate">{entry.classroom.short}</div>}
                                             </td>
                                           )
                                         })}
@@ -953,7 +953,7 @@ export default function SearchPage() {
                         })()}
                       </>
                     ) : (
-                      <p className="text-center text-sm text-slate-400 py-6">Could not load profile data.</p>
+                      <p className="text-center text-sm text-slate-400 dark:text-slate-500 py-6">Could not load profile data.</p>
                     )}
                   </div>
                 </>

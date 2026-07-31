@@ -239,14 +239,14 @@ export default function TeacherAssignmentsPage() {
 
   return (
     <AuthGuard requiredRole="TEACHER">
-      <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="sky" />
         <main className="flex-1 overflow-y-auto">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">📚 My Assignments</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Homework, quizzes, projects, and more</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">📚 My Assignments</h1>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Homework, quizzes, projects, and more</p>
             </div>
             <button onClick={openCreate} className="bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-sky-700 shadow-sm">+ New Assignment</button>
           </div>
@@ -254,25 +254,25 @@ export default function TeacherAssignmentsPage() {
           {!isLoading && !isError && assignments.length > 0 && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard label="Total" value={counts.total} decimals={0} prefix="" color="bg-sky-100"
-                icon={<svg className="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
+                icon={<svg className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
               <StatCard label="Draft" value={counts.draft} decimals={0} prefix="" color="bg-slate-100"
-                icon={<svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>} />
+                icon={<svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>} />
               <StatCard label="Published" value={counts.published} decimals={0} prefix="" color="bg-emerald-100"
-                icon={<svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>} />
+                icon={<svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>} />
               <StatCard label="Submissions" value={counts.submissions} decimals={0} prefix="" color="bg-amber-100"
-                icon={<svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
+                icon={<svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>} />
             </div>
           )}
 
-          <div className="bg-white rounded-2xl shadow-sm p-3 flex flex-wrap items-center gap-2 border border-gray-100">
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title…" className="flex-1 min-w-[160px] border border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
-            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-3 flex flex-wrap items-center gap-2 border border-gray-100 dark:border-slate-800">
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title…" className="flex-1 min-w-[160px] border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border border-gray-200 dark:border-slate-700 rounded-xl px-2 py-1.5 text-sm bg-white dark:bg-slate-900">
               <option value="ALL">All status</option>
               <option value="DRAFT">Draft</option>
               <option value="PUBLISHED">Published</option>
               <option value="CLOSED">Closed</option>
             </select>
-            <select value={filterType} onChange={e => setFilterType(e.target.value)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
+            <select value={filterType} onChange={e => setFilterType(e.target.value)} className="border border-gray-200 dark:border-slate-700 rounded-xl px-2 py-1.5 text-sm bg-white dark:bg-slate-900">
               <option value="ALL">All types</option>
               <option value="HOMEWORK">Homework</option>
               <option value="QUIZ">Quiz</option>
@@ -280,11 +280,11 @@ export default function TeacherAssignmentsPage() {
               <option value="LAB">Lab</option>
               <option value="ESSAY">Essay</option>
             </select>
-            <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
+            <select value={filterClass} onChange={e => setFilterClass(e.target.value)} className="border border-gray-200 dark:border-slate-700 rounded-xl px-2 py-1.5 text-sm bg-white dark:bg-slate-900">
               <option value="ALL">All classes</option>
               {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="border border-gray-200 rounded-xl px-2 py-1.5 text-sm bg-white">
+            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="border border-gray-200 dark:border-slate-700 rounded-xl px-2 py-1.5 text-sm bg-white dark:bg-slate-900">
               <option value="createdAt">Newest</option>
               <option value="dueDate">Due date</option>
               <option value="title">Title</option>
@@ -292,38 +292,38 @@ export default function TeacherAssignmentsPage() {
           </div>
 
           {isLoading ? (
-            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />)}</div>
+            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-20 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />)}</div>
           ) : isError ? (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
-              <p className="text-red-600 mb-2">Failed to load assignments</p>
-              <button onClick={() => refetch()} className="text-sm text-red-500 underline">Retry</button>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-2xl p-6 text-center">
+              <p className="text-red-600 dark:text-red-400 mb-2">Failed to load assignments</p>
+              <button onClick={() => refetch()} className="text-sm text-red-500 dark:text-red-400 underline">Retry</button>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
               <EmptyState icon="📚" message={assignments.length === 0 ? 'No assignments created yet' : 'No assignments match your filters'} />
             </div>
           ) : (
             <div className="space-y-3">
               {filtered.map(a => (
-                <div key={a.id} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 flex items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                <div key={a.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-gray-100 dark:border-slate-800 flex items-center justify-between gap-4 hover:shadow-md transition-shadow">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <p className="font-semibold text-gray-900 truncate">{a.title}</p>
+                      <p className="font-semibold text-gray-900 dark:text-slate-100 truncate">{a.title}</p>
                       <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${STATUS_BADGES[a.status] || 'bg-slate-100 text-slate-600'}`}>{a.status}</span>
                       <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${TYPE_BADGES[a.type] || 'bg-slate-100 text-slate-600'}`}>{a.type}</span>
-                      {a.weight !== 1 && <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-indigo-100 text-indigo-700">×{a.weight}</span>}
+                      {a.weight !== 1 && <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300">×{a.weight}</span>}
                     </div>
-                    <p className="text-xs text-gray-500">{a.class?.name} · {a.class?.subject} · {a.totalMarks} marks{a.maxAttempts > 1 ? ` · up to ${a.maxAttempts} attempts` : ''}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">{a.class?.name} · {a.class?.subject} · {a.totalMarks} marks{a.maxAttempts > 1 ? ` · up to ${a.maxAttempts} attempts` : ''}</p>
                     {a.dueDate && <p className="text-xs text-gray-400">Due: {new Date(a.dueDate).toLocaleString()}</p>}
-                    <p className="text-xs text-amber-600 mt-0.5">{a._count?.submissions ?? 0} submission(s){a.latePenaltyPct > 0 ? ` · ${a.latePenaltyPct}% late penalty` : ''}</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">{a._count?.submissions ?? 0} submission(s){a.latePenaltyPct > 0 ? ` · ${a.latePenaltyPct}% late penalty` : ''}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {a.type === 'QUIZ' && (
-                      <Link href={`/teacher/assignments/${a.id}/quiz`} className="text-xs bg-violet-100 text-violet-700 px-3 py-1.5 rounded-lg font-medium hover:bg-violet-200">📝 Questions</Link>
+                      <Link href={`/teacher/assignments/${a.id}/quiz`} className="text-xs bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 px-3 py-1.5 rounded-lg font-medium hover:bg-violet-200">📝 Questions</Link>
                     )}
-                    <Link href={`/teacher/assignments/${a.id}`} className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200">Grade</Link>
-                    <button onClick={() => openEdit(a)} className="text-xs bg-sky-50 text-sky-700 px-3 py-1.5 rounded-lg font-medium hover:bg-sky-100">Edit</button>
-                    <button onClick={() => { if (confirm(`Delete "${a.title}"?`)) deleteMutation.mutate(a.id) }} className="text-xs text-red-500 hover:underline">Delete</button>
+                    <Link href={`/teacher/assignments/${a.id}`} className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 px-3 py-1.5 rounded-lg font-medium hover:bg-gray-200">Grade</Link>
+                    <button onClick={() => openEdit(a)} className="text-xs bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 px-3 py-1.5 rounded-lg font-medium hover:bg-sky-100">Edit</button>
+                    <button onClick={() => { if (confirm(`Delete "${a.title}"?`)) deleteMutation.mutate(a.id) }} className="text-xs text-red-500 dark:text-red-400 hover:underline">Delete</button>
                   </div>
                 </div>
               ))}
@@ -334,10 +334,10 @@ export default function TeacherAssignmentsPage() {
 
         {showForm && (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl my-8">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-2xl shadow-xl my-8">
               <h2 className="text-lg font-bold mb-4">{editing ? 'Edit Assignment' : 'New Assignment'}</h2>
               {formError && (
-                <div className="mb-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{formError}</div>
+                <div className="mb-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-sm rounded-lg px-3 py-2">{formError}</div>
               )}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
                 <input {...register('title', { required: true })} placeholder="Title *" className="w-full border rounded-lg px-3 py-2 text-sm" />
@@ -359,13 +359,13 @@ export default function TeacherAssignmentsPage() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  <label className="text-xs text-slate-500">Total marks
+                  <label className="text-xs text-slate-500 dark:text-slate-400">Total marks
                     <input type="number" step="any" min={0} {...register('totalMarks')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
                   </label>
-                  <label className="text-xs text-slate-500">Weight
+                  <label className="text-xs text-slate-500 dark:text-slate-400">Weight
                     <input type="number" step="0.1" min={0} {...register('weight')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
                   </label>
-                  <label className="text-xs text-slate-500">Status
+                  <label className="text-xs text-slate-500 dark:text-slate-400">Status
                     <select {...register('status')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm">
                       <option value="DRAFT">Draft</option>
                       <option value="PUBLISHED">Published</option>
@@ -375,24 +375,24 @@ export default function TeacherAssignmentsPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <label className="text-xs text-slate-500">Available from
+                  <label className="text-xs text-slate-500 dark:text-slate-400">Available from
                     <input type="datetime-local" {...register('availableFrom')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
                   </label>
-                  <label className="text-xs text-slate-500">Due date & time
+                  <label className="text-xs text-slate-500 dark:text-slate-400">Due date & time
                     <input type="datetime-local" {...register('dueDate')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
                   </label>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  <label className="text-xs text-slate-500">Late penalty %
+                  <label className="text-xs text-slate-500 dark:text-slate-400">Late penalty %
                     <input type="number" step="any" min={0} max={100} {...register('latePenaltyPct')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
                   </label>
                   {watchType !== 'QUIZ' ? (
-                    <label className="text-xs text-slate-500">Max attempts
+                    <label className="text-xs text-slate-500 dark:text-slate-400">Max attempts
                       <input type="number" min={1} {...register('maxAttempts')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
                     </label>
                   ) : <div />}
-                  <label className="text-xs text-slate-500 flex items-center gap-2 mt-5">
+                  <label className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-5">
                     <input type="checkbox" {...register('allowLate')} className="h-4 w-4" />
                     Allow late submissions
                   </label>
@@ -401,39 +401,39 @@ export default function TeacherAssignmentsPage() {
                 <input {...register('attachmentUrl')} placeholder="Attachment URL (Google Drive, Dropbox, etc.)" className="w-full border rounded-lg px-3 py-2 text-sm" />
 
                 {watchType === 'QUIZ' && (
-                  <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-3 space-y-2">
+                  <div className="rounded-lg border border-violet-200 dark:border-violet-900 bg-violet-50/50 p-3 space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-xs font-semibold text-violet-700">Quiz settings</div>
+                      <div className="text-xs font-semibold text-violet-700 dark:text-violet-300">Quiz settings</div>
                       {editing ? (
                         <Link href={`/teacher/assignments/${editing.id}/quiz`} className="text-xs bg-violet-600 text-white px-3 py-1 rounded-lg font-medium hover:bg-violet-700">📝 Add / edit questions</Link>
                       ) : (
-                        <span className="text-[10px] text-violet-600">You'll be taken to the question editor after saving.</span>
+                        <span className="text-[10px] text-violet-600 dark:text-violet-400">You'll be taken to the question editor after saving.</span>
                       )}
                     </div>
                     <div className="grid grid-cols-3 gap-3 items-end">
-                      <label className="text-xs text-slate-600 flex items-center gap-2">
+                      <label className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2">
                         <input type="checkbox" {...register('randomizeQuestions')} className="h-4 w-4" />
                         Randomize question order
                       </label>
-                      <label className="text-xs text-slate-600 flex items-center gap-2">
+                      <label className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2">
                         <input type="checkbox" {...register('randomizeChoices')} className="h-4 w-4" />
                         Randomize MCQ choices
                       </label>
-                      <label className="text-xs text-slate-500">Time limit (minutes)
+                      <label className="text-xs text-slate-500 dark:text-slate-400">Time limit (minutes)
                         <input type="number" min={1} max={600} placeholder="No limit" {...register('timeLimitMinutes')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
                       </label>
                     </div>
                     <div className="grid grid-cols-3 gap-3 items-end pt-2 border-t border-violet-200/60">
-                      <label className="text-xs text-slate-700 flex items-center gap-2 col-span-2">
+                      <label className="text-xs text-slate-700 dark:text-slate-200 flex items-center gap-2 col-span-2">
                         <input type="checkbox" {...register('allowRetake')} className="h-4 w-4" />
                         <span>Allow students to <strong>retake</strong> this quiz</span>
                       </label>
                       {watchAllowRetake ? (
-                        <label className="text-xs text-slate-500">Max attempts
+                        <label className="text-xs text-slate-500 dark:text-slate-400">Max attempts
                           <input type="number" min={0} max={50} placeholder="0 = unlimited" {...register('maxAttempts')} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
                         </label>
                       ) : (
-                        <span className="text-[11px] text-slate-500 mt-5">Students get a single attempt.</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-5">Students get a single attempt.</span>
                       )}
                     </div>
                   </div>

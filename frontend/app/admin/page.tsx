@@ -416,17 +416,17 @@ function DashboardContent() {
 
   const SummaryCard = ({ label, value, total, color, onClick }: { label:string; value:number; total:number; color:string; onClick?:()=>void }) => {
     const bg: Record<string,string> = {
-      green:'from-emerald-50 to-emerald-100/50 border-emerald-200/60 hover:border-emerald-300 hover:shadow-emerald-100/40',
-      red:'from-red-50 to-red-100/50 border-red-200/60 hover:border-red-300 hover:shadow-red-100/40',
-      orange:'from-amber-50 to-amber-100/50 border-amber-200/60 hover:border-amber-300 hover:shadow-amber-100/40',
-      blue:'from-blue-50 to-blue-100/50 border-blue-200/60 hover:border-blue-300 hover:shadow-blue-100/40',
+      green:'from-emerald-50 dark:from-emerald-950/40 to-emerald-100/50 dark:to-emerald-900/30 border-emerald-200/60 dark:border-emerald-900 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-emerald-100/40 dark:hover:shadow-none',
+      red:'from-red-50 dark:from-red-950/40 to-red-100/50 dark:to-red-900/30 border-red-200/60 dark:border-red-900 hover:border-red-300 dark:hover:border-red-700 hover:shadow-red-100/40 dark:hover:shadow-none',
+      orange:'from-amber-50 dark:from-amber-950/40 to-amber-100/50 dark:to-amber-900/30 border-amber-200/60 dark:border-amber-900 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-amber-100/40 dark:hover:shadow-none',
+      blue:'from-blue-50 dark:from-blue-950/40 to-blue-100/50 dark:to-blue-900/30 border-blue-200/60 dark:border-blue-900 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-blue-100/40 dark:hover:shadow-none',
     }
-    const num: Record<string,string> = { green:'text-emerald-700', red:'text-red-700', orange:'text-amber-700', blue:'text-blue-700' }
+    const num: Record<string,string> = { green:'text-emerald-700 dark:text-emerald-300', red:'text-red-700 dark:text-red-300', orange:'text-amber-700 dark:text-amber-300', blue:'text-blue-700 dark:text-blue-300' }
     return (
       <button onClick={onClick} className={`bg-gradient-to-br ${bg[color]} relative border rounded-2xl p-4 text-left transition-all duration-200 cursor-pointer hover:shadow-lg active:scale-[0.97]`}>
         <div className="flex items-start justify-between">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5"><CardIcon color={color}/><span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{label}</span></div>
+            <div className="flex items-center gap-1.5"><CardIcon color={color}/><span className="text-[11px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">{label}</span></div>
             <div className={`text-3xl font-extrabold tracking-tight ${num[color]}`}>{value}</div>
           </div>
           <StatRing value={value} total={total} color={color}/>
@@ -442,7 +442,7 @@ function DashboardContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden"/>
         <div className="flex flex-col items-center justify-center h-64 gap-3">
-          <div className="relative"><div className="w-10 h-10 rounded-full border-[3px] border-indigo-100"/><div className="absolute inset-0 w-10 h-10 rounded-full border-[3px] border-indigo-500 border-t-transparent animate-spin"/></div>
+          <div className="relative"><div className="w-10 h-10 rounded-full border-[3px] border-indigo-100 dark:border-indigo-900"/><div className="absolute inset-0 w-10 h-10 rounded-full border-[3px] border-indigo-500 border-t-transparent animate-spin"/></div>
           <span className="text-sm text-gray-400">{t('common.loading') || 'Loading'}...</span>
         </div>
       </div>
@@ -493,13 +493,13 @@ function DashboardContent() {
 
         {/* ── Sticky compact header (mobile) ── */}
         <div className="sticky top-14 lg:top-0 z-30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2.5 bg-white/85 backdrop-blur-md border-b border-slate-200/70 flex items-center gap-2 lg:hidden">
-          <span className="text-xs font-semibold text-slate-500 mr-auto truncate">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-auto truncate">
             {selectedDateObj.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' })}
           </span>
           <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
-            className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none"/>
+            className="appearance-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none"/>
           <button onClick={() => setSelectedDate(todayCambodia())}
-            className="px-2.5 py-1.5 text-[11px] font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
+            className="px-2.5 py-1.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg hover:bg-indigo-100 transition-colors">
             {t('common.today') || 'Today'}
           </button>
         </div>
@@ -615,7 +615,7 @@ function DashboardContent() {
 
         <div className={`page-body ${sp}`}>
           {attendanceEnabled === false && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            <div className="rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
               The Attendance module is disabled for this school — the stats, live class progress, and monthly trend below have nothing to show. Enable it under Add-ons to start tracking attendance.
             </div>
           )}
@@ -623,10 +623,10 @@ function DashboardContent() {
           <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
             {visibleQuickActions.map(a => (
               <Link key={a.href} href={a.href}
-                className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200/70 hover:border-transparent hover:shadow-lg active:scale-[0.97] transition-all p-3 sm:p-4 flex flex-col items-center justify-center gap-1.5 text-center">
+                className="group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/70 hover:border-transparent hover:shadow-lg active:scale-[0.97] transition-all p-3 sm:p-4 flex flex-col items-center justify-center gap-1.5 text-center">
                 <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br ${a.color}`} aria-hidden />
                 <span className="relative text-2xl sm:text-3xl transition-transform group-hover:scale-110">{a.emoji}</span>
-                <span className="relative text-[10px] sm:text-xs font-semibold text-slate-700 group-hover:text-white transition-colors leading-tight">{a.label}</span>
+                <span className="relative text-[10px] sm:text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-white transition-colors leading-tight">{a.label}</span>
               </Link>
             ))}
           </div>
@@ -635,44 +635,44 @@ function DashboardContent() {
           {insights && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50 to-emerald-100/40 p-3.5">
-                <div className="flex items-center gap-2 text-emerald-700">
+                <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
                   <span className="text-xl">🏆</span>
                   <span className="text-[11px] font-semibold uppercase tracking-wider">Perfect Groups</span>
                 </div>
-                <div className="text-2xl font-extrabold text-emerald-800 mt-1">{insights.perfectGroups}<span className="text-sm font-medium text-emerald-600">/{insights.totalGroups}</span></div>
+                <div className="text-2xl font-extrabold text-emerald-800 dark:text-emerald-300 mt-1">{insights.perfectGroups}<span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">/{insights.totalGroups}</span></div>
                 <div className="text-[11px] text-emerald-600/80 mt-0.5">No absent or late today</div>
               </div>
               <div className="rounded-2xl border border-blue-200/70 bg-gradient-to-br from-blue-50 to-blue-100/40 p-3.5">
-                <div className="flex items-center gap-2 text-blue-700">
+                <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
                   <span className="text-xl">✨</span>
                   <span className="text-[11px] font-semibold uppercase tracking-wider">Perfect Attendees</span>
                 </div>
-                <div className="text-2xl font-extrabold text-blue-800 mt-1">{insights.perfectAttendees}</div>
+                <div className="text-2xl font-extrabold text-blue-800 dark:text-blue-300 mt-1">{insights.perfectAttendees}</div>
                 <div className="text-[11px] text-blue-600/80 mt-0.5">Present all sessions, no late</div>
               </div>
               <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50 to-amber-100/40 p-3.5">
-                <div className="flex items-center gap-2 text-amber-700">
+                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
                   <span className="text-xl">📨</span>
                   <span className="text-[11px] font-semibold uppercase tracking-wider">Permissions</span>
                 </div>
-                <div className="text-2xl font-extrabold text-amber-800 mt-1">{insights.pendingPermissions}</div>
+                <div className="text-2xl font-extrabold text-amber-800 dark:text-amber-300 mt-1">{insights.pendingPermissions}</div>
                 <div className="text-[11px] text-amber-600/80 mt-0.5">People with permission today</div>
               </div>
               <button onClick={() => insights.worstGroup && handleCardClick(insights.worstGroup.name.toLowerCase().includes('class') || insights.worstGroup.name.match(/^\d/) ? 'Student' : 'Staff', 'absent')}
                 disabled={!insights.worstGroup}
-                className="text-left rounded-2xl border border-rose-200/70 bg-gradient-to-br from-rose-50 to-rose-100/40 p-3.5 hover:shadow-md hover:border-rose-300 transition-all disabled:cursor-default disabled:hover:shadow-none">
-                <div className="flex items-center gap-2 text-rose-700">
+                className="text-left rounded-2xl border border-rose-200/70 bg-gradient-to-br from-rose-50 to-rose-100/40 p-3.5 hover:shadow-md hover:border-rose-300 dark:hover:border-rose-600 transition-all disabled:cursor-default disabled:hover:shadow-none">
+                <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300">
                   <span className="text-xl">⚠️</span>
                   <span className="text-[11px] font-semibold uppercase tracking-wider">Needs Attention</span>
                 </div>
                 {insights.worstGroup ? (
                   <>
-                    <div className="text-base font-extrabold text-rose-800 mt-1 truncate">{insights.worstGroup.name}</div>
+                    <div className="text-base font-extrabold text-rose-800 dark:text-rose-300 mt-1 truncate">{insights.worstGroup.name}</div>
                     <div className="text-[11px] text-rose-600/80 mt-0.5">{insights.worstGroup.absent} absent · tap to view</div>
                   </>
                 ) : (
                   <>
-                    <div className="text-base font-extrabold text-emerald-700 mt-1">All Good</div>
+                    <div className="text-base font-extrabold text-emerald-700 dark:text-emerald-300 mt-1">All Good</div>
                     <div className="text-[11px] text-rose-600/80 mt-0.5">No groups flagged today</div>
                   </>
                 )}
@@ -684,8 +684,8 @@ function DashboardContent() {
             <div className="space-y-5">
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-1 h-5 rounded-full bg-purple-500"/><h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider">{t('dashboard.studentSummary')}</h2>
-                  <span className="ml-1 text-xs bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">{stu.total}</span>
+                  <div className="w-1 h-5 rounded-full bg-purple-500"/><h2 className="text-sm font-bold text-gray-700 dark:text-slate-200 uppercase tracking-wider">{t('dashboard.studentSummary')}</h2>
+                  <span className="ml-1 text-xs bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 font-semibold px-2 py-0.5 rounded-full">{stu.total}</span>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   <SummaryCard label={t('common.present')} value={stu.present} total={stu.total} color="green" onClick={() => handleCardClick('Student','present')}/>
@@ -694,15 +694,15 @@ function DashboardContent() {
                   <SummaryCard label={t('common.permission')} value={stu.permission} total={stu.total} color="blue" onClick={() => handleCardClick('Student','permission')}/>
                 </div>
                 {stu.permissionBreakdown && (
-                  <div className="mt-2 text-xs text-slate-500">
+                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                     Permission Types: Morning Half={stu.permissionBreakdown.halfDayMorning} | Afternoon Half={stu.permissionBreakdown.halfDayAfternoon} | Full Day={stu.permissionBreakdown.fullDay} | Many Day={stu.permissionBreakdown.multiDay}
                   </div>
                 )}
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-1 h-5 rounded-full bg-cyan-500"/><h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider">{t('dashboard.staffSummary')}</h2>
-                  <span className="ml-1 text-xs bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">{stf.total}</span>
+                  <div className="w-1 h-5 rounded-full bg-cyan-500"/><h2 className="text-sm font-bold text-gray-700 dark:text-slate-200 uppercase tracking-wider">{t('dashboard.staffSummary')}</h2>
+                  <span className="ml-1 text-xs bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 font-semibold px-2 py-0.5 rounded-full">{stf.total}</span>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   <SummaryCard label={t('common.present')} value={stf.present} total={stf.total} color="green" onClick={() => handleCardClick('Staff','present')}/>
@@ -711,7 +711,7 @@ function DashboardContent() {
                   <SummaryCard label={t('common.permission')} value={stf.permission} total={stf.total} color="blue" onClick={() => handleCardClick('Staff','permission')}/>
                 </div>
                 {stf.permissionBreakdown && (
-                  <div className="mt-2 text-xs text-slate-500">
+                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                     Permission Types: Morning Half={stf.permissionBreakdown.halfDayMorning} | Afternoon Half={stf.permissionBreakdown.halfDayAfternoon} | Full Day={stf.permissionBreakdown.fullDay} | Many Day={stf.permissionBreakdown.multiDay}
                   </div>
                 )}
@@ -733,10 +733,10 @@ function DashboardContent() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Student Attendance Distribution */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
               <div className="flex items-center gap-2 px-5 pt-5">
                 <div className="w-1 h-5 rounded-full bg-purple-500"/>
-                <h3 className="text-sm font-bold text-gray-700">{t('dashboard.studentSummary')} - {t('dashboard.attendanceDistribution')}</h3>
+                <h3 className="text-sm font-bold text-gray-700 dark:text-slate-200">{t('dashboard.studentSummary')} - {t('dashboard.attendanceDistribution')}</h3>
               </div>
               <div className="px-5 pb-5" style={{ height: '280px' }}>
                 {studentPieData.length > 0 ? (
@@ -762,10 +762,10 @@ function DashboardContent() {
             </div>
 
             {/* Staff Attendance Distribution */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
               <div className="flex items-center gap-2 px-5 pt-5">
                 <div className="w-1 h-5 rounded-full bg-cyan-500"/>
-                <h3 className="text-sm font-bold text-gray-700">{t('dashboard.staffSummary')} - {t('dashboard.attendanceDistribution')}</h3>
+                <h3 className="text-sm font-bold text-gray-700 dark:text-slate-200">{t('dashboard.staffSummary')} - {t('dashboard.attendanceDistribution')}</h3>
               </div>
               <div className="px-5 pb-5" style={{ height: '280px' }}>
                 {staffPieData.length > 0 ? (
@@ -792,21 +792,21 @@ function DashboardContent() {
           </div>
 
           {/* ── Monthly Line Chart ── */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-5 pt-5 gap-3">
               <div className="flex items-center gap-2">
                 <div className="w-1 h-5 rounded-full bg-indigo-500"/>
-                <h3 className="text-sm font-bold text-gray-700">{t('dashboard.monthlyTrend') || 'Monthly Attendance Trend'}</h3>
+                <h3 className="text-sm font-bold text-gray-700 dark:text-slate-200">{t('dashboard.monthlyTrend') || 'Monthly Attendance Trend'}</h3>
               </div>
               <div className="flex items-center gap-2">
                 <select value={trendMonth} onChange={e => setTrendMonth(Number(e.target.value))}
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-600 cursor-pointer focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all">
+                  className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-sm text-gray-600 dark:text-slate-300 cursor-pointer focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all">
                   {Array.from({length:12},(_,i)=>i+1).map(m => (
                     <option key={m} value={m}>{new Date(2000,m-1).toLocaleString('default',{month:'long'})}</option>
                   ))}
                 </select>
                 <select value={trendYear} onChange={e => setTrendYear(Number(e.target.value))}
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-600 cursor-pointer focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all">
+                  className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-sm text-gray-600 dark:text-slate-300 cursor-pointer focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all">
                   {Array.from({length:5},(_,i)=>new Date().getFullYear()-i).map(y => (
                     <option key={y} value={y}>{y}</option>
                   ))}
@@ -837,27 +837,27 @@ function DashboardContent() {
             </div>
           </div>
 
-          <div id="detail-table" className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div id="detail-table" className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
             <button onClick={() => setTableExpanded(prev => !prev)}
               className="w-full p-4 sm:p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50/50 transition-colors">
               <div className="flex items-center gap-3">
-                <h3 className="text-sm font-bold text-gray-700">{t('dashboard.detailedTable')}</h3>
-                <span className="text-[11px] bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">{filteredDetails.length}</span>
+                <h3 className="text-sm font-bold text-gray-700 dark:text-slate-200">{t('dashboard.detailedTable')}</h3>
+                <span className="text-[11px] bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 font-semibold px-2 py-0.5 rounded-full">{filteredDetails.length}</span>
               </div>
               <svg className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${tableExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
             </button>
 
             {tableExpanded && (<>
-            <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-gray-100">
+            <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-gray-100 dark:border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3">
                 <div className="flex items-center gap-3">
                   {drillRole && (
-                    <button onClick={clearDrill} className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full hover:bg-indigo-100 transition-colors">
+                    <button onClick={clearDrill} className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 rounded-full hover:bg-indigo-100 transition-colors">
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                       {t('dashboard.clearFilter')}
                     </button>
                   )}
-                  <span className="text-[11px] bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">{filteredDetails.length}</span>
+                  <span className="text-[11px] bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 font-semibold px-2 py-0.5 rounded-full">{filteredDetails.length}</span>
                 </div>
                 <button onClick={exportCSV} disabled={filteredDetails.length === 0}
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white text-xs font-semibold rounded-xl hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm">
@@ -869,16 +869,16 @@ function DashboardContent() {
                 <div className="relative flex-1 min-w-[120px] sm:flex-none sm:w-52">
                   <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                   <input ref={searchInputRef} type="text" placeholder={`${t('common.search')}... (press /)`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"/>
+                    className="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"/>
                 </div>
                 <select value={roleFilter} onChange={e => { setRoleFilter(e.target.value as any); setDrillRole(null) }}
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 cursor-pointer transition-all">
+                  className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-gray-600 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 cursor-pointer transition-all">
                   <option value="all">{t('common.all')} {t('common.role')}</option>
                   <option value="Student">{t('common.students')}</option>
                   <option value="Staff">{t('dashboard.staff')}</option>
                 </select>
                 <select value={groupFilter} onChange={e => setGroupFilter(e.target.value)}
-                  className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-600 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 cursor-pointer transition-all">
+                  className="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-gray-600 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 cursor-pointer transition-all">
                   <option value="">{t('dashboard.allClassesDepts')}</option>
                   {data?.filters.classes.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                   {data?.filters.departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
@@ -887,11 +887,11 @@ function DashboardContent() {
               {/* Status filter pills — more touchable & visible */}
               <div className="flex flex-wrap gap-1.5 mt-2.5">
                 {([
-                  { v:'all',        label: t('common.all') || 'All',           cls:'bg-slate-100 text-slate-700 ring-slate-200',     active:'bg-slate-900 text-white ring-slate-900' },
-                  { v:'present',    label: t('common.present'),                cls:'bg-emerald-50 text-emerald-700 ring-emerald-200', active:'bg-emerald-600 text-white ring-emerald-600' },
-                  { v:'absent',     label: t('common.absent'),                 cls:'bg-rose-50 text-rose-700 ring-rose-200',          active:'bg-rose-600 text-white ring-rose-600' },
-                  { v:'late',       label: t('common.late'),                   cls:'bg-amber-50 text-amber-700 ring-amber-200',       active:'bg-amber-600 text-white ring-amber-600' },
-                  { v:'permission', label: t('common.permission'),             cls:'bg-blue-50 text-blue-700 ring-blue-200',          active:'bg-blue-600 text-white ring-blue-600' },
+                  { v:'all',        label: t('common.all') || 'All',           cls:'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 ring-slate-200 dark:ring-slate-700',     active:'bg-slate-900 text-white ring-slate-900' },
+                  { v:'present',    label: t('common.present'),                cls:'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-900', active:'bg-emerald-600 text-white ring-emerald-600' },
+                  { v:'absent',     label: t('common.absent'),                 cls:'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 ring-rose-200 dark:ring-rose-900',          active:'bg-rose-600 text-white ring-rose-600' },
+                  { v:'late',       label: t('common.late'),                   cls:'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 ring-amber-200 dark:ring-amber-900',       active:'bg-amber-600 text-white ring-amber-600' },
+                  { v:'permission', label: t('common.permission'),             cls:'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-blue-200 dark:ring-blue-900',          active:'bg-blue-600 text-white ring-blue-600' },
                 ] as { v: StatusFilter; label: string; cls: string; active: string }[]).map(pill => (
                   <button key={pill.v} onClick={() => setStatusFilter(pill.v)}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold ring-1 transition-all ${statusFilter === pill.v ? pill.active + ' shadow-sm' : pill.cls + ' hover:ring-2'}`}>
@@ -904,17 +904,17 @@ function DashboardContent() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50/80 border-b border-gray-100">
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{t('common.name')}</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{t('common.role')}</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('dashboard.classOrDept')}</th>
-                    <th className="text-center px-3 py-3 text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">{t('common.present')}</th>
-                    <th className="text-center px-3 py-3 text-[11px] font-semibold text-red-600 uppercase tracking-wider">{t('common.absent')}</th>
-                    <th className="text-center px-3 py-3 text-[11px] font-semibold text-amber-600 uppercase tracking-wider">{t('common.late')}</th>
-                    <th className="text-center px-3 py-3 text-[11px] font-semibold text-blue-600 uppercase tracking-wider">{t('common.permission')}</th>
+                  <tr className="bg-gray-50/80 border-b border-gray-100 dark:border-slate-800">
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">{t('common.name')}</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">{t('common.role')}</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">{t('dashboard.classOrDept')}</th>
+                    <th className="text-center px-3 py-3 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">{t('common.present')}</th>
+                    <th className="text-center px-3 py-3 text-[11px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">{t('common.absent')}</th>
+                    <th className="text-center px-3 py-3 text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">{t('common.late')}</th>
+                    <th className="text-center px-3 py-3 text-[11px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">{t('common.permission')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
                   {filteredDetails.length === 0 ? (
                     <tr><td colSpan={7} className="text-center py-12 text-gray-300">
                       <svg className="w-10 h-10 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
@@ -922,28 +922,28 @@ function DashboardContent() {
                     </td></tr>
                   ) : filteredDetails.slice(0, visibleCount).map((row, i) => (
                     <tr key={`${row.id}-${i}`} className="hover:bg-gray-50/60 transition-colors">
-                      <td className="px-4 py-3"><div className="font-medium text-gray-900 text-sm">{row.name}</div><div className="text-[11px] text-gray-400 md:hidden">{row.group||''}</div></td>
+                      <td className="px-4 py-3"><div className="font-medium text-gray-900 dark:text-slate-100 text-sm">{row.name}</div><div className="text-[11px] text-gray-400 md:hidden">{row.group||''}</div></td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-semibold ${row.role==='Student'?'bg-purple-50 text-purple-700 ring-1 ring-purple-200/60':'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200/60'}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-semibold ${row.role==='Student'?'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 ring-1 ring-purple-200/60 dark:ring-purple-900/60':'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 ring-1 ring-cyan-200/60 dark:ring-cyan-900/60'}`}>
                           {row.role === 'Student' ? t('common.students') : getRoleLabel(row.role)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500 hidden md:table-cell">{row.group||'-'}</td>
-                      <td className="text-center px-3 py-3">{row.present>0?<span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold ring-1 ring-emerald-200/50">{row.present}</span>:<span className="text-gray-200">-</span>}</td>
-                      <td className="text-center px-3 py-3">{row.absent>0?<span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-red-50 text-red-700 text-xs font-bold ring-1 ring-red-200/50">{row.absent}</span>:<span className="text-gray-200">-</span>}</td>
-                      <td className="text-center px-3 py-3">{row.late>0?<span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold ring-1 ring-amber-200/50">{row.late}</span>:<span className="text-gray-200">-</span>}</td>
-                      <td className="text-center px-3 py-3">{row.permission>0?<span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold ring-1 ring-blue-200/50">{row.permission}</span>:<span className="text-gray-200">-</span>}</td>
+                      <td className="px-4 py-3 text-xs text-gray-500 dark:text-slate-400 hidden md:table-cell">{row.group||'-'}</td>
+                      <td className="text-center px-3 py-3">{row.present>0?<span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold ring-1 ring-emerald-200/50">{row.present}</span>:<span className="text-gray-200">-</span>}</td>
+                      <td className="text-center px-3 py-3">{row.absent>0?<span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-xs font-bold ring-1 ring-red-200/50">{row.absent}</span>:<span className="text-gray-200">-</span>}</td>
+                      <td className="text-center px-3 py-3">{row.late>0?<span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 text-xs font-bold ring-1 ring-amber-200/50">{row.late}</span>:<span className="text-gray-200">-</span>}</td>
+                      <td className="text-center px-3 py-3">{row.permission>0?<span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-bold ring-1 ring-blue-200/50">{row.permission}</span>:<span className="text-gray-200">-</span>}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             {filteredDetails.length > 0 && (
-              <div className="px-4 py-3 border-t border-gray-50 flex items-center justify-between">
+              <div className="px-4 py-3 border-t border-gray-50 dark:border-slate-800 flex items-center justify-between">
                 <span className="text-[11px] text-gray-400 font-medium">{t('common.showing')} {Math.min(visibleCount, filteredDetails.length)} / {filteredDetails.length} {t('common.results')}</span>
                 {visibleCount < filteredDetails.length && (
                   <button onClick={() => setVisibleCount(v => v + 100)}
-                    className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl hover:bg-indigo-100 transition-colors">
+                    className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1.5 rounded-xl hover:bg-indigo-100 transition-colors">
                     Show more ({filteredDetails.length - visibleCount} remaining)
                   </button>
                 )}
@@ -990,14 +990,14 @@ function DashboardContent() {
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setAbsentModal(false)} />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+            <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
                 <div>
-                  <h2 className="text-base font-bold text-slate-800">
+                  <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
                     Absent {absentModalRole === 'Student' ? 'Students' : 'Staff'}
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">{selectedDate} · {absentRows.length} record{absentRows.length !== 1 ? 's' : ''}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{selectedDate} · {absentRows.length} record{absentRows.length !== 1 ? 's' : ''}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -1008,17 +1008,17 @@ function DashboardContent() {
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Export CSV
                   </button>
-                  <button onClick={() => setAbsentModal(false)} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors">
+                  <button onClick={() => setAbsentModal(false)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
                 </div>
               </div>
 
               {/* Filter bar */}
-              <div className="px-5 py-3 border-b border-slate-100 flex flex-wrap gap-2 items-center">
+              <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex flex-wrap gap-2 items-center">
                 {/* Address search — icon is outside the input so it never overlaps text */}
-                <div className="flex flex-1 min-w-[200px] items-center gap-0 rounded-xl border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-500/20 transition-all overflow-hidden">
-                  <span className="flex items-center justify-center w-10 h-10 shrink-0 text-slate-400">
+                <div className="flex flex-1 min-w-[200px] items-center gap-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus-within:bg-white focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-500/20 transition-all overflow-hidden">
+                  <span className="flex items-center justify-center w-10 h-10 shrink-0 text-slate-400 dark:text-slate-500">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                   </span>
                   <input
@@ -1026,10 +1026,10 @@ function DashboardContent() {
                     placeholder="Filter by address..."
                     value={absentAddressFilter}
                     onChange={e => setAbsentAddressFilter(e.target.value)}
-                    className="flex-1 bg-transparent py-2 pr-3 text-sm text-slate-700 placeholder:text-slate-400 outline-none"
+                    className="flex-1 bg-transparent py-2 pr-3 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                   />
                   {absentAddressFilter && (
-                    <button onClick={() => setAbsentAddressFilter('')} className="flex items-center justify-center w-8 h-8 mr-1 shrink-0 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors">
+                    <button onClick={() => setAbsentAddressFilter('')} className="flex items-center justify-center w-8 h-8 mr-1 shrink-0 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 transition-colors">
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                   )}
@@ -1037,7 +1037,7 @@ function DashboardContent() {
                 <div className="flex gap-1.5">
                   {(['Student', 'Staff'] as const).map(r => (
                     <button key={r} onClick={() => setAbsentModalRole(r)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold ring-1 transition-all ${absentModalRole === r ? 'bg-rose-600 text-white ring-rose-600' : 'bg-rose-50 text-rose-700 ring-rose-200 hover:ring-2'}`}>
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold ring-1 transition-all ${absentModalRole === r ? 'bg-rose-600 text-white ring-rose-600' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 ring-rose-200 dark:ring-rose-900 hover:ring-2'}`}>
                       {r === 'Student' ? 'Students' : 'Staff'}
                     </button>
                   ))}
@@ -1049,29 +1049,29 @@ function DashboardContent() {
                 {absentRows.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-slate-300 gap-2">
                     <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span className="text-sm text-slate-400">No absent {absentModalRole === 'Student' ? 'students' : 'staff'} found</span>
+                    <span className="text-sm text-slate-400 dark:text-slate-500">No absent {absentModalRole === 'Student' ? 'students' : 'staff'} found</span>
                   </div>
                 ) : (
                   <table className="w-full text-sm">
-                    <thead className="sticky top-0 bg-slate-50 border-b border-slate-100">
+                    <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-800">
                       <tr>
-                        <th className="text-left px-5 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Name</th>
-                        <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">{absentModalRole === 'Student' ? 'Class' : 'Dept'}</th>
-                        <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Address</th>
-                        <th className="text-center px-3 py-2.5 text-[11px] font-semibold text-rose-500 uppercase tracking-wider">Absent</th>
+                        <th className="text-left px-5 py-2.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Name</th>
+                        <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">{absentModalRole === 'Student' ? 'Class' : 'Dept'}</th>
+                        <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Address</th>
+                        <th className="text-center px-3 py-2.5 text-[11px] font-semibold text-rose-500 dark:text-rose-400 uppercase tracking-wider">Absent</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
                       {absentRows.map((row, i) => (
                         <tr key={`${row.id}-${i}`} className="hover:bg-rose-50/40 transition-colors">
                           <td className="px-5 py-3">
-                            <div className="font-medium text-slate-800">{row.name}</div>
-                            <div className="text-[11px] text-slate-400 sm:hidden">{row.group || '-'}</div>
+                            <div className="font-medium text-slate-800 dark:text-slate-100">{row.name}</div>
+                            <div className="text-[11px] text-slate-400 dark:text-slate-500 sm:hidden">{row.group || '-'}</div>
                           </td>
-                          <td className="px-3 py-3 text-xs text-slate-500 hidden sm:table-cell">{row.group || '-'}</td>
-                          <td className="px-3 py-3 text-xs text-slate-500">{row.address || <span className="text-slate-300 italic">—</span>}</td>
+                          <td className="px-3 py-3 text-xs text-slate-500 dark:text-slate-400 hidden sm:table-cell">{row.group || '-'}</td>
+                          <td className="px-3 py-3 text-xs text-slate-500 dark:text-slate-400">{row.address || <span className="text-slate-300 italic">—</span>}</td>
                           <td className="text-center px-3 py-3">
-                            <span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-red-50 text-red-700 text-xs font-bold ring-1 ring-red-200/50">{row.absent}</span>
+                            <span className="inline-flex items-center justify-center min-w-[28px] h-7 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-xs font-bold ring-1 ring-red-200/50">{row.absent}</span>
                           </td>
                         </tr>
                       ))}
@@ -1082,9 +1082,9 @@ function DashboardContent() {
 
               {/* Footer */}
               {absentRows.length > 0 && (
-                <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">{absentRows.length} record{absentRows.length !== 1 ? 's' : ''}{absentAddressFilter ? ' (filtered by address)' : ''}</span>
-                  <button onClick={() => setAbsentModal(false)} className="text-xs font-semibold text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-xl hover:bg-slate-100 transition-colors">Close</button>
+                <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <span className="text-xs text-slate-400 dark:text-slate-500">{absentRows.length} record{absentRows.length !== 1 ? 's' : ''}{absentAddressFilter ? ' (filtered by address)' : ''}</span>
+                  <button onClick={() => setAbsentModal(false)} className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Close</button>
                 </div>
               )}
             </div>
@@ -1135,18 +1135,18 @@ function ClassProgressPanel({ rows, loading, flash, search, setSearch, sortMode,
   const aggPctScanned = agg.total > 0 ? Math.round((agg.scanned / agg.total) * 100) : 0
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white shadow-sm overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center gap-3">
+    <div className="rounded-2xl border border-slate-200/70 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">📊</span>
-          <h3 className="text-sm font-bold text-slate-800">Class Attendance Progress</h3>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Class Attendance Progress</h3>
           {isToday && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[10px] font-semibold">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 text-[10px] font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               LIVE
             </span>
           )}
-          {loading && <span className="text-[10px] text-slate-400">refreshing…</span>}
+          {loading && <span className="text-[10px] text-slate-400 dark:text-slate-500">refreshing…</span>}
         </div>
         <div className="ml-auto flex items-center gap-2">
           <input
@@ -1154,12 +1154,12 @@ function ClassProgressPanel({ rows, loading, flash, search, setSearch, sortMode,
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search class…"
-            className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 outline-none w-32 sm:w-44"
+            className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 outline-none w-32 sm:w-44"
           />
           <select
             value={sortMode}
             onChange={e => setSortMode(e.target.value as any)}
-            className="px-2 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white outline-none"
+            className="px-2 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white outline-none"
           >
             <option value="name">Name</option>
             <option value="pctDesc">Present % ↓</option>
@@ -1169,21 +1169,21 @@ function ClassProgressPanel({ rows, loading, flash, search, setSearch, sortMode,
       </div>
 
       {/* Overall summary */}
-      <div className="px-4 py-3 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100 grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
-        <div><div className="text-[10px] uppercase tracking-wider text-slate-500">Classes</div><div className="text-lg font-bold text-slate-800">{rows.length}</div></div>
-        <div><div className="text-[10px] uppercase tracking-wider text-slate-500">Students</div><div className="text-lg font-bold text-slate-800">{agg.total}</div></div>
-        <div><div className="text-[10px] uppercase tracking-wider text-emerald-600">Scanned</div><div className="text-lg font-bold text-emerald-700">{agg.scanned}<span className="text-xs font-medium text-emerald-500"> ({aggPctScanned}%)</span></div></div>
-        <div><div className="text-[10px] uppercase tracking-wider text-emerald-600">Present</div><div className="text-lg font-bold text-emerald-700">{agg.present}<span className="text-xs font-medium text-emerald-500"> ({aggPctPresent}%)</span></div></div>
-        <div><div className="text-[10px] uppercase tracking-wider text-rose-600">Absent</div><div className="text-lg font-bold text-rose-700">{agg.absent}</div></div>
+      <div className="px-4 py-3 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+        <div><div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Classes</div><div className="text-lg font-bold text-slate-800 dark:text-slate-100">{rows.length}</div></div>
+        <div><div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Students</div><div className="text-lg font-bold text-slate-800 dark:text-slate-100">{agg.total}</div></div>
+        <div><div className="text-[10px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Scanned</div><div className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{agg.scanned}<span className="text-xs font-medium text-emerald-500 dark:text-emerald-400"> ({aggPctScanned}%)</span></div></div>
+        <div><div className="text-[10px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Present</div><div className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{agg.present}<span className="text-xs font-medium text-emerald-500 dark:text-emerald-400"> ({aggPctPresent}%)</span></div></div>
+        <div><div className="text-[10px] uppercase tracking-wider text-rose-600 dark:text-rose-400">Absent</div><div className="text-lg font-bold text-rose-700 dark:text-rose-300">{agg.absent}</div></div>
       </div>
 
       {/* Rows */}
-      <div className="divide-y divide-slate-100 max-h-[480px] overflow-y-auto">
+      <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[480px] overflow-y-auto">
         {sorted.length === 0 && !loading && (
-          <div className="px-4 py-8 text-center text-sm text-slate-400">No classes match.</div>
+          <div className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">No classes match.</div>
         )}
         {sorted.length === 0 && loading && (
-          <div className="px-4 py-8 text-center text-sm text-slate-400">Loading classes…</div>
+          <div className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">Loading classes…</div>
         )}
         {sorted.map(row => {
           const flashTime = flash[row.classId]
@@ -1196,28 +1196,28 @@ function ClassProgressPanel({ rows, loading, flash, search, setSearch, sortMode,
             <div key={row.classId} className={`px-4 py-2.5 transition-colors ${flashing ? 'bg-emerald-50/70' : 'hover:bg-slate-50/60'}`}>
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-shrink-0 w-32 sm:w-40">
-                  <div className="text-sm font-semibold text-slate-800 truncate" title={row.className}>{row.className}</div>
-                  <div className="text-[10px] text-slate-500">{row.total} student{row.total === 1 ? '' : 's'}</div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate" title={row.className}>{row.className}</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">{row.total} student{row.total === 1 ? '' : 's'}</div>
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="relative h-5 rounded-full bg-slate-100 overflow-hidden flex">
+                  <div className="relative h-5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
                     {pctP > 0 && <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500" style={{ width: `${pctP}%` }} title={`Present: ${row.present}`} />}
                     {pctL > 0 && <div className="h-full bg-gradient-to-r from-amber-300 to-amber-500" style={{ width: `${pctL}%` }} title={`Late: ${row.late}`} />}
                     {pctPerm > 0 && <div className="h-full bg-gradient-to-r from-purple-300 to-purple-500" style={{ width: `${pctPerm}%` }} title={`Permission: ${row.permission}`} />}
                     {pctA > 0 && <div className="h-full bg-gradient-to-r from-rose-300 to-rose-500" style={{ width: `${pctA}%` }} title={`Absent: ${row.absent}`} />}
                   </div>
                   <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px]">
-                    <span className="text-emerald-700">● {row.present} present</span>
-                    {row.late > 0 && <span className="text-amber-700">● {row.late} late</span>}
-                    {row.permission > 0 && <span className="text-purple-700">● {row.permission} perm</span>}
-                    {row.absent > 0 && <span className="text-rose-700">● {row.absent} absent</span>}
+                    <span className="text-emerald-700 dark:text-emerald-300">● {row.present} present</span>
+                    {row.late > 0 && <span className="text-amber-700 dark:text-amber-300">● {row.late} late</span>}
+                    {row.permission > 0 && <span className="text-purple-700 dark:text-purple-300">● {row.permission} perm</span>}
+                    {row.absent > 0 && <span className="text-rose-700 dark:text-rose-300">● {row.absent} absent</span>}
                   </div>
                 </div>
 
                 <div className="flex-shrink-0 w-14 text-right">
                   <div className={`text-lg font-extrabold tabular-nums ${row.pctPresent >= 80 ? 'text-emerald-600' : row.pctPresent >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>{row.pctPresent}%</div>
-                  <div className="text-[9px] uppercase tracking-wider text-slate-400">present</div>
+                  <div className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500">present</div>
                 </div>
               </div>
             </div>

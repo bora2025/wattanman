@@ -500,7 +500,7 @@ function TeacherStaffAttendance() {
   const getStaffRecord = (userId: string) => todayRecords.find(r => r.userId === userId && r.session === session)
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-800">
       <div className="h-14 lg:hidden" />
 
       {/* ===== FULLSCREEN CAMERA MODE ===== */}
@@ -513,10 +513,10 @@ function TeacherStaffAttendance() {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-64 h-64 sm:w-72 sm:h-72 relative">
                 <div className="absolute inset-0 bg-black/0 rounded-2xl" style={{ boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)' }} />
-                <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-teal-400 rounded-tl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
-                <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-teal-400 rounded-tr-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
-                <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-teal-400 rounded-bl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
-                <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-teal-400 rounded-br-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-teal-400 dark:border-teal-700 rounded-tl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-teal-400 dark:border-teal-700 rounded-tr-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-teal-400 dark:border-teal-700 rounded-bl-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
+                <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-teal-400 dark:border-teal-700 rounded-br-2xl drop-shadow-[0_0_8px_rgba(0,201,167,0.5)]" />
                 <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-teal-400 to-transparent drop-shadow-[0_0_8px_rgba(0,201,167,0.6)]" style={{ animation: 'scanLine 2.5s ease-in-out infinite' }} />
               </div>
             </div>
@@ -610,7 +610,7 @@ function TeacherStaffAttendance() {
 
           {showStaffInfo && currentStaff && scanResult && (
             <div className="absolute inset-0 z-20 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-              <div className="w-full sm:max-w-sm bg-white sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden sm:mx-4 animate-[slideUp_0.35s_ease-out]">
+              <div className="w-full sm:max-w-sm bg-white dark:bg-slate-900 sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden sm:mx-4 animate-[slideUp_0.35s_ease-out]">
                 <div className={`relative px-6 py-6 text-center overflow-hidden ${
                   scanResult.action === 'CHECK_OUT'
                     ? 'bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-500'
@@ -625,7 +625,7 @@ function TeacherStaffAttendance() {
                 </div>
                 <div className="px-6 py-5 flex flex-col items-center">
                   <div className="relative -mt-12 mb-3">
-                    <div className="w-20 h-20 rounded-full border-4 border-white shadow-xl bg-teal-50 text-teal-600 flex items-center justify-center text-3xl font-bold overflow-hidden">
+                    <div className="w-20 h-20 rounded-full border-4 border-white shadow-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center text-3xl font-bold overflow-hidden">
                       {currentStaff.photo ? (
                         <img src={currentStaff.photo} alt={currentStaff.name} className="w-full h-full object-cover" />
                       ) : (
@@ -637,26 +637,26 @@ function TeacherStaffAttendance() {
                     }`}>{scanResult.action === 'CHECK_OUT' ? '↑' : '✓'}</div>
                   </div>
                   {/* Position & Department */}
-                  <p className="text-sm font-medium text-slate-700">💼 {t('role.' + (currentStaff.role || '').toLowerCase()) || currentStaff.role}</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">💼 {t('role.' + (currentStaff.role || '').toLowerCase()) || currentStaff.role}</p>
                   {scanResult.userDepartment && (
-                    <p className="text-xs text-slate-500 mt-0.5">🏢 {scanResult.userDepartment.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">🏢 {scanResult.userDepartment.name}</p>
                   )}
                   {/* Date & Time details */}
                   <div className="mt-3 w-full space-y-2">
-                    <div className="flex items-center gap-3 py-2.5 px-4 bg-slate-50 rounded-xl">
-                      <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center text-teal-600 text-sm">📅</div>
+                    <div className="flex items-center gap-3 py-2.5 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                      <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-950/40 flex items-center justify-center text-teal-600 dark:text-teal-400 text-sm">📅</div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Date</p>
-                        <p className="font-bold text-slate-800 text-sm">{new Date(scanResult.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Date</p>
+                        <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{new Date(scanResult.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 py-2.5 px-4 bg-slate-50 rounded-xl">
+                    <div className="flex items-center gap-3 py-2.5 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
                         scanResult.action === 'CHECK_OUT' ? 'bg-sky-100 text-sky-600' : 'bg-emerald-100 text-emerald-600'
                       }`}>{scanResult.action === 'CHECK_OUT' ? '📤' : '📥'}</div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Time</p>
-                        <p className="font-bold text-slate-800 text-sm">
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Time</p>
+                        <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">
                           {scanResult.action === 'CHECK_OUT' && scanResult.checkOutTime
                             ? formatCambodiaTime(scanResult.checkOutTime)
                             : scanResult.checkInTime
@@ -678,7 +678,7 @@ function TeacherStaffAttendance() {
                   }`}>
                     ✅ Attendance Marked
                   </div>
-                  <p className="text-xs text-slate-400 mt-3 pb-2">Redirecting to dashboard...</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-3 pb-2">Redirecting to dashboard...</p>
                 </div>
               </div>
             </div>
@@ -689,23 +689,23 @@ function TeacherStaffAttendance() {
       {!scanning && <video ref={videoRef} className="hidden" autoPlay playsInline muted />}
 
       {/* ===== TOP BAR ===== */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold text-slate-800">{t('attendance.title')}</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100">{t('attendance.title')}</h1>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
-              <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">{checkedInCount} {t('attendance.checkedIn')}</span>
+              <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">{checkedInCount} {t('attendance.checkedIn')}</span>
               <span className="text-slate-300 text-xs">·</span>
-              <span className="inline-flex items-center gap-1 text-xs text-slate-500">{totalStaff} {t('attendance.totalStaff')}</span>
+              <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">{totalStaff} {t('attendance.totalStaff')}</span>
               <span className="text-slate-300 text-xs hidden sm:inline">·</span>
-              <span className="text-xs text-slate-400 hidden sm:inline">Session {session} · {scanMode === 'check-in' ? '📥 Check-In' : '📤 Check-Out'}{(() => { const cfg = staffSessionConfigs.find(c => c.session === session); return cfg ? ` · ${cfg.startTime}–${cfg.endTime}` : '' })()}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 hidden sm:inline">Session {session} · {scanMode === 'check-in' ? '📥 Check-In' : '📤 Check-Out'}{(() => { const cfg = staffSessionConfigs.find(c => c.session === session); return cfg ? ` · ${cfg.startTime}–${cfg.endTime}` : '' })()}</span>
             </div>
           </div>
-          <Link href="/teacher" className="shrink-0 text-sm text-slate-500 hover:text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors">
+          <Link href="/teacher" className="shrink-0 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
             ← Back
           </Link>
         </div>
-        <div className="h-1 bg-slate-100">
+        <div className="h-1 bg-slate-100 dark:bg-slate-800">
           <div className="h-1 bg-emerald-500 transition-all duration-500 ease-out" style={{ width: `${progressPct}%` }} />
         </div>
       </div>
@@ -723,7 +723,7 @@ function TeacherStaffAttendance() {
         {staffSessionConfigs.length > 0 && (
           <div className="card p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-semibold text-slate-700">⏰ Staff Session Schedule</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">⏰ Staff Session Schedule</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {staffSessionConfigs.map(cfg => {
@@ -743,13 +743,13 @@ function TeacherStaffAttendance() {
                     {isCurrent && (
                       <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                     )}
-                    <div className="text-[11px] font-medium text-slate-500">{sessionName(cfg.session)}</div>
+                    <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{sessionName(cfg.session)}</div>
                     <div className={`text-xs font-bold mt-0.5 ${
                       cfg.type === 'CHECK_IN' ? 'text-emerald-600' : 'text-blue-600'
                     }`}>
                       {cfg.type === 'CHECK_IN' ? '📥 Check-In' : '📤 Check-Out'}
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">{cfg.startTime} – {cfg.endTime}</div>
+                    <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{cfg.startTime} – {cfg.endTime}</div>
                   </div>
                 )
               })}
@@ -768,10 +768,10 @@ function TeacherStaffAttendance() {
               </div>
               {(() => {
                 const cfg = staffSessionConfigs.find(c => c.session === session)
-                return cfg ? <span className="text-xs text-slate-400">{cfg.startTime} – {cfg.endTime}</span> : null
+                return cfg ? <span className="text-xs text-slate-400 dark:text-slate-500">{cfg.startTime} – {cfg.endTime}</span> : null
               })()}
             </div>
-            <div className="text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <div className="text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">
               {checkedInCount}/{totalStaff} {t('attendance.checkedIn')}
             </div>
           </div>
@@ -798,7 +798,7 @@ function TeacherStaffAttendance() {
                   : 'Requesting location...'}
           </span>
           {(locationStatus === 'denied' || locationStatus === 'unavailable') && (
-            <button onClick={requestLocation} className="px-2.5 py-1 bg-white rounded-lg border border-current/20 text-xs font-bold hover:bg-slate-50 transition-colors">
+            <button onClick={requestLocation} className="px-2.5 py-1 bg-white dark:bg-slate-900 rounded-lg border border-current/20 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
               Retry
             </button>
           )}
@@ -815,8 +815,8 @@ function TeacherStaffAttendance() {
 
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-slate-700">{t('attendance.staffRoster')}</h2>
-            <span className="text-xs text-slate-400">{checkedInCount}/{totalStaff} {t('attendance.checkedIn')}</span>
+            <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200">{t('attendance.staffRoster')}</h2>
+            <span className="text-xs text-slate-400 dark:text-slate-500">{checkedInCount}/{totalStaff} {t('attendance.checkedIn')}</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {staffList.map(staff => {
@@ -844,17 +844,17 @@ function TeacherStaffAttendance() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-slate-800 truncate text-sm">{staff.name}</h3>
-                      <p className="text-xs text-slate-400 truncate">
+                      <h3 className="font-medium text-slate-800 dark:text-slate-100 truncate text-sm">{staff.name}</h3>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
                         {staff.role === 'ADMIN' ? '🛡️' : '👨‍🏫'} {staff.role} · {staff.email}
                       </p>
                     </div>
-                    {status === 'PRESENT' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-100 text-emerald-800">{t('common.present')}</span>}
-                    {status === 'LATE' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-amber-100 text-amber-800">{t('common.late')}</span>}
-                    {status === 'NOT_RECORDED' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-slate-100 text-slate-600">—</span>}
+                    {status === 'PRESENT' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300">{t('common.present')}</span>}
+                    {status === 'LATE' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">{t('common.late')}</span>}
+                    {status === 'NOT_RECORDED' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">—</span>}
                   </div>
                   {record && (
-                    <div className="mt-2 flex gap-2 text-[11px] text-slate-500">
+                    <div className="mt-2 flex gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                       {record.checkInTime && <span>📥 {formatCambodiaTime(record.checkInTime)}</span>}
                       {record.checkOutTime && <span>📤 {formatCambodiaTime(record.checkOutTime)}</span>}
                     </div>
@@ -865,10 +865,10 @@ function TeacherStaffAttendance() {
           </div>
           {staffList.length === 0 && (
             <div className="card p-12">
-              <div className="text-center text-slate-400">
+              <div className="text-center text-slate-400 dark:text-slate-500">
                 <p className="text-5xl mb-3">👔</p>
-                <p className="font-semibold text-slate-600">No staff found</p>
-                <p className="text-sm text-slate-400 mt-1">Teachers and admins will appear here.</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-300">No staff found</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Teachers and admins will appear here.</p>
               </div>
             </div>
           )}

@@ -76,18 +76,18 @@ export function ImageUpload({ value, onChange }: { value: string; onChange: (v: 
   return (
     <div className="space-y-2">
       {value ? (
-        <div className="relative rounded-sm overflow-hidden border border-gray-200 group">
+        <div className="relative rounded-sm overflow-hidden border border-gray-200 dark:border-slate-700 group">
           <img src={value} alt="preview" className="w-full h-40 object-cover" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
             <button type="button" onClick={() => ref.current?.click()}
-              className="px-3 py-1.5 bg-white text-gray-800 text-xs font-semibold rounded">Replace</button>
+              className="px-3 py-1.5 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 text-xs font-semibold rounded">Replace</button>
             <button type="button" onClick={() => onChange('')}
               className="px-3 py-1.5 bg-red-500 text-white text-xs font-semibold rounded">Remove</button>
           </div>
         </div>
       ) : (
         <div
-          className="border-2 border-dashed border-gray-300 rounded-sm cursor-pointer hover:border-[#2271b1] hover:bg-gray-50 transition-all"
+          className="border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-sm cursor-pointer hover:border-[#2271b1] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
           onClick={() => ref.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) pick(f) }}
@@ -100,14 +100,14 @@ export function ImageUpload({ value, onChange }: { value: string; onChange: (v: 
                 <svg className="w-7 h-7 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
                 </svg>
-                <p className="text-xs font-medium text-gray-600">Click or drag image here</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-slate-300">Click or drag image here</p>
                 <p className="text-[11px] text-gray-400">JPEG, PNG, WebP — max 15 MB</p>
               </>
             )}
           </div>
         </div>
       )}
-      {err && <p className="text-xs text-red-500">{err}</p>}
+      {err && <p className="text-xs text-red-500 dark:text-red-400">{err}</p>}
       <input ref={ref} type="file" accept="image/*" className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); e.target.value = '' }} />
     </div>

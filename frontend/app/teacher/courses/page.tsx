@@ -279,20 +279,20 @@ export default function TeacherCoursesPage() {
 
   return (
     <AuthGuard requiredRole="TEACHER">
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-800">
         <div className="mx-auto max-w-7xl px-4 py-6">
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Courses</h1>
-              <p className="text-sm text-slate-500">
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Courses</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Create and manage LMS courses for your classes.
               </p>
             </div>
             <div className="flex items-center gap-2">
               <Link
                 href="/teacher"
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 ← Dashboard
               </Link>
@@ -323,17 +323,17 @@ export default function TeacherCoursesPage() {
           </div>
 
           {/* Filters */}
-          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by title…"
-              className="flex-1 min-w-[180px] rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="flex-1 min-w-[180px] rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
             <select
               value={filterClass}
               onChange={(e) => setFilterClass(e.target.value)}
-              className="rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white"
+              className="rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm bg-white dark:bg-slate-900"
             >
               <option value="ALL">All Classes</option>
               {classes.map((c) => (
@@ -345,7 +345,7 @@ export default function TeacherCoursesPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as any)}
-              className="rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white"
+              className="rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm bg-white dark:bg-slate-900"
             >
               <option value="ALL">All Statuses</option>
               {(Object.keys(STATUS_LABEL) as CourseStatus[]).map((s) => (
@@ -358,13 +358,13 @@ export default function TeacherCoursesPage() {
 
           {/* List */}
           {isLoading ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <div key={i} className="bg-white h-40 rounded-2xl animate-pulse border border-gray-100" />)}</div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-40 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />)}</div>
           ) : isError ? (
-            <div className="rounded-2xl bg-rose-50 border border-rose-200 p-6 text-rose-700">
+            <div className="rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 p-6 text-rose-700 dark:text-rose-300">
               Failed to load courses.
             </div>
           ) : filtered.length === 0 ? (
-            <div className="rounded-2xl bg-white border border-gray-100 shadow-sm">
+            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm">
               <EmptyState icon="📖" message="No courses match your filters. Click + New Course to get started." />
             </div>
           ) : (
@@ -395,44 +395,44 @@ export default function TeacherCoursesPage() {
         {/* Modal form */}
         {showForm && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl">
-              <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-                <h2 className="text-lg font-semibold text-slate-800">
+            <div className="w-full max-w-2xl rounded-xl bg-white dark:bg-slate-900 shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-5 py-3">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
                   {editing ? 'Edit Course' : 'Create New Course'}
                 </h2>
                 <button
                   onClick={closeForm}
-                  className="rounded-md p-1 text-slate-500 hover:bg-slate-100"
+                  className="rounded-md p-1 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
                   ✕
                 </button>
               </div>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-5">
                 {formError && (
-                  <div className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                  <div className="rounded-md bg-rose-50 dark:bg-rose-950/40 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
                     {formError}
                   </div>
                 )}
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
                     Title *
                   </label>
                   <input
                     {...register('title', { required: true })}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g. Khmer Literature 101"
                   />
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
                       Class *
                     </label>
                     <select
                       {...register('classId', { required: true })}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
                     >
                       <option value="">— Choose class —</option>
                       {classes.map((c) => (
@@ -444,75 +444,75 @@ export default function TeacherCoursesPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
                       Category
                     </label>
                     <input
                       {...register('category')}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
                       placeholder="e.g. Science, Math"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
                     Description
                   </label>
                   <textarea
                     {...register('description')}
                     rows={3}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
                     placeholder="Short summary visible to students."
                   />
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
                       Start Date
                     </label>
                     <input
                       type="datetime-local"
                       {...register('startDate')}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
                       End Date
                     </label>
                     <input
                       type="datetime-local"
                       {...register('endDate')}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
                     Cover Image URL
                   </label>
                   <input
                     {...register('coverImageUrl')}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
                     placeholder="https://…"
                   />
                 </div>
 
                 {!editing && (
-                  <div className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                  <div className="rounded-md bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs text-slate-600 dark:text-slate-300">
                     New courses start in <b>Draft</b>. Add lessons, then publish from the
                     course card to make it visible to students.
                   </div>
                 )}
 
-                <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
+                <div className="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-700 pt-4">
                   <button
                     type="button"
                     onClick={closeForm}
-                    className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
                     Cancel
                   </button>
@@ -549,13 +549,13 @@ function CourseCard({
 }) {
   const nextStates = NEXT_BY_STATUS[course.status] || []
   return (
-    <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex flex-col rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm hover:shadow-md transition-shadow">
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold text-gray-900">
+          <h3 className="truncate text-base font-semibold text-gray-900 dark:text-slate-100">
             {course.title}
           </h3>
-          <p className="truncate text-xs text-gray-500">
+          <p className="truncate text-xs text-gray-500 dark:text-slate-400">
             {course.class.name}
             {course.class.subject ? ` • ${course.class.subject}` : ''}
           </p>
@@ -568,29 +568,29 @@ function CourseCard({
       </div>
 
       {course.description && (
-        <p className="mb-3 line-clamp-2 text-sm text-gray-600">{course.description}</p>
+        <p className="mb-3 line-clamp-2 text-sm text-gray-600 dark:text-slate-300">{course.description}</p>
       )}
 
-      <div className="mb-3 flex items-center gap-3 text-xs text-gray-500">
+      <div className="mb-3 flex items-center gap-3 text-xs text-gray-500 dark:text-slate-400">
         <span>📚 {course._count.lessons} lessons</span>
         <span>👥 {course._count.enrollments} enrolled</span>
         {course.enrollmentOpen && (
-          <span className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-700">
+          <span className="rounded-full bg-sky-100 dark:bg-sky-950/40 px-2 py-0.5 font-medium text-sky-700 dark:text-sky-300">
             Enrolling
           </span>
         )}
       </div>
 
-      <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+      <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-gray-100 dark:border-slate-800 pt-3">
         <Link
           href={`/teacher/courses/${course.id}`}
-          className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200"
+          className="rounded-lg bg-gray-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-200"
         >
           Open
         </Link>
         <button
           onClick={onEdit}
-          className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200"
+          className="rounded-lg bg-gray-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-200"
         >
           Edit
         </button>
@@ -606,7 +606,7 @@ function CourseCard({
         ))}
         <button
           onClick={onDelete}
-          className="ml-auto rounded-lg px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50"
+          className="ml-auto rounded-lg px-3 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
         >
           Delete
         </button>

@@ -113,10 +113,10 @@ export default function StudentQuizPage() {
   }, [deadline?.getTime()])
 
   if (isLoading) {
-    return <AuthGuard requiredRole="STUDENT"><div className="min-h-screen bg-gray-50 p-6"><div className="max-w-3xl mx-auto space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white h-24 rounded-2xl animate-pulse border border-gray-100" />)}</div></div></AuthGuard>
+    return <AuthGuard requiredRole="STUDENT"><div className="min-h-screen bg-gray-50 dark:bg-slate-800 p-6"><div className="max-w-3xl mx-auto space-y-3">{[1,2,3].map(i => <div key={i} className="bg-white dark:bg-slate-900 h-24 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />)}</div></div></AuthGuard>
   }
   if (isError || !data) {
-    return <AuthGuard requiredRole="STUDENT"><div className="min-h-screen bg-gray-50 p-6"><div className="max-w-3xl mx-auto"><div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center"><p className="text-red-600 mb-2">Failed to load quiz</p><Link href="/student/assignments" className="text-sm text-sky-600 underline">Back to assignments</Link></div></div></div></AuthGuard>
+    return <AuthGuard requiredRole="STUDENT"><div className="min-h-screen bg-gray-50 dark:bg-slate-800 p-6"><div className="max-w-3xl mx-auto"><div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-2xl p-6 text-center"><p className="text-red-600 dark:text-red-400 mb-2">Failed to load quiz</p><Link href="/student/assignments" className="text-sm text-sky-600 dark:text-sky-400 underline">Back to assignments</Link></div></div></div></AuthGuard>
   }
 
   const { assignment, questions, submission } = data
@@ -132,13 +132,13 @@ export default function StudentQuizPage() {
 
   return (
     <AuthGuard requiredRole="STUDENT">
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-800 p-6">
         <div className="max-w-3xl mx-auto">
-          <Link href="/student/assignments" className="text-sm text-gray-500 hover:text-gray-800 mb-4 block">← Back to my assignments</Link>
-          <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 mb-4">
-            <h1 className="text-xl font-bold text-gray-900 mb-1">📝 {assignment.title}</h1>
-            <p className="text-xs text-gray-500">{questions.length} question(s) · {totalPoints} points total{assignment.dueDate ? ` · Due ${new Date(assignment.dueDate).toLocaleString()}` : ''}</p>
-            {assignment.instructions && <p className="text-sm text-gray-600 mt-3 whitespace-pre-wrap">{assignment.instructions}</p>}
+          <Link href="/student/assignments" className="text-sm text-gray-500 dark:text-slate-400 hover:text-gray-800 mb-4 block">← Back to my assignments</Link>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-slate-800 mb-4">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-1">📝 {assignment.title}</h1>
+            <p className="text-xs text-gray-500 dark:text-slate-400">{questions.length} question(s) · {totalPoints} points total{assignment.dueDate ? ` · Due ${new Date(assignment.dueDate).toLocaleString()}` : ''}</p>
+            {assignment.instructions && <p className="text-sm text-gray-600 dark:text-slate-300 mt-3 whitespace-pre-wrap">{assignment.instructions}</p>}
             {assignment.maxAttempts > 1 && <p className="text-xs text-gray-400 mt-2">Attempts: {attemptsUsed}/{assignment.maxAttempts}</p>}
             {timeLimit && remainingSec != null && isTakeable && (
               <div className={`mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold ${remainingSec < 60 ? 'bg-red-100 text-red-700' : remainingSec < 300 ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700'}`}>
@@ -146,7 +146,7 @@ export default function StudentQuizPage() {
               </div>
             )}
             {timeLimit && !remainingSec && isTakeable && <p className="text-xs text-gray-400 mt-2">Time limit: {timeLimit} minutes — timer will start.</p>}
-            {autoSubmittedReason && <p className="mt-2 text-xs text-red-600 font-semibold">{autoSubmittedReason}</p>}
+            {autoSubmittedReason && <p className="mt-2 text-xs text-red-600 dark:text-red-400 font-semibold">{autoSubmittedReason}</p>}
             {isTakeable && questions.length > 0 && (
               <div className="mt-3">
                 <ProgressBar pct={(answeredCount / (questions.length || 1)) * 100} label={`${answeredCount} of ${questions.length} answered`} color="bg-emerald-500" />
@@ -155,47 +155,47 @@ export default function StudentQuizPage() {
           </div>
 
           {(result || alreadyGraded) && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 mb-4">
-              <p className="font-semibold text-emerald-800 mb-1">{alreadyGraded ? 'Graded' : 'Submitted'}{canRetake ? ' — you may retake below' : ''}</p>
+            <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-2xl p-5 mb-4">
+              <p className="font-semibold text-emerald-800 dark:text-emerald-300 mb-1">{alreadyGraded ? 'Graded' : 'Submitted'}{canRetake ? ' — you may retake below' : ''}</p>
               {result && (
-                <p className="text-sm text-emerald-700">
+                <p className="text-sm text-emerald-700 dark:text-emerald-300">
                   Auto-graded score: {result.adjustedAutoScore.toFixed(2)} / {totalPoints}
                   {result.latePenaltyApplied ? ` (after −${result.latePenaltyApplied}% late penalty)` : ''}
                   {result.hasManualGrading ? ' — essay portion will be graded by your teacher.' : ''}
                 </p>
               )}
               {alreadyGraded && submission?.marks != null && (
-                <p className="text-sm text-emerald-700">Final score: {submission.marks} / {assignment.totalMarks}</p>
+                <p className="text-sm text-emerald-700 dark:text-emerald-300">Final score: {submission.marks} / {assignment.totalMarks}</p>
               )}
             </div>
           )}
 
-          {submitError && <div className="mb-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-3 py-2">{submitError}</div>}
+          {submitError && <div className="mb-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-sm rounded-xl px-3 py-2">{submitError}</div>}
 
           <div className="space-y-3">
             {questions.length === 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
                 <EmptyState icon="⏳" message="This quiz has no questions yet." />
               </div>
             )}
             {questions.map((q, i) => {
               const ans = answerByQ.get(q.id)
               return (
-              <div key={q.id} className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
+              <div key={q.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-slate-800">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center">{i + 1}</span>
-                  <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">{q.points} pt</span>
+                  <span className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                  <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300">{q.points} pt</span>
                   {revealAnswers && ans && ans.pointsAwarded != null && (
                     <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${ans.pointsAwarded >= q.points ? 'bg-emerald-100 text-emerald-700' : ans.pointsAwarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>You: {ans.pointsAwarded}/{q.points}</span>
                   )}
                 </div>
-                <RichText as="div" className="text-sm text-gray-800 whitespace-pre-wrap mb-3" html={q.prompt} />
+                <RichText as="div" className="text-sm text-gray-800 dark:text-slate-100 whitespace-pre-wrap mb-3" html={q.prompt} />
                 <QuestionInput q={q} value={answers[q.id]} onChange={(v) => setAnswer(q.id, v)} disabled={(exhausted && !!submission) || revealAnswers} />
                 {revealAnswers && q.correctData && (
                   <CorrectAnswerPanel q={q} />
                 )}
                 {revealAnswers && ans?.feedback && (
-                  <p className="text-xs text-gray-600 italic mt-2">Teacher feedback: “{ans.feedback}”</p>
+                  <p className="text-xs text-gray-600 dark:text-slate-300 italic mt-2">Teacher feedback: “{ans.feedback}”</p>
                 )}
               </div>
               )
@@ -204,14 +204,14 @@ export default function StudentQuizPage() {
 
           {questions.length > 0 && (
             <div className="mt-4 flex items-center justify-between gap-3">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {exhausted ? 'No more attempts available.' : (submission ? 'Resubmitting starts a new attempt.' : 'Submit when you are ready.')}
               </p>
               <div className="flex items-center gap-2">
                 {(exhausted || revealAnswers || (!!submission && !canRetake)) && (
                   <button
                     onClick={() => router.push('/student/assignments')}
-                    className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-300">
+                    className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-300">
                     ✅ Finish
                   </button>
                 )}
@@ -302,7 +302,7 @@ function QuestionInput({ q, value, onChange, disabled }: { q: Question; value: a
         <div className="space-y-2">
           {left.map(l => (
             <div key={l.id} className="flex items-center gap-2">
-              <MathText as="span" className="text-sm text-slate-700 w-1/2 truncate" text={l.text} />
+              <MathText as="span" className="text-sm text-slate-700 dark:text-slate-200 w-1/2 truncate" text={l.text} />
               <select value={pairFor(l.id)} onChange={e => setPair(l.id, e.target.value)} disabled={disabled} className="flex-1 border rounded-lg px-2 py-1 text-sm">
                 <option value="">— choose —</option>
                 {right.map(r => <option key={r.id} value={r.id}>{r.text}</option>)}
@@ -325,17 +325,17 @@ function CorrectAnswerPanel({ q }: { q: Question }) {
       const choices: Array<{ id: string; text: string }> = q.data?.choices ?? []
       const correctIds: string[] = cd.correctIds ?? []
       content = (
-        <ul className="list-disc list-inside text-sm text-emerald-700">
+        <ul className="list-disc list-inside text-sm text-emerald-700 dark:text-emerald-300">
           {choices.filter(c => correctIds.includes(c.id)).map(c => <li key={c.id}><MathText as="span" text={c.text} /></li>)}
         </ul>
       )
       break
     }
     case 'TF':
-      content = <p className="text-sm text-emerald-700 font-semibold">{cd.correct ? 'True' : 'False'}</p>
+      content = <p className="text-sm text-emerald-700 dark:text-emerald-300 font-semibold">{cd.correct ? 'True' : 'False'}</p>
       break
     case 'NUMERICAL':
-      content = <p className="text-sm text-emerald-700 font-semibold">{String(cd.correct)}{cd.tolerance ? ` (±${cd.tolerance})` : ''}</p>
+      content = <p className="text-sm text-emerald-700 dark:text-emerald-300 font-semibold">{String(cd.correct)}{cd.tolerance ? ` (±${cd.tolerance})` : ''}</p>
       break
     case 'MATCHING': {
       const left: Array<{ id: string; text: string }> = q.data?.left ?? []
@@ -344,7 +344,7 @@ function CorrectAnswerPanel({ q }: { q: Question }) {
       const leftMap = new Map(left.map(l => [l.id, l.text]))
       const rightMap = new Map(right.map(r => [r.id, r.text]))
       content = (
-        <ul className="text-sm text-emerald-700 space-y-0.5">
+        <ul className="text-sm text-emerald-700 dark:text-emerald-300 space-y-0.5">
           {pairs.map((p, i) => <li key={i}>{leftMap.get(p.leftId) ?? p.leftId} → {rightMap.get(p.rightId) ?? p.rightId}</li>)}
         </ul>
       )
@@ -353,21 +353,21 @@ function CorrectAnswerPanel({ q }: { q: Question }) {
     case 'SORT_PARAGRAPHS': {
       const paragraphs: Array<{ id: string; text: string }> = cd.paragraphs ?? []
       content = (
-        <ol className="list-decimal list-inside text-sm text-emerald-700 space-y-0.5">
+        <ol className="list-decimal list-inside text-sm text-emerald-700 dark:text-emerald-300 space-y-0.5">
           {paragraphs.map(p => <li key={p.id}><MathText as="span" text={p.text} /></li>)}
         </ol>
       )
       break
     }
     case 'DRAG_WORDS': {
-      content = <p className="text-sm text-emerald-700 whitespace-pre-wrap">{cd.text}</p>
+      content = <p className="text-sm text-emerald-700 dark:text-emerald-300 whitespace-pre-wrap">{cd.text}</p>
       break
     }
     case 'DRAG_DROP': {
       const zones: Array<{ id: string }> = q.data?.zones ?? []
       const items: Array<{ id: string; label: string; correctZoneId: string }> = cd.items ?? []
       content = (
-        <ul className="text-sm text-emerald-700 space-y-0.5">
+        <ul className="text-sm text-emerald-700 dark:text-emerald-300 space-y-0.5">
           {items.map(it => <li key={it.id}><MathText as="span" text={it.label} /> → Zone {zones.findIndex(z => z.id === it.correctZoneId) + 1}</li>)}
         </ul>
       )
@@ -375,28 +375,28 @@ function CorrectAnswerPanel({ q }: { q: Question }) {
     }
     case 'SPEAK_WORDS': {
       const accepted: string[] = cd.acceptedAnswers ?? []
-      content = <p className="text-sm text-emerald-700">{accepted.join(' / ')}</p>
+      content = <p className="text-sm text-emerald-700 dark:text-emerald-300">{accepted.join(' / ')}</p>
       break
     }
     case 'SPEAK_WORDS_SET': {
       const items: Array<{ id: string; prompt: string; acceptedAnswers: string[] }> = cd.items ?? []
       content = (
-        <ul className="text-sm text-emerald-700 space-y-0.5">
+        <ul className="text-sm text-emerald-700 dark:text-emerald-300 space-y-0.5">
           {items.map(it => <li key={it.id}><MathText as="span" text={it.prompt} />: {it.acceptedAnswers.join(' / ')}</li>)}
         </ul>
       )
       break
     }
     case 'DICTATION': {
-      content = <p className="text-sm text-emerald-700 whitespace-pre-wrap">{cd.script}</p>
+      content = <p className="text-sm text-emerald-700 dark:text-emerald-300 whitespace-pre-wrap">{cd.script}</p>
       break
     }
     default:
       return null
   }
   return (
-    <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-      <p className="text-[11px] uppercase font-semibold text-emerald-700 mb-1">✓ Correct answer</p>
+    <div className="mt-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-lg p-3">
+      <p className="text-[11px] uppercase font-semibold text-emerald-700 dark:text-emerald-300 mb-1">✓ Correct answer</p>
       {content}
     </div>
   )

@@ -78,27 +78,27 @@ export default function TeacherMessagesPage() {
 
   return (
     <AuthGuard requiredRole="TEACHER">
-      <div className="flex min-h-screen bg-slate-50 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pb-[72px] lg:pb-0">
         <Sidebar title="Teacher" subtitle="Portal" navItems={teacherNav} accentColor="emerald" />
         {/* Mobile top spacer for fixed bar */}
         <div className="h-14 lg:hidden" />
         <aside className={`${selectedPartnerId ? 'hidden lg:flex' : 'flex'} w-full lg:w-72 bg-white border-r border-slate-200 flex-col`}>
-          <div className="p-4 border-b border-slate-100">
-            <Link href="/teacher" className="text-xs text-sky-600">← Back</Link>
-            <p className="text-sm font-bold text-slate-700 mt-2">Messages</p>
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+            <Link href="/teacher" className="text-xs text-sky-600 dark:text-sky-400">← Back</Link>
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 mt-2">Messages</p>
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             <button onClick={() => setShowContactList(s => !s)}
-              className="w-full text-xs text-sky-600 py-2 hover:underline">+ New Message</button>
+              className="w-full text-xs text-sky-600 dark:text-sky-400 py-2 hover:underline">+ New Message</button>
 
             {showContactList && (
-              <div className="mb-3 border border-slate-200 rounded-lg p-2 bg-slate-50">
+              <div className="mb-3 border border-slate-200 dark:border-slate-700 rounded-lg p-2 bg-slate-50 dark:bg-slate-800">
                 <input
                   type="search"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search by name…"
-                  className="w-full text-xs border border-slate-200 rounded-md px-2 py-1 mb-2 focus:outline-none focus:ring-1 focus:ring-sky-300"
+                  className="w-full text-xs border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 mb-2 focus:outline-none focus:ring-1 focus:ring-sky-300"
                 />
                 <div className="flex gap-1 mb-2">
                   {(['ALL', 'PARENT', 'STUDENT'] as const).map(f => (
@@ -110,12 +110,12 @@ export default function TeacherMessagesPage() {
                 </div>
                 <div className="max-h-48 overflow-y-auto">
                   {filteredContacts.length === 0 && (
-                    <p className="text-[11px] text-slate-400 px-2 py-1">No matches</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 px-2 py-1">No matches</p>
                   )}
                   {filteredContacts.map(c => (
                     <button key={c.id}
                       onClick={() => { onSelectPartner(c.id); setShowContactList(false); setSearch('') }}
-                      className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-white text-slate-700 flex items-center justify-between gap-2">
+                      className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-white text-slate-700 dark:text-slate-200 flex items-center justify-between gap-2">
                       <span className="truncate">{c.name}</span>
                       <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${c.role === 'PARENT' ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700'}`}>
                         {c.role}
@@ -127,9 +127,9 @@ export default function TeacherMessagesPage() {
             )}
 
             {isLoading ? (
-              <div className="animate-pulse h-10 bg-slate-100 rounded-lg m-2" />
+              <div className="animate-pulse h-10 bg-slate-100 dark:bg-slate-800 rounded-lg m-2" />
             ) : inbox.length === 0 ? (
-              <p className="text-xs text-slate-400 px-3 py-4 text-center">No conversations yet. Tap “New Message” to start one.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 px-3 py-4 text-center">No conversations yet. Tap “New Message” to start one.</p>
             ) : inbox.map(item => {
               const lm = item.lastMessage
               const unread = !lm?.readAt && lm?.sender?.id === item.partner.id
@@ -140,7 +140,7 @@ export default function TeacherMessagesPage() {
                     <p className={`truncate ${unread ? 'font-bold text-slate-800' : 'font-medium'}`}>{item.partner.name}</p>
                     {unread && <span className="w-2 h-2 rounded-full bg-sky-500 flex-shrink-0" />}
                   </div>
-                  <p className="text-xs truncate text-slate-400">{lm?.content ?? ''}</p>
+                  <p className="text-xs truncate text-slate-400 dark:text-slate-500">{lm?.content ?? ''}</p>
                 </button>
               )
             })}
@@ -149,28 +149,28 @@ export default function TeacherMessagesPage() {
 
         <main className={`${selectedPartnerId ? 'flex' : 'hidden lg:flex'} flex-1 flex-col`}>
           {!selectedPartnerId ? (
-            <div className="flex-1 flex items-center justify-center text-slate-400">
+            <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500">
               <div className="text-center">
                 <p className="text-5xl mb-3">💬</p>
-                <p className="text-slate-500 font-medium">Select a conversation</p>
-                <p className="text-xs text-slate-400 mt-1">or start a new one with any parent or student.</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">Select a conversation</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">or start a new one with any parent or student.</p>
               </div>
             </div>
           ) : (
             <>
-              <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sticky top-0 z-10">
-                <button onClick={() => setSelectedPartnerId(null)} className="lg:hidden w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition-transform" aria-label="Back to conversations">←</button>
+              <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sticky top-0 z-10">
+                <button onClick={() => setSelectedPartnerId(null)} className="lg:hidden w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 active:scale-95 transition-transform" aria-label="Back to conversations">←</button>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 text-white font-bold flex items-center justify-center shadow-sm">
                   {(selectedPartner?.name || '?').charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-800 truncate">{selectedPartner?.name ?? 'Chat'}</p>
-                  <p className="text-xs text-slate-400">{selectedPartner?.role ?? ''}</p>
+                  <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{selectedPartner?.name ?? 'Chat'}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">{selectedPartner?.role ?? ''}</p>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-2 bg-slate-50">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-2 bg-slate-50 dark:bg-slate-800">
                 {conversation.length === 0 && (
-                  <p className="text-center text-sm text-slate-400 mt-8">No messages yet — say hello 👋</p>
+                  <p className="text-center text-sm text-slate-400 dark:text-slate-500 mt-8">No messages yet — say hello 👋</p>
                 )}
                 {conversation.map((msg, i) => {
                   const mine = msg.sender.id !== selectedPartnerId
@@ -195,10 +195,10 @@ export default function TeacherMessagesPage() {
                   )
                 })}
               </div>
-              <form onSubmit={handleSubmit(onSend)} className="bg-white border-t border-slate-200 p-3 sm:p-4 flex gap-2 sm:gap-3 sticky bottom-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}>
+              <form onSubmit={handleSubmit(onSend)} className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-3 sm:p-4 flex gap-2 sm:gap-3 sticky bottom-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}>
                 <input {...register('content', { required: true })}
                   placeholder="Type a message…" autoComplete="off"
-                  className="flex-1 border border-slate-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                  className="flex-1 border border-slate-200 dark:border-slate-700 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300" />
                 <button type="submit" disabled={sendMutation.isPending}
                   className="bg-sky-600 text-white px-4 sm:px-5 py-2.5 rounded-full text-sm font-semibold disabled:opacity-60 active:scale-95 transition-transform">
                   {sendMutation.isPending ? '…' : 'Send'}

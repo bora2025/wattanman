@@ -50,13 +50,13 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
             <img src={result.studentPhoto} alt={result.studentName}
               className="w-20 h-20 sm:w-24 sm:h-24 object-cover" />
           ) : (
-            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white flex items-center justify-center text-5xl">👤</div>
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white dark:bg-slate-900 flex items-center justify-center text-5xl">👤</div>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-extrabold text-slate-800 text-lg sm:text-xl leading-tight truncate">{result.studentName}</p>
-          <p className="text-sm text-slate-500 truncate mt-0.5">{result.className}</p>
-          {isAlready && <p className="text-xs text-indigo-500 font-medium mt-1">Already recorded — no duplicate</p>}
+          <p className="font-extrabold text-slate-800 dark:text-slate-100 text-lg sm:text-xl leading-tight truncate">{result.studentName}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{result.className}</p>
+          {isAlready && <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium mt-1">Already recorded — no duplicate</p>}
         </div>
       </div>
       {timeDisplay && (
@@ -64,7 +64,7 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
           style={{ background: meta.bgLight }}>
           <div className="flex items-center gap-2">
             <span className="text-base">🕐</span>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
               {isAlready ? 'First scan time' : result.action === 'CHECK_OUT' ? 'Check-out time' : 'Check-in time'}
             </span>
           </div>
@@ -98,17 +98,17 @@ function StudentProfileCardLarge({ result }: { result: ScanResult }) {
           {result.studentPhoto ? (
             <img src={result.studentPhoto} alt={result.studentName} className="w-20 h-20 object-cover" />
           ) : (
-            <div className="w-20 h-20 bg-white flex items-center justify-center text-4xl">👤</div>
+            <div className="w-20 h-20 bg-white dark:bg-slate-900 flex items-center justify-center text-4xl">👤</div>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-extrabold text-slate-800 text-xl leading-tight">{result.studentName}</p>
-          <p className="text-slate-500 text-xs mt-0.5 truncate">{result.className}</p>
-          {isAlready && <p className="text-indigo-500 text-xs font-medium mt-1">Already recorded</p>}
+          <p className="font-extrabold text-slate-800 dark:text-slate-100 text-xl leading-tight">{result.studentName}</p>
+          <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 truncate">{result.className}</p>
+          {isAlready && <p className="text-indigo-500 dark:text-indigo-400 text-xs font-medium mt-1">Already recorded</p>}
           {timeDisplay && (
             <div className="flex items-center gap-1.5 mt-2 rounded-xl px-3 py-1.5" style={{ background: meta.bgLight }}>
               <span className="text-sm">🕐</span>
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                 {isAlready ? 'First' : result.action === 'CHECK_OUT' ? 'Out' : 'In'}
               </span>
               <span className="ml-auto text-xl font-extrabold tabular-nums" style={{ color: meta.textHex }}>
@@ -126,20 +126,20 @@ function StudentProfileCardLarge({ result }: { result: ScanResult }) {
             <img src={result.studentPhoto} alt={result.studentName}
               className="w-36 h-36 sm:w-40 sm:h-40 object-cover" />
           ) : (
-            <div className="w-36 h-36 sm:w-40 sm:h-40 bg-white flex items-center justify-center text-7xl">👤</div>
+            <div className="w-36 h-36 sm:w-40 sm:h-40 bg-white dark:bg-slate-900 flex items-center justify-center text-7xl">👤</div>
           )}
         </div>
         <div className="text-center space-y-1">
-          <p className="font-extrabold text-slate-800 text-2xl sm:text-3xl leading-tight">{result.studentName}</p>
-          <p className="text-slate-500 text-sm sm:text-base">{result.className}</p>
-          {isAlready && <p className="text-indigo-500 text-sm font-medium mt-1">Already recorded — no duplicate</p>}
+          <p className="font-extrabold text-slate-800 dark:text-slate-100 text-2xl sm:text-3xl leading-tight">{result.studentName}</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">{result.className}</p>
+          {isAlready && <p className="text-indigo-500 dark:text-indigo-400 text-sm font-medium mt-1">Already recorded — no duplicate</p>}
         </div>
         {timeDisplay && (
           <div className="w-full rounded-2xl px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between"
             style={{ background: meta.bgLight }}>
             <div className="flex items-center gap-2">
               <span className="text-xl">🕐</span>
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                 {isAlready ? 'First scan' : result.action === 'CHECK_OUT' ? 'Check-out' : 'Check-in'}
               </span>
             </div>
@@ -759,7 +759,7 @@ function UsbScanContent() {
                 S{activeSession.session} · {activeSession.startTime}–{activeSession.endTime}
               </p>
             ) : (
-              <p className="text-xs text-slate-500 leading-tight">School Attendance</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">School Attendance</p>
             )}
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -788,7 +788,7 @@ function UsbScanContent() {
             <span className="text-2xl">🖲️</span>
             <div>
               <h1 className="font-extrabold text-white text-base leading-tight">USB Scanner — Attendance</h1>
-              <p className="text-slate-400 text-xs">School Attendance Management System</p>
+              <p className="text-slate-400 dark:text-slate-500 text-xs">School Attendance Management System</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -870,12 +870,12 @@ function UsbScanContent() {
                 <p className="text-xs font-semibold text-violet-400 uppercase tracking-wide mb-2">🧪 Test Mode — attendance NOT recorded</p>
                 {testResult ? (
                   <div className="bg-slate-900/80 rounded-lg px-3 py-2 border border-violet-500/20">
-                    <p className="text-xs text-slate-500 mb-1">Raw QR value from scanner:</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Raw QR value from scanner:</p>
                     <p className="font-mono text-sm text-violet-300 break-all">{testResult}</p>
                     <p className="text-xs text-emerald-400 mt-1.5 font-medium">✓ Scanner is working correctly</p>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-500">Scan any card — value shown here, no attendance recorded</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Scan any card — value shown here, no attendance recorded</p>
                 )}
               </div>
             )}
@@ -908,7 +908,7 @@ function UsbScanContent() {
                     <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-4 border-amber-500/30 border-t-amber-400 animate-spin" />
                   </div>
                   <p className="text-slate-300 text-lg sm:text-xl font-semibold">Processing scan…</p>
-                  <p className="text-slate-500 text-sm">Checking student record</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">Checking student record</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-5 sm:gap-7">
@@ -924,7 +924,7 @@ function UsbScanContent() {
                   </div>
                   <div className="text-center space-y-2">
                     <p className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">Ready to Scan</p>
-                    <p className="text-slate-400 text-sm sm:text-base">Point scanner at a student QR card</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-sm sm:text-base">Point scanner at a student QR card</p>
                   </div>
                   <div className="w-48 sm:w-64 lg:w-80 h-1.5 bg-slate-700 rounded-full overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 rounded-full"
@@ -955,7 +955,7 @@ function UsbScanContent() {
               {/* Buffer display */}
               {bufferDisplay && (
                 <div className="mt-5 bg-slate-800 border border-slate-600 rounded-2xl px-4 py-3 flex items-center gap-3 w-full max-w-xs sm:max-w-sm">
-                  <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider flex-shrink-0">Reading</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider flex-shrink-0">Reading</span>
                   <span className="font-mono text-sm text-emerald-300 truncate flex-1">{bufferDisplay}</span>
                   <span className="w-1.5 h-4 bg-emerald-400 animate-pulse rounded-sm flex-shrink-0" />
                 </div>
@@ -990,7 +990,7 @@ function UsbScanContent() {
               {scanHistory.length > 0 && (
                 <button
                   onClick={() => setScanHistory([])}
-                  className="text-xs text-slate-500 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700 transition-all"
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-slate-700 transition-all"
                 >
                   Clear
                 </button>
@@ -1000,7 +1000,7 @@ function UsbScanContent() {
               {scanHistory.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full py-8 gap-2 opacity-50">
                   <span className="text-4xl">📋</span>
-                  <p className="text-xs text-slate-500">No scans yet</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">No scans yet</p>
                 </div>
               ) : (
                 scanHistory.map((r, i) => {
@@ -1014,7 +1014,7 @@ function UsbScanContent() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-slate-200 truncate leading-tight">{r.studentName}</p>
-                        <p className="text-xs text-slate-500 truncate leading-tight">{r.className}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-tight">{r.className}</p>
                       </div>
                       <span className={`text-white font-bold px-1.5 py-0.5 rounded-md flex-shrink-0 ${meta.bg}`}
                         style={{ fontSize: '10px', lineHeight: '1.5' }}>
@@ -1049,7 +1049,7 @@ function UsbScanContent() {
       {linkCardQr && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           data-modal>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col gap-0 overflow-hidden"
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col gap-0 overflow-hidden"
             data-modal>
             <div className="bg-amber-500 px-5 py-4 flex items-center justify-between">
               <div>
@@ -1060,39 +1060,39 @@ function UsbScanContent() {
                 className="text-white/80 hover:text-white text-2xl leading-none transition-colors">×</button>
             </div>
             <div className="px-5 pt-4 pb-2">
-              <p className="text-xs text-slate-500 font-mono mb-3 break-all bg-slate-50 rounded-lg px-3 py-2">{linkCardQr}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mb-3 break-all bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2">{linkCardQr}</p>
               <input
                 type="text"
                 placeholder="Search student by name or ID…"
                 value={linkSearch}
                 onChange={e => setLinkSearch(e.target.value)}
-                className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
                 autoFocus
               />
             </div>
             <div className="px-5 pb-5 max-h-64 overflow-y-auto flex flex-col gap-2 mt-2">
-              {linkLoading && <p className="text-center text-xs text-slate-400 py-4">Searching…</p>}
+              {linkLoading && <p className="text-center text-xs text-slate-400 dark:text-slate-500 py-4">Searching…</p>}
               {!linkLoading && linkResults.length === 0 && linkSearch.trim() && (
-                <p className="text-center text-xs text-slate-400 py-4">No students found</p>
+                <p className="text-center text-xs text-slate-400 dark:text-slate-500 py-4">No students found</p>
               )}
               {!linkLoading && linkResults.map(s => (
                 <button key={s.id}
                   onClick={() => linkCardToStudent(s.id)}
                   disabled={linkSaving}
-                  className="flex items-center gap-3 w-full text-left rounded-xl px-3 py-2.5 hover:bg-amber-50 active:bg-amber-100 border border-transparent hover:border-amber-200 transition-all disabled:opacity-50">
+                  className="flex items-center gap-3 w-full text-left rounded-xl px-3 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-950/40 active:bg-amber-100 border border-transparent hover:border-amber-200 transition-all disabled:opacity-50">
                   {(s.photo || s.user.photo) ? (
                     <img src={(s.photo || s.user.photo)!} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                   ) : (
-                    <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-xl flex-shrink-0">👤</div>
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl flex-shrink-0">👤</div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 truncate">{s.user.name}</p>
-                    <p className="text-xs text-slate-500">{s.studentNumber} · {s.class?.name ?? '—'}</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{s.user.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{s.studentNumber} · {s.class?.name ?? '—'}</p>
                   </div>
-                  <span className="text-amber-500 text-sm">Link →</span>
+                  <span className="text-amber-500 dark:text-amber-400 text-sm">Link →</span>
                 </button>
               ))}
-              {linkError && <p className="text-xs text-red-500 text-center">{linkError}</p>}
+              {linkError && <p className="text-xs text-red-500 dark:text-red-400 text-center">{linkError}</p>}
             </div>
           </div>
         </div>

@@ -97,15 +97,15 @@ function PostsListContent() {
   return (
     <div className="space-y-4">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500">
+      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
         <Link href="/admin/appearance" className="hover:text-[#2271b1] transition-colors">Appearance</Link>
         <span>›</span>
-        <span className="text-gray-900 font-medium">Posts</span>
+        <span className="text-gray-900 dark:text-slate-100 font-medium">Posts</span>
       </div>
 
       {/* Heading row */}
       <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-normal text-gray-800">Posts</h1>
+        <h1 className="text-2xl font-normal text-gray-800 dark:text-slate-100">Posts</h1>
         <Link
           href="/admin/appearance/posts/new"
           className="px-3 py-1.5 text-sm font-medium border border-[#2271b1] text-[#2271b1] rounded-sm hover:bg-[#2271b1] hover:text-white transition-colors"
@@ -115,7 +115,7 @@ function PostsListContent() {
       </div>
 
       {/* Status subnav + search */}
-      <div className="flex items-center justify-between flex-wrap gap-3 border-b border-gray-200 pb-3">
+      <div className="flex items-center justify-between flex-wrap gap-3 border-b border-gray-200 dark:border-slate-700 pb-3">
         <div className="flex items-center gap-2 text-sm">
           {([
             ['all', 'All'],
@@ -137,7 +137,7 @@ function PostsListContent() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search Posts"
-          className="px-2.5 py-1.5 border border-gray-300 rounded-sm text-sm w-56 focus:outline-none focus:ring-1 focus:ring-[#2271b1] focus:border-[#2271b1]"
+          className="px-2.5 py-1.5 border border-gray-300 dark:border-slate-600 rounded-sm text-sm w-56 focus:outline-none focus:ring-1 focus:ring-[#2271b1] focus:border-[#2271b1]"
         />
       </div>
 
@@ -146,7 +146,7 @@ function PostsListContent() {
         <select
           value={bulkAction}
           onChange={(e) => setBulkAction(e.target.value as BulkAction)}
-          className="px-2 py-1.5 border border-gray-300 rounded-sm text-sm bg-white"
+          className="px-2 py-1.5 border border-gray-300 dark:border-slate-600 rounded-sm text-sm bg-white dark:bg-slate-900"
         >
           <option value="">Bulk actions</option>
           <option value="publish">Publish</option>
@@ -155,20 +155,20 @@ function PostsListContent() {
         </select>
         <button
           onClick={applyBulk}
-          className="px-3 py-1.5 border border-gray-300 rounded-sm text-sm text-gray-700 hover:bg-gray-50 bg-white"
+          className="px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded-sm text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 bg-white dark:bg-slate-900"
         >
           Apply
         </button>
-        <span className="ml-auto text-sm text-gray-500">
+        <span className="ml-auto text-sm text-gray-500 dark:text-slate-400">
           {filtered.length} item{filtered.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Table */}
-      <div className="border border-gray-300 rounded-sm overflow-hidden bg-white overflow-x-auto">
+      <div className="border border-gray-300 dark:border-slate-600 rounded-sm overflow-hidden bg-white dark:bg-slate-900 overflow-x-auto">
         <table className="w-full text-sm min-w-[720px]">
           <thead>
-            <tr className="border-b border-gray-300 bg-gray-50 text-left text-gray-700">
+            <tr className="border-b border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-left text-gray-700 dark:text-slate-200">
               <th className="w-10 px-3 py-2">
                 <input
                   type="checkbox"
@@ -204,8 +204,8 @@ function PostsListContent() {
                   <Link href={`/admin/appearance/posts/${post.id}`} className="font-semibold text-[#2271b1] hover:text-[#135e96]">
                     {post.title || '(no title)'}
                   </Link>
-                  {post.pinned && <span className="ml-2 text-xs text-amber-600" title="Pinned">📌</span>}
-                  {post.excerpt && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{post.excerpt}</p>}
+                  {post.pinned && <span className="ml-2 text-xs text-amber-600 dark:text-amber-400" title="Pinned">📌</span>}
+                  {post.excerpt && <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-1">{post.excerpt}</p>}
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs mt-1 flex items-center gap-1.5">
                     <Link href={`/admin/appearance/posts/${post.id}`} className="text-[#2271b1] hover:text-[#135e96] hover:underline">Edit</Link>
                     <span className="text-gray-300">|</span>
@@ -213,7 +213,7 @@ function PostsListContent() {
                       {post.published ? 'Unpublish' : 'Publish'}
                     </button>
                     <span className="text-gray-300">|</span>
-                    <button onClick={() => setConfirmDelete([post.id])} className="text-red-600 hover:text-red-800 hover:underline">Trash</button>
+                    <button onClick={() => setConfirmDelete([post.id])} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:underline">Trash</button>
                   </div>
                 </td>
                 <td className="px-3 py-3 align-top">
@@ -221,11 +221,11 @@ function PostsListContent() {
                     {post.tags.length === 0 ? (
                       <span className="text-gray-300">—</span>
                     ) : post.tags.map((t) => (
-                      <span key={t} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[11px] rounded">{t}</span>
+                      <span key={t} className="px-1.5 py-0.5 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 text-[11px] rounded">{t}</span>
                     ))}
                   </div>
                 </td>
-                <td className="px-3 py-3 align-top text-gray-600 whitespace-nowrap">
+                <td className="px-3 py-3 align-top text-gray-600 dark:text-slate-300 whitespace-nowrap">
                   {TYPE_ICON[post.type]} <span className="capitalize">{post.type}</span>
                 </td>
                 <td className="px-3 py-3 align-top">
@@ -233,7 +233,7 @@ function PostsListContent() {
                     {post.published ? 'Published' : 'Draft'}
                   </span>
                 </td>
-                <td className="px-3 py-3 align-top text-gray-500 text-xs whitespace-nowrap">
+                <td className="px-3 py-3 align-top text-gray-500 dark:text-slate-400 text-xs whitespace-nowrap">
                   {new Date(post.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </td>
               </tr>
@@ -248,7 +248,7 @@ function PostsListContent() {
           <select
             value={bulkAction}
             onChange={(e) => setBulkAction(e.target.value as BulkAction)}
-            className="px-2 py-1.5 border border-gray-300 rounded-sm text-sm bg-white"
+            className="px-2 py-1.5 border border-gray-300 dark:border-slate-600 rounded-sm text-sm bg-white dark:bg-slate-900"
           >
             <option value="">Bulk actions</option>
             <option value="publish">Publish</option>
@@ -257,7 +257,7 @@ function PostsListContent() {
           </select>
           <button
             onClick={applyBulk}
-            className="px-3 py-1.5 border border-gray-300 rounded-sm text-sm text-gray-700 hover:bg-gray-50 bg-white"
+            className="px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded-sm text-sm text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 bg-white dark:bg-slate-900"
           >
             Apply
           </button>
@@ -267,14 +267,14 @@ function PostsListContent() {
       {/* Delete confirm dialog */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full space-y-4">
-            <h3 className="font-bold text-gray-900">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl p-6 max-w-sm w-full space-y-4">
+            <h3 className="font-bold text-gray-900 dark:text-slate-100">
               {confirmDelete.length > 1 ? `Delete ${confirmDelete.length} posts?` : 'Delete Post?'}
             </h3>
-            <p className="text-sm text-gray-500">This action cannot be undone.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">This action cannot be undone.</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
+                className="flex-1 px-4 py-2 text-sm text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">
                 Cancel
               </button>
               <button onClick={confirmDeleteAction}

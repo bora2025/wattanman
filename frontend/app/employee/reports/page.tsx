@@ -122,7 +122,7 @@ export default function EmployeeReports() {
 
   return (
     <AuthGuard allowedRoles={['EMPLOYEE']}>
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800">
         <Sidebar title="Employee" subtitle={userName || 'Portal'} navItems={employeeNav} accentColor="emerald" />
 
         <main className="flex-1 lg:ml-0">
@@ -133,7 +133,7 @@ export default function EmployeeReports() {
               <div className="page-header">
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900">{t('reports.title')}</h1>
-                  <p className="text-sm text-slate-500 mt-1">{t('reports.viewHistory')}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('reports.viewHistory')}</p>
                 </div>
               </div>
 
@@ -148,7 +148,7 @@ export default function EmployeeReports() {
                         type="date"
                         value={selectedDate}
                         onChange={e => setSelectedDate(e.target.value)}
-                        className="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                        className="flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                       />
                       <button onClick={() => goDay(1)} className="flex-shrink-0 btn-outline px-2 py-2.5 text-sm">▶</button>
                       <button onClick={() => setSelectedDate(todayCambodia())} className="flex-shrink-0 btn-outline px-3 py-2.5 text-sm">
@@ -163,8 +163,8 @@ export default function EmployeeReports() {
 
                 {/* Holiday Banner */}
                 {isHoliday && (
-                  <div className="card p-4 bg-amber-50 border-amber-200 text-center">
-                    <p className="text-amber-800 font-semibold">🎉 {t('reports.holiday')} — {dayLabel}</p>
+                  <div className="card p-4 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900 text-center">
+                    <p className="text-amber-800 dark:text-amber-300 font-semibold">🎉 {t('reports.holiday')} — {dayLabel}</p>
                   </div>
                 )}
 
@@ -196,42 +196,42 @@ export default function EmployeeReports() {
                         {/* Daily Stats */}
                         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                           <div className="stat-card">
-                            <p className="stat-value text-slate-800">4</p>
+                            <p className="stat-value text-slate-800 dark:text-slate-100">4</p>
                             <p className="stat-label">{t('reports.sessions')}</p>
                           </div>
                           <div className="stat-card">
-                            <p className="stat-value text-emerald-600">{dailyPresent}</p>
+                            <p className="stat-value text-emerald-600 dark:text-emerald-400">{dailyPresent}</p>
                             <p className="stat-label">{t('common.present')}</p>
                           </div>
                           <div className="stat-card">
-                            <p className="stat-value text-amber-600">{dailyLate}</p>
+                            <p className="stat-value text-amber-600 dark:text-amber-400">{dailyLate}</p>
                             <p className="stat-label">{t('common.late')}</p>
                           </div>
                           <div className="stat-card">
-                            <p className="stat-value text-red-600">{dailyAbsent}</p>
+                            <p className="stat-value text-red-600 dark:text-red-400">{dailyAbsent}</p>
                             <p className="stat-label">{t('common.absent')}</p>
                           </div>
                           <div className="stat-card col-span-2 sm:col-span-1">
-                            <p className="stat-value text-purple-600">{dailyPermission}</p>
+                            <p className="stat-value text-purple-600 dark:text-purple-400">{dailyPermission}</p>
                             <p className="stat-label">{t('common.permission')}</p>
                           </div>
                         </div>
 
                         {/* Daily Grid */}
                         <div className="card overflow-hidden">
-                          <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
-                            <h3 className="text-sm font-semibold text-slate-700">📋 {dayLabel}</h3>
+                          <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">📋 {dayLabel}</h3>
                           </div>
                           {grid.length === 0 ? (
-                            <div className="p-8 text-center text-slate-400">
+                            <div className="p-8 text-center text-slate-400 dark:text-slate-500">
                               <p className="text-3xl mb-2">📭</p>
                               <p className="text-sm">{t('reports.noRecordsDay')}</p>
                             </div>
                           ) : (
                             <div className="overflow-x-auto">
                               <table className="w-full text-xs sm:text-sm">
-                                <thead className="bg-slate-50">
-                                  <tr className="text-left text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide">
+                                <thead className="bg-slate-50 dark:bg-slate-800">
+                                  <tr className="text-left text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                                     <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.day')}</th>
                                     <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center">{t('common.morningIn')}</th>
                                     <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center">{t('common.morningOut')}</th>
@@ -243,7 +243,7 @@ export default function EmployeeReports() {
                                 <tbody>
                                   {grid.map(r => (
                                     <tr key={r.userId} className={`border-t border-slate-100 ${r.isHoliday ? 'bg-amber-50/50' : 'hover:bg-slate-50'}`}>
-                                      <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 font-medium text-xs sm:text-sm">{dayLabel.split(',')[0]}</td>
+                                      <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 dark:text-slate-100 font-medium text-xs sm:text-sm">{dayLabel.split(',')[0]}</td>
                                       <SessionCell time={r.checkInMorning} status={r.session1Status} />
                                       <SessionCell time={r.checkOutMorning} status={r.session2Status} />
                                       <SessionCell time={r.checkInAfternoon} status={r.session3Status} />
@@ -254,12 +254,12 @@ export default function EmployeeReports() {
                                             href={`https://www.google.com/maps?q=${r.scanLatitude},${r.scanLongitude}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                                            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
                                           >
                                             📍 {r.scanLatitude?.toFixed(4)}, {r.scanLongitude?.toFixed(4)}
                                           </a>
                                         ) : (
-                                          <span className="text-xs text-slate-400">—</span>
+                                          <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
                                         )}
                                       </td>
                                     </tr>
@@ -277,8 +277,8 @@ export default function EmployeeReports() {
                           <div className="card p-12">
                             <div className="empty-state">
                               <p className="text-4xl mb-3">📊</p>
-                            <p className="font-semibold text-slate-600">{t('common.noData')}</p>
-                            <p className="text-sm text-slate-400 mt-1">{t('reports.noTotals')}</p>
+                            <p className="font-semibold text-slate-600 dark:text-slate-300">{t('common.noData')}</p>
+                            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('reports.noTotals')}</p>
                             </div>
                           </div>
                         ) : (() => {
@@ -287,33 +287,33 @@ export default function EmployeeReports() {
                           const tr = totals[0]
                           return (
                             <div className="card overflow-hidden">
-                              <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
-                                <h3 className="text-sm font-semibold text-slate-700">{periodLabel} {t('reports.attendanceTotals')}</h3>
+                              <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">{periodLabel} {t('reports.attendanceTotals')}</h3>
                               </div>
                               {/* Summary cards for period */}
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4">
                                 <div className="stat-card">
-                                  <p className="stat-value text-emerald-600">{tr[periodKey].present}</p>
+                                  <p className="stat-value text-emerald-600 dark:text-emerald-400">{tr[periodKey].present}</p>
                                   <p className="stat-label">{t('common.present')}</p>
                                 </div>
                                 <div className="stat-card">
-                                  <p className="stat-value text-amber-600">{tr[periodKey].late}</p>
+                                  <p className="stat-value text-amber-600 dark:text-amber-400">{tr[periodKey].late}</p>
                                   <p className="stat-label">{t('common.late')}</p>
                                 </div>
                                 <div className="stat-card">
-                                  <p className="stat-value text-red-600">{tr[periodKey].absent}</p>
+                                  <p className="stat-value text-red-600 dark:text-red-400">{tr[periodKey].absent}</p>
                                   <p className="stat-label">{t('common.absent')}</p>
                                 </div>
                                 <div className="stat-card">
-                                  <p className="stat-value text-purple-600">{tr[periodKey].dayOff || 0}</p>
+                                  <p className="stat-value text-purple-600 dark:text-purple-400">{tr[periodKey].dayOff || 0}</p>
                                   <p className="stat-label">{t('common.permission')}</p>
                                 </div>
                               </div>
                               {/* Detail table */}
                               <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
-                                  <thead className="bg-slate-50">
-                                    <tr className="text-left text-xs text-slate-500 uppercase tracking-wide">
+                                  <thead className="bg-slate-50 dark:bg-slate-800">
+                                    <tr className="text-left text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                                       <th className="px-3 py-3 font-semibold">{t('common.name')}</th>
                                       <th className="px-3 py-3 font-semibold text-center">{t('reports.totalPresent')}</th>
                                       <th className="px-3 py-3 font-semibold text-center">{t('reports.totalPresentLate')}</th>
@@ -322,12 +322,12 @@ export default function EmployeeReports() {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    <tr className="border-t border-slate-100 hover:bg-slate-50">
-                                      <td className="px-3 py-2.5 text-slate-800 font-medium">{tr.staffName}</td>
-                                      <td className="px-3 py-2.5 text-center text-emerald-700 font-semibold">{tr[periodKey].present}</td>
-                                      <td className="px-3 py-2.5 text-center text-amber-600 font-semibold">{tr[periodKey].late}</td>
-                                      <td className="px-3 py-2.5 text-center text-red-600 font-semibold">{tr[periodKey].absent}</td>
-                                      <td className="px-3 py-2.5 text-center text-purple-600 font-semibold">{tr[periodKey].dayOff || 0}</td>
+                                    <tr className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
+                                      <td className="px-3 py-2.5 text-slate-800 dark:text-slate-100 font-medium">{tr.staffName}</td>
+                                      <td className="px-3 py-2.5 text-center text-emerald-700 dark:text-emerald-300 font-semibold">{tr[periodKey].present}</td>
+                                      <td className="px-3 py-2.5 text-center text-amber-600 dark:text-amber-400 font-semibold">{tr[periodKey].late}</td>
+                                      <td className="px-3 py-2.5 text-center text-red-600 dark:text-red-400 font-semibold">{tr[periodKey].absent}</td>
+                                      <td className="px-3 py-2.5 text-center text-purple-600 dark:text-purple-400 font-semibold">{tr[periodKey].dayOff || 0}</td>
                                     </tr>
                                   </tbody>
                                 </table>
@@ -349,20 +349,20 @@ export default function EmployeeReports() {
       {/* Export Report Modal */}
       {showExportForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => { setShowExportForm(false); setExportMessage('') }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             {/* Header */}
-            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-white rounded-t-2xl">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-emerald-50 to-white rounded-t-2xl">
               <div>
-                <h2 className="text-lg font-bold text-slate-800">📊 {t('reports.exportMyReportTitle')}</h2>
-                <p className="text-xs text-slate-500 mt-0.5">{t('reports.choosePeriod')}</p>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">📊 {t('reports.exportMyReportTitle')}</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('reports.choosePeriod')}</p>
               </div>
-              <button onClick={() => { setShowExportForm(false); setExportMessage('') }} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-sm">✕</button>
+              <button onClick={() => { setShowExportForm(false); setExportMessage('') }} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 flex items-center justify-center text-slate-500 dark:text-slate-400 text-sm">✕</button>
             </div>
 
             <div className="p-6 space-y-5">
               {/* Period Selector */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">📅 {t('reports.period')}</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📅 {t('reports.period')}</label>
                 <div className="grid grid-cols-4 gap-2">
                   {(['daily', 'weekly', 'monthly', 'yearly'] as const).map(p => (
                     <button
@@ -382,25 +382,25 @@ export default function EmployeeReports() {
 
               {/* Date Picker */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">📆 {t('common.date')}</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">📆 {t('common.date')}</label>
                 <input
                   type="date"
                   value={exportDate}
                   onChange={e => setExportDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                 />
               </div>
 
               {/* Preview */}
-              <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-2">
-                <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400">{t('reports.exportPreview')}</h4>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2">
+                <h4 className="text-xs uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">{t('reports.exportPreview')}</h4>
                 <div className="grid grid-cols-2 gap-y-1.5 text-sm">
-                  <span className="text-slate-500">{t('reports.type')}:</span>
-                  <span className="font-medium text-slate-800">{t('reports.myAttendance')}</span>
-                  <span className="text-slate-500">{t('reports.period')}:</span>
-                  <span className="font-medium text-slate-800">{exportPeriod.charAt(0).toUpperCase() + exportPeriod.slice(1)}</span>
-                  <span className="text-slate-500">{t('common.date')}:</span>
-                  <span className="font-medium text-slate-800">{exportDate}</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('reports.type')}:</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-100">{t('reports.myAttendance')}</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('reports.period')}:</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-100">{exportPeriod.charAt(0).toUpperCase() + exportPeriod.slice(1)}</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('common.date')}:</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-100">{exportDate}</span>
                 </div>
               </div>
 
@@ -415,7 +415,7 @@ export default function EmployeeReports() {
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-1">
-                <button onClick={() => { setShowExportForm(false); setExportMessage('') }} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                <button onClick={() => { setShowExportForm(false); setExportMessage('') }} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                   {t('common.cancel')}
                 </button>
                 <button
@@ -453,7 +453,7 @@ function SessionCell({ time, status }: { time: string | null; status: string | n
         {time || '✓'}
       </span>
       {status === 'LATE' && (
-        <div className="text-[9px] sm:text-[10px] text-amber-500 font-medium">Late</div>
+        <div className="text-[9px] sm:text-[10px] text-amber-500 dark:text-amber-400 font-medium">Late</div>
       )}
     </td>
   )

@@ -7,13 +7,13 @@ import { diffWords } from '../../lib/h5pQuestionLogic'
 export function DictationEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
   return (
     <div className="space-y-2">
-      <label className="block text-xs text-slate-500">Script (read aloud to the student)
+      <label className="block text-xs text-slate-500 dark:text-slate-400">Script (read aloud to the student)
         <textarea value={data?.script ?? ''} onChange={e => onChange({ ...data, script: e.target.value })} rows={3} placeholder="The text students must type back correctly." className="mt-1 w-full border rounded-lg px-3 py-2 text-sm resize-none" />
       </label>
-      <label className="block text-xs text-slate-500">Audio URL (optional — plays a real recording instead of text-to-speech)
+      <label className="block text-xs text-slate-500 dark:text-slate-400">Audio URL (optional — plays a real recording instead of text-to-speech)
         <input value={data?.audioUrl ?? ''} onChange={e => onChange({ ...data, audioUrl: e.target.value })} placeholder="https://example.com/dictation.mp3" className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
       </label>
-      <p className="text-[11px] text-slate-400">If no audio URL is set, the browser reads the script aloud (text-to-speech) instead.</p>
+      <p className="text-[11px] text-slate-400 dark:text-slate-500">If no audio URL is set, the browser reads the script aloud (text-to-speech) instead.</p>
     </div>
   )
 }
@@ -44,14 +44,14 @@ export function DictationInput({ data, value, onChange, revealFeedback, disabled
     const diff = diffWords(data?.script || '', text)
     return (
       <div>
-        <p className="text-xs text-slate-500 mb-2">Correct words are highlighted green, misses are red:</p>
-        <div className="text-sm bg-slate-50 border rounded-lg p-3 leading-relaxed">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Correct words are highlighted green, misses are red:</p>
+        <div className="text-sm bg-slate-50 dark:bg-slate-800 border rounded-lg p-3 leading-relaxed">
           {diff.map((d, i) => (
             <span key={i} className={`mr-1.5 ${d.match ? 'text-emerald-700' : 'text-red-600 line-through'}`}>{d.word}</span>
           ))}
         </div>
-        <p className="text-xs text-slate-500 mt-2">Your answer:</p>
-        <p className="text-sm bg-white border rounded-lg p-2 mt-1 whitespace-pre-wrap">{text || <span className="text-slate-400 italic">(no answer)</span>}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Your answer:</p>
+        <p className="text-sm bg-white dark:bg-slate-900 border rounded-lg p-2 mt-1 whitespace-pre-wrap">{text || <span className="text-slate-400 dark:text-slate-500 italic">(no answer)</span>}</p>
       </div>
     )
   }
@@ -60,10 +60,10 @@ export function DictationInput({ data, value, onChange, revealFeedback, disabled
     <div className="space-y-2">
       {data?.audioUrl && <audio ref={audioRef} src={data.audioUrl} className="hidden" />}
       <div className="flex items-center gap-2">
-        <button type="button" onClick={play} disabled={disabled} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-100 text-sky-700 text-sm font-medium disabled:opacity-50">
+        <button type="button" onClick={play} disabled={disabled} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-sm font-medium disabled:opacity-50">
           ▶ Play{plays > 0 ? ` (${plays})` : ''}
         </button>
-        <span className="text-xs text-slate-400">Listen, then type exactly what you hear.</span>
+        <span className="text-xs text-slate-400 dark:text-slate-500">Listen, then type exactly what you hear.</span>
       </div>
       <textarea
         value={text}

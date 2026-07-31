@@ -52,10 +52,10 @@ export default function ParentDashboard() {
           <div className="h-14 lg:hidden" />
 
           <div className="page-header">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-800">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">
               👋 Hello{parentName ? `, ${parentName}` : ''}
             </h1>
-            <p className="text-sm text-slate-500 mt-1">Stay connected with your child&apos;s school journey.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Stay connected with your child&apos;s school journey.</p>
           </div>
 
           <div className="page-body space-y-4 sm:space-y-6">
@@ -78,21 +78,21 @@ export default function ParentDashboard() {
 
             {/* My Children */}
             <section className="card p-4 sm:p-5">
-              <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">My Children</h2>
+              <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">My Children</h2>
               {isLoading ? (
                 <div className="flex gap-3 overflow-x-auto pb-1">
-                  {[1, 2].map(i => <div key={i} className="w-28 h-28 bg-slate-100 rounded-2xl animate-pulse flex-shrink-0" />)}
+                  {[1, 2].map(i => <div key={i} className="w-28 h-28 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse flex-shrink-0" />)}
                 </div>
               ) : isError ? (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                  <p className="text-red-600 text-sm mb-1">Failed to load children</p>
-                  <button onClick={() => refetch()} className="text-xs text-red-500 underline">Retry</button>
+                <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-xl p-4">
+                  <p className="text-red-600 dark:text-red-400 text-sm mb-1">Failed to load children</p>
+                  <button onClick={() => refetch()} className="text-xs text-red-500 dark:text-red-400 underline">Retry</button>
                 </div>
               ) : children.length === 0 ? (
                 <div className="empty-state py-6">
                   <p className="text-3xl mb-2">👨‍👩‍👧</p>
-                  <p className="text-sm text-slate-500">No students linked to your account.</p>
-                  <p className="text-xs text-slate-400 mt-1">Contact your school administrator.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">No students linked to your account.</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Contact your school administrator.</p>
                 </div>
               ) : (
                 <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
@@ -100,14 +100,14 @@ export default function ParentDashboard() {
                     const active = selectedChildId === child.id
                     return (
                       <button key={child.id} onClick={() => setSelectedChildId(child.id)}
-                        className={`flex-shrink-0 flex flex-col items-center p-3 rounded-2xl border-2 transition-all min-w-[96px] ${active ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                        className={`flex-shrink-0 flex flex-col items-center p-3 rounded-2xl border-2 transition-all min-w-[96px] ${active ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600'}`}>
                         <div className="w-14 h-14 rounded-xl overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-400 text-white flex items-center justify-center mb-2 shadow-sm">
                           {child.user.photo
                             ? <img src={child.user.photo} alt={child.user.name} className="w-full h-full object-cover" />
                             : <span className="text-lg font-bold">{(child.user.name || '?').charAt(0).toUpperCase()}</span>}
                         </div>
-                        <p className="text-xs font-semibold text-slate-700 text-center max-w-[80px] truncate">{child.user.name}</p>
-                        <p className="text-[10px] text-slate-400 text-center truncate max-w-[80px]">{child.class?.name ?? '—'}</p>
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 text-center max-w-[80px] truncate">{child.user.name}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center truncate max-w-[80px]">{child.class?.name ?? '—'}</p>
                       </button>
                     )
                   })}
@@ -117,7 +117,7 @@ export default function ParentDashboard() {
 
             {/* Announcements */}
             <section className="card p-4 sm:p-5">
-              <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">📣 Announcements</h2>
+              <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">📣 Announcements</h2>
               <AnnouncementFeed accent="emerald" limit={5} />
             </section>
 
@@ -125,17 +125,17 @@ export default function ParentDashboard() {
             {selectedChild && (
               <section className="card p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">
+                  <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     More — {selectedChild.user.name}
                   </h2>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
-                    { label: 'Attendance', href: '/parent/attendance', icon: '📅', tint: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
-                    { label: 'Grades', href: '/parent/grades', icon: '📊', tint: 'bg-violet-50 border-violet-200 text-violet-700' },
-                    { label: 'Messages', href: '/parent/messages', icon: '💬', tint: 'bg-sky-50 border-sky-200 text-sky-700' },
-                    { label: 'Fees', href: '/parent/fees', icon: '💰', tint: 'bg-amber-50 border-amber-200 text-amber-700' },
-                    { label: 'Bus Tracker', href: '/parent/bus', icon: '🚌', tint: 'bg-rose-50 border-rose-200 text-rose-700' },
+                    { label: 'Attendance', href: '/parent/attendance', icon: '📅', tint: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300' },
+                    { label: 'Grades', href: '/parent/grades', icon: '📊', tint: 'bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-900 text-violet-700 dark:text-violet-300' },
+                    { label: 'Messages', href: '/parent/messages', icon: '💬', tint: 'bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-900 text-sky-700 dark:text-sky-300' },
+                    { label: 'Fees', href: '/parent/fees', icon: '💰', tint: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900 text-amber-700 dark:text-amber-300' },
+                    { label: 'Bus Tracker', href: '/parent/bus', icon: '🚌', tint: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300' },
                   ].map(item => (
                     <Link key={item.href} href={item.href}
                       className={`flex flex-col items-center justify-center p-4 rounded-xl border ${item.tint} font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all`}>
@@ -150,7 +150,7 @@ export default function ParentDashboard() {
             {/* Child schedule */}
             {selectedChild && (
               <section className="card p-4 sm:p-5">
-                <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">
                   📅 {selectedChild.user.name}&apos;s Schedule
                 </h2>
                 <ChildTimetableGrid childUserId={selectedChild.user.id} />

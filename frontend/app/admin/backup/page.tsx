@@ -123,8 +123,8 @@ export default function BackupPage() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">Backup & Restore</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Backup & Restore</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Export every record in the database to a JSON file, or restore a previous backup
             (e.g. when starting a new project / migrating servers).
           </p>
@@ -141,8 +141,8 @@ export default function BackupPage() {
 
           {/* Export */}
           <div className="card p-6">
-            <h2 className="text-lg font-semibold text-slate-800 mb-1">Download backup</h2>
-            <p className="text-sm text-slate-500 mb-4">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-1">Download backup</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
               Generates a single JSON file containing every row of every table — users,
               classes, attendance, fees, exams, scores, timetables, card templates, etc.
               Keep this file safe; it contains all sensitive data.
@@ -157,10 +157,10 @@ export default function BackupPage() {
           </div>
 
           {/* Restore */}
-          <div className="card p-6 border-2 border-red-100">
-            <h2 className="text-lg font-semibold text-red-700 mb-1">Restore from backup</h2>
-            <p className="text-sm text-slate-600 mb-4">
-              <strong className="text-red-700">Destructive.</strong> Loading a backup file
+          <div className="card p-6 border-2 border-red-100 dark:border-red-900">
+            <h2 className="text-lg font-semibold text-red-700 dark:text-red-300 mb-1">Restore from backup</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+              <strong className="text-red-700 dark:text-red-300">Destructive.</strong> Loading a backup file
               will <strong>WIPE</strong> all existing data and replace it with the contents
               of the file. Use this on a fresh deployment or when explicitly recovering.
               Active sessions (yours included) will be invalidated.
@@ -177,30 +177,30 @@ export default function BackupPage() {
             {summary && (
               <div className="mt-4 space-y-3">
                 <div className="grid sm:grid-cols-3 gap-3 text-sm">
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <div className="text-slate-500 text-xs uppercase tracking-wide">Exported at</div>
-                    <div className="text-slate-800 font-medium mt-0.5">
+                  <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+                    <div className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wide">Exported at</div>
+                    <div className="text-slate-800 dark:text-slate-100 font-medium mt-0.5">
                       {summary.exportedAt !== '—' ? new Date(summary.exportedAt).toLocaleString() : '—'}
                     </div>
                   </div>
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <div className="text-slate-500 text-xs uppercase tracking-wide">Models</div>
-                    <div className="text-slate-800 font-medium mt-0.5">{summary.models.length}</div>
+                  <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+                    <div className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wide">Models</div>
+                    <div className="text-slate-800 dark:text-slate-100 font-medium mt-0.5">{summary.models.length}</div>
                   </div>
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <div className="text-slate-500 text-xs uppercase tracking-wide">Total rows</div>
-                    <div className="text-slate-800 font-medium mt-0.5">{summary.totalRows.toLocaleString()}</div>
+                  <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+                    <div className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wide">Total rows</div>
+                    <div className="text-slate-800 dark:text-slate-100 font-medium mt-0.5">{summary.totalRows.toLocaleString()}</div>
                   </div>
                 </div>
 
-                <details className="bg-slate-50 rounded-lg p-3 text-sm">
-                  <summary className="cursor-pointer font-medium text-slate-700">
+                <details className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 text-sm">
+                  <summary className="cursor-pointer font-medium text-slate-700 dark:text-slate-200">
                     Per-model row counts ({summary.perModel.filter(m => m.rows > 0).length} non-empty)
                   </summary>
                   <ul className="mt-2 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1 text-xs">
                     {summary.perModel.map(m => (
                       <li key={m.name} className="flex justify-between">
-                        <span className="text-slate-600">{m.name}</span>
+                        <span className="text-slate-600 dark:text-slate-300">{m.name}</span>
                         <span className={m.rows > 0 ? 'text-slate-800 font-medium' : 'text-slate-400'}>
                           {m.rows.toLocaleString()}
                         </span>
@@ -218,8 +218,8 @@ export default function BackupPage() {
                   </button>
                 ) : (
                   <div className="space-y-2 border-t pt-4">
-                    <p className="text-sm text-slate-700">
-                      Type <code className="bg-red-50 text-red-700 px-1.5 py-0.5 rounded font-mono text-xs">RESTORE</code> to confirm:
+                    <p className="text-sm text-slate-700 dark:text-slate-200">
+                      Type <code className="bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded font-mono text-xs">RESTORE</code> to confirm:
                     </p>
                     <div className="flex gap-2">
                       <input
@@ -252,8 +252,8 @@ export default function BackupPage() {
 
           {/* Help */}
           <div className="card p-6 bg-slate-50/50">
-            <h3 className="text-sm font-semibold text-slate-700 mb-2">How this works</h3>
-            <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-5">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">How this works</h3>
+            <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-1.5 list-disc pl-5">
               <li>Export produces a single JSON file. It is the entire database — keep it private.</li>
               <li>Restore uses a Postgres transaction: if anything fails, your data is left untouched.</li>
               <li>FK checks are temporarily disabled during restore so tables can be repopulated in any order.</li>

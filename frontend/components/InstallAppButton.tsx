@@ -83,15 +83,15 @@ export default function InstallAppButton({ variant = 'row', className = '' }: { 
     <div className={className}>
       <button
         onClick={handleClick}
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100"
         aria-label="Install Wattaman app"
       >
         <span className="text-lg">📲</span>
         <span className="flex-1 text-left">Install Wattaman on this device</span>
-        <span className="text-xs text-emerald-600">{isIOS && !deferred ? 'How?' : 'Install'}</span>
+        <span className="text-xs text-emerald-600 dark:text-emerald-400">{isIOS && !deferred ? 'How?' : 'Install'}</span>
       </button>
       {showIOSHint && isIOS && (
-        <div className="mt-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-3 leading-relaxed">
+        <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 leading-relaxed">
           On iPhone/iPad: tap the <strong>Share</strong> button <span aria-hidden>⬆️</span> in Safari, then choose <strong>"Add to Home Screen"</strong>.
         </div>
       )}

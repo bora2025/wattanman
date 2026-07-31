@@ -347,8 +347,8 @@ export default function PortalManager({
         <div className="h-14 lg:hidden" />
         <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">{title}</h1>
-            {subtitle && <p className="text-sm text-slate-500 mt-1">{subtitle}</p>}
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{title}</h1>
+            {subtitle && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{subtitle}</p>}
           </div>
           <div className="flex gap-2">
             <button
@@ -370,14 +370,14 @@ export default function PortalManager({
 
           {showForm && (
             <div className="card p-6">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">Add new {title.replace(' Portal', '').toLowerCase()}</h3>
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Add new {title.replace(' Portal', '').toLowerCase()}</h3>
               <form onSubmit={handleCreate} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="sm:col-span-2 lg:col-span-4 flex items-center gap-3">
                   {photo ? (
-                    <img src={normalizePhotoUrl(photo)} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-slate-200 shrink-0" />
+                    <img src={normalizePhotoUrl(photo)} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700 shrink-0" />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center shrink-0">
-                      <span className="text-lg text-slate-400">📷</span>
+                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center shrink-0">
+                      <span className="text-lg text-slate-400 dark:text-slate-500">📷</span>
                     </div>
                   )}
                   <div className="flex-1">
@@ -453,9 +453,9 @@ export default function PortalManager({
           {/* Table */}
           <div className="card overflow-hidden">
             {loading ? (
-              <div className="p-8 text-center text-slate-400">Loading…</div>
+              <div className="p-8 text-center text-slate-400 dark:text-slate-500">Loading…</div>
             ) : filtered.length === 0 ? (
-              <div className="p-8 text-center text-slate-400">
+              <div className="p-8 text-center text-slate-400 dark:text-slate-500">
                 {users.length === 0 ? 'No users yet — click "+ Add user".' : 'No users match filter.'}
               </div>
             ) : (
@@ -481,38 +481,38 @@ export default function PortalManager({
                             <img
                               src={normalizePhotoUrl(u.photo || '')}
                               alt={u.name}
-                              className="w-9 h-9 rounded-full object-cover bg-slate-100"
+                              className="w-9 h-9 rounded-full object-cover bg-slate-100 dark:bg-slate-800"
                               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                             />
                           ) : (
-                            <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-semibold">
+                            <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 text-xs font-semibold">
                               {u.name?.charAt(0)?.toUpperCase() || '?'}
                             </div>
                           )}
                         </td>
-                        <td className="font-medium text-slate-800">{u.name}</td>
-                        <td className="text-slate-500">{u.email}</td>
-                        <td className="text-slate-500">{u.phone || '—'}</td>
+                        <td className="font-medium text-slate-800 dark:text-slate-100">{u.name}</td>
+                        <td className="text-slate-500 dark:text-slate-400">{u.email}</td>
+                        <td className="text-slate-500 dark:text-slate-400">{u.phone || '—'}</td>
                         {roles.length > 1 && <td><span className="badge-blue">{getRoleLabel(u.role)}</span></td>}
-                        <td className="text-xs text-slate-500">
+                        <td className="text-xs text-slate-500 dark:text-slate-400">
                           {u.studentProfile?.studentNumber && <div>#{u.studentProfile.studentNumber}</div>}
                           {u.studentProfile?.class?.name && <div>{u.studentProfile.class.name}</div>}
                           {u.role === 'STUDENT' && (
                             u.studentProfile?.parent
-                              ? <div className="text-emerald-600">👪 {u.studentProfile.parent.name}</div>
-                              : <div className="text-amber-600">No parent linked</div>
+                              ? <div className="text-emerald-600 dark:text-emerald-400">👪 {u.studentProfile.parent.name}</div>
+                              : <div className="text-amber-600 dark:text-amber-400">No parent linked</div>
                           )}
                           {u.parentStudents && u.parentStudents.length > 0 && (
                             <div>{u.parentStudents.length} child{u.parentStudents.length !== 1 ? 'ren' : ''}</div>
                           )}
                         </td>
-                        <td className="text-xs text-slate-500 whitespace-nowrap" title={u.updatedAt ? new Date(u.updatedAt).toLocaleString() : undefined}>
+                        <td className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" title={u.updatedAt ? new Date(u.updatedAt).toLocaleString() : undefined}>
                           {formatRelativeTime(u.updatedAt)}
                         </td>
                         <td className="text-right space-x-2 whitespace-nowrap">
-                          <button onClick={() => openEdit(u)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Edit</button>
-                          <button onClick={() => { setResetUser(u); setResetPassword('') }} className="text-amber-600 hover:text-amber-800 text-sm font-medium">Reset PW</button>
-                          <button onClick={() => setDeleteUser(u)} className="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
+                          <button onClick={() => openEdit(u)} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm font-medium">Edit</button>
+                          <button onClick={() => { setResetUser(u); setResetPassword('') }} className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 text-sm font-medium">Reset PW</button>
+                          <button onClick={() => setDeleteUser(u)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium">Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -527,14 +527,14 @@ export default function PortalManager({
       {/* Edit modal */}
       {editingUser && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setEditingUser(null)}>
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-slate-800">Edit user</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-xl max-w-lg w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Edit user</h3>
             <form onSubmit={handleEditSubmit} className="space-y-3">
               <div className="flex items-center gap-3">
                 {editPhoto ? (
                   <img src={normalizePhotoUrl(editPhoto)} alt="" className={`w-14 h-14 rounded-full object-cover border-2 ring-2 ${accentRing[accent]}`} />
                 ) : (
-                  <div className="w-14 h-14 rounded-full bg-slate-100 border-2 border-dashed border-slate-300" />
+                  <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-600" />
                 )}
                 <div className="flex-1">
                   <label className="form-label">Photo URL</label>
@@ -581,7 +581,7 @@ export default function PortalManager({
                       <option key={p.id} value={p.id}>{p.name} ({p.email})</option>
                     ))}
                   </select>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                     Don’t see the parent? Create them first in the <strong>Parent Portal</strong>.
                   </p>
                 </div>
@@ -598,10 +598,10 @@ export default function PortalManager({
       {/* Reset password modal */}
       {resetUser && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setResetUser(null)}>
-          <div className="bg-white rounded-xl max-w-md w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-slate-800">Reset password</h3>
-            <p className="text-sm text-slate-500">
-              Set a new password for <strong className="text-slate-800">{resetUser.name}</strong> ({resetUser.email}).
+          <div className="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Reset password</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Set a new password for <strong className="text-slate-800 dark:text-slate-100">{resetUser.name}</strong> ({resetUser.email}).
               Existing sessions will be revoked.
             </p>
             <form onSubmit={handleResetSubmit} className="space-y-3">
@@ -628,9 +628,9 @@ export default function PortalManager({
       {/* Delete confirm */}
       {deleteUser && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setDeleteUser(null)}>
-          <div className="bg-white rounded-xl max-w-md w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-red-600">Delete user?</h3>
-            <p className="text-sm text-slate-600">
+          <div className="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">Delete user?</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
               <strong>{deleteUser.name}</strong> ({deleteUser.email}) will be permanently removed.
               This also deletes their student profile / attendance records (if any).
             </p>

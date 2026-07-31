@@ -29,9 +29,9 @@ interface AnnouncementFeedProps {
 }
 
 const accentClasses = {
-  indigo: { bar: 'bg-indigo-500', dot: 'bg-indigo-500', badge: 'bg-indigo-100 text-indigo-700', btn: 'text-indigo-600 hover:text-indigo-700' },
-  emerald: { bar: 'bg-emerald-500', dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700', btn: 'text-emerald-600 hover:text-emerald-700' },
-  sky: { bar: 'bg-sky-500', dot: 'bg-sky-500', badge: 'bg-sky-100 text-sky-700', btn: 'text-sky-600 hover:text-sky-700' },
+  indigo: { bar: 'bg-indigo-500', dot: 'bg-indigo-500', badge: 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300', btn: 'text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300' },
+  emerald: { bar: 'bg-emerald-500', dot: 'bg-emerald-500', badge: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300', btn: 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300' },
+  sky: { bar: 'bg-sky-500', dot: 'bg-sky-500', badge: 'bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300', btn: 'text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300' },
 }
 
 export default function AnnouncementFeed({ accent = 'indigo', limit, compact = false }: AnnouncementFeedProps) {
@@ -62,14 +62,14 @@ export default function AnnouncementFeed({ accent = 'indigo', limit, compact = f
   if (isLoading) {
     return (
       <div className="space-y-2">
-        {[1, 2].map(i => <div key={i} className="h-16 bg-slate-100 rounded-lg animate-pulse" />)}
+        {[1, 2].map(i => <div key={i} className="h-16 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />)}
       </div>
     )
   }
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-6 text-sm text-slate-400">
+      <div className="text-center py-6 text-sm text-slate-400 dark:text-slate-500">
         <p className="text-2xl mb-2">📣</p>
         <p>No announcements yet</p>
       </div>
@@ -87,18 +87,18 @@ export default function AnnouncementFeed({ accent = 'indigo', limit, compact = f
         return (
           <li
             key={a.id}
-            className={`relative rounded-xl border bg-white overflow-hidden ${a.read ? 'border-slate-200' : 'border-slate-300 shadow-sm'}`}
+            className={`relative rounded-xl border bg-white dark:bg-slate-900 overflow-hidden ${a.read ? 'border-slate-200 dark:border-slate-700' : 'border-slate-300 dark:border-slate-600 shadow-sm'}`}
           >
             {!a.read && <span className={`absolute left-0 top-0 bottom-0 w-1 ${c.bar}`} aria-hidden />}
             <button
               type="button"
               onClick={handleOpen}
-              className="w-full text-left px-4 py-3 hover:bg-slate-50 transition"
+              className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
             >
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    {a.pinned && <span title="Pinned" className="text-amber-500 text-xs">📌</span>}
+                    {a.pinned && <span title="Pinned" className="text-amber-500 dark:text-amber-400 text-xs">📌</span>}
                     <h4 className={`text-sm truncate ${a.read ? 'font-medium text-slate-700' : 'font-bold text-slate-900'}`}>
                       {a.title}
                     </h4>
@@ -109,7 +109,7 @@ export default function AnnouncementFeed({ accent = 'indigo', limit, compact = f
                       {a.body}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
+                  <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400 dark:text-slate-500">
                     <span className={`px-1.5 py-0.5 rounded-full font-semibold ${c.badge}`}>
                       {a.audience === 'SCHOOL' && 'School'}
                       {a.audience === 'ROLE' && (a.targetRole === 'ALL' ? 'Everyone' : a.targetRole)}

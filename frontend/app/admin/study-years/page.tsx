@@ -156,8 +156,8 @@ export default function StudyYearsPage() {
           <div className="h-14 lg:hidden" />
           <div className="page-header flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Study Years</h1>
-              <p className="text-sm text-slate-500 mt-1">Manage academic study years. Create a study year first, then create classes under it.</p>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Study Years</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage academic study years. Create a study year first, then create classes under it.</p>
             </div>
             <button onClick={() => { cancelForm(); setShowForm(true) }} className="btn-primary text-sm px-4 py-2">
               + New Study Year
@@ -174,11 +174,11 @@ export default function StudyYearsPage() {
             {/* Create/Edit Form */}
             {showForm && (
               <div className="card p-5">
-                <h2 className="text-lg font-semibold text-slate-800 mb-4">{editingId ? 'Edit Study Year' : 'New Study Year'}</h2>
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">{editingId ? 'Edit Study Year' : 'New Study Year'}</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Year *</label>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Year *</label>
                       <input
                         type="number"
                         value={formData.year}
@@ -190,7 +190,7 @@ export default function StudyYearsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Label</label>
                       <input
                         type="text"
                         value={formData.label}
@@ -200,7 +200,7 @@ export default function StudyYearsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Start Date</label>
                       <input
                         type="date"
                         value={formData.startDate}
@@ -209,7 +209,7 @@ export default function StudyYearsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">End Date</label>
                       <input
                         type="date"
                         value={formData.endDate}
@@ -221,7 +221,7 @@ export default function StudyYearsPage() {
 
                   {/* School Name */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">School Name · ឈ្មោះសាលា</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">School Name · ឈ្មោះសាលា</label>
                     <input
                       type="text"
                       value={formData.schoolName}
@@ -234,18 +234,18 @@ export default function StudyYearsPage() {
 
                   {/* School Logo */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">School Logo</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">School Logo</label>
                     <div className="flex items-start gap-4">
                       {/* Preview */}
                       <div
-                        className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50 flex-shrink-0 overflow-hidden cursor-pointer hover:border-indigo-400 transition-colors"
+                        className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center bg-slate-50 dark:bg-slate-800 flex-shrink-0 overflow-hidden cursor-pointer hover:border-indigo-400 transition-colors"
                         onClick={() => logoInputRef.current?.click()}
                         title="Click to upload logo"
                       >
                         {logoPreview ? (
                           <img src={logoPreview} alt="Logo preview" className="w-full h-full object-contain" />
                         ) : (
-                          <div className="text-center text-slate-400">
+                          <div className="text-center text-slate-400 dark:text-slate-500">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-1">
                               <rect x="3" y="3" width="18" height="18" rx="2" />
                               <circle cx="8.5" cy="8.5" r="1.5" />
@@ -274,12 +274,12 @@ export default function StudyYearsPage() {
                           <button
                             type="button"
                             onClick={() => { setLogoPreview(''); setFormData(f => ({ ...f, logoUrl: '' })) }}
-                            className="ml-2 text-xs text-red-500 hover:text-red-700"
+                            className="ml-2 text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                           >
                             Remove
                           </button>
                         )}
-                        <p className="text-xs text-slate-400">PNG, JPG, SVG or WebP · max 2 MB</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">PNG, JPG, SVG or WebP · max 2 MB</p>
                       </div>
                     </div>
                   </div>
@@ -298,24 +298,24 @@ export default function StudyYearsPage() {
 
             {/* Study Years List */}
             {loading ? (
-              <div className="text-center py-12 text-slate-400">Loading...</div>
+              <div className="text-center py-12 text-slate-400 dark:text-slate-500">Loading...</div>
             ) : studyYears.length === 0 ? (
               <div className="card p-12 text-center">
                 <div className="text-4xl mb-3">📅</div>
-                <h3 className="text-lg font-semibold text-slate-700">No Study Years</h3>
-                <p className="text-sm text-slate-500 mt-1">Create your first study year to start managing classes.</p>
+                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">No Study Years</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Create your first study year to start managing classes.</p>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {studyYears.map(sy => (
                   <div key={sy.id} className={`card p-5 relative ${sy.isCurrent ? 'ring-2 ring-indigo-500 bg-indigo-50/30' : ''}`}>
                     {sy.isCurrent && (
-                      <span className="absolute top-3 right-3 text-xs bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded-full">
+                      <span className="absolute top-3 right-3 text-xs bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2 py-0.5 rounded-full">
                         Current
                       </span>
                     )}
                     <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden border border-slate-100">
+                      <div className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden border border-slate-100 dark:border-slate-800">
                         {sy.logoUrl ? (
                           <img src={sy.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                         ) : (
@@ -325,15 +325,15 @@ export default function StudyYearsPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-slate-800 text-lg leading-tight">{sy.label || sy.year}</h3>
+                        <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-lg leading-tight">{sy.label || sy.year}</h3>
                         {sy.schoolName && (
-                          <p className="text-sm text-indigo-700 font-medium mt-0.5 truncate" style={{ fontFamily: '"Khmer", var(--font-khmer), sans-serif' }}>{sy.schoolName}</p>
+                          <p className="text-sm text-indigo-700 dark:text-indigo-300 font-medium mt-0.5 truncate" style={{ fontFamily: '"Khmer", var(--font-khmer), sans-serif' }}>{sy.schoolName}</p>
                         )}
-                        <p className="text-sm text-slate-500 mt-0.5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                           {sy._count.classes} class{sy._count.classes !== 1 ? 'es' : ''}
                         </p>
                         {(sy.startDate || sy.endDate) && (
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                             {sy.startDate && new Date(sy.startDate).toLocaleDateString()}
                             {sy.startDate && sy.endDate && ' – '}
                             {sy.endDate && new Date(sy.endDate).toLocaleDateString()}
@@ -341,19 +341,19 @@ export default function StudyYearsPage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
+                    <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
                       {!sy.isCurrent && (
-                        <button onClick={() => handleSetCurrent(sy.id)} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-2 py-1 rounded hover:bg-indigo-50 transition-colors">
+                        <button onClick={() => handleSetCurrent(sy.id)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors">
                           Set Current
                         </button>
                       )}
-                      <Link href={`/admin/classes?studyYearId=${sy.id}`} className="text-xs text-slate-600 hover:text-slate-800 font-medium px-2 py-1 rounded hover:bg-slate-50 transition-colors">
+                      <Link href={`/admin/classes?studyYearId=${sy.id}`} className="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-800 font-medium px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         View Classes
                       </Link>
-                      <button onClick={() => handleEdit(sy)} className="text-xs text-slate-600 hover:text-slate-800 font-medium px-2 py-1 rounded hover:bg-slate-50 transition-colors">
+                      <button onClick={() => handleEdit(sy)} className="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-800 font-medium px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         Edit
                       </button>
-                      <button onClick={() => handleDelete(sy.id)} className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                      <button onClick={() => handleDelete(sy.id)} className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors">
                         Delete
                       </button>
                     </div>

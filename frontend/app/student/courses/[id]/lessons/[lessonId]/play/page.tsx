@@ -212,12 +212,12 @@ export default function LessonPlayPage() {
         <div className="flex items-center justify-between">
           <Link
             href={`/student/courses/${courseId}`}
-            className="text-sm text-sky-600 hover:underline"
+            className="text-sm text-sky-600 dark:text-sky-400 hover:underline"
           >
             ← Back to course
           </Link>
           {lesson && (
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
               {lesson.gradingMode === 'PRACTICE'
                 ? 'Practice mode'
                 : lesson.gradingMode === 'UNGRADED'
@@ -228,29 +228,29 @@ export default function LessonPlayPage() {
         </div>
 
         {startMutation.isPending && (
-          <div className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />
+          <div className="bg-white dark:bg-slate-900 h-20 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />
         )}
         {startMutation.isError && (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-4 text-sm text-rose-700 dark:text-rose-300">
             {(startMutation.error as Error)?.message || 'Could not start lesson.'}
           </div>
         )}
 
         {attempt && pagesLoading && (
-          <div className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />
+          <div className="bg-white dark:bg-slate-900 h-20 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />
         )}
         {attempt && pagesError && (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-4 text-sm text-rose-700 dark:text-rose-300">
             {(pagesErrorObj as Error)?.message || 'Failed to load lesson pages.'}
           </div>
         )}
         {attempt && !pagesLoading && !pagesError && pages.length === 0 && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50">
+          <div className="rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40">
             <EmptyState icon="📄" message="This lesson has no pages yet. Please contact your teacher." />
           </div>
         )}
         {attempt && pages.length > 0 && !currentPage && !finished && (
-          <div className="bg-white h-20 rounded-2xl animate-pulse border border-gray-100" />
+          <div className="bg-white dark:bg-slate-900 h-20 rounded-2xl animate-pulse border border-gray-100 dark:border-slate-800" />
         )}
 
         {teacherMsg && (
@@ -284,12 +284,12 @@ export default function LessonPlayPage() {
         )}
 
         {!finished && attempt && currentPage && (
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-4">
+          <div className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4">
             <ProgressBar
               pct={pages.length > 0 ? ((pages.findIndex((p) => p.id === currentPage.id) + 1) / pages.length) * 100 : 0}
               label={`Page ${pages.findIndex((p) => p.id === currentPage.id) + 1} of ${pages.length}`}
             />
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
               {currentPage.title}
             </h2>
 
@@ -317,7 +317,7 @@ export default function LessonPlayPage() {
               />
             )}
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
               {currentPage.pageType === 'CONTENT' && !lastResult && (
                 <button
                   onClick={() =>
@@ -374,13 +374,13 @@ function TeacherSaysModal({
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center gap-3 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-amber-100 px-5 py-3">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl">
+        <div className="flex items-center gap-3 border-b border-amber-200 dark:border-amber-900 bg-gradient-to-r from-amber-50 to-amber-100 px-5 py-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500 text-xl text-white">
             👩‍🏫
           </div>
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
               Teacher says
             </div>
             <div className="text-sm font-semibold text-amber-900">
@@ -390,7 +390,7 @@ function TeacherSaysModal({
         </div>
 
         <div className="space-y-4 px-5 py-5">
-          <p className="text-sm text-slate-700">{message}</p>
+          <p className="text-sm text-slate-700 dark:text-slate-200">{message}</p>
 
           {required != null && current != null && (
             <ProgressBar
@@ -401,7 +401,7 @@ function TeacherSaysModal({
             />
           )}
 
-          <ul className="space-y-1 text-xs text-slate-600">
+          <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
             <li>• Scroll back to the video page and press play.</li>
             <li>• Your watched time is saved automatically.</li>
             <li>
@@ -411,11 +411,11 @@ function TeacherSaysModal({
           </ul>
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3">
+        <div className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-5 py-3">
           <button
             type="button"
             onClick={onBack}
-            className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-200"
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200"
           >
             ← Back to course
           </button>
@@ -423,7 +423,7 @@ function TeacherSaysModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
               Close
             </button>
@@ -500,7 +500,7 @@ function ContentView({ content, lessonId }: { content: any; lessonId: string }) 
         />
       )}
       {showAsEmbed && (
-        <div className="relative w-full overflow-hidden rounded-md border border-slate-200" style={{ paddingTop: '56.25%' }}>
+        <div className="relative w-full overflow-hidden rounded-md border border-slate-200 dark:border-slate-700" style={{ paddingTop: '56.25%' }}>
           <iframe
             src={embedUrl!}
             className="absolute inset-0 h-full w-full"
@@ -513,11 +513,11 @@ function ContentView({ content, lessonId }: { content: any; lessonId: string }) 
       {mediaUrl && mediaType === 'embed' && !embedUrl && (
         <iframe
           src={mediaUrl}
-          className="aspect-video w-full rounded-md border border-slate-200"
+          className="aspect-video w-full rounded-md border border-slate-200 dark:border-slate-700"
           allowFullScreen
         />
       )}
-      <MathText as="div" className="whitespace-pre-wrap text-sm text-slate-700" text={body} />
+      <MathText as="div" className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200" text={body} />
     </div>
   )
 }
@@ -667,7 +667,7 @@ function QuestionView({
 
   return (
     <div className="space-y-3">
-      <RichText as="div" className="whitespace-pre-wrap text-sm text-slate-700" html={c.prompt} />
+      <RichText as="div" className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200" html={c.prompt} />
 
       {(qt === 'MCQ_SINGLE' || qt === 'MCQ_MULTI') && (
         <div className="space-y-1.5">
@@ -737,7 +737,7 @@ function QuestionView({
           value={text}
           disabled={disabled}
           onChange={(e) => setText(e.target.value)}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
           placeholder="Your answer…"
         />
       )}
@@ -748,7 +748,7 @@ function QuestionView({
           value={num}
           disabled={disabled}
           onChange={(e) => setNum(e.target.value)}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm"
           placeholder="Your answer (number)…"
         />
       )}
@@ -810,7 +810,7 @@ function BranchView({
   const disabled = submitting || !!lastResult
   return (
     <div className="space-y-3">
-      <RichText as="div" className="whitespace-pre-wrap text-sm text-slate-700" html={c.prompt} />
+      <RichText as="div" className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200" html={c.prompt} />
       <div className="space-y-2">
         {(c.choices || []).map((ch: any) => (
           <button
@@ -818,7 +818,7 @@ function BranchView({
             type="button"
             disabled={disabled}
             onClick={() => onSubmit({ choiceId: ch.id })}
-            className="block w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-700 hover:border-sky-400 hover:bg-sky-50 disabled:opacity-60"
+            className="block w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-left text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40 disabled:opacity-60"
           >
             {ch.text ? <MathText as="span" text={ch.text} /> : '(unnamed choice)'}
           </button>
@@ -838,7 +838,7 @@ function Feedback({
   if (result.correct === null) {
     if (result.pointsAwarded === null) {
       return (
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="rounded-md border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-800 dark:text-amber-300">
           <div className="font-semibold">Submitted — graded manually by your teacher</div>
         </div>
       )
@@ -879,12 +879,12 @@ function ResultScreen({
   const awaitingGrade = attempt.status === 'AWAITING_GRADE'
   const ungraded = !awaitingGrade && (lesson?.gradingMode === 'UNGRADED' || attempt.passed === null)
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-4 text-center">
-      <h2 className="text-2xl font-bold text-slate-800">
+    <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 text-center">
+      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
         {awaitingGrade ? 'Submitted' : 'Lesson complete'}
       </h2>
       {awaitingGrade && (
-        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+        <div className="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-md px-3 py-2">
           One or more of your answers need to be graded by your teacher before this lesson counts as complete.
         </div>
       )}
@@ -893,7 +893,7 @@ function ResultScreen({
           <div className="text-4xl font-extrabold text-slate-900">
             {attempt.score} / {attempt.maxScore}
           </div>
-          <div className="text-sm text-slate-500">{pct}%</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">{pct}%</div>
           <div
             className={`inline-block rounded-full px-3 py-1 text-sm font-semibold ${
               attempt.passed
@@ -906,7 +906,7 @@ function ResultScreen({
         </>
       )}
       {ungraded && (
-        <div className="text-sm text-slate-600">
+        <div className="text-sm text-slate-600 dark:text-slate-300">
           Nice work! This lesson is ungraded.
         </div>
       )}

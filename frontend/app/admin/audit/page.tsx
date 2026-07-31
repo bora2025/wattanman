@@ -169,8 +169,8 @@ export default function AuditLogsPage() {
 
           <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Audit Logs</h1>
-              <p className="text-sm text-slate-500 mt-1">Append-only record of every admin action across the system.</p>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Audit Logs</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Append-only record of every admin action across the system.</p>
             </div>
             {activeTab === 'logs' && (
               <div className="flex gap-2">
@@ -183,7 +183,7 @@ export default function AuditLogsPage() {
           </div>
 
           {/* Tab bar */}
-          <div className="flex gap-1 border-b border-slate-200 mt-2 -mb-2">
+          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 mt-2 -mb-2">
             {([['logs', '📋 Logs'], ['cleanup', '🗑 Cleanup Schedules']] as const).map(([id, label]) => (
               <button key={id} onClick={() => setActiveTab(id)}
                 className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
@@ -263,14 +263,14 @@ export default function AuditLogsPage() {
             </div>
 
             <div className="card overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between text-sm">
-                <span className="text-slate-600">
+              <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between text-sm">
+                <span className="text-slate-600 dark:text-slate-300">
                   {loading ? 'Loading…' : <>Showing <strong>{page.items.length}</strong> of <strong>{page.total}</strong> entries</>}
                 </span>
                 {page.pages > 1 && (
                   <div className="flex items-center gap-1">
                     <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="btn-outline btn-sm">←</button>
-                    <span className="px-2 text-slate-500">Page {currentPage} / {page.pages}</span>
+                    <span className="px-2 text-slate-500 dark:text-slate-400">Page {currentPage} / {page.pages}</span>
                     <button onClick={() => setCurrentPage(p => Math.min(page.pages, p + 1))} disabled={currentPage >= page.pages} className="btn-outline btn-sm">→</button>
                   </div>
                 )}
@@ -278,46 +278,46 @@ export default function AuditLogsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-left">
-                      <th className="px-3 py-2 font-medium text-slate-600">When</th>
-                      <th className="px-3 py-2 font-medium text-slate-600">Actor</th>
-                      <th className="px-3 py-2 font-medium text-slate-600">Action</th>
-                      <th className="px-3 py-2 font-medium text-slate-600">Resource</th>
-                      <th className="px-3 py-2 font-medium text-slate-600">Target</th>
-                      <th className="px-3 py-2 font-medium text-slate-600">IP</th>
-                      <th className="px-3 py-2 font-medium text-slate-600">Status</th>
+                    <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-left">
+                      <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">When</th>
+                      <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Actor</th>
+                      <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Action</th>
+                      <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Resource</th>
+                      <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Target</th>
+                      <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">IP</th>
+                      <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Status</th>
                       <th className="px-3 py-2"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {page.items.map(log => (
                       <Fragment key={log.id}>
                         <tr className={`hover:bg-slate-50 ${!log.success ? 'bg-red-50/40' : ''}`}>
-                          <td className="px-3 py-2 whitespace-nowrap text-slate-700" title={new Date(log.createdAt).toLocaleString()}>
+                          <td className="px-3 py-2 whitespace-nowrap text-slate-700 dark:text-slate-200" title={new Date(log.createdAt).toLocaleString()}>
                             {relativeTime(log.createdAt)}
                           </td>
-                          <td className="px-3 py-2 text-slate-700">
-                            <div className="font-medium">{log.actorName || <span className="text-slate-400">anonymous</span>}</div>
-                            <div className="text-xs text-slate-500">{log.actorEmail || '—'} {log.actorRole && <span className="ml-1 text-[10px] text-slate-400">[{log.actorRole}]</span>}</div>
+                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
+                            <div className="font-medium">{log.actorName || <span className="text-slate-400 dark:text-slate-500">anonymous</span>}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">{log.actorEmail || '—'} {log.actorRole && <span className="ml-1 text-[10px] text-slate-400 dark:text-slate-500">[{log.actorRole}]</span>}</div>
                           </td>
                           <td className="px-3 py-2">
                             <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium border ${actionStyle(log.action)}`}>{log.action}</span>
                           </td>
-                          <td className="px-3 py-2 text-slate-700">
+                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
                             <div className="font-medium">{log.resource}</div>
-                            {log.method && <div className="text-xs text-slate-400">{log.method} {log.path}</div>}
+                            {log.method && <div className="text-xs text-slate-400 dark:text-slate-500">{log.method} {log.path}</div>}
                           </td>
-                          <td className="px-3 py-2 text-slate-700">
+                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
                             <div className="font-mono text-xs">{log.resourceLabel || log.resourceId || '—'}</div>
                           </td>
-                          <td className="px-3 py-2 text-slate-500 font-mono text-xs">{log.ip || '—'}</td>
+                          <td className="px-3 py-2 text-slate-500 dark:text-slate-400 font-mono text-xs">{log.ip || '—'}</td>
                           <td className="px-3 py-2">
                             {log.success
-                              ? <span className="text-emerald-600 text-xs">✓ {log.statusCode ?? 'OK'}</span>
-                              : <span className="text-red-600 text-xs">✕ {log.statusCode ?? 'ERR'}</span>}
+                              ? <span className="text-emerald-600 dark:text-emerald-400 text-xs">✓ {log.statusCode ?? 'OK'}</span>
+                              : <span className="text-red-600 dark:text-red-400 text-xs">✕ {log.statusCode ?? 'ERR'}</span>}
                           </td>
                           <td className="px-3 py-2 text-right">
-                            <button onClick={() => toggleExpand(log.id)} className="text-xs text-indigo-600 hover:text-indigo-800">
+                            <button onClick={() => toggleExpand(log.id)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
                               {expanded === log.id ? 'Hide' : 'Details'}
                             </button>
                           </td>
@@ -328,7 +328,7 @@ export default function AuditLogsPage() {
                           <tr className="bg-slate-50/60">
                             <td colSpan={8} className="px-4 py-3">
                               {detailLoading && !detailCache[log.id] && (
-                                <div className="text-xs text-slate-500 mb-2">Loading details…</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">Loading details…</div>
                               )}
                               <div className="grid sm:grid-cols-2 gap-4 text-xs">
                                 <DetailBlock title="Request">
@@ -347,14 +347,14 @@ export default function AuditLogsPage() {
                                 </DetailBlock>
                                 {full.changes && (
                                   <DetailBlock title="Changes" wide>
-                                    <pre className="bg-white p-2 rounded border border-slate-200 max-h-64 overflow-auto text-[11px]">
+                                    <pre className="bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 max-h-64 overflow-auto text-[11px]">
                                       {JSON.stringify(full.changes, null, 2)}
                                     </pre>
                                   </DetailBlock>
                                 )}
                                 {full.metadata && (
                                   <DetailBlock title="Metadata" wide>
-                                    <pre className="bg-white p-2 rounded border border-slate-200 max-h-64 overflow-auto text-[11px]">
+                                    <pre className="bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 max-h-64 overflow-auto text-[11px]">
                                       {JSON.stringify(full.metadata, null, 2)}
                                     </pre>
                                   </DetailBlock>
@@ -367,7 +367,7 @@ export default function AuditLogsPage() {
                       </Fragment>
                     ))}
                     {!loading && page.items.length === 0 && (
-                      <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">No audit entries match the current filters.</td></tr>
+                      <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400 dark:text-slate-500">No audit entries match the current filters.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -400,7 +400,7 @@ function StatTile({ label, value, tone }: { label: string; value: number; tone: 
 function DetailBlock({ title, children, wide }: { title: string; children: React.ReactNode; wide?: boolean }) {
   return (
     <div className={wide ? 'sm:col-span-2' : ''}>
-      <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-1">{title}</div>
+      <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-1">{title}</div>
       <div className="space-y-0.5">{children}</div>
     </div>
   )
@@ -410,7 +410,7 @@ function KV({ k, v, truncate }: { k: string; v: any; truncate?: boolean }) {
   if (v === null || v === undefined || v === '') return null
   return (
     <div className="flex gap-2">
-      <span className="text-slate-500 min-w-[80px]">{k}:</span>
+      <span className="text-slate-500 dark:text-slate-400 min-w-[80px]">{k}:</span>
       <span className={`text-slate-800 font-mono ${truncate ? 'truncate max-w-md' : ''}`}>{String(v)}</span>
     </div>
   )
@@ -507,8 +507,8 @@ function CleanupSchedulePanel() {
   return (
     <div className="space-y-5">
       <div className="card p-4">
-        <p className="text-sm text-slate-700 font-semibold mb-1">Automatic Audit Log Cleanup</p>
-        <p className="text-xs text-slate-500">
+        <p className="text-sm text-slate-700 dark:text-slate-200 font-semibold mb-1">Automatic Audit Log Cleanup</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Configure schedules to automatically delete audit logs older than a chosen number of days.
           The scheduler checks every hour and runs any schedule whose interval has elapsed.
           You can also trigger a schedule immediately with <strong>Run Now</strong>.
@@ -516,7 +516,7 @@ function CleanupSchedulePanel() {
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-slate-700">
+        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
           {schedules.length} schedule{schedules.length === 1 ? '' : 's'} configured
         </p>
         <button onClick={() => setCreating(s => !s)} className="btn-primary btn-sm">
@@ -525,24 +525,24 @@ function CleanupSchedulePanel() {
       </div>
 
       {creating && (
-        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-indigo-50/30 border-indigo-200">
-          <h3 className="text-sm font-semibold text-slate-800">New cleanup schedule</h3>
+        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-indigo-50/30 border-indigo-200 dark:border-indigo-900">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">New cleanup schedule</h3>
           <div className="grid sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Label (optional)</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Label (optional)</label>
               <input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
                 placeholder="e.g. Daily – keep 90 days"
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Frequency *</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Frequency *</label>
               <select value={form.frequency} onChange={e => setForm(f => ({ ...f, frequency: e.target.value }))}
                 className="w-full border rounded-lg px-3 py-2 text-sm">
                 {FREQUENCIES.map(f => <option key={f} value={f}>{FREQ_LABELS[f]}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Retain last N days *</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Retain last N days *</label>
               <input type="number" min={1} value={form.retainDays}
                 onChange={e => setForm(f => ({ ...f, retainDays: Number(e.target.value) }))}
                 className="w-full border rounded-lg px-3 py-2 text-sm" />
@@ -557,16 +557,16 @@ function CleanupSchedulePanel() {
         </form>
       )}
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-sm">{error}</div>}
+      {error && <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-lg px-3 py-2 text-sm">{error}</div>}
 
       {loading ? (
-        <div className="card p-8 text-center text-slate-400 text-sm">Loading…</div>
+        <div className="card p-8 text-center text-slate-400 dark:text-slate-500 text-sm">Loading…</div>
       ) : schedules.length === 0 ? (
-        <div className="card p-8 text-center text-slate-400 text-sm">No cleanup schedules yet. Create one above.</div>
+        <div className="card p-8 text-center text-slate-400 dark:text-slate-500 text-sm">No cleanup schedules yet. Create one above.</div>
       ) : (
         <div className="card overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <thead className="bg-slate-50 dark:bg-slate-800 text-xs uppercase text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 text-left">Label</th>
                 <th className="px-4 py-2 text-left">Frequency</th>
@@ -579,14 +579,14 @@ function CleanupSchedulePanel() {
             </thead>
             <tbody>
               {schedules.map(s => (
-                <tr key={s.id} className="border-t border-slate-100">
-                  <td className="px-4 py-2 font-medium text-slate-800">{s.label}</td>
-                  <td className="px-4 py-2 text-slate-600">{FREQ_LABELS[s.frequency] ?? s.frequency}</td>
-                  <td className="px-4 py-2 text-slate-600">{s.retainDays} days</td>
-                  <td className="px-4 py-2 text-xs text-slate-500">
+                <tr key={s.id} className="border-t border-slate-100 dark:border-slate-800">
+                  <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">{s.label}</td>
+                  <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{FREQ_LABELS[s.frequency] ?? s.frequency}</td>
+                  <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{s.retainDays} days</td>
+                  <td className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400">
                     {s.lastRunAt ? formatCambodiaTime(s.lastRunAt) : '—'}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{s.lastDeletedCount.toLocaleString()}</td>
+                  <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{s.lastDeletedCount.toLocaleString()}</td>
                   <td className="px-4 py-2">
                     <button onClick={() => handleToggle(s)}
                       className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border transition ${
@@ -599,10 +599,10 @@ function CleanupSchedulePanel() {
                   </td>
                   <td className="px-4 py-2 text-right space-x-2 whitespace-nowrap">
                     <button onClick={() => handleRunNow(s)} disabled={runningId === s.id}
-                      className="text-xs text-indigo-600 hover:underline disabled:opacity-50">
+                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-50">
                       {runningId === s.id ? 'Running…' : 'Run Now'}
                     </button>
-                    <button onClick={() => handleDelete(s)} className="text-xs text-red-600 hover:underline">Delete</button>
+                    <button onClick={() => handleDelete(s)} className="text-xs text-red-600 dark:text-red-400 hover:underline">Delete</button>
                   </td>
                 </tr>
               ))}

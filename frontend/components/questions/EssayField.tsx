@@ -3,7 +3,7 @@
 /** Authoring editor for the Essay question type. `data: { minWords: number }`. */
 export function EssayEditor({ data, onChange }: { data: any; onChange: (d: any) => void }) {
   return (
-    <label className="text-xs text-slate-500 block">Minimum words (optional)
+    <label className="text-xs text-slate-500 dark:text-slate-400 block">Minimum words (optional)
       <input
         type="number"
         min={0}
@@ -11,7 +11,7 @@ export function EssayEditor({ data, onChange }: { data: any; onChange: (d: any) 
         onChange={e => onChange({ minWords: Number(e.target.value) || 0 })}
         className="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
       />
-      <p className="text-[11px] text-slate-400 mt-1">Essay answers must be graded manually.</p>
+      <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Essay answers must be graded manually.</p>
     </label>
   )
 }

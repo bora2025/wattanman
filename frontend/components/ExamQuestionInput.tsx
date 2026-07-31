@@ -44,8 +44,8 @@ export function QuestionInput({ q, value, onChange }: { q: QuestionInputQuestion
               <div className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 ${multiple ? 'rounded' : 'rounded-full'} ${isSelected ? 'border-sky-500' : 'border-slate-300'}`}>
                 {isSelected && <div className={`bg-sky-500 ${multiple ? 'w-2.5 h-2.5 rounded-sm' : 'w-2.5 h-2.5 rounded-full'}`} />}
               </div>
-              {label && <span className="text-sm font-semibold text-slate-400 flex-shrink-0">{label}.</span>}
-              <MathText as="span" className="text-sm text-slate-700" text={c.text} />
+              {label && <span className="text-sm font-semibold text-slate-400 dark:text-slate-500 flex-shrink-0">{label}.</span>}
+              <MathText as="span" className="text-sm text-slate-700 dark:text-slate-200" text={c.text} />
             </label>
           )
         })}
@@ -59,7 +59,7 @@ export function QuestionInput({ q, value, onChange }: { q: QuestionInputQuestion
         {[true, false].map((v) => (
           <label key={String(v)} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${value === v ? 'border-sky-500 bg-sky-50' : 'border-slate-200 hover:border-slate-300'}`}>
             <input type="radio" name={q.id} checked={value === v} onChange={() => onChange(v)} className="sr-only" />
-            <span className="text-sm font-medium text-slate-700">{v ? 'True' : 'False'}</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{v ? 'True' : 'False'}</span>
           </label>
         ))}
       </div>
@@ -76,5 +76,5 @@ export function QuestionInput({ q, value, onChange }: { q: QuestionInputQuestion
   if (q.type === 'SPEAK_WORDS_SET') return <SpeakWordsSetInput data={q.data} value={value} onChange={onChange} />
   if (q.type === 'DICTATION') return <DictationInput data={q.data} value={value} onChange={onChange} />
 
-  return <p className="text-xs text-red-500">Unsupported question type</p>
+  return <p className="text-xs text-red-500 dark:text-red-400">Unsupported question type</p>
 }

@@ -323,7 +323,7 @@ export default function StudentCardsPage() {
           <div className="flex min-h-screen items-center justify-center">
             <div className="text-center">
               <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-sm text-slate-500 mt-3">Loading…</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
             </div>
           </div>
         </div>
@@ -335,9 +335,9 @@ export default function StudentCardsPage() {
     <div className="page-shell">
       {exporting && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-lg px-4 sm:px-8 py-4 sm:py-6 flex flex-col items-center gap-3">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg px-4 sm:px-8 py-4 sm:py-6 flex flex-col items-center gap-3">
             <div className="animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
-            <p className="text-sm font-medium text-slate-700">Exporting, please wait…</p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Exporting, please wait…</p>
           </div>
         </div>
       )}
@@ -346,8 +346,8 @@ export default function StudentCardsPage() {
         <div className="h-14 lg:hidden" />
         <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">🎓 Student ID Cards</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">🎓 Student ID Cards</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               {selectedYearObj ? `${studyYearLabel} · ${classes.length} class${classes.length !== 1 ? 'es' : ''} · ${totalStudents} student${totalStudents !== 1 ? 's' : ''}` : 'Select a study year'}
             </p>
           </div>
@@ -373,14 +373,14 @@ export default function StudentCardsPage() {
             <div className="ml-auto flex items-center gap-2">
               {/* Design sync status */}
               {designLoading ? (
-                <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <span className="inline-block w-3 h-3 rounded-full border-2 border-slate-300 border-t-transparent animate-spin" />
+                <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                  <span className="inline-block w-3 h-3 rounded-full border-2 border-slate-300 dark:border-slate-600 border-t-transparent animate-spin" />
                   Loading template…
                 </span>
               ) : (
                 <button
                   onClick={reloadDesign}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors"
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   title="Re-fetch the active template from the server"
                 >
                   🔄 Refresh Template
@@ -392,7 +392,7 @@ export default function StudentCardsPage() {
               >
                 {showEditor ? '✕ Close Editor' : '✏️ Edit Card Design'}
               </button>
-              <Link href="/admin/card-designer" className="px-3 py-2 rounded-lg text-xs font-medium border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors" title="Open full Card Designer page">
+              <Link href="/admin/card-designer" className="px-3 py-2 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" title="Open full Card Designer page">
                 🎨 Full Designer
               </Link>
             </div>
@@ -400,11 +400,11 @@ export default function StudentCardsPage() {
 
           {/* Inline Card Editor */}
           {showEditor && (
-            <div className="card overflow-hidden border-2 border-amber-200">
-              <div className="flex items-center justify-between px-5 py-3 bg-amber-50 border-b border-amber-200">
+            <div className="card overflow-hidden border-2 border-amber-200 dark:border-amber-900">
+              <div className="flex items-center justify-between px-5 py-3 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900">
                 <div>
-                  <h3 className="font-semibold text-slate-800">✏️ Editing Student Card Design</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Save design here to apply changes to all student ID cards below</p>
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-100">✏️ Editing Student Card Design</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Save design here to apply changes to all student ID cards below</p>
                 </div>
                 <button onClick={handleEditorClose} className="btn-ghost btn-sm">✕ Close</button>
               </div>
@@ -419,8 +419,8 @@ export default function StudentCardsPage() {
             <div className="card p-12">
               <div className="empty-state">
                 <p className="text-4xl mb-3">📅</p>
-                <p className="font-semibold text-slate-600">Select a Study Year</p>
-                <p className="text-sm text-slate-400 mt-1">Choose a study year to view student ID cards for all classes.</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-300">Select a Study Year</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Choose a study year to view student ID cards for all classes.</p>
               </div>
             </div>
           )}
@@ -429,7 +429,7 @@ export default function StudentCardsPage() {
           {selectedStudyYear && loadingClasses && (
             <div className="card p-12 text-center">
               <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-sm text-slate-500 mt-3">Loading classes…</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading classes…</p>
             </div>
           )}
 
@@ -440,8 +440,8 @@ export default function StudentCardsPage() {
                 <div className="card p-12">
                   <div className="empty-state">
                     <p className="text-4xl mb-3">🪪</p>
-                    <p className="font-semibold text-slate-600">No classes in this study year</p>
-                    <p className="text-sm text-slate-400 mt-1">Create classes and add students first.</p>
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">No classes in this study year</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Create classes and add students first.</p>
                   </div>
                 </div>
               ) : !selectedStudentClass ? (
@@ -449,7 +449,7 @@ export default function StudentCardsPage() {
                 <div>
                   {/* Bulk download all classes */}
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-slate-700">
+                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
                       📖 All Classes in {studyYearLabel}
                     </h3>
                     {totalStudents > 0 && (
@@ -491,8 +491,8 @@ export default function StudentCardsPage() {
                           </div>
                           <h3 className="text-white font-bold text-lg mt-3 leading-tight">{cls.name}</h3>
                         </div>
-                        <div className="px-5 py-3 flex items-center justify-between bg-white">
-                          <div className="text-xs text-slate-500 truncate">
+                        <div className="px-5 py-3 flex items-center justify-between bg-white dark:bg-slate-900">
+                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                             {cls.teacher ? `👤 ${cls.teacher.name}` : 'No teacher'}
                           </div>
                           <span className="text-indigo-400 group-hover:text-indigo-600 text-sm transition-colors">View →</span>
@@ -505,7 +505,7 @@ export default function StudentCardsPage() {
                 const cls = classes.find((c) => c.id === selectedStudentClass);
                 if (!cls) return (
                   <div className="card p-8 text-center">
-                    <p className="text-slate-500">Class not found.</p>
+                    <p className="text-slate-500 dark:text-slate-400">Class not found.</p>
                     <button onClick={() => setSelectedStudentClass(null)} className="btn-primary btn-sm mt-3">← Back to Classes</button>
                   </div>
                 );
@@ -519,12 +519,12 @@ export default function StudentCardsPage() {
                   <div className="space-y-4">
                     <div className="card p-4">
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        <button onClick={() => setSelectedStudentClass(null)} className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium text-sm transition-colors shrink-0">← Back to Classes</button>
+                        <button onClick={() => setSelectedStudentClass(null)} className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm transition-colors shrink-0">← Back to Classes</button>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-lg">📖</span>
                           <div>
-                            <h3 className="font-bold text-slate-800 text-lg leading-tight">{cls.name}</h3>
-                            <p className="text-xs text-slate-500">
+                            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight">{cls.name}</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
                               {cls.teacher && <span>{cls.teacher.name} · </span>}
                               {studyYearLabel && <span>{studyYearLabel} · </span>}
                               {filtered.length} student{filtered.length !== 1 ? 's' : ''}
@@ -533,8 +533,8 @@ export default function StudentCardsPage() {
                         </div>
                         <div className="sm:ml-auto flex items-center gap-2 flex-wrap">
                           <div className="relative flex-1 min-w-0 sm:min-w-[180px]">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
-                            <input type="text" placeholder="Search students..." value={studentSearch} onChange={(e) => { setStudentSearch(e.target.value); setStudentPage(1); }} className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none transition-all" />
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">🔍</span>
+                            <input type="text" placeholder="Search students..." value={studentSearch} onChange={(e) => { setStudentSearch(e.target.value); setStudentPage(1); }} className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none transition-all" />
                           </div>
                           {cls.students.length > 0 && (
                             <div className="flex gap-1.5">
@@ -544,7 +544,7 @@ export default function StudentCardsPage() {
                               >📄 Download Card</button>
                               <button
                                 onClick={() => downloadAllQRCodes(`${cls.name} - QR Codes`, cls.students.map((s) => ({ name: s.name, id: s.id })))}
-                                className="btn-sm border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg font-medium text-xs transition-colors"
+                                className="btn-sm border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg font-medium text-xs transition-colors"
                               >📱 All QR</button>
                             </div>
                           )}
@@ -554,7 +554,7 @@ export default function StudentCardsPage() {
 
                     {paged.length === 0 ? (
                       <div className="card p-8 text-center">
-                        <p className="text-slate-400 text-sm">{studentSearch ? `No students matching "${studentSearch}"` : 'No students in this class'}</p>
+                        <p className="text-slate-400 dark:text-slate-500 text-sm">{studentSearch ? `No students matching "${studentSearch}"` : 'No students in this class'}</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -584,14 +584,14 @@ export default function StudentCardsPage() {
                     {totalStudentPages > 1 && (
                       <div className="card px-4 py-3">
                         <div className="flex items-center justify-between">
-                          <p className="text-xs text-slate-500">Showing {(safePage - 1) * studentPageSize + 1}–{Math.min(safePage * studentPageSize, filtered.length)} of {filtered.length}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Showing {(safePage - 1) * studentPageSize + 1}–{Math.min(safePage * studentPageSize, filtered.length)} of {filtered.length}</p>
                           <div className="flex items-center gap-1">
-                            <button onClick={() => setStudentPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1} className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">← Prev</button>
+                            <button onClick={() => setStudentPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1} className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">← Prev</button>
                             {Array.from({ length: totalStudentPages }, (_, i) => i + 1)
                               .filter((p) => p === 1 || p === totalStudentPages || Math.abs(p - safePage) <= 1)
                               .reduce<(number | string)[]>((acc, p, i, arr) => { if (i > 0 && typeof arr[i - 1] === 'number' && (p as number) - (arr[i - 1] as number) > 1) acc.push('...'); acc.push(p); return acc; }, [])
-                              .map((p, i) => typeof p === 'string' ? <span key={`dot-${i}`} className="px-1 text-xs text-slate-400">…</span> : <button key={p} onClick={() => setStudentPage(p)} className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${p === safePage ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 hover:bg-slate-50'}`}>{p}</button>)}
-                            <button onClick={() => setStudentPage((p) => Math.min(totalStudentPages, p + 1))} disabled={safePage >= totalStudentPages} className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next →</button>
+                              .map((p, i) => typeof p === 'string' ? <span key={`dot-${i}`} className="px-1 text-xs text-slate-400 dark:text-slate-500">…</span> : <button key={p} onClick={() => setStudentPage(p)} className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${p === safePage ? 'bg-indigo-600 text-white border-indigo-600' : 'border-slate-200 hover:bg-slate-50'}`}>{p}</button>)}
+                            <button onClick={() => setStudentPage((p) => Math.min(totalStudentPages, p + 1))} disabled={safePage >= totalStudentPages} className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next →</button>
                           </div>
                         </div>
                       </div>
@@ -631,13 +631,13 @@ function IDCardPreview({
 
   return (
     <div className="group relative">
-      <div className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white" style={{ aspectRatio: `${design.width} / ${design.height}` }}>
-        {imgSrc ? <img src={imgSrc} alt={`${name} ID Card`} className="w-full h-full object-contain" /> : <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">Rendering…</div>}
+      <div className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-slate-900" style={{ aspectRatio: `${design.width} / ${design.height}` }}>
+        {imgSrc ? <img src={imgSrc} alt={`${name} ID Card`} className="w-full h-full object-contain" /> : <div className="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500 text-xs">Rendering…</div>}
       </div>
       <div className="mt-1.5 flex gap-0.5">
-        <button onClick={onDownload} disabled={!qrDataUrl} className="flex-1 text-[10px] py-1 rounded font-medium border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download as PNG">📥 PNG</button>
-        {onDownloadPDF && <button onClick={onDownloadPDF} disabled={!qrDataUrl} className="flex-1 text-[10px] py-1 rounded font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download as PDF">📄 PDF</button>}
-        {onDownloadQR && <button onClick={onDownloadQR} disabled={!qrDataUrl} className="text-[10px] py-1 px-1.5 rounded font-medium border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download QR only">📱</button>}
+        <button onClick={onDownload} disabled={!qrDataUrl} className="flex-1 text-[10px] py-1 rounded font-medium border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download as PNG">📥 PNG</button>
+        {onDownloadPDF && <button onClick={onDownloadPDF} disabled={!qrDataUrl} className="flex-1 text-[10px] py-1 rounded font-medium border border-red-200 dark:border-red-900 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download as PDF">📄 PDF</button>}
+        {onDownloadQR && <button onClick={onDownloadQR} disabled={!qrDataUrl} className="text-[10px] py-1 px-1.5 rounded font-medium border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed leading-tight" title="Download QR only">📱</button>}
       </div>
     </div>
   );

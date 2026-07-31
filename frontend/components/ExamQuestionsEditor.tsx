@@ -84,8 +84,8 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-semibold text-slate-700">Questions</p>
-        <button type="button" onClick={() => setPreviewOpen(true)} disabled={questions.length === 0} className="text-xs text-emerald-700 hover:underline disabled:opacity-40">
+        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Questions</p>
+        <button type="button" onClick={() => setPreviewOpen(true)} disabled={questions.length === 0} className="text-xs text-emerald-700 dark:text-emerald-300 hover:underline disabled:opacity-40">
           👁 Preview
         </button>
       </div>
@@ -118,11 +118,11 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
             </div>
             {showSectionDivider && (
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-xs font-bold text-sky-700 uppercase tracking-wide">{section}</span>
+                <span className="text-xs font-bold text-sky-700 dark:text-sky-300 uppercase tracking-wide">{section}</span>
                 <div className="flex-1 h-px bg-sky-200" />
               </div>
             )}
-            <div className="border border-slate-200 rounded-xl p-3 bg-slate-50">
+            <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-slate-50 dark:bg-slate-800">
             {/* Stacked on mobile — cramming the type/marks grid AND the 4-button
                 toolbar into one non-wrapping row squeezed the <select> until it
                 visibly truncated ("Multi-Choi…") on narrow phones. */}
@@ -132,12 +132,12 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
                   {(Object.keys(TYPE_LABEL) as QType[]).map(t => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
                 </select>
                 {q.type === 'TEXT' ? (
-                  <span className="border rounded px-2 py-1 text-sm text-slate-400 bg-slate-100 text-center" title="A passage isn't scored">not scored</span>
+                  <span className="border rounded px-2 py-1 text-sm text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 text-center" title="A passage isn't scored">not scored</span>
                 ) : (
                   <input type="number" step="any" min={0} value={q.marks} onChange={e => updateQuestion(i, { marks: Number(e.target.value) || 0 })} placeholder="Marks" className="border rounded px-2 py-1 text-sm min-w-0" />
                 )}
               </div>
-              <div className="flex items-center gap-0.5 shrink-0 border border-slate-200 rounded-lg bg-white p-0.5 self-start">
+              <div className="flex items-center gap-0.5 shrink-0 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 p-0.5 self-start">
                 <ToolbarButton onClick={() => moveQuestion(i, -1)} disabled={i === 0} title="Move up"><IconChevronUp /></ToolbarButton>
                 <ToolbarButton onClick={() => moveQuestion(i, 1)} disabled={i === questions.length - 1} title="Move down"><IconChevronDown /></ToolbarButton>
                 <ToolbarButton onClick={() => duplicateQuestion(i)} title="Duplicate"><IconDuplicate /></ToolbarButton>
@@ -151,7 +151,7 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
               onChange={e => updateQuestion(i, { section: cleanSectionLabel(e.target.value) })}
               placeholder="Section this question belongs to (optional) — e.g. Listening"
               title="One section name per question — questions in a row sharing the same name become one page for students. Leave blank for questions with no section."
-              className="w-full border rounded px-2 py-1 text-xs mb-2 text-slate-600"
+              className="w-full border rounded px-2 py-1 text-xs mb-2 text-slate-600 dark:text-slate-300"
             />
             <RichTextEditor value={q.text} onChange={text => updateQuestion(i, { text })} placeholder={q.type === 'TEXT' ? `Passage ${i + 1}: paste or write the reading text here` : `Q${i + 1}: Question text`} />
 
@@ -160,7 +160,7 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
             )}
             {q.type === 'TF' && (
               <div className="flex items-center gap-4 text-sm">
-                <span className="text-slate-500">Correct answer:</span>
+                <span className="text-slate-500 dark:text-slate-400">Correct answer:</span>
                 <label className="flex items-center gap-1"><input type="radio" checked={q.data?.correct === true} onChange={() => updateQuestion(i, { data: { correct: true } })} /> True</label>
                 <label className="flex items-center gap-1"><input type="radio" checked={q.data?.correct === false} onChange={() => updateQuestion(i, { data: { correct: false } })} /> False</label>
               </div>
@@ -197,9 +197,9 @@ export function ExamQuestionsEditor({ questions, onChange }: { questions: ExamQu
       <button
         type="button"
         onClick={addQuestion}
-        className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-dashed border-slate-300 text-sm font-medium text-slate-500 hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50/50 transition-colors"
+        className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-sky-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50/50 transition-colors"
       >
-        <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs leading-none">+</span>
+        <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center text-xs leading-none">+</span>
         Add Question
       </button>
       {previewOpen && <ExamPreviewModal questions={questions} onClose={() => setPreviewOpen(false)} />}
@@ -227,29 +227,29 @@ function McqEditor({ data, onChange }: { data: any; onChange: (d: any) => void }
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-4">
-        <label className="flex items-center gap-2 text-xs text-slate-500">
+        <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <input type="checkbox" checked={multiple} onChange={e => onChange({ ...data, multiple: e.target.checked })} /> Allow multiple correct answers
         </label>
-        <label className="flex items-center gap-2 text-xs text-slate-500">
+        <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           Answer labels
           <select value={labelStyle} onChange={e => onChange({ ...data, labelStyle: e.target.value })} className="border rounded-lg px-2 py-1 text-xs">
             {LABEL_STYLES.map(s => <option key={s} value={s}>{LABEL_STYLE_NAME[s]}</option>)}
           </select>
         </label>
       </div>
-      <p className="text-[11px] text-slate-400">Choices are shown to students in random order every time — labels always match what they see.</p>
+      <p className="text-[11px] text-slate-400 dark:text-slate-500">Choices are shown to students in random order every time — labels always match what they see.</p>
       {choices.map((c, i) => {
         const label = optionLabel(labelStyle, i)
         return (
           <div key={c.id} className="flex items-center gap-2">
             <input type={multiple ? 'checkbox' : 'radio'} checked={c.isCorrect} onChange={() => toggleCorrect(i)} title="Mark as correct" />
-            {label && <span className="text-xs font-semibold text-slate-400 w-5 text-center flex-shrink-0">{label}.</span>}
+            {label && <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 w-5 text-center flex-shrink-0">{label}.</span>}
             <input value={c.text} onChange={e => setChoice(i, { text: e.target.value })} placeholder={`Choice ${i + 1}`} className="flex-1 border rounded-lg px-3 py-1.5 text-sm" />
-            <button type="button" onClick={() => removeChoice(i)} disabled={choices.length <= 2} className="text-xs text-red-500 disabled:opacity-30">✕</button>
+            <button type="button" onClick={() => removeChoice(i)} disabled={choices.length <= 2} className="text-xs text-red-500 dark:text-red-400 disabled:opacity-30">✕</button>
           </div>
         )
       })}
-      <button type="button" onClick={addChoice} className="text-xs text-sky-600 hover:underline">+ Add choice</button>
+      <button type="button" onClick={addChoice} className="text-xs text-sky-600 dark:text-sky-400 hover:underline">+ Add choice</button>
     </div>
   )
 }

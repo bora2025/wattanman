@@ -122,13 +122,13 @@ function StatCard({
   label: string; value: string; sub: string; icon: React.ReactNode; accent: string
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-start gap-4">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 flex items-start gap-4">
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${accent}`}>
         {icon}
       </div>
       <div>
-        <p className="text-sm text-gray-500 font-medium">{label}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-0.5">{value}</p>
+        <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">{label}</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-0.5">{value}</p>
         <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
       </div>
     </div>
@@ -157,26 +157,26 @@ function PaymentModal({ record, onClose, onSave }: PaymentModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">Record Payment</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{record.studentName} — {record.class}</p>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-slate-800">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Record Payment</h2>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{record.studentName} — {record.class}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="bg-gray-50 rounded-xl p-3">
+            <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3">
               <p className="text-gray-400">Total</p>
-              <p className="font-semibold text-gray-900">{fmt(record.totalAmount)}</p>
+              <p className="font-semibold text-gray-900 dark:text-slate-100">{fmt(record.totalAmount)}</p>
             </div>
-            <div className="bg-gray-50 rounded-xl p-3">
+            <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3">
               <p className="text-gray-400">Balance</p>
-              <p className="font-semibold text-red-600">{fmt(balance)}</p>
+              <p className="font-semibold text-red-600 dark:text-red-400">{fmt(balance)}</p>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Payment Amount</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Payment Amount</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
               <input
@@ -186,33 +186,33 @@ function PaymentModal({ record, onClose, onSave }: PaymentModalProps) {
                 step="0.01"
                 value={amount}
                 onChange={e => { setAmount(e.target.value); setError('') }}
-                className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full pl-7 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Notes (optional)</label>
             <input
               type="text"
               value={note}
               onChange={e => setNote(e.target.value)}
               placeholder="e.g. Cash payment"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
             />
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
 
           {record.payments.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Payment History</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">Payment History</p>
               <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
                 {record.payments.map(p => (
-                  <div key={p.id} className="flex justify-between text-xs bg-gray-50 rounded-lg px-3 py-2">
-                    <span className="text-gray-500">{p.date}</span>
-                    <span className="font-semibold text-gray-900">{fmt(p.amount)}</span>
+                  <div key={p.id} className="flex justify-between text-xs bg-gray-50 dark:bg-slate-800 rounded-lg px-3 py-2">
+                    <span className="text-gray-500 dark:text-slate-400">{p.date}</span>
+                    <span className="font-semibold text-gray-900 dark:text-slate-100">{fmt(p.amount)}</span>
                     {p.note && <span className="text-gray-400 truncate max-w-[80px]">{p.note}</span>}
                   </div>
                 ))}
@@ -224,7 +224,7 @@ function PaymentModal({ record, onClose, onSave }: PaymentModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition"
             >
               Cancel
             </button>
@@ -411,11 +411,11 @@ function QRScannerModal({ records, onClose, onPayRecord }: QRScannerModalProps) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">Scan Student ID Card</h2>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-slate-100">Scan Student ID Card</h2>
             <p className="text-xs text-gray-400 mt-0.5">
               {records.length > 0 ? `${records.length} fee record${records.length > 1 ? 's' : ''} loaded — scan to pay` : 'Loading fee data…'}
             </p>
@@ -600,11 +600,11 @@ function InvoiceModal({ record, onClose }: InvoiceModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Fee Invoice</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Fee Invoice</h2>
             <p className="text-sm text-gray-400">Preview before printing</p>
           </div>
           <div className="flex gap-2">
@@ -631,68 +631,68 @@ function InvoiceModal({ record, onClose }: InvoiceModalProps) {
 
         {/* Invoice preview */}
         <div className="overflow-y-auto p-6">
-          <div id="fee-invoice-content" className="bg-white rounded-xl border border-gray-200 p-8 text-sm">
+          <div id="fee-invoice-content" className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 p-8 text-sm">
 
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
-                <p className="text-xl font-bold text-gray-900">{inv.schoolName}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-slate-100">{inv.schoolName}</p>
                 {inv.schoolAddress && <p className="text-[11px] text-gray-400 mt-0.5">{inv.schoolAddress}</p>}
                 {(inv.schoolPhone || inv.schoolEmail) && <p className="text-[11px] text-gray-400">{[inv.schoolPhone, inv.schoolEmail].filter(Boolean).join(' · ')}</p>}
                 <p className="text-xs text-gray-400 mt-0.5">{inv.invoiceSubtitle}</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-extrabold text-gray-900 tracking-tight">{inv.invoiceTitle}</p>
-                <p className="text-xs text-gray-500 mt-1">No: #{invoiceNo}</p>
-                <p className="text-xs text-gray-500">Date: {today}</p>
+                <p className="text-2xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{inv.invoiceTitle}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">No: #{invoiceNo}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400">Date: {today}</p>
               </div>
             </div>
 
-            <hr className="border-gray-200 mb-5" />
+            <hr className="border-gray-200 dark:border-slate-700 mb-5" />
 
             {/* Student & fee info */}
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-gray-50 rounded-xl p-3.5">
+              <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3.5">
                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Bill To</p>
-                <p className="font-semibold text-gray-900">{record.studentName}</p>
-                <p className="text-xs text-gray-500">Class: {record.class}</p>
+                <p className="font-semibold text-gray-900 dark:text-slate-100">{record.studentName}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400">Class: {record.class}</p>
               </div>
-              <div className="bg-gray-50 rounded-xl p-3.5">
+              <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3.5">
                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Fee Details</p>
-                <p className="text-xs text-gray-600">Term: <span className="font-medium text-gray-900">{record.term || '—'}</span></p>
-                <p className="text-xs text-gray-600">Due Date: <span className="font-medium text-gray-900">{record.dueDate}</span></p>
-                {record.notes && <p className="text-xs text-gray-600 mt-0.5">Note: {record.notes}</p>}
+                <p className="text-xs text-gray-600 dark:text-slate-300">Term: <span className="font-medium text-gray-900 dark:text-slate-100">{record.term || '—'}</span></p>
+                <p className="text-xs text-gray-600 dark:text-slate-300">Due Date: <span className="font-medium text-gray-900 dark:text-slate-100">{record.dueDate}</span></p>
+                {record.notes && <p className="text-xs text-gray-600 dark:text-slate-300 mt-0.5">Note: {record.notes}</p>}
               </div>
             </div>
 
             {/* Fee line */}
             <table className="w-full text-xs mb-4 border-collapse">
               <thead>
-                <tr className="bg-gray-100">
-                  <th className="text-left px-3 py-2 rounded-tl-lg text-gray-500 font-semibold uppercase tracking-wider">Description</th>
-                  <th className="text-right px-3 py-2 rounded-tr-lg text-gray-500 font-semibold uppercase tracking-wider">Amount</th>
+                <tr className="bg-gray-100 dark:bg-slate-800">
+                  <th className="text-left px-3 py-2 rounded-tl-lg text-gray-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Description</th>
+                  <th className="text-right px-3 py-2 rounded-tr-lg text-gray-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Amount</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b border-gray-100">
-                  <td className="px-3 py-2.5 text-gray-700">
+                <tr className="border-b border-gray-100 dark:border-slate-800">
+                  <td className="px-3 py-2.5 text-gray-700 dark:text-slate-200">
                     School Fee{record.term ? ` – ${record.term}` : ''}
                   </td>
-                  <td className="px-3 py-2.5 text-right font-medium text-gray-900">{fmt(record.totalAmount)}</td>
+                  <td className="px-3 py-2.5 text-right font-medium text-gray-900 dark:text-slate-100">{fmt(record.totalAmount)}</td>
                 </tr>
                 {record.discount > 0 && (
-                  <tr className="border-b border-gray-100">
-                    <td className="px-3 py-2.5 text-emerald-600 flex items-center gap-1">
+                  <tr className="border-b border-gray-100 dark:border-slate-800">
+                    <td className="px-3 py-2.5 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                       <span>Discount</span>
                       {record.discountReason && <span className="text-gray-400">— {record.discountReason}</span>}
                     </td>
-                    <td className="px-3 py-2.5 text-right font-medium text-emerald-600">−{fmt(record.discount)}</td>
+                    <td className="px-3 py-2.5 text-right font-medium text-emerald-600 dark:text-emerald-400">−{fmt(record.discount)}</td>
                   </tr>
                 )}
                 {record.discount > 0 && (
                   <tr>
-                    <td className="px-3 py-2 text-gray-500 font-semibold text-[11px] uppercase tracking-wide">Net Amount Due</td>
-                    <td className="px-3 py-2 text-right font-bold text-gray-900">{fmt(record.effectiveAmount)}</td>
+                    <td className="px-3 py-2 text-gray-500 dark:text-slate-400 font-semibold text-[11px] uppercase tracking-wide">Net Amount Due</td>
+                    <td className="px-3 py-2 text-right font-bold text-gray-900 dark:text-slate-100">{fmt(record.effectiveAmount)}</td>
                   </tr>
                 )}
               </tbody>
@@ -704,20 +704,20 @@ function InvoiceModal({ record, onClose }: InvoiceModalProps) {
                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Payment History</p>
                 <table className="w-full text-xs border-collapse">
                   <thead>
-                    <tr className="bg-gray-50">
-                      <th className="text-left px-3 py-2 text-gray-500 font-semibold">#</th>
-                      <th className="text-left px-3 py-2 text-gray-500 font-semibold">Date</th>
-                      <th className="text-left px-3 py-2 text-gray-500 font-semibold">Note</th>
-                      <th className="text-right px-3 py-2 text-gray-500 font-semibold">Amount</th>
+                    <tr className="bg-gray-50 dark:bg-slate-800">
+                      <th className="text-left px-3 py-2 text-gray-500 dark:text-slate-400 font-semibold">#</th>
+                      <th className="text-left px-3 py-2 text-gray-500 dark:text-slate-400 font-semibold">Date</th>
+                      <th className="text-left px-3 py-2 text-gray-500 dark:text-slate-400 font-semibold">Note</th>
+                      <th className="text-right px-3 py-2 text-gray-500 dark:text-slate-400 font-semibold">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     {record.payments.map((p, i) => (
-                      <tr key={p.id} className="border-b border-gray-100">
+                      <tr key={p.id} className="border-b border-gray-100 dark:border-slate-800">
                         <td className="px-3 py-2 text-gray-400">{i + 1}</td>
-                        <td className="px-3 py-2 text-gray-700">{p.date}</td>
-                        <td className="px-3 py-2 text-gray-500">{p.note || '—'}</td>
-                        <td className="px-3 py-2 text-right font-medium text-emerald-600">{fmt(p.amount)}</td>
+                        <td className="px-3 py-2 text-gray-700 dark:text-slate-200">{p.date}</td>
+                        <td className="px-3 py-2 text-gray-500 dark:text-slate-400">{p.note || '—'}</td>
+                        <td className="px-3 py-2 text-right font-medium text-emerald-600 dark:text-emerald-400">{fmt(p.amount)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -728,21 +728,21 @@ function InvoiceModal({ record, onClose }: InvoiceModalProps) {
             {/* Totals */}
             <div className="flex justify-end">
               <div className="w-64 space-y-1.5">
-                <div className="flex justify-between text-xs text-gray-600">
-                  <span>Total Amount</span><span className="font-medium text-gray-900">{fmt(record.totalAmount)}</span>
+                <div className="flex justify-between text-xs text-gray-600 dark:text-slate-300">
+                  <span>Total Amount</span><span className="font-medium text-gray-900 dark:text-slate-100">{fmt(record.totalAmount)}</span>
                 </div>
                 {record.discount > 0 && (
-                  <div className="flex justify-between text-xs text-emerald-600">
+                  <div className="flex justify-between text-xs text-emerald-600 dark:text-emerald-400">
                     <span>Discount{record.discountReason ? ` (${record.discountReason})` : ''}</span>
                     <span className="font-medium">−{fmt(record.discount)}</span>
                   </div>
                 )}
                 {record.discount > 0 && (
-                  <div className="flex justify-between text-xs text-gray-700 border-t border-gray-100 pt-1.5">
+                  <div className="flex justify-between text-xs text-gray-700 dark:text-slate-200 border-t border-gray-100 dark:border-slate-800 pt-1.5">
                     <span className="font-semibold">Net Due</span><span className="font-semibold">{fmt(record.effectiveAmount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-xs text-emerald-600">
+                <div className="flex justify-between text-xs text-emerald-600 dark:text-emerald-400">
                   <span>Total Paid</span><span className="font-semibold">{fmt(record.paidAmount)}</span>
                 </div>
                 <div className={`flex justify-between text-sm font-bold border-t border-gray-200 pt-2 mt-1 ${balance === 0 ? 'text-gray-400' : 'text-red-500'}`}>
@@ -754,18 +754,18 @@ function InvoiceModal({ record, onClose }: InvoiceModalProps) {
             {/* Status stamp */}
             <div className="mt-6 flex justify-end">
               {status === 'paid' && (
-                <span className="inline-block border-2 border-emerald-500 text-emerald-500 font-extrabold text-base tracking-widest uppercase px-4 py-1.5 rounded-lg rotate-[-4deg]">
+                <span className="inline-block border-2 border-emerald-500 text-emerald-500 dark:text-emerald-400 font-extrabold text-base tracking-widest uppercase px-4 py-1.5 rounded-lg rotate-[-4deg]">
                   PAID
                 </span>
               )}
               {(status === 'partial') && (
-                <span className="inline-block border-2 border-amber-500 text-amber-500 font-extrabold text-base tracking-widest uppercase px-4 py-1.5 rounded-lg rotate-[-4deg]">
+                <span className="inline-block border-2 border-amber-500 text-amber-500 dark:text-amber-400 font-extrabold text-base tracking-widest uppercase px-4 py-1.5 rounded-lg rotate-[-4deg]">
                   PARTIAL
                 </span>
               )}
             </div>
 
-            <hr className="border-gray-100 mt-6 mb-3" />
+            <hr className="border-gray-100 dark:border-slate-800 mt-6 mb-3" />
             <p className="text-center text-[10px] text-gray-400">{inv.invoiceFooter}</p>
           </div>
         </div>
@@ -840,15 +840,15 @@ function AddFeeModal({ students, onClose, onSave, editRecord }: AddFeeModalProps
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">{editRecord ? 'Edit Fee Record' : 'Add Fee Record'}</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-slate-800">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{editRecord ? 'Edit Fee Record' : 'Add Fee Record'}</h2>
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           {!editRecord && (
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Student</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Student</label>
               <div className="relative">
                 <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
@@ -866,25 +866,25 @@ function AddFeeModal({ students, onClose, onSave, editRecord }: AddFeeModalProps
                   onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
                   placeholder="Search student by name or class..."
                   autoComplete="off"
-                  className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                 />
               </div>
               {showDropdown && filteredStudents.length > 0 && (
-                <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                <ul className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                   {filteredStudents.map(s => (
                     <li
                       key={s.id}
                       onMouseDown={() => selectStudent(s)}
-                      className="flex items-center justify-between px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="flex items-center justify-between px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                     >
-                      <span className="font-medium text-gray-900">{s.name}</span>
-                      <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{s.class}</span>
+                      <span className="font-medium text-gray-900 dark:text-slate-100">{s.name}</span>
+                      <span className="text-xs text-gray-400 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{s.class}</span>
                     </li>
                   ))}
                 </ul>
               )}
               {showDropdown && studentQuery.length > 0 && filteredStudents.length === 0 && (
-                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg px-4 py-3 text-sm text-gray-400">
+                <div className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg px-4 py-3 text-sm text-gray-400">
                   No students found
                 </div>
               )}
@@ -892,14 +892,14 @@ function AddFeeModal({ students, onClose, onSave, editRecord }: AddFeeModalProps
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Total Amount</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
               <input
                 type="number" min="1" step="0.01"
                 value={totalAmount}
                 onChange={e => { setTotalAmount(e.target.value); setError('') }}
-                className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full pl-7 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                 required
               />
             </div>
@@ -908,75 +908,75 @@ function AddFeeModal({ students, onClose, onSave, editRecord }: AddFeeModalProps
           {/* Discount */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Discount Amount</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Discount Amount</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
                 <input
                   type="number" min="0" step="0.01"
                   value={discount}
                   onChange={e => { setDiscount(e.target.value); setError('') }}
-                  className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="w-full pl-7 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Discount Reason</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Discount Reason</label>
               <input
                 type="text"
                 value={discountReason}
                 onChange={e => setDiscountReason(e.target.value)}
                 placeholder="e.g. Sports Day Promo"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
               />
             </div>
           </div>
           {parsedDiscount > 0 && parsedTotal > 0 && (
-            <div className="flex items-center justify-between bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2.5 text-sm">
-              <span className="text-emerald-700 font-medium">Net amount due after discount</span>
-              <span className="font-bold text-emerald-800">${effectivePreview.toLocaleString()}</span>
+            <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900 rounded-xl px-4 py-2.5 text-sm">
+              <span className="text-emerald-700 dark:text-emerald-300 font-medium">Net amount due after discount</span>
+              <span className="font-bold text-emerald-800 dark:text-emerald-300">${effectivePreview.toLocaleString()}</span>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Due Date</label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={e => { setDueDate(e.target.value); setError('') }}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Term</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Term</label>
               <input
                 type="text"
                 value={term}
                 onChange={e => setTerm(e.target.value)}
                 placeholder="e.g. 2025-T1"
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Notes (optional)</label>
             <input
               type="text"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Any additional notes..."
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
             />
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
 
           <div className="flex gap-3 pt-2">
             <button
               type="button" onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition"
             >Cancel</button>
             <button
               type="submit"
@@ -1193,20 +1193,20 @@ function FeeManagementContent() {
   const unpaidCount    = overdueRecords.length + partialRecords.length + pendingRecords.length
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-50 min-h-screen">
+    <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-800 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Fee Management</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Track and manage student fee payments</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fee Management</h1>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Track and manage student fee payments</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setShowQRScanner(true)}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-800 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h6v6H3zm12 0h6v6h-6zM3 15h6v6H3zm9-9h.01M12 12h3m0 0v3m0-3h3M15 15h3m0 0v3m-3 0h3" />
@@ -1215,7 +1215,7 @@ function FeeManagementContent() {
             </button>
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-800 shadow-sm transition"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -1232,7 +1232,7 @@ function FeeManagementContent() {
               Export Report
             </button>
             <a href="/admin/fees/settings"
-              className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+              className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition"
               title="Fee Settings">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -1251,7 +1251,7 @@ function FeeManagementContent() {
             sub="Collected this term"
             accent="bg-emerald-50"
             icon={
-              <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
               </svg>
             }
@@ -1262,7 +1262,7 @@ function FeeManagementContent() {
             sub="Yet to collect"
             accent="bg-amber-50"
             icon={
-              <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             }
@@ -1273,7 +1273,7 @@ function FeeManagementContent() {
             sub={`Out of ${records.length} students`}
             accent="bg-blue-50"
             icon={
-              <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
               </svg>
             }
@@ -1284,7 +1284,7 @@ function FeeManagementContent() {
             sub="Payment completion"
             accent="bg-purple-50"
             icon={
-              <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             }
@@ -1308,13 +1308,13 @@ function FeeManagementContent() {
                 </svg>
               </span>
               <div className="flex items-center gap-3 flex-1 flex-wrap">
-                <span className="text-sm font-semibold text-gray-800">
+                <span className="text-sm font-semibold text-gray-800 dark:text-slate-100">
                   {unpaidCount} student{unpaidCount !== 1 ? 's' : ''} with unpaid fees
                 </span>
                 <span className="flex gap-2 text-xs">
-                  {overdueRecords.length > 0 && <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-semibold">{overdueRecords.length} Overdue</span>}
-                  {partialRecords.length > 0 && <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-semibold">{partialRecords.length} Partial</span>}
-                  {pendingRecords.length > 0 && <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full font-semibold">{pendingRecords.length} Pending</span>}
+                  {overdueRecords.length > 0 && <span className="px-2 py-0.5 bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300 rounded-full font-semibold">{overdueRecords.length} Overdue</span>}
+                  {partialRecords.length > 0 && <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 rounded-full font-semibold">{partialRecords.length} Partial</span>}
+                  {pendingRecords.length > 0 && <span className="px-2 py-0.5 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-full font-semibold">{pendingRecords.length} Pending</span>}
                 </span>
                 <span className="ml-auto text-xs text-gray-400 hidden sm:block">{fmt(pendingAmount)} outstanding</span>
               </div>
@@ -1325,24 +1325,24 @@ function FeeManagementContent() {
 
             {/* Expanded list — overdue students */}
             {alertExpanded && (
-              <div className="border-t border-gray-100">
+              <div className="border-t border-gray-100 dark:border-slate-800">
                 {overdueRecords.length > 0 && (
                   <div>
-                    <div className="px-6 py-2 bg-red-50 flex items-center justify-between">
-                      <span className="text-xs font-bold text-red-600 uppercase tracking-wider">Overdue</span>
-                      <button onClick={() => setStatusFilter('overdue')} className="text-xs text-red-500 hover:underline">Filter table →</button>
+                    <div className="px-6 py-2 bg-red-50 dark:bg-red-950/40 flex items-center justify-between">
+                      <span className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Overdue</span>
+                      <button onClick={() => setStatusFilter('overdue')} className="text-xs text-red-500 dark:text-red-400 hover:underline">Filter table →</button>
                     </div>
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-gray-50 dark:divide-slate-800">
                       {overdueRecords.map(r => {
                         const daysLate = Math.floor((Date.now() - new Date(r.dueDate).getTime()) / 86400000)
                         const balance  = r.effectiveAmount - r.paidAmount
                         return (
                           <div key={r.id} className="px-6 py-3 flex items-center gap-3 hover:bg-red-50/40 transition">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-900 truncate">{r.studentName}</p>
+                              <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">{r.studentName}</p>
                               <p className="text-xs text-gray-400">{r.class} · {daysLate}d overdue</p>
                             </div>
-                            <span className="text-sm font-bold text-red-600 shrink-0">{fmt(balance)}</span>
+                            <span className="text-sm font-bold text-red-600 dark:text-red-400 shrink-0">{fmt(balance)}</span>
                             <button onClick={() => setPaymentTarget(r)}
                               className="px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition shrink-0">
                               Pay
@@ -1354,14 +1354,14 @@ function FeeManagementContent() {
                   </div>
                 )}
                 {(partialRecords.length > 0 || pendingRecords.length > 0) && (
-                  <div className="px-6 py-3 bg-gray-50 flex items-center gap-4 border-t border-gray-100">
+                  <div className="px-6 py-3 bg-gray-50 dark:bg-slate-800 flex items-center gap-4 border-t border-gray-100 dark:border-slate-800">
                     {partialRecords.length > 0 && (
-                      <button onClick={() => setStatusFilter('partial')} className="text-xs text-amber-700 font-medium hover:underline">
+                      <button onClick={() => setStatusFilter('partial')} className="text-xs text-amber-700 dark:text-amber-300 font-medium hover:underline">
                         View {partialRecords.length} partial →
                       </button>
                     )}
                     {pendingRecords.length > 0 && (
-                      <button onClick={() => setStatusFilter('pending')} className="text-xs text-gray-600 font-medium hover:underline">
+                      <button onClick={() => setStatusFilter('pending')} className="text-xs text-gray-600 dark:text-slate-300 font-medium hover:underline">
                         View {pendingRecords.length} pending →
                       </button>
                     )}
@@ -1376,11 +1376,11 @@ function FeeManagementContent() {
         )}
 
         {/* Fee Records */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
           {/* Table header */}
-          <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold text-gray-900">Fee Records</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-slate-100">Fee Records</h2>
               <p className="text-sm text-gray-400">Manage student payments</p>
             </div>
             <div className="flex gap-2">
@@ -1394,14 +1394,14 @@ function FeeManagementContent() {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search students..."
-                  className="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 w-52"
+                  className="pl-9 pr-4 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 w-52"
                 />
               </div>
               {/* Status filter */}
               <select
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value as FeeStatus)}
-                className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+                className="px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white dark:bg-slate-900"
               >
                 <option value="all">All Status</option>
                 <option value="paid">Paid</option>
@@ -1421,34 +1421,34 @@ function FeeManagementContent() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/60">
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Student Name</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Class</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Paid</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Balance</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Due Date</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                  <tr className="border-b border-gray-100 dark:border-slate-800 bg-gray-50/60">
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Student Name</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Class</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Amount</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Paid</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Balance</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Due Date</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Status</th>
+                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
                   {filtered.map(r => {
                     const status = getStatus(r)
                     const balance = r.effectiveAmount - r.paidAmount
                     return (
                       <tr key={r.id} className="hover:bg-gray-50/60 transition-colors">
-                        <td className="px-6 py-4 font-medium text-gray-900">{r.studentName}</td>
-                        <td className="px-4 py-4 text-gray-600">{r.class}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-slate-100">{r.studentName}</td>
+                        <td className="px-4 py-4 text-gray-600 dark:text-slate-300">{r.class}</td>
                         <td className="px-4 py-4 text-right">
-                          <span className="text-gray-700">{fmt(r.effectiveAmount)}</span>
+                          <span className="text-gray-700 dark:text-slate-200">{fmt(r.effectiveAmount)}</span>
                           {r.discount > 0 && (
-                            <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700" title={r.discountReason || 'Discount'}>
+                            <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" title={r.discountReason || 'Discount'}>
                               -{fmt(r.discount)}
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-4 text-right text-emerald-600 font-medium">{fmt(r.paidAmount)}</td>
+                        <td className="px-4 py-4 text-right text-emerald-600 dark:text-emerald-400 font-medium">{fmt(r.paidAmount)}</td>
                         <td className={`px-4 py-4 text-right font-medium ${balance === 0 ? 'text-gray-400' : 'text-red-500'}`}>{fmt(balance)}</td>
                         <td className={`px-4 py-4 font-medium ${status === 'overdue' ? 'text-red-500' : 'text-gray-600'}`}>{r.dueDate}</td>
                         <td className="px-4 py-4">
@@ -1461,7 +1461,7 @@ function FeeManagementContent() {
                             {balance > 0 && (
                               <button
                                 onClick={() => setPaymentTarget(r)}
-                                className="px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+                                className="px-3 py-1.5 text-xs font-semibold border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 transition"
                               >
                                 Record Payment
                               </button>
@@ -1469,7 +1469,7 @@ function FeeManagementContent() {
                             {r.paidAmount > 0 && (
                               <button
                                 onClick={() => setPrintTarget(r)}
-                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition"
                                 title="Print Invoice"
                                 aria-label={`Print invoice for ${r.studentName}`}
                               >
@@ -1490,7 +1490,7 @@ function FeeManagementContent() {
                             </button>
                             <button
                               onClick={() => setDeleteTarget(r.id)}
-                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition"
                               title="Delete"
                               aria-label={`Delete fee record for ${r.studentName}`}
                             >
@@ -1510,12 +1510,12 @@ function FeeManagementContent() {
 
           {/* Footer summary */}
           {filtered.length > 0 && (
-            <div className="px-6 py-3 border-t border-gray-100 bg-gray-50/40 flex items-center justify-between text-xs text-gray-500">
+            <div className="px-6 py-3 border-t border-gray-100 dark:border-slate-800 bg-gray-50/40 flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
               <span>Showing {filtered.length} of {records.length} records</span>
               <div className="flex gap-4">
-                <span>Total billed: <span className="font-semibold text-gray-700">{fmt(filtered.reduce((s, r) => s + r.effectiveAmount, 0))}</span></span>
-                <span>Total collected: <span className="font-semibold text-emerald-600">{fmt(filtered.reduce((s, r) => s + r.paidAmount, 0))}</span></span>
-                <span>Outstanding: <span className="font-semibold text-red-500">{fmt(filtered.reduce((s, r) => s + Math.max(0, r.effectiveAmount - r.paidAmount), 0))}</span></span>
+                <span>Total billed: <span className="font-semibold text-gray-700 dark:text-slate-200">{fmt(filtered.reduce((s, r) => s + r.effectiveAmount, 0))}</span></span>
+                <span>Total collected: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{fmt(filtered.reduce((s, r) => s + r.paidAmount, 0))}</span></span>
+                <span>Outstanding: <span className="font-semibold text-red-500 dark:text-red-400">{fmt(filtered.reduce((s, r) => s + Math.max(0, r.effectiveAmount - r.paidAmount), 0))}</span></span>
               </div>
             </div>
           )}
@@ -1566,13 +1566,13 @@ function FeeManagementContent() {
       {/* Delete confirmation */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Delete Fee Record</h2>
-            <p className="text-sm text-gray-500">Are you sure you want to delete this fee record? This action cannot be undone.</p>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Delete Fee Record</h2>
+            <p className="text-sm text-gray-500 dark:text-slate-400">Are you sure you want to delete this fee record? This action cannot be undone.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteTarget(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 transition"
               >Cancel</button>
               <button
                 onClick={() => handleDelete(deleteTarget)}
@@ -1596,7 +1596,7 @@ function FeeManagementContent() {
 export default function FeeManagementPage() {
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
-      <div className="flex min-h-screen lg:h-screen bg-gray-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+      <div className="flex min-h-screen lg:h-screen bg-gray-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
         <Sidebar
           title="Admin"
           navItems={adminNav}

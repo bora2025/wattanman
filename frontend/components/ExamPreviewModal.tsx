@@ -51,19 +51,19 @@ export default function ExamPreviewModal({ questions, onClose }: { questions: Ex
 
   return (
     <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl my-4 flex flex-col max-h-[90vh]">
-        <div className="p-5 border-b border-slate-100 flex items-start justify-between gap-3">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl shadow-xl my-4 flex flex-col max-h-[90vh]">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-slate-800">👁 Exam Preview</h2>
-            <p className="text-xs text-amber-600 mt-0.5">Preview mode — nothing here is saved or counted as a real attempt.</p>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">👁 Exam Preview</h2>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Preview mode — nothing here is saved or counted as a real attempt.</p>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none flex-shrink-0">✕</button>
+          <button type="button" onClick={onClose} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xl leading-none flex-shrink-0">✕</button>
         </div>
 
         {pages.length > 1 && (
-          <div className="px-5 pt-3 border-b border-slate-100">
+          <div className="px-5 pt-3 border-b border-slate-100 dark:border-slate-800">
             {currentPage.section && (
-              <p className="text-center text-sm font-bold text-slate-700 mb-1">{currentPage.section}</p>
+              <p className="text-center text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">{currentPage.section}</p>
             )}
             <SectionPager labels={pages.map(p => p.section || 'Questions')} current={page} onChange={setPage} />
           </div>
@@ -71,7 +71,7 @@ export default function ExamPreviewModal({ questions, onClose }: { questions: Ex
 
         <div className="p-5 overflow-y-auto space-y-4 flex-1">
           {questions.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-8">No questions to preview yet.</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-8">No questions to preview yet.</p>
           ) : currentPage.questions.map((q, localI) => {
             const i = currentPage.startIndex + localI
             const isPassage = q.type === 'TEXT'
@@ -87,10 +87,10 @@ export default function ExamPreviewModal({ questions, onClose }: { questions: Ex
             return (
               <div key={i} className={`rounded-xl border p-4 ${cardClass}`}>
                 <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="font-semibold text-slate-800 text-sm">
+                  <div className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
                     <span>{isPassage ? '📖 Reading Passage' : `Q${displayNumbers[i]}.`}</span>
-                    {q.text ? <RichText as="div" html={q.text} /> : <span className="text-slate-400 italic font-normal">(no question text yet)</span>}
-                    {!isPassage && <span className="text-xs font-normal text-slate-400">{TYPE_LABEL[q.type]} · {q.marks} mark{q.marks !== 1 ? 's' : ''}</span>}
+                    {q.text ? <RichText as="div" html={q.text} /> : <span className="text-slate-400 dark:text-slate-500 italic font-normal">(no question text yet)</span>}
+                    {!isPassage && <span className="text-xs font-normal text-slate-400 dark:text-slate-500">{TYPE_LABEL[q.type]} · {q.marks} mark{q.marks !== 1 ? 's' : ''}</span>}
                   </div>
                   {!isPassage && checked && result && (
                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${result.autoGraded ? badgeClass : 'bg-slate-100 text-slate-500'}`}>
@@ -108,15 +108,15 @@ export default function ExamPreviewModal({ questions, onClose }: { questions: Ex
           })}
         </div>
 
-        <div className="p-5 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
-          <div className="text-sm text-slate-600">
+        <div className="p-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 flex-wrap">
+          <div className="text-sm text-slate-600 dark:text-slate-300">
             {checked ? (
               <span>
                 Auto-graded score: <strong>{Math.round(autoTotal * 100) / 100}</strong> / {totalMarks}
-                {hasManual && <span className="text-slate-400"> (some questions need manual grading)</span>}
+                {hasManual && <span className="text-slate-400 dark:text-slate-500"> (some questions need manual grading)</span>}
               </span>
             ) : (
-              <span className="text-slate-400">{totalMarks} mark{totalMarks !== 1 ? 's' : ''} total</span>
+              <span className="text-slate-400 dark:text-slate-500">{totalMarks} mark{totalMarks !== 1 ? 's' : ''} total</span>
             )}
           </div>
           <div className="flex gap-2">

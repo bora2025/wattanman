@@ -323,7 +323,7 @@ export default function ManageEmployees() {
   const presentRoles = Array.from(new Set(users.map(u => u.role)))
 
   return (
-    <div className="flex min-h-screen bg-slate-50 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-800 pt-14 lg:pt-0 pb-[72px] lg:pb-0">
       <Sidebar title="Admin" subtitle="Wattanman" navItems={adminNav} accentColor="indigo" />
 
       <main className="flex-1 lg:ml-0">
@@ -334,7 +334,7 @@ export default function ManageEmployees() {
             <div className="page-header">
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">{t('employees.title')}</h1>
-                <p className="text-sm text-slate-500 mt-1">{filtered.length} {t('employees.employees')} · {departments.length} {t('employees.departments')}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{filtered.length} {t('employees.employees')} · {departments.length} {t('employees.departments')}</p>
               </div>
               <div className="flex gap-2">
                 <Link href="/admin/staff-cards" className="btn-outline flex items-center gap-1">
@@ -380,27 +380,27 @@ export default function ManageEmployees() {
                   {/* Create Form */}
                   {showForm && (
                     <div className="card p-5">
-                      <h3 className="text-sm font-semibold text-slate-700 mb-3">{t('employees.newEmployee')}</h3>
+                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">{t('employees.newEmployee')}</h3>
                       <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         <div>
                           <label className="form-label">Name *</label>
-                          <input value={name} onChange={e => setName(e.target.value)} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Full name" />
+                          <input value={name} onChange={e => setName(e.target.value)} required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" placeholder="Full name" />
                         </div>
                         <div>
                           <label className="form-label">Email *</label>
-                          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="email@company.com" />
+                          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" placeholder="email@company.com" />
                         </div>
                         <div>
                           <label className="form-label">Password *</label>
-                          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="••••••••" />
+                          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" placeholder="••••••••" />
                         </div>
                         <div>
                           <label className="form-label">Phone</label>
-                          <input value={phone} onChange={e => setPhone(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="012 345 678" />
+                          <input value={phone} onChange={e => setPhone(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" placeholder="012 345 678" />
                         </div>
                         <div>
                           <label className="form-label">Position *</label>
-                          <select value={role} onChange={e => { setRole(e.target.value); if (e.target.value !== '__custom__') setCustomRole('') }} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                          <select value={role} onChange={e => { setRole(e.target.value); if (e.target.value !== '__custom__') setCustomRole('') }} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm">
                             {employeeRoles.map(r => (
                               <option key={r} value={r}>{getRoleLabel(r)} ({r})</option>
                             ))}
@@ -411,14 +411,14 @@ export default function ManageEmployees() {
                               value={customRole}
                               onChange={e => setCustomRole(e.target.value)}
                               required
-                              className="w-full mt-1.5 rounded-lg border border-indigo-400 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300"
+                              className="w-full mt-1.5 rounded-lg border border-indigo-400 dark:border-indigo-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300"
                               placeholder="Type new position name..."
                             />
                           )}
                         </div>
                         <div>
                           <label className="form-label">Department</label>
-                          <select value={departmentId} onChange={e => setDepartmentId(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                          <select value={departmentId} onChange={e => setDepartmentId(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm">
                             <option value="">— No Department —</option>
                             {departments.map(d => (
                               <option key={d.id} value={d.id}>{d.name}{d.nameKh ? ` (${d.nameKh})` : ''}</option>
@@ -427,7 +427,7 @@ export default function ManageEmployees() {
                         </div>
                         <div>
                           <label className="form-label">Photo URL</label>
-                          <input type="url" value={photo} onChange={e => setPhoto(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="https://..." />
+                          <input type="url" value={photo} onChange={e => setPhoto(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" placeholder="https://..." />
                         </div>
                         <div className="sm:col-span-2 lg:col-span-3 flex justify-end gap-2">
                           <button type="button" onClick={() => setShowForm(false)} className="btn-outline btn-sm">Cancel</button>
@@ -443,9 +443,9 @@ export default function ManageEmployees() {
                       value={search}
                       onChange={e => setSearch(e.target.value)}
                       placeholder={t('employees.searchPlaceholder')}
-                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm w-64"
+                      className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm w-64"
                     />
-                    <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)} className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm">
                       <option value="ALL">{t('employees.allDepartments')}</option>
                       <option value="NONE">{t('employees.noDepartment')}</option>
                       {departments.map(d => (
@@ -488,31 +488,31 @@ export default function ManageEmployees() {
                                   ) : (
                                     <div className="avatar avatar-sm">{user.name.charAt(0).toUpperCase()}</div>
                                   )}
-                                  <span className="font-medium text-slate-800">{user.name}</span>
+                                  <span className="font-medium text-slate-800 dark:text-slate-100">{user.name}</span>
                                 </div>
                               </td>
-                              <td className="text-slate-500">{user.email}</td>
-                              <td className="text-slate-500">{user.phone || '—'}</td>
+                              <td className="text-slate-500 dark:text-slate-400">{user.email}</td>
+                              <td className="text-slate-500 dark:text-slate-400">{user.phone || '—'}</td>
                               <td><span className="badge-gray">{getRoleLabel(user.role)}</span></td>
                               <td>
                                 {user.department ? (
                                   <span className="badge-blue">{user.department.name}</span>
                                 ) : (
-                                  <span className="text-slate-400 text-xs">—</span>
+                                  <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
                                 )}
                               </td>
                               <td>
                                 <div className="flex gap-1">
                                   <Link href={`/admin/employees/${user.id}/cv`} className="btn-outline btn-sm" title="Curriculum Vitae">📄</Link>
                                   <button onClick={() => openEdit(user)} className="btn-outline btn-sm">✏️</button>
-                                  <button onClick={() => setDeleteId(user.id)} className="btn-outline btn-sm text-red-500 hover:bg-red-50">🗑️</button>
+                                  <button onClick={() => setDeleteId(user.id)} className="btn-outline btn-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40">🗑️</button>
                                 </div>
                               </td>
                             </tr>
                           ))}
                           {filtered.length === 0 && (
                             <tr>
-                              <td colSpan={6} className="text-center text-slate-400 py-8">{t('employees.noEmployeesFound')}</td>
+                              <td colSpan={6} className="text-center text-slate-400 dark:text-slate-500 py-8">{t('employees.noEmployeesFound')}</td>
                             </tr>
                           )}
                         </tbody>
@@ -532,19 +532,19 @@ export default function ManageEmployees() {
                   {/* Create Department Form */}
                   {showDeptForm && (
                     <div className="card p-5">
-                      <h3 className="text-sm font-semibold text-slate-700 mb-3">New Department</h3>
+                      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">New Department</h3>
                       <form onSubmit={handleCreateDept} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                           <label className="form-label">Name (English) *</label>
-                          <input value={deptName} onChange={e => setDeptName(e.target.value)} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="e.g. Human Resources" />
+                          <input value={deptName} onChange={e => setDeptName(e.target.value)} required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" placeholder="e.g. Human Resources" />
                         </div>
                         <div>
                           <label className="form-label">Name (Khmer)</label>
-                          <input value={deptNameKh} onChange={e => setDeptNameKh(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="e.g. ធនធានមនុស្ស" />
+                          <input value={deptNameKh} onChange={e => setDeptNameKh(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" placeholder="e.g. ធនធានមនុស្ស" />
                         </div>
                         <div>
                           <label className="form-label">Description</label>
-                          <input value={deptDescription} onChange={e => setDeptDescription(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Optional description" />
+                          <input value={deptDescription} onChange={e => setDeptDescription(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" placeholder="Optional description" />
                         </div>
                         <div className="sm:col-span-3 flex justify-end gap-2">
                           <button type="button" onClick={() => setShowDeptForm(false)} className="btn-outline btn-sm">Cancel</button>
@@ -558,8 +558,8 @@ export default function ManageEmployees() {
                   {departments.length === 0 ? (
                     <div className="card p-12 text-center">
                       <p className="text-4xl mb-3">🏢</p>
-                      <p className="font-semibold text-slate-600">No departments yet</p>
-                      <p className="text-sm text-slate-400 mt-1">Create your first department to organize employees</p>
+                      <p className="font-semibold text-slate-600 dark:text-slate-300">No departments yet</p>
+                      <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Create your first department to organize employees</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -567,17 +567,17 @@ export default function ManageEmployees() {
                         <div key={dept.id} className="card p-5 hover:shadow-md transition-shadow">
                           <div className="flex items-start justify-between mb-3">
                             <div>
-                              <h3 className="font-semibold text-slate-800">{dept.name}</h3>
-                              {dept.nameKh && <p className="text-sm text-slate-500">{dept.nameKh}</p>}
+                              <h3 className="font-semibold text-slate-800 dark:text-slate-100">{dept.name}</h3>
+                              {dept.nameKh && <p className="text-sm text-slate-500 dark:text-slate-400">{dept.nameKh}</p>}
                             </div>
                             <div className="flex gap-1">
                               <button onClick={() => openEditDept(dept)} className="btn-outline btn-sm">✏️</button>
-                              <button onClick={() => setDeleteDeptId(dept.id)} className="btn-outline btn-sm text-red-500 hover:bg-red-50">🗑️</button>
+                              <button onClick={() => setDeleteDeptId(dept.id)} className="btn-outline btn-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40">🗑️</button>
                             </div>
                           </div>
-                          {dept.description && <p className="text-xs text-slate-400 mb-3">{dept.description}</p>}
+                          {dept.description && <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">{dept.description}</p>}
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
+                            <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-1 rounded-full">
                               👥 {dept._count?.users || 0} employees
                             </span>
                           </div>
@@ -594,24 +594,24 @@ export default function ManageEmployees() {
         {/* Edit Employee Modal */}
         {editingUser && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEditingUser(null)}>
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Edit Employee</h3>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Edit Employee</h3>
               <form onSubmit={handleEditSubmit} className="space-y-3">
                 <div>
                   <label className="form-label">Name</label>
-                  <input value={editName} onChange={e => setEditName(e.target.value)} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  <input value={editName} onChange={e => setEditName(e.target.value)} required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" />
                 </div>
                 <div>
                   <label className="form-label">Email</label>
-                  <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" />
                 </div>
                 <div>
                   <label className="form-label">Phone</label>
-                  <input value={editPhone} onChange={e => setEditPhone(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  <input value={editPhone} onChange={e => setEditPhone(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" />
                 </div>
                 <div>
                   <label className="form-label">Position</label>
-                  <select value={editRole} onChange={e => { setEditRole(e.target.value); if (e.target.value !== '__custom__') setEditCustomRole('') }} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                  <select value={editRole} onChange={e => { setEditRole(e.target.value); if (e.target.value !== '__custom__') setEditCustomRole('') }} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm">
                     {employeeRoles.map(r => (
                       <option key={r} value={r}>{getRoleLabel(r)} ({r})</option>
                     ))}
@@ -622,14 +622,14 @@ export default function ManageEmployees() {
                       value={editCustomRole}
                       onChange={e => setEditCustomRole(e.target.value)}
                       required
-                      className="w-full mt-1.5 rounded-lg border border-indigo-400 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300"
+                      className="w-full mt-1.5 rounded-lg border border-indigo-400 dark:border-indigo-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300"
                       placeholder="Type new position name..."
                     />
                   )}
                 </div>
                 <div>
                   <label className="form-label">Department</label>
-                  <select value={editDepartmentId} onChange={e => setEditDepartmentId(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                  <select value={editDepartmentId} onChange={e => setEditDepartmentId(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm">
                     <option value="">— No Department —</option>
                     {departments.map(d => (
                       <option key={d.id} value={d.id}>{d.name}{d.nameKh ? ` (${d.nameKh})` : ''}</option>
@@ -638,7 +638,7 @@ export default function ManageEmployees() {
                 </div>
                 <div>
                   <label className="form-label">Photo URL</label>
-                  <input type="url" value={editPhoto} onChange={e => setEditPhoto(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  <input type="url" value={editPhoto} onChange={e => setEditPhoto(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" />
                 </div>
                 <div className="flex justify-end gap-2 mt-4">
                   <button type="button" onClick={() => setEditingUser(null)} className="btn-outline btn-sm">Cancel</button>
@@ -652,20 +652,20 @@ export default function ManageEmployees() {
         {/* Edit Department Modal */}
         {editingDept && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEditingDept(null)}>
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Edit Department</h3>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Edit Department</h3>
               <form onSubmit={handleEditDeptSubmit} className="space-y-3">
                 <div>
                   <label className="form-label">Name (English) *</label>
-                  <input value={editDeptName} onChange={e => setEditDeptName(e.target.value)} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  <input value={editDeptName} onChange={e => setEditDeptName(e.target.value)} required className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" />
                 </div>
                 <div>
                   <label className="form-label">Name (Khmer)</label>
-                  <input value={editDeptNameKh} onChange={e => setEditDeptNameKh(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  <input value={editDeptNameKh} onChange={e => setEditDeptNameKh(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" />
                 </div>
                 <div>
                   <label className="form-label">Description</label>
-                  <input value={editDeptDescription} onChange={e => setEditDeptDescription(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  <input value={editDeptDescription} onChange={e => setEditDeptDescription(e.target.value)} className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm" />
                 </div>
                 <div className="flex justify-end gap-2 mt-4">
                   <button type="button" onClick={() => setEditingDept(null)} className="btn-outline btn-sm">Cancel</button>
@@ -679,10 +679,10 @@ export default function ManageEmployees() {
         {/* Delete Employee Confirmation */}
         {deleteId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setDeleteId(null)}>
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 text-center" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 text-center" onClick={e => e.stopPropagation()}>
               <div className="text-4xl mb-3">⚠️</div>
-              <h3 className="text-lg font-bold text-slate-800 mb-2">Delete Employee?</h3>
-              <p className="text-sm text-slate-500 mb-4">This will permanently remove this employee and all their attendance records.</p>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Delete Employee?</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">This will permanently remove this employee and all their attendance records.</p>
               <div className="flex justify-center gap-3">
                 <button onClick={() => setDeleteId(null)} className="btn-outline">Cancel</button>
                 <button onClick={handleDelete} className="btn-danger">Delete</button>
@@ -694,10 +694,10 @@ export default function ManageEmployees() {
         {/* Delete Department Confirmation */}
         {deleteDeptId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setDeleteDeptId(null)}>
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 text-center" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 text-center" onClick={e => e.stopPropagation()}>
               <div className="text-4xl mb-3">⚠️</div>
-              <h3 className="text-lg font-bold text-slate-800 mb-2">Delete Department?</h3>
-              <p className="text-sm text-slate-500 mb-4">Employees in this department will be unassigned. This cannot be undone.</p>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Delete Department?</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Employees in this department will be unassigned. This cannot be undone.</p>
               <div className="flex justify-center gap-3">
                 <button onClick={() => setDeleteDeptId(null)} className="btn-outline">Cancel</button>
                 <button onClick={handleDeleteDept} className="btn-danger">Delete</button>

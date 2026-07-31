@@ -16,11 +16,11 @@ export default function ConfirmModal({
 }) {
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) onCancel() }}>
-      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-        <h2 className="text-lg font-bold text-gray-900 mb-2">{title}</h2>
-        <p className="text-sm text-gray-600 mb-5">{message}</p>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-2">{title}</h2>
+        <p className="text-sm text-gray-600 dark:text-slate-300 mb-5">{message}</p>
         <div className="flex gap-2 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50">
+          <button onClick={onCancel} className="px-4 py-2 text-sm font-medium border border-gray-200 dark:border-slate-700 rounded-xl text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800">
             {cancelLabel}
           </button>
           <button

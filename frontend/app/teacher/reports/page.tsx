@@ -231,19 +231,19 @@ export default function TeacherReports() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">{t('reports.title')}</h1>
-          <p className="text-sm text-slate-500 mt-1">{t('reports.cambodiaTime')}</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('reports.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('reports.cambodiaTime')}</p>
         </div>
         <div className="page-body space-y-6">
           {/* Controls */}
           <div className="card p-3 sm:p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1.5">{t('common.class')}</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">{t('common.class')}</label>
                 <select
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white dark:bg-slate-900"
                 >
                   {classes.map(cls => (
                     <option key={cls.id} value={cls.id}>{cls.name} — {cls.subject || 'N/A'}</option>
@@ -251,20 +251,20 @@ export default function TeacherReports() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1.5">{t('common.date')}</label>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">{t('common.date')}</label>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => goDay(-1)} className="px-3 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 active:bg-slate-100 text-sm transition-colors">◀</button>
+                  <button onClick={() => goDay(-1)} className="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 text-sm transition-colors">◀</button>
                   <input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="flex-1 rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
+                    className="flex-1 rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white dark:bg-slate-900"
                   />
-                  <button onClick={() => goDay(1)} className="px-3 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 active:bg-slate-100 text-sm transition-colors">▶</button>
+                  <button onClick={() => goDay(1)} className="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 text-sm transition-colors">▶</button>
                 </div>
               </div>
               <div className="flex items-end">
-                <button onClick={() => setSelectedDate(todayCambodia())} className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 active:bg-slate-100 text-sm font-medium transition-colors">
+                <button onClick={() => setSelectedDate(todayCambodia())} className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 text-sm font-medium transition-colors">
                   📅 {t('common.today')}
                 </button>
               </div>
@@ -274,21 +274,21 @@ export default function TeacherReports() {
                 </button>
               </div>
             </div>
-            <p className="mt-2 text-sm font-medium text-slate-700">{dayLabel} — {selectedClassName}</p>
+            <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-200">{dayLabel} — {selectedClassName}</p>
           </div>
 
           {isHolidayDate && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2">
               <span className="text-lg">📅</span>
               <span dangerouslySetInnerHTML={{ __html: t('reports.holidayNotice') }} />
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">{error}</div>
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 rounded-xl px-4 py-3 text-sm font-medium">{error}</div>
           )}
 
-          <div className="flex overflow-x-auto border-b border-slate-200 -mx-1 px-1 scrollbar-hide">
+          <div className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-700 -mx-1 px-1 scrollbar-hide">
             <button
               onClick={() => setActiveTab('daily')}
               className={`flex-1 min-w-0 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
@@ -311,7 +311,7 @@ export default function TeacherReports() {
             <div className="card p-12">
               <div className="empty-state">
                 <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <p className="text-sm text-slate-500 mt-3">Loading…</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
               </div>
             </div>
           ) : activeTab === 'daily' ? (
@@ -319,25 +319,25 @@ export default function TeacherReports() {
               {/* Day stats */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div className="stat-card"><p className="stat-label">{t('reports.totalStudents')}</p><p className="stat-value">{totalStudents}</p></div>
-                <div className="stat-card"><p className="stat-label">{t('common.present')}</p><p className="stat-value text-emerald-600">{dailyPresent}</p></div>
-                <div className="stat-card"><p className="stat-label">{t('common.late')}</p><p className="stat-value text-amber-600">{dailyLate}</p></div>
-                <div className="stat-card"><p className="stat-label">{t('reports.absentDayOff')}</p><p className="stat-value text-red-600">{dailyAbsent}</p></div>
+                <div className="stat-card"><p className="stat-label">{t('common.present')}</p><p className="stat-value text-emerald-600 dark:text-emerald-400">{dailyPresent}</p></div>
+                <div className="stat-card"><p className="stat-label">{t('common.late')}</p><p className="stat-value text-amber-600 dark:text-amber-400">{dailyLate}</p></div>
+                <div className="stat-card"><p className="stat-label">{t('reports.absentDayOff')}</p><p className="stat-value text-red-600 dark:text-red-400">{dailyAbsent}</p></div>
               </div>
 
               {grid.length === 0 ? (
                 <div className="card p-12">
                   <div className="empty-state">
                     <p className="text-4xl mb-3">📊</p>
-                    <p className="font-semibold text-slate-600">{t('reports.noAttendanceData')}</p>
-                    <p className="text-sm text-slate-400 mt-1">{t('reports.noRecordsDay')}</p>
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">{t('reports.noAttendanceData')}</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('reports.noRecordsDay')}</p>
                   </div>
                 </div>
               ) : (
                 <div className="card overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs sm:text-sm">
-                      <thead className="bg-slate-50">
-                        <tr className="text-left text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide">
+                      <thead className="bg-slate-50 dark:bg-slate-800">
+                        <tr className="text-left text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold hidden sm:table-cell">{t('common.day')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.id')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.studentName')}</th>
@@ -346,7 +346,7 @@ export default function TeacherReports() {
                             return (
                               <th key={sd.session} className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center">
                                 <div className="text-[10px] sm:text-xs">{cfg?.type === 'CHECK_OUT' ? t('common.checkOut') : t('common.checkIn')}</div>
-                                <div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 hidden sm:block">{getSessionLabel(sd.session)}</div>
+                                <div className="text-[9px] sm:text-[10px] normal-case font-normal text-slate-400 dark:text-slate-500 hidden sm:block">{getSessionLabel(sd.session)}</div>
                               </th>
                             )
                           })}
@@ -356,11 +356,11 @@ export default function TeacherReports() {
                       <tbody>
                         {grid.map((row, i) => (
                           <tr key={row.studentId} className={`border-t border-slate-100 ${row.dayOff ? 'bg-red-50/40' : 'hover:bg-slate-50'}`}>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-500 text-[10px] sm:text-xs hidden sm:table-cell">
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs hidden sm:table-cell">
                               {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
                             </td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 font-mono text-[10px] sm:text-xs">{row.studentNumber}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 font-medium text-xs sm:text-sm">{row.studentName}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 dark:text-slate-300 font-mono text-[10px] sm:text-xs">{row.studentNumber}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 dark:text-slate-100 font-medium text-xs sm:text-sm">{row.studentName}</td>
                             {activeSessions.map(sd => (
                               <SessionCell key={sd.session} time={(row as any)[sd.field]} status={(row as any)[sd.statusField]} />
                             ))}
@@ -368,9 +368,9 @@ export default function TeacherReports() {
                               {(() => {
                                 const label = getRowPermissionLabel(row)
                                 return label ? (
-                                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">📋 {label}</span>
+                                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300">📋 {label}</span>
                                 ) : (
-                                  <span className="text-[10px] sm:text-xs text-slate-400">—</span>
+                                  <span className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">—</span>
                                 )
                               })()}
                             </td>
@@ -389,16 +389,16 @@ export default function TeacherReports() {
                 <div className="card p-12">
                   <div className="empty-state">
                     <p className="text-4xl mb-3">📊</p>
-                    <p className="font-semibold text-slate-600">{t('common.noData')}</p>
-                    <p className="text-sm text-slate-400 mt-1">{t('reports.selectClassTotals')}</p>
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">{t('common.noData')}</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('reports.selectClassTotals')}</p>
                   </div>
                 </div>
               ) : (
                 <div className="card overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs sm:text-sm">
-                      <thead className="bg-slate-50">
-                        <tr className="text-left text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide">
+                      <thead className="bg-slate-50 dark:bg-slate-800">
+                        <tr className="text-left text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.id')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold">{t('common.studentName')}</th>
                           <th className="px-2 sm:px-3 py-2.5 sm:py-3 font-semibold text-center" colSpan={4}>
@@ -411,57 +411,57 @@ export default function TeacherReports() {
                             <div>{t('common.year')}</div>
                           </th>
                         </tr>
-                        <tr className="text-[9px] sm:text-[10px] text-slate-400 border-b border-slate-200">
+                        <tr className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-slate-700">
                           <th className="px-2 sm:px-3 pb-2"></th>
                           <th className="px-2 sm:px-3 pb-2"></th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-emerald-600 font-medium">{t('common.present')}</th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-amber-500 font-medium">{t('common.late')}</th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-red-500 font-medium">{t('common.absent')}</th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-purple-500 font-medium">{t('common.dayOff')}</th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-emerald-600 font-medium">{t('common.present')}</th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-amber-500 font-medium">{t('common.late')}</th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-red-500 font-medium">{t('common.absent')}</th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-purple-500 font-medium">{t('common.dayOff')}</th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-emerald-600 font-medium">{t('common.present')}</th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-amber-500 font-medium">{t('common.late')}</th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-red-500 font-medium">{t('common.absent')}</th>
-                          <th className="px-2 sm:px-3 pb-2 text-center text-purple-500 font-medium">{t('common.dayOff')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-emerald-600 dark:text-emerald-400 font-medium">{t('common.present')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-amber-500 dark:text-amber-400 font-medium">{t('common.late')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-red-500 dark:text-red-400 font-medium">{t('common.absent')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-purple-500 dark:text-purple-400 font-medium">{t('common.dayOff')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-emerald-600 dark:text-emerald-400 font-medium">{t('common.present')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-amber-500 dark:text-amber-400 font-medium">{t('common.late')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-red-500 dark:text-red-400 font-medium">{t('common.absent')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-purple-500 dark:text-purple-400 font-medium">{t('common.dayOff')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-emerald-600 dark:text-emerald-400 font-medium">{t('common.present')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-amber-500 dark:text-amber-400 font-medium">{t('common.late')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-red-500 dark:text-red-400 font-medium">{t('common.absent')}</th>
+                          <th className="px-2 sm:px-3 pb-2 text-center text-purple-500 dark:text-purple-400 font-medium">{t('common.dayOff')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {totals.map(row => (
-                          <tr key={row.studentId} className="border-t border-slate-100 hover:bg-slate-50">
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 font-mono text-[10px] sm:text-xs">{row.studentNumber}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 font-medium text-xs sm:text-sm">{row.studentName}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 font-semibold">{row.week.present}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 font-semibold">{row.week.late || 0}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 font-semibold">{row.week.absent}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 font-semibold">{row.week.dayOff || 0}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 font-semibold">{row.month.present}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 font-semibold">{row.month.late || 0}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 font-semibold">{row.month.absent}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 font-semibold">{row.month.dayOff || 0}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 font-semibold">{row.year.present}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 font-semibold">{row.year.late || 0}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 font-semibold">{row.year.absent}</td>
-                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 font-semibold">{row.year.dayOff || 0}</td>
+                          <tr key={row.studentId} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-600 dark:text-slate-300 font-mono text-[10px] sm:text-xs">{row.studentNumber}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-slate-800 dark:text-slate-100 font-medium text-xs sm:text-sm">{row.studentName}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 dark:text-emerald-300 font-semibold">{row.week.present}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 dark:text-amber-400 font-semibold">{row.week.late || 0}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 dark:text-red-400 font-semibold">{row.week.absent}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 dark:text-purple-400 font-semibold">{row.week.dayOff || 0}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 dark:text-emerald-300 font-semibold">{row.month.present}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 dark:text-amber-400 font-semibold">{row.month.late || 0}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 dark:text-red-400 font-semibold">{row.month.absent}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 dark:text-purple-400 font-semibold">{row.month.dayOff || 0}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 dark:text-emerald-300 font-semibold">{row.year.present}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 dark:text-amber-400 font-semibold">{row.year.late || 0}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 dark:text-red-400 font-semibold">{row.year.absent}</td>
+                            <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 dark:text-purple-400 font-semibold">{row.year.dayOff || 0}</td>
                           </tr>
                         ))}
                         {/* Totals footer */}
-                        <tr className="border-t-2 border-slate-300 bg-slate-50 font-bold text-slate-700">
+                        <tr className="border-t-2 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">
                           <td className="px-2 sm:px-3 py-2 sm:py-2.5" colSpan={2}>{t('common.total')}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700">{totals.reduce((s, r) => s + r.week.present, 0)}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600">{totals.reduce((s, r) => s + (r.week.late || 0), 0)}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600">{totals.reduce((s, r) => s + r.week.absent, 0)}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600">{totals.reduce((s, r) => s + (r.week.dayOff || 0), 0)}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700">{totals.reduce((s, r) => s + r.month.present, 0)}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600">{totals.reduce((s, r) => s + (r.month.late || 0), 0)}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600">{totals.reduce((s, r) => s + r.month.absent, 0)}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600">{totals.reduce((s, r) => s + (r.month.dayOff || 0), 0)}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700">{totals.reduce((s, r) => s + r.year.present, 0)}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600">{totals.reduce((s, r) => s + (r.year.late || 0), 0)}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600">{totals.reduce((s, r) => s + r.year.absent, 0)}</td>
-                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600">{totals.reduce((s, r) => s + (r.year.dayOff || 0), 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 dark:text-emerald-300">{totals.reduce((s, r) => s + r.week.present, 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 dark:text-amber-400">{totals.reduce((s, r) => s + (r.week.late || 0), 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 dark:text-red-400">{totals.reduce((s, r) => s + r.week.absent, 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 dark:text-purple-400">{totals.reduce((s, r) => s + (r.week.dayOff || 0), 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 dark:text-emerald-300">{totals.reduce((s, r) => s + r.month.present, 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 dark:text-amber-400">{totals.reduce((s, r) => s + (r.month.late || 0), 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 dark:text-red-400">{totals.reduce((s, r) => s + r.month.absent, 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 dark:text-purple-400">{totals.reduce((s, r) => s + (r.month.dayOff || 0), 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-emerald-700 dark:text-emerald-300">{totals.reduce((s, r) => s + r.year.present, 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-amber-600 dark:text-amber-400">{totals.reduce((s, r) => s + (r.year.late || 0), 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-red-600 dark:text-red-400">{totals.reduce((s, r) => s + r.year.absent, 0)}</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center text-purple-600 dark:text-purple-400">{totals.reduce((s, r) => s + (r.year.dayOff || 0), 0)}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -481,7 +481,7 @@ function SessionCell({ time, status }: { time: string | null; status: string | n
     return <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center"><span className="text-[10px] sm:text-xs text-red-400">✗</span></td>
   }
   if (status === 'DAY_OFF' || status === 'PERMISSION') {
-    return <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center"><span className="text-[10px] sm:text-xs text-purple-500 font-medium">🏖</span></td>
+    return <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center"><span className="text-[10px] sm:text-xs text-purple-500 dark:text-purple-400 font-medium">🏖</span></td>
   }
   return (
     <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-center">
@@ -491,7 +491,7 @@ function SessionCell({ time, status }: { time: string | null; status: string | n
         {time || '✓'}
       </span>
       {status === 'LATE' && (
-        <div className="text-[9px] sm:text-[10px] text-amber-500 font-medium">Late</div>
+        <div className="text-[9px] sm:text-[10px] text-amber-500 dark:text-amber-400 font-medium">Late</div>
       )}
     </td>
   )

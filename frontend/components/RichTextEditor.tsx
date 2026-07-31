@@ -181,8 +181,8 @@ export default function RichTextEditor({
   const align = (a: string) => editor.isActive({ textAlign: a })
 
   return (
-    <div className="border border-slate-200 rounded-lg bg-white overflow-hidden mb-2">
-      <div className="flex flex-wrap items-center gap-1 border-b border-slate-100 bg-slate-50 px-2 py-1.5">
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 overflow-hidden mb-2">
+      <div className="flex flex-wrap items-center gap-1 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-2 py-1.5">
         <select
           value={currentFontFamily}
           onChange={e => e.target.value ? editor.chain().focus().setFontFamily(e.target.value).run() : editor.chain().focus().unsetFontFamily().run()}
@@ -200,10 +200,10 @@ export default function RichTextEditor({
           <option value="">Size</option>
           {FONT_SIZES.map(s => <option key={s} value={s}>{s.replace('px', '')}</option>)}
         </select>
-        <span className="w-px h-4 bg-slate-200 mx-0.5" />
+        <span className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5" />
         <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={btn(editor.isActive('bold'))} title="Bold"><b>B</b></button>
         <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={btn(editor.isActive('italic'))} title="Italic"><i>I</i></button>
-        <span className="w-px h-4 bg-slate-200 mx-0.5" />
+        <span className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5" />
         <button type="button" onClick={() => editor.chain().focus().setTextAlign('left').run()} className={btn(align('left'))} title="Align left">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h10.5M3.75 17.25h13.5" /></svg>
         </button>
@@ -216,7 +216,7 @@ export default function RichTextEditor({
         <button type="button" onClick={() => editor.chain().focus().setTextAlign('justify').run()} className={btn(align('justify'))} title="Justify">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
         </button>
-        <span className="w-px h-4 bg-slate-200 mx-0.5" />
+        <span className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5" />
         <select
           value={currentLineHeight}
           onChange={e => e.target.value ? editor.chain().focus().setLineHeight(e.target.value).run() : editor.chain().focus().unsetLineHeight().run()}
@@ -226,16 +226,16 @@ export default function RichTextEditor({
           <option value="">Spacing</option>
           {LINE_HEIGHTS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
         </select>
-        <span className="w-px h-4 bg-slate-200 mx-0.5" />
+        <span className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5" />
         <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={btn(editor.isActive('bulletList'))} title="Bullet list">• ―</button>
         <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={btn(editor.isActive('orderedList'))} title="Numbered list">1. ―</button>
-        <span className="w-px h-4 bg-slate-200 mx-0.5" />
+        <span className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5" />
         <button type="button" onClick={setLink} className={btn(editor.isActive('link'))} title="Link">🔗</button>
         <button type="button" onClick={() => imageInputRef.current?.click()} className={btn(false)} title="Upload image">🖼</button>
         <button type="button" onClick={() => audioInputRef.current?.click()} className={btn(false)} title="Upload audio" disabled={uploadingAudio}>{uploadingAudio ? '⏳' : '🔊'}</button>
         <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageFile} className="hidden" />
         <input ref={audioInputRef} type="file" accept="audio/*" onChange={handleAudioFile} className="hidden" />
-        <span className="w-px h-4 bg-slate-200 mx-0.5" />
+        <span className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5" />
         <button
           type="button"
           onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().unsetFontFamily().unsetFontSize().unsetLineHeight().run()}
@@ -244,8 +244,8 @@ export default function RichTextEditor({
         >
           ✕ Format
         </button>
-        {uploadingAudio && <span className="text-xs text-slate-400 ml-1">Checking audio…</span>}
-        {uploadError && <span className="text-xs text-red-600 ml-1">{uploadError}</span>}
+        {uploadingAudio && <span className="text-xs text-slate-400 dark:text-slate-500 ml-1">Checking audio…</span>}
+        {uploadError && <span className="text-xs text-red-600 dark:text-red-400 ml-1">{uploadError}</span>}
       </div>
       <EditorContent editor={editor} className="resize-y overflow-y-auto min-h-[4.5rem] max-h-[32rem]" />
     </div>
