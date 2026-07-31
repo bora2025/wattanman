@@ -127,30 +127,30 @@ function NewSchoolContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <Link href="/platform/schools" className="text-xs text-slate-500 hover:text-slate-700 mb-2 inline-flex items-center gap-1">← Back to Schools</Link>
-          <h1 className="text-2xl font-bold text-slate-800">Onboard a New School</h1>
-          <p className="text-sm text-slate-500 mt-1">Creates the school and its first admin account in one step.</p>
+          <Link href="/platform/schools" className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-2 inline-flex items-center gap-1">← Back to Schools</Link>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Onboard a New School</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Creates the school and its first admin account in one step.</p>
         </div>
 
         <div className="page-body">
           {result ? (
-            <div className="card p-6 max-w-xl border-2 border-emerald-100">
-              <div className="flex items-center gap-2 text-emerald-700 mb-3">
+            <div className="card p-6 max-w-xl border-2 border-emerald-100 dark:border-emerald-900">
+              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 mb-3">
                 <span className="text-2xl">✅</span>
                 <h2 className="text-lg font-semibold">School created</h2>
               </div>
-              <p className="text-sm text-slate-600 mb-4">
+              <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
                 <strong>{result.school.name}</strong> is live at{' '}
-                <code className="bg-slate-50 px-1.5 py-0.5 rounded text-xs">{result.school.subdomain}.wattaman.app</code>.
+                <code className="bg-slate-50 dark:bg-slate-800 px-1.5 py-0.5 rounded text-xs">{result.school.subdomain}.wattaman.app</code>.
               </p>
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
-                <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">Temporary admin credentials — shown once</p>
-                <div className="text-sm text-slate-700"><span className="text-slate-500">Email:</span> {result.admin.email}</div>
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl p-4 space-y-2">
+                <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wide">Temporary admin credentials — shown once</p>
+                <div className="text-sm text-slate-700 dark:text-slate-200"><span className="text-slate-500 dark:text-slate-400">Email:</span> {result.admin.email}</div>
                 <div className="flex items-center gap-2">
-                  <code className="bg-white border border-amber-200 rounded px-2 py-1 text-sm font-mono">{result.temporaryPassword}</code>
+                  <code className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900 rounded px-2 py-1 text-sm font-mono">{result.temporaryPassword}</code>
                   <button onClick={copyPassword} className="btn-outline btn-sm">{copied ? 'Copied!' : 'Copy'}</button>
                 </div>
-                <p className="text-xs text-amber-700">Share this securely with the school's admin — it will not be shown again.</p>
+                <p className="text-xs text-amber-700 dark:text-amber-300">Share this securely with the school's admin — it will not be shown again.</p>
               </div>
               <div className="flex gap-2 mt-5">
                 <Link href={`/platform/schools/${result.school.id}`} className="btn-primary text-sm px-4 py-2 rounded-lg">View School</Link>
@@ -159,15 +159,15 @@ function NewSchoolContent() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="card p-6 max-w-xl space-y-5">
-              {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 text-red-800 border border-red-200">{error}</div>}
+              {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900">{error}</div>}
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">School name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">School name</label>
                 <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Greenhill International School" required className="w-full" />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Subdomain</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Subdomain</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
@@ -177,31 +177,31 @@ function NewSchoolContent() {
                     required
                     className="flex-1"
                   />
-                  <span className="text-sm text-slate-400 whitespace-nowrap">.wattaman.app</span>
+                  <span className="text-sm text-slate-400 dark:text-slate-500 whitespace-nowrap">.wattaman.app</span>
                 </div>
                 <div className="mt-1.5 text-xs">
-                  {checking && <span className="text-slate-400">Checking availability…</span>}
+                  {checking && <span className="text-slate-400 dark:text-slate-500">Checking availability…</span>}
                   {!checking && availability && (
                     availability.available
-                      ? <span className="text-emerald-600 font-medium">✓ Available</span>
-                      : <span className="text-red-600 font-medium">✗ {availability.reason || 'Unavailable'}</span>
+                      ? <span className="text-emerald-600 dark:text-emerald-400 font-medium">✓ Available</span>
+                      : <span className="text-red-600 dark:text-red-400 font-medium">✗ {availability.reason || 'Unavailable'}</span>
                   )}
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 pt-4">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Modules</p>
-                <p className="text-xs text-slate-400 mb-3">Pick what this school actually needs. Nothing is selected by default — unpicked modules stay hidden and their APIs stay locked; more can be enabled later from the school's page.</p>
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Modules</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">Pick what this school actually needs. Nothing is selected by default — unpicked modules stay hidden and their APIs stay locked; more can be enabled later from the school's page.</p>
                 {modules.length === 0 ? (
-                  <p className="text-xs text-slate-400">No modules in the catalog yet.</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">No modules in the catalog yet.</p>
                 ) : (
                   <div className="grid sm:grid-cols-2 gap-2">
                     {modules.map(m => (
-                      <label key={m.key} className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer text-sm ${selectedModules.includes(m.key) ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-slate-200'}`}>
+                      <label key={m.key} className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer text-sm ${selectedModules.includes(m.key) ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
                         <input type="checkbox" checked={selectedModules.includes(m.key)} onChange={() => toggleModule(m.key)} className="mt-0.5" />
                         <span>
-                          <span className="font-medium text-slate-700 flex items-center gap-1">{m.icon && <span>{m.icon}</span>}{m.name}</span>
-                          {m.description && <span className="block text-xs text-slate-400 mt-0.5">{m.description}</span>}
+                          <span className="font-medium text-slate-700 dark:text-slate-200 flex items-center gap-1">{m.icon && <span>{m.icon}</span>}{m.name}</span>
+                          {m.description && <span className="block text-xs text-slate-400 dark:text-slate-500 mt-0.5">{m.description}</span>}
                         </span>
                       </label>
                     ))}
@@ -209,19 +209,19 @@ function NewSchoolContent() {
                 )}
               </div>
 
-              <div className="border-t border-slate-100 pt-4">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">First admin account</p>
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">First admin account</p>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Admin name</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Admin name</label>
                     <input type="text" value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Jane Doe" required className="w-full" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Admin email</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Admin email</label>
                     <input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} placeholder="admin@greenhill.example" required className="w-full" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Admin phone <span className="text-slate-400 font-normal">(optional)</span></label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Admin phone <span className="text-slate-400 dark:text-slate-500 font-normal">(optional)</span></label>
                     <input type="tel" value={adminPhone} onChange={e => setAdminPhone(e.target.value)} placeholder="+855…" className="w-full" />
                   </div>
                 </div>

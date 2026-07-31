@@ -46,18 +46,18 @@ function DashboardContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">Platform Overview</h1>
-          <p className="text-sm text-slate-500 mt-1">Cross-school metrics for the Wattaman platform tier.</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Platform Overview</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Cross-school metrics for the Wattaman platform tier.</p>
         </div>
 
         <div className="page-body space-y-6">
           {error && (
-            <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 text-red-800 border border-red-200">{error}</div>
+            <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900">{error}</div>
           )}
 
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-8 h-8 border-3 border-slate-300 border-t-slate-700 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-3 border-slate-300 dark:border-slate-600 border-t-slate-700 rounded-full animate-spin" />
             </div>
           ) : stats && (
             <>
@@ -77,19 +77,19 @@ function DashboardContent() {
           <div className="grid sm:grid-cols-2 gap-4">
             <Link href="/platform/schools/new" className="card p-5 hover:shadow-lg transition-all group">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🏫</div>
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🏫</div>
                 <div>
-                  <div className="font-semibold text-slate-800">Onboard a new school</div>
-                  <div className="text-xs text-slate-500 mt-0.5">Create a school + its first admin account</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-100">Onboard a new school</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Create a school + its first admin account</div>
                 </div>
               </div>
             </Link>
             <Link href="/platform/schools" className="card p-5 hover:shadow-lg transition-all group">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📋</div>
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📋</div>
                 <div>
-                  <div className="font-semibold text-slate-800">Manage schools</div>
-                  <div className="text-xs text-slate-500 mt-0.5">Suspend, reactivate, impersonate, or delete</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-100">Manage schools</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Suspend, reactivate, impersonate, or delete</div>
                 </div>
               </div>
             </Link>

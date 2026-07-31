@@ -72,38 +72,38 @@ function MfaSetupContent() {
       <div className="page-content">
         <div className="h-14 lg:hidden" />
         <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800">Two-Factor Authentication</h1>
-          <p className="text-sm text-slate-500 mt-1">Required for every Platform Admin account — it can reach every school.</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Two-Factor Authentication</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Required for every Platform Admin account — it can reach every school.</p>
         </div>
 
         <div className="page-body">
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-8 h-8 border-3 border-slate-300 border-t-slate-700 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-3 border-slate-300 dark:border-slate-600 border-t-slate-700 rounded-full animate-spin" />
             </div>
           ) : alreadyEnabled ? (
             <div className="card p-6 max-w-md text-center">
               <div className="text-3xl mb-2">✅</div>
-              <p className="text-sm font-medium text-slate-700">MFA is already enabled on your account.</p>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">MFA is already enabled on your account.</p>
             </div>
           ) : done ? (
-            <div className="card p-6 max-w-md text-center border-2 border-emerald-100">
+            <div className="card p-6 max-w-md text-center border-2 border-emerald-100 dark:border-emerald-900">
               <div className="text-3xl mb-2">✅</div>
-              <p className="text-sm font-medium text-emerald-700">MFA enabled. Redirecting…</p>
+              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">MFA enabled. Redirecting…</p>
             </div>
           ) : (
             <div className="card p-6 max-w-md space-y-4">
-              {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 text-red-800 border border-red-200">{error}</div>}
+              {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900">{error}</div>}
               <div className="text-center">
-                {qrDataUrl && <img src={qrDataUrl} alt="MFA QR code" className="mx-auto rounded-lg border border-slate-200" />}
-                <p className="text-xs text-slate-500 mt-3">Scan with Google Authenticator, Authy, or any TOTP app.</p>
+                {qrDataUrl && <img src={qrDataUrl} alt="MFA QR code" className="mx-auto rounded-lg border border-slate-200 dark:border-slate-700" />}
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">Scan with Google Authenticator, Authy, or any TOTP app.</p>
                 {secret && (
-                  <p className="text-xs text-slate-400 mt-1 font-mono break-all">Manual entry: {secret}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 font-mono break-all">Manual entry: {secret}</p>
                 )}
               </div>
               <form onSubmit={handleVerify} className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Enter the 6-digit code</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Enter the 6-digit code</label>
                   <input
                     type="text"
                     inputMode="numeric"
