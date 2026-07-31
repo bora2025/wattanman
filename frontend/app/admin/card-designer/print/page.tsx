@@ -9,7 +9,7 @@ import Sidebar from '../../../../components/Sidebar';
 import { adminNav } from '../../../../lib/admin-nav';
 import { apiFetch } from '../../../../lib/api';
 import { formatDOB } from '../../../../lib/dateUtils';
-import { useAccentColor } from '../../../../lib/accentColor'
+import { useAccentColor } from '../../../../lib/appearance/accentColor'
 import {
   CardDesign, CardType, CARD_TYPE_FIELDS,
   apiGetActiveDesign,

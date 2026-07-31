@@ -4,7 +4,7 @@ import AuthGuard from '../../../../components/AuthGuard'
 import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
 import { FeeSettingsDashboard } from '../../../../components/FeeSettingsDashboard'
-import { useAccentColor } from '../../../../lib/accentColor'
+import { useAccentColor } from '../../../../lib/appearance/accentColor'
 
 export default function FeeSettingsPage() {
   const { accentColor } = useAccentColor()

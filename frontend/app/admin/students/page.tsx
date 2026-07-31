@@ -7,7 +7,7 @@ import { adminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../lib/i18n';
 import { downloadStudentsCsv } from '../../../lib/exportCsv';
-import { useAccentColor } from '../../../lib/accentColor'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 /* â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 interface StudyYear { id: string; year: number; label: string | null; isCurrent: boolean }

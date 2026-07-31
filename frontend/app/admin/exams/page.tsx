@@ -9,7 +9,7 @@ import StatCard from '../../../components/StatCard'
 import EmptyState from '../../../components/EmptyState'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
-import { useAccentColor } from '../../../lib/accentColor'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface Exam {
   id: string; title: string; description: string | null; status: string

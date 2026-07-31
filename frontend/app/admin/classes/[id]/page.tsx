@@ -8,7 +8,7 @@ import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
 import { formatCambodiaTime } from '../../../../lib/dateUtils'
-import { useAccentColor } from '../../../../lib/accentColor'
+import { useAccentColor } from '../../../../lib/appearance/accentColor'
 
 type Tab = 'assignments' | 'exams' | 'courses'
 const TABS: Tab[] = ['assignments', 'exams', 'courses']

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../lib/i18n';
-import { useTheme } from '../lib/theme';
+import { useTheme } from '../lib/appearance/theme';
 import { iconMap, IconGlobe, IconLogout, IconSun, IconMoon } from './Icons';
 import InstallAppButton from './InstallAppButton';
 

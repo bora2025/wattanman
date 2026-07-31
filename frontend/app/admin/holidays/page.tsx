@@ -6,7 +6,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch, getCurrentUser } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
-import { useAccentColor } from '../../../lib/accentColor'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface Holiday {
   id: string

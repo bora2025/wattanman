@@ -13,7 +13,7 @@ import { renderDesignToCanvas } from '../../../components/card-designer/renderDe
 import CardCanvas from '../../../components/card-designer/CardCanvas';
 import Toolbar from '../../../components/card-designer/Toolbar';
 import { downloadSingleCardPDF, downloadA4CardsPDF } from '../../../components/card-designer/generateCardPDF';
-import { useAccentColor } from '../../../lib/accentColor'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface Student {
   id: string;

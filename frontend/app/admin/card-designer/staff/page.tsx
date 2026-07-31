@@ -5,7 +5,7 @@ import AuthGuard from '../../../../components/AuthGuard';
 import Sidebar from '../../../../components/Sidebar';
 import CardEditor from '../../../../components/card-designer/CardEditor';
 import { adminNav } from '../../../../lib/admin-nav';
-import { useAccentColor } from '../../../../lib/accentColor'
+import { useAccentColor } from '../../../../lib/appearance/accentColor'
 
 export default function StaffCardDesignerPage() {
   const { accentColor } = useAccentColor()

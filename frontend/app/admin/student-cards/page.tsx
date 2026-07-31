@@ -12,7 +12,7 @@ import { formatDOB } from '../../../lib/dateUtils';
 import { CardDesign, STUDENT_TEMPLATE, DESIGN_STORAGE_KEY, loadSavedDesign, apiGetActiveDesign, saveDesign } from '../../../components/card-designer/types';
 import { renderDesignToCanvas } from '../../../components/card-designer/renderDesignToCanvas';
 import { downloadSingleCardPDF, downloadA4CardsPDF } from '../../../components/card-designer/generateCardPDF';
-import { useAccentColor } from '../../../lib/accentColor'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 // Lazy-load the heavy card editor (QRCode + jsPDF + canvas + ~50KB) so the
 // student-cards page itself loads instantly. The editor only mounts when the

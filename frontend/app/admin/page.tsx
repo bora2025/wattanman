@@ -11,7 +11,7 @@ import { adminNav, classAdminNav } from '../../lib/admin-nav'
 import { apiFetch } from '../../lib/api'
 import { useLanguage } from '../../lib/i18n'
 import { todayCambodia } from '../../lib/dateUtils'
-import { useAccentColor } from '../../lib/accentColor'
+import { useAccentColor } from '../../lib/appearance/accentColor'
 
 interface PermissionBreakdown { halfDayMorning: number; halfDayAfternoon: number; fullDay: number; multiDay: number; unknown: number }
 interface GroupSummary {

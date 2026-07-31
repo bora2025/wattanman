@@ -5,7 +5,7 @@ import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch, getCurrentUser } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
-import { useAccentColor } from '../../../lib/accentColor'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 const SESSION_NAMES: Record<number, string> = {
   1: 'Morning 1',

@@ -6,7 +6,7 @@ import Sidebar from '../../../../components/Sidebar'
 import AuthGuard from '../../../../components/AuthGuard'
 import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
-import { useAccentColor } from '../../../../lib/accentColor'
+import { useAccentColor } from '../../../../lib/appearance/accentColor'
 
 interface TimetableListItem { id: string; name: string; academicYear: string }
 interface TClass { id: string; name: string; short: string }

@@ -5,7 +5,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { useLanguage } from '../../../lib/i18n'
-import { useAccentColor } from '../../../lib/accentColor'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 function AdminCameraHubContent() {
   const { accentColor } = useAccentColor()

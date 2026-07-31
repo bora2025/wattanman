@@ -7,7 +7,7 @@ import AuthGuard from '../../../../components/AuthGuard'
 import { adminNav } from '../../../../lib/admin-nav'
 import { apiFetch } from '../../../../lib/api'
 import { Post, TYPE_ICON } from './shared'
-import { useAccentColor } from '../../../../lib/accentColor'
+import { useAccentColor } from '../../../../lib/appearance/accentColor'
 
 /* ─── WordPress-style "All Posts" list table ─────────────── */
 

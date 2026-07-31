@@ -9,7 +9,7 @@ import { adminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { formatDOB } from '../../../lib/dateUtils';
 import { useLanguage } from '../../../lib/i18n';
-import { useAccentColor } from '../../../lib/accentColor'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 import {
   CardDesign,
   BLANK_CERTIFICATE_STUDENT,

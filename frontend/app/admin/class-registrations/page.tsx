@@ -8,7 +8,7 @@ import Sidebar from '../../../components/Sidebar'
 import ConfirmModal from '../../../components/ConfirmModal'
 import { adminNav, classAdminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
-import { useAccentColor } from '../../../lib/accentColor'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface ClassRegistrationItem {
   id: string

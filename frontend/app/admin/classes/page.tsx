@@ -8,7 +8,7 @@ import { adminNav, classAdminNav } from '../../../lib/admin-nav';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../lib/i18n';
 import { downloadStudentsCsv } from '../../../lib/exportCsv';
-import { useAccentColor } from '../../../lib/accentColor'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
 
 interface StudyYear {
   id: string;
