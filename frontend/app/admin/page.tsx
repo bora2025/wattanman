@@ -98,14 +98,21 @@ function DashboardContent() {
   const [agoStr, setAgoStr] = useState('')
   // Phase 9: which modules this school has opted into — drives the Quick
   // Actions grid filter below (Sidebar.tsx fetches this same endpoint
-  // independently for its own nav filtering).
+  // independently for its own nav filtering). Also gates the entire
+  // attendance data layer below (fetches + the socket connection) — this
+  // whole dashboard is built around attendance stats, so a school with
+  // ATTENDANCE disabled has nothing real to compute and shouldn't pay for
+  // querying it, polling it, or holding a live socket open for it.
   const [enabledModules, setEnabledModules] = useState<string[]>([])
+  const [modulesLoaded, setModulesLoaded] = useState(false)
+  const attendanceEnabled = modulesLoaded ? enabledModules.includes('ATTENDANCE') : null
   useEffect(() => {
     let active = true
     apiFetch('/api/school-addons')
       .then(r => (r.ok ? r.json() : null))
       .then(data => { if (active && data) setEnabledModules(data.enabled ?? []) })
       .catch(() => { /* silent — worst case a gated quick action stays hidden until refresh */ })
+      .finally(() => { if (active) setModulesLoaded(true) })
     return () => { active = false }
   }, [])
   // Per-class real-time progress
@@ -144,9 +151,19 @@ function DashboardContent() {
   }, [router])
 
   const currentNav = typeof window !== 'undefined' && localStorage.getItem('role') === 'CLASS_ADMIN' ? classAdminNav : adminNav
-  useEffect(() => { if (selectedDate) fetchDashboard() }, [selectedDate])
-  useEffect(() => { if (selectedDate) fetchClassProgress() }, [selectedDate])
-  useEffect(() => { fetchTrend() }, [trendYear, trendMonth])
+  useEffect(() => {
+    if (!selectedDate || attendanceEnabled === null) return
+    if (attendanceEnabled) fetchDashboard()
+    else setLoading(false) // nothing to compute — don't leave the whole page stuck on the loading gate below
+  }, [selectedDate, attendanceEnabled])
+  useEffect(() => {
+    if (!selectedDate || attendanceEnabled === null) return
+    if (attendanceEnabled) fetchClassProgress()
+    else setClassProgressLoading(false)
+  }, [selectedDate, attendanceEnabled])
+  useEffect(() => {
+    if (attendanceEnabled) fetchTrend()
+  }, [trendYear, trendMonth, attendanceEnabled])
 
   /* Live Cambodia clock for hero */
   useEffect(() => {
@@ -174,7 +191,7 @@ function DashboardContent() {
      The 30s background poll was removed in favor of socket.io push updates below;
      we still re-fetch on tab focus so stale data is replaced immediately. */
   useEffect(() => {
-    if (!selectedDate) return
+    if (!selectedDate || !attendanceEnabled) return
     if (selectedDate !== todayCambodia()) return
     const onVis = () => {
       if (document.visibilityState === 'visible') {
@@ -185,11 +202,15 @@ function DashboardContent() {
     document.addEventListener('visibilitychange', onVis)
     return () => { document.removeEventListener('visibilitychange', onVis) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate])
+  }, [selectedDate, attendanceEnabled])
 
-  /* Push-based real-time updates via socket.io — instant refresh on student scans */
+  /* Push-based real-time updates via socket.io — instant refresh on student scans.
+     Gated on attendanceEnabled: no attendance module means nothing to push
+     updates about, so skip opening the connection entirely rather than
+     holding a live socket (and a server-side dashboard-room join) open for
+     no reason. */
   useEffect(() => {
-    if (!selectedDate) return
+    if (!selectedDate || !attendanceEnabled) return
     if (selectedDate !== todayCambodia()) return
     const base = process.env.NEXT_PUBLIC_API_URL || ''
     let socket: Socket | null = null
@@ -216,7 +237,7 @@ function DashboardContent() {
       try { socket?.emit('leaveDashboard'); socket?.disconnect() } catch {}
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate])
+  }, [selectedDate, attendanceEnabled])
 
   /* Keyboard shortcuts: T=today, R=refresh, /=focus search, ESC=clear drill */
   useEffect(() => {
@@ -593,6 +614,11 @@ function DashboardContent() {
         </div>
 
         <div className={`page-body ${sp}`}>
+          {attendanceEnabled === false && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              The Attendance module is disabled for this school — the stats, live class progress, and monthly trend below have nothing to show. Enable it under Add-ons to start tracking attendance.
+            </div>
+          )}
           {/* ── Quick Actions ── */}
           <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
             {visibleQuickActions.map(a => (

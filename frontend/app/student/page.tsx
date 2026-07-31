@@ -56,14 +56,30 @@ export default function StudentPortal() {
   const [studentName, setStudentName] = useState<string>('');
   const [studentUserId, setStudentUserId] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [attendanceEnabled, setAttendanceEnabled] = useState<boolean | null>(null);
   const { t } = useLanguage();
 
   useEffect(() => {
     getCurrentUser().then(u => { if (u) { setStudentName(u.name || ''); setStudentUserId(u.userId); } });
-    fetchAttendance();
     fetchAssignments();
     fetchExams();
   }, []);
+
+  useEffect(() => {
+    apiFetch('/api/school-addons')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => setAttendanceEnabled((data?.enabled ?? []).includes('ATTENDANCE')))
+      .catch(() => setAttendanceEnabled(false));
+  }, []);
+
+  // Attendance is pure attendance-module data — skip the fetch (and clear the
+  // loading gate below) rather than querying for data that can't exist when
+  // the school doesn't have Attendance enabled.
+  useEffect(() => {
+    if (attendanceEnabled === null) return;
+    if (attendanceEnabled) fetchAttendance();
+    else setLoading(false);
+  }, [attendanceEnabled]);
 
   const fetchAttendance = async () => {
     try {
