@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
+import { IconSun, IconMoon } from '../../../components/Icons'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
+import { useTheme } from '../../../lib/theme'
 
 interface DirectoryAddon {
   addonKey: string
@@ -220,11 +222,57 @@ function AddonDetailModal({ addon, onClose, onChanged }: { addon: DirectoryAddon
   )
 }
 
+function AppearanceTab() {
+  const { theme, setTheme } = useTheme()
+
+  const options: { id: 'light' | 'dark'; label: string; icon: React.ReactNode }[] = [
+    { id: 'light', label: 'Light', icon: <IconSun size={22} /> },
+    { id: 'dark', label: 'Dark', icon: <IconMoon size={22} /> },
+  ]
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <div>
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Dashboard theme</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          This only changes how your own dashboard looks on this device — other staff at your school pick their own,
+          and it's separate from your school's public website branding (under Appearance in the sidebar).
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {options.map(o => (
+          <button
+            key={o.id}
+            onClick={() => setTheme(o.id)}
+            className={`card p-5 flex flex-col items-center gap-2 transition-all ${
+              theme === o.id
+                ? 'border-indigo-400 dark:border-indigo-500 ring-2 ring-indigo-100 dark:ring-indigo-900/40'
+                : 'hover:border-indigo-200 dark:hover:border-slate-600'
+            }`}
+          >
+            <span className="text-slate-700 dark:text-slate-200">{o.icon}</span>
+            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{o.label}</span>
+            {theme === o.id && <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">Active</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+type PageTab = 'addons' | 'appearance'
+
 function AddonsContent() {
   const [addons, setAddons] = useState<DirectoryAddon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [openKey, setOpenKey] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<PageTab>('addons')
+
+  const tabs: { id: PageTab; label: string }[] = [
+    { id: 'addons', label: 'Modules & Add-ons' },
+    { id: 'appearance', label: 'Appearance' },
+  ]
 
   useEffect(() => {
     apiFetch('/api/school-addons/directory')
@@ -252,9 +300,29 @@ function AddonsContent() {
         <div className="page-header">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Modules &amp; Add-ons</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Turn free modules on or off yourself. Paid add-ons need a quick approval — request one and we'll follow up to enable it once billing is sorted. Click any card for details.</p>
+
+          <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl w-fit mt-4">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm'
+                    : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="page-body space-y-6">
+          {activeTab === 'appearance' ? (
+            <AppearanceTab />
+          ) : (
+          <>
           {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900">{error}</div>}
 
           {loading ? (
@@ -287,6 +355,8 @@ function AddonsContent() {
                 )}
               </div>
             </>
+          )}
+          </>
           )}
         </div>
       </div>
