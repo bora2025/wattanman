@@ -614,7 +614,7 @@ model SchoolAddon {
 model AddonDefinition {
   id                String   @id @default(cuid())
   key               String   @unique // stable identifier, e.g. "FACE_RECOGNITION_ATTENDANCE" — set at creation, not editable after
-  kind              String   @default("ADDON") // MODULE | ADDON
+  kind              String   @default("ADDON") // MODULE | ADDON | THEME
   name              String
   description       String? // short blurb, shown in listing cards
   detailDescription String? // long-form write-up for the platform admin's own detail view — separate from `description` so the card summary can stay short
@@ -624,6 +624,10 @@ model AddonDefinition {
   price             Float?
   priceNote         String? // free text, e.g. "/month", "one-time" — billing itself stays manual (Phase 7a), this is just the listed price
   isActive          Boolean  @default(true)
+  // THEME-only preset payload — { mode: 'light'|'dark', accentColor: AccentColor, primaryColor: string }.
+  // Force-nulled server-side for non-THEME kinds, same convention as price/priceNote being
+  // force-nulled for MODULE (see addon-directory.service.ts).
+  themeConfig       Json?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

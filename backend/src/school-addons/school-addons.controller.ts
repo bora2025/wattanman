@@ -56,6 +56,7 @@ export class SchoolAddonsSelfServiceController {
         icon: d.icon,
         price: d.price,
         priceNote: d.priceNote,
+        themeConfig: d.themeConfig,
         enabled: row?.enabled ?? false,
         requested: !!row?.requestedAt && !row?.enabled,
       };
@@ -70,14 +71,17 @@ export class SchoolAddonsSelfServiceController {
     return definition;
   }
 
-  /** Self-toggle a free module on or off — no platform admin involved. */
+  /** Self-toggle a free module (or free THEME) on or off — no platform admin
+   * involved. A priced THEME behaves like a paid ADDON instead — see
+   * requestAddon() below. */
   @Roles('ADMIN')
   @UseGuards(RolesGuard)
   @Patch(':addonKey')
   async toggleModule(@Param('addonKey') addonKey: string, @Body() body: { enabled: boolean }, @CurrentSchool() schoolId: string) {
     const definition = await this.getDefinitionOrThrow(addonKey);
-    if (definition.kind !== 'MODULE') {
-      throw new BadRequestException('Only free modules can be self-toggled — paid add-ons go through the request flow.');
+    const isFreeTheme = definition.kind === 'THEME' && definition.price == null;
+    if (definition.kind !== 'MODULE' && !isFreeTheme) {
+      throw new BadRequestException('Only free modules and free themes can be self-toggled — paid add-ons and paid themes go through the request flow.');
     }
     return this.prisma.schoolAddon.upsert({
       where: { schoolId_addonKey: { schoolId, addonKey } },
@@ -86,14 +90,16 @@ export class SchoolAddonsSelfServiceController {
     });
   }
 
-  /** Ask the platform admin for a paid add-on — doesn't turn it on. */
+  /** Ask the platform admin for a paid add-on (or a priced THEME) — doesn't
+   * turn it on. */
   @Roles('ADMIN')
   @UseGuards(RolesGuard)
   @Post(':addonKey/request')
   async requestAddon(@Param('addonKey') addonKey: string, @Request() req: any, @CurrentSchool() schoolId: string) {
     const definition = await this.getDefinitionOrThrow(addonKey);
-    if (definition.kind !== 'ADDON') {
-      throw new BadRequestException('Free modules are self-service — use PATCH instead of requesting them.');
+    const isPricedTheme = definition.kind === 'THEME' && definition.price != null;
+    if (definition.kind !== 'ADDON' && !isPricedTheme) {
+      throw new BadRequestException('Free modules and free themes are self-service — use PATCH instead of requesting them.');
     }
     const existing = await this.prisma.schoolAddon.findFirst({ where: { addonKey } });
     if (existing?.enabled) {

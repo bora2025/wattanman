@@ -6,7 +6,7 @@ import AuthGuard from '../../../components/AuthGuard'
 import AppearanceTab from '../../../components/appearance/AppearanceTab'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
-import { useAccentColor } from '../../../lib/appearance/accentColor'
+import { useAccentColor, AccentColor } from '../../../lib/appearance/accentColor'
 
 interface DirectoryAddon {
   addonKey: string
@@ -19,6 +19,7 @@ interface DirectoryAddon {
   icon: string | null
   price: number | null
   priceNote: string | null
+  themeConfig: { mode: 'light' | 'dark'; accentColor: AccentColor; primaryColor: string } | null
   enabled: boolean
   requested: boolean
 }
@@ -247,12 +248,13 @@ function AddonsContent() {
       .finally(() => setLoading(false))
   }, [])
 
-  function handleChanged(updated: DirectoryAddon) {
-    setAddons(prev => prev.map(a => a.addonKey === updated.addonKey ? updated : a))
+  function handleChanged(updated: Partial<DirectoryAddon> & { addonKey: string }) {
+    setAddons(prev => prev.map(a => a.addonKey === updated.addonKey ? { ...a, ...updated } : a))
   }
 
   const modules = addons.filter(a => a.kind === 'MODULE')
   const paidAddons = addons.filter(a => a.kind === 'ADDON')
+  const themes = addons.filter(a => a.kind === 'THEME')
   const openAddon = addons.find(a => a.addonKey === openKey) ?? null
 
   return (
@@ -283,7 +285,7 @@ function AddonsContent() {
 
         <div className="page-body space-y-6">
           {activeTab === 'appearance' ? (
-            <AppearanceTab />
+            <AppearanceTab themes={themes} onThemeChanged={handleChanged} />
           ) : (
           <>
           {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900">{error}</div>}

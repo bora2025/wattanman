@@ -2,7 +2,32 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { PrismaService } from '../database/prisma.service';
 
 const KEY_PATTERN = /^[A-Z][A-Z0-9_]*$/;
-const VALID_KINDS = ['MODULE', 'ADDON'];
+const VALID_KINDS = ['MODULE', 'ADDON', 'THEME'];
+// Mirrors frontend/lib/appearance/accentColor.tsx's AccentColor union — kept
+// as a small local duplicate rather than a shared package, matching this
+// codebase's existing convention for small cross-cutting constants.
+const VALID_ACCENT_COLORS = ['indigo', 'emerald', 'sky', 'teal', 'violet', 'rose', 'amber', 'blue', 'fuchsia', 'cyan'];
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+interface ThemeConfigInput {
+  mode?: string;
+  accentColor?: string;
+  primaryColor?: string;
+}
+
+function validateThemeConfig(themeConfig: ThemeConfigInput | null | undefined) {
+  if (!themeConfig) throw new BadRequestException('themeConfig is required for THEME listings');
+  if (themeConfig.mode !== 'light' && themeConfig.mode !== 'dark') {
+    throw new BadRequestException("themeConfig.mode must be 'light' or 'dark'");
+  }
+  if (!themeConfig.accentColor || !VALID_ACCENT_COLORS.includes(themeConfig.accentColor)) {
+    throw new BadRequestException(`themeConfig.accentColor must be one of ${VALID_ACCENT_COLORS.join(', ')}`);
+  }
+  if (!themeConfig.primaryColor || !HEX_COLOR_PATTERN.test(themeConfig.primaryColor)) {
+    throw new BadRequestException('themeConfig.primaryColor must be a hex color, e.g. #4f46e5');
+  }
+  return { mode: themeConfig.mode, accentColor: themeConfig.accentColor, primaryColor: themeConfig.primaryColor };
+}
 
 function slugifyToKey(name: string): string {
   return name
@@ -34,7 +59,7 @@ export class AddonDirectoryService {
     return this.prisma.addonDefinition.findMany({ orderBy: { createdAt: 'asc' } });
   }
 
-  async create(data: { name: string; kind?: string; description?: string; detailDescription?: string; screenshotUrl?: string; category?: string; icon?: string; price?: number; priceNote?: string }) {
+  async create(data: { name: string; kind?: string; description?: string; detailDescription?: string; screenshotUrl?: string; category?: string; icon?: string; price?: number; priceNote?: string; themeConfig?: ThemeConfigInput }) {
     const name = (data.name || '').trim();
     if (!name) throw new BadRequestException('Name is required');
     const kind = data.kind || 'ADDON';
@@ -63,6 +88,9 @@ export class AddonDirectoryService {
         // rather than trusting the client not to send stale form state.
         price: kind === 'MODULE' ? undefined : data.price ?? undefined,
         priceNote: kind === 'MODULE' ? undefined : data.priceNote?.trim() || undefined,
+        // THEME-only preset payload — validated and force-null otherwise,
+        // same reasoning as price/priceNote being MODULE-null above.
+        themeConfig: kind === 'THEME' ? validateThemeConfig(data.themeConfig) : undefined,
       },
     });
   }
@@ -82,7 +110,7 @@ export class AddonDirectoryService {
    */
   async update(
     id: string,
-    data: { name?: string; kind?: string; description?: string; detailDescription?: string; screenshotUrl?: string | null; category?: string; icon?: string; price?: number | null; priceNote?: string; isActive?: boolean },
+    data: { name?: string; kind?: string; description?: string; detailDescription?: string; screenshotUrl?: string | null; category?: string; icon?: string; price?: number | null; priceNote?: string; isActive?: boolean; themeConfig?: ThemeConfigInput },
   ) {
     const existing = await this.prisma.addonDefinition.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Add-on not found');
@@ -91,6 +119,17 @@ export class AddonDirectoryService {
       throw new BadRequestException(`kind must be one of ${VALID_KINDS.join(', ')}`);
     }
     const nextKind = data.kind ?? existing.kind;
+
+    // THEME-only preset payload — force-null when switching away from THEME
+    // (same reasoning as price/priceNote below); when staying/becoming
+    // THEME, validate a freshly-sent themeConfig, or leave the existing one
+    // untouched if this call didn't include one (e.g. just editing price).
+    const themeConfig =
+      nextKind !== 'THEME'
+        ? null
+        : data.themeConfig !== undefined
+          ? validateThemeConfig(data.themeConfig)
+          : undefined;
 
     return this.prisma.addonDefinition.update({
       where: { id },
@@ -107,6 +146,7 @@ export class AddonDirectoryService {
         // reasoning as create().
         price: nextKind === 'MODULE' ? null : (data.price === null ? null : data.price),
         priceNote: nextKind === 'MODULE' ? null : (data.priceNote !== undefined ? data.priceNote.trim() || null : undefined),
+        themeConfig,
         isActive: data.isActive,
       },
     });
