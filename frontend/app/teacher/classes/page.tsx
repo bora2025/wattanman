@@ -39,8 +39,17 @@ export default function MyClasses() {
   const [editStudentData, setEditStudentData] = useState({ sex: '', photo: '', phone: '', dateOfBirth: '', address: '' });
   const [editStudentCustomFields, setEditStudentCustomFields] = useState<Record<string, string>>({});
   const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([]);
+  const [enabledModules, setEnabledModules] = useState<string[] | null>(null);
+  const studentPortalEnabled = enabledModules === null || enabledModules.includes('STUDENT_PORTAL');
 
   useEffect(() => { fetchMyClasses(); }, []);
+
+  useEffect(() => {
+    apiFetch('/api/school-addons')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => setEnabledModules(data?.enabled ?? []))
+      .catch(() => setEnabledModules([]));
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -155,6 +164,11 @@ export default function MyClasses() {
                   </button>
                 </div>
                 <div className="p-6">
+                  {!studentPortalEnabled && (
+                    <div className="card p-3 border-amber-200 bg-amber-50/50 text-sm text-amber-700 mb-4">
+                      Student Portal is disabled for this school — you can view the roster, but adding, editing, and removing students is turned off.
+                    </div>
+                  )}
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Available */}
                     <div>
@@ -172,7 +186,7 @@ export default function MyClasses() {
                                 <p className="text-sm font-medium text-slate-800 truncate">{s.name}</p>
                                 <p className="text-xs text-slate-500 truncate">{s.email}</p>
                               </div>
-                              <button onClick={() => handleAddStudent(s.id)} className="btn-primary btn-sm">Add</button>
+                              <button onClick={() => handleAddStudent(s.id)} disabled={!studentPortalEnabled} className="btn-primary btn-sm disabled:opacity-50 disabled:pointer-events-none">Add</button>
                             </div>
                           ))
                         )}
@@ -201,8 +215,8 @@ export default function MyClasses() {
                                   </div>
                                 </div>
                                 <div className="flex gap-1">
-                                  <button onClick={() => handleEditStudent(s)} className="btn-warning btn-sm">Edit</button>
-                                  <button onClick={() => handleRemoveStudent(s.id)} className="btn-danger btn-sm">Remove</button>
+                                  <button onClick={() => handleEditStudent(s)} disabled={!studentPortalEnabled} className="btn-warning btn-sm disabled:opacity-50 disabled:pointer-events-none">Edit</button>
+                                  <button onClick={() => handleRemoveStudent(s.id)} disabled={!studentPortalEnabled} className="btn-danger btn-sm disabled:opacity-50 disabled:pointer-events-none">Remove</button>
                                 </div>
                               </div>
                               {editingStudent === s.id && (
@@ -244,7 +258,7 @@ export default function MyClasses() {
                                     ))}
                                   </div>
                                   <div className="flex gap-2">
-                                    <button onClick={() => handleSaveStudent(s.id)} className="btn-success btn-sm">Save</button>
+                                    <button onClick={() => handleSaveStudent(s.id)} disabled={!studentPortalEnabled} className="btn-success btn-sm disabled:opacity-50 disabled:pointer-events-none">Save</button>
                                     <button onClick={() => setEditingStudent(null)} className="btn-ghost btn-sm">Cancel</button>
                                   </div>
                                 </div>

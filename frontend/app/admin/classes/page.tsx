@@ -272,6 +272,17 @@ function ManageClasses() {
   const [addToTTSaving, setAddToTTSaving] = useState(false);
   const [addToTTExisting, setAddToTTExisting] = useState<TTClass[]>([]);
 
+  // Roster mutations (add/register/CSV-import/remove/edit student) require
+  // the Student Portal module — the class list/roster view itself doesn't.
+  const [enabledModules, setEnabledModules] = useState<string[] | null>(null);
+  const studentPortalEnabled = enabledModules === null || enabledModules.includes('STUDENT_PORTAL');
+  useEffect(() => {
+    apiFetch('/api/school-addons')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => setEnabledModules(data?.enabled ?? []))
+      .catch(() => setEnabledModules([]));
+  }, []);
+
   useEffect(() => { fetchStudyYears(); fetchTeachers(); fetchClassAdmins(); fetchTimetableList(); }, []);
 
   useEffect(() => {
@@ -1220,15 +1231,20 @@ function ManageClasses() {
                 </div>
 
                 <div className="p-6 space-y-6">
+                  {!studentPortalEnabled && (
+                    <div className="card p-3 border-amber-200 bg-amber-50/50 text-sm text-amber-700">
+                      Student Portal is disabled for this school — you can view the roster, but adding, editing, and removing students is turned off. Enable it under Add-ons to manage students.
+                    </div>
+                  )}
                   {/* Add New Student */}
                   <div>
                     <div className="flex flex-wrap gap-2">
-                      <button onClick={() => setShowAddStudentForm(!showAddStudentForm)} className={showAddStudentForm ? 'btn-ghost' : 'btn-success btn-sm'}>
+                      <button onClick={() => setShowAddStudentForm(!showAddStudentForm)} disabled={!studentPortalEnabled} className={`${showAddStudentForm ? 'btn-ghost' : 'btn-success btn-sm'} disabled:opacity-50 disabled:pointer-events-none`}>
                         {showAddStudentForm ? 'Cancel' : '+ Register New Student'}
                       </button>
-                      <label className={`btn-primary btn-sm cursor-pointer inline-flex items-center gap-1 ${csvUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <label className={`btn-primary btn-sm cursor-pointer inline-flex items-center gap-1 ${(csvUploading || !studentPortalEnabled) ? 'opacity-50 pointer-events-none' : ''}`}>
                         📄 {csvUploading ? 'Uploading...' : 'Bulk Upload CSV'}
-                        <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" disabled={csvUploading} />
+                        <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" disabled={csvUploading || !studentPortalEnabled} />
                       </label>
                       <button
                         type="button"
@@ -1332,7 +1348,7 @@ function ManageClasses() {
                           <input type="number" min="1" value={newStudentForm.generation} onChange={(e) => setNewStudentForm({ ...newStudentForm, generation: e.target.value })} placeholder="1" />
                         </div>
                         <p className="text-xs text-slate-400">If password is left blank, it will be auto-generated as: <span className="font-mono">student + email prefix</span> (e.g. <span className="font-mono">studentjohn</span>). Student ID auto-generates from class roster order if blank.</p>
-                        <button type="submit" className="btn-success">Add Student</button>
+                        <button type="submit" disabled={!studentPortalEnabled} className="btn-success disabled:opacity-50 disabled:pointer-events-none">Add Student</button>
                       </form>
                     )}
                   </div>
@@ -1355,7 +1371,7 @@ function ManageClasses() {
                                   <p className="text-sm font-medium text-slate-800 truncate">{s.name}</p>
                                   <p className="text-xs text-slate-500 truncate">{s.email}</p>
                                 </div>
-                                <button onClick={() => handleAddStudent(s.id)} className="btn-primary btn-sm">Add</button>
+                                <button onClick={() => handleAddStudent(s.id)} disabled={!studentPortalEnabled} className="btn-primary btn-sm disabled:opacity-50 disabled:pointer-events-none">Add</button>
                               </div>
                             ))}
                           </div>
@@ -1408,8 +1424,8 @@ function ManageClasses() {
                                     <td className="px-3 py-2 text-slate-500 text-xs truncate max-w-[140px]">{s.address || <span className="text-slate-300">—</span>}</td>
                                     <td className="px-3 py-2 text-right">
                                       <div className="flex justify-end gap-1">
-                                        <button onClick={() => handleEditStudent(s)} className="btn-warning btn-sm">Edit</button>
-                                        <button onClick={() => handleRemoveStudent(s.id, s.name)} className="btn-danger btn-sm">Delete</button>
+                                        <button onClick={() => handleEditStudent(s)} disabled={!studentPortalEnabled} className="btn-warning btn-sm disabled:opacity-50 disabled:pointer-events-none">Edit</button>
+                                        <button onClick={() => handleRemoveStudent(s.id, s.name)} disabled={!studentPortalEnabled} className="btn-danger btn-sm disabled:opacity-50 disabled:pointer-events-none">Delete</button>
                                       </div>
                                     </td>
                                   </tr>
