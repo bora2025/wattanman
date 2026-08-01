@@ -84,15 +84,15 @@ export default function ClassroomsPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
             <div>
-              <button onClick={() => router.push('/admin/timetable')} className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline mb-1">← Back to Timetable</button>
+              <button onClick={() => router.push('/admin/timetable')} className="text-brand-600 dark:text-brand-400 text-sm hover:underline mb-1">← Back to Timetable</button>
               <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Classrooms</h1>
               <p className="text-sm text-gray-500 dark:text-slate-400">Manage classrooms for your timetable</p>
             </div>
-            <button onClick={() => openModal()} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700">+ New Classroom</button>
+            <button onClick={() => openModal()} className="px-4 py-2 bg-brand-600 text-white rounded-lg font-medium text-sm hover:bg-brand-700">+ New Classroom</button>
           </div>
           <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-2 flex items-center gap-3">
             <label className="text-sm text-gray-600 dark:text-slate-300 font-medium">Timetable:</label>
-            <select className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            <select className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               value={selectedTT} onChange={e => setSelectedTT(e.target.value)}>
               {timetables.map(tt => <option key={tt.id} value={tt.id}>{tt.name} · {tt.academicYear}</option>)}
             </select>
@@ -148,12 +148,12 @@ export default function ClassroomsPage() {
             <div className="px-5 py-4 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Classroom Name</label>
-                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fName} onChange={e => setFName(e.target.value)} placeholder="e.g. Room 101" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Short Name</label>
-                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fShort} onChange={e => setFShort(e.target.value)} maxLength={8} placeholder="e.g. R101" />
               </div>
               <div>
@@ -171,7 +171,7 @@ export default function ClassroomsPage() {
             <div className="px-5 py-3 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-2">
               <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium">Cancel</button>
               <button onClick={handleSave} disabled={saving || !fName || !fShort}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
+                className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-40">
                 {saving ? 'Saving…' : 'OK'}
               </button>
             </div>

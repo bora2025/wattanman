@@ -127,9 +127,9 @@ function ClassDetailContent() {
         <div className="h-14 lg:hidden" />
         <div className="page-header">
           <nav className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mb-2" aria-label="Breadcrumb">
-            <Link href="/admin" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline">🏠 Dashboard</Link>
+            <Link href="/admin" className="hover:text-brand-600 dark:hover:text-brand-400 hover:underline">🏠 Dashboard</Link>
             <span className="text-slate-300">/</span>
-            <Link href="/admin/classes" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline">Classes</Link>
+            <Link href="/admin/classes" className="hover:text-brand-600 dark:hover:text-brand-400 hover:underline">Classes</Link>
             <span className="text-slate-300">/</span>
             <span className="text-slate-700 dark:text-slate-200 font-medium truncate max-w-[200px]">{cls?.name ?? '…'}</span>
           </nav>
@@ -165,7 +165,7 @@ function ClassDetailContent() {
               <button key={id} onClick={() => setTab(id)}
                 className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
                   tab === id
-                    ? 'border-indigo-600 text-indigo-700'
+                    ? 'border-brand-600 text-brand-700'
                     : 'border-transparent text-slate-500 hover:text-slate-700'
                 }`}>
                 {label}
@@ -296,13 +296,13 @@ function AssignmentsPanel({ classId }: { classId: string }) {
       </div>
 
       {creating && (
-        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-indigo-50/30 border-indigo-200 dark:border-indigo-900">
+        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-brand-50/30 border-brand-200 dark:border-brand-900">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">New assignment</h3>
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Title *</label>
               <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Type</label>
@@ -421,7 +421,7 @@ function AssignmentsPanel({ classId }: { classId: string }) {
                         className="text-xs text-violet-600 dark:text-violet-400 hover:underline mr-3">Quiz Questions ↗</Link>
                     )}
                     <Link href={`/teacher/assignments/${r.id}`} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mr-3">Grade ↗</Link>
+                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline mr-3">Grade ↗</Link>
                     <button onClick={() => handleDelete(r)} className="text-xs text-red-600 dark:text-red-400 hover:underline">Delete</button>
                   </td>
                 </tr>
@@ -531,7 +531,7 @@ function ExamsPanel({ classId }: { classId: string }) {
                     <Link href={`/teacher/exams/${r.id}/edit?returnTo=${returnTo}`}
                       className="text-xs text-emerald-700 dark:text-emerald-300 hover:underline mr-3">Edit</Link>
                     <Link href={`/teacher/exams/${r.id}/attempts`} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mr-3">Grade ↗</Link>
+                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline mr-3">Grade ↗</Link>
                     <button onClick={() => handleDelete(r)} className="text-xs text-red-600 dark:text-red-400 hover:underline">Delete</button>
                   </td>
                 </tr>
@@ -646,7 +646,7 @@ function CoursesPanel({ classId }: { classId: string }) {
       </div>
 
       {creating && (
-        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-indigo-50/30 border-indigo-200 dark:border-indigo-900">
+        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-brand-50/30 border-brand-200 dark:border-brand-900">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">New course</h3>
           <div>
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Title *</label>
@@ -727,7 +727,7 @@ function CoursesPanel({ classId }: { classId: string }) {
                   <td className="px-4 py-2 text-right whitespace-nowrap">
                     <button onClick={() => openEdit(r)} className="text-xs text-emerald-700 dark:text-emerald-300 hover:underline mr-3">Edit</button>
                     <Link href={`/teacher/courses/${r.id}`} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mr-3">Lessons ↗</Link>
+                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline mr-3">Lessons ↗</Link>
                     <button onClick={() => handleDelete(r)} className="text-xs text-red-600 dark:text-red-400 hover:underline">Delete</button>
                   </td>
                 </tr>

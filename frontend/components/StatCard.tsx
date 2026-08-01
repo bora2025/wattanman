@@ -29,7 +29,7 @@ export default function StatCard({
       type={onClick ? 'button' : undefined}
       className={`bg-white dark:bg-slate-900 rounded-2xl border shadow-sm p-5 flex items-start gap-4 text-left w-full ${
         onClick ? 'transition-all hover:shadow-md' : ''
-      } ${active ? 'border-indigo-400 dark:border-indigo-500 ring-2 ring-indigo-100 dark:ring-indigo-900/40' : 'border-gray-100 dark:border-slate-700'}`}
+      } ${active ? 'border-brand-400 dark:border-brand-500 ring-2 ring-brand-100 dark:ring-brand-900/40' : 'border-gray-100 dark:border-slate-700'}`}
     >
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-none ${color}`}>
         {icon}

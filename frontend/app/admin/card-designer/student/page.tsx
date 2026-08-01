@@ -29,7 +29,7 @@ export default function StudentCardDesignerPage() {
             <span className="text-xs text-slate-400 dark:text-slate-500">/</span>
             <Link href="/admin/card-designer" className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">Designer</Link>
             <span className="text-xs text-slate-400 dark:text-slate-500">/</span>
-            <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 inline-flex items-center gap-1">
+            <span className="text-xs font-semibold text-brand-700 dark:text-brand-300 inline-flex items-center gap-1">
               <span>🎓</span> Student ID Card Workspace
             </span>
             <span className="ml-2 text-[10px] text-slate-400 dark:text-slate-500 hidden sm:inline">• Student designs only</span>

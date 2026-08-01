@@ -80,7 +80,7 @@ export default function AdminParentRequestsPage() {
         <Sidebar title="Admin" subtitle="Portal" navItems={adminNav as any} accentColor={accentColor} />
         <main className="flex-1 p-6">
           <div className="mb-4">
-            <Link href="/admin" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">← Dashboard</Link>
+            <Link href="/admin" className="text-xs text-brand-600 dark:text-brand-400 hover:underline">← Dashboard</Link>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-2">Parent Link Requests</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Approve or reject student-submitted requests to link a parent account.</p>
           </div>
@@ -90,7 +90,7 @@ export default function AdminParentRequestsPage() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-3 py-1.5 text-xs rounded-lg border ${tab === t ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                className={`px-3 py-1.5 text-xs rounded-lg border ${tab === t ? 'bg-brand-600 text-white border-brand-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'}`}
               >
                 {t}
               </button>

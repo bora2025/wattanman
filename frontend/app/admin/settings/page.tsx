@@ -177,7 +177,7 @@ export default function SettingsPage() {
               {/* Storage bar */}
               <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-1">
                 <div
-                  className="h-full bg-indigo-500 rounded-full transition-all"
+                  className="h-full bg-brand-500 rounded-full transition-all"
                   style={{ width: `${Math.min(100, (items.length / 20) * 100)}%` }}
                 />
               </div>

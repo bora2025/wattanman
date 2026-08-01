@@ -164,7 +164,7 @@ function BudgetContent() {
                 key={t.id}
                 onClick={() => setPeriod(t.id)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                  period === t.id ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                  period === t.id ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 {t.label}
@@ -176,12 +176,12 @@ function BudgetContent() {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900"
+            className="px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-slate-900"
           />
           <button
             onClick={loadData}
             disabled={loading}
-            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-60"
+            className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-60"
           >
             {loading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -230,7 +230,7 @@ function BudgetContent() {
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <>
@@ -327,8 +327,8 @@ function BudgetContent() {
                     label="All-Time Revenue"
                     value={allTime.totalRevenue}
                     sub={`${allTime.collectionRate}% collection rate`}
-                    color="bg-indigo-100"
-                    icon={<svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>}
+                    color="bg-brand-100"
+                    icon={<svg className="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>}
                   />
                 )}
               </div>
@@ -344,7 +344,7 @@ function BudgetContent() {
                     key={t}
                     onClick={() => setTab(t)}
                     className={`px-4 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all ${
-                      tab === t ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                      tab === t ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
                     {t === 'chart' ? '📊 Chart' : `💳 Payments (${report?.payments.length ?? 0})`}
@@ -517,7 +517,7 @@ function PrintBudgetReportModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-indigo-50 to-white rounded-t-2xl">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-brand-50 to-white rounded-t-2xl">
           <div>
             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">🖨️ Print Budget Report</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Customize the letterhead and print</p>
@@ -536,12 +536,12 @@ function PrintBudgetReportModal({
                   onClick={() => setPrintPeriod(opt.value)}
                   className={`flex items-center gap-1.5 p-2.5 rounded-xl border text-left transition-all text-sm ${
                     printPeriod === opt.value
-                      ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
+                      ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-200'
                       : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                   }`}
                 >
                   <span>{opt.icon}</span>
-                  <span className={`font-semibold ${printPeriod === opt.value ? 'text-indigo-700' : 'text-slate-700'}`}>{opt.label}</span>
+                  <span className={`font-semibold ${printPeriod === opt.value ? 'text-brand-700' : 'text-slate-700'}`}>{opt.label}</span>
                 </button>
               ))}
             </div>
@@ -554,7 +554,7 @@ function PrintBudgetReportModal({
               type="date"
               value={printDate}
               onChange={e => setPrintDate(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
             />
           </div>
 
@@ -568,11 +568,11 @@ function PrintBudgetReportModal({
                   onClick={() => setPaperSize(opt.value)}
                   className={`flex-1 p-2.5 rounded-xl border text-center transition-all ${
                     paperSize === opt.value
-                      ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
+                      ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-200'
                       : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                   }`}
                 >
-                  <div className={`text-sm font-semibold ${paperSize === opt.value ? 'text-indigo-700' : 'text-slate-700'}`}>{opt.label}</div>
+                  <div className={`text-sm font-semibold ${paperSize === opt.value ? 'text-brand-700' : 'text-slate-700'}`}>{opt.label}</div>
                   <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{opt.desc}</div>
                 </button>
               ))}
@@ -591,7 +591,7 @@ function PrintBudgetReportModal({
                 value={logoUrl}
                 onChange={e => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
               />
             </div>
 
@@ -599,7 +599,7 @@ function PrintBudgetReportModal({
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Logo (px)</label>
               <div className="flex items-center gap-2">
-                <input type="range" min="0" max="20" step="1" value={logoGap} onChange={e => setLogoGap(e.target.value)} className="flex-1 accent-indigo-500" />
+                <input type="range" min="0" max="20" step="1" value={logoGap} onChange={e => setLogoGap(e.target.value)} className="flex-1 accent-brand-500" />
                 <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{logoGap}</span>
               </div>
             </div>
@@ -614,7 +614,7 @@ function PrintBudgetReportModal({
                       type="text"
                       value={line}
                       onChange={e => { const l = [...logoTextLines]; l[idx] = e.target.value; setLogoTextLines(l) }}
-                      className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                      className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                       placeholder={`Line ${idx + 1}`}
                     />
                     {logoTextLines.length > 1 && (
@@ -622,7 +622,7 @@ function PrintBudgetReportModal({
                     )}
                   </div>
                 ))}
-                <button onClick={() => setLogoTextLines([...logoTextLines, ''])} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">+ Add line</button>
+                <button onClick={() => setLogoTextLines([...logoTextLines, ''])} className="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium">+ Add line</button>
               </div>
             </div>
 
@@ -630,7 +630,7 @@ function PrintBudgetReportModal({
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Logo Text (px)</label>
               <div className="flex items-center gap-2">
-                <input type="range" min="0" max="20" step="1" value={logoTextGap} onChange={e => setLogoTextGap(e.target.value)} className="flex-1 accent-indigo-500" />
+                <input type="range" min="0" max="20" step="1" value={logoTextGap} onChange={e => setLogoTextGap(e.target.value)} className="flex-1 accent-brand-500" />
                 <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{logoTextGap}</span>
               </div>
             </div>
@@ -645,7 +645,7 @@ function PrintBudgetReportModal({
                       type="text"
                       value={line}
                       onChange={e => { const h = [...headerLines]; h[idx] = e.target.value; setHeaderLines(h) }}
-                      className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-center"
+                      className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none text-center"
                       placeholder={`Line ${idx + 1}`}
                     />
                     {headerLines.length > 1 && (
@@ -653,7 +653,7 @@ function PrintBudgetReportModal({
                     )}
                   </div>
                 ))}
-                <button onClick={() => setHeaderLines([...headerLines, ''])} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">+ Add line</button>
+                <button onClick={() => setHeaderLines([...headerLines, ''])} className="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium">+ Add line</button>
               </div>
             </div>
 
@@ -661,7 +661,7 @@ function PrintBudgetReportModal({
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Spacing Below Header Lines (px)</label>
               <div className="flex items-center gap-2">
-                <input type="range" min="0" max="20" step="1" value={headerGap} onChange={e => setHeaderGap(e.target.value)} className="flex-1 accent-indigo-500" />
+                <input type="range" min="0" max="20" step="1" value={headerGap} onChange={e => setHeaderGap(e.target.value)} className="flex-1 accent-brand-500" />
                 <span className="text-xs text-slate-500 dark:text-slate-400 w-8 text-center">{headerGap}</span>
               </div>
             </div>
@@ -673,7 +673,7 @@ function PrintBudgetReportModal({
                 type="text"
                 value={orgName}
                 onChange={e => setOrgName(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
               />
             </div>
           </div>
@@ -688,7 +688,7 @@ function PrintBudgetReportModal({
                     type="text"
                     value={signer}
                     onChange={e => { const s = [...signers]; s[idx] = e.target.value; setSigners(s) }}
-                    className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                     placeholder={`Signer ${idx + 1}`}
                   />
                   {signers.length > 1 && (
@@ -698,7 +698,7 @@ function PrintBudgetReportModal({
               ))}
               <button
                 onClick={() => setSigners([...signers, ''])}
-                className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center gap-1"
+                className="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium flex items-center gap-1"
               >
                 + Add signer
               </button>
@@ -712,7 +712,7 @@ function PrintBudgetReportModal({
               <span className="text-slate-500 dark:text-slate-400">Period:</span>
               <span className="font-medium text-slate-800 dark:text-slate-100 capitalize">{printPeriod} — {printDate}</span>
               <span className="text-slate-500 dark:text-slate-400">Paper Size:</span>
-              <span className="font-medium text-indigo-600 dark:text-indigo-400">{paperSize}</span>
+              <span className="font-medium text-brand-600 dark:text-brand-400">{paperSize}</span>
             </div>
           </div>
 
@@ -723,7 +723,7 @@ function PrintBudgetReportModal({
             </button>
             <button
               onClick={handlePrint}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm flex items-center justify-center gap-2"
             >
               🖨️ Preview
             </button>

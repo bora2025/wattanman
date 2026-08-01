@@ -125,7 +125,7 @@ const ATTENDANCE_PRESETS: AttendancePreset[] = [
 ]
 
 const PRESET_COLORS: Record<string, string> = {
-  indigo: 'border-indigo-300 bg-indigo-50 hover:bg-indigo-100',
+  indigo: 'border-brand-300 bg-brand-50 hover:bg-brand-100',
   amber: 'border-amber-300 bg-amber-50 hover:bg-amber-100',
   orange: 'border-orange-300 bg-orange-50 hover:bg-orange-100',
   purple: 'border-purple-300 bg-purple-50 hover:bg-purple-100',
@@ -133,7 +133,7 @@ const PRESET_COLORS: Record<string, string> = {
 }
 
 const PRESET_ICON_BG: Record<string, string> = {
-  indigo: 'bg-indigo-100 text-indigo-700',
+  indigo: 'bg-brand-100 text-brand-700',
   amber: 'bg-amber-100 text-amber-700',
   orange: 'bg-orange-100 text-orange-700',
   purple: 'bg-purple-100 text-purple-700',
@@ -141,7 +141,7 @@ const PRESET_ICON_BG: Record<string, string> = {
 }
 
 const PRESET_ACTIVE: Record<string, string> = {
-  indigo: 'ring-2 ring-indigo-400 border-indigo-400',
+  indigo: 'ring-2 ring-brand-400 border-brand-400',
   amber: 'ring-2 ring-amber-400 border-amber-400',
   orange: 'ring-2 ring-orange-400 border-orange-400',
   purple: 'ring-2 ring-purple-400 border-purple-400',
@@ -349,7 +349,7 @@ export default function SessionSettingsPage() {
               onClick={() => setActiveTab('CLASS')}
               className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'CLASS'
-                  ? 'bg-white text-indigo-700 shadow-sm'
+                  ? 'bg-white text-brand-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -359,7 +359,7 @@ export default function SessionSettingsPage() {
               onClick={() => setActiveTab('STAFF')}
               className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'STAFF'
-                  ? 'bg-white text-indigo-700 shadow-sm'
+                  ? 'bg-white text-brand-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -374,7 +374,7 @@ export default function SessionSettingsPage() {
               : 'Configure time windows for staff check-in and check-out sessions.'}
           </div>
 
-          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900">
+          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-900">
             <span>🏢</span>
             <span>Admin scope: {organizationName} organization</span>
           </div>
@@ -398,7 +398,7 @@ export default function SessionSettingsPage() {
                     <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">{preset.name}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{preset.description}</div>
                     {selectedPreset === preset.id && (
-                      <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mt-1">✓ Active</div>
+                      <div className="text-xs font-medium text-brand-600 dark:text-brand-400 mt-1">✓ Active</div>
                     )}
                   </button>
                 ))}
@@ -415,7 +415,7 @@ export default function SessionSettingsPage() {
                   <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">Custom</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Set times manually</div>
                   {selectedPreset === 'custom' && (
-                    <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mt-1">✓ Active</div>
+                    <div className="text-xs font-medium text-brand-600 dark:text-brand-400 mt-1">✓ Active</div>
                   )}
                 </button>
               </div>
@@ -435,7 +435,7 @@ export default function SessionSettingsPage() {
           {loading ? (
             <div className="card p-12">
               <div className="empty-state">
-                <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading settings…</p>
               </div>
             </div>
@@ -470,7 +470,7 @@ export default function SessionSettingsPage() {
                         <select
                           value={cfg.type}
                           onChange={(e) => updateConfig(cfg.session, 'type', e.target.value)}
-                          className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                         >
                           <option value="CHECK_IN">📥 Check-In</option>
                           <option value="CHECK_OUT">📤 Check-Out</option>
@@ -483,7 +483,7 @@ export default function SessionSettingsPage() {
                             type="time"
                             value={cfg.startTime}
                             onChange={(e) => updateConfig(cfg.session, 'startTime', e.target.value)}
-                            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                           />
                         </div>
                         <div>
@@ -492,7 +492,7 @@ export default function SessionSettingsPage() {
                             type="time"
                             value={cfg.endTime}
                             onChange={(e) => updateConfig(cfg.session, 'endTime', e.target.value)}
-                            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                           />
                         </div>
                       </div>
@@ -529,7 +529,7 @@ export default function SessionSettingsPage() {
                       }}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
                     <span className="ml-2 text-sm font-medium text-slate-600 dark:text-slate-300">
                       {(activeTab === 'STAFF' ? staffFormatRule.enabled : classFormatRule.enabled) ? 'Enabled' : 'Disabled'}
                     </span>
@@ -557,7 +557,7 @@ export default function SessionSettingsPage() {
                               setClassFormatRule(prev => ({ ...prev, permissionsPerAbsent: val }))
                             }
                           }}
-                          className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                         />
                         <span className="text-sm text-slate-600 dark:text-slate-300">permissions = <strong>1 absent full day</strong></span>
                       </div>
@@ -585,7 +585,7 @@ export default function SessionSettingsPage() {
                               setClassFormatRule(prev => ({ ...prev, latesPerAbsentHalf: val }))
                             }
                           }}
-                          className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                         />
                         <span className="text-sm text-slate-600 dark:text-slate-300">lates = <strong>1 absent half day</strong></span>
                       </div>
@@ -614,7 +614,7 @@ export default function SessionSettingsPage() {
                               setClassFormatRule(prev => ({ ...prev, absentSessionsForDayAbsent: val }))
                             }
                           }}
-                          className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                         />
                         <span className="text-sm text-slate-600 dark:text-slate-300">or more sessions in a day → count whole day as <strong>Absent</strong></span>
                       </div>
@@ -640,7 +640,7 @@ export default function SessionSettingsPage() {
                               const val = Math.max(0, Math.min(120, parseInt(e.target.value) || 0))
                               setStaffFormatRule(prev => ({ ...prev, teacherLateGraceMinutes: val }))
                             }}
-                            className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            className="w-20 rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-center focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                           />
                           <span className="text-sm text-slate-600 dark:text-slate-300">minutes after their period start time will be marked <strong>Late</strong>.</span>
                         </div>
@@ -673,7 +673,7 @@ export default function SessionSettingsPage() {
                             }}
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                          <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
                         </label>
                       </div>
                       <ul className="mt-3 text-xs text-slate-600 dark:text-slate-300 space-y-1">

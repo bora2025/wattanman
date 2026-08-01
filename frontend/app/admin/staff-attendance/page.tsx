@@ -617,7 +617,7 @@ function AdminStaffAttendance() {
               <div className="w-full sm:max-w-sm bg-white dark:bg-slate-900 sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden sm:mx-4 animate-[slideUp_0.35s_ease-out]">
                 <div className={`relative px-6 py-6 text-center overflow-hidden ${
                   scanResult.action === 'CHECK_OUT'
-                    ? 'bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-500'
+                    ? 'bg-gradient-to-br from-sky-500 via-blue-500 to-brand-500'
                     : 'bg-gradient-to-br from-teal-500 via-emerald-500 to-cyan-500'
                 }`}>
                   <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10" />
@@ -731,7 +731,7 @@ function AdminStaffAttendance() {
           <div className="card p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">⏰ Staff Session Schedule</span>
-              <Link href="/admin/session-settings" className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">Edit →</Link>
+              <Link href="/admin/session-settings" className="text-xs text-brand-500 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Edit →</Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {staffSessionConfigs.map(cfg => {
@@ -822,7 +822,7 @@ function AdminStaffAttendance() {
           </button>
           <Link
             href="/admin/staff-reports"
-            className="flex-1 sm:flex-none flex items-center justify-center bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold py-3.5 sm:py-3 px-6 rounded-xl shadow-lg shadow-indigo-200 active:scale-[0.98] transition-all text-sm sm:text-base"
+            className="flex-1 sm:flex-none flex items-center justify-center bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white font-bold py-3.5 sm:py-3 px-6 rounded-xl shadow-lg shadow-brand-200 active:scale-[0.98] transition-all text-sm sm:text-base"
           >
             📈 Staff Reports
           </Link>

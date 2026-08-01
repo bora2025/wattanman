@@ -107,7 +107,7 @@ export default function AdminClassRegistrationsPage() {
         <Sidebar title="Admin" subtitle="Portal" navItems={isClassAdmin ? classAdminNav : adminNav} accentColor={accentColor} />
         <main className="flex-1 p-6">
           <div className="mb-4">
-            <Link href="/admin" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">← Dashboard</Link>
+            <Link href="/admin" className="text-xs text-brand-600 dark:text-brand-400 hover:underline">← Dashboard</Link>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-2">Class Registrations</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Approve or reject student self-registration requests submitted from the public registration page.</p>
           </div>
@@ -118,7 +118,7 @@ export default function AdminClassRegistrationsPage() {
                 <button
                   key={v.id}
                   onClick={() => setView(v.id)}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${view === v.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${view === v.id ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                 >
                   {v.label}
                 </button>
@@ -135,7 +135,7 @@ export default function AdminClassRegistrationsPage() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-3 py-1.5 text-xs rounded-lg border ${tab === t ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                className={`px-3 py-1.5 text-xs rounded-lg border ${tab === t ? 'bg-brand-600 text-white border-brand-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'}`}
               >
                 {t}
               </button>
@@ -247,7 +247,7 @@ function ModeToggle({ label, value, onChange, disableHidden }: { label: string; 
               onClick={() => onChange(m)}
               disabled={disabled}
               title={disabled ? 'Email and Phone cannot both be hidden' : undefined}
-              className={`px-3 py-1.5 text-xs font-medium ${value === m ? 'bg-indigo-600 text-white' : disabled ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+              className={`px-3 py-1.5 text-xs font-medium ${value === m ? 'bg-brand-600 text-white' : disabled ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
             >
               {MODE_LABELS[m]}
             </button>
@@ -502,7 +502,7 @@ function FormSettingsView() {
                       <button
                         onClick={() => saveEdit(f.id)}
                         disabled={!editLabel.trim() || updateField.isPending}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium disabled:opacity-60"
+                        className="text-xs px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-medium disabled:opacity-60"
                       >
                         Save
                       </button>
@@ -536,7 +536,7 @@ function FormSettingsView() {
                       <input type="checkbox" checked={f.enabled} onChange={(e) => updateField.mutate({ id: f.id, patch: { enabled: e.target.checked } })} />
                       Enabled
                     </label>
-                    <button onClick={() => startEdit(f)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline shrink-0">Edit</button>
+                    <button onClick={() => startEdit(f)} className="text-xs text-brand-600 dark:text-brand-400 hover:underline shrink-0">Edit</button>
                     <button onClick={() => setDeleteTarget(f)} className="text-xs text-red-600 dark:text-red-400 hover:underline shrink-0">Delete</button>
                   </div>
                 )}
@@ -573,7 +573,7 @@ function FormSettingsView() {
             <button
               type="submit"
               disabled={!newLabel.trim() || createField.isPending}
-              className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg disabled:opacity-60"
+              className="shrink-0 bg-brand-600 hover:bg-brand-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg disabled:opacity-60"
             >
               + Add field
             </button>

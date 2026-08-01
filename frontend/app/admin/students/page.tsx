@@ -311,7 +311,7 @@ function ManageStudents() {
 
   const avatarInitials = (name: string) => name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const avatarColor = (name: string) => {
-    const colors = ['bg-indigo-500','bg-violet-500','bg-emerald-500','bg-sky-500','bg-amber-500','bg-rose-500','bg-teal-500','bg-fuchsia-500'];
+    const colors = ['bg-brand-500','bg-violet-500','bg-emerald-500','bg-sky-500','bg-amber-500','bg-rose-500','bg-teal-500','bg-fuchsia-500'];
     let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
     return colors[h % colors.length];
   };
@@ -327,7 +327,7 @@ function ManageStudents() {
         <div className="page-header">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-lg shadow-brand-200">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
               </div>
               <div>
@@ -337,7 +337,7 @@ function ManageStudents() {
             </div>
             {/* Summary chips */}
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-50 dark:bg-brand-950/40 border border-brand-100 dark:border-brand-900 text-brand-700 dark:text-brand-300 text-xs font-semibold">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                 {grades.length} Grades
               </div>
@@ -367,7 +367,7 @@ function ManageStudents() {
               <select
                 value={selectedStudyYearId}
                 onChange={e => setSelectedStudyYearId(e.target.value)}
-                className="text-sm border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 bg-white dark:bg-slate-900 shadow-sm w-full focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="text-sm border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 bg-white dark:bg-slate-900 shadow-sm w-full focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               >
                 <option value="">All Study Years</option>
                 {studyYears.map(sy => (
@@ -381,7 +381,7 @@ function ManageStudents() {
                 <input
                   type="text" value={gradeSearch} onChange={e => setGradeSearch(e.target.value)}
                   placeholder="Search grade..."
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                 />
                 {gradeSearch && <button onClick={() => setGradeSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"><svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>}
               </div>
@@ -390,7 +390,7 @@ function ManageStudents() {
               <div className="flex-1 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
                 {loadingGrades ? (
                   <div className="py-12 flex flex-col items-center gap-3 text-slate-400 dark:text-slate-500">
-                    <svg className="w-8 h-8 animate-spin text-indigo-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
+                    <svg className="w-8 h-8 animate-spin text-brand-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
                     <span className="text-sm">Loading grades...</span>
                   </div>
                 ) : filteredGrades.length === 0 ? (
@@ -403,19 +403,19 @@ function ManageStudents() {
                       key={g.id}
                       onClick={() => selectGrade(g)}
                       className={`w-full text-left px-4 py-3 border-b border-slate-100 last:border-0 transition-all group
-                        ${isActive ? 'bg-gradient-to-r from-indigo-50 to-violet-50 border-l-4 border-l-indigo-500' : 'border-l-4 border-l-transparent hover:bg-slate-50'}`}
+                        ${isActive ? 'bg-gradient-to-r from-brand-50 to-violet-50 border-l-4 border-l-brand-500' : 'border-l-4 border-l-transparent hover:bg-slate-50'}`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`text-sm font-semibold leading-tight ${isActive ? 'text-indigo-700' : 'text-slate-800 group-hover:text-indigo-600'}`}>
+                        <span className={`text-sm font-semibold leading-tight ${isActive ? 'text-brand-700' : 'text-slate-800 group-hover:text-brand-600'}`}>
                           {g.name}
                         </span>
                         <span className={`shrink-0 min-w-[28px] text-center text-xs font-bold px-2 py-0.5 rounded-full transition-colors
-                          ${isActive ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'}`}>
+                          ${isActive ? 'bg-brand-500 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-brand-100 group-hover:text-brand-600'}`}>
                           {count ?? '...'}
                         </span>
                       </div>
                       {g.teacher && (
-                        <p className={`text-xs mt-0.5 truncate ${isActive ? 'text-indigo-500' : 'text-slate-400'}`}>
+                        <p className={`text-xs mt-0.5 truncate ${isActive ? 'text-brand-500' : 'text-slate-400'}`}>
                           {g.teacher.name}
                         </p>
                       )}
@@ -442,8 +442,8 @@ function ManageStudents() {
               {!selectedGrade ? (
                 /* Empty state */
                 <div className="flex-1 flex flex-col items-center justify-center gap-4 text-slate-400 dark:text-slate-500">
-                  <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center">
-                    <svg className="w-12 h-12 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-brand-100 to-violet-100 flex items-center justify-center">
+                    <svg className="w-12 h-12 text-brand-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   </div>
                   <div className="text-center">
                     <p className="text-base font-semibold text-slate-600 dark:text-slate-300">Select a Grade</p>
@@ -453,14 +453,14 @@ function ManageStudents() {
               ) : (
                 <>
                   {/* â”€â”€ Class Banner â”€â”€ */}
-                  <div className="rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 p-4 text-white shadow-lg shadow-indigo-200 flex flex-wrap items-center justify-between gap-3">
+                  <div className="rounded-2xl bg-gradient-to-r from-brand-600 via-brand-500 to-violet-600 p-4 text-white shadow-lg shadow-brand-200 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                       </div>
                       <div>
                         <h2 className="text-base font-bold leading-tight">{selectedGrade.name}</h2>
-                        <p className="text-indigo-200 text-xs mt-0.5">
+                        <p className="text-brand-200 text-xs mt-0.5">
                           {selectedGrade.subject && <span>{selectedGrade.subject}</span>}
                           {selectedGrade.teacher && <span> / {selectedGrade.teacher.name}</span>}
                         </p>
@@ -481,7 +481,7 @@ function ManageStudents() {
                       <input
                         type="text" value={studentSearch} onChange={e => setStudentSearch(e.target.value)}
                         placeholder="Search by name, ID, email..."
-                        className="pl-8 pr-8 py-1.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 w-56"
+                        className="pl-8 pr-8 py-1.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-100 w-56"
                       />
                       {studentSearch && <button onClick={() => setStudentSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"><svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>}
                     </div>
@@ -490,11 +490,11 @@ function ManageStudents() {
                       {/* View toggle */}
                       <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-0.5">
                         <button onClick={() => setStudentViewMode('cards')} title="Card view"
-                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${studentViewMode === 'cards' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${studentViewMode === 'cards' ? 'bg-brand-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" strokeWidth={2} strokeLinecap="round"/><rect x="14" y="3" width="7" height="7" rx="1" strokeWidth={2} strokeLinecap="round"/><rect x="3" y="14" width="7" height="7" rx="1" strokeWidth={2} strokeLinecap="round"/><rect x="14" y="14" width="7" height="7" rx="1" strokeWidth={2} strokeLinecap="round"/></svg>
                         </button>
                         <button onClick={() => setStudentViewMode('table')} title="Table view"
-                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${studentViewMode === 'table' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${studentViewMode === 'table' ? 'bg-brand-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                         </button>
                       </div>
@@ -502,7 +502,7 @@ function ManageStudents() {
                       {/* CSV upload */}
                       <label title="Import CSV" className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white shadow-sm text-sm font-medium text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors ${csvUploading ? 'opacity-50 pointer-events-none' : ''}`}>
                         {csvUploading ? (
-                          <svg className="w-4 h-4 animate-spin text-indigo-500 dark:text-indigo-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
+                          <svg className="w-4 h-4 animate-spin text-brand-500 dark:text-brand-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
                         ) : (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" /></svg>
                         )}
@@ -530,7 +530,7 @@ function ManageStudents() {
                       <button
                         onClick={() => { setShowAddForm(f => !f); }}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold shadow-sm transition-all
-                          ${showAddForm ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-indigo-200 hover:shadow-md hover:shadow-indigo-200'}`}
+                          ${showAddForm ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-gradient-to-r from-brand-500 to-violet-600 text-white shadow-brand-200 hover:shadow-md hover:shadow-brand-200'}`}
                       >
                         <svg className={`w-4 h-4 transition-transform ${showAddForm ? 'rotate-45' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         {showAddForm ? 'Cancel' : 'Add Student'}
@@ -548,10 +548,10 @@ function ManageStudents() {
 
                   {/* Add student form */}
                   {showAddForm && (
-                    <form onSubmit={handleAddStudent} className="rounded-2xl border border-indigo-200 dark:border-indigo-900 bg-gradient-to-br from-indigo-50 to-violet-50 p-4 space-y-3 shadow-sm">
+                    <form onSubmit={handleAddStudent} className="rounded-2xl border border-brand-200 dark:border-brand-900 bg-gradient-to-br from-brand-50 to-violet-50 p-4 space-y-3 shadow-sm">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
-                          <span className="w-6 h-6 rounded-lg bg-indigo-500 text-white flex items-center justify-center text-xs">+</span>
+                        <h4 className="text-sm font-bold text-brand-800 dark:text-brand-300 flex items-center gap-1.5">
+                          <span className="w-6 h-6 rounded-lg bg-brand-500 text-white flex items-center justify-center text-xs">+</span>
                           New Student
                         </h4>
                       </div>
@@ -603,7 +603,7 @@ function ManageStudents() {
                       </div>
                       <div className="flex justify-end">
                         <button type="submit" disabled={addingStudent}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-semibold shadow-sm hover:shadow-md disabled:opacity-60">
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-brand-500 to-violet-600 text-white text-sm font-semibold shadow-sm hover:shadow-md disabled:opacity-60">
                           {addingStudent ? <><svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>Adding...</> : 'Add Student'}
                         </button>
                       </div>
@@ -614,7 +614,7 @@ function ManageStudents() {
                   <div className="flex-1 overflow-auto">
                     {loadingStudents ? (
                       <div className="py-20 flex flex-col items-center gap-3 text-slate-400 dark:text-slate-500">
-                        <svg className="w-10 h-10 animate-spin text-indigo-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
+                        <svg className="w-10 h-10 animate-spin text-brand-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
                         <span className="text-sm">Loading students...</span>
                       </div>
                     ) : filteredStudents.length === 0 ? (
@@ -626,14 +626,14 @@ function ManageStudents() {
                           }
                         </div>
                         <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{studentSearch ? 'No students match your search' : 'No students in this grade yet'}</p>
-                        {!studentSearch && <button onClick={() => setShowAddForm(true)} className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">+ Add the first student</button>}
+                        {!studentSearch && <button onClick={() => setShowAddForm(true)} className="text-xs text-brand-500 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium">+ Add the first student</button>}
                       </div>
                     ) : studentViewMode === 'cards' ? (
 
                       /* â”€â”€ Card Grid View â”€â”€ */
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 pb-2">
                         {filteredStudents.map((s, idx) => (
-                          <div key={s.id} className="group relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all overflow-hidden flex flex-col">
+                          <div key={s.id} className="group relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-brand-200 transition-all overflow-hidden flex flex-col">
                             {/* Photo area */}
                             <div className="relative h-28 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center overflow-hidden">
                               {s.photo ? (
@@ -700,7 +700,7 @@ function ManageStudents() {
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                           {filteredStudents.map((s, idx) => (
-                            <tr key={s.id} className="hover:bg-indigo-50/40 transition-colors group">
+                            <tr key={s.id} className="hover:bg-brand-50/40 transition-colors group">
                               <td className="px-3 py-2.5 text-slate-400 dark:text-slate-500 font-mono text-xs">{s.studentNumber || String(idx + 1).padStart(4, '0')}</td>
                               <td className="px-3 py-2.5">
                                 <div className="flex items-center gap-2.5">
@@ -904,8 +904,8 @@ function ManageStudents() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                <div className="w-8 h-8 rounded-xl bg-brand-100 dark:bg-brand-950/40 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
                 </div>
                 <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Reset Password</h3>
               </div>
@@ -937,7 +937,7 @@ function ManageStudents() {
               )}
               <div className="flex justify-end gap-2 pt-1">
                 <button type="button" onClick={() => { setResetStudent(null); setResetMsg(null); }} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800">Cancel</button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-sm font-semibold shadow-sm hover:shadow-md">Reset Password</button>
+                <button type="submit" className="px-4 py-2 rounded-xl bg-gradient-to-r from-brand-500 to-violet-600 text-white text-sm font-semibold shadow-sm hover:shadow-md">Reset Password</button>
               </div>
             </form>
           </div>

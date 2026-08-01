@@ -199,7 +199,7 @@ const DAY_PRESETS = [
 const DAY_COLORS: Record<string, string> = {
   same: 'bg-slate-100 text-slate-600 border-slate-200',
   'day-off': 'bg-red-50 text-red-600 border-red-200',
-  'full-day': 'bg-indigo-50 text-indigo-600 border-indigo-200',
+  'full-day': 'bg-brand-50 text-brand-600 border-brand-200',
   'morning-only': 'bg-amber-50 text-amber-600 border-amber-200',
   'afternoon-only': 'bg-orange-50 text-orange-600 border-orange-200',
   evening: 'bg-purple-50 text-purple-600 border-purple-200',
@@ -365,7 +365,7 @@ function ManageClasses() {
 
   // Subject-based gradient palette
   const SUBJECT_THEMES: { from: string; to: string; ring: string; chip: string; emoji: string }[] = [
-    { from: 'from-indigo-500', to: 'to-violet-600', ring: 'ring-indigo-200', chip: 'bg-indigo-100 text-indigo-700', emoji: '📘' },
+    { from: 'from-brand-500', to: 'to-violet-600', ring: 'ring-brand-200', chip: 'bg-brand-100 text-brand-700', emoji: '📘' },
     { from: 'from-emerald-500', to: 'to-teal-600', ring: 'ring-emerald-200', chip: 'bg-emerald-100 text-emerald-700', emoji: '📗' },
     { from: 'from-rose-500', to: 'to-pink-600', ring: 'ring-rose-200', chip: 'bg-rose-100 text-rose-700', emoji: '📕' },
     { from: 'from-amber-500', to: 'to-orange-600', ring: 'ring-amber-200', chip: 'bg-amber-100 text-amber-700', emoji: '📙' },
@@ -842,7 +842,7 @@ function ManageClasses() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by class name, subject, or teacher…"
-                className="w-full pl-9 pr-9 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full pl-9 pr-9 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
               {searchQuery && (
                 <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-lg leading-none">×</button>
@@ -877,7 +877,7 @@ function ManageClasses() {
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
-                  className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'grid' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'grid' ? 'bg-brand-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                   title="Grid view"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h6v6H4V6zm10 0h6v6h-6V6zM4 16h6v4H4v-4zm10 0h6v4h-6v-4z" /></svg>
@@ -885,7 +885,7 @@ function ManageClasses() {
                 <button
                   type="button"
                   onClick={() => setViewMode('list')}
-                  className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'list' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'list' ? 'bg-brand-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                   title="List view"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -900,7 +900,7 @@ function ManageClasses() {
 
           {searchQuery && (
             <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              Showing <span className="font-semibold text-slate-700 dark:text-slate-200">{filteredClasses.length}</span> of {classes.length} classes matching <span className="font-mono text-indigo-600 dark:text-indigo-400">&quot;{searchQuery}&quot;</span>
+              Showing <span className="font-semibold text-slate-700 dark:text-slate-200">{filteredClasses.length}</span> of {classes.length} classes matching <span className="font-mono text-brand-600 dark:text-brand-400">&quot;{searchQuery}&quot;</span>
             </div>
           )}
         </div>
@@ -1030,7 +1030,7 @@ function ManageClasses() {
                         }}
                         className={`p-3 rounded-xl border-2 text-left transition-all ${
                           selectedPreset === preset.id
-                            ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-200'
+                            ? 'border-brand-400 bg-brand-50 ring-2 ring-brand-200'
                             : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                         }`}
                       >
@@ -1140,7 +1140,7 @@ function ManageClasses() {
                           Mon–Fri Full / Sat Morning
                         </button>
                         <button type="button" onClick={() => { setShowWeekly(true); setWeeklySchedule({ MON: 'day-off', TUE: 'day-off', WED: 'day-off', THU: 'day-off', FRI: 'day-off', SAT: 'same', SUN: 'same' }); }}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 transition-colors">
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-brand-100 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 hover:bg-brand-200 transition-colors">
                           Weekend Only (Sat–Sun)
                         </button>
                       </div>
@@ -1187,7 +1187,7 @@ function ManageClasses() {
                           Mon–Fri Full / Sat Morning
                         </button>
                         <button type="button" onClick={() => setWeeklySchedule({ MON: 'day-off', TUE: 'day-off', WED: 'day-off', THU: 'day-off', FRI: 'day-off', SAT: 'same', SUN: 'same' })}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 transition-colors">
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-brand-100 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 hover:bg-brand-200 transition-colors">
                           Weekend Only (Sat–Sun)
                         </button>
                         <button type="button" onClick={() => {
@@ -1659,7 +1659,7 @@ function ManageClasses() {
                         </span>
                       )}
                       {classFormats[cls.id] ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-brand-100 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300">
                           {classFormats[cls.id].icon} {classFormats[cls.id].name}
                         </span>
                       ) : (
@@ -1677,12 +1677,12 @@ function ManageClasses() {
                       </div>
                     )}
                     {cls.classAdmin && (
-                      <div className="mt-1.5 flex items-center gap-2 text-xs text-indigo-500 dark:text-indigo-400">
-                        <div className="w-6 h-6 rounded-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                      <div className="mt-1.5 flex items-center gap-2 text-xs text-brand-500 dark:text-brand-400">
+                        <div className="w-6 h-6 rounded-full bg-brand-50 dark:bg-brand-950/40 flex items-center justify-center text-[10px] font-bold text-brand-600 dark:text-brand-400">
                           {cls.classAdmin.name?.charAt(0).toUpperCase() || 'A'}
                         </div>
                         <span className="truncate">{cls.classAdmin.name}</span>
-                        <span className="text-[10px] text-indigo-300">Class Admin</span>
+                        <span className="text-[10px] text-brand-300">Class Admin</span>
                       </div>
                     )}
                     {cls.schedule && (() => {
@@ -1716,7 +1716,7 @@ function ManageClasses() {
                       <div className="flex items-center gap-1.5">
                         <Link href={`/admin/attendance?classId=${cls.id}`} className="btn-outline btn-sm flex-1 text-center">Attendance</Link>
                         <button onClick={() => handleEdit(cls)} className="btn-outline btn-sm flex-1">Edit</button>
-                        <button onClick={() => openAddToTT(cls)} title="Add to Timetable" className="btn-outline btn-sm px-2.5 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-900 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex-shrink-0">
+                        <button onClick={() => openAddToTT(cls)} title="Add to Timetable" className="btn-outline btn-sm px-2.5 text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-900 hover:bg-brand-50 dark:hover:bg-brand-950/40 flex-shrink-0">
                           🗓
                         </button>
                         <button onClick={() => handleDelete(cls.id)} title="Delete class" className="btn-outline btn-sm px-2.5 text-red-500 dark:text-red-400 border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 flex-shrink-0">
@@ -1759,7 +1759,7 @@ function ManageClasses() {
                           </td>
                           <td className="px-4 py-2.5"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${theme.chip}`}>{cls.subject}</span></td>
                           <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">{cls.teacher?.name || <span className="text-slate-300">—</span>}</td>
-                          <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300 text-xs">{cls.classAdmin?.name ? <span className="text-indigo-600 dark:text-indigo-400">{cls.classAdmin.name}</span> : <span className="text-slate-300">—</span>}</td>
+                          <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300 text-xs">{cls.classAdmin?.name ? <span className="text-brand-600 dark:text-brand-400">{cls.classAdmin.name}</span> : <span className="text-slate-300">—</span>}</td>
                           <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400 text-xs">{cls.studyYear ? (cls.studyYear.label || cls.studyYear.year) : <span className="text-slate-300">—</span>}</td>
                           <td className="px-4 py-2.5">
                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${REGISTRATION_STATUS_META[cls.registrationStatus || 'HIDDEN'].className}`}>
@@ -1837,7 +1837,7 @@ function ManageClasses() {
                       if (res.ok) { const tt = await res.json(); setAddToTTExisting(tt.classes ?? []); }
                     }
                   }}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 >
                   <option value="">Select timetable…</option>
                   {timetables.map(tt => <option key={tt.id} value={tt.id}>{tt.name} · {tt.academicYear}</option>)}
@@ -1849,7 +1849,7 @@ function ManageClasses() {
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Short Name</label>
                 <input
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={addToTTShort} onChange={e => setAddToTTShort(e.target.value)} maxLength={8} placeholder="e.g. G1A"
                 />
               </div>
@@ -1870,7 +1870,7 @@ function ManageClasses() {
               <button
                 onClick={handleAddToTTSave}
                 disabled={addToTTSaving || !addToTTSelectedTT || !addToTTShort}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40"
+                className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-40"
               >
                 {addToTTSaving ? 'Adding…' : 'Add to Timetable'}
               </button>

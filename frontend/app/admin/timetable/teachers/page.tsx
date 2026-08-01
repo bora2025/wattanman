@@ -199,15 +199,15 @@ export default function TeachersPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
             <div>
-              <button onClick={() => router.push('/admin/timetable')} className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline mb-1">← Back to Timetable</button>
+              <button onClick={() => router.push('/admin/timetable')} className="text-brand-600 dark:text-brand-400 text-sm hover:underline mb-1">← Back to Timetable</button>
               <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Teachers</h1>
               <p className="text-sm text-gray-500 dark:text-slate-400">Manage timetable teachers and their lesson contracts</p>
             </div>
-            <button onClick={() => openTeacherModal()} disabled={!partTimeTeacherEnabled} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700 disabled:opacity-40 disabled:pointer-events-none">+ New Teacher</button>
+            <button onClick={() => openTeacherModal()} disabled={!partTimeTeacherEnabled} className="px-4 py-2 bg-brand-600 text-white rounded-lg font-medium text-sm hover:bg-brand-700 disabled:opacity-40 disabled:pointer-events-none">+ New Teacher</button>
           </div>
           <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-2 flex items-center gap-3">
             <label className="text-sm text-gray-600 dark:text-slate-300 font-medium">Timetable:</label>
-            <select className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            <select className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               value={selectedTT} onChange={e => setSelectedTT(e.target.value)}>
               {timetables.map(tt => <option key={tt.id} value={tt.id}>{tt.name} · {tt.academicYear}</option>)}
             </select>
@@ -246,7 +246,7 @@ export default function TeachersPage() {
                           <tbody>
                             {teachers.map(t => (
                               <tr key={t.id}
-                                className={`border-b border-gray-100 cursor-pointer ${selectedTeacher?.id === t.id ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}
+                                className={`border-b border-gray-100 cursor-pointer ${selectedTeacher?.id === t.id ? 'bg-brand-50' : 'hover:bg-gray-50'}`}
                                 onClick={() => setSelectedTeacher(t)}>
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-2">
@@ -303,7 +303,7 @@ export default function TeachersPage() {
                       </h3>
                       {selectedTeacher && (
                         <button onClick={() => openLessonModal(undefined, selectedTeacher.id)}
-                          className="text-xs bg-indigo-600 text-white px-2 py-1 rounded font-medium">+ New Lesson</button>
+                          className="text-xs bg-brand-600 text-white px-2 py-1 rounded font-medium">+ New Lesson</button>
                       )}
                     </div>
                     <div className="flex-1 overflow-auto p-3">
@@ -313,7 +313,7 @@ export default function TeachersPage() {
                         <div className="text-center mt-8">
                           <p className="text-gray-400 text-xs mb-3">No lesson contracts yet</p>
                           <button onClick={() => openLessonModal(undefined, selectedTeacher.id)}
-                            className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded font-medium hover:bg-indigo-700">
+                            className="text-xs bg-brand-600 text-white px-3 py-1.5 rounded font-medium hover:bg-brand-700">
                             + Add First Lesson
                           </button>
                         </div>
@@ -334,7 +334,7 @@ export default function TeachersPage() {
                                     <span className="text-sm text-gray-600 dark:text-slate-300">{l.class.name}</span>
                                   </div>
                                   <div className="flex items-center gap-2 pt-0.5">
-                                    <span className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-semibold rounded px-1.5 py-0.5">
+                                    <span className="bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 text-[10px] font-semibold rounded px-1.5 py-0.5">
                                       {l.perWeek}×/week
                                     </span>
                                     <span className="text-gray-400 text-[10px] capitalize">{l.lessonType.toLowerCase()}</span>
@@ -354,7 +354,7 @@ export default function TeachersPage() {
                     </div>
                     <div className="px-4 py-3 border-t border-gray-200 dark:border-slate-700">
                       <button onClick={() => router.push('/admin/timetable/teacher-attendance')}
-                        className="w-full text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+                        className="w-full text-sm text-brand-600 dark:text-brand-400 hover:underline">
                         → Teacher Attendance Report
                       </button>
                     </div>
@@ -416,14 +416,14 @@ export default function TeachersPage() {
               )}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Full Name</label>
-                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }}
                   value={fFullName} onChange={e => setFFullName(e.target.value)} placeholder="e.g. John Smith" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Khmer Name · ឈ្មោះខ្មែរ</label>
                 <input
-                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fKhmerName}
                   onChange={e => setFKhmerName(e.target.value)}
                   placeholder="ឧ. សុខ ដារ៉ា"
@@ -432,7 +432,7 @@ export default function TeachersPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Short Name</label>
-                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   style={{ fontFamily: '"Khmer", Inter, Arial, sans-serif' }}
                   value={fShort} onChange={e => setFShort(e.target.value)} maxLength={8} placeholder="e.g. SmithJ" />
               </div>
@@ -450,18 +450,18 @@ export default function TeachersPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">E-mail</label>
-                  <input type="email" className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  <input type="email" className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                     value={fEmail} onChange={e => setFEmail(e.target.value)} />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Phone</label>
-                  <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                     value={fPhone} onChange={e => setFPhone(e.target.value)} />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Class Teacher for</label>
-                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fClassTeacher} onChange={e => setFClassTeacher(e.target.value)}>
                   <option value="">— None —</option>
                   {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -482,7 +482,7 @@ export default function TeachersPage() {
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Photo URL <span className="font-normal text-gray-400">(optional)</span></label>
                 <div className="flex items-center gap-3">
                   <input
-                    className="flex-1 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                     value={fPhoto}
                     onChange={e => setFPhoto(e.target.value)}
                     placeholder="https://..."
@@ -512,7 +512,7 @@ export default function TeachersPage() {
               <div className="flex justify-end gap-2">
                 <button onClick={() => setShowTeacherModal(false)} className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium">Cancel</button>
                 <button onClick={saveTeacher} disabled={savingTeacher || !fFullName || !fShort || !partTimeTeacherEnabled}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
+                  className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-40">
                   {savingTeacher ? 'Saving…' : 'OK'}
                 </button>
               </div>
@@ -537,7 +537,7 @@ export default function TeachersPage() {
               ].map(({ label, val, set, opts }) => (
                 <div key={label}>
                   <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{label}</label>
-                  <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                     value={val} onChange={e => set(e.target.value)}>
                     <option value="">Select {label.toLowerCase()}</option>
                     {opts.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
@@ -546,14 +546,14 @@ export default function TeachersPage() {
               ))}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Lessons / Week</label>
-                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fLPerWeek} onChange={e => setFLPerWeek(+e.target.value)}>
                   {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n} per week</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Type</label>
-                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fLType} onChange={e => setFLType(e.target.value)}>
                   {LESSON_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>

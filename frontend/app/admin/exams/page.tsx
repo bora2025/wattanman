@@ -65,15 +65,15 @@ export default function ExamAdminPage() {
                 <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Create, publish, and manage exams across classes</p>
               </div>
               <Link href="/teacher/exams/new?returnTo=/admin/exams"
-                className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 shadow-sm">
+                className="bg-brand-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-brand-700 shadow-sm">
                 + Create Exam
               </Link>
             </div>
 
             {!isLoading && !isError && exams.length > 0 && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard label="Total Exams" value={counts.total} decimals={0} prefix="" color="bg-indigo-100"
-                  icon={<svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
+                <StatCard label="Total Exams" value={counts.total} decimals={0} prefix="" color="bg-brand-100"
+                  icon={<svg className="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} />
                 <StatCard label="Draft" value={counts.draft} decimals={0} prefix="" color="bg-slate-100"
                   icon={<svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>} />
                 <StatCard label="Live" value={counts.live} decimals={0} prefix="" color="bg-emerald-100" sub="published or active"
@@ -93,7 +93,7 @@ export default function ExamAdminPage() {
             ) : exams.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
                 <EmptyState icon="📝" message="No exams yet" action={
-                  <Link href="/teacher/exams/new?returnTo=/admin/exams" className="text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline">Create your first exam</Link>
+                  <Link href="/teacher/exams/new?returnTo=/admin/exams" className="text-sm text-brand-600 dark:text-brand-400 font-medium hover:underline">Create your first exam</Link>
                 } />
               </div>
             ) : (
@@ -112,14 +112,14 @@ export default function ExamAdminPage() {
                       <p className="text-xs text-gray-400 mt-0.5">{exam._count.attempts} attempt(s) · by {exam.createdBy.name}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <Link href={`/teacher/exams/${exam.id}/edit?returnTo=/admin/exams`} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+                      <Link href={`/teacher/exams/${exam.id}/edit?returnTo=/admin/exams`} className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">
                         Edit
                       </Link>
                       <Link href={`/teacher/exams/${exam.id}/attempts`} target="_blank" rel="noopener noreferrer"
                         className="text-xs text-emerald-700 dark:text-emerald-300 hover:underline font-medium">Grade ↗</Link>
                       <select value={exam.status}
                         onChange={e => statusMutation.mutate({ id: exam.id, status: e.target.value })}
-                        className="text-xs border border-gray-200 dark:border-slate-700 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                        className="text-xs border border-gray-200 dark:border-slate-700 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-300">
                         {['DRAFT','PUBLISHED','ACTIVE','COMPLETED'].map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                       <button onClick={() => deleteMutation.mutate(exam.id)} className="text-xs text-red-500 dark:text-red-400 hover:underline font-medium">Delete</button>

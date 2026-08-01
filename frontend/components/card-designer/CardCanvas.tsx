@@ -445,7 +445,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 return (
                   <div
                     key="__photo__"
-                    className={`absolute flex items-center justify-center bg-slate-200 text-slate-400 text-xs select-none cursor-move ${isSelected ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
+                    className={`absolute flex items-center justify-center bg-slate-200 text-slate-400 text-xs select-none cursor-move ${isSelected ? 'ring-2 ring-brand-500 ring-offset-1' : ''}`}
                     style={{
                       left: photo.x,
                       top: photo.y,
@@ -501,7 +501,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 return (
                   <div
                     key="__qr__"
-                    className={`absolute flex items-center justify-center bg-slate-200 text-slate-400 text-xs select-none cursor-move ${isSelected ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
+                    className={`absolute flex items-center justify-center bg-slate-200 text-slate-400 text-xs select-none cursor-move ${isSelected ? 'ring-2 ring-brand-500 ring-offset-1' : ''}`}
                     style={{
                       left: qr.x,
                       top: qr.y,
@@ -562,7 +562,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 return (
                   <div
                     key={shape.id}
-                    className={`absolute cursor-move select-none ${isSelected ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
+                    className={`absolute cursor-move select-none ${isSelected ? 'ring-2 ring-brand-500 ring-offset-1' : ''}`}
                     style={{
                       left: shape.x,
                       top: shape.y,
@@ -611,7 +611,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 return (
                   <div
                     key={logo.id}
-                    className={`absolute cursor-move select-none overflow-hidden ${selectedId === logo.id ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
+                    className={`absolute cursor-move select-none overflow-hidden ${selectedId === logo.id ? 'ring-2 ring-brand-500 ring-offset-1' : ''}`}
                     style={{
                       left: logo.x, top: logo.y, width: logo.width, height: logo.height,
                       zIndex: logo.zIndex ?? 0,
@@ -648,7 +648,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
               return (
                 <div
                   key={text.id}
-                  className={`absolute cursor-move select-none whitespace-pre-wrap ${selectedId === text.id ? 'ring-2 ring-indigo-500 ring-offset-1 rounded' : ''}`}
+                  className={`absolute cursor-move select-none whitespace-pre-wrap ${selectedId === text.id ? 'ring-2 ring-brand-500 ring-offset-1 rounded' : ''}`}
                   style={{
                     left: text.x,
                     top: text.y,
@@ -697,14 +697,14 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
             >
               {/* Dashed selection border */}
               <div
-                className="absolute inset-0 border-2 border-dashed border-indigo-400 dark:border-indigo-700 rounded-sm pointer-events-none"
+                className="absolute inset-0 border-2 border-dashed border-brand-400 dark:border-brand-700 rounded-sm pointer-events-none"
               />
 
               {/* Resize handles */}
               {handlePositions.map(({ key, cursor, style }) => (
                 <div
                   key={key}
-                  className="absolute bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:scale-125 transition-transform"
+                  className="absolute bg-white dark:bg-slate-900 border-2 border-brand-500 rounded-sm pointer-events-auto shadow-sm hover:bg-brand-50 dark:hover:bg-brand-950/40 hover:scale-125 transition-transform"
                   style={{
                     width: HANDLE_SIZE,
                     height: HANDLE_SIZE,
@@ -721,16 +721,16 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 style={{ top: -32, left: '50%', marginLeft: -7 }}
               >
                 <div
-                  className="w-3.5 h-3.5 rounded-full bg-indigo-500 border-2 border-white shadow-md cursor-grab hover:bg-indigo-600 hover:scale-110 transition-all"
+                  className="w-3.5 h-3.5 rounded-full bg-brand-500 border-2 border-white shadow-md cursor-grab hover:bg-brand-600 hover:scale-110 transition-all"
                   title="Drag to rotate (hold Shift for 15° snapping)"
                   onMouseDown={(e) => handleRotateMouseDown(e, selectedShape)}
                 />
-                <div className="w-px h-[14px] bg-indigo-400" />
+                <div className="w-px h-[14px] bg-brand-400" />
               </div>
 
               {/* Size label */}
               <div
-                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 dark:text-indigo-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
+                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-brand-500 dark:text-brand-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
               >
                 {Math.round(selectedShape.width)} × {Math.round(selectedShape.height)}
                 {selectedShape.rotation ? ` · ${Math.round(selectedShape.rotation)}°` : ''}
@@ -754,11 +754,11 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 zIndex: 50,
               }}
             >
-              <div className="absolute inset-0 border-2 border-dashed border-indigo-400 dark:border-indigo-700 rounded-sm pointer-events-none" />
+              <div className="absolute inset-0 border-2 border-dashed border-brand-400 dark:border-brand-700 rounded-sm pointer-events-none" />
               {handlePositions.map(({ key, cursor, style }) => (
                 <div
                   key={key}
-                  className="absolute bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:scale-125 transition-transform"
+                  className="absolute bg-white dark:bg-slate-900 border-2 border-brand-500 rounded-sm pointer-events-auto shadow-sm hover:bg-brand-50 dark:hover:bg-brand-950/40 hover:scale-125 transition-transform"
                   style={{
                     width: HANDLE_SIZE,
                     height: HANDLE_SIZE,
@@ -769,7 +769,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 />
               ))}
               <div
-                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 dark:text-indigo-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
+                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-brand-500 dark:text-brand-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
               >
                 {Math.round(photo.width)} × {Math.round(photo.height)}
               </div>
@@ -792,11 +792,11 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 zIndex: 50,
               }}
             >
-              <div className="absolute inset-0 border-2 border-dashed border-indigo-400 dark:border-indigo-700 rounded-sm pointer-events-none" />
+              <div className="absolute inset-0 border-2 border-dashed border-brand-400 dark:border-brand-700 rounded-sm pointer-events-none" />
               {handlePositions.map(({ key, cursor, style }) => (
                 <div
                   key={key}
-                  className="absolute bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:scale-125 transition-transform"
+                  className="absolute bg-white dark:bg-slate-900 border-2 border-brand-500 rounded-sm pointer-events-auto shadow-sm hover:bg-brand-50 dark:hover:bg-brand-950/40 hover:scale-125 transition-transform"
                   style={{
                     width: HANDLE_SIZE,
                     height: HANDLE_SIZE,
@@ -807,7 +807,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 />
               ))}
               <div
-                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 dark:text-indigo-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
+                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-brand-500 dark:text-brand-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
               >
                 {Math.round(qr.width)} × {Math.round(qr.height)}
               </div>
@@ -830,11 +830,11 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 zIndex: 50,
               }}
             >
-              <div className="absolute inset-0 border-2 border-dashed border-indigo-400 dark:border-indigo-700 rounded-sm pointer-events-none" />
+              <div className="absolute inset-0 border-2 border-dashed border-brand-400 dark:border-brand-700 rounded-sm pointer-events-none" />
               {handlePositions.map(({ key, cursor, style }) => (
                 <div
                   key={key}
-                  className="absolute bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-sm pointer-events-auto shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:scale-125 transition-transform"
+                  className="absolute bg-white dark:bg-slate-900 border-2 border-brand-500 rounded-sm pointer-events-auto shadow-sm hover:bg-brand-50 dark:hover:bg-brand-950/40 hover:scale-125 transition-transform"
                   style={{
                     width: HANDLE_SIZE,
                     height: HANDLE_SIZE,
@@ -845,7 +845,7 @@ export default function CardCanvas({ design, selectedId, onSelect, onMoveText, o
                 />
               ))}
               <div
-                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-indigo-500 dark:text-indigo-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
+                className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-brand-500 dark:text-brand-400 font-mono whitespace-nowrap pointer-events-none bg-white/80 px-1 rounded"
               >
                 {Math.round(selectedLogo.width)} × {Math.round(selectedLogo.height)}
               </div>

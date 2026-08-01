@@ -138,7 +138,7 @@ export default function LayersPanel({ design, selectedId, onSelect, onDesignChan
   };
 
   const typeColor: Record<string, string> = {
-    text: 'bg-indigo-500',
+    text: 'bg-brand-500',
     logo: 'bg-amber-500',
     shape: 'bg-violet-500',
     photo: 'bg-blue-500',
@@ -171,7 +171,7 @@ export default function LayersPanel({ design, selectedId, onSelect, onDesignChan
                 <div
                   key={layer.id}
                   className={`group flex items-center gap-1.5 px-2 py-[5px] cursor-pointer transition-colors ${
-                    isSelected ? 'bg-indigo-600/15 border-l-2 border-indigo-500' : 'border-l-2 border-transparent hover:bg-white/5'
+                    isSelected ? 'bg-brand-600/15 border-l-2 border-brand-500' : 'border-l-2 border-transparent hover:bg-white/5'
                   } ${isHidden ? 'opacity-30' : ''}`}
                   onClick={() => !isLocked && onSelect(isSelected ? null : layer.id)}
                 >
@@ -179,7 +179,7 @@ export default function LayersPanel({ design, selectedId, onSelect, onDesignChan
                   <span className={`shrink-0 w-1.5 h-1.5 rounded-full ${typeColor[layer.type]}`} />
 
                   {/* Label */}
-                  <span className={`flex-1 text-[11px] truncate ${isSelected ? 'text-indigo-300 font-medium' : 'text-[#bbb]'}`}>
+                  <span className={`flex-1 text-[11px] truncate ${isSelected ? 'text-brand-300 font-medium' : 'text-[#bbb]'}`}>
                     {layer.label}
                   </span>
 
@@ -223,22 +223,22 @@ export default function LayersPanel({ design, selectedId, onSelect, onDesignChan
             <button
               onClick={() => onArrange(selectedId, 'front')}
               title="Bring to Front"
-              className="py-1.5 rounded border border-[#383838] text-[11px] text-[#888] hover:bg-indigo-600/20 hover:border-indigo-600/40 hover:text-indigo-300 transition-colors"
+              className="py-1.5 rounded border border-[#383838] text-[11px] text-[#888] hover:bg-brand-600/20 hover:border-brand-600/40 hover:text-brand-300 transition-colors"
             >⤒</button>
             <button
               onClick={() => onArrange(selectedId, 'forward')}
               title="Move Forward"
-              className="py-1.5 rounded border border-[#383838] text-[11px] text-[#888] hover:bg-indigo-600/20 hover:border-indigo-600/40 hover:text-indigo-300 transition-colors"
+              className="py-1.5 rounded border border-[#383838] text-[11px] text-[#888] hover:bg-brand-600/20 hover:border-brand-600/40 hover:text-brand-300 transition-colors"
             >↑</button>
             <button
               onClick={() => onArrange(selectedId, 'backward')}
               title="Move Backward"
-              className="py-1.5 rounded border border-[#383838] text-[11px] text-[#888] hover:bg-indigo-600/20 hover:border-indigo-600/40 hover:text-indigo-300 transition-colors"
+              className="py-1.5 rounded border border-[#383838] text-[11px] text-[#888] hover:bg-brand-600/20 hover:border-brand-600/40 hover:text-brand-300 transition-colors"
             >↓</button>
             <button
               onClick={() => onArrange(selectedId, 'back')}
               title="Send to Back"
-              className="py-1.5 rounded border border-[#383838] text-[11px] text-[#888] hover:bg-indigo-600/20 hover:border-indigo-600/40 hover:text-indigo-300 transition-colors"
+              className="py-1.5 rounded border border-[#383838] text-[11px] text-[#888] hover:bg-brand-600/20 hover:border-brand-600/40 hover:text-brand-300 transition-colors"
             >⤓</button>
           </div>
           <div className="grid grid-cols-2 gap-1 mt-1">

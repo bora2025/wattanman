@@ -124,7 +124,7 @@ export default function AuthGuard({ children, requiredRole, allowedRoles }: Auth
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-800">
         <div className="text-center">
-          <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
         </div>
       </div>

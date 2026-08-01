@@ -88,14 +88,14 @@ function normalizePhotoUrl(url: string): string {
 }
 
 const accentBtn: Record<NonNullable<PortalManagerProps['accent']>, string> = {
-  indigo: 'bg-indigo-600 hover:bg-indigo-700',
+  indigo: 'bg-brand-600 hover:bg-brand-700',
   emerald: 'bg-emerald-600 hover:bg-emerald-700',
   amber: 'bg-amber-600 hover:bg-amber-700',
   sky: 'bg-sky-600 hover:bg-sky-700',
   violet: 'bg-violet-600 hover:bg-violet-700',
 }
 const accentRing: Record<NonNullable<PortalManagerProps['accent']>, string> = {
-  indigo: 'ring-indigo-500',
+  indigo: 'ring-brand-500',
   emerald: 'ring-emerald-500',
   amber: 'ring-amber-500',
   sky: 'ring-sky-500',
@@ -510,7 +510,7 @@ export default function PortalManager({
                           {formatRelativeTime(u.updatedAt)}
                         </td>
                         <td className="text-right space-x-2 whitespace-nowrap">
-                          <button onClick={() => openEdit(u)} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm font-medium">Edit</button>
+                          <button onClick={() => openEdit(u)} className="text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 text-sm font-medium">Edit</button>
                           <button onClick={() => { setResetUser(u); setResetPassword('') }} className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 text-sm font-medium">Reset PW</button>
                           <button onClick={() => setDeleteUser(u)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium">Delete</button>
                         </td>

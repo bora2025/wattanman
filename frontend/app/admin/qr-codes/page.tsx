@@ -738,7 +738,7 @@ export default function GenerateQRCodes() {
         <div className="page-content">
           <div className="flex min-h-screen items-center justify-center">
             <div className="text-center">
-              <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
             </div>
           </div>
@@ -752,7 +752,7 @@ export default function GenerateQRCodes() {
       {exporting && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg px-4 sm:px-8 py-4 sm:py-6 flex flex-col items-center gap-3">
-            <div className="animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+            <div className="animate-spin h-8 w-8 border-4 border-brand-500 border-t-transparent rounded-full" />
             <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Exporting, please wait…</p>
           </div>
         </div>
@@ -806,7 +806,7 @@ export default function GenerateQRCodes() {
                   onClick={() => setCardType('students')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     cardType === 'students'
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-brand-600 text-white'
                       : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                   }`}
                 >
@@ -859,7 +859,7 @@ export default function GenerateQRCodes() {
                       <button onClick={() => setShowTemplatePicker(true)} className="px-3 py-1.5 text-xs font-medium rounded-lg border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 transition-colors">
                         📂 Template
                       </button>
-                      <button onClick={() => setShowSaveTemplate(true)} className="px-3 py-1.5 text-xs font-medium rounded-lg border border-indigo-300 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 transition-colors">
+                      <button onClick={() => setShowSaveTemplate(true)} className="px-3 py-1.5 text-xs font-medium rounded-lg border border-brand-300 dark:border-brand-800 text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-950/40 hover:bg-brand-100 transition-colors">
                         {templateSaved ? '✅ Saved!' : '📋 Save as Template'}
                       </button>
                       <button onClick={handleEditorSave} className="btn-success btn-sm">
@@ -888,12 +888,12 @@ export default function GenerateQRCodes() {
                           onChange={(e) => setTemplateName(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && handleEditorSaveAsTemplate()}
                           placeholder="Template name"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 mb-4"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 mb-4"
                           autoFocus
                         />
                         <div className="flex justify-end gap-2">
                           <button onClick={() => setShowSaveTemplate(false)} className="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Cancel</button>
-                          <button onClick={handleEditorSaveAsTemplate} disabled={!templateName.trim()} className="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed">Save Template</button>
+                          <button onClick={handleEditorSaveAsTemplate} disabled={!templateName.trim()} className="px-4 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed">Save Template</button>
                         </div>
                       </div>
                     </div>
@@ -969,7 +969,7 @@ export default function GenerateQRCodes() {
                                       </div>
                                       <div className="flex items-center gap-2 mt-1">
                                         <span className={`inline-block px-2 py-0.5 text-[10px] rounded-full font-medium ${
-                                          tpl.cardType === 'student' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'
+                                          tpl.cardType === 'student' ? 'bg-brand-100 text-brand-600' : 'bg-emerald-100 text-emerald-600'
                                         }`}>{tpl.cardType}</span>
                                         <span className="text-[10px] text-slate-400 dark:text-slate-500">{new Date(tpl.createdAt).toLocaleDateString()}</span>
                                       </div>
@@ -1007,7 +1007,7 @@ export default function GenerateQRCodes() {
                       {/* Resize handle */}
                       <div
                         onMouseDown={handleEditorResizeStart}
-                        className="w-1.5 shrink-0 cursor-col-resize rounded-full hover:bg-indigo-400 bg-slate-300 transition-colors self-stretch"
+                        className="w-1.5 shrink-0 cursor-col-resize rounded-full hover:bg-brand-400 bg-slate-300 transition-colors self-stretch"
                         title="Drag to resize sidebar"
                       />
                       <Toolbar
@@ -1042,7 +1042,7 @@ export default function GenerateQRCodes() {
                           onClick={() => { setSelectedStudentClass(cls.id); setStudentSearch(''); setStudentPage(1); }}
                           className="card p-0 overflow-hidden text-left hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
                         >
-                          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 px-5 py-4">
+                          <div className="bg-gradient-to-br from-brand-500 to-purple-600 px-5 py-4">
                             <div className="flex items-center justify-between">
                               <span className="text-2xl">📖</span>
                               <span className="bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">
@@ -1058,7 +1058,7 @@ export default function GenerateQRCodes() {
                             <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                               {cls.teacher ? `👤 ${cls.teacher.name}` : 'No teacher'}
                             </div>
-                            <span className="text-indigo-400 group-hover:text-indigo-600 text-sm transition-colors">
+                            <span className="text-brand-400 group-hover:text-brand-600 text-sm transition-colors">
                               View →
                             </span>
                           </div>
@@ -1086,7 +1086,7 @@ export default function GenerateQRCodes() {
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                             <button
                               onClick={() => setSelectedStudentClass(null)}
-                              className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm transition-colors shrink-0"
+                              className="flex items-center gap-2 text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 font-medium text-sm transition-colors shrink-0"
                             >
                               ← Back to Classes
                             </button>
@@ -1110,7 +1110,7 @@ export default function GenerateQRCodes() {
                                   placeholder="Search students..."
                                   value={studentSearch}
                                   onChange={(e) => { setStudentSearch(e.target.value); setStudentPage(1); }}
-                                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 focus:border-brand-300 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
                                 />
                               </div>
                               {/* Download actions */}
@@ -1235,7 +1235,7 @@ export default function GenerateQRCodes() {
                                         onClick={() => setStudentPage(p)}
                                         className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${
                                           p === safePage
-                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            ? 'bg-brand-600 text-white border-brand-600'
                                             : 'border-slate-200 hover:bg-slate-50'
                                         }`}
                                       >
@@ -1274,7 +1274,7 @@ export default function GenerateQRCodes() {
                           value={staffSearch}
                           onChange={(e) => { setStaffSearch(e.target.value); setStaffPage(1); }}
                           placeholder="Search staff by name or email..."
-                          className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                          className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                         />
                         {staffSearch && (
                           <button onClick={() => { setStaffSearch(''); setStaffPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xs">✕</button>
@@ -1285,13 +1285,13 @@ export default function GenerateQRCodes() {
                       <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0">
                         <button
                           onClick={() => setStaffViewMode('grid')}
-                          className={`px-3 py-2 text-xs font-medium transition-colors ${staffViewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                          className={`px-3 py-2 text-xs font-medium transition-colors ${staffViewMode === 'grid' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
                         >
                           ▦ Grid
                         </button>
                         <button
                           onClick={() => setStaffViewMode('list')}
-                          className={`px-3 py-2 text-xs font-medium transition-colors ${staffViewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                          className={`px-3 py-2 text-xs font-medium transition-colors ${staffViewMode === 'list' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
                         >
                           ☰ List
                         </button>
@@ -1531,7 +1531,7 @@ export default function GenerateQRCodes() {
                               onClick={() => setStaffPage(p)}
                               className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${
                                 p === staffPageClamped
-                                  ? 'bg-indigo-600 text-white'
+                                  ? 'bg-brand-600 text-white'
                                   : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
                               }`}
                             >

@@ -101,7 +101,7 @@ function ImageUpload({ value, onChange, hint }: { value: string; onChange: (v: s
         </div>
       ) : (
         <div
-          className={`border-2 border-dashed rounded-xl cursor-pointer transition-all ${dragging ? 'border-indigo-400 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'}`}
+          className={`border-2 border-dashed rounded-xl cursor-pointer transition-all ${dragging ? 'border-brand-400 bg-brand-50' : 'border-gray-300 hover:border-brand-400 hover:bg-gray-50'}`}
           onClick={() => ref.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
           onDragLeave={() => setDragging(false)}
@@ -109,11 +109,11 @@ function ImageUpload({ value, onChange, hint }: { value: string; onChange: (v: s
         >
           <div className="flex flex-col items-center py-10 gap-2 text-center">
             {busy ? (
-              <div className="w-7 h-7 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <div className="w-12 h-12 rounded-full bg-brand-50 dark:bg-brand-950/40 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-brand-500 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
                   </svg>
                 </div>
@@ -178,15 +178,15 @@ function FeatureListEditor({ items, onChange }: { items: string[]; onChange: (v:
               </svg>
             </button>
           </div>
-          <div className="flex-none w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center">
-            <svg className="w-2.5 h-2.5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+          <div className="flex-none w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-950/40 flex items-center justify-center">
+            <svg className="w-2.5 h-2.5 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
           </div>
           <input
             value={item}
             onChange={(e) => edit(i, e.target.value)}
-            className="flex-1 px-3 py-1.5 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3 py-1.5 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
           <button type="button" onClick={() => remove(i)}
             className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors">
@@ -202,10 +202,10 @@ function FeatureListEditor({ items, onChange }: { items: string[]; onChange: (v:
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add() } }}
           placeholder="Add a feature point and press Enter…"
-          className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
         <button type="button" onClick={add}
-          className="px-4 py-2 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 text-sm font-medium rounded-lg transition-colors">
+          className="px-4 py-2 bg-brand-50 dark:bg-brand-950/40 hover:bg-brand-100 text-brand-700 dark:text-brand-300 text-sm font-medium rounded-lg transition-colors">
           + Add
         </button>
       </div>
@@ -335,7 +335,7 @@ function AboutContent() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -345,7 +345,7 @@ function AboutContent() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 mb-1">
-            <Link href="/admin/appearance" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Appearance</Link>
+            <Link href="/admin/appearance" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Appearance</Link>
             <span>›</span>
             <span className="text-gray-900 dark:text-slate-100 font-medium">About</span>
           </div>
@@ -365,7 +365,7 @@ function AboutContent() {
           <button
             onClick={save}
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-60"
+            className="flex items-center gap-2 px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-60"
           >
             {saving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
             {saving ? 'Saving…' : 'Save Changes'}
@@ -387,7 +387,7 @@ function AboutContent() {
                 value={settings.aboutBadge}
                 onChange={(e) => patch('aboutBadge', e.target.value)}
                 placeholder="About Us"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div>
@@ -396,7 +396,7 @@ function AboutContent() {
                 value={settings.aboutTitle}
                 onChange={(e) => patch('aboutTitle', e.target.value)}
                 placeholder="A Smarter Way to Manage Your School"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div>
@@ -406,7 +406,7 @@ function AboutContent() {
                 onChange={(e) => patch('aboutDescription', e.target.value)}
                 rows={4}
                 placeholder="Describe your school and its mission…"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-y"
               />
             </div>
           </div>
@@ -428,7 +428,7 @@ function AboutContent() {
                   value={settings.aboutCtaLabel}
                   onChange={(e) => patch('aboutCtaLabel', e.target.value)}
                   placeholder="Get Started Today"
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
               <div>
@@ -437,7 +437,7 @@ function AboutContent() {
                   value={settings.aboutCtaHref}
                   onChange={(e) => patch('aboutCtaHref', e.target.value)}
                   placeholder="/login"
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>
@@ -462,9 +462,9 @@ function AboutContent() {
         <div className="space-y-4">
           <div className="sticky top-6 space-y-4">
             <LivePreview s={settings} />
-            <div className="bg-indigo-50 dark:bg-indigo-950/40 rounded-xl p-4 text-sm text-indigo-700 dark:text-indigo-300 space-y-1">
+            <div className="bg-brand-50 dark:bg-brand-950/40 rounded-xl p-4 text-sm text-brand-700 dark:text-brand-300 space-y-1">
               <p className="font-semibold">💡 Tips</p>
-              <ul className="text-xs space-y-1 text-indigo-600 dark:text-indigo-400 list-disc list-inside">
+              <ul className="text-xs space-y-1 text-brand-600 dark:text-brand-400 list-disc list-inside">
                 <li>Keep the title under 60 characters for best readability.</li>
                 <li>3–5 feature points work best in the checklist.</li>
                 <li>The photo appears on the <strong>left</strong> on desktop, below the text on mobile.</li>
@@ -481,7 +481,7 @@ function AboutContent() {
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-60"
+          className="flex items-center gap-2 px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-60"
         >
           {saving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
           {saving ? 'Saving…' : 'Save Changes'}

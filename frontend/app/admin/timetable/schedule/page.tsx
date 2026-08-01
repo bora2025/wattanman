@@ -253,15 +253,15 @@ export default function SchedulePage() {
       <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.15s' }}>
         <table className="border-collapse text-xs select-none">
           <thead>
-            <tr className="bg-indigo-700 text-white sticky top-0 z-10">
-              <th className="border border-indigo-600 px-2 py-1 min-w-[80px] text-left sticky left-0 bg-indigo-700 z-20">
+            <tr className="bg-brand-700 text-white sticky top-0 z-10">
+              <th className="border border-brand-600 px-2 py-1 min-w-[80px] text-left sticky left-0 bg-brand-700 z-20">
                 Class / P
               </th>
               {days.map(d =>
                 periods.map(p => (
-                  <th key={`${d}_${p}`} className="border border-indigo-600 px-1 py-1 min-w-[96px] text-center font-medium">
+                  <th key={`${d}_${p}`} className="border border-brand-600 px-1 py-1 min-w-[96px] text-center font-medium">
                     <div>{DAY_LABELS[d - 1] ?? `D${d}`}</div>
-                    <div className="text-indigo-300 text-[10px] font-normal">P{p}</div>
+                    <div className="text-brand-300 text-[10px] font-normal">P{p}</div>
                   </th>
                 ))
               )}
@@ -269,7 +269,7 @@ export default function SchedulePage() {
           </thead>
           <tbody>
             {tt.classes.map(cls => (
-              <tr key={cls.id} className="even:bg-gray-50 hover:bg-indigo-50/30 transition-colors">
+              <tr key={cls.id} className="even:bg-gray-50 hover:bg-brand-50/30 transition-colors">
                 <td className="border border-gray-200 dark:border-slate-700 px-2 py-1 font-semibold align-middle whitespace-nowrap sticky left-0 bg-white dark:bg-slate-900 z-[5] shadow-sm">
                   <div className="flex flex-col gap-0.5">
                     {badge(cls.color, cls.short)}
@@ -285,7 +285,7 @@ export default function SchedulePage() {
                       <td
                         key={cellKey}
                         className={`border align-top p-0.5 min-h-[56px] w-24 transition-colors
-                          ${isOver ? 'bg-indigo-100 border-indigo-400' : 'border-gray-200'}`}
+                          ${isOver ? 'bg-brand-100 border-brand-400' : 'border-gray-200'}`}
                         onDragOver={ev => onDragOver(ev, cellKey)}
                         onDragLeave={onDragLeave}
                         onDrop={ev => onDrop(ev, cls.id, day, period)}
@@ -391,15 +391,15 @@ export default function SchedulePage() {
 
         {/* Left Panel: Lesson Cards */}
         <div className="w-64 shrink-0 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 flex flex-col">
-          <div className="px-3 py-3 border-b border-gray-100 dark:border-slate-800 bg-indigo-50 dark:bg-indigo-950/40">
-            <h2 className="font-bold text-indigo-800 dark:text-indigo-300 text-sm">Lesson Cards</h2>
-            <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-0.5">Drag → grid to schedule</p>
+          <div className="px-3 py-3 border-b border-gray-100 dark:border-slate-800 bg-brand-50 dark:bg-brand-950/40">
+            <h2 className="font-bold text-brand-800 dark:text-brand-300 text-sm">Lesson Cards</h2>
+            <p className="text-xs text-brand-500 dark:text-brand-400 mt-0.5">Drag → grid to schedule</p>
           </div>
 
           {/* Timetable selector */}
           <div className="px-3 py-2 border-b border-gray-100 dark:border-slate-800">
             <select
-              className="w-full border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-indigo-400"
+              className="w-full border border-gray-200 dark:border-slate-700 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-brand-400"
               value={selectedId}
               onChange={e => setSelectedId(e.target.value)}
             >
@@ -419,7 +419,7 @@ export default function SchedulePage() {
               </div>
               <div className="w-full h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                  className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-emerald-500' : 'bg-brand-500'}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -487,7 +487,7 @@ export default function SchedulePage() {
             <div className="flex rounded-lg border border-gray-200 dark:border-slate-700 overflow-hidden text-xs">
               <button
                 onClick={() => setViewMode('class')}
-                className={`px-3 py-1.5 transition-colors ${viewMode === 'class' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`px-3 py-1.5 transition-colors ${viewMode === 'class' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
               >By Class</button>
               <button
                 onClick={() => setViewMode('teacher')}
@@ -501,7 +501,7 @@ export default function SchedulePage() {
               <span className="w-10 text-center text-gray-500 dark:text-slate-400">{Math.round(zoom * 100)}%</span>
               <button onClick={() => setZoom(z => Math.min(2, +(z + 0.1).toFixed(1)))}
                 className="w-6 h-6 rounded border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-100 flex items-center justify-center font-bold">+</button>
-              <button onClick={() => setZoom(1)} className="text-indigo-500 dark:text-indigo-400 hover:underline ml-1">100%</button>
+              <button onClick={() => setZoom(1)} className="text-brand-500 dark:text-brand-400 hover:underline ml-1">100%</button>
             </div>
             <div className="ml-auto flex items-center gap-2">
               {saving && (
@@ -513,7 +513,7 @@ export default function SchedulePage() {
                   Saving…
                 </span>
               )}
-              <a href="/admin/timetable" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">← Back to Timetable</a>
+              <a href="/admin/timetable" className="text-xs text-brand-600 dark:text-brand-400 hover:underline">← Back to Timetable</a>
             </div>
           </div>
 
@@ -570,14 +570,14 @@ export default function SchedulePage() {
               <button
                 onClick={() => assignClassroom(assignEntry.id, null)}
                 className={`w-full text-left px-3 py-2 rounded border text-sm transition-colors
-                  ${!assignEntry.classroomId ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'}`}
+                  ${!assignEntry.classroomId ? 'border-brand-400 bg-brand-50 text-brand-700' : 'border-gray-200 hover:border-brand-300 hover:bg-gray-50'}`}
               >— No classroom —</button>
               {tt.classrooms.map(rm => (
                 <button
                   key={rm.id}
                   onClick={() => assignClassroom(assignEntry.id, rm.id)}
                   className={`w-full text-left px-3 py-2 rounded border text-sm transition-colors
-                    ${assignEntry.classroomId === rm.id ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'}`}
+                    ${assignEntry.classroomId === rm.id ? 'border-brand-400 bg-brand-50 text-brand-700' : 'border-gray-200 hover:border-brand-300 hover:bg-gray-50'}`}
                 >
                   <span className="font-medium">{rm.name}</span>
                   <span className="text-gray-400 ml-2 text-xs">{rm.short}</span>

@@ -156,13 +156,13 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
         <div className="flex border-b border-slate-200 dark:border-slate-700 px-6">
           <button
             onClick={() => setTab('blank')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px ${tab === 'blank' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px ${tab === 'blank' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
           >
             📄 Blank Project
           </button>
           <button
             onClick={() => setTab('template')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px ${tab === 'template' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px ${tab === 'template' ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
           >
             🎨 From Template
           </button>
@@ -182,7 +182,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                       onClick={() => setPurpose(p.id)}
                       className={`p-3 rounded-xl border-2 text-left transition-all ${
                         purpose === p.id
-                          ? 'border-indigo-500 bg-indigo-50'
+                          ? 'border-brand-500 bg-brand-50'
                           : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
@@ -193,7 +193,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                   ))}
                 </div>
                 {purpose !== 'general' && (
-                  <p className="mt-1.5 text-[11px] text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg px-3 py-1.5">
+                  <p className="mt-1.5 text-[11px] text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/40 rounded-lg px-3 py-1.5">
                     Text placeholders like <code className="font-mono bg-white dark:bg-slate-900 px-1 rounded">{'{{name}}'}</code>, <code className="font-mono bg-white dark:bg-slate-900 px-1 rounded">{'{{class}}'}</code> will be replaced with real data when printing.
                   </p>
                 )}
@@ -209,7 +209,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                       onClick={() => handlePresetSelect(preset)}
                       className={`p-3 rounded-xl border-2 text-left transition-all ${
                         selectedPreset === preset.key && !isCustomSize
-                          ? 'border-indigo-500 bg-indigo-50'
+                          ? 'border-brand-500 bg-brand-50'
                           : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
@@ -221,7 +221,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                     onClick={() => { setIsCustomSize(true); setSelectedPreset(''); }}
                     className={`p-3 rounded-xl border-2 text-left transition-all ${
                       isCustomSize
-                        ? 'border-indigo-500 bg-indigo-50'
+                        ? 'border-brand-500 bg-brand-50'
                         : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -241,7 +241,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                       type="number"
                       value={widthVal}
                       onChange={(e) => { setIsCustomSize(true); setSelectedPreset(''); setWidthVal(Number(e.target.value)); }}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400"
                     />
                   </div>
                   <div className="pb-2 text-slate-400 dark:text-slate-500 font-medium">×</div>
@@ -251,7 +251,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                       type="number"
                       value={heightVal}
                       onChange={(e) => { setIsCustomSize(true); setSelectedPreset(''); setHeightVal(Number(e.target.value)); }}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400"
                     />
                   </div>
                   <div className="flex-1">
@@ -259,7 +259,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                     <select
                       value={unit}
                       onChange={(e) => handleUnitChange(e.target.value as Unit)}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400"
                     >
                       <option value="px">px</option>
                       <option value="cm">cm</option>
@@ -279,7 +279,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                       key={d}
                       onClick={() => handleDpiChange(d)}
                       className={`flex-1 py-2 text-sm rounded-lg border-2 font-medium transition-all ${
-                        dpi === d ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                        dpi === d ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'
                       }`}
                     >
                       {d}
@@ -323,7 +323,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                       key={b}
                       onClick={() => setBitDepth(b)}
                       className={`flex-1 py-2 text-sm rounded-lg border-2 font-medium transition-all ${
-                        bitDepth === b ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                        bitDepth === b ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'
                       }`}
                     >
                       {b}-bit
@@ -366,14 +366,14 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
                     <button
                       key={preset.key}
                       onClick={() => handleApplyTemplate(preset.design)}
-                      className="rounded-xl border-2 border-indigo-100 dark:border-indigo-900 bg-white dark:bg-slate-900 hover:border-indigo-400 hover:shadow-md transition-all text-left overflow-hidden group"
+                      className="rounded-xl border-2 border-brand-100 dark:border-brand-900 bg-white dark:bg-slate-900 hover:border-brand-400 hover:shadow-md transition-all text-left overflow-hidden group"
                     >
-                      <div className="h-20 bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center text-4xl">
+                      <div className="h-20 bg-gradient-to-br from-brand-50 to-blue-50 flex items-center justify-center text-4xl">
                         {preset.emoji}
                       </div>
                       <div className="p-3">
                         <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{preset.label}</div>
-                        <div className="mt-1 inline-block px-2 py-0.5 text-[10px] rounded-full bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-medium">Student</div>
+                        <div className="mt-1 inline-block px-2 py-0.5 text-[10px] rounded-full bg-brand-100 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 font-medium">Student</div>
                       </div>
                     </button>
                   ))}
@@ -413,7 +413,7 @@ export default function NewProjectDialog({ onClose, onCreate }: NewProjectDialog
             <button onClick={onClose} className="px-5 py-2 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
               Cancel
             </button>
-            <button onClick={handleCreateBlank} className="px-5 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+            <button onClick={handleCreateBlank} className="px-5 py-2 text-sm font-medium rounded-lg bg-brand-600 text-white hover:bg-brand-700 transition-colors">
               Create
             </button>
           </div>

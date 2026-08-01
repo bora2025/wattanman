@@ -101,7 +101,7 @@ const PAPER_SIZES: Record<string, { width: string; minHeight: string }> = {
 
 export default function StaffPrintReportPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin"></div></div>}>
       <StaffPrintReportContent />
     </Suspense>
   )
@@ -202,7 +202,7 @@ function StaffPrintReportContent() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm text-slate-500 mt-3">{t('common.loading')}</p>
         </div>
       </div>

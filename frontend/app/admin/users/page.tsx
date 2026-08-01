@@ -446,7 +446,7 @@ export default function ManageUsers() {
                   type="file"
                   accept=".csv,.html,.htm"
                   onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
-                  className="text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 file:cursor-pointer"
+                  className="text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-600 hover:file:bg-brand-100 file:cursor-pointer"
                 />
               </div>
             </div>
@@ -509,7 +509,7 @@ export default function ManageUsers() {
                 onClick={() => setFilter(r)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   filter === r
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-brand-600 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >

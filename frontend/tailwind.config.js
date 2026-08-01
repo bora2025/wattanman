@@ -32,6 +32,7 @@ module.exports = {
         // etc. across every file that uses these classes, with no
         // per-theme code changes ever needed again.
         brand: {
+          50: 'var(--brand-50)',
           100: 'var(--brand-100)',
           200: 'var(--brand-200)',
           300: 'var(--brand-300)',

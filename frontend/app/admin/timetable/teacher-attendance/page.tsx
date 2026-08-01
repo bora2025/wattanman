@@ -132,7 +132,7 @@ export default function TeacherAttendancePage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
             <div>
-              <button onClick={() => router.push('/admin/timetable/teachers')} className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline mb-1">← Back to Teachers</button>
+              <button onClick={() => router.push('/admin/timetable/teachers')} className="text-brand-600 dark:text-brand-400 text-sm hover:underline mb-1">← Back to Teachers</button>
               <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Teacher Attendance</h1>
               <p className="text-sm text-gray-500 dark:text-slate-400">Based on timetable — QR scan or manual mark</p>
             </div>
@@ -140,7 +140,7 @@ export default function TeacherAttendancePage() {
               <button onClick={() => setShowQrModal(true)} className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium text-sm hover:bg-emerald-700">
                 📷 Scan QR
               </button>
-              <button onClick={() => setShowMarkModal(true)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700">
+              <button onClick={() => setShowMarkModal(true)} className="px-4 py-2 bg-brand-600 text-white rounded-lg font-medium text-sm hover:bg-brand-700">
                 ✎ Manual Mark
               </button>
             </div>
@@ -150,7 +150,7 @@ export default function TeacherAttendancePage() {
           <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-2 flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-slate-300 font-medium">Timetable:</label>
-              <select className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              <select className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 value={selectedTT} onChange={e => {
                   setSelectedTT(e.target.value)
                   const tt = timetables.find(t => t.id === e.target.value)
@@ -161,15 +161,15 @@ export default function TeacherAttendancePage() {
             </div>
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-slate-300">From:</label>
-              <input type="date" className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              <input type="date" className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 value={startDate} onChange={e => setStartDate(e.target.value)} />
             </div>
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-slate-300">To:</label>
-              <input type="date" className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              <input type="date" className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 value={endDate} onChange={e => setEndDate(e.target.value)} />
             </div>
-            <button onClick={fetchReport} className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900 rounded-lg text-sm font-medium hover:bg-indigo-100">
+            <button onClick={fetchReport} className="px-3 py-1.5 bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-900 rounded-lg text-sm font-medium hover:bg-brand-100">
               Refresh
             </button>
           </div>
@@ -184,20 +184,20 @@ export default function TeacherAttendancePage() {
               <div className="overflow-auto rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
                 <table className="text-xs border-collapse">
                   <thead>
-                    <tr className="bg-indigo-700 text-white">
-                      <th className="border border-indigo-800 px-3 py-2 text-left sticky left-0 bg-indigo-700 min-w-[140px]">Teacher</th>
+                    <tr className="bg-brand-700 text-white">
+                      <th className="border border-brand-800 px-3 py-2 text-left sticky left-0 bg-brand-700 min-w-[140px]">Teacher</th>
                       {dates.map(d => (
                         <th key={d} colSpan={periodArr.length}
-                          className="border border-indigo-800 px-2 py-2 text-center min-w-[80px]">
+                          className="border border-brand-800 px-2 py-2 text-center min-w-[80px]">
                           {d}
                         </th>
                       ))}
                     </tr>
-                    <tr className="bg-indigo-600 text-white">
-                      <th className="border border-indigo-700 px-3 py-1 text-left sticky left-0 bg-indigo-600" />
+                    <tr className="bg-brand-600 text-white">
+                      <th className="border border-brand-700 px-3 py-1 text-left sticky left-0 bg-brand-600" />
                       {dates.flatMap(d =>
                         periodArr.map(p => (
-                          <th key={`${d}_${p}`} className="border border-indigo-700 px-1 py-1 text-center font-normal">
+                          <th key={`${d}_${p}`} className="border border-brand-700 px-1 py-1 text-center font-normal">
                             P{p}
                           </th>
                         ))
@@ -254,7 +254,7 @@ export default function TeacherAttendancePage() {
             <div className="px-5 py-4 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Teacher</label>
-                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={markTeacherId} onChange={e => setMarkTeacherId(e.target.value)}>
                   <option value="">Select teacher</option>
                   {teachers.map(t => <option key={t.id} value={t.id}>{t.lastName} {t.firstName}</option>)}
@@ -262,12 +262,12 @@ export default function TeacherAttendancePage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Date</label>
-                <input type="date" className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <input type="date" className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={markDate} onChange={e => setMarkDate(e.target.value)} />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Period</label>
-                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={markPeriod} onChange={e => setMarkPeriod(+e.target.value)}>
                   {periodArr.map(p => <option key={p} value={p}>Period {p}</option>)}
                 </select>
@@ -287,7 +287,7 @@ export default function TeacherAttendancePage() {
             <div className="px-5 py-3 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-2">
               <button onClick={() => setShowMarkModal(false)} className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium">Cancel</button>
               <button onClick={handleMark} disabled={saving || !markTeacherId}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
+                className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-40">
                 {saving ? 'Saving…' : 'Mark'}
               </button>
             </div>
@@ -308,14 +308,14 @@ export default function TeacherAttendancePage() {
               <p className="text-sm text-gray-500 dark:text-slate-400">Point a QR scanner at the teacher's QR code, or paste the code below.</p>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Period</label>
-                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <select className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={qrPeriod} onChange={e => setQrPeriod(+e.target.value)}>
                   {periodArr.map(p => <option key={p} value={p}>Period {p}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">QR Code</label>
-                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={qrInput} onChange={e => setQrInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') handleScanQr() }}
                   placeholder="Scan or paste QR code here…"

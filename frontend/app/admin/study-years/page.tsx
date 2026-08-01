@@ -240,7 +240,7 @@ export default function StudyYearsPage() {
                     <div className="flex items-start gap-4">
                       {/* Preview */}
                       <div
-                        className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center bg-slate-50 dark:bg-slate-800 flex-shrink-0 overflow-hidden cursor-pointer hover:border-indigo-400 transition-colors"
+                        className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center bg-slate-50 dark:bg-slate-800 flex-shrink-0 overflow-hidden cursor-pointer hover:border-brand-400 transition-colors"
                         onClick={() => logoInputRef.current?.click()}
                         title="Click to upload logo"
                       >
@@ -310,9 +310,9 @@ export default function StudyYearsPage() {
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {studyYears.map(sy => (
-                  <div key={sy.id} className={`card p-5 relative ${sy.isCurrent ? 'ring-2 ring-indigo-500 bg-indigo-50/30' : ''}`}>
+                  <div key={sy.id} className={`card p-5 relative ${sy.isCurrent ? 'ring-2 ring-brand-500 bg-brand-50/30' : ''}`}>
                     {sy.isCurrent && (
-                      <span className="absolute top-3 right-3 text-xs bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2 py-0.5 rounded-full">
+                      <span className="absolute top-3 right-3 text-xs bg-brand-100 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 font-semibold px-2 py-0.5 rounded-full">
                         Current
                       </span>
                     )}
@@ -321,7 +321,7 @@ export default function StudyYearsPage() {
                         {sy.logoUrl ? (
                           <img src={sy.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                          <div className="w-full h-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
                             {sy.year.toString().slice(-2)}
                           </div>
                         )}
@@ -329,7 +329,7 @@ export default function StudyYearsPage() {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-lg leading-tight">{sy.label || sy.year}</h3>
                         {sy.schoolName && (
-                          <p className="text-sm text-indigo-700 dark:text-indigo-300 font-medium mt-0.5 truncate" style={{ fontFamily: '"Khmer", var(--font-khmer), sans-serif' }}>{sy.schoolName}</p>
+                          <p className="text-sm text-brand-700 dark:text-brand-300 font-medium mt-0.5 truncate" style={{ fontFamily: '"Khmer", var(--font-khmer), sans-serif' }}>{sy.schoolName}</p>
                         )}
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                           {sy._count.classes} class{sy._count.classes !== 1 ? 'es' : ''}
@@ -345,7 +345,7 @@ export default function StudyYearsPage() {
                     </div>
                     <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
                       {!sy.isCurrent && (
-                        <button onClick={() => handleSetCurrent(sy.id)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors">
+                        <button onClick={() => handleSetCurrent(sy.id)} className="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 font-medium px-2 py-1 rounded hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-colors">
                           Set Current
                         </button>
                       )}

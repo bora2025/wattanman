@@ -147,7 +147,7 @@ export default function StaffCvEditorPage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
-                <Link href="/admin/employees" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← Employees</Link>
+                <Link href="/admin/employees" className="text-sm text-brand-600 dark:text-brand-400 hover:underline">← Employees</Link>
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">📄 Curriculum Vitae</h1>
                 {user && <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{user.name} {user.department ? `· ${user.department.name}` : ''}</p>}
               </div>
@@ -174,7 +174,7 @@ export default function StaffCvEditorPage() {
                   {user.photo ? (
                     <img src={user.photo} alt={user.name} className="w-16 h-16 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl font-bold">
+                    <div className="w-16 h-16 rounded-full bg-brand-100 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xl font-bold">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -194,15 +194,15 @@ export default function StaffCvEditorPage() {
                   <div>
                     <label className="form-label text-xs">Professional Summary</label>
                     <textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={4} placeholder="A short paragraph summarizing experience and strengths…"
-                      className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                      className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-300" />
                   </div>
                   <div>
                     <label className="form-label text-xs">Skills</label>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {skills.map((s) => (
-                        <span key={s} className="inline-flex items-center gap-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-medium px-2.5 py-1 rounded-full">
+                        <span key={s} className="inline-flex items-center gap-1 bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 text-xs font-medium px-2.5 py-1 rounded-full">
                           {s}
-                          <button type="button" onClick={() => removeSkill(s)} className="text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">✕</button>
+                          <button type="button" onClick={() => removeSkill(s)} className="text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">✕</button>
                         </span>
                       ))}
                       {skills.length === 0 && <span className="text-xs text-slate-400 dark:text-slate-500">No skills added yet.</span>}
@@ -225,7 +225,7 @@ export default function StaffCvEditorPage() {
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">🎓 Education</h2>
-                    <button type="button" onClick={() => setEducation((prev) => [...prev, emptyEducation()])} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">+ Add entry</button>
+                    <button type="button" onClick={() => setEducation((prev) => [...prev, emptyEducation()])} className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">+ Add entry</button>
                   </div>
                   {education.length === 0 && <p className="text-xs text-slate-400 dark:text-slate-500">No education entries yet.</p>}
                   {education.map((row, i) => (
@@ -259,7 +259,7 @@ export default function StaffCvEditorPage() {
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">💼 Work Experience</h2>
-                    <button type="button" onClick={() => setExperience((prev) => [...prev, emptyExperience()])} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">+ Add entry</button>
+                    <button type="button" onClick={() => setExperience((prev) => [...prev, emptyExperience()])} className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">+ Add entry</button>
                   </div>
                   {experience.length === 0 && <p className="text-xs text-slate-400 dark:text-slate-500">No work experience entries yet.</p>}
                   {experience.map((row, i) => (
@@ -284,7 +284,7 @@ export default function StaffCvEditorPage() {
                       <div className="sm:col-span-2">
                         <label className="form-label text-xs">Description</label>
                         <textarea value={row.description} onChange={(e) => setExperience((prev) => prev.map((r, idx) => idx === i ? { ...r, description: e.target.value } : r))} rows={2}
-                          className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Key responsibilities / achievements…" />
+                          className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-300" placeholder="Key responsibilities / achievements…" />
                       </div>
                     </div>
                   ))}
@@ -294,7 +294,7 @@ export default function StaffCvEditorPage() {
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">🏅 Certifications</h2>
-                    <button type="button" onClick={() => setCertifications((prev) => [...prev, emptyCertification()])} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">+ Add entry</button>
+                    <button type="button" onClick={() => setCertifications((prev) => [...prev, emptyCertification()])} className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">+ Add entry</button>
                   </div>
                   {certifications.length === 0 && <p className="text-xs text-slate-400 dark:text-slate-500">No certifications yet.</p>}
                   {certifications.map((row, i) => (
@@ -317,7 +317,7 @@ export default function StaffCvEditorPage() {
                 </div>
 
                 <div className="flex items-center gap-3 pb-8">
-                  <button type="button" onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-sm disabled:opacity-60">
+                  <button type="button" onClick={handleSave} disabled={saving} className="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-sm disabled:opacity-60">
                     {saving ? 'Saving…' : 'Save CV'}
                   </button>
                   {saved && <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">✓ Saved</span>}

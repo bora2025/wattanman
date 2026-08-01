@@ -172,7 +172,7 @@ function TopBtn({ icon, label, title, onClick, disabled, active, variant = 'defa
   const variants: Record<string, string> = {
     default: active ? 'bg-[#3a3a3a] text-white' : 'text-[#aaa] hover:bg-[#333] hover:text-white',
     emerald: active ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-400 hover:bg-emerald-950/60 hover:text-emerald-300',
-    indigo: active ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-400 hover:bg-indigo-950/60 hover:text-indigo-300',
+    indigo: active ? 'bg-brand-600 text-white shadow-sm' : 'text-brand-400 hover:bg-brand-950/60 hover:text-brand-300',
     violet: active ? 'bg-violet-600 text-white shadow-sm' : 'text-violet-400 hover:bg-violet-950/60 hover:text-violet-300',
     amber: active ? 'bg-amber-500 text-white shadow-sm' : 'text-amber-400 hover:bg-amber-950/60 hover:text-amber-300',
     danger: 'text-red-400 hover:bg-red-950/40 hover:text-red-300',
@@ -1143,7 +1143,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         ) : (
           <div className="flex rounded border border-[#444] overflow-hidden shrink-0 text-[11px] font-medium">
             <button onClick={() => handleCardTypeChange('student')} title="Student ID Card"
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'student' ? 'bg-indigo-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${design.cardType === 'student' ? 'bg-brand-600 text-white' : 'text-[#999] hover:bg-[#333] hover:text-white'}`}>
               <Icons.Student /> <span className="hidden sm:inline">Student</span>
             </button>
             <button onClick={() => handleCardTypeChange('staff')} title="Staff ID Card"
@@ -1171,7 +1171,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           <TopBtn icon={exporting ? <Icons.Spinner /> : <Icons.Export />} label={exporting ? 'Exporting…' : 'Export'} onClick={(e) => { e.stopPropagation(); setShowExportMenu((v) => !v); }} disabled={!!exporting} variant="indigo" active={showExportMenu} />
           {showExportMenu && (
             <div className="absolute top-full left-0 mt-1 bg-[#2a2a2a] rounded-lg shadow-2xl border border-[#444] py-1 z-50 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
-              <button onClick={handleExportPNG} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[#ccc] hover:bg-indigo-600/20 hover:text-indigo-300 transition-colors text-left"><Icons.ExportPng /> Export PNG</button>
+              <button onClick={handleExportPNG} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[#ccc] hover:bg-brand-600/20 hover:text-brand-300 transition-colors text-left"><Icons.ExportPng /> Export PNG</button>
               <button onClick={handleExportPDF} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[#ccc] hover:bg-red-600/20 hover:text-red-300 transition-colors text-left"><Icons.ExportPdf /> Export PDF</button>
             </div>
           )}
@@ -1216,7 +1216,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
         <div className="shrink-0 flex items-center gap-1.5 bg-[#252525] border-b border-[#383838] px-3 py-1.5 z-10 overflow-x-auto">
 
           {/* Element badge */}
-          <span className="text-[9px] font-bold uppercase tracking-widest text-white bg-indigo-600 rounded px-1.5 py-0.5 shrink-0 font-mono">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-white bg-brand-600 rounded px-1.5 py-0.5 shrink-0 font-mono">
             {selText ? 'T' : selShape ? selShape.type[0].toUpperCase() : selLogo ? 'Img' : selPhoto ? 'Ph' : selQr ? 'QR' : '?'}
           </span>
 
@@ -1227,7 +1227,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
               <select
                 value={selText.fontFamily ?? 'Inter, sans-serif'}
                 onChange={(e) => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontFamily: e.target.value } : t) }))}
-                className="text-xs border border-[#444] rounded px-1.5 py-1 bg-[#333] text-[#ddd] shrink-0 max-w-[110px] focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="text-xs border border-[#444] rounded px-1.5 py-1 bg-[#333] text-[#ddd] shrink-0 max-w-[110px] focus:outline-none focus:ring-1 focus:ring-brand-500"
                 title="Font Family"
               >
                 {FONT_OPTIONS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
@@ -1260,7 +1260,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                 onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontWeight: t.fontWeight === 'bold' ? 'normal' : 'bold' } : t) }))}
                 title="Bold (B)"
                 className={`text-xs font-bold w-7 h-7 rounded border transition-colors shrink-0 ${
-                  selText.fontWeight === 'bold' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[#444] text-[#999] hover:bg-[#3a3a3a] hover:text-white'
+                  selText.fontWeight === 'bold' ? 'bg-brand-600 text-white border-brand-600' : 'border-[#444] text-[#999] hover:bg-[#3a3a3a] hover:text-white'
                 }`}
               >B</button>
 
@@ -1269,7 +1269,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                 onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, fontStyle: t.fontStyle === 'italic' ? 'normal' : 'italic' } : t) }))}
                 title="Italic (I)"
                 className={`text-xs italic font-semibold w-7 h-7 rounded border transition-colors shrink-0 ${
-                  selText.fontStyle === 'italic' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-[#444] text-[#999] hover:bg-[#3a3a3a] hover:text-white'
+                  selText.fontStyle === 'italic' ? 'bg-brand-600 text-white border-brand-600' : 'border-[#444] text-[#999] hover:bg-[#3a3a3a] hover:text-white'
                 }`}
               >I</button>
 
@@ -1281,7 +1281,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                     onClick={() => setDesign((prev) => ({ ...prev, texts: prev.texts.map((t) => t.id === selectedId ? { ...t, textAlign: align } : t) }))}
                     title={`Align ${align}`}
                     className={`w-7 h-7 flex items-center justify-center transition-colors ${
-                      selText.textAlign === align ? 'bg-indigo-600 text-white' : 'text-[#888] hover:bg-[#3a3a3a] hover:text-white'
+                      selText.textAlign === align ? 'bg-brand-600 text-white' : 'text-[#888] hover:bg-[#3a3a3a] hover:text-white'
                     }`}
                   >
                     {align === 'left' && (
@@ -1345,7 +1345,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                   type="range" min={0} max={1} step={0.05}
                   value={selShape.opacity ?? 1}
                   onChange={(e) => setDesign((prev) => ({ ...prev, shapes: (prev.shapes ?? []).map((s) => s.id === selectedId ? { ...s, opacity: parseFloat(e.target.value) } : s) }))}
-                  className="w-16 accent-indigo-500"
+                  className="w-16 accent-brand-500"
                   title={`Opacity: ${Math.round((selShape.opacity ?? 1) * 100)}%`}
                 />
                 <span className="text-xs text-[#666] w-7">{Math.round((selShape.opacity ?? 1) * 100)}%</span>
@@ -1383,7 +1383,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
                 type="range" min={0} max={50} step={1}
                 value={selPhoto.borderRadius ?? 0}
                 onChange={(e) => setDesign((prev) => prev.photo ? { ...prev, photo: { ...prev.photo, borderRadius: parseInt(e.target.value) } } : prev)}
-                className="w-14 accent-indigo-500"
+                className="w-14 accent-brand-500"
                 title={`Border Radius: ${selPhoto.borderRadius ?? 0}px`}
               />
               <span className="text-xs text-[#666] w-5">{selPhoto.borderRadius ?? 0}</span>
@@ -1394,10 +1394,10 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 
           {/* ── ARRANGE (always) ── */}
           <span className="text-[10px] text-[#666] shrink-0 uppercase tracking-wider">Arrange</span>
-          <button onClick={() => handleArrange(selectedId, 'front')} title="Bring to Front" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-indigo-600/20 hover:text-indigo-300 hover:border-indigo-600/40 transition-colors shrink-0">⤒ Front</button>
-          <button onClick={() => handleArrange(selectedId, 'forward')} title="Move Forward" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-indigo-600/20 hover:text-indigo-300 hover:border-indigo-600/40 transition-colors shrink-0">↑ Fwd</button>
-          <button onClick={() => handleArrange(selectedId, 'backward')} title="Move Backward" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-indigo-600/20 hover:text-indigo-300 hover:border-indigo-600/40 transition-colors shrink-0">↓ Bwd</button>
-          <button onClick={() => handleArrange(selectedId, 'back')} title="Send to Back" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-indigo-600/20 hover:text-indigo-300 hover:border-indigo-600/40 transition-colors shrink-0">⤓ Back</button>
+          <button onClick={() => handleArrange(selectedId, 'front')} title="Bring to Front" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-brand-600/20 hover:text-brand-300 hover:border-brand-600/40 transition-colors shrink-0">⤒ Front</button>
+          <button onClick={() => handleArrange(selectedId, 'forward')} title="Move Forward" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-brand-600/20 hover:text-brand-300 hover:border-brand-600/40 transition-colors shrink-0">↑ Fwd</button>
+          <button onClick={() => handleArrange(selectedId, 'backward')} title="Move Backward" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-brand-600/20 hover:text-brand-300 hover:border-brand-600/40 transition-colors shrink-0">↓ Bwd</button>
+          <button onClick={() => handleArrange(selectedId, 'back')} title="Send to Back" className="text-[11px] px-2 py-0.5 rounded border border-[#444] text-[#999] hover:bg-brand-600/20 hover:text-brand-300 hover:border-brand-600/40 transition-colors shrink-0">⤓ Back</button>
           <Divider />
 
           {/* Duplicate & Delete */}
@@ -1509,19 +1509,19 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           {/* Zoom footer bar */}
           <div className="shrink-0 flex items-center gap-2 px-4 py-1.5 bg-[#1a1a1a] border-t border-[#333] select-none">
             <button onClick={() => setZoom((z) => Math.max(25, z - 10))} title="Zoom Out" className="w-6 h-6 flex items-center justify-center rounded text-[#777] hover:bg-[#333] hover:text-white text-sm font-bold transition-colors">−</button>
-            <input type="range" min={25} max={200} step={5} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="w-28 accent-indigo-500" title={`Zoom: ${zoom}%`} />
+            <input type="range" min={25} max={200} step={5} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="w-28 accent-brand-500" title={`Zoom: ${zoom}%`} />
             <button onClick={() => setZoom((z) => Math.min(200, z + 10))} title="Zoom In" className="w-6 h-6 flex items-center justify-center rounded text-[#777] hover:bg-[#333] hover:text-white text-sm font-bold transition-colors">+</button>
             <button onClick={() => setZoom(100)} className="text-xs text-[#666] hover:text-white font-mono min-w-[3rem] transition-colors" title="Reset Zoom">{zoom}%</button>
             <div className="flex-1" />
             {/* Save / sync status */}
             {autoSaveStatus === 'saving' && <span className="flex items-center gap-1 text-[10px] text-[#777]"><Icons.Spinner />Saving…</span>}
             {autoSaveStatus === 'saved' && <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Saved</span>}
-            {syncStatus === 'syncing' && <span className="flex items-center gap-1 text-[10px] text-indigo-400"><Icons.Sync />Syncing</span>}
+            {syncStatus === 'syncing' && <span className="flex items-center gap-1 text-[10px] text-brand-400"><Icons.Sync />Syncing</span>}
             {syncStatus === 'synced' && <span className="flex items-center gap-1 text-[10px] text-emerald-400"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Synced</span>}
             {syncStatus === 'error' && <span className="flex items-center gap-1 text-[10px] text-red-400"><span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" /><button onClick={() => syncToServer(design)} className="underline">Retry</button></span>}
             {(autoSaveStatus !== 'idle' || syncStatus !== 'idle') && <span className="text-[#444]">·</span>}
             <span className="text-[10px] text-[#555] hidden md:inline tracking-wide">{design.width}×{design.height}px · {design.cardType}</span>
-            {showGrid && <span className="text-[10px] text-indigo-400">Grid on</span>}
+            {showGrid && <span className="text-[10px] text-brand-400">Grid on</span>}
           </div>
         </div>
 
@@ -1561,10 +1561,10 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
           <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">📋 Save as Template</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Save the current <span className="font-medium text-slate-700 dark:text-slate-200">{design.cardType}</span> card design as a reusable template.</p>
-            <input type="text" value={templateName} onChange={(e) => setTemplateName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveAsTemplate()} placeholder="Template name…" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 mb-4" autoFocus />
+            <input type="text" value={templateName} onChange={(e) => setTemplateName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveAsTemplate()} placeholder="Template name…" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 mb-4" autoFocus />
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowSaveTemplate(false)} className="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Cancel</button>
-              <button onClick={handleSaveAsTemplate} disabled={!templateName.trim()} className="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-40">Save Template</button>
+              <button onClick={handleSaveAsTemplate} disabled={!templateName.trim()} className="px-4 py-2 text-sm rounded-lg bg-brand-600 text-white hover:bg-brand-700 transition-colors disabled:opacity-40">Save Template</button>
             </div>
           </div>
         </div>
@@ -1794,7 +1794,7 @@ export default function CardEditor({ initialCardType, openNewProject, onSave }: 
 // ── Helper: Template Card (for picker modal) ─────────────────────────────────
 function TemplateCard({ preview, emoji, label, onClick, small }: { preview?: string; emoji: string; label: string; onClick: () => void; small?: boolean }) {
   return (
-    <button onClick={onClick} className="rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 bg-white dark:bg-slate-900 transition-all text-left overflow-hidden w-full">
+    <button onClick={onClick} className="rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/40 bg-white dark:bg-slate-900 transition-all text-left overflow-hidden w-full">
       <div className={`bg-slate-50 flex items-center justify-center border-b border-slate-100 ${small ? 'h-20 p-1.5' : 'h-28 p-3'}`}>
         {preview ? <img src={preview} alt={label} className="rounded shadow-sm max-h-full object-contain" /> : <span className="text-slate-300 text-xs">Loading…</span>}
       </div>
@@ -1849,7 +1849,7 @@ function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNew
         {/* Branding */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-lg font-black shadow-lg shadow-indigo-900/50 shrink-0">W</div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center text-lg font-black shadow-lg shadow-brand-900/50 shrink-0">W</div>
             <div>
               <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.15em] leading-none mb-0.5">System</p>
               <p className="text-lg font-black text-white leading-none tracking-tight">Wattaman</p>
@@ -1864,11 +1864,11 @@ function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNew
           <div className="space-y-1.5">
             <button
               onClick={onNewStudent}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-indigo-600/25 border border-white/[0.06] hover:border-indigo-500/50 transition-all text-left group"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-brand-600/25 border border-white/[0.06] hover:border-brand-500/50 transition-all text-left group"
             >
               <span className="text-xl leading-none shrink-0">🎓</span>
               <div>
-                <div className="text-[12px] font-semibold text-white group-hover:text-indigo-200 transition-colors">Student ID Card</div>
+                <div className="text-[12px] font-semibold text-white group-hover:text-brand-200 transition-colors">Student ID Card</div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Photo card with student data</div>
               </div>
             </button>
@@ -1977,7 +1977,7 @@ function StartScreen({ previews, savedTemplates, onNewStudent, onNewStaff, onNew
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mb-6">
           {BUILTIN_START_ITEMS.filter((i) => i.type === 'student' || i.type === 'staff' || i.type === 'teacher-part-time').map(({ key, design, label, emoji }) => (
             <button key={key} onClick={() => onOpen(design)}
-              className="group rounded-xl overflow-hidden border border-white/[0.07] hover:border-indigo-400/60 bg-[#13141a] hover:bg-[#1e2035] transition-all text-left shadow-sm hover:shadow-indigo-900/30 hover:shadow-lg"
+              className="group rounded-xl overflow-hidden border border-white/[0.07] hover:border-brand-400/60 bg-[#13141a] hover:bg-[#1e2035] transition-all text-left shadow-sm hover:shadow-brand-900/30 hover:shadow-lg"
             >
               <div className="bg-[#0d0e12] h-28 flex items-center justify-center p-2 relative">
                 {previews[key] ? (

@@ -53,8 +53,8 @@ const ACTION_STYLES: Record<string, string> = {
   LOGIN: 'bg-sky-100 text-sky-700 border-sky-200',
   LOGIN_FAILED: 'bg-rose-100 text-rose-700 border-rose-200',
   LOGOUT: 'bg-slate-100 text-slate-700 border-slate-200',
-  EXPORT: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-  IMPORT: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  EXPORT: 'bg-brand-100 text-brand-700 border-brand-200',
+  IMPORT: 'bg-brand-100 text-brand-700 border-brand-200',
   ROLE_CHANGE: 'bg-purple-100 text-purple-700 border-purple-200',
   PASSWORD_RESET: 'bg-purple-100 text-purple-700 border-purple-200',
 }
@@ -189,7 +189,7 @@ export default function AuditLogsPage() {
             {([['logs', '📋 Logs'], ['cleanup', '🗑 Cleanup Schedules']] as const).map(([id, label]) => (
               <button key={id} onClick={() => setActiveTab(id)}
                 className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
-                  activeTab === id ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'
+                  activeTab === id ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-500 hover:text-slate-700'
                 }`}>{label}</button>
             ))}
           </div>
@@ -319,7 +319,7 @@ export default function AuditLogsPage() {
                               : <span className="text-red-600 dark:text-red-400 text-xs">✕ {log.statusCode ?? 'ERR'}</span>}
                           </td>
                           <td className="px-3 py-2 text-right">
-                            <button onClick={() => toggleExpand(log.id)} className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
+                            <button onClick={() => toggleExpand(log.id)} className="text-xs text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300">
                               {expanded === log.id ? 'Hide' : 'Details'}
                             </button>
                           </td>
@@ -385,7 +385,7 @@ export default function AuditLogsPage() {
 
 function StatTile({ label, value, tone }: { label: string; value: number; tone: 'indigo' | 'sky' | 'red' | 'emerald' | 'slate' }) {
   const tones = {
-    indigo: 'from-indigo-50 to-indigo-100 text-indigo-700 border-indigo-200',
+    indigo: 'from-brand-50 to-brand-100 text-brand-700 border-brand-200',
     sky: 'from-sky-50 to-sky-100 text-sky-700 border-sky-200',
     red: 'from-red-50 to-red-100 text-red-700 border-red-200',
     emerald: 'from-emerald-50 to-emerald-100 text-emerald-700 border-emerald-200',
@@ -527,14 +527,14 @@ function CleanupSchedulePanel() {
       </div>
 
       {creating && (
-        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-indigo-50/30 border-indigo-200 dark:border-indigo-900">
+        <form onSubmit={handleCreate} className="card p-4 space-y-3 bg-brand-50/30 border-brand-200 dark:border-brand-900">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">New cleanup schedule</h3>
           <div className="grid sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Label (optional)</label>
               <input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
                 placeholder="e.g. Daily – keep 90 days"
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Frequency *</label>
@@ -601,7 +601,7 @@ function CleanupSchedulePanel() {
                   </td>
                   <td className="px-4 py-2 text-right space-x-2 whitespace-nowrap">
                     <button onClick={() => handleRunNow(s)} disabled={runningId === s.id}
-                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-50">
+                      className="text-xs text-brand-600 dark:text-brand-400 hover:underline disabled:opacity-50">
                       {runningId === s.id ? 'Running…' : 'Run Now'}
                     </button>
                     <button onClick={() => handleDelete(s)} className="text-xs text-red-600 dark:text-red-400 hover:underline">Delete</button>

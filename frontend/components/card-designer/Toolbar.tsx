@@ -78,7 +78,7 @@ function NumInput({ value, onChange, min, max, step }: { value: number; onChange
       max={max}
       step={step}
       onChange={(e) => onChange(Number(e.target.value))}
-      className="w-full text-xs text-center rounded-md border border-slate-700 bg-slate-800 text-slate-200 px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 [appearance:textfield]"
+      className="w-full text-xs text-center rounded-md border border-slate-700 bg-slate-800 text-slate-200 px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 [appearance:textfield]"
     />
   );
 }
@@ -91,7 +91,7 @@ function SliderRow({ label, value, min, max, onChange, unit = '' }: { label: str
         <span className="text-[10px] font-mono text-slate-300">{value}{unit}</span>
       </div>
       <input type="range" min={min} max={max} value={value} onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-1.5 accent-indigo-500 cursor-pointer" />
+        className="w-full h-1.5 accent-brand-500 cursor-pointer" />
     </div>
   );
 }
@@ -115,7 +115,7 @@ function HexInput({ value, onChange }: { value: string; onChange: (v: string) =>
       value={value}
       onChange={(e) => { if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) onChange(e.target.value); }}
       maxLength={7}
-      className="w-full text-[10px] font-mono rounded-md border border-slate-700 bg-slate-800 text-slate-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+      className="w-full text-[10px] font-mono rounded-md border border-slate-700 bg-slate-800 text-slate-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-500"
     />
   );
 }
@@ -126,7 +126,7 @@ function TogglePill({ active, onToggle, label }: { active: boolean; onToggle: ()
       <span className="text-xs text-slate-300 font-medium">{label}</span>
       <button
         onClick={onToggle}
-        className={`relative w-9 h-5 rounded-full transition-colors ${active ? 'bg-indigo-500' : 'bg-slate-600'}`}
+        className={`relative w-9 h-5 rounded-full transition-colors ${active ? 'bg-brand-500' : 'bg-slate-600'}`}
       >
         <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${active ? 'translate-x-4' : 'translate-x-0.5'}`} />
       </button>
@@ -260,7 +260,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
             title={tab.label}
             className={`flex flex-col items-center justify-center gap-0.5 w-10 h-[40px] rounded-lg transition-all text-[8px] font-semibold tracking-wide select-none flex-shrink-0
               ${activeTab === tab.id
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-900/50'
+                ? 'bg-brand-600 text-white shadow-md shadow-brand-900/50'
                 : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
               }`}
           >
@@ -281,7 +281,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
               {(Object.keys(CARD_SIZE_PRESETS) as Array<keyof typeof CARD_SIZE_PRESETS>).map((key) => (
                 <button key={key} onClick={() => handleSizePreset(key)}
                   className={`text-left px-2.5 py-2 rounded-lg border text-xs transition-all leading-tight
-                    ${design.size === key ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600 hover:bg-slate-750'}`}
+                    ${design.size === key ? 'bg-brand-600 border-brand-500 text-white' : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600 hover:bg-slate-750'}`}
                 >
                   <span className="block font-semibold truncate">{CARD_SIZE_PRESETS[key].label.split(' (')[0]}</span>
                   <span className="block text-[9px] opacity-60">{CARD_SIZE_PRESETS[key].width}×{CARD_SIZE_PRESETS[key].height}</span>
@@ -289,7 +289,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
               ))}
               <button onClick={() => handleSizePreset('custom')}
                 className={`text-left px-2.5 py-2 rounded-lg border text-xs transition-all
-                  ${design.size === 'custom' ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600'}`}
+                  ${design.size === 'custom' ? 'bg-brand-600 border-brand-500 text-white' : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600'}`}
               >
                 <span className="font-semibold">Custom</span>
               </button>
@@ -337,7 +337,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
               <span className="text-[9px] text-slate-600 dark:text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded font-mono">{design.texts.length}</span>
             </div>
             <button onClick={addText}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors shadow-sm shadow-indigo-900/40">
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition-colors shadow-sm shadow-brand-900/40">
               <svg viewBox="0 0 14 14" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M7 2v10M2 7h10"/></svg>
               Add Text
             </button>
@@ -353,11 +353,11 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
               const isSel = selectedId === text.id;
               return (
                 <div key={text.id}
-                  className={`rounded-lg border overflow-hidden transition-all ${isSel ? 'border-indigo-500 bg-slate-800/80 shadow-md shadow-indigo-900/30' : 'border-slate-800 hover:border-slate-700 bg-slate-900'}`}
+                  className={`rounded-lg border overflow-hidden transition-all ${isSel ? 'border-brand-500 bg-slate-800/80 shadow-md shadow-brand-900/30' : 'border-slate-800 hover:border-slate-700 bg-slate-900'}`}
                 >
                   {/* Row */}
                   <div className="flex items-center gap-2 px-2.5 py-2 cursor-pointer group" onClick={() => onSelect?.(isSel ? null : text.id)}>
-                    <svg viewBox="0 0 16 16" className={`w-3 h-3 shrink-0 ${isSel ? 'text-indigo-400' : 'text-slate-600'}`} fill="currentColor"><path d="M2 3h12v1.8H9v7.2H7V4.8H2z"/></svg>
+                    <svg viewBox="0 0 16 16" className={`w-3 h-3 shrink-0 ${isSel ? 'text-brand-400' : 'text-slate-600'}`} fill="currentColor"><path d="M2 3h12v1.8H9v7.2H7V4.8H2z"/></svg>
                     <span className="flex-1 text-xs truncate text-slate-300">{text.content || '(empty)'}</span>
                     <span className="text-[9px] font-mono text-slate-600 dark:text-slate-300 shrink-0">{text.fontSize}px</span>
                     <button onClick={(e) => { e.stopPropagation(); deleteText(text.id); }}
@@ -371,14 +371,14 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                       <div>
                         <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Content</p>
                         <textarea value={selectedText.content} onChange={(e) => updateText(selectedText.id, { content: e.target.value })} rows={2}
-                          className="w-full text-xs rounded-md border border-slate-700 bg-slate-800 text-slate-200 px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                          className="w-full text-xs rounded-md border border-slate-700 bg-slate-800 text-slate-200 px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-brand-500" />
                       </div>
 
                       {/* Font */}
                       <div>
                         <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Font Family</p>
                         <select value={selectedText.fontFamily ?? 'Inter, sans-serif'} onChange={(e) => updateText(selectedText.id, { fontFamily: e.target.value })}
-                          className="w-full text-xs rounded-md border border-slate-700 bg-slate-800 text-slate-200 px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                          className="w-full text-xs rounded-md border border-slate-700 bg-slate-800 text-slate-200 px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-500">
                           {FONT_OPTIONS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
                         </select>
                       </div>
@@ -389,13 +389,13 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                       {/* Style row */}
                       <div className="flex items-center gap-1.5">
                         <button onClick={() => updateText(selectedText.id, { fontWeight: selectedText.fontWeight === 'bold' ? 'normal' : 'bold' })}
-                          className={`w-7 h-7 rounded-md border text-xs font-bold transition-all ${selectedText.fontWeight === 'bold' ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-700 text-slate-400 hover:bg-slate-700'}`}>B</button>
+                          className={`w-7 h-7 rounded-md border text-xs font-bold transition-all ${selectedText.fontWeight === 'bold' ? 'bg-brand-600 border-brand-500 text-white' : 'border-slate-700 text-slate-400 hover:bg-slate-700'}`}>B</button>
                         <button onClick={() => updateText(selectedText.id, { fontStyle: selectedText.fontStyle === 'italic' ? 'normal' : 'italic' })}
-                          className={`w-7 h-7 rounded-md border text-xs italic font-semibold transition-all ${selectedText.fontStyle === 'italic' ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-700 text-slate-400 hover:bg-slate-700'}`}>I</button>
+                          className={`w-7 h-7 rounded-md border text-xs italic font-semibold transition-all ${selectedText.fontStyle === 'italic' ? 'bg-brand-600 border-brand-500 text-white' : 'border-slate-700 text-slate-400 hover:bg-slate-700'}`}>I</button>
                         <div className="w-px h-4 bg-slate-700 mx-0.5" />
                         {(['left', 'center', 'right'] as const).map((a) => (
                           <button key={a} onClick={() => updateText(selectedText.id, { textAlign: a })}
-                            className={`w-7 h-7 rounded-md border flex items-center justify-center transition-all ${selectedText.textAlign === a ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-700 text-slate-500 hover:bg-slate-700'}`}>
+                            className={`w-7 h-7 rounded-md border flex items-center justify-center transition-all ${selectedText.textAlign === a ? 'bg-brand-600 border-brand-500 text-white' : 'border-slate-700 text-slate-500 hover:bg-slate-700'}`}>
                             {a === 'left' && <svg viewBox="0 0 12 10" className="w-3 h-3" fill="currentColor"><rect x="0" y="0" width="12" height="2"/><rect x="0" y="4" width="8" height="2"/><rect x="0" y="8" width="10" height="2"/></svg>}
                             {a === 'center' && <svg viewBox="0 0 12 10" className="w-3 h-3" fill="currentColor"><rect x="0" y="0" width="12" height="2"/><rect x="2" y="4" width="8" height="2"/><rect x="1" y="8" width="10" height="2"/></svg>}
                             {a === 'right' && <svg viewBox="0 0 12 10" className="w-3 h-3" fill="currentColor"><rect x="0" y="0" width="12" height="2"/><rect x="4" y="4" width="8" height="2"/><rect x="2" y="8" width="10" height="2"/></svg>}
@@ -438,7 +438,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                 { type: 'line' as const, label: 'Line', icon: <svg viewBox="0 0 16 16" className="w-4 h-4" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><line x1="2" y1="8" x2="14" y2="8"/></svg> },
               ]).map(({ type, label, icon }) => (
                 <button key={type} onClick={() => addShape(type)}
-                  className="flex flex-col items-center gap-1 py-2.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:border-indigo-500 hover:text-indigo-400 hover:bg-slate-800 transition-all text-[10px] font-medium">
+                  className="flex flex-col items-center gap-1 py-2.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:border-brand-500 hover:text-brand-400 hover:bg-slate-800 transition-all text-[10px] font-medium">
                   {icon}{label}
                 </button>
               ))}
@@ -455,7 +455,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                 : undefined;
               return (
                 <div key={shape.id}
-                  className={`rounded-lg border overflow-hidden transition-all ${isSel ? 'border-indigo-500 bg-slate-800/80 shadow-md shadow-indigo-900/30' : 'border-slate-800 hover:border-slate-700'}`}>
+                  className={`rounded-lg border overflow-hidden transition-all ${isSel ? 'border-brand-500 bg-slate-800/80 shadow-md shadow-brand-900/30' : 'border-slate-800 hover:border-slate-700'}`}>
                   <div className="flex items-center gap-2 px-2.5 py-2 cursor-pointer group" onClick={() => onSelect?.(isSel ? null : shape.id)}>
                     <span className="w-4 h-4 rounded shrink-0 border border-slate-700"
                       style={{ backgroundColor: gradBg ? undefined : shape.color, backgroundImage: gradBg, borderRadius: shape.type === 'circle' ? '50%' : shape.borderRadius }} />
@@ -523,7 +523,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                             <div className="flex gap-1">
                               {(['solid', 'dashed', 'dotted'] as const).map((s) => (
                                 <button key={s} onClick={() => updateShape(selectedShape.id, { lineStyle: s })}
-                                  className={`flex-1 py-1 text-[10px] rounded-md border transition-colors ${(selectedShape.lineStyle ?? 'solid') === s ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-700 text-slate-400 hover:bg-slate-700'}`}>
+                                  className={`flex-1 py-1 text-[10px] rounded-md border transition-colors ${(selectedShape.lineStyle ?? 'solid') === s ? 'bg-brand-600 border-brand-500 text-white' : 'border-slate-700 text-slate-400 hover:bg-slate-700'}`}>
                                   {s === 'solid' ? '—' : s === 'dashed' ? '- -' : '···'}
                                 </button>
                               ))}
@@ -544,7 +544,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                             <div className="flex gap-1">
                               {(['linear', 'radial'] as const).map((t) => (
                                 <button key={t} onClick={() => updateShape(selectedShape.id, { gradient: { ...selectedShape.gradient, type: t } })}
-                                  className={`flex-1 py-1 text-[10px] rounded-md border transition-colors capitalize ${selectedShape.gradient.type === t ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{t}</button>
+                                  className={`flex-1 py-1 text-[10px] rounded-md border transition-colors capitalize ${selectedShape.gradient.type === t ? 'bg-brand-600 border-brand-500 text-white' : 'border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{t}</button>
                               ))}
                             </div>
                             {selectedShape.gradient.type === 'linear' && (
@@ -555,12 +555,12 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                               {selectedShape.gradient.stops.map((stop, idx) => (
                                 <div key={idx} className="flex items-center gap-1.5">
                                   <input type="color" value={stop.color} onChange={(e) => updateGradStop(selectedShape.id, idx, { color: e.target.value })} className="w-5 h-5 rounded cursor-pointer border border-slate-700 bg-transparent" />
-                                  <input type="range" min={0} max={100} value={Math.round(stop.offset * 100)} onChange={(e) => updateGradStop(selectedShape.id, idx, { offset: Number(e.target.value) / 100 })} className="flex-1 accent-indigo-500 h-1.5" />
+                                  <input type="range" min={0} max={100} value={Math.round(stop.offset * 100)} onChange={(e) => updateGradStop(selectedShape.id, idx, { offset: Number(e.target.value) / 100 })} className="flex-1 accent-brand-500 h-1.5" />
                                   <span className="text-[9px] text-slate-500 dark:text-slate-400 w-5">{Math.round(stop.offset * 100)}%</span>
                                   {selectedShape.gradient.stops.length > 2 && <button onClick={() => removeGradStop(selectedShape.id, idx)} className="text-red-500 dark:text-red-400 text-xs w-4">×</button>}
                                 </div>
                               ))}
-                              <button onClick={() => addGradStop(selectedShape.id)} className="text-[10px] text-indigo-400 hover:text-indigo-300">+ Add Stop</button>
+                              <button onClick={() => addGradStop(selectedShape.id)} className="text-[10px] text-brand-400 hover:text-brand-300">+ Add Stop</button>
                             </div>
                           </div>
                         )}
@@ -580,7 +580,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
             <PanelLabel>Logos & Images</PanelLabel>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
             <button onClick={() => fileInputRef.current?.click()}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors shadow-sm shadow-indigo-900/40">
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition-colors shadow-sm shadow-brand-900/40">
               <svg viewBox="0 0 14 14" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M7 2v10M2 7h10"/></svg>
               Upload Image
             </button>
@@ -589,12 +589,12 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
               const isSel = selectedId === logo.id;
               return (
                 <div key={logo.id}
-                  className={`rounded-lg border transition-all ${isSel ? 'border-indigo-500 bg-slate-800/80 shadow-md shadow-indigo-900/30' : 'border-slate-800 hover:border-slate-700 bg-slate-900'}`}>
+                  className={`rounded-lg border transition-all ${isSel ? 'border-brand-500 bg-slate-800/80 shadow-md shadow-brand-900/30' : 'border-slate-800 hover:border-slate-700 bg-slate-900'}`}>
                   <div className="flex items-center gap-2 px-2 py-1.5 cursor-pointer group" onClick={() => onSelect?.(isSel ? null : logo.id)}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={logo.src} alt={logo.name} className="w-8 h-8 object-contain rounded-md border border-slate-700 bg-slate-800 shrink-0" />
                     <span className="flex-1 text-xs truncate text-slate-300">{logo.name}</span>
-                    {isSel && <span className="text-[9px] text-indigo-400 shrink-0">Selected</span>}
+                    {isSel && <span className="text-[9px] text-brand-400 shrink-0">Selected</span>}
                     <button onClick={(e) => { e.stopPropagation(); deleteLogo(logo.id); }}
                       className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center rounded text-red-500 dark:text-red-400 hover:bg-red-500/20 transition-all text-[10px] shrink-0">×</button>
                   </div>
@@ -630,8 +630,8 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                         <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Background Removal</p>
                         {removingBg[logo.id] ? (
                           <div className="flex items-center justify-center gap-2 py-2 rounded-lg bg-slate-800 border border-slate-700">
-                            <svg className="w-3.5 h-3.5 text-indigo-400 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                            <span className="text-[11px] text-indigo-300">Removing background…</span>
+                            <svg className="w-3.5 h-3.5 text-brand-400 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                            <span className="text-[11px] text-brand-300">Removing background…</span>
                           </div>
                         ) : logo.originalSrc ? (
                           <div className="flex gap-1.5">
@@ -694,7 +694,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
           <div className="p-3 space-y-3">
             <PanelLabel>Photo Placeholder</PanelLabel>
             <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-800">
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${design.photo ? 'bg-indigo-600' : 'bg-slate-700'}`}>
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${design.photo ? 'bg-brand-600' : 'bg-slate-700'}`}>
                 <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round"><circle cx="10" cy="8" r="3"/><path d="M4 17c0-3.31 2.69-6 6-6s6 2.69 6 6"/><circle cx="10" cy="8" r="7.5"/></svg>
               </div>
               <div className="flex-1">
@@ -727,7 +727,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
           <div className="p-3 space-y-3">
             <PanelLabel>QR Code</PanelLabel>
             <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-800">
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${design.qr ? 'bg-indigo-600' : 'bg-slate-700'}`}>
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${design.qr ? 'bg-brand-600' : 'bg-slate-700'}`}>
                 <svg viewBox="0 0 20 20" className="w-5 h-5" fill="currentColor"><path d="M3 3h6v6H3V3zm2 2v2h2V5H5zM11 3h6v6h-6V3zm2 2v2h2V5h-2zM3 11h6v6H3v-6zm2 2v2h2v-2H5zM13 11h2v2h-2zM15 13h2v2h-2zM13 15h2v2h-2z"/></svg>
               </div>
               <div className="flex-1">
@@ -794,7 +794,7 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                     onClick={() => update({ cardType: p.id })}
                     className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-all ${
                       design.cardType === p.id
-                        ? 'border-indigo-500/60 bg-indigo-600/20 text-indigo-300'
+                        ? 'border-brand-500/60 bg-brand-600/20 text-brand-300'
                         : 'border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800'
                     }`}
                   >
@@ -812,18 +812,18 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                   <div className="py-6 text-center space-y-2">
                     <div className="text-2xl opacity-20">🔗</div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No data source linked</p>
-                    <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed px-2">Pick <strong className="text-indigo-400">Student</strong>, <strong className="text-emerald-400">Staff</strong>, or a Certificate type above to enable drag-and-drop fields like <code className="font-mono text-indigo-400">{'{{name}}'}</code>.</p>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed px-2">Pick <strong className="text-brand-400">Student</strong>, <strong className="text-emerald-400">Staff</strong>, or a Certificate type above to enable drag-and-drop fields like <code className="font-mono text-brand-400">{'{{name}}'}</code>.</p>
                   </div>
                 );
               }
               const purposeLabel: Record<string, string> = { student: 'Student ID Card', staff: 'Staff ID Card', 'certificate-student': 'Student Certificate', 'certificate-staff': 'Staff Certificate', 'teacher-part-time': 'TPT ID Card' };
               return (
                 <>
-                  <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-indigo-600/20 border border-indigo-500/30">
-                    <svg viewBox="0 0 14 14" className="w-3.5 h-3.5 text-indigo-400 shrink-0" fill="currentColor"><circle cx="7" cy="7" r="6"/><path d="M7 5v5M7 3.5v1" fill="none" stroke="white" strokeWidth={1.5} strokeLinecap="round"/></svg>
-                    <span className="text-[10px] text-indigo-300 font-medium">{purposeLabel[design.cardType] ?? design.cardType}</span>
+                  <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-brand-600/20 border border-brand-500/30">
+                    <svg viewBox="0 0 14 14" className="w-3.5 h-3.5 text-brand-400 shrink-0" fill="currentColor"><circle cx="7" cy="7" r="6"/><path d="M7 5v5M7 3.5v1" fill="none" stroke="white" strokeWidth={1.5} strokeLinecap="round"/></svg>
+                    <span className="text-[10px] text-brand-300 font-medium">{purposeLabel[design.cardType] ?? design.cardType}</span>
                   </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed px-0.5">Click to insert at top-left, or <strong className="text-indigo-400">drag &amp; drop</strong> onto the card to place at any position. Placeholders are replaced with real data when printing.</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed px-0.5">Click to insert at top-left, or <strong className="text-brand-400">drag &amp; drop</strong> onto the card to place at any position. Placeholders are replaced with real data when printing.</p>
                   <div className="space-y-1">
                     {fields.map((field) => (
                       <button key={field.key}
@@ -840,14 +840,14 @@ export default function Toolbar({ design, selectedId, onDesignChange, onSelect, 
                           onSelect?.(newText.id);
                           setActiveTab('text');
                         }}
-                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-800 transition-all group text-left cursor-grab active:cursor-grabbing"
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg border border-slate-800 hover:border-brand-500/50 hover:bg-slate-800 transition-all group text-left cursor-grab active:cursor-grabbing"
                       >
-                        <code className="text-[9px] font-mono bg-slate-800 group-hover:bg-indigo-600/20 text-indigo-400 px-1.5 py-0.5 rounded shrink-0 border border-slate-700 group-hover:border-indigo-500/50">{field.key}</code>
+                        <code className="text-[9px] font-mono bg-slate-800 group-hover:bg-brand-600/20 text-brand-400 px-1.5 py-0.5 rounded shrink-0 border border-slate-700 group-hover:border-brand-500/50">{field.key}</code>
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] font-medium text-slate-300 truncate">{field.label}</p>
                           <p className="text-[9px] text-slate-600 dark:text-slate-300 truncate">{field.example}</p>
                         </div>
-                        <svg viewBox="0 0 12 12" className="w-3 h-3 text-slate-700 dark:text-slate-200 group-hover:text-indigo-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M6 2v8M2 6h8"/></svg>
+                        <svg viewBox="0 0 12 12" className="w-3 h-3 text-slate-700 dark:text-slate-200 group-hover:text-brand-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M6 2v8M2 6h8"/></svg>
                       </button>
                     ))}
                   </div>

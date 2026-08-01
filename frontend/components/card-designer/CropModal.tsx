@@ -249,7 +249,7 @@ export default function CropModal({ logo, onConfirm, onClose }: CropModalProps) 
         </button>
         <button
           onClick={handleConfirm}
-          className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-sm text-white font-semibold transition-colors"
+          className="px-5 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-sm text-white font-semibold transition-colors"
         >
           Apply Crop
         </button>

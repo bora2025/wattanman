@@ -47,7 +47,7 @@ export default function StaffCvPrintPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -84,7 +84,7 @@ export default function StaffCvPrintPage() {
 
       {/* No-print toolbar */}
       <div className="no-print fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200 px-4 py-2 flex items-center gap-3">
-        <button onClick={() => window.print()} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">
+        <button onClick={() => window.print()} className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">
           🖨️ Print
         </button>
         <button onClick={() => window.close()} className="text-slate-600 hover:text-slate-800 text-sm font-medium px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50">

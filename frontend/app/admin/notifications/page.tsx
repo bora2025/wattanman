@@ -69,7 +69,7 @@ export default function NotificationSettings() {
                       type="checkbox"
                       checked={settings[key as keyof typeof settings]}
                       onChange={(e) => updateSetting(key, e.target.checked)}
-                      className="h-4 w-4 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 border-slate-300 dark:border-slate-600 rounded"
+                      className="h-4 w-4 text-brand-600 dark:text-brand-400 focus:ring-brand-500 border-slate-300 dark:border-slate-600 rounded"
                     />
                     <span className="text-sm text-slate-700 dark:text-slate-200">{label}</span>
                   </label>

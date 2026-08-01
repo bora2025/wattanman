@@ -72,7 +72,7 @@ export default function AdminCommunicationPage() {
                   onClick={() => setTab(id)}
                   className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
                     tab === id
-                      ? 'border-indigo-600 text-indigo-700'
+                      ? 'border-brand-600 text-brand-700'
                       : 'border-transparent text-slate-500 hover:text-slate-700'
                   }`}
                 >
@@ -147,7 +147,7 @@ function InboxTab() {
     <div className="card overflow-hidden flex h-[70vh]">
       <div className="w-72 border-r border-slate-200 dark:border-slate-700 flex flex-col bg-slate-50 dark:bg-slate-800">
         <div className="p-3 border-b border-slate-200 dark:border-slate-700">
-          <button onClick={() => setShowPicker(s => !s)} className="w-full text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
+          <button onClick={() => setShowPicker(s => !s)} className="w-full text-sm text-brand-600 dark:text-brand-400 font-medium hover:underline">
             + New Message
           </button>
           {showPicker && (
@@ -155,12 +155,12 @@ function InboxTab() {
               <input
                 type="search" value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search…"
-                className="w-full text-xs border rounded px-2 py-1 mb-2 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                className="w-full text-xs border rounded px-2 py-1 mb-2 focus:outline-none focus:ring-1 focus:ring-brand-300"
               />
               <div className="flex gap-1 mb-2 flex-wrap">
                 {(['ALL', 'TEACHER', 'PARENT', 'STUDENT'] as const).map(f => (
                   <button key={f} onClick={() => setFilter(f)}
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${filter === f ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border'}`}>
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${filter === f ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 border'}`}>
                     {f === 'ALL' ? 'All' : f}
                   </button>
                 ))}
@@ -187,10 +187,10 @@ function InboxTab() {
             const unread = !lm?.readAt && senderId === item.partner.id
             return (
               <button key={item.partner.id} onClick={() => onPick(item.partner.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 ${partnerId === item.partner.id ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-white'}`}>
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 ${partnerId === item.partner.id ? 'bg-brand-100 text-brand-700' : 'text-slate-600 hover:bg-white'}`}>
                 <div className="flex items-center justify-between gap-2">
                   <p className={`truncate ${unread ? 'font-bold text-slate-800' : 'font-medium'}`}>{item.partner.name}</p>
-                  {unread && <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0" />}
+                  {unread && <span className="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0" />}
                 </div>
                 <p className="text-xs truncate text-slate-400 dark:text-slate-500">{lm?.content ?? ''}</p>
               </button>
@@ -221,9 +221,9 @@ function InboxTab() {
                 const fromPartner = msg.sender?.id === partnerId
                 return (
                   <div key={msg.id} className={`flex ${fromPartner ? 'justify-start' : 'justify-end'}`}>
-                    <div className={`max-w-md px-4 py-2 rounded-2xl text-sm ${fromPartner ? 'bg-white border border-slate-200 text-slate-800' : 'bg-indigo-600 text-white'}`}>
+                    <div className={`max-w-md px-4 py-2 rounded-2xl text-sm ${fromPartner ? 'bg-white border border-slate-200 text-slate-800' : 'bg-brand-600 text-white'}`}>
                       <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                      <p className={`text-xs mt-1 ${fromPartner ? 'text-slate-400' : 'text-indigo-200'}`}>
+                      <p className={`text-xs mt-1 ${fromPartner ? 'text-slate-400' : 'text-brand-200'}`}>
                         {formatCambodiaTime(msg.createdAt)}
                       </p>
                     </div>
@@ -234,9 +234,9 @@ function InboxTab() {
             <form onSubmit={handleSubmit(onSend)} className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-4 flex gap-3">
               <input {...register('content', { required: true })} autoComplete="off"
                 placeholder="Type a message…"
-                className="flex-1 border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                className="flex-1 border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
               <button type="submit" disabled={sendMutation.isPending}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-60">
+                className="bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-60">
                 {sendMutation.isPending ? '...' : 'Send'}
               </button>
             </form>
@@ -300,19 +300,19 @@ function BroadcastTab() {
 
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Title</label>
       <input {...register('title', { required: 'Title required', maxLength: 120 })}
-        className="w-full border rounded-lg px-3 py-2 mb-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        className="w-full border rounded-lg px-3 py-2 mb-1 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
       {errors.title && <p className="text-xs text-red-600 dark:text-red-400 mb-2">{errors.title.message}</p>}
 
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1 mt-3">Message</label>
       <textarea rows={5} {...register('body', { required: 'Message required' })}
-        className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+        className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
       {errors.body && <p className="text-xs text-red-600 dark:text-red-400 mb-2">{errors.body.message}</p>}
 
       <div className="grid sm:grid-cols-2 gap-4 mt-4">
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Audience</label>
           <select {...register('audience')}
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300">
             <option value="SCHOOL">Entire school</option>
             <option value="ROLE">By role</option>
             <option value="CLASS">Specific class</option>
@@ -322,7 +322,7 @@ function BroadcastTab() {
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Role</label>
             <select {...register('targetRole')}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300">
               <option value="ALL">All staff & families</option>
               <option value="PARENT">Parents only</option>
               <option value="TEACHER">Teachers only</option>
@@ -334,7 +334,7 @@ function BroadcastTab() {
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Class</label>
             <select {...register('classId', { required: audience === 'CLASS' })}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300">
               <option value="">— select class —</option>
               {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -368,7 +368,7 @@ function BroadcastTab() {
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Schedule (optional)</label>
           <input type="datetime-local" {...register('scheduledAt')}
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
         </div>
       </div>
 
@@ -527,14 +527,14 @@ function PortalActivityTab() {
             {(['1h', '24h', '7d'] as const).map(w => (
               <button key={w} onClick={() => setWindow(w)}
                 className={`px-3 py-1.5 text-xs font-semibold transition ${
-                  window === w ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
+                  window === w ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
                 }`}>
                 {w === '1h' ? 'Last hour' : w === '24h' ? 'Last 24h' : 'Last 7 days'}
               </button>
             ))}
           </div>
           <button onClick={() => refetch()} disabled={isFetching}
-            className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline disabled:opacity-60">
+            className="text-xs text-brand-600 dark:text-brand-400 font-medium hover:underline disabled:opacity-60">
             {isFetching ? 'Refreshing…' : '↻ Refresh'}
           </button>
         </div>
@@ -552,7 +552,7 @@ function PortalActivityTab() {
               <div key={p.key} className="card p-5 space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl">
+                    <div className="w-11 h-11 rounded-xl bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xl">
                       {p.icon}
                     </div>
                     <div>
@@ -643,7 +643,7 @@ function PortalActivityTab() {
 
                 <div className="flex items-center justify-end pt-1 border-t border-slate-100 dark:border-slate-800">
                   <Link href={`/admin/audit?resource=${encodeURIComponent(p.byResource[0]?.resource ?? '')}`}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
+                    className="text-xs text-brand-600 dark:text-brand-400 font-medium hover:underline">
                     View full audit log →
                   </Link>
                 </div>

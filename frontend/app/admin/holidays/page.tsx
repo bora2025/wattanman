@@ -221,7 +221,7 @@ export default function HolidaysPage() {
                   <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                     {MONTH_NAMES[currentMonth]} {currentYear}
                   </h2>
-                  <button onClick={goToday} className="text-xs bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-2 py-1 rounded-md font-medium hover:bg-indigo-100 transition">
+                  <button onClick={goToday} className="text-xs bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 px-2 py-1 rounded-md font-medium hover:bg-brand-100 transition">
                     {t('common.today')}
                   </button>
                 </div>
@@ -258,8 +258,8 @@ export default function HolidaysPage() {
                   return (
                     <div
                       key={dateStr}
-                      className={`min-h-[80px] border-b border-r border-slate-100 p-1.5 cursor-pointer transition group hover:bg-indigo-50/50 ${
-                        isToday ? 'bg-indigo-50/70' : dayHolidays.length > 0 ? 'bg-red-50/50' : ''
+                      className={`min-h-[80px] border-b border-r border-slate-100 p-1.5 cursor-pointer transition group hover:bg-brand-50/50 ${
+                        isToday ? 'bg-brand-50/70' : dayHolidays.length > 0 ? 'bg-red-50/50' : ''
                       }`}
                       onClick={() => openAddModal(dateStr)}
                     >
@@ -267,7 +267,7 @@ export default function HolidaysPage() {
                         <span
                           className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${
                             isToday
-                              ? 'bg-indigo-600 text-white'
+                              ? 'bg-brand-600 text-white'
                               : isSunday
                               ? 'text-red-500'
                               : isSaturday
@@ -277,7 +277,7 @@ export default function HolidaysPage() {
                         >
                           {day}
                         </span>
-                        <span className="opacity-0 group-hover:opacity-100 text-xs text-indigo-500 dark:text-indigo-400 transition">+ Add</span>
+                        <span className="opacity-0 group-hover:opacity-100 text-xs text-brand-500 dark:text-brand-400 transition">+ Add</span>
                       </div>
                       {dayHolidays.map(h => (
                         <div
@@ -304,7 +304,7 @@ export default function HolidaysPage() {
                 </h3>
                 <button
                   onClick={() => openAddModal(toDateStr(getCambodiaDate()))}
-                  className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition flex items-center gap-1"
+                  className="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-brand-700 transition flex items-center gap-1"
                 >
                   + {t('holidays.addHoliday')}
                 </button>
@@ -345,7 +345,7 @@ export default function HolidaysPage() {
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <button
                           onClick={() => openEditModal(h)}
-                          className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition"
+                          className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 font-medium px-2 py-1 rounded hover:bg-brand-50 dark:hover:bg-brand-950/40 transition"
                         >
                           {t('common.edit')}
                         </button>
@@ -397,7 +397,7 @@ export default function HolidaysPage() {
                     type="date"
                     value={formDate}
                     onChange={e => setFormDate(e.target.value)}
-                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   />
                 </div>
 
@@ -408,7 +408,7 @@ export default function HolidaysPage() {
                     value={formName}
                     onChange={e => setFormName(e.target.value)}
                     placeholder="e.g., Khmer New Year"
-                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                   />
                 </div>
 
@@ -419,7 +419,7 @@ export default function HolidaysPage() {
                     onChange={e => setFormDescription(e.target.value)}
                     rows={2}
                     placeholder="Add details about this holiday..."
-                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
                   />
                 </div>
 
@@ -432,7 +432,7 @@ export default function HolidaysPage() {
                         onClick={() => setFormType(t.value)}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition ${
                           formType === t.value
-                            ? t.color + ' ring-2 ring-offset-1 ring-indigo-400'
+                            ? t.color + ' ring-2 ring-offset-1 ring-brand-400'
                             : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                         }`}
                       >
@@ -453,7 +453,7 @@ export default function HolidaysPage() {
                 <button
                   onClick={handleSave}
                   disabled={saving || !formDate || !formName.trim()}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white hover:bg-brand-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? t('common.loading') : editingHoliday ? t('common.save') : t('holidays.saveHoliday')}
                 </button>

@@ -20,7 +20,7 @@ const CardEditor = dynamic(() => import('../../../components/card-designer/CardE
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-full w-full">
-      <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin" />
     </div>
   ),
 });
@@ -300,7 +300,7 @@ export default function StaffCardsPage() {
         <div className="page-content">
           <div className="flex min-h-screen items-center justify-center">
             <div className="text-center">
-              <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
             </div>
           </div>
@@ -397,12 +397,12 @@ export default function StaffCardsPage() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="relative flex-1 min-w-0">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">🔍</span>
-                <input type="text" value={staffSearch} onChange={(e) => { setStaffSearch(e.target.value); setStaffPage(1); }} placeholder="Search staff by name or email..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                <input type="text" value={staffSearch} onChange={(e) => { setStaffSearch(e.target.value); setStaffPage(1); }} placeholder="Search staff by name or email..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" />
                 {staffSearch && <button onClick={() => { setStaffSearch(''); setStaffPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xs">✕</button>}
               </div>
               <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0">
-                <button onClick={() => setStaffViewMode('grid')} className={`px-3 py-2 text-xs font-medium transition-colors ${staffViewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>▦ Grid</button>
-                <button onClick={() => setStaffViewMode('list')} className={`px-3 py-2 text-xs font-medium transition-colors ${staffViewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>☰ List</button>
+                <button onClick={() => setStaffViewMode('grid')} className={`px-3 py-2 text-xs font-medium transition-colors ${staffViewMode === 'grid' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>▦ Grid</button>
+                <button onClick={() => setStaffViewMode('list')} className={`px-3 py-2 text-xs font-medium transition-colors ${staffViewMode === 'list' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>☰ List</button>
               </div>
               <select value={staffPageSize} onChange={(e) => { setStaffPageSize(Number(e.target.value)); setStaffPage(1); }} className="!w-auto text-sm shrink-0">
                 <option value={12}>12 / page</option>
@@ -516,7 +516,7 @@ export default function StaffCardsPage() {
               {Array.from({ length: staffTotalPages }, (_, i) => i + 1)
                 .filter(p => p === 1 || p === staffTotalPages || Math.abs(p - staffPageClamped) <= 2)
                 .reduce<(number | string)[]>((acc, p, i, arr) => { if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('...'); acc.push(p); return acc; }, [])
-                .map((p, i) => typeof p === 'string' ? <span key={`dots-${i}`} className="px-1 text-xs text-slate-400 dark:text-slate-500">…</span> : <button key={p} onClick={() => setStaffPage(p)} className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${p === staffPageClamped ? 'bg-indigo-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{p}</button>)}
+                .map((p, i) => typeof p === 'string' ? <span key={`dots-${i}`} className="px-1 text-xs text-slate-400 dark:text-slate-500">…</span> : <button key={p} onClick={() => setStaffPage(p)} className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${p === staffPageClamped ? 'bg-brand-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{p}</button>)}
               <button onClick={() => setStaffPage(Math.min(staffTotalPages, staffPageClamped + 1))} disabled={staffPageClamped >= staffTotalPages} className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Next ›</button>
               <button onClick={() => setStaffPage(staffTotalPages)} disabled={staffPageClamped >= staffTotalPages} className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">»</button>
             </div>

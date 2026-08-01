@@ -147,7 +147,7 @@ function AddonCard({ addon, onChanged, onOpen }: { addon: DirectoryAddon; onChan
   return (
     <div
       onClick={onOpen}
-      className="card p-5 space-y-2 cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all"
+      className="card p-5 space-y-2 cursor-pointer hover:shadow-md hover:border-brand-200 transition-all"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
@@ -155,7 +155,7 @@ function AddonCard({ addon, onChanged, onOpen }: { addon: DirectoryAddon; onChan
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-slate-800 dark:text-slate-100">{addon.name}</span>
-              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900">{addon.category}</span>}
+              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-900">{addon.category}</span>}
             </div>
             {addon.description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{addon.description}</p>}
           </div>
@@ -193,7 +193,7 @@ function AddonDetailModal({ addon, onClose, onChanged }: { addon: DirectoryAddon
               <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{addon.name}</h2>
               <div className="flex items-center gap-2 flex-wrap mt-1.5">
                 <KindBadge kind={addon.kind} />
-                {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900">{addon.category}</span>}
+                {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-900">{addon.category}</span>}
               </div>
             </div>
           </div>
@@ -275,7 +275,7 @@ function AddonsContent() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                   activeTab === tab.id
-                    ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm'
+                    ? 'bg-white dark:bg-slate-700 text-brand-700 dark:text-brand-300 shadow-sm'
                     : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200'
                 }`}
               >
@@ -294,7 +294,7 @@ function AddonsContent() {
 
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-8 h-8 border-3 border-indigo-100 dark:border-indigo-900 border-t-indigo-500 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-3 border-brand-100 dark:border-brand-900 border-t-brand-500 rounded-full animate-spin" />
             </div>
           ) : addons.length === 0 ? (
             <div className="card p-10 text-center text-slate-400 dark:text-slate-500 text-sm">No modules or add-ons available yet — check back later.</div>

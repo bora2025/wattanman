@@ -360,7 +360,7 @@ export default function CertificatePrintPage() {
           <div className="page-header flex items-center justify-between flex-wrap gap-3">
             <div>
               <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-                <Link href="/admin/card-designer" className="hover:text-indigo-600 transition-colors">← Designer</Link>
+                <Link href="/admin/card-designer" className="hover:text-brand-600 transition-colors">← Designer</Link>
                 <span>/</span>
                 <span className="text-slate-700 font-medium">Print Certificates</span>
               </div>
@@ -371,7 +371,7 @@ export default function CertificatePrintPage() {
               <button
                 onClick={handleExportAll}
                 disabled={exporting || selectedEntries.length === 0}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold transition-colors shadow-sm"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-semibold transition-colors shadow-sm"
               >
                 {exporting ? (
                   <><svg viewBox="0 0 16 16" className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><circle cx="8" cy="8" r="5" strokeOpacity={0.3}/><path d="M8 3a5 5 0 0 1 5 5"/></svg> Exporting…</>
@@ -397,7 +397,7 @@ export default function CertificatePrintPage() {
                     { v: 'teacher-part-time' as Mode, label: 'TPT ID Cards', icon: '⏰' },
                   ]).map(({ v, label, icon }) => (
                     <button key={v} onClick={() => { setMode(v); setEntries([]); setSelected(new Set()); setSearch(''); }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${mode === v ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${mode === v ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                       {icon} {label}
                     </button>
                   ))}
@@ -410,7 +410,7 @@ export default function CertificatePrintPage() {
                   <div className="flex-1 min-w-[200px]">
                     <label className="block text-xs font-medium text-slate-500 mb-1">Search Teacher</label>
                     <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name or Khmer name…"
-                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-300" />
                   </div>
                   {loading && <p className="text-xs text-slate-400">Loading teachers…</p>}
                   {!loading && tptTeachers.length === 0 && <p className="text-xs text-amber-600">No scheduled teachers found in any timetable.</p>}
@@ -424,7 +424,7 @@ export default function CertificatePrintPage() {
                   <div className="min-w-[140px]">
                     <label className="block text-xs font-medium text-slate-500 mb-1">Study Year</label>
                     <select value={selectedStudyYear} onChange={(e) => { setSelectedStudyYear(e.target.value); const y = studyYears.find((y) => y.id === e.target.value); setStudyYearLabel(y?.label ?? String(y?.year ?? '')); }}
-                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-300">
                       <option value="">All Years</option>
                       {studyYears.map((y) => (
                         <option key={y.id} value={y.id}>{y.label ?? y.year}{y.isCurrent ? ' (Current)' : ''}</option>
@@ -435,7 +435,7 @@ export default function CertificatePrintPage() {
                   <div className="min-w-[160px]">
                     <label className="block text-xs font-medium text-slate-500 mb-1">Class</label>
                     <select value={selectedClass} onChange={(e) => { setSelectedClass(e.target.value); setEntries([]); setSelected(new Set()); }}
-                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-300"
                       disabled={classes.length === 0}>
                       <option value="">Select class…</option>
                       {classes.map((c) => (
@@ -447,7 +447,7 @@ export default function CertificatePrintPage() {
                   <div className="flex-1 min-w-[160px]">
                     <label className="block text-xs font-medium text-slate-500 mb-1">Search Student</label>
                     <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name or student ID…"
-                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-300" />
                   </div>
                 </div>
               )}
@@ -458,7 +458,7 @@ export default function CertificatePrintPage() {
                   <div className="flex-1 min-w-[200px]">
                     <label className="block text-xs font-medium text-slate-500 mb-1">Search Staff</label>
                     <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name or email…"
-                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-300" />
                   </div>
                 </div>
               )}
@@ -468,7 +468,7 @@ export default function CertificatePrintPage() {
                 <span className={`w-2 h-2 rounded-full ${designLoading ? 'bg-amber-400 animate-pulse' : design ? 'bg-emerald-400' : 'bg-red-400'}`} />
                 {designLoading ? 'Loading design…' : design ? `Design loaded (${design.cardType})` : 'No design found — using default'}
                 {!designLoading && (
-                  <Link href={`/admin/card-designer/new`} className="ml-2 text-indigo-500 hover:text-indigo-700 underline">Edit Design</Link>
+                  <Link href={`/admin/card-designer/new`} className="ml-2 text-brand-500 hover:text-brand-700 underline">Edit Design</Link>
                 )}
               </div>
 
@@ -503,7 +503,7 @@ export default function CertificatePrintPage() {
                 <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-700 font-medium">
-                      <input type="checkbox" className="w-4 h-4 accent-indigo-600 rounded"
+                      <input type="checkbox" className="w-4 h-4 accent-brand-600 rounded"
                         checked={selected.size === entries.length && entries.length > 0}
                         onChange={toggleAll} />
                       Select All ({entries.length})
@@ -516,7 +516,7 @@ export default function CertificatePrintPage() {
                     <button
                       onClick={handleExportAll}
                       disabled={exporting || selectedEntries.length === 0}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs font-semibold transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-40 text-white text-xs font-semibold transition-colors"
                     >
                       <svg viewBox="0 0 14 14" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M7 1v7M4.5 5.5l2.5 2.5 2.5-2.5"/><path d="M2 9v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V9"/></svg>
                       Export {selectedEntries.length > 1 ? `${selectedEntries.length} PDFs` : 'PDF'}
@@ -530,11 +530,11 @@ export default function CertificatePrintPage() {
                     const isSel = selected.has(entry.id);
                     return (
                       <div key={entry.id}
-                        className={`relative rounded-xl border-2 cursor-pointer transition-all group overflow-hidden ${isSel ? 'border-indigo-500 shadow-md shadow-indigo-100' : 'border-slate-200 hover:border-slate-300'}`}
+                        className={`relative rounded-xl border-2 cursor-pointer transition-all group overflow-hidden ${isSel ? 'border-brand-500 shadow-md shadow-brand-100' : 'border-slate-200 hover:border-slate-300'}`}
                         onClick={() => toggleSelect(entry.id)}
                       >
                         {/* Checkbox */}
-                        <div className={`absolute top-2 left-2 z-10 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isSel ? 'bg-indigo-600 border-indigo-600' : 'bg-white/80 border-slate-300 group-hover:border-indigo-400'}`}>
+                        <div className={`absolute top-2 left-2 z-10 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isSel ? 'bg-brand-600 border-brand-600' : 'bg-white/80 border-slate-300 group-hover:border-brand-400'}`}>
                           {isSel && <svg viewBox="0 0 12 12" className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M2 6l3 3 5-5"/></svg>}
                         </div>
 
@@ -556,7 +556,7 @@ export default function CertificatePrintPage() {
                           <p className="text-[11px] font-medium text-slate-700 truncate leading-tight">{entry.name}</p>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleExportSingle(entry); }}
-                            className="mt-1 w-full text-[9px] text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-0.5"
+                            className="mt-1 w-full text-[9px] text-brand-600 hover:text-brand-800 hover:underline flex items-center gap-0.5"
                           >
                             <svg viewBox="0 0 12 12" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 1v6M4 5l2 2 2-2"/><path d="M1 8v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8"/></svg>
                             Export PDF

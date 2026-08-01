@@ -55,7 +55,7 @@ interface SessionConfigItem {
 
 const ATTENDANCE_PRESETS = [
   { id: 'global-default', name: 'Global Default', icon: '🌐', color: 'bg-slate-100 text-slate-600', configs: [] as SessionConfigItem[] },
-  { id: 'full-day', name: 'Full Day', icon: '☀️', color: 'bg-indigo-100 text-indigo-700', configs: [
+  { id: 'full-day', name: 'Full Day', icon: '☀️', color: 'bg-brand-100 text-brand-700', configs: [
     { session: 1, type: 'CHECK_IN', startTime: '07:00', endTime: '07:15' },
     { session: 2, type: 'CHECK_OUT', startTime: '12:00', endTime: '12:15' },
     { session: 3, type: 'CHECK_IN', startTime: '13:00', endTime: '13:15' },
@@ -100,7 +100,7 @@ const DAYS_OF_WEEK = [
 const DAY_FORMAT_STYLES: Record<string, { bg: string; icon: string; label: string }> = {
   same: { bg: 'bg-slate-100 text-slate-500', icon: '📋', label: 'Same as class' },
   'day-off': { bg: 'bg-red-100 text-red-600', icon: '🚫', label: 'Day Off' },
-  'full-day': { bg: 'bg-indigo-100 text-indigo-600', icon: '☀️', label: 'Full Day' },
+  'full-day': { bg: 'bg-brand-100 text-brand-600', icon: '☀️', label: 'Full Day' },
   'morning-only': { bg: 'bg-amber-100 text-amber-600', icon: '🌅', label: 'Morning Only' },
   'afternoon-only': { bg: 'bg-orange-100 text-orange-600', icon: '🌤️', label: 'Afternoon Only' },
   evening: { bg: 'bg-purple-100 text-purple-600', icon: '🌆', label: 'Evening' },
@@ -448,7 +448,7 @@ export default function AdminReports() {
                 <select
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="w-full lg:w-auto rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  className="w-full lg:w-auto rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                 >
                   {classes.map(cls => (
                     <option key={cls.id} value={cls.id}>{cls.name} — {cls.subject || 'N/A'}</option>
@@ -463,7 +463,7 @@ export default function AdminReports() {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="flex-1 lg:flex-none rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    className="flex-1 lg:flex-none rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                   />
                   <button onClick={() => goDay(1)} className="px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm flex-shrink-0">▶</button>
                   <button onClick={() => setSelectedDate(todayCambodia())} className="px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm flex-shrink-0 whitespace-nowrap">
@@ -525,7 +525,7 @@ export default function AdminReports() {
                         return (
                           <div
                             key={day.key}
-                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md flex items-center justify-center text-[10px] sm:text-xs font-bold ${style.bg} ${isToday ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
+                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md flex items-center justify-center text-[10px] sm:text-xs font-bold ${style.bg} ${isToday ? 'ring-2 ring-brand-500 ring-offset-1' : ''}`}
                             title={`${day.full}: ${style.label}`}
                           >
                             {style.icon}
@@ -579,7 +579,7 @@ export default function AdminReports() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 min-w-0 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === tab ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'
+                  activeTab === tab ? 'border-brand-500 text-brand-700' : 'border-transparent text-slate-500 hover:text-slate-700'
                 }`}
               >
                 {tab === 'daily' ? `📋 ${t('reports.daily')}` : tab === 'weekly' ? `📅 ${t('reports.weekly')}` : tab === 'monthly' ? `📆 ${t('reports.monthly')}` : `📊 ${t('reports.yearly')}`}
@@ -590,7 +590,7 @@ export default function AdminReports() {
           {loading ? (
             <div className="card p-12">
               <div className="empty-state">
-                <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
               </div>
             </div>
@@ -807,7 +807,7 @@ function ExportReportModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-indigo-50 to-white rounded-t-2xl">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-brand-50 to-white rounded-t-2xl">
           <div>
             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">📊 {t('reports.exportAttendanceReport')}</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('reports.selectPeriodDownload')}</p>
@@ -822,7 +822,7 @@ function ExportReportModal({
             <select
               value={exportClassId}
               onChange={e => setExportClassId(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-slate-900"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white dark:bg-slate-900"
             >
               <option value="">{t('reports.allClasses')} ({classes.length})</option>
               {classes.map(cls => (
@@ -841,13 +841,13 @@ function ExportReportModal({
                   onClick={() => setExportPeriod(opt.value)}
                   className={`flex items-start gap-2 p-3 rounded-xl border text-left transition-all ${
                     exportPeriod === opt.value
-                      ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
+                      ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-200'
                       : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                   }`}
                 >
                   <span className="text-lg">{opt.icon}</span>
                   <div>
-                    <div className={`text-sm font-semibold ${exportPeriod === opt.value ? 'text-indigo-700' : 'text-slate-700'}`}>{opt.label}</div>
+                    <div className={`text-sm font-semibold ${exportPeriod === opt.value ? 'text-brand-700' : 'text-slate-700'}`}>{opt.label}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{opt.desc}</div>
                   </div>
                 </button>
@@ -862,7 +862,7 @@ function ExportReportModal({
               type="date"
               value={exportDate}
               onChange={e => setExportDate(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
             />
           </div>
 
@@ -875,13 +875,13 @@ function ExportReportModal({
               <span className="text-slate-500 dark:text-slate-400">{t('common.date')}:</span>
               <span className="font-medium text-slate-800 dark:text-slate-100">{exportDate}</span>
               <span className="text-slate-500 dark:text-slate-400">{t('reports.reportPeriod')}:</span>
-              <span className="font-medium text-indigo-600 dark:text-indigo-400 capitalize">{exportPeriod}</span>
+              <span className="font-medium text-brand-600 dark:text-brand-400 capitalize">{exportPeriod}</span>
               <span className="text-slate-500 dark:text-slate-400">{t('reports.format')}:</span>
-              <span className="font-medium text-indigo-600 dark:text-indigo-400">XLSX</span>
+              <span className="font-medium text-brand-600 dark:text-brand-400">XLSX</span>
               {!exportClassId && (
                 <>
                   <span className="text-slate-500 dark:text-slate-400">{t('reports.files')}:</span>
-                  <span className="font-medium text-indigo-600 dark:text-indigo-400">{classes.length} XLSX {t('reports.files')}</span>
+                  <span className="font-medium text-brand-600 dark:text-brand-400">{classes.length} XLSX {t('reports.files')}</span>
                 </>
               )}
             </div>
@@ -904,7 +904,7 @@ function ExportReportModal({
             <button
               onClick={handleExportReport}
               disabled={exporting}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-2"
             >
               {exporting ? (
                 <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('reports.exporting')}</>

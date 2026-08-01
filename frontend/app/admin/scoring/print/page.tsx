@@ -187,7 +187,7 @@ export default function ScoringPrintPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
       </div>
     }>
       <ScoringPrintContent />
@@ -324,7 +324,7 @@ function ScoringPrintContent() {
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -482,13 +482,13 @@ function ScoringPrintContent() {
                     )
                   })}
                   {printCols.has('total') && (
-                    <td className="border border-slate-300 px-1 py-1.5 text-center font-semibold text-indigo-700 bg-indigo-50 whitespace-nowrap">
+                    <td className="border border-slate-300 px-1 py-1.5 text-center font-semibold text-brand-700 bg-brand-50 whitespace-nowrap">
                       {total.toFixed(scoreMode === 'citation' ? 1 : 1)}
                       {scoreMode === 'citation' && <span className="text-[9px] text-slate-400 ml-0.5">pts</span>}
                     </td>
                   )}
                   {printCols.has('average') && (
-                    <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-700 bg-indigo-50 whitespace-nowrap">
+                    <td className="border border-slate-300 px-1 py-1.5 text-center text-slate-700 bg-brand-50 whitespace-nowrap">
                       {scoreMode === 'citation' ? (
                         <>
                           {avg.toFixed(2)}
@@ -500,7 +500,7 @@ function ScoringPrintContent() {
                     </td>
                   )}
                   {printCols.has('rank') && (
-                    <td className="border border-slate-300 px-1 py-1.5 text-center font-bold text-indigo-800 bg-indigo-50 whitespace-nowrap">{rank}</td>
+                    <td className="border border-slate-300 px-1 py-1.5 text-center font-bold text-brand-800 bg-brand-50 whitespace-nowrap">{rank}</td>
                   )}
                   {activeFcols.map(fc => {
                     const result = evalFormulaExpr(fc.formula, fCtx)
@@ -565,7 +565,7 @@ function ScoringPrintContent() {
           {sheetName} — {tabLabel} — {selectedClassName}
         </div>
         <button onClick={() => window.print()}
-          className="flex-shrink-0 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm">
+          className="flex-shrink-0 px-4 py-2 text-sm font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 shadow-sm">
           🖨️ {t('scoring.print')}
         </button>
       </div>

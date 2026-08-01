@@ -29,7 +29,7 @@ interface AnnouncementFeedProps {
 }
 
 const accentClasses = {
-  indigo: { bar: 'bg-indigo-500', dot: 'bg-indigo-500', badge: 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300', btn: 'text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300' },
+  indigo: { bar: 'bg-brand-500', dot: 'bg-brand-500', badge: 'bg-brand-100 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300', btn: 'text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300' },
   emerald: { bar: 'bg-emerald-500', dot: 'bg-emerald-500', badge: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300', btn: 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300' },
   sky: { bar: 'bg-sky-500', dot: 'bg-sky-500', badge: 'bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300', btn: 'text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300' },
 }

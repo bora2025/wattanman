@@ -339,7 +339,7 @@ function EditStaffAttendanceContent() {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                   />
                   <button onClick={() => goDay(1)} className="px-2 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">▶</button>
                 </div>
@@ -354,7 +354,7 @@ function EditStaffAttendanceContent() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by staff name or role…"
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
                 />
               </div>
             </div>
@@ -410,7 +410,7 @@ function EditStaffAttendanceContent() {
           {loading ? (
             <div className="card p-12">
               <div className="empty-state">
-                <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Loading…</p>
               </div>
             </div>

@@ -153,15 +153,15 @@ export default function ClassesPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
             <div>
-              <button onClick={() => router.push('/admin/timetable')} className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline mb-1">← Back to Timetable</button>
+              <button onClick={() => router.push('/admin/timetable')} className="text-brand-600 dark:text-brand-400 text-sm hover:underline mb-1">← Back to Timetable</button>
               <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Classes</h1>
               <p className="text-sm text-gray-500 dark:text-slate-400">Manage classes and assign multiple teachers per class</p>
             </div>
-            <button onClick={() => openModal()} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700">+ New Class</button>
+            <button onClick={() => openModal()} className="px-4 py-2 bg-brand-600 text-white rounded-lg font-medium text-sm hover:bg-brand-700">+ New Class</button>
           </div>
           <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-2 flex items-center gap-3">
             <label className="text-sm text-gray-600 dark:text-slate-300 font-medium">Timetable:</label>
-            <select className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            <select className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               value={selectedTT} onChange={e => setSelectedTT(e.target.value)}>
               {timetables.map(tt => <option key={tt.id} value={tt.id}>{tt.name} · {tt.academicYear}</option>)}
             </select>
@@ -191,7 +191,7 @@ export default function ClassesPage() {
                           const count = teacherCount(c.id)
                           const isManaging = managingClass?.id === c.id
                           return (
-                            <tr key={c.id} className={`border-b border-gray-100 transition-colors ${isManaging ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}>
+                            <tr key={c.id} className={`border-b border-gray-100 transition-colors ${isManaging ? 'bg-brand-50' : 'hover:bg-gray-50'}`}>
                               <td className="px-4 py-3 font-medium text-gray-800 dark:text-slate-100">{c.name}</td>
                               <td className="px-4 py-3">
                                 <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold text-white"
@@ -225,7 +225,7 @@ export default function ClassesPage() {
                               <td className="px-4 py-3 text-right whitespace-nowrap">
                                 <button
                                   onClick={() => setManagingClass(isManaging ? null : c)}
-                                  className={`text-sm mr-3 font-medium transition-colors ${isManaging ? 'text-indigo-700 underline' : 'text-indigo-600 hover:underline'}`}>
+                                  className={`text-sm mr-3 font-medium transition-colors ${isManaging ? 'text-brand-700 underline' : 'text-brand-600 hover:underline'}`}>
                                   {isManaging ? 'Close panel' : `Teachers (${count})`}
                                 </button>
                                 <button onClick={() => openModal(c)} className="text-blue-600 dark:text-blue-400 hover:underline text-sm mr-3">Edit</button>
@@ -243,10 +243,10 @@ export default function ClassesPage() {
             {/* Teacher management side panel */}
             {managingClass && (
               <div className="w-full lg:w-80 shrink-0 bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-700 flex flex-col">
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-700 bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-between">
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-700 bg-brand-50 dark:bg-brand-950/40 flex items-center justify-between">
                   <div>
-                    <h3 className="font-bold text-indigo-800 dark:text-indigo-300 text-sm">Teachers — {managingClass.name}</h3>
-                    <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-0.5">{assignedTeachers.length} assigned</p>
+                    <h3 className="font-bold text-brand-800 dark:text-brand-300 text-sm">Teachers — {managingClass.name}</h3>
+                    <p className="text-xs text-brand-500 dark:text-brand-400 mt-0.5">{assignedTeachers.length} assigned</p>
                   </div>
                   <button onClick={() => setManagingClass(null)}
                     className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
@@ -266,7 +266,7 @@ export default function ClassesPage() {
                     <div className="space-y-1">
                       {assignedTeachers.map(t => (
                         <div key={t.id}
-                          className="flex items-center justify-between px-3 py-2 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg border border-indigo-100 dark:border-indigo-900">
+                          className="flex items-center justify-between px-3 py-2 bg-brand-50 dark:bg-brand-950/40 rounded-lg border border-brand-100 dark:border-brand-900">
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                               style={{ backgroundColor: t.color ?? '#6366f1' }} />
@@ -306,7 +306,7 @@ export default function ClassesPage() {
                     <div className="space-y-1">
                       {unassignedTeachers.map(t => (
                         <div key={t.id}
-                          className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-800 hover:border-indigo-200 transition-colors">
+                          className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-100 dark:border-slate-800 hover:border-brand-200 transition-colors">
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                               style={{ backgroundColor: t.color ?? '#6366f1' }} />
@@ -327,7 +327,7 @@ export default function ClassesPage() {
                           <button
                             onClick={() => assignTeacher(t.id)}
                             disabled={assigning}
-                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-xs font-medium disabled:opacity-40 shrink-0">
+                            className="text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 text-xs font-medium disabled:opacity-40 shrink-0">
                             + Add
                           </button>
                         </div>
@@ -365,8 +365,8 @@ export default function ClassesPage() {
                             onClick={() => { setFName(sc.name); setFShort(autoShort(sc.name)) }}
                             className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
                               fName === sc.name
-                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-indigo-400 hover:text-indigo-700'
+                                ? 'bg-brand-600 text-white border-brand-600'
+                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-brand-400 hover:text-brand-700'
                             }`}
                           >
                             {sc.name}{sc.studyYear ? ` · ${sc.studyYear.label ?? sc.studyYear.year}` : ''}
@@ -382,12 +382,12 @@ export default function ClassesPage() {
               )}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Class Name</label>
-                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fName} onChange={e => setFName(e.target.value)} placeholder="e.g. Grade 1A" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Short Name</label>
-                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                <input className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fShort} onChange={e => setFShort(e.target.value)} maxLength={8} placeholder="e.g. G1A" />
               </div>
               <div>
@@ -409,7 +409,7 @@ export default function ClassesPage() {
             <div className="px-5 py-3 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-2">
               <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-lg text-sm font-medium">Cancel</button>
               <button onClick={handleSave} disabled={saving || !fName || !fShort}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
+                className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-40">
                 {saving ? 'Saving…' : 'OK'}
               </button>
             </div>

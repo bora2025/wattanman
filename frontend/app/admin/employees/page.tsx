@@ -358,13 +358,13 @@ export default function ManageEmployees() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setActiveSection('employees')}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeSection === 'employees' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300'}`}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeSection === 'employees' ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-300'}`}
                 >
                   {t('employees.employees')} ({users.length})
                 </button>
                 <button
                   onClick={() => setActiveSection('departments')}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeSection === 'departments' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300'}`}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeSection === 'departments' ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-300'}`}
                 >
                   {t('employees.departments')} ({departments.length})
                 </button>
@@ -413,7 +413,7 @@ export default function ManageEmployees() {
                               value={customRole}
                               onChange={e => setCustomRole(e.target.value)}
                               required
-                              className="w-full mt-1.5 rounded-lg border border-indigo-400 dark:border-indigo-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300"
+                              className="w-full mt-1.5 rounded-lg border border-brand-400 dark:border-brand-700 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-300"
                               placeholder="Type new position name..."
                             />
                           )}
@@ -455,11 +455,11 @@ export default function ManageEmployees() {
                       ))}
                     </select>
                     <div className="flex flex-wrap gap-1">
-                      <button onClick={() => setFilter('ALL')} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filter === 'ALL' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                      <button onClick={() => setFilter('ALL')} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filter === 'ALL' ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                         {t('common.all')} ({users.length})
                       </button>
                       {presentRoles.map(r => (
-                        <button key={r} onClick={() => setFilter(r)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filter === r ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                        <button key={r} onClick={() => setFilter(r)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filter === r ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                           {getRoleLabel(r)} ({users.filter(u => u.role === r).length})
                         </button>
                       ))}
@@ -579,7 +579,7 @@ export default function ManageEmployees() {
                           </div>
                           {dept.description && <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">{dept.description}</p>}
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-1 rounded-full">
+                            <span className="text-xs font-medium text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/40 px-2 py-1 rounded-full">
                               👥 {dept._count?.users || 0} employees
                             </span>
                           </div>
@@ -624,7 +624,7 @@ export default function ManageEmployees() {
                       value={editCustomRole}
                       onChange={e => setEditCustomRole(e.target.value)}
                       required
-                      className="w-full mt-1.5 rounded-lg border border-indigo-400 dark:border-indigo-700 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300"
+                      className="w-full mt-1.5 rounded-lg border border-brand-400 dark:border-brand-700 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-300"
                       placeholder="Type new position name..."
                     />
                   )}

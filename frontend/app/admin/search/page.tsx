@@ -242,7 +242,7 @@ export default function SearchPage() {
 
   const InfoBox = ({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) => (
     <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 flex items-start gap-2.5">
-      {icon && <span className="w-7 h-7 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-indigo-500 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 mt-0.5">{icon}</span>}
+      {icon && <span className="w-7 h-7 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-brand-500 dark:text-brand-400 flex items-center justify-center flex-shrink-0 mt-0.5">{icon}</span>}
       <div className="min-w-0">
         <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-0.5">{label}</p>
         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 break-all">{value}</p>
@@ -281,7 +281,7 @@ export default function SearchPage() {
         <div className="h-14 lg:hidden" />
         <div className="page-header">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200 flex-shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-brand-200 flex-shrink-0">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 110-14 7 7 0 010 14z" /></svg>
             </div>
             <div>
@@ -323,8 +323,8 @@ export default function SearchPage() {
                 onClick={() => setRoleFilter(r)}
                 className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-all inline-flex items-center gap-1.5 ${
                   roleFilter === r
-                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/50'
+                    ? 'bg-brand-600 text-white shadow-sm shadow-brand-200'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-200 hover:bg-brand-50/50'
                 }`}
               >
                 {r === 'ALL' ? t('common.all') : t(roleKeyMap[r] || '')}
@@ -338,7 +338,7 @@ export default function SearchPage() {
           {/* Results */}
           {loading ? (
             <div className="text-center py-12 text-slate-400 dark:text-slate-500">
-              <div className="inline-block w-6 h-6 border-2 border-indigo-300 dark:border-indigo-800 border-t-indigo-600 rounded-full animate-spin mb-2" />
+              <div className="inline-block w-6 h-6 border-2 border-brand-300 dark:border-brand-800 border-t-brand-600 rounded-full animate-spin mb-2" />
               <p className="text-sm">{t('search.searching')}</p>
             </div>
           ) : hasSearched && results.length === 0 ? (
@@ -383,7 +383,7 @@ export default function SearchPage() {
                   <button
                     key={user.id}
                     onClick={() => handleSelectUser(user)}
-                    className={`w-full text-left rounded-2xl shadow-sm border px-4 py-3 flex items-center gap-3 active:bg-indigo-50 transition-colors ${isDup(user) ? 'bg-amber-50 border-amber-300' : 'bg-white border-slate-100'}`}
+                    className={`w-full text-left rounded-2xl shadow-sm border px-4 py-3 flex items-center gap-3 active:bg-brand-50 transition-colors ${isDup(user) ? 'bg-amber-50 border-amber-300' : 'bg-white border-slate-100'}`}
                   >
                     <div className="relative flex-shrink-0">
                       {user.photo || user.studentProfile?.photo ? (
@@ -400,7 +400,7 @@ export default function SearchPage() {
                         />
                       ) : null}
                       <div
-                        className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg font-bold"
+                        className="w-12 h-12 rounded-xl bg-brand-100 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg font-bold"
                         style={{ display: (user.photo || user.studentProfile?.photo) ? 'none' : 'flex' }}
                       >
                         {user.name.charAt(0).toUpperCase()}
@@ -417,7 +417,7 @@ export default function SearchPage() {
                           <span className="text-[11px] text-slate-500 dark:text-slate-400">{user.studentProfile?.class?.name || user.department?.name}</span>
                         )}
                         {user.phone && (
-                          <a href={`tel:${user.phone}`} onClick={e => e.stopPropagation()} className="text-[11px] text-indigo-500 dark:text-indigo-400 font-medium inline-flex items-center gap-1">
+                          <a href={`tel:${user.phone}`} onClick={e => e.stopPropagation()} className="text-[11px] text-brand-500 dark:text-brand-400 font-medium inline-flex items-center gap-1">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                             {user.phone}
                           </a>
@@ -445,7 +445,7 @@ export default function SearchPage() {
                   </thead>
                   <tbody>
                     {results.map(user => (
-                      <tr key={user.id} className={`cursor-pointer ${isDup(user) ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-indigo-50/50'}`} onClick={() => handleSelectUser(user)}>
+                      <tr key={user.id} className={`cursor-pointer ${isDup(user) ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-brand-50/50'}`} onClick={() => handleSelectUser(user)}>
                         <td>
                           <div className="flex items-center gap-3">
                             {user.photo || user.studentProfile?.photo ? (
@@ -481,7 +481,7 @@ export default function SearchPage() {
                         <td className="text-slate-500 dark:text-slate-400 text-sm">{user.email}</td>
                         <td className="text-slate-500 dark:text-slate-400 text-sm" onClick={e => e.stopPropagation()}>
                           {user.phone
-                            ? <a href={`tel:${user.phone}`} className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">{user.phone}</a>
+                            ? <a href={`tel:${user.phone}`} className="text-brand-600 dark:text-brand-400 hover:underline font-medium">{user.phone}</a>
                             : '—'}
                         </td>
                         <td><span className={roleBadge[user.role] || 'badge-gray'}>{t(roleKeyMap[user.role] || '')}</span></td>
@@ -489,7 +489,7 @@ export default function SearchPage() {
                         <td>
                           <button
                             onClick={e => { e.stopPropagation(); handleSelectUser(user) }}
-                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm font-medium"
+                            className="text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 text-sm font-medium"
                           >
                             {t('common.view')}
                           </button>
@@ -521,7 +521,7 @@ export default function SearchPage() {
           >
             {/* Header */}
             <div className="relative px-4 pt-5 pb-5 sm:px-5 flex-shrink-0 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-indigo-500 to-violet-600" />
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-500 via-brand-500 to-violet-600" />
               <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, white 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
               <div className="relative flex items-center gap-3">
                 <div className="relative flex-shrink-0">
@@ -604,7 +604,7 @@ export default function SearchPage() {
                           key={tab.id}
                           onClick={() => handleTabChange(tab.id)}
                           className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                            activeTab === tab.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                            activeTab === tab.id ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
                           }`}
                         >
                           {tabIcons[tab.id]}
@@ -617,7 +617,7 @@ export default function SearchPage() {
                   <div className="p-4 sm:p-5 overflow-y-auto flex-1 min-h-0">
                     {fullProfileLoading ? (
                       <div className="text-center py-10">
-                        <div className="inline-block w-7 h-7 border-2 border-indigo-300 dark:border-indigo-800 border-t-indigo-600 rounded-full animate-spin" />
+                        <div className="inline-block w-7 h-7 border-2 border-brand-300 dark:border-brand-800 border-t-brand-600 rounded-full animate-spin" />
                         <p className="text-sm text-slate-400 dark:text-slate-500 mt-2">Loading…</p>
                       </div>
                     ) : fullProfile ? (
@@ -627,11 +627,11 @@ export default function SearchPage() {
                           <div className="grid grid-cols-2 gap-3">
                             <InfoBox icon={infoIcons.email} label={t('common.email')} value={fullProfile.email} />
                             <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 flex items-start gap-2.5">
-                              <span className="w-7 h-7 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-indigo-500 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 mt-0.5">{infoIcons.phone}</span>
+                              <span className="w-7 h-7 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-brand-500 dark:text-brand-400 flex items-center justify-center flex-shrink-0 mt-0.5">{infoIcons.phone}</span>
                               <div className="min-w-0">
                                 <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-0.5">{t('common.phone')}</p>
                                 {fullProfile.phone
-                                  ? <a href={`tel:${fullProfile.phone}`} className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">{fullProfile.phone}</a>
+                                  ? <a href={`tel:${fullProfile.phone}`} className="text-sm font-semibold text-brand-600 dark:text-brand-400 hover:underline">{fullProfile.phone}</a>
                                   : <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">—</p>}
                               </div>
                             </div>
@@ -822,7 +822,7 @@ export default function SearchPage() {
                                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{tab.tabLabel}</p>
                                             <div className="flex items-center gap-2">
                                               {ranking && ranking.rank > 0 && (
-                                                <span className="text-xs bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold px-2 py-0.5 rounded-full">
+                                                <span className="text-xs bg-brand-100 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 font-semibold px-2 py-0.5 rounded-full">
                                                   🏆 #{ranking.rank}/{ranking.total}
                                                 </span>
                                               )}
@@ -858,7 +858,7 @@ export default function SearchPage() {
                         {activeTab === 'schedule' && fullProfile.studentProfile && (() => {
                           if (scheduleLoading || scheduleData === undefined) return (
                             <div className="text-center py-10">
-                              <div className="inline-block w-6 h-6 border-2 border-indigo-300 dark:border-indigo-800 border-t-indigo-600 rounded-full animate-spin" />
+                              <div className="inline-block w-6 h-6 border-2 border-brand-300 dark:border-brand-800 border-t-brand-600 rounded-full animate-spin" />
                               <p className="text-sm text-slate-400 dark:text-slate-500 mt-2">Loading schedule…</p>
                             </div>
                           )

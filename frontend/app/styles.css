@@ -39,6 +39,7 @@
      pre-Phase-19 hardcoded desktop indigo, so nothing visually changes for
      a school that hasn't applied a theme yet. */
   --brand-600: #4F46E5;
+  --brand-50: color-mix(in srgb, var(--brand-600) 6%, white);
   --brand-100: color-mix(in srgb, var(--brand-600) 12%, white);
   --brand-200: color-mix(in srgb, var(--brand-600) 24%, white);
   --brand-300: color-mix(in srgb, var(--brand-600) 45%, white);

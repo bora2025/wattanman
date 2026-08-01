@@ -995,7 +995,7 @@ function AdminTakeAttendance() {
               {/* Info cards */}
               <div className="w-full space-y-2">
                 <div className="flex items-center gap-3 py-3 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                  <div className="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-sm">🏫</div>
+                  <div className="w-9 h-9 rounded-lg bg-brand-100 dark:bg-brand-950/40 flex items-center justify-center text-brand-600 dark:text-brand-400 text-sm">🏫</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Class</p>
                     <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{currentStudent.className || 'N/A'}</p>
@@ -1071,7 +1071,7 @@ function AdminTakeAttendance() {
           <div className="w-full sm:max-w-sm bg-white dark:bg-slate-900 sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden sm:mx-4 animate-[slideUp_0.35s_ease-out]">
             <div className={`relative px-6 py-6 text-center overflow-hidden ${
               staffScanResult.action === 'CHECK_OUT'
-                ? 'bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-500'
+                ? 'bg-gradient-to-br from-sky-500 via-blue-500 to-brand-500'
                 : 'bg-gradient-to-br from-teal-500 via-emerald-500 to-cyan-500'
             }`}>
               <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10" />
@@ -1159,7 +1159,7 @@ function AdminTakeAttendance() {
           </Link>
         </div>
         <div className="h-1 bg-slate-100 dark:bg-slate-800">
-          <div className="h-1 bg-indigo-500 transition-all duration-500 ease-out" style={{ width: `${progressPct}%` }} />
+          <div className="h-1 bg-brand-500 transition-all duration-500 ease-out" style={{ width: `${progressPct}%` }} />
         </div>
       </div>
 
@@ -1203,7 +1203,7 @@ function AdminTakeAttendance() {
               <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                 <span className="text-lg">{fmt.icon}</span>
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">Attendance Format: <span className="text-indigo-600 dark:text-indigo-400">{fmt.name}</span></div>
+                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">Attendance Format: <span className="text-brand-600 dark:text-brand-400">{fmt.name}</span></div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">{fmt.description}</div>
                 </div>
               </div>
@@ -1216,7 +1216,7 @@ function AdminTakeAttendance() {
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="w-full sm:w-auto rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white dark:bg-slate-900"
+              className="w-full sm:w-auto rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white dark:bg-slate-900"
             >
               {classes.map(cls => (
                 <option key={cls.id} value={cls.id}>{cls.name} — {cls.subject || 'N/A'}</option>
@@ -1351,7 +1351,7 @@ function AdminTakeAttendance() {
                   className={`card p-3 sm:p-4 transition-all duration-300 ${
                     status === 'PRESENT' ? 'border-emerald-300 bg-emerald-50/50' :
                     status === 'LATE' ? 'border-amber-300 bg-amber-50/50' : ''
-                  } ${justScanned ? 'ring-2 ring-indigo-400 animate-pulse' : ''}`}
+                  } ${justScanned ? 'ring-2 ring-brand-400 animate-pulse' : ''}`}
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center overflow-hidden text-sm font-bold shrink-0 ${
@@ -1382,7 +1382,7 @@ function AdminTakeAttendance() {
                         type="checkbox"
                         checked={status === 'PRESENT' || status === 'LATE'}
                         onChange={(e) => updateAttendance(student.id, e.target.checked ? 'PRESENT' : 'ABSENT')}
-                        className="w-5 h-5 text-indigo-600 dark:text-indigo-400 rounded border-slate-300 dark:border-slate-600 focus:ring-indigo-500"
+                        className="w-5 h-5 text-brand-600 dark:text-brand-400 rounded border-slate-300 dark:border-slate-600 focus:ring-brand-500"
                       />
                       <span className="text-sm text-slate-600 dark:text-slate-300">{t('common.present')}</span>
                     </label>

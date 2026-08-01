@@ -62,7 +62,7 @@ function periodLabel(period: Period, dateRange: { start: string; end: string }) 
 
 export default function PrintBudgetReportPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin"></div></div>}>
       <PrintBudgetReportContent />
     </Suspense>
   )
@@ -129,7 +129,7 @@ function PrintBudgetReportContent() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm text-slate-500 mt-3">Loading…</p>
         </div>
       </div>
@@ -214,7 +214,7 @@ function PrintBudgetReportContent() {
         <div className="print-toolbar-center text-sm text-slate-500 truncate min-w-0 mx-1">
           Finance / Budget Report — {periodLabel(period, report.dateRange)} — {paperSize}
         </div>
-        <button onClick={() => window.print()} className="flex-shrink-0 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm">
+        <button onClick={() => window.print()} className="flex-shrink-0 px-4 py-2 text-sm font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 shadow-sm">
           {'🖨️'} Print
         </button>
       </div>

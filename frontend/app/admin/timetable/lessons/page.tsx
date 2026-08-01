@@ -140,11 +140,11 @@ export default function LessonsPage() {
           {/* Header */}
           <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
             <div>
-              <button onClick={() => router.push('/admin/timetable')} className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline mb-1">← Back to Timetable</button>
+              <button onClick={() => router.push('/admin/timetable')} className="text-brand-600 dark:text-brand-400 text-sm hover:underline mb-1">← Back to Timetable</button>
               <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Lesson Contracts</h1>
               <p className="text-sm text-gray-500 dark:text-slate-400">Manage teacher–subject–class assignments and lessons per week</p>
             </div>
-            <button onClick={() => openModal()} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700">
+            <button onClick={() => openModal()} className="px-4 py-2 bg-brand-600 text-white rounded-lg font-medium text-sm hover:bg-brand-700">
               + New Lesson
             </button>
           </div>
@@ -154,7 +154,7 @@ export default function LessonsPage() {
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-slate-300 font-medium">Timetable:</label>
               <select
-                className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 value={selectedTT} onChange={e => setSelectedTT(e.target.value)}>
                 {timetables.map(tt => <option key={tt.id} value={tt.id}>{tt.name} · {tt.academicYear}</option>)}
               </select>
@@ -162,7 +162,7 @@ export default function LessonsPage() {
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-slate-300 font-medium">Teacher:</label>
               <select
-                className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 value={filterTeacher} onChange={e => setFilterTeacher(e.target.value)}>
                 <option value="">All teachers</option>
                 {teachers.map(t => <option key={t.id} value={t.id}>{t.lastName} {t.firstName}</option>)}
@@ -219,7 +219,7 @@ export default function LessonsPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <span className="inline-block bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold rounded px-2 py-0.5 text-xs">
+                          <span className="inline-block bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 font-semibold rounded px-2 py-0.5 text-xs">
                             {l.perWeek}×/week
                           </span>
                         </td>
@@ -257,7 +257,7 @@ export default function LessonsPage() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Teacher</label>
                 <select
-                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fTeacher} onChange={e => setFTeacher(e.target.value)}>
                   <option value="">Select teacher</option>
                   {teachers.map(t => (
@@ -270,7 +270,7 @@ export default function LessonsPage() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Subject</label>
                 <select
-                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fSubject} onChange={e => setFSubject(e.target.value)}>
                   <option value="">Select subject</option>
                   {subjects.map(s => (
@@ -283,7 +283,7 @@ export default function LessonsPage() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Class</label>
                 <select
-                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fClass} onChange={e => setFClass(e.target.value)}>
                   <option value="">Select class</option>
                   {classes.map(c => (
@@ -296,7 +296,7 @@ export default function LessonsPage() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Lessons / Week</label>
                 <select
-                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fPerWeek} onChange={e => setFPerWeek(+e.target.value)}>
                   {[1,2,3,4,5,6,7,8,9,10].map(n => (
                     <option key={n} value={n}>{n} {n === 1 ? 'time' : 'times'} per week</option>
@@ -308,7 +308,7 @@ export default function LessonsPage() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">Lesson Type</label>
                 <select
-                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   value={fType} onChange={e => setFType(e.target.value)}>
                   {LESSON_TYPES.map(lt => (
                     <option key={lt.value} value={lt.value}>{lt.label}</option>
@@ -321,7 +321,7 @@ export default function LessonsPage() {
               <button
                 onClick={handleSave}
                 disabled={saving || !fTeacher || !fSubject || !fClass}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40">
+                className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-40">
                 {saving ? 'Saving…' : 'OK'}
               </button>
             </div>

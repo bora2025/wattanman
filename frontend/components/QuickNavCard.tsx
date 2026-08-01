@@ -26,7 +26,7 @@ export default function QuickNavCard({
         <p className="font-bold text-gray-900 dark:text-slate-100">{title}</p>
         <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{sub}</p>
       </div>
-      <svg className="w-5 h-5 text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+      <svg className="w-5 h-5 text-gray-300 group-hover:text-brand-500 group-hover:translate-x-1 transition-all flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
       </svg>
     </Link>

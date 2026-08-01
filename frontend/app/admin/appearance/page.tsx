@@ -210,8 +210,8 @@ function ImageUploader({
         <div
           className={`relative border-2 border-dashed rounded-xl transition-all cursor-pointer ${
             dragging
-              ? 'border-indigo-400 bg-indigo-50'
-              : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'
+              ? 'border-brand-400 bg-brand-50'
+              : 'border-gray-300 hover:border-brand-400 hover:bg-gray-50'
           }`}
           onClick={() => inputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
@@ -221,13 +221,13 @@ function ImageUploader({
           <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-2">
             {compressing ? (
               <>
-                <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">Compressing image…</p>
+                <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-brand-600 dark:text-brand-400 font-medium">Compressing image…</p>
               </>
             ) : (
               <>
-                <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <div className="w-12 h-12 rounded-full bg-brand-50 dark:bg-brand-950/40 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-brand-500 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
                   </svg>
                 </div>
@@ -250,7 +250,7 @@ function ImageUploader({
         <button
           type="button"
           onClick={() => setUrlMode((m) => !m)}
-          className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 underline transition-colors"
+          className="text-xs text-brand-500 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 underline transition-colors"
         >
           {urlMode ? 'Hide URL input' : 'Or paste an image URL instead'}
         </button>
@@ -274,12 +274,12 @@ function ImageUploader({
             onChange={(e) => setUrlInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyUrl() } }}
             placeholder="https://example.com/banner.jpg"
-            className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900"
+            className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-slate-900"
           />
           <button
             type="button"
             onClick={applyUrl}
-            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
           >
             Apply
           </button>
@@ -356,7 +356,7 @@ function Input({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-slate-900"
+      className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-white dark:bg-slate-900"
     />
   )
 }
@@ -601,7 +601,7 @@ function AppearanceContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -627,7 +627,7 @@ function AppearanceContent() {
           <button
             onClick={save}
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+            className="flex items-center gap-2 px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
           >
             {saving ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -649,7 +649,7 @@ function AppearanceContent() {
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               activeTab === tab.id
-                ? 'bg-white text-indigo-700 shadow-sm'
+                ? 'bg-white text-brand-700 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -689,7 +689,7 @@ function AppearanceContent() {
             </div>
             <button
               onClick={addSlide}
-              className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-indigo-300 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-sm font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors w-full justify-center"
+              className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-brand-300 dark:border-brand-800 text-brand-600 dark:text-brand-400 text-sm font-medium rounded-lg hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-colors w-full justify-center"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
@@ -951,7 +951,7 @@ function AppearanceContent() {
                 onChange={(e) => patch('customCss', e.target.value)}
                 rows={10}
                 placeholder={`:root {\n  /* Override CSS variables here */\n}`}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-slate-800 resize-y"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500 bg-gray-50 dark:bg-slate-800 resize-y"
               />
             </Field>
           </SectionCard>
@@ -975,7 +975,7 @@ function AppearanceContent() {
           <button
             onClick={save}
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+            className="flex items-center gap-2 px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
           >
             {saving ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
