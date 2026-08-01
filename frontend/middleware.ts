@@ -19,12 +19,6 @@ import { NextRequest, NextResponse } from 'next/server';
  *     issued on the platform host in the first place.
  */
 
-// Phase 6d: on a school subdomain, `/` shouldn't show Wattaman-the-company's
-// generic marketing copy to that school's own users — send it to /login
-// instead. On the platform host, `/` stays untouched: it IS the company's
-// marketing page.
-const ROOT_REDIRECT_ON_SCHOOL_HOST = '/login';
-
 const ROLE_DASHBOARD_PREFIXES = [
   '/admin',
   '/teacher',
@@ -57,9 +51,11 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  if (!isPlatformHost && pathname === '/') {
-    return NextResponse.redirect(new URL(ROOT_REDIRECT_ON_SCHOOL_HOST, req.url));
-  }
+  // `/` on a school subdomain renders the same page.tsx as the platform
+  // host, but it's already fully per-tenant: it fetches this school's own
+  // SiteSettings (logo, hero, about, posts) via the Host-resolved
+  // /api/site-settings, same as everywhere else in the app, and already has
+  // "Sign In" links through to /login throughout. No redirect needed.
 
   return NextResponse.next();
 }
