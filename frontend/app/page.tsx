@@ -30,6 +30,7 @@ interface SiteSettings {
   primaryColor: string
   secondaryColor: string
   font: string
+  customCss: string
   // About
   aboutBadge: string
   aboutTitle: string
@@ -56,6 +57,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   primaryColor: '#FF6B2C',
   secondaryColor: '#7C3AED',
   font: 'inter',
+  customCss: '',
   aboutBadge: 'About Us',
   aboutTitle: 'A Smarter Way to Manage Your School',
   aboutDescription: 'Wattaman is an all-in-one school management platform designed for modern educational institutions. From QR-code attendance to fee management, timetables, and parent communication — everything runs seamlessly in one place.',
@@ -556,6 +558,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: `var(--font-${settings.font || 'inter'}), sans-serif` }}>
+      {/* Platform-admin-authored theme package CSS (Phase 20) — applied on
+          top of everything above via primary/secondary/font. Self-contained
+          (assets already inlined as data URIs client-side at upload time),
+          validated/sanitized server-side before ever being stored. */}
+      {settings.customCss && <style dangerouslySetInnerHTML={{ __html: settings.customCss }} />}
 
       {/* ══════════════ TOP BAR ══════════════ */}
       {(settings.footerPhone || settings.footerEmail) && (

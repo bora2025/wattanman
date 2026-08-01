@@ -16,7 +16,7 @@ export interface ThemeListing {
   priceNote: string | null
   enabled: boolean
   requested: boolean
-  themeConfig: { mode: 'light' | 'dark'; primaryColor: string; secondaryColor: string; font: ThemeFont; radius: ThemeRadius } | null
+  themeConfig: { mode: 'light' | 'dark'; primaryColor: string; secondaryColor: string; font: ThemeFont; radius: ThemeRadius; customCss?: string } | null
 }
 
 const DEFAULT_VARS: Required<ThemeVars> = { primaryColor: '#4f46e5', secondaryColor: '#0284c7', font: 'inter', radius: 'soft' }
@@ -58,7 +58,7 @@ function ThemeCard({ theme, onChanged }: { theme: ThemeListing; onChanged: (upda
     apiFetch('/api/site-settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ primaryColor: c.primaryColor, secondaryColor: c.secondaryColor, font: c.font, radius: c.radius }),
+      body: JSON.stringify({ primaryColor: c.primaryColor, secondaryColor: c.secondaryColor, font: c.font, radius: c.radius, customCss: c.customCss || '' }),
     }).catch(() => { /* best-effort */ })
   }
 
