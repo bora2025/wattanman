@@ -5,12 +5,15 @@ import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { platformNav } from '../../../lib/platform-nav'
 import { apiFetch } from '../../../lib/api'
-import { AccentColor, ACCENT_SWATCHES } from '../../../lib/appearance/accentColor'
+import { THEME_FONTS, ThemeFont } from '../../../lib/appearance/themeFonts'
+import { THEME_RADIUS_PRESETS, ThemeRadius } from '../../../lib/appearance/themeRadius'
 
 interface ThemeConfig {
   mode: 'light' | 'dark'
-  accentColor: AccentColor
   primaryColor: string
+  secondaryColor: string
+  font: ThemeFont
+  radius: ThemeRadius
 }
 
 interface AddonDefinition {
@@ -41,13 +44,15 @@ interface FormState {
   price: string
   priceNote: string
   themeMode: 'light' | 'dark'
-  themeAccentColor: AccentColor
   themePrimaryColor: string
+  themeSecondaryColor: string
+  themeFont: ThemeFont
+  themeRadius: ThemeRadius
 }
 
 const EMPTY_FORM: FormState = {
   kind: 'ADDON', name: '', description: '', detailDescription: '', screenshotUrl: '', category: '', icon: '', price: '', priceNote: '',
-  themeMode: 'light', themeAccentColor: 'indigo', themePrimaryColor: '#4f46e5',
+  themeMode: 'light', themePrimaryColor: '#4f46e5', themeSecondaryColor: '#0284c7', themeFont: 'inter', themeRadius: 'soft',
 }
 
 /** Compress an image File to a JPEG data URL via <canvas>, same technique as
@@ -176,11 +181,13 @@ function KindToggle({ kind, onChange, moduleLabel, addonLabel }: { kind: FormSta
   )
 }
 
-/** THEME-only preset fields — light/dark, one of the 10 accent colors, and
- * the public-site primary color. Shared by the create and edit forms. */
-function ThemeConfigFields({ mode, accentColor, primaryColor, onChange }: {
-  mode: 'light' | 'dark'; accentColor: AccentColor; primaryColor: string
-  onChange: (next: { mode?: 'light' | 'dark'; accentColor?: AccentColor; primaryColor?: string }) => void
+/** THEME-only preset fields (Phase 19) — light/dark, a primary + secondary
+ * color (drives both the dashboard and the public site, replacing the old
+ * fixed 10-name accent enum), a curated font, and a corner-roundness preset.
+ * Shared by the create and edit forms. */
+function ThemeConfigFields({ mode, primaryColor, secondaryColor, font, radius, onChange }: {
+  mode: 'light' | 'dark'; primaryColor: string; secondaryColor: string; font: ThemeFont; radius: ThemeRadius
+  onChange: (next: { mode?: 'light' | 'dark'; primaryColor?: string; secondaryColor?: string; font?: ThemeFont; radius?: ThemeRadius }) => void
 }) {
   return (
     <div className="space-y-3 p-3 rounded-lg bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900">
@@ -195,20 +202,43 @@ function ThemeConfigFields({ mode, accentColor, primaryColor, onChange }: {
           ))}
         </div>
       </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Primary color <span className="font-normal text-slate-400 dark:text-slate-500">(dashboard + site)</span></label>
+          <div className="flex items-center gap-2">
+            <input type="color" value={primaryColor} onChange={e => onChange({ primaryColor: e.target.value })} className="w-9 h-9 rounded cursor-pointer border border-slate-200 dark:border-slate-700" />
+            <input type="text" value={primaryColor} onChange={e => onChange({ primaryColor: e.target.value })} placeholder="#4f46e5" className="w-24 text-sm" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Secondary color</label>
+          <div className="flex items-center gap-2">
+            <input type="color" value={secondaryColor} onChange={e => onChange({ secondaryColor: e.target.value })} className="w-9 h-9 rounded cursor-pointer border border-slate-200 dark:border-slate-700" />
+            <input type="text" value={secondaryColor} onChange={e => onChange({ secondaryColor: e.target.value })} placeholder="#0284c7" className="w-24 text-sm" />
+          </div>
+        </div>
+      </div>
       <div>
-        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Sidebar accent color</label>
-        <div className="grid grid-cols-5 gap-2 max-w-xs">
-          {ACCENT_SWATCHES.map(s => (
-            <button key={s.id} type="button" onClick={() => onChange({ accentColor: s.id })} title={s.label}
-              className={`aspect-square rounded-lg bg-gradient-to-br ${s.gradient} transition-all ${accentColor === s.id ? 'ring-2 ring-offset-1 ring-slate-400' : 'hover:opacity-80'}`} />
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Font</label>
+        <div className="flex gap-2 flex-wrap">
+          {THEME_FONTS.map(f => (
+            <button key={f.id} type="button" onClick={() => onChange({ font: f.id })} style={{ fontFamily: f.previewStyle.replace('font-family: ', '').replace(/;$/, '') }}
+              className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${font === f.id ? 'bg-slate-700 text-white border-slate-700' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}>
+              {f.label}
+            </button>
           ))}
         </div>
       </div>
       <div>
-        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Public site primary color</label>
-        <div className="flex items-center gap-2">
-          <input type="color" value={primaryColor} onChange={e => onChange({ primaryColor: e.target.value })} className="w-9 h-9 rounded cursor-pointer border border-slate-200 dark:border-slate-700" />
-          <input type="text" value={primaryColor} onChange={e => onChange({ primaryColor: e.target.value })} placeholder="#4f46e5" className="w-28 text-sm" />
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Corner roundness</label>
+        <div className="flex gap-2">
+          {THEME_RADIUS_PRESETS.map(r => (
+            <button key={r.id} type="button" onClick={() => onChange({ radius: r.id })}
+              className={`text-sm px-3 py-1.5 border font-medium ${radius === r.id ? 'bg-slate-700 text-white border-slate-700' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
+              style={{ borderRadius: r.radiusBtn }}>
+              {r.label}
+            </button>
+          ))}
         </div>
       </div>
     </div>
@@ -227,8 +257,10 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
     price: addon.price != null ? String(addon.price) : '',
     priceNote: addon.priceNote ?? '',
     themeMode: addon.themeConfig?.mode ?? 'light',
-    themeAccentColor: addon.themeConfig?.accentColor ?? 'indigo',
     themePrimaryColor: addon.themeConfig?.primaryColor ?? '#4f46e5',
+    themeSecondaryColor: addon.themeConfig?.secondaryColor ?? '#0284c7',
+    themeFont: addon.themeConfig?.font ?? 'inter',
+    themeRadius: addon.themeConfig?.radius ?? 'soft',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -252,7 +284,7 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
           icon: form.icon,
           price: form.kind === 'MODULE' ? null : (form.price.trim() === '' ? null : Number(form.price)),
           priceNote: form.kind === 'MODULE' ? '' : form.priceNote,
-          themeConfig: form.kind === 'THEME' ? { mode: form.themeMode, accentColor: form.themeAccentColor, primaryColor: form.themePrimaryColor } : undefined,
+          themeConfig: form.kind === 'THEME' ? { mode: form.themeMode, primaryColor: form.themePrimaryColor, secondaryColor: form.themeSecondaryColor, font: form.themeFont, radius: form.themeRadius } : undefined,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -307,8 +339,15 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
       </div>
       {form.kind === 'THEME' && (
         <ThemeConfigFields
-          mode={form.themeMode} accentColor={form.themeAccentColor} primaryColor={form.themePrimaryColor}
-          onChange={(next) => setForm({ ...form, ...(next.mode !== undefined && { themeMode: next.mode }), ...(next.accentColor !== undefined && { themeAccentColor: next.accentColor }), ...(next.primaryColor !== undefined && { themePrimaryColor: next.primaryColor }) })}
+          mode={form.themeMode} primaryColor={form.themePrimaryColor} secondaryColor={form.themeSecondaryColor} font={form.themeFont} radius={form.themeRadius}
+          onChange={(next) => setForm({
+            ...form,
+            ...(next.mode !== undefined && { themeMode: next.mode }),
+            ...(next.primaryColor !== undefined && { themePrimaryColor: next.primaryColor }),
+            ...(next.secondaryColor !== undefined && { themeSecondaryColor: next.secondaryColor }),
+            ...(next.font !== undefined && { themeFont: next.font }),
+            ...(next.radius !== undefined && { themeRadius: next.radius }),
+          })}
         />
       )}
       <div>
@@ -440,7 +479,7 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
           icon: form.icon || undefined,
           price: form.kind === 'MODULE' || form.price.trim() === '' ? undefined : Number(form.price),
           priceNote: form.kind === 'MODULE' ? undefined : (form.priceNote || undefined),
-          themeConfig: form.kind === 'THEME' ? { mode: form.themeMode, accentColor: form.themeAccentColor, primaryColor: form.themePrimaryColor } : undefined,
+          themeConfig: form.kind === 'THEME' ? { mode: form.themeMode, primaryColor: form.themePrimaryColor, secondaryColor: form.themeSecondaryColor, font: form.themeFont, radius: form.themeRadius } : undefined,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -499,8 +538,15 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
       </div>
       {form.kind === 'THEME' && (
         <ThemeConfigFields
-          mode={form.themeMode} accentColor={form.themeAccentColor} primaryColor={form.themePrimaryColor}
-          onChange={(next) => setForm({ ...form, ...(next.mode !== undefined && { themeMode: next.mode }), ...(next.accentColor !== undefined && { themeAccentColor: next.accentColor }), ...(next.primaryColor !== undefined && { themePrimaryColor: next.primaryColor }) })}
+          mode={form.themeMode} primaryColor={form.themePrimaryColor} secondaryColor={form.themeSecondaryColor} font={form.themeFont} radius={form.themeRadius}
+          onChange={(next) => setForm({
+            ...form,
+            ...(next.mode !== undefined && { themeMode: next.mode }),
+            ...(next.primaryColor !== undefined && { themePrimaryColor: next.primaryColor }),
+            ...(next.secondaryColor !== undefined && { themeSecondaryColor: next.secondaryColor }),
+            ...(next.font !== undefined && { themeFont: next.font }),
+            ...(next.radius !== undefined && { themeRadius: next.radius }),
+          })}
         />
       )}
       <div>
