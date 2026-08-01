@@ -3,30 +3,51 @@ import { PrismaService } from '../database/prisma.service';
 
 const KEY_PATTERN = /^[A-Z][A-Z0-9_]*$/;
 const VALID_KINDS = ['MODULE', 'ADDON', 'THEME'];
-// Mirrors frontend/lib/appearance/accentColor.tsx's AccentColor union — kept
-// as a small local duplicate rather than a shared package, matching this
-// codebase's existing convention for small cross-cutting constants.
-const VALID_ACCENT_COLORS = ['indigo', 'emerald', 'sky', 'teal', 'violet', 'rose', 'amber', 'blue', 'fuchsia', 'cyan'];
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+// Mirror frontend/lib/appearance/themeFonts.ts and themeRadius.ts's curated
+// lists — kept as small local duplicates rather than a shared package,
+// matching this codebase's existing convention for small cross-cutting
+// constants (see the old VALID_ACCENT_COLORS this replaces, same reasoning).
+const VALID_THEME_FONTS = ['inter', 'poppins', 'nunito', 'manrope', 'roboto'];
+const VALID_THEME_RADII = ['sharp', 'soft', 'round'];
 
 interface ThemeConfigInput {
   mode?: string;
-  accentColor?: string;
   primaryColor?: string;
+  secondaryColor?: string;
+  font?: string;
+  radius?: string;
 }
 
+/** Phase 19 shape — `accentColor` (a fixed 10-name enum, Sidebar-only) is
+ * retired in favor of `primaryColor` alone now driving both the dashboard
+ * and the public site consistently; `secondaryColor`/`font`/`radius` are new.
+ * Older stored rows may still carry a leftover `accentColor` key in their
+ * JSON blob from before this change — harmless, just unused, never read. */
 function validateThemeConfig(themeConfig: ThemeConfigInput | null | undefined) {
   if (!themeConfig) throw new BadRequestException('themeConfig is required for THEME listings');
   if (themeConfig.mode !== 'light' && themeConfig.mode !== 'dark') {
     throw new BadRequestException("themeConfig.mode must be 'light' or 'dark'");
   }
-  if (!themeConfig.accentColor || !VALID_ACCENT_COLORS.includes(themeConfig.accentColor)) {
-    throw new BadRequestException(`themeConfig.accentColor must be one of ${VALID_ACCENT_COLORS.join(', ')}`);
-  }
   if (!themeConfig.primaryColor || !HEX_COLOR_PATTERN.test(themeConfig.primaryColor)) {
     throw new BadRequestException('themeConfig.primaryColor must be a hex color, e.g. #4f46e5');
   }
-  return { mode: themeConfig.mode, accentColor: themeConfig.accentColor, primaryColor: themeConfig.primaryColor };
+  if (!themeConfig.secondaryColor || !HEX_COLOR_PATTERN.test(themeConfig.secondaryColor)) {
+    throw new BadRequestException('themeConfig.secondaryColor must be a hex color, e.g. #0284c7');
+  }
+  if (!themeConfig.font || !VALID_THEME_FONTS.includes(themeConfig.font)) {
+    throw new BadRequestException(`themeConfig.font must be one of ${VALID_THEME_FONTS.join(', ')}`);
+  }
+  if (!themeConfig.radius || !VALID_THEME_RADII.includes(themeConfig.radius)) {
+    throw new BadRequestException(`themeConfig.radius must be one of ${VALID_THEME_RADII.join(', ')}`);
+  }
+  return {
+    mode: themeConfig.mode,
+    primaryColor: themeConfig.primaryColor,
+    secondaryColor: themeConfig.secondaryColor,
+    font: themeConfig.font,
+    radius: themeConfig.radius,
+  };
 }
 
 function slugifyToKey(name: string): string {

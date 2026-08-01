@@ -17,14 +17,14 @@ export class AddonDirectoryController {
   }
 
   @Post()
-  create(@Body() body: { name: string; kind?: string; description?: string; detailDescription?: string; screenshotUrl?: string; category?: string; icon?: string; price?: number; priceNote?: string; themeConfig?: { mode?: string; accentColor?: string; primaryColor?: string } }) {
+  create(@Body() body: { name: string; kind?: string; description?: string; detailDescription?: string; screenshotUrl?: string; category?: string; icon?: string; price?: number; priceNote?: string; themeConfig?: { mode?: string; primaryColor?: string; secondaryColor?: string; font?: string; radius?: string } }) {
     return this.directory.create(body);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body() body: { name?: string; kind?: string; description?: string; detailDescription?: string; screenshotUrl?: string | null; category?: string; icon?: string; price?: number | null; priceNote?: string; isActive?: boolean; themeConfig?: { mode?: string; accentColor?: string; primaryColor?: string } },
+    @Body() body: { name?: string; kind?: string; description?: string; detailDescription?: string; screenshotUrl?: string | null; category?: string; icon?: string; price?: number | null; priceNote?: string; isActive?: boolean; themeConfig?: { mode?: string; primaryColor?: string; secondaryColor?: string; font?: string; radius?: string } },
   ) {
     return this.directory.update(id, body);
   }
