@@ -28,6 +28,8 @@ interface SiteSettings {
   footerYoutube: string
   footerCopyright: string
   primaryColor: string
+  secondaryColor: string
+  font: string
   // About
   aboutBadge: string
   aboutTitle: string
@@ -52,6 +54,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   footerYoutube: '',
   footerCopyright: `© ${new Date().getFullYear()} Wattaman School. All rights reserved.`,
   primaryColor: '#FF6B2C',
+  secondaryColor: '#7C3AED',
+  font: 'inter',
   aboutBadge: 'About Us',
   aboutTitle: 'A Smarter Way to Manage Your School',
   aboutDescription: 'Wattaman is an all-in-one school management platform designed for modern educational institutions. From QR-code attendance to fee management, timetables, and parent communication — everything runs seamlessly in one place.',
@@ -548,9 +552,10 @@ export default function Home() {
 
   const slides = settings.heroSlides?.length > 0 ? settings.heroSlides : DEFAULT_SLIDES
   const primary = settings.primaryColor || '#FF6B2C'
+  const secondary = settings.secondaryColor || '#7C3AED'
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'var(--font-inter), sans-serif' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: `var(--font-${settings.font || 'inter'}), sans-serif` }}>
 
       {/* ══════════════ TOP BAR ══════════════ */}
       {(settings.footerPhone || settings.footerEmail) && (
@@ -815,7 +820,7 @@ export default function Home() {
       {/* ══════════════ CTA BANNER ══════════════ */}
       <section
         className="py-16 relative overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${primary} 0%, #7C3AED 100%)` }}
+        style={{ background: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)` }}
       >
         <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-white/10" />
         <div className="absolute -bottom-20 -left-12 w-64 h-64 rounded-full bg-white/10" />
