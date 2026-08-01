@@ -38,6 +38,7 @@ import { PlatformModule } from './platform/platform.module';
 import { SchoolAddonsModule } from './school-addons/school-addons.module';
 import { PortalManagerModule } from './portal-manager/portal-manager.module';
 import { ThemePackagesModule } from './theme-packages/theme-packages.module';
+import { AddonPackagesModule } from './addon-packages/addon-packages.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { ThemePackagesModule } from './theme-packages/theme-packages.module';
     SchoolAddonsModule,
     PortalManagerModule,
     ThemePackagesModule,
+    AddonPackagesModule,
   ],
   controllers: [AppController],
   providers: [

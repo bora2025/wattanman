@@ -8,6 +8,7 @@ import { apiFetch } from '../../../lib/api'
 import { THEME_FONTS, ThemeFont } from '../../../lib/appearance/themeFonts'
 import { THEME_RADIUS_PRESETS, ThemeRadius } from '../../../lib/appearance/themeRadius'
 import { parseThemePackageZip, uploadThemePackage } from '../../../lib/appearance/themePackage'
+import { parseAddonPackageZip, uploadAddonPackage } from '../../../lib/addonPackage'
 
 interface ThemeConfig {
   mode: 'light' | 'dark'
@@ -297,6 +298,53 @@ function ThemePackageUpload({ addonId, currentCss, onUploaded }: { addonId: stri
   )
 }
 
+/** Richer catalog authoring, for any listing kind — upload a .zip bundling
+ * a screenshot.* and/or a README.md instead of pasting a URL and typing a
+ * description by hand. Metadata only, same as ThemePackageUpload's CSS
+ * upload is styling-only: this can never add or change what a listing
+ * *does*, only what's shown about it. */
+function AddonPackageUpload({ addonId, onUploaded }: { addonId: string; onUploaded: (updated: AddonDefinition) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+
+  async function handleFile(file: File) {
+    setBusy(true)
+    setError('')
+    setSuccess(false)
+    try {
+      const extracted = await parseAddonPackageZip(file)
+      const updated = await uploadAddonPackage(addonId, extracted)
+      onUploaded(updated)
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 2500)
+    } catch (e: any) {
+      setError(e.message || 'Failed to upload package')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+      <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">Listing package (.zip)</label>
+      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+        A .zip with a <code>screenshot.png</code> and/or a <code>README.md</code> — fills in the screenshot and detail description below
+        in one step instead of pasting/typing them. Optional.
+      </p>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => inputRef.current?.click()} disabled={busy} className="btn-outline btn-sm disabled:opacity-50">
+          {busy ? 'Uploading…' : 'Upload package'}
+        </button>
+        {success && <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Uploaded ✓</span>}
+      </div>
+      <input ref={inputRef} type="file" accept=".zip" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
+      {error && <p className="text-[11px] text-red-600 dark:text-red-400">{error}</p>}
+    </div>
+  )
+}
+
 function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCancel: () => void; onSaved: (a: AddonDefinition) => void }) {
   const [form, setForm] = useState<FormState>({
     kind: addon.kind === 'MODULE' || addon.kind === 'THEME' ? addon.kind : 'ADDON',
@@ -410,6 +458,17 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
           onUploaded={(updated) => { setCustomCss(updated.themeConfig?.customCss); onSaved(updated) }}
         />
       )}
+      <AddonPackageUpload
+        addonId={addon.id}
+        onUploaded={(updated) => {
+          setForm(f => ({
+            ...f,
+            ...(updated.screenshotUrl !== undefined && { screenshotUrl: updated.screenshotUrl ?? '' }),
+            ...(updated.detailDescription !== undefined && { detailDescription: updated.detailDescription ?? '' }),
+          }))
+          onSaved(updated)
+        }}
+      />
       <div>
         <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Description <span className="font-normal text-slate-400 dark:text-slate-500">(short, shown in listing cards)</span></label>
         <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={2} className="w-full text-sm" />
