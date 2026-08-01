@@ -19,7 +19,7 @@ export interface ThemeListing {
   themeConfig: { mode: 'light' | 'dark'; primaryColor: string; secondaryColor: string; font: ThemeFont; radius: ThemeRadius; customCss?: string } | null
 }
 
-const DEFAULT_VARS: Required<ThemeVars> = { primaryColor: '#4f46e5', secondaryColor: '#0284c7', font: 'inter', radius: 'soft' }
+const DEFAULT_VARS: Required<ThemeVars> = { primaryColor: '#4f46e5', secondaryColor: '#0284c7', font: 'inter', radius: 'soft', customCss: '' }
 
 function priceLabel(t: ThemeListing): string {
   if (t.price == null) return 'Free'
@@ -50,7 +50,7 @@ function ThemeCard({ theme, onChanged }: { theme: ThemeListing; onChanged: (upda
     if (!theme.themeConfig) return
     const c = theme.themeConfig
     setTheme(c.mode)
-    applyThemeVars({ primaryColor: c.primaryColor, secondaryColor: c.secondaryColor, font: c.font, radius: c.radius })
+    applyThemeVars({ primaryColor: c.primaryColor, secondaryColor: c.secondaryColor, font: c.font, radius: c.radius, customCss: c.customCss || '' })
     setApplied(true)
     setTimeout(() => setApplied(false), 2000)
     // Fire-and-forget — the school's public site is shared, not personal, so

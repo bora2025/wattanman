@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { applyStoredCustomCss } from './applyTheme'
 
 type Theme = 'light' | 'dark'
 
@@ -28,6 +29,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (saved === 'light' || saved === 'dark') {
       setThemeState(saved)
     }
+    // A platform-admin theme package's CSS (Phase 20) — see applyTheme.ts
+    // for why this can't live in layout.tsx's blocking anti-flash script
+    // the way --brand-600 etc. do.
+    applyStoredCustomCss()
   }, [])
 
   useEffect(() => {
