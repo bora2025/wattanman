@@ -632,10 +632,18 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
   )
 }
 
+const KIND_TABS: { id: 'ALL' | 'MODULE' | 'ADDON' | 'THEME'; label: string }[] = [
+  { id: 'ALL', label: 'All' },
+  { id: 'MODULE', label: 'Modules' },
+  { id: 'ADDON', label: 'Add-ons' },
+  { id: 'THEME', label: 'Themes' },
+]
+
 function AddonDirectoryContent() {
   const [addons, setAddons] = useState<AddonDefinition[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [kindFilter, setKindFilter] = useState<'ALL' | 'MODULE' | 'ADDON' | 'THEME'>('ALL')
 
   useEffect(() => { load() }, [])
 
@@ -675,6 +683,16 @@ function AddonDirectoryContent() {
 
           <NewAddonForm onCreated={(a) => setAddons(prev => [...prev, a])} />
 
+          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
+            {KIND_TABS.map(t => (
+              <button key={t.id} onClick={() => setKindFilter(t.id)}
+                className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${kindFilter === t.id ? 'border-slate-700 dark:border-slate-400 text-slate-800 dark:text-slate-100' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>
+                {t.label}
+                {t.id !== 'ALL' && <span className="ml-1.5 text-xs font-normal text-slate-400 dark:text-slate-500">{addons.filter(a => a.kind === t.id).length}</span>}
+              </button>
+            ))}
+          </div>
+
           {loading ? (
             <div className="flex items-center justify-center h-32">
               <div className="w-8 h-8 border-3 border-slate-300 dark:border-slate-600 border-t-slate-700 rounded-full animate-spin" />
@@ -682,15 +700,22 @@ function AddonDirectoryContent() {
           ) : addons.length === 0 ? (
             <div className="card p-10 text-center text-slate-400 dark:text-slate-500 text-sm">No add-ons listed yet — create the first one above.</div>
           ) : (
-            <div className="grid gap-3">
-              {addons.map(a => (
-                <AddonCard
-                  key={a.id}
-                  addon={a}
-                  onChanged={(updated) => handleChanged(updated, updated ? undefined : a.id)}
-                />
-              ))}
-            </div>
+            (() => {
+              const filtered = kindFilter === 'ALL' ? addons : addons.filter(a => a.kind === kindFilter)
+              return filtered.length === 0 ? (
+                <div className="card p-10 text-center text-slate-400 dark:text-slate-500 text-sm">No {KIND_TABS.find(t => t.id === kindFilter)?.label.toLowerCase()} yet.</div>
+              ) : (
+                <div className="grid gap-3">
+                  {filtered.map(a => (
+                    <AddonCard
+                      key={a.id}
+                      addon={a}
+                      onChanged={(updated) => handleChanged(updated, updated ? undefined : a.id)}
+                    />
+                  ))}
+                </div>
+              )
+            })()
           )}
         </div>
       </div>

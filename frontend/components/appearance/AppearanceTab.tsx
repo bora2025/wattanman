@@ -12,6 +12,8 @@ export interface ThemeListing {
   addonKey: string
   name: string
   description: string | null
+  detailDescription: string | null
+  screenshotUrl: string | null
   price: number | null
   priceNote: string | null
   enabled: boolean
@@ -26,13 +28,19 @@ function priceLabel(t: ThemeListing): string {
   return `$${t.price}${t.priceNote ? ` ${t.priceNote}` : ''}`
 }
 
-/** One theme's live preview swatch, built from its own themeConfig — no
- * reliance on a manually-uploaded screenshot staying in sync with reality. */
-function ThemeSwatch({ config }: { config: ThemeListing['themeConfig'] }) {
+/** A theme's preview — a real uploaded screenshot when the platform admin
+ * provided one (same field/upload mechanism as regular add-ons, Phase 17),
+ * falling back to a live gradient swatch built from the theme's own colors
+ * when they didn't (matches real WordPress: a theme *can* ship a
+ * screenshot, and something reasonable still shows if it didn't). */
+function ThemeSwatch({ config, screenshotUrl, className = 'w-full h-16' }: { config: ThemeListing['themeConfig']; screenshotUrl?: string | null; className?: string }) {
+  if (screenshotUrl) {
+    return <img src={screenshotUrl} alt="" className={`${className} rounded-lg object-cover`} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+  }
   if (!config) return null
   return (
     <div
-      className={`w-full h-16 rounded-lg flex items-end justify-start p-2 ${config.mode === 'light' ? 'ring-1 ring-inset ring-white/30' : ''}`}
+      className={`${className} rounded-lg flex items-end justify-start p-2 ${config.mode === 'light' ? 'ring-1 ring-inset ring-white/30' : ''}`}
       style={{ background: `linear-gradient(135deg, ${config.primaryColor}, ${config.secondaryColor})`, fontFamily: `var(--font-${config.font}, inherit)` }}
     >
       <span className="w-4 h-4 rounded-full border-2 border-white/80 shadow" style={{ backgroundColor: config.secondaryColor }} />
@@ -112,38 +120,97 @@ function ThemeCard({ theme, onChanged }: { theme: ThemeListing; onChanged: (upda
     }
   }
 
+  const [showDetail, setShowDetail] = useState(false)
+
+  const actionsProps = { theme, busy, error, applied, applyLocally, getFree, request, cancelRequest }
+
   return (
     <div className="card p-4 space-y-3">
-      <ThemeSwatch config={theme.themeConfig} />
+      <button type="button" onClick={() => setShowDetail(true)} className="block w-full text-left cursor-pointer">
+        <ThemeSwatch config={theme.themeConfig} screenshotUrl={theme.screenshotUrl} />
+      </button>
       <div>
-        <div className="flex items-center justify-between gap-2">
+        <button type="button" onClick={() => setShowDetail(true)} className="flex items-center justify-between gap-2 w-full text-left hover:underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2">
           <span className="font-semibold text-sm text-slate-800 dark:text-slate-100">{theme.name}</span>
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{priceLabel(theme)}</span>
-        </div>
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 no-underline">{priceLabel(theme)}</span>
+        </button>
         {theme.description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{theme.description}</p>}
       </div>
 
-      {theme.enabled ? (
-        <button onClick={applyLocally} disabled={!theme.themeConfig} className="btn-outline btn-sm w-full">
-          {applied ? 'Applied ✓' : 'Apply'}
-        </button>
-      ) : theme.price == null ? (
-        <button onClick={getFree} disabled={busy} className="btn-primary btn-sm w-full disabled:opacity-50">
-          {busy ? 'Getting…' : 'Get this theme'}
-        </button>
-      ) : theme.requested ? (
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-semibold px-2 py-1 rounded-full border bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900">Requested</span>
-          <button onClick={cancelRequest} disabled={busy} className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50">
-            {busy ? '…' : 'Cancel'}
-          </button>
-        </div>
-      ) : (
-        <button onClick={request} disabled={busy} className="btn-primary btn-sm w-full disabled:opacity-50">
-          {busy ? 'Requesting…' : 'Request this theme'}
-        </button>
-      )}
+      <ThemeActions {...actionsProps} />
       {error && <span className="text-[11px] text-red-600 dark:text-red-400">{error}</span>}
+
+      {showDetail && <ThemeDetailModal onClose={() => setShowDetail(false)} {...actionsProps} />}
+    </div>
+  )
+}
+
+/** The Apply/Get/Request/Cancel action row — identical logic and markup
+ * needed by both the compact card and the detail modal, so it's shared
+ * rather than duplicated. All the actual API calls/state live in ThemeCard
+ * (the one component that owns this theme's busy/error/applied state);
+ * this just renders based on it. */
+function ThemeActions({ theme, busy, applied, applyLocally, getFree, request, cancelRequest }: {
+  theme: ThemeListing; busy: boolean; error: string; applied: boolean
+  applyLocally: () => void; getFree: () => void; request: () => void; cancelRequest: () => void
+}) {
+  if (theme.enabled) {
+    return (
+      <button onClick={applyLocally} disabled={!theme.themeConfig} className="btn-outline btn-sm w-full">
+        {applied ? 'Applied ✓' : 'Apply'}
+      </button>
+    )
+  }
+  if (theme.price == null) {
+    return (
+      <button onClick={getFree} disabled={busy} className="btn-primary btn-sm w-full disabled:opacity-50">
+        {busy ? 'Getting…' : 'Get this theme'}
+      </button>
+    )
+  }
+  if (theme.requested) {
+    return (
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-semibold px-2 py-1 rounded-full border bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900">Requested</span>
+        <button onClick={cancelRequest} disabled={busy} className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50">
+          {busy ? '…' : 'Cancel'}
+        </button>
+      </div>
+    )
+  }
+  return (
+    <button onClick={request} disabled={busy} className="btn-primary btn-sm w-full disabled:opacity-50">
+      {busy ? 'Requesting…' : 'Request this theme'}
+    </button>
+  )
+}
+
+/** Full-detail view — large screenshot/swatch, the long-form description
+ * (detailDescription, never surfaced anywhere for themes before this),
+ * and the same actions as the card, reusing the visual language of
+ * admin/addons/page.tsx's existing AddonDetailModal rather than inventing
+ * a new modal style. */
+function ThemeDetailModal({ theme, onClose, ...actionsProps }: {
+  theme: ThemeListing; onClose: () => void; busy: boolean; error: string; applied: boolean
+  applyLocally: () => void; getFree: () => void; request: () => void; cancelRequest: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{theme.name}</h3>
+          <button onClick={onClose} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xl leading-none">×</button>
+        </div>
+        <ThemeSwatch config={theme.themeConfig} screenshotUrl={theme.screenshotUrl} className="w-full h-40" />
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{priceLabel(theme)}</span>
+          {theme.enabled && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900">You have this theme</span>}
+        </div>
+        <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
+          {theme.detailDescription || theme.description || 'No description provided.'}
+        </p>
+        <ThemeActions theme={theme} {...actionsProps} />
+      </div>
     </div>
   )
 }
