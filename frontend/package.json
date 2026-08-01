@@ -26,6 +26,7 @@
     "@zxing/library": "^0.21.3",
     "isomorphic-dompurify": "^3.19.0",
     "jspdf": "^4.2.1",
+    "jszip": "^3.10.1",
     "leaflet": "^1.9.4",
     "next": "^14.2.35",
     "onnxruntime-web": "^1.21.0",
