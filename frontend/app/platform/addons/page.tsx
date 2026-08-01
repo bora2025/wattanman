@@ -613,11 +613,24 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
     }
   }
 
+  function openAs(kind: FormState['kind']) {
+    setForm({ ...EMPTY_FORM, kind })
+    setOpen(true)
+  }
+
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} className="btn-primary text-sm px-4 py-2.5 rounded-xl w-fit">
-        + New Listing
-      </button>
+      <div className="flex gap-2 flex-wrap">
+        <button onClick={() => openAs('MODULE')} className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl w-fit">
+          + Add new module
+        </button>
+        <button onClick={() => openAs('ADDON')} className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl w-fit">
+          + Add new add-on
+        </button>
+        <button onClick={() => openAs('THEME')} className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl w-fit">
+          + Add new theme
+        </button>
+      </div>
     )
   }
 
