@@ -141,7 +141,7 @@ export default function NotificationSettingsPage() {
             <button
               onClick={save}
               disabled={saving}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-medium disabled:opacity-50"
+              className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg font-medium disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save preferences'}
             </button>

@@ -311,7 +311,7 @@ export default function TeacherAssignmentsPage() {
                       <p className="font-semibold text-gray-900 dark:text-slate-100 truncate">{a.title}</p>
                       <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${STATUS_BADGES[a.status] || 'bg-slate-100 text-slate-600'}`}>{a.status}</span>
                       <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${TYPE_BADGES[a.type] || 'bg-slate-100 text-slate-600'}`}>{a.type}</span>
-                      {a.weight !== 1 && <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300">×{a.weight}</span>}
+                      {a.weight !== 1 && <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-brand-100 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300">×{a.weight}</span>}
                     </div>
                     <p className="text-xs text-gray-500 dark:text-slate-400">{a.class?.name} · {a.class?.subject} · {a.totalMarks} marks{a.maxAttempts > 1 ? ` · up to ${a.maxAttempts} attempts` : ''}</p>
                     {a.dueDate && <p className="text-xs text-gray-400">Due: {new Date(a.dueDate).toLocaleString()}</p>}

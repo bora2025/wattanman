@@ -145,7 +145,7 @@ function NewSchoolContent() {
               {result.domainProvisioned && result.domain ? (
                 <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
                   <strong>{result.school.name}</strong> is live at{' '}
-                  <a href={`https://${result.domain}`} target="_blank" rel="noreferrer" className="text-indigo-600 dark:text-indigo-400 underline">{result.domain}</a>.
+                  <a href={`https://${result.domain}`} target="_blank" rel="noreferrer" className="text-brand-600 dark:text-brand-400 underline">{result.domain}</a>.
                 </p>
               ) : (
                 <div className="mb-4 px-4 py-3 rounded-lg text-sm bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900">

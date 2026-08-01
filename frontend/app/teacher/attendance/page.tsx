@@ -1061,7 +1061,7 @@ function TakeAttendance() {
           <div className="w-full sm:max-w-sm bg-white dark:bg-slate-900 sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden sm:mx-4 animate-[slideUp_0.35s_ease-out]">
             <div className={`relative px-6 py-6 text-center overflow-hidden ${
               staffScanResult.action === 'CHECK_OUT'
-                ? 'bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-500'
+                ? 'bg-gradient-to-br from-sky-500 via-blue-500 to-brand-500'
                 : 'bg-gradient-to-br from-teal-500 via-emerald-500 to-cyan-500'
             }`}>
               <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10" />
@@ -1209,7 +1209,7 @@ function TakeAttendance() {
               <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                 <span className="text-lg">{fmt.icon}</span>
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">Attendance Format: <span className="text-indigo-600 dark:text-indigo-400">{fmt.name}</span></div>
+                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">Attendance Format: <span className="text-brand-600 dark:text-brand-400">{fmt.name}</span></div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">{fmt.description}</div>
                 </div>
               </div>

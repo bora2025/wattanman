@@ -21,7 +21,7 @@ interface Exam { id: string; title: string; duration: number; totalMarks: number
 
 const STATUS_COLOR: Record<string, string> = {
   DRAFT: 'bg-slate-100 text-slate-600',
-  PUBLISHED: 'bg-indigo-100 text-indigo-700',
+  PUBLISHED: 'bg-brand-100 text-brand-700',
   ACTIVE: 'bg-emerald-100 text-emerald-700',
   COMPLETED: 'bg-purple-100 text-purple-700',
 }
@@ -72,8 +72,8 @@ export default function StudentExamsPage() {
                 return (
                   <div key={exam.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-gray-100 dark:border-slate-800 flex items-center justify-between gap-4 hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-none bg-indigo-100 dark:bg-indigo-950/40">
-                        <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-none bg-brand-100 dark:bg-brand-950/40">
+                        <svg className="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -106,7 +106,7 @@ export default function StudentExamsPage() {
                       )}
                       {canRetake && (
                         <Link href={`/student/exams/${exam.id}`}
-                          className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-indigo-700 shadow-sm">
+                          className="bg-brand-600 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-brand-700 shadow-sm">
                           Retake Exam
                         </Link>
                       )}

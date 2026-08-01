@@ -26,7 +26,7 @@ interface TeacherScanResult {
 
 const statusMeta = (action: string, status: string) => {
   if (action === 'ALREADY_RECORDED')
-    return { label: '↩ Already Recorded', bg: 'bg-indigo-500', cardBg: 'bg-indigo-50', ring: 'ring-indigo-300', text: 'text-indigo-600', flash: 'rgba(99,102,241,0.4)', bgLight: 'rgba(99,102,241,0.1)', textHex: '#4338ca' }
+    return { label: '↩ Already Recorded', bg: 'bg-brand-500', cardBg: 'bg-brand-50', ring: 'ring-brand-300', text: 'text-brand-600', flash: 'rgba(99,102,241,0.4)', bgLight: 'rgba(99,102,241,0.1)', textHex: '#4338ca' }
   if (status === 'LATE')
     return { label: '⚠️ Late', bg: 'bg-amber-500', cardBg: 'bg-amber-50', ring: 'ring-amber-300', text: 'text-amber-600', flash: 'rgba(251,191,36,0.35)', bgLight: 'rgba(245,158,11,0.12)', textHex: '#b45309' }
   return { label: '✓ Present', bg: 'bg-emerald-500', cardBg: 'bg-emerald-50', ring: 'ring-emerald-300', text: 'text-emerald-600', flash: 'rgba(52,211,153,0.4)', bgLight: 'rgba(16,185,129,0.12)', textHex: '#047857' }
@@ -60,7 +60,7 @@ function TeacherProfileCard({ result }: { result: TeacherScanResult }) {
             <p className="text-sm text-slate-600 dark:text-slate-300 truncate mt-0.5">{result.subjectName}{result.className ? ` · ${result.className}` : ''}</p>
           )}
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{result.timetableName}</p>
-          {isAlready && <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium mt-1">Already recorded — no duplicate</p>}
+          {isAlready && <p className="text-xs text-brand-500 dark:text-brand-400 font-medium mt-1">Already recorded — no duplicate</p>}
           {result.scheduledPeriods?.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
               {result.scheduledPeriods.map(p => (

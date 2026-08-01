@@ -111,7 +111,7 @@ function WattamanDashboardContent() {
               { label: 'Scanned', value: stats.total, gradient: 'from-teal-400 to-emerald-500', icon: '📊' },
               { label: 'Present', value: stats.present, gradient: 'from-green-400 to-emerald-500', icon: '✅' },
               { label: 'Late', value: stats.late, gradient: 'from-amber-400 to-orange-500', icon: '⚠️' },
-              { label: 'Again', value: stats.already, gradient: 'from-indigo-400 to-violet-500', icon: '↩' },
+              { label: 'Again', value: stats.already, gradient: 'from-brand-400 to-violet-500', icon: '↩' },
             ].map(c => (
               <div key={c.label} className={`rounded-2xl p-2.5 sm:p-4 text-white bg-gradient-to-br ${c.gradient} shadow-sm`}>
                 <div className="text-lg sm:text-xl mb-1">{c.icon}</div>

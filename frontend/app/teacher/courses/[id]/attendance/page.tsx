@@ -218,7 +218,7 @@ export default function TeacherCourseAttendancePage() {
                     </div>
                     <div className="mt-1 flex flex-wrap gap-2 text-xs">
                       {s.lesson && (
-                        <span className="rounded bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 text-indigo-700 dark:text-indigo-300">
+                        <span className="rounded bg-brand-50 dark:bg-brand-950/40 px-2 py-0.5 text-brand-700 dark:text-brand-300">
                           🎯 Auto: {s.lesson.title}
                         </span>
                       )}

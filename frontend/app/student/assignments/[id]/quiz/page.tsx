@@ -183,7 +183,7 @@ export default function StudentQuizPage() {
               return (
               <div key={q.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 border border-gray-100 dark:border-slate-800">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                  <span className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 text-xs font-bold flex items-center justify-center">{i + 1}</span>
                   <span className="text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300">{q.points} pt</span>
                   {revealAnswers && ans && ans.pointsAwarded != null && (
                     <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-semibold ${ans.pointsAwarded >= q.points ? 'bg-emerald-100 text-emerald-700' : ans.pointsAwarded > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>You: {ans.pointsAwarded}/{q.points}</span>

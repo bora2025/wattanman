@@ -220,7 +220,7 @@ export default function StudentExamTakingPage() {
                     {isPassage ? (
                       <span className="text-lg leading-none mt-0.5">📖</span>
                     ) : (
-                      <span className="flex-none w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center mt-0.5">{displayNumbers[i]}</span>
+                      <span className="flex-none w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 text-xs font-bold flex items-center justify-center mt-0.5">{displayNumbers[i]}</span>
                     )}
                     <div className="font-semibold text-gray-900 dark:text-slate-100 flex-1 min-w-0">
                       <RichText as="div" html={q.text} />

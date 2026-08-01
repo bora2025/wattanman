@@ -22,7 +22,7 @@ interface ScanResult {
 /* ─── helpers ─────────────────────────────────────────────── */
 const statusMeta = (action: string, status: string) => {
   if (action === 'ALREADY_RECORDED')
-    return { label: '↩ Already Recorded', bg: 'bg-indigo-500', cardBg: 'bg-indigo-50', ring: 'ring-indigo-300', text: 'text-indigo-600', flash: 'rgba(99,102,241,0.4)', bgLight: 'rgba(99,102,241,0.1)', textHex: '#4338ca' }
+    return { label: '↩ Already Recorded', bg: 'bg-brand-500', cardBg: 'bg-brand-50', ring: 'ring-brand-300', text: 'text-brand-600', flash: 'rgba(99,102,241,0.4)', bgLight: 'rgba(99,102,241,0.1)', textHex: '#4338ca' }
   if (action === 'CHECK_OUT')
     return { label: '↑ Checked Out', bg: 'bg-blue-500', cardBg: 'bg-blue-50', ring: 'ring-blue-300', text: 'text-blue-600', flash: 'rgba(59,130,246,0.4)', bgLight: 'rgba(59,130,246,0.1)', textHex: '#1d4ed8' }
   if (status === 'LATE')
@@ -56,7 +56,7 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
         <div className="flex-1 min-w-0">
           <p className="font-extrabold text-slate-800 dark:text-slate-100 text-lg sm:text-xl leading-tight truncate">{result.studentName}</p>
           <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{result.className}</p>
-          {isAlready && <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium mt-1">Already recorded — no duplicate</p>}
+          {isAlready && <p className="text-xs text-brand-500 dark:text-brand-400 font-medium mt-1">Already recorded — no duplicate</p>}
         </div>
       </div>
       {timeDisplay && (
@@ -104,7 +104,7 @@ function StudentProfileCardLarge({ result }: { result: ScanResult }) {
         <div className="flex-1 min-w-0">
           <p className="font-extrabold text-slate-800 dark:text-slate-100 text-xl leading-tight">{result.studentName}</p>
           <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 truncate">{result.className}</p>
-          {isAlready && <p className="text-indigo-500 dark:text-indigo-400 text-xs font-medium mt-1">Already recorded</p>}
+          {isAlready && <p className="text-brand-500 dark:text-brand-400 text-xs font-medium mt-1">Already recorded</p>}
           {timeDisplay && (
             <div className="flex items-center gap-1.5 mt-2 rounded-xl px-3 py-1.5" style={{ background: meta.bgLight }}>
               <span className="text-sm">🕐</span>
@@ -132,7 +132,7 @@ function StudentProfileCardLarge({ result }: { result: ScanResult }) {
         <div className="text-center space-y-1">
           <p className="font-extrabold text-slate-800 dark:text-slate-100 text-2xl sm:text-3xl leading-tight">{result.studentName}</p>
           <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">{result.className}</p>
-          {isAlready && <p className="text-indigo-500 dark:text-indigo-400 text-sm font-medium mt-1">Already recorded — no duplicate</p>}
+          {isAlready && <p className="text-brand-500 dark:text-brand-400 text-sm font-medium mt-1">Already recorded — no duplicate</p>}
         </div>
         {timeDisplay && (
           <div className="w-full rounded-2xl px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between"

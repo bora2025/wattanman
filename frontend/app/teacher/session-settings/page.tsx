@@ -117,7 +117,7 @@ const ATTENDANCE_PRESETS: AttendancePreset[] = [
 ]
 
 const PRESET_COLORS: Record<string, string> = {
-  indigo: 'border-indigo-300 bg-indigo-50 hover:bg-indigo-100',
+  indigo: 'border-brand-300 bg-brand-50 hover:bg-brand-100',
   amber: 'border-amber-300 bg-amber-50 hover:bg-amber-100',
   orange: 'border-orange-300 bg-orange-50 hover:bg-orange-100',
   purple: 'border-purple-300 bg-purple-50 hover:bg-purple-100',
@@ -125,7 +125,7 @@ const PRESET_COLORS: Record<string, string> = {
 }
 
 const PRESET_ICON_BG: Record<string, string> = {
-  indigo: 'bg-indigo-100 text-indigo-700',
+  indigo: 'bg-brand-100 text-brand-700',
   amber: 'bg-amber-100 text-amber-700',
   orange: 'bg-orange-100 text-orange-700',
   purple: 'bg-purple-100 text-purple-700',
@@ -133,7 +133,7 @@ const PRESET_ICON_BG: Record<string, string> = {
 }
 
 const PRESET_ACTIVE: Record<string, string> = {
-  indigo: 'ring-2 ring-indigo-400 border-indigo-400',
+  indigo: 'ring-2 ring-brand-400 border-brand-400',
   amber: 'ring-2 ring-amber-400 border-amber-400',
   orange: 'ring-2 ring-orange-400 border-orange-400',
   purple: 'ring-2 ring-purple-400 border-purple-400',

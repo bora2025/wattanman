@@ -117,7 +117,7 @@ function ScreenshotUploader({ value, onChange }: { value: string; onChange: (v: 
         </div>
       ) : (
         <div
-          className={`border-2 border-dashed rounded-lg cursor-pointer transition-colors ${dragging ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600'}`}
+          className={`border-2 border-dashed rounded-lg cursor-pointer transition-colors ${dragging ? 'border-brand-400 dark:border-brand-500 bg-brand-50 dark:bg-brand-950/40' : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-600'}`}
           onClick={() => inputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
           onDragLeave={() => setDragging(false)}
@@ -125,7 +125,7 @@ function ScreenshotUploader({ value, onChange }: { value: string; onChange: (v: 
         >
           <div className="flex flex-col items-center justify-center py-6 px-4 text-center gap-1">
             {compressing ? (
-              <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Compressing…</p>
+              <p className="text-xs text-brand-600 dark:text-brand-400 font-medium">Compressing…</p>
             ) : (
               <>
                 <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Click to upload or drag & drop a screenshot</p>
@@ -137,7 +137,7 @@ function ScreenshotUploader({ value, onChange }: { value: string; onChange: (v: 
       )}
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
       {error && <p className="text-[11px] text-red-600 dark:text-red-400">{error}</p>}
-      <button type="button" onClick={() => setUrlMode(m => !m)} className="text-[11px] text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 underline">
+      <button type="button" onClick={() => setUrlMode(m => !m)} className="text-[11px] text-brand-500 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 underline">
         {urlMode ? 'Hide URL input' : 'Or paste an image URL instead'}
       </button>
       {urlMode && (
@@ -427,7 +427,7 @@ function AddonCard({ addon, onChanged }: { addon: AddonDefinition; onChanged: (a
               }`}>
                 {addon.kind === 'MODULE' ? 'Module' : addon.kind === 'THEME' ? 'Theme' : 'Paid add-on'}
               </span>
-              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900">{addon.category}</span>}
+              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-900">{addon.category}</span>}
               {!addon.isActive && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700">Deactivated — hidden from new schools</span>}
             </div>
             {addon.description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{addon.description}</p>}
@@ -503,7 +503,7 @@ function NewAddonForm({ onCreated }: { onCreated: (a: AddonDefinition) => void }
   }
 
   return (
-    <div className="card p-5 space-y-3 border-2 border-indigo-100 dark:border-indigo-900">
+    <div className="card p-5 space-y-3 border-2 border-brand-100 dark:border-brand-900">
       <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">New Listing</h3>
       {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
       <div>

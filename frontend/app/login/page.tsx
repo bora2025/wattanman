@@ -385,7 +385,7 @@ function LoginContent() {
             </form>
 
             <p className="text-center text-sm text-slate-400 mt-6">
-              <Link href="/" className="text-indigo-500 hover:text-indigo-700 transition-colors font-medium">
+              <Link href="/" className="text-brand-500 hover:text-brand-700 transition-colors font-medium">
                 ← {t('login.backToHome')}
               </Link>
             </p>
@@ -398,7 +398,7 @@ function LoginContent() {
 
 export default function Login() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" /></div>}>
       <LoginContent />
     </Suspense>
   );

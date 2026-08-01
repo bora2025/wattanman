@@ -255,13 +255,13 @@ function EditModal({
                 <div>
                   <label className="form-label">First Name *</label>
                   <input value={form.firstName} onChange={e => set('firstName', e.target.value)} required
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
                     placeholder="First name" />
                 </div>
                 <div>
                   <label className="form-label">Last Name *</label>
                   <input value={form.lastName} onChange={e => set('lastName', e.target.value)} required
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
                     placeholder="Last name" />
                 </div>
               </div>
@@ -272,7 +272,7 @@ function EditModal({
               <input
                 value={form.khmerName}
                 onChange={e => set('khmerName', e.target.value)}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
                 placeholder="ឧ. សុខ ដារ៉ា"
                 style={{ fontFamily: 'var(--font-khmer), "Noto Sans Khmer", sans-serif' }}
               />
@@ -289,14 +289,14 @@ function EditModal({
                     onChange={e => set('short', e.target.value.toUpperCase())}
                     maxLength={6}
                     required
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-brand-400"
                     placeholder="e.g. SMITH"
                   />
                 </div>
                 <div>
                   <label className="form-label">Sex</label>
                   <select value={form.sex} onChange={e => set('sex', e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400">
                     <option value="">— unset —</option>
                     <option value="MALE">Male</option>
                     <option value="FEMALE">Female</option>
@@ -334,13 +334,13 @@ function EditModal({
                 <div>
                   <label className="form-label">Email</label>
                   <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
                     placeholder="teacher@school.edu" />
                 </div>
                 <div>
                   <label className="form-label">Phone</label>
                   <input value={form.phone} onChange={e => set('phone', e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
                     placeholder="+855..." />
                 </div>
               </div>
@@ -482,7 +482,7 @@ function ManageTeachersContent() {
                 }}
                 disabled={timetables.length === 0}
                 title="View attendance report"
-                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-700 dark:hover:text-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors rounded-l-xl"
+                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-950/40 hover:text-brand-700 dark:hover:text-brand-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors rounded-l-xl"
               >
                 <IconBarChart size={20} />
                 <span className="text-[10px] font-semibold leading-none tracking-wide uppercase">Report</span>
@@ -495,7 +495,7 @@ function ManageTeachersContent() {
                 onClick={() => printCards(filtered.map(t => t.id))}
                 disabled={filtered.length === 0}
                 title="Print ID cards for visible teachers"
-                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-700 dark:hover:text-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-950/40 hover:text-brand-700 dark:hover:text-brand-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <IconIdCard size={20} />
                 <span className="text-[10px] font-semibold leading-none tracking-wide uppercase">ID Cards</span>
@@ -509,7 +509,7 @@ function ManageTeachersContent() {
                   onClick={() => setTeacherMenuOpen(v => !v)}
                   title="Teacher management options"
                   className={`flex flex-col items-center justify-center gap-1.5 px-6 py-3 transition-colors ${
-                    teacherMenuOpen ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-700'
+                    teacherMenuOpen ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-brand-50 hover:text-brand-700'
                   }`}
                 >
                   <IconUsers size={20} />
@@ -573,7 +573,7 @@ function ManageTeachersContent() {
                   window.open(url, '_blank')
                 }}
                 title="Print attendance report"
-                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors rounded-r-xl"
+                className="flex flex-col items-center justify-center gap-1.5 px-6 py-3 text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-950/40 hover:text-brand-700 dark:hover:text-brand-300 transition-colors rounded-r-xl"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6 9 6 2 18 2 18 9" />
@@ -598,7 +598,7 @@ function ManageTeachersContent() {
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => setTimetableFilter('ALL')}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${timetableFilter === 'ALL' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300'}`}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${timetableFilter === 'ALL' ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-300'}`}
                 >
                   All Timetables ({teachers.length})
                 </button>
@@ -606,7 +606,7 @@ function ManageTeachersContent() {
                   <button
                     key={id}
                     onClick={() => setTimetableFilter(id)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${timetableFilter === id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300'}`}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${timetableFilter === id ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-300'}`}
                   >
                     {name} ({teachers.filter(t => t.timetableId === id).length})
                     <span className={`text-xs px-1 py-0.5 rounded ${timetableFilter === id ? 'bg-white/20 text-white' : status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
@@ -637,7 +637,7 @@ function ManageTeachersContent() {
               {/* Table */}
               {loading ? (
                 <div className="flex items-center justify-center py-16">
-                  <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : teachers.length === 0 ? (
                 <div className="card p-12 text-center">

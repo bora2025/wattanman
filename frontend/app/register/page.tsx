@@ -235,11 +235,11 @@ function RegisterForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-slate-50 to-white py-10 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-brand-50 via-slate-50 to-white py-10 px-4">
       <div className="max-w-lg mx-auto">
         <div className="mb-6 text-center">
-          <Link href="/" className="text-xs text-indigo-600 hover:underline">← Back to home</Link>
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-2xl flex items-center justify-center mx-auto mt-4 shadow-lg shadow-indigo-200">
+          <Link href="/" className="text-xs text-brand-600 hover:underline">← Back to home</Link>
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 text-white text-2xl flex items-center justify-center mx-auto mt-4 shadow-lg shadow-brand-200">
             🎓
           </div>
           <h1 className="text-2xl font-bold text-slate-800 mt-3">Student Registration</h1>
@@ -361,7 +361,7 @@ function RegisterForm() {
                 {photoMode !== 'HIDDEN' && (
                   <div className="flex flex-col items-center gap-2 py-1">
                     <label className="relative cursor-pointer group inline-block">
-                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center group-hover:border-indigo-400 group-active:border-indigo-400 transition-colors">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center group-hover:border-brand-400 group-active:border-brand-400 transition-colors">
                         {photo ? (
                           <img src={photo} alt="Preview" className="w-full h-full object-cover" />
                         ) : (
@@ -371,7 +371,7 @@ function RegisterForm() {
                           </svg>
                         )}
                       </div>
-                      <span className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md ring-2 ring-white group-hover:bg-indigo-700 transition-colors">
+                      <span className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-md ring-2 ring-white group-hover:bg-brand-700 transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                       </span>
                       <input type="file" accept="image/*" onChange={handlePhotoChange} className="sr-only" />

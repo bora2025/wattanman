@@ -26,7 +26,7 @@ interface ScanResult {
 /* ─── helpers ─────────────────────────────────────────────── */
 const statusMeta = (action: string, status: string) => {
   if (action === 'ALREADY_RECORDED')
-    return { label: '↩ Already Recorded', bg: 'bg-indigo-500', cardBg: 'bg-indigo-50', ring: 'ring-indigo-300', text: 'text-indigo-600', flash: 'rgba(99,102,241,0.4)', bgLight: 'rgba(99,102,241,0.1)', textHex: '#4338ca' }
+    return { label: '↩ Already Recorded', bg: 'bg-brand-500', cardBg: 'bg-brand-50', ring: 'ring-brand-300', text: 'text-brand-600', flash: 'rgba(99,102,241,0.4)', bgLight: 'rgba(99,102,241,0.1)', textHex: '#4338ca' }
   if (action === 'CHECK_OUT')
     return { label: '↑ Checked Out', bg: 'bg-blue-500', cardBg: 'bg-blue-50', ring: 'ring-blue-300', text: 'text-blue-600', flash: 'rgba(59,130,246,0.4)', bgLight: 'rgba(59,130,246,0.1)', textHex: '#1d4ed8' }
   if (status === 'LATE')
@@ -66,7 +66,7 @@ function StudentProfileCard({ result }: { result: ScanResult }) {
         <div className="flex-1 min-w-0">
           <p className="font-extrabold text-slate-800 dark:text-slate-100 text-lg sm:text-xl leading-tight truncate">{result.studentName}</p>
           <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{result.className}</p>
-          {isAlready && <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium mt-1">Already recorded — no duplicate</p>}
+          {isAlready && <p className="text-xs text-brand-500 dark:text-brand-400 font-medium mt-1">Already recorded — no duplicate</p>}
         </div>
       </div>
 
@@ -1187,7 +1187,7 @@ function WattamanScanContent() {
                 placeholder="Search by name or student number…"
                 value={linkSearch}
                 onChange={(e) => setLinkSearch(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
                 disabled={linkSaving}
               />
               {linkError && (

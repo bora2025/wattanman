@@ -116,9 +116,9 @@ function AddonCard({ addon, schoolId, onSaved }: { addon: Addon; schoolId: strin
               <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${isModule ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900'}`}>
                 {isModule ? 'Module' : 'Paid add-on'}
               </span>
-              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900">{addon.category}</span>}
+              {addon.category && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-900">{addon.category}</span>}
               {!isModule && <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_STYLES[addon.billingStatus]}`}>{addon.billingStatus}</span>}
-              {addon.enabled && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900">Feature ON</span>}
+              {addon.enabled && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-900">Feature ON</span>}
               {requested && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900">Requested by school</span>}
               {addon.retired && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700">Retired from directory</span>}
             </div>

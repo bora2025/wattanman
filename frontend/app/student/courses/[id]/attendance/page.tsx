@@ -141,7 +141,7 @@ export default function StudentCourseAttendancePage() {
                     {row.location ? ` · ${row.location}` : ''}
                   </div>
                   {row.lesson && (
-                    <div className="mt-1 text-xs text-indigo-600 dark:text-indigo-400">
+                    <div className="mt-1 text-xs text-brand-600 dark:text-brand-400">
                       🎯 Linked lesson: {row.lesson.title}
                     </div>
                   )}

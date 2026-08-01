@@ -613,7 +613,7 @@ function TeacherStaffAttendance() {
               <div className="w-full sm:max-w-sm bg-white dark:bg-slate-900 sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden sm:mx-4 animate-[slideUp_0.35s_ease-out]">
                 <div className={`relative px-6 py-6 text-center overflow-hidden ${
                   scanResult.action === 'CHECK_OUT'
-                    ? 'bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-500'
+                    ? 'bg-gradient-to-br from-sky-500 via-blue-500 to-brand-500'
                     : 'bg-gradient-to-br from-teal-500 via-emerald-500 to-cyan-500'
                 }`}>
                   <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10" />
