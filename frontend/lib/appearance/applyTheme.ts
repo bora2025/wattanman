@@ -41,8 +41,15 @@ function setCustomCssTag(css: string) {
   tag.textContent = css
 }
 
-export function applyThemeVars(vars: ThemeVars) {
+/** `persist: false` (Phase 21 — live theme Preview) applies the CSS
+ * variables/style tag exactly as normal but skips the localStorage write,
+ * so it's a session-only, in-memory look — a page reload/navigation reverts
+ * to whatever was actually saved. Defaults to `true`, so every pre-existing
+ * call site (Apply, the individual color/font/radius pickers) is
+ * unaffected. */
+export function applyThemeVars(vars: ThemeVars, options?: { persist?: boolean }) {
   if (typeof document === 'undefined') return
+  const persist = options?.persist ?? true
   const root = document.documentElement.style
   const { radiusCard, radiusBtn } = radiusPreset(vars.radius)
 
@@ -54,6 +61,8 @@ export function applyThemeVars(vars: ThemeVars) {
     root.setProperty('--radius-btn', radiusBtn)
   }
   if (vars.customCss !== undefined) setCustomCssTag(vars.customCss)
+
+  if (!persist) return
 
   try {
     const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
@@ -92,4 +101,39 @@ export function loadStoredThemeVars(): (ThemeVars & { radiusCard?: string; radiu
   } catch {
     return null
   }
+}
+
+// True defaults (Phase 19's :root values in app/styles.css) — used by
+// restoreThemeSnapshot() below so "Revert" after a Preview is always a
+// complete, correct reset, even for a school that never customized
+// anything before (an empty/partial snapshot must still fully clear
+// whatever the preview applied, not just leave gaps).
+const DEFAULT_PRIMARY = '#4f46e5'
+const DEFAULT_SECONDARY = '#0284c7'
+const DEFAULT_FONT: ThemeFont = 'inter'
+
+export type ThemeSnapshot = ThemeVars & { radiusCard?: string; radiusBtn?: string }
+
+/** Captures exactly what's currently stored, before a Preview starts —
+ * Preview mode (Phase 21) needs something concrete to restore to on
+ * Revert, not just "whatever happens to still be in memory." */
+export function snapshotCurrentThemeVars(): ThemeSnapshot {
+  return loadStoredThemeVars() || {}
+}
+
+/** Re-applies a previously captured snapshot — always sets every property
+ * (falling back to the real defaults, not skipping), so Revert is a
+ * complete reset regardless of what was or wasn't customized before. Does
+ * NOT persist to localStorage — a revert to a state that came FROM
+ * localStorage doesn't need to re-write it. */
+export function restoreThemeSnapshot(snapshot: ThemeSnapshot) {
+  if (typeof document === 'undefined') return
+  const root = document.documentElement.style
+  const { radiusCard, radiusBtn } = radiusPreset(snapshot.radius)
+  root.setProperty('--brand-600', snapshot.primaryColor || DEFAULT_PRIMARY)
+  root.setProperty('--brand-secondary-600', snapshot.secondaryColor || DEFAULT_SECONDARY)
+  root.setProperty('--font-theme', `var(--font-${snapshot.font || DEFAULT_FONT})`)
+  root.setProperty('--radius-card', snapshot.radiusCard || radiusCard)
+  root.setProperty('--radius-btn', snapshot.radiusBtn || radiusBtn)
+  setCustomCssTag(snapshot.customCss || '')
 }

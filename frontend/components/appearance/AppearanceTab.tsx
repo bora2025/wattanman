@@ -5,6 +5,7 @@ import { IconSun, IconMoon } from '../Icons'
 import { apiFetch } from '../../lib/api'
 import { useTheme } from '../../lib/appearance/theme'
 import { applyThemeVars, loadStoredThemeVars, ThemeVars } from '../../lib/appearance/applyTheme'
+import { startPreview } from '../../lib/appearance/preview'
 import { THEME_FONTS, ThemeFont } from '../../lib/appearance/themeFonts'
 import { THEME_RADIUS_PRESETS, ThemeRadius } from '../../lib/appearance/themeRadius'
 
@@ -209,6 +210,14 @@ function ThemeDetailModal({ theme, onClose, ...actionsProps }: {
         <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
           {theme.detailDescription || theme.description || 'No description provided.'}
         </p>
+        {theme.themeConfig && (
+          <button
+            onClick={() => { startPreview(theme.name, theme.themeConfig!); onClose() }}
+            className="btn-outline btn-sm w-full"
+          >
+            👁 Preview on my dashboard
+          </button>
+        )}
         <ThemeActions theme={theme} {...actionsProps} />
       </div>
     </div>
