@@ -14,6 +14,7 @@ import { AddonDirectoryService } from './addon-directory.service';
 import { AddonRequestsController } from './addon-requests.controller';
 import { AddonRequestsService } from './addon-requests.service';
 import { SchoolMetricsController } from './school-metrics.controller';
+import { RailwayDomainService } from './railway-domain.service';
 
 @Module({
   imports: [
@@ -26,6 +27,6 @@ import { SchoolMetricsController } from './school-metrics.controller';
     }),
   ],
   controllers: [SchoolsController, PlatformAdminsController, SchoolAddonsController, AddonDirectoryController, AddonRequestsController, SchoolMetricsController],
-  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService, AddonRequestsService],
+  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService, AddonRequestsService, RailwayDomainService],
 })
 export class PlatformModule {}

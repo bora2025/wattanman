@@ -5,9 +5,21 @@ import { PrismaService } from '../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { generatePassword, isValidEmail } from '../common/identity';
 import { PLATFORM_SCHOOL_SUBDOMAIN } from '../tenancy/constants';
+import { RailwayDomainService } from './railway-domain.service';
 
 const SUBDOMAIN_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const RESERVED_SUBDOMAINS = new Set([PLATFORM_SCHOOL_SUBDOMAIN, 'www', 'api', 'app']);
+
+// Explicit `=== true`/`=== false` checks, not truthy narrowing — this
+// backend's tsconfig has strictNullChecks off, which (verified directly,
+// this is not obvious) means `if (domainResult.ok)`/a ternary on it fails to
+// narrow this union, while `===` comparisons narrow correctly.
+function formatDomainResult(domainResult: { ok: true; domain: string } | { ok: false; reason: string }) {
+  if (domainResult.ok === true) {
+    return { domain: domainResult.domain, domainProvisioned: true, domainError: null };
+  }
+  return { domain: null, domainProvisioned: false, domainError: domainResult.reason };
+}
 
 @Injectable()
 export class SchoolsService {
@@ -15,6 +27,7 @@ export class SchoolsService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private audit: AuditService,
+    private railwayDomain: RailwayDomainService,
   ) {}
 
   /** Every real school — the platform sentinel row is never a management target. */
@@ -123,11 +136,27 @@ export class SchoolsService {
       return { school, admin };
     });
 
+    // Best-effort — this deployment has no wildcard DNS, so a school is only
+    // actually reachable once a matching Railway domain exists (Phase 18).
+    // Never blocks/fails school creation itself: the DB row + first admin
+    // account above are the important, already-durable part.
+    const domainResult = await this.railwayDomain.provisionDomain(subdomain);
+
     return {
       school: result.school,
       admin: { id: result.admin.id, name: result.admin.name, email: result.admin.email },
       temporaryPassword: tempPassword,
+      ...formatDomainResult(domainResult),
     };
+  }
+
+  /** Retries domain provisioning for a school that already exists — covers
+   * both a failed auto-provision at creation time and backfilling a school
+   * that predates this automation (Phase 18). */
+  async retryDomainProvisioning(id: string) {
+    const school = await this.getOne(id);
+    const domainResult = await this.railwayDomain.provisionDomain(school.subdomain);
+    return formatDomainResult(domainResult);
   }
 
   async update(id: string, data: { name?: string; status?: string }) {
@@ -151,6 +180,11 @@ export class SchoolsService {
     // onDelete: Cascade on every schoolId relation (Phase 1) removes every row
     // this school owns across every tenant-scoped table.
     await this.prisma.school.delete({ where: { id } });
+    // Best-effort cleanup (Phase 18/2a-iii) — a stale Railway domain left
+    // pointed at this app after the school is gone is a subdomain-takeover
+    // risk, but the DB deletion above is the irreversible part; this must
+    // never block or fail it.
+    await this.railwayDomain.deregisterDomain(school.subdomain);
     return { deleted: true, id };
   }
 

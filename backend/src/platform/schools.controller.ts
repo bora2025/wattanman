@@ -60,4 +60,9 @@ export class SchoolsController {
   resetAdminPassword(@Param('id') id: string, @Body() body: { reason: string }, @Request() req: any) {
     return this.schools.resetAdminPassword(req.user.userId, id, body?.reason || '');
   }
+
+  @Post(':id/retry-domain')
+  retryDomainProvisioning(@Param('id') id: string) {
+    return this.schools.retryDomainProvisioning(id);
+  }
 }

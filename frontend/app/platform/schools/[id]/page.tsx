@@ -51,6 +51,9 @@ function SchoolDetailContent() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
 
+  const [domainChecking, setDomainChecking] = useState(false)
+  const [domainResult, setDomainResult] = useState<{ domain: string | null; domainProvisioned: boolean; domainError: string | null } | null>(null)
+
   useEffect(() => { load() }, [id])
 
   async function load() {
@@ -140,6 +143,21 @@ function SchoolDetailContent() {
     })
   }
 
+  async function checkDomain() {
+    if (!school) return
+    setDomainChecking(true)
+    try {
+      const res = await apiFetch(`/api/platform/schools/${school.id}/retry-domain`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`)
+      setDomainResult(data)
+    } catch (e: any) {
+      setDomainResult({ domain: null, domainProvisioned: false, domainError: e.message || 'Failed to check domain' })
+    } finally {
+      setDomainChecking(false)
+    }
+  }
+
   async function handleDelete() {
     if (!school || confirmName !== school.name) return
     setDeleting(true)
@@ -213,11 +231,30 @@ function SchoolDetailContent() {
                     </div>
                   </div>
                   <div className="card p-5 space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Subdomain</span><span className="font-medium text-slate-800 dark:text-slate-100">{school.subdomain}.{SCHOOL_ROOT_DOMAIN}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Subdomain</span><span className="font-medium text-slate-800 dark:text-slate-100">{school.subdomain}</span></div>
                     {school.customDomain && (
                       <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Custom domain</span><span className="font-medium text-slate-800 dark:text-slate-100">{school.customDomain}</span></div>
                     )}
                     <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Created</span><span className="font-medium text-slate-800 dark:text-slate-100">{new Date(school.createdAt).toLocaleString()}</span></div>
+                  </div>
+
+                  <div className="card p-5">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Live web address</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">This deployment has no wildcard DNS — each school needs its own Railway domain registered before it's reachable. Check status or retry if it was never set up.</p>
+                    {domainResult && (
+                      domainResult.domainProvisioned && domainResult.domain ? (
+                        <div className="mb-3 px-3 py-2 rounded-lg text-sm bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">
+                          Live at <a href={`https://${domainResult.domain}`} target="_blank" rel="noreferrer" className="underline">{domainResult.domain}</a>
+                        </div>
+                      ) : (
+                        <div className="mb-3 px-3 py-2 rounded-lg text-sm bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900">
+                          Not reachable{domainResult.domainError ? ` — ${domainResult.domainError}` : ''}
+                        </div>
+                      )
+                    )}
+                    <button onClick={checkDomain} disabled={domainChecking} className="btn-outline text-sm px-4 py-2 rounded-lg disabled:opacity-50">
+                      {domainChecking ? 'Checking…' : domainResult ? 'Recheck / Retry' : 'Check / Provision Domain'}
+                    </button>
                   </div>
 
                   <Link href={`/platform/schools/${school.id}/addons`} className="card p-5 flex items-center justify-between gap-3 hover:shadow-md transition-all">

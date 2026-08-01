@@ -23,6 +23,9 @@ interface CreateResult {
   school: { id: string; name: string; subdomain: string }
   admin: { id: string; name: string; email: string }
   temporaryPassword: string
+  domain: string | null
+  domainProvisioned: boolean
+  domainError: string | null
 }
 
 interface ModuleListing {
@@ -139,10 +142,18 @@ function NewSchoolContent() {
                 <span className="text-2xl">✅</span>
                 <h2 className="text-lg font-semibold">School created</h2>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
-                <strong>{result.school.name}</strong> is live at{' '}
-                <code className="bg-slate-50 dark:bg-slate-800 px-1.5 py-0.5 rounded text-xs">{result.school.subdomain}.wattaman.app</code>.
-              </p>
+              {result.domainProvisioned && result.domain ? (
+                <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+                  <strong>{result.school.name}</strong> is live at{' '}
+                  <a href={`https://${result.domain}`} target="_blank" rel="noreferrer" className="text-indigo-600 dark:text-indigo-400 underline">{result.domain}</a>.
+                </p>
+              ) : (
+                <div className="mb-4 px-4 py-3 rounded-lg text-sm bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900">
+                  <p className="font-medium"><strong>{result.school.name}</strong> was created, but its web address couldn't be set up automatically.</p>
+                  {result.domainError && <p className="mt-1 text-xs opacity-90">{result.domainError}</p>}
+                  <p className="mt-1 text-xs">You can retry this from the school's page.</p>
+                </div>
+              )}
               <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl p-4 space-y-2">
                 <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wide">Temporary admin credentials — shown once</p>
                 <div className="text-sm text-slate-700 dark:text-slate-200"><span className="text-slate-500 dark:text-slate-400">Email:</span> {result.admin.email}</div>
