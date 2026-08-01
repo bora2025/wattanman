@@ -42,6 +42,7 @@
   --brand-100: color-mix(in srgb, var(--brand-600) 12%, white);
   --brand-200: color-mix(in srgb, var(--brand-600) 24%, white);
   --brand-300: color-mix(in srgb, var(--brand-600) 45%, white);
+  --brand-400: color-mix(in srgb, var(--brand-600) 65%, white);
   --brand-500: color-mix(in srgb, var(--brand-600) 85%, white);
   --brand-700: color-mix(in srgb, var(--brand-600) 85%, black);
   --brand-800: color-mix(in srgb, var(--brand-600) 70%, black);

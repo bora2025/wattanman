@@ -6,7 +6,9 @@ import AuthGuard from '../../../components/AuthGuard'
 import AppearanceTab from '../../../components/appearance/AppearanceTab'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
-import { useAccentColor, AccentColor } from '../../../lib/appearance/accentColor'
+import { useAccentColor } from '../../../lib/appearance/accentColor'
+import { ThemeFont } from '../../../lib/appearance/themeFonts'
+import { ThemeRadius } from '../../../lib/appearance/themeRadius'
 
 interface DirectoryAddon {
   addonKey: string
@@ -19,7 +21,7 @@ interface DirectoryAddon {
   icon: string | null
   price: number | null
   priceNote: string | null
-  themeConfig: { mode: 'light' | 'dark'; accentColor: AccentColor; primaryColor: string } | null
+  themeConfig: { mode: 'light' | 'dark'; primaryColor: string; secondaryColor: string; font: ThemeFont; radius: ThemeRadius } | null
   enabled: boolean
   requested: boolean
 }

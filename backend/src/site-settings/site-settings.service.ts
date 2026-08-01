@@ -25,6 +25,9 @@ export interface SiteSettingDto {
   footerYoutube?: string;
   footerCopyright?: string;
   primaryColor?: string;
+  secondaryColor?: string;
+  font?: string;
+  radius?: string;
   customCss?: string;
   // About section
   aboutBadge?: string;

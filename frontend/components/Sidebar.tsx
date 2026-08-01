@@ -37,93 +37,40 @@ interface SidebarProps {
   bottomTabs?: string[];
 }
 
+// Phase 19: the Sidebar now follows the school's unified theme brand color
+// (--brand-600 etc., app/styles.css) rather than each of these 10 names
+// having its own fixed hex pair — a school's chosen primary color (Get
+// Free Theme mode, plain, arbitrary, hex) reaches the Sidebar exactly the
+// same way it reaches every other themed surface. All 10 non-slate keys
+// below are kept and resolve identically, purely so the ~50 existing
+// `<Sidebar accentColor="...">` call sites (many still hardcoded to a
+// specific one of these names from before Phase 19) don't need editing —
+// the actual name passed no longer changes what's rendered, only whether
+// it's 'slate' (platform) or anything else (school) does.
+const BRAND_ENTRY = {
+  bg: 'bg-brand-600',
+  text: 'text-white/70',
+  hover: 'hover:bg-white/10',
+  active: 'bg-white/18 text-white font-semibold',
+  ring: 'ring-[var(--brand-500)]',
+  gradient: 'from-[var(--brand-900)] to-[var(--brand-800)]',
+};
 const colorMap: Record<string, { bg: string; text: string; hover: string; active: string; ring: string; gradient: string }> = {
-  indigo: {
-    bg: 'bg-indigo-600',
-    text: 'text-indigo-100',
-    hover: 'hover:bg-white/10',
-    active: 'bg-white/18 text-white font-semibold',
-    ring: 'ring-indigo-500',
-    gradient: 'from-[#1e1b4b] to-[#312e81]',
-  },
-  emerald: {
-    bg: 'bg-emerald-600',
-    text: 'text-emerald-100',
-    hover: 'hover:bg-white/10',
-    active: 'bg-white/18 text-white font-semibold',
-    ring: 'ring-emerald-500',
-    gradient: 'from-[#064e3b] to-[#065f46]',
-  },
-  sky: {
-    bg: 'bg-sky-600',
-    text: 'text-sky-100',
-    hover: 'hover:bg-white/10',
-    active: 'bg-white/18 text-white font-semibold',
-    ring: 'ring-sky-500',
-    gradient: 'from-[#0c4a6e] to-[#075985]',
-  },
-  // The 6 below + the 3 above are the school admin's selectable Appearance
-  // accent-color palette (frontend/app/admin/addons/page.tsx's AppearanceTab).
-  // `slate` is deliberately excluded from that picker — see its own comment.
-  teal: {
-    bg: 'bg-teal-600',
-    text: 'text-teal-100',
-    hover: 'hover:bg-white/10',
-    active: 'bg-white/18 text-white font-semibold',
-    ring: 'ring-teal-500',
-    gradient: 'from-[#134e4a] to-[#115e59]',
-  },
-  violet: {
-    bg: 'bg-violet-600',
-    text: 'text-violet-100',
-    hover: 'hover:bg-white/10',
-    active: 'bg-white/18 text-white font-semibold',
-    ring: 'ring-violet-500',
-    gradient: 'from-[#4c1d95] to-[#5b21b6]',
-  },
-  rose: {
-    bg: 'bg-rose-600',
-    text: 'text-rose-100',
-    hover: 'hover:bg-white/10',
-    active: 'bg-white/18 text-white font-semibold',
-    ring: 'ring-rose-500',
-    gradient: 'from-[#881337] to-[#9f1239]',
-  },
-  amber: {
-    bg: 'bg-amber-600',
-    text: 'text-amber-100',
-    hover: 'hover:bg-white/10',
-    active: 'bg-white/18 text-white font-semibold',
-    ring: 'ring-amber-500',
-    gradient: 'from-[#78350f] to-[#92400e]',
-  },
-  blue: {
-    bg: 'bg-blue-600',
-    text: 'text-blue-100',
-    hover: 'hover:bg-white/10',
-    active: 'bg-white/18 text-white font-semibold',
-    ring: 'ring-blue-500',
-    gradient: 'from-[#1e3a8a] to-[#1e40af]',
-  },
-  fuchsia: {
-    bg: 'bg-fuchsia-600',
-    text: 'text-fuchsia-100',
-    hover: 'hover:bg-white/10',
-    active: 'bg-white/18 text-white font-semibold',
-    ring: 'ring-fuchsia-500',
-    gradient: 'from-[#701a75] to-[#86198f]',
-  },
-  cyan: {
-    bg: 'bg-cyan-600',
-    text: 'text-cyan-100',
-    hover: 'hover:bg-white/10',
-    active: 'bg-white/18 text-white font-semibold',
-    ring: 'ring-cyan-500',
-    gradient: 'from-[#164e63] to-[#155e75]',
-  },
+  indigo: BRAND_ENTRY,
+  emerald: BRAND_ENTRY,
+  sky: BRAND_ENTRY,
+  teal: BRAND_ENTRY,
+  violet: BRAND_ENTRY,
+  rose: BRAND_ENTRY,
+  amber: BRAND_ENTRY,
+  blue: BRAND_ENTRY,
+  fuchsia: BRAND_ENTRY,
+  cyan: BRAND_ENTRY,
   // Platform tier only (frontend/app/platform/*) — deliberately distinct from
-  // every school-facing accent so it's visually obvious which "layer" of the
-  // product a screenshot or a confused support session is in.
+  // every school-facing accent (and NOT brand-var-driven, unlike the above)
+  // so it's visually obvious which "layer" of the product a screenshot or a
+  // confused support session is in, and so a school's own theme choice can
+  // never bleed into the platform admin's own view.
   slate: {
     bg: 'bg-slate-700',
     text: 'text-slate-200',

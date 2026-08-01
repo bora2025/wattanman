@@ -35,6 +35,7 @@ module.exports = {
           100: 'var(--brand-100)',
           200: 'var(--brand-200)',
           300: 'var(--brand-300)',
+          400: 'var(--brand-400)',
           500: 'var(--brand-500)',
           600: 'var(--brand-600)',
           700: 'var(--brand-700)',

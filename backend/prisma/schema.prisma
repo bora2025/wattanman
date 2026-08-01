@@ -1806,8 +1806,15 @@ model SiteSetting {
   footerTwitter    String   @default("")
   footerYoutube    String   @default("")
   footerCopyright  String   @default("")
-  // Theme
+  // Theme (Phase 19 — secondaryColor/font/radius joined the pre-existing
+  // primaryColor once a theme became a 5-knob preset instead of just a color;
+  // font/radius stay plain strings, validated against the frontend's own
+  // curated lists at the UI layer only, matching primaryColor's own existing
+  // convention of no server-side validation on this school-owned endpoint)
   primaryColor     String   @default("#4f46e5")
+  secondaryColor   String   @default("#0284c7")
+  font             String   @default("inter")
+  radius           String   @default("soft")
   // Custom CSS
   customCss        String   @default("")
   // About section
