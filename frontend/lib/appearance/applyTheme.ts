@@ -71,7 +71,7 @@ export function applyThemeVars(vars: ThemeVars, options?: { persist?: boolean })
       ...(vars.primaryColor ? { primaryColor: vars.primaryColor } : {}),
       ...(vars.secondaryColor ? { secondaryColor: vars.secondaryColor } : {}),
       ...(vars.font ? { font: vars.font } : {}),
-      ...(vars.radius ? { radiusCard, radiusBtn } : {}),
+      ...(vars.radius ? { radius: vars.radius, radiusCard, radiusBtn } : {}),
       ...(vars.customCss !== undefined ? { customCss: vars.customCss } : {}),
     }))
   } catch {
