@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { IconSun, IconMoon } from '../Icons'
 import { apiFetch } from '../../lib/api'
 import { useTheme } from '../../lib/appearance/theme'
@@ -267,6 +267,8 @@ function ThemeDetailModal({ theme, isCurrent, onClose, ...actionsProps }: {
 export default function AppearanceTab({ themes, onThemeChanged }: { themes: ThemeListing[]; onThemeChanged: (updated: ThemeListing) => void }) {
   const { theme, setTheme } = useTheme()
   const [vars, setVars] = useState<Required<ThemeVars>>(() => ({ ...DEFAULT_VARS, ...loadStoredThemeVars() }))
+  const settingsRef = useRef<HTMLDivElement>(null)
+  const [highlightSettings, setHighlightSettings] = useState(false)
 
   const options: { id: 'light' | 'dark'; label: string; icon: React.ReactNode }[] = [
     { id: 'light', label: 'Light', icon: <IconSun size={22} /> },
@@ -277,6 +279,18 @@ export default function AppearanceTab({ themes, onThemeChanged }: { themes: Them
     const next = { ...vars, ...patch }
     setVars(next)
     applyThemeVars(patch)
+  }
+
+  /** Wired into ThemeCard's onApplied — beyond just syncing `vars` (so the
+   * pickers below and the "Current" badges stay correct), scrolls to and
+   * briefly highlights Dashboard theme + Colors/font/shape so it's obvious
+   * those are what a theme's Apply just changed, instead of the change
+   * happening silently below the fold. */
+  function handleThemeApplied(v: Required<ThemeVars>) {
+    setVars(v)
+    setHighlightSettings(true)
+    settingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setTimeout(() => setHighlightSettings(false), 1800)
   }
 
   return (
@@ -296,83 +310,88 @@ export default function AppearanceTab({ themes, onThemeChanged }: { themes: Them
                 theme={t}
                 isCurrent={themeMatchesCurrent(t.themeConfig, vars, theme)}
                 onChanged={onThemeChanged}
-                onApplied={setVars}
+                onApplied={handleThemeApplied}
               />
             ))}
           </div>
         </div>
       )}
 
-      <div>
+      <div
+        ref={settingsRef}
+        className={`space-y-6 rounded-2xl transition-shadow duration-700 ${highlightSettings ? 'ring-2 ring-emerald-400 dark:ring-emerald-500 shadow-lg shadow-emerald-500/10' : ''}`}
+      >
         <div>
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Dashboard theme</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            This only changes how your own dashboard looks on this device — other staff at your school pick their own,
-            and it's separate from your school's public website branding (under Appearance in the sidebar).
-          </p>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Dashboard theme</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              This only changes how your own dashboard looks on this device — other staff at your school pick their own,
+              and it's separate from your school's public website branding (under Appearance in the sidebar).
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3 max-w-lg">
+            {options.map(o => (
+              <button
+                key={o.id}
+                onClick={() => setTheme(o.id)}
+                className={`card p-5 flex flex-col items-center gap-2 transition-all ${
+                  theme === o.id
+                    ? 'border-brand-400 dark:border-brand-500 ring-2 ring-brand-100 dark:ring-brand-900/40'
+                    : 'hover:border-brand-200 dark:hover:border-slate-600'
+                }`}
+              >
+                <span className="text-slate-700 dark:text-slate-200">{o.icon}</span>
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{o.label}</span>
+                {theme === o.id && <span className="text-[11px] font-semibold text-brand-600 dark:text-brand-400">Active</span>}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 mt-3 max-w-lg">
-          {options.map(o => (
-            <button
-              key={o.id}
-              onClick={() => setTheme(o.id)}
-              className={`card p-5 flex flex-col items-center gap-2 transition-all ${
-                theme === o.id
-                  ? 'border-brand-400 dark:border-brand-500 ring-2 ring-brand-100 dark:ring-brand-900/40'
-                  : 'hover:border-brand-200 dark:hover:border-slate-600'
-              }`}
-            >
-              <span className="text-slate-700 dark:text-slate-200">{o.icon}</span>
-              <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{o.label}</span>
-              {theme === o.id && <span className="text-[11px] font-semibold text-brand-600 dark:text-brand-400">Active</span>}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      <div>
-        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Colors, font &amp; shape</h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Recolors your sidebar and the dashboard's buttons, badges and inputs on this device — pick a theme above for a
-          ready-made combination, or set these individually.
-        </p>
-        <div className="grid sm:grid-cols-2 gap-3 mt-3 max-w-lg">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Primary color</label>
-            <div className="flex items-center gap-2">
-              <input type="color" value={vars.primaryColor} onChange={e => updateVar({ primaryColor: e.target.value })} className="w-9 h-9 rounded cursor-pointer border border-slate-200 dark:border-slate-700" />
-              <input type="text" value={vars.primaryColor} onChange={e => updateVar({ primaryColor: e.target.value })} className="w-24 text-sm" />
+        <div>
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Colors, font &amp; shape</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Recolors your sidebar and the dashboard's buttons, badges and inputs on this device — pick a theme above for a
+            ready-made combination, or set these individually.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-3 mt-3 max-w-lg">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Primary color</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={vars.primaryColor} onChange={e => updateVar({ primaryColor: e.target.value })} className="w-9 h-9 rounded cursor-pointer border border-slate-200 dark:border-slate-700" />
+                <input type="text" value={vars.primaryColor} onChange={e => updateVar({ primaryColor: e.target.value })} className="w-24 text-sm" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Secondary color</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={vars.secondaryColor} onChange={e => updateVar({ secondaryColor: e.target.value })} className="w-9 h-9 rounded cursor-pointer border border-slate-200 dark:border-slate-700" />
+                <input type="text" value={vars.secondaryColor} onChange={e => updateVar({ secondaryColor: e.target.value })} className="w-24 text-sm" />
+              </div>
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Secondary color</label>
-            <div className="flex items-center gap-2">
-              <input type="color" value={vars.secondaryColor} onChange={e => updateVar({ secondaryColor: e.target.value })} className="w-9 h-9 rounded cursor-pointer border border-slate-200 dark:border-slate-700" />
-              <input type="text" value={vars.secondaryColor} onChange={e => updateVar({ secondaryColor: e.target.value })} className="w-24 text-sm" />
+          <div className="mt-3 max-w-lg">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Font</label>
+            <div className="flex gap-2 flex-wrap">
+              {THEME_FONTS.map(f => (
+                <button key={f.id} onClick={() => updateVar({ font: f.id })} style={{ fontFamily: f.previewStyle.replace('font-family: ', '').replace(/;$/, '') }}
+                  className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${vars.font === f.id ? 'bg-slate-700 text-white border-slate-700' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}>
+                  {f.label}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-        <div className="mt-3 max-w-lg">
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Font</label>
-          <div className="flex gap-2 flex-wrap">
-            {THEME_FONTS.map(f => (
-              <button key={f.id} onClick={() => updateVar({ font: f.id })} style={{ fontFamily: f.previewStyle.replace('font-family: ', '').replace(/;$/, '') }}
-                className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${vars.font === f.id ? 'bg-slate-700 text-white border-slate-700' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}>
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="mt-3 max-w-lg">
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Corner roundness</label>
-          <div className="flex gap-2">
-            {THEME_RADIUS_PRESETS.map(r => (
-              <button key={r.id} onClick={() => updateVar({ radius: r.id })}
-                className={`text-sm px-3 py-1.5 border font-medium ${vars.radius === r.id ? 'bg-slate-700 text-white border-slate-700' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
-                style={{ borderRadius: r.radiusBtn }}>
-                {r.label}
-              </button>
-            ))}
+          <div className="mt-3 max-w-lg">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Corner roundness</label>
+            <div className="flex gap-2">
+              {THEME_RADIUS_PRESETS.map(r => (
+                <button key={r.id} onClick={() => updateVar({ radius: r.id })}
+                  className={`text-sm px-3 py-1.5 border font-medium ${vars.radius === r.id ? 'bg-slate-700 text-white border-slate-700' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
+                  style={{ borderRadius: r.radiusBtn }}>
+                  {r.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
