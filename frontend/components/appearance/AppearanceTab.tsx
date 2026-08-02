@@ -29,27 +29,56 @@ function priceLabel(t: ThemeListing): string {
   return `$${t.price}${t.priceNote ? ` ${t.priceNote}` : ''}`
 }
 
+/** Whether this theme's own config exactly matches what's actually applied
+ * on this device right now — the source of the "Current" badge. Compared
+ * live against AppearanceTab's own `vars`/`mode` state (not re-derived from
+ * localStorage), so editing any individual color/font/radius control, or
+ * Applying a different theme, immediately un-marks/re-marks the right card
+ * with no reload needed. */
+function themeMatchesCurrent(config: ThemeListing['themeConfig'], vars: Required<ThemeVars>, mode: 'light' | 'dark'): boolean {
+  if (!config) return false
+  return (
+    config.mode === mode &&
+    config.primaryColor.toLowerCase() === vars.primaryColor.toLowerCase() &&
+    config.secondaryColor.toLowerCase() === vars.secondaryColor.toLowerCase() &&
+    config.font === vars.font &&
+    config.radius === vars.radius &&
+    (config.customCss || '') === (vars.customCss || '')
+  )
+}
+
 /** A theme's preview — a real uploaded screenshot when the platform admin
  * provided one (same field/upload mechanism as regular add-ons, Phase 17),
  * falling back to a live gradient swatch built from the theme's own colors
  * when they didn't (matches real WordPress: a theme *can* ship a
  * screenshot, and something reasonable still shows if it didn't). */
-function ThemeSwatch({ config, screenshotUrl, className = 'w-full h-16' }: { config: ThemeListing['themeConfig']; screenshotUrl?: string | null; className?: string }) {
+function ThemeSwatch({ config, screenshotUrl, isCurrent, className = 'w-full h-16' }: { config: ThemeListing['themeConfig']; screenshotUrl?: string | null; isCurrent?: boolean; className?: string }) {
+  const badge = isCurrent && (
+    <span className="absolute top-1.5 left-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/90 dark:bg-slate-900/90 text-emerald-700 dark:text-emerald-400 shadow-sm">
+      ✓ Current
+    </span>
+  )
   if (screenshotUrl) {
-    return <img src={screenshotUrl} alt="" className={`${className} rounded-lg object-cover`} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+    return (
+      <div className="relative">
+        <img src={screenshotUrl} alt="" className={`${className} rounded-lg object-cover`} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+        {badge}
+      </div>
+    )
   }
   if (!config) return null
   return (
     <div
-      className={`${className} rounded-lg flex items-end justify-start p-2 ${config.mode === 'light' ? 'ring-1 ring-inset ring-white/30' : ''}`}
+      className={`relative ${className} rounded-lg flex items-end justify-start p-2 ${config.mode === 'light' ? 'ring-1 ring-inset ring-white/30' : ''}`}
       style={{ background: `linear-gradient(135deg, ${config.primaryColor}, ${config.secondaryColor})`, fontFamily: `var(--font-${config.font}, inherit)` }}
     >
       <span className="w-4 h-4 rounded-full border-2 border-white/80 shadow" style={{ backgroundColor: config.secondaryColor }} />
+      {badge}
     </div>
   )
 }
 
-function ThemeCard({ theme, onChanged }: { theme: ThemeListing; onChanged: (updated: ThemeListing) => void }) {
+function ThemeCard({ theme, isCurrent, onChanged, onApplied }: { theme: ThemeListing; isCurrent: boolean; onChanged: (updated: ThemeListing) => void; onApplied: (vars: Required<ThemeVars>) => void }) {
   const { setTheme } = useTheme()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -58,8 +87,10 @@ function ThemeCard({ theme, onChanged }: { theme: ThemeListing; onChanged: (upda
   function applyLocally() {
     if (!theme.themeConfig) return
     const c = theme.themeConfig
+    const vars = { primaryColor: c.primaryColor, secondaryColor: c.secondaryColor, font: c.font, radius: c.radius, customCss: c.customCss || '' }
     setTheme(c.mode)
-    applyThemeVars({ primaryColor: c.primaryColor, secondaryColor: c.secondaryColor, font: c.font, radius: c.radius, customCss: c.customCss || '' })
+    applyThemeVars(vars)
+    onApplied(vars)
     setApplied(true)
     setTimeout(() => setApplied(false), 2000)
     // Fire-and-forget — the school's public site is shared, not personal, so
@@ -67,7 +98,7 @@ function ThemeCard({ theme, onChanged }: { theme: ThemeListing; onChanged: (upda
     apiFetch('/api/site-settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ primaryColor: c.primaryColor, secondaryColor: c.secondaryColor, font: c.font, radius: c.radius, customCss: c.customCss || '' }),
+      body: JSON.stringify(vars),
     }).catch(() => { /* best-effort */ })
   }
 
@@ -123,12 +154,12 @@ function ThemeCard({ theme, onChanged }: { theme: ThemeListing; onChanged: (upda
 
   const [showDetail, setShowDetail] = useState(false)
 
-  const actionsProps = { theme, busy, error, applied, applyLocally, getFree, request, cancelRequest }
+  const actionsProps = { theme, isCurrent, busy, error, applied, applyLocally, getFree, request, cancelRequest }
 
   return (
-    <div className="card p-4 space-y-3">
+    <div className={`card p-4 space-y-3 ${isCurrent ? 'ring-2 ring-emerald-400 dark:ring-emerald-500 border-emerald-300 dark:border-emerald-600' : ''}`}>
       <button type="button" onClick={() => setShowDetail(true)} className="block w-full text-left cursor-pointer">
-        <ThemeSwatch config={theme.themeConfig} screenshotUrl={theme.screenshotUrl} />
+        <ThemeSwatch config={theme.themeConfig} screenshotUrl={theme.screenshotUrl} isCurrent={isCurrent} />
       </button>
       <div>
         <button type="button" onClick={() => setShowDetail(true)} className="flex items-center justify-between gap-2 w-full text-left hover:underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2">
@@ -151,11 +182,18 @@ function ThemeCard({ theme, onChanged }: { theme: ThemeListing; onChanged: (upda
  * rather than duplicated. All the actual API calls/state live in ThemeCard
  * (the one component that owns this theme's busy/error/applied state);
  * this just renders based on it. */
-function ThemeActions({ theme, busy, applied, applyLocally, getFree, request, cancelRequest }: {
-  theme: ThemeListing; busy: boolean; error: string; applied: boolean
+function ThemeActions({ theme, isCurrent, busy, applied, applyLocally, getFree, request, cancelRequest }: {
+  theme: ThemeListing; isCurrent: boolean; busy: boolean; error: string; applied: boolean
   applyLocally: () => void; getFree: () => void; request: () => void; cancelRequest: () => void
 }) {
   if (theme.enabled) {
+    if (isCurrent && !applied) {
+      return (
+        <div className="text-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 py-1.5">
+          ✓ Currently active
+        </div>
+      )
+    }
     return (
       <button onClick={applyLocally} disabled={!theme.themeConfig} className="btn-outline btn-sm w-full">
         {applied ? 'Applied ✓' : 'Apply'}
@@ -191,8 +229,8 @@ function ThemeActions({ theme, busy, applied, applyLocally, getFree, request, ca
  * and the same actions as the card, reusing the visual language of
  * admin/addons/page.tsx's existing AddonDetailModal rather than inventing
  * a new modal style. */
-function ThemeDetailModal({ theme, onClose, ...actionsProps }: {
-  theme: ThemeListing; onClose: () => void; busy: boolean; error: string; applied: boolean
+function ThemeDetailModal({ theme, isCurrent, onClose, ...actionsProps }: {
+  theme: ThemeListing; isCurrent: boolean; onClose: () => void; busy: boolean; error: string; applied: boolean
   applyLocally: () => void; getFree: () => void; request: () => void; cancelRequest: () => void
 }) {
   return (
@@ -202,10 +240,12 @@ function ThemeDetailModal({ theme, onClose, ...actionsProps }: {
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{theme.name}</h3>
           <button onClick={onClose} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xl leading-none">×</button>
         </div>
-        <ThemeSwatch config={theme.themeConfig} screenshotUrl={theme.screenshotUrl} className="w-full h-40" />
+        <ThemeSwatch config={theme.themeConfig} screenshotUrl={theme.screenshotUrl} isCurrent={isCurrent} className="w-full h-40" />
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{priceLabel(theme)}</span>
-          {theme.enabled && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900">You have this theme</span>}
+          {isCurrent
+            ? <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900">✓ Currently active</span>
+            : theme.enabled && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700">You have this theme</span>}
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
           {theme.detailDescription || theme.description || 'No description provided.'}
@@ -218,7 +258,7 @@ function ThemeDetailModal({ theme, onClose, ...actionsProps }: {
             👁 Preview on my dashboard
           </button>
         )}
-        <ThemeActions theme={theme} {...actionsProps} />
+        <ThemeActions theme={theme} isCurrent={isCurrent} {...actionsProps} />
       </div>
     </div>
   )
@@ -250,7 +290,15 @@ export default function AppearanceTab({ themes, onThemeChanged }: { themes: Them
             anytime you want to switch back). Pick one here, or fine-tune the individual controls below instead.
           </p>
           <div className="grid sm:grid-cols-3 gap-3 mt-3">
-            {themes.map(t => <ThemeCard key={t.addonKey} theme={t} onChanged={onThemeChanged} />)}
+            {themes.map(t => (
+              <ThemeCard
+                key={t.addonKey}
+                theme={t}
+                isCurrent={themeMatchesCurrent(t.themeConfig, vars, theme)}
+                onChanged={onThemeChanged}
+                onApplied={setVars}
+              />
+            ))}
           </div>
         </div>
       )}
