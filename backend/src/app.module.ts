@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { TenantHostMiddleware } from './tenancy/tenant-host.middleware';
 import { DatabaseModule } from './database/database.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { RequiresAddonGuard } from './school-addons/requires-addon.guard';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -90,6 +91,11 @@ import { AddonPackagesModule } from './addon-packages/addon-packages.module';
     TenantHostMiddleware,
     // Apply rate limiting globally to all endpoints
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Phase 22 — global so a newly-gated controller only ever needs
+    // @RequiresAddon('KEY') added, not a hand-typed guard list too. A
+    // no-op on any route without that decorator (RequiresAddonGuard
+    // returns true immediately when no metadata is present).
+    { provide: APP_GUARD, useClass: RequiresAddonGuard },
   ],
 })
 export class AppModule implements NestModule {

@@ -3,16 +3,9 @@ import { AttendanceService } from './attendance.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
 import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
-// Phase 9 — every method here already sets its own JwtAuthGuard/RolesGuard,
-// so this class-level guard is additive, not a replacement: Nest runs
-// class-level and method-level guards together, not one instead of the
-// other. RequiresAddonGuard doesn't depend on req.user, so it's safe to run
-// ahead of the per-method auth guards too.
 @Controller('attendance')
-@UseGuards(RequiresAddonGuard)
 @RequiresAddon('ATTENDANCE')
 export class AttendanceController {
   constructor(private attendanceService: AttendanceService) {}

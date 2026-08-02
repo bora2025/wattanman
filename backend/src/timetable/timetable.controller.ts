@@ -6,7 +6,6 @@ import { TimetableService } from './timetable.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
 import { RequiresAddon, SkipAddonCheck } from '../school-addons/requires-addon.decorator';
 
 /**
@@ -18,7 +17,7 @@ import { RequiresAddon, SkipAddonCheck } from '../school-addons/requires-addon.d
  * @RequiresAddon overrides the class-level one via getAllAndOverride).
  */
 @Controller('timetable')
-@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @RequiresAddon('TIMETABLE')
 export class TimetableController {
   constructor(private readonly svc: TimetableService) {}

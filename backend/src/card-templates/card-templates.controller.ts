@@ -3,11 +3,10 @@ import { CardTemplatesService } from './card-templates.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
 import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
 @Controller('card-templates')
-@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @RequiresAddon('CARD_DESIGNER')
 export class CardTemplatesController {
   constructor(private readonly cardTemplatesService: CardTemplatesService) {}

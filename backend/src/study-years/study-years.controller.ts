@@ -3,11 +3,10 @@ import { StudyYearsService } from './study-years.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
 import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
 @Controller('study-years')
-@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @RequiresAddon('CLASSES')
 export class StudyYearsController {
   constructor(private studyYearsService: StudyYearsService) {}
