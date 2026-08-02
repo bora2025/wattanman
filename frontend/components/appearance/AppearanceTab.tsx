@@ -241,6 +241,20 @@ export default function AppearanceTab({ themes, onThemeChanged }: { themes: Them
 
   return (
     <div className="max-w-3xl space-y-6">
+      {themes.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Themes</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            A theme is a ready-made combination of the controls below, plus your school's public website. Getting or
+            requesting one just unlocks it — click Apply on any theme you have to actually switch to it (and Apply again
+            anytime you want to switch back). Pick one here, or fine-tune the individual controls below instead.
+          </p>
+          <div className="grid sm:grid-cols-3 gap-3 mt-3">
+            {themes.map(t => <ThemeCard key={t.addonKey} theme={t} onChanged={onThemeChanged} />)}
+          </div>
+        </div>
+      )}
+
       <div>
         <div>
           <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Dashboard theme</h2>
@@ -271,7 +285,7 @@ export default function AppearanceTab({ themes, onThemeChanged }: { themes: Them
       <div>
         <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Colors, font &amp; shape</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Recolors your sidebar and the dashboard's buttons, badges and inputs on this device — pick a theme below for a
+          Recolors your sidebar and the dashboard's buttons, badges and inputs on this device — pick a theme above for a
           ready-made combination, or set these individually.
         </p>
         <div className="grid sm:grid-cols-2 gap-3 mt-3 max-w-lg">
@@ -314,20 +328,6 @@ export default function AppearanceTab({ themes, onThemeChanged }: { themes: Them
           </div>
         </div>
       </div>
-
-      {themes.length > 0 && (
-        <div>
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Themes</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            A theme is a ready-made combination of the controls above, plus your school's public website. Getting or
-            requesting one just unlocks it — click Apply on any theme you have to actually switch to it (and Apply again
-            anytime you want to switch back).
-          </p>
-          <div className="grid sm:grid-cols-3 gap-3 mt-3">
-            {themes.map(t => <ThemeCard key={t.addonKey} theme={t} onChanged={onThemeChanged} />)}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
