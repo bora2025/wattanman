@@ -1,4 +1,6 @@
-export const teacherNav = [
+import { NavItem } from '../components/Sidebar';
+
+export const teacherNav: NavItem[] = [
   { label: 'nav.dashboard', href: '/teacher', icon: 'dashboard' },
   { label: 'nav.myClasses', href: '/teacher/classes', icon: 'graduation', moduleKey: 'CLASSES' },
   { label: 'nav.takeAttendance', href: '/teacher/camera', icon: 'camera', moduleKey: 'ATTENDANCE' },

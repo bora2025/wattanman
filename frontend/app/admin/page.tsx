@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { io, Socket } from 'socket.io-client'
 import { Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import Sidebar from '../../components/Sidebar'
+import { ModuleKey } from '../../lib/moduleRegistry'
 import AuthGuard from '../../components/AuthGuard'
 import { adminNav, classAdminNav } from '../../lib/admin-nav'
 import { apiFetch } from '../../lib/api'
@@ -472,7 +473,7 @@ function DashboardContent() {
   // separate hardcoded list from the sidebar nav, so it needs its own filter
   // against the same enabledModules data, or a school without a module still
   // gets a dead shortcut card straight to its (403'ing) page.
-  const quickActions: { label: string; href: string; emoji: string; color: string; moduleKey?: string }[] = [
+  const quickActions: { label: string; href: string; emoji: string; color: string; moduleKey?: ModuleKey }[] = [
     { label: 'Take Attendance', href: '/admin/camera',                emoji: '📷', color: 'from-purple-500 to-fuchsia-500', moduleKey: 'ATTENDANCE' },
     { label: 'Edit Attendance', href: '/admin/attendance/edit',       emoji: '✏️', color: 'from-brand-500 to-blue-500', moduleKey: 'ATTENDANCE' },
     { label: 'Reports',         href: '/admin/reports',               emoji: '📊', color: 'from-emerald-500 to-teal-500' },

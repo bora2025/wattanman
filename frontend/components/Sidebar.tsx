@@ -7,6 +7,7 @@ import { useLanguage } from '../lib/i18n';
 import { useTheme } from '../lib/appearance/theme';
 import { iconMap, IconGlobe, IconLogout, IconSun, IconMoon } from './Icons';
 import InstallAppButton from './InstallAppButton';
+import { ModuleKey } from '../lib/moduleRegistry';
 
 /** Renders an icon: if `key` maps to an SVG component, uses it; otherwise falls back to text/emoji. */
 function NavIcon({ icon, size = 20, className }: { icon: string; size?: number; className?: string }) {
@@ -15,7 +16,7 @@ function NavIcon({ icon, size = 20, className }: { icon: string; size?: number; 
   return <span className={`leading-none ${className || ''}`} style={{ fontSize: size }}>{icon}</span>;
 }
 
-interface NavItem {
+export interface NavItem {
   label: string;
   href: string;
   icon: string;
@@ -25,7 +26,7 @@ interface NavItem {
   badgeKey?: 'messages' | 'announcements' | 'class-registrations' | 'addon-requests';
   /** If set, this item is only shown once the current school has opted into
    * that module/add-on (Phase 9's opt-in catalog — see /api/school-addons). */
-  moduleKey?: string;
+  moduleKey?: ModuleKey;
 }
 
 interface SidebarProps {

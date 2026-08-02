@@ -1,4 +1,6 @@
-export const wattamanNav = [
+import { NavItem } from '../components/Sidebar';
+
+export const wattamanNav: NavItem[] = [
   { label: 'nav.dashboard', href: '/wattaman', icon: 'dashboard' },
   { label: 'nav.scanAttendance', href: '/wattaman/scan', icon: 'camera', moduleKey: 'ATTENDANCE' },
   { label: 'nav.usbScanner', href: '/wattaman/usb-scan', icon: 'doc-scanner', moduleKey: 'ATTENDANCE' },
