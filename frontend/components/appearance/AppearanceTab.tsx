@@ -284,6 +284,13 @@ export default function AppearanceTab({ themes, onThemeChanged }: { themes: Them
     applyThemeVars(patch)
   }
 
+  // Same match used for each card's "Current" badge — reused here so the
+  // section headings below can name whichever theme is actually active
+  // right now, instead of a generic label with no link back to the picker
+  // above. null once anything's been hand-tweaked away from every theme's
+  // exact values, since at that point no single theme name is accurate.
+  const currentThemeName = themes.find(t => themeMatchesCurrent(t.themeConfig, vars, theme))?.name ?? null
+
   /** Wired into ThemeCard's onApplied — beyond just syncing `vars` (so the
    * pickers below and the "Current" badges stay correct), scrolls to and
    * briefly highlights Dashboard theme + Colors/font/shape so it's obvious
@@ -326,7 +333,9 @@ export default function AppearanceTab({ themes, onThemeChanged }: { themes: Them
       >
         <div>
           <div>
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Dashboard theme</h2>
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              {currentThemeName ? `${currentThemeName} — Dashboard theme` : 'Dashboard theme'}
+            </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               This only changes how your own dashboard looks on this device — other staff at your school pick their own,
               and it's separate from your school's public website branding (under Appearance in the sidebar).
@@ -352,7 +361,9 @@ export default function AppearanceTab({ themes, onThemeChanged }: { themes: Them
         </div>
 
         <div>
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Colors, font &amp; shape</h2>
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {currentThemeName ? `${currentThemeName} — Colors, font & shape` : 'Colors, font & shape'}
+          </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Recolors your sidebar and the dashboard's buttons, badges and inputs on this device — pick a theme above for a
             ready-made combination, or set these individually.
