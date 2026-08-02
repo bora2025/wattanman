@@ -296,7 +296,7 @@ export default function PostsPage() {
   const { accentColor } = useAccentColor()
   return (
     <AuthGuard>
-      <div className="flex h-screen bg-[#f0f0f1]">
+      <div className="flex h-screen bg-[#f0f0f1] dark:bg-slate-900">
         <Sidebar title="Admin" navItems={adminNav} accentColor={accentColor} />
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-6xl mx-auto px-6 py-8">
