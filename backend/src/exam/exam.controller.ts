@@ -6,11 +6,10 @@ import { ExamService } from './exam.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
 import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
 @Controller('exams')
-@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @RequiresAddon('EXAMS')
 export class ExamController {
   constructor(private examService: ExamService) {}

@@ -6,14 +6,13 @@ import { BusService } from './bus.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
 import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
 // Phase 9 — Bus is a free MODULE a PLATFORM_ADMIN opts a school into (e.g. a
 // school with a transport program). Gated at the API, not just hidden in the
 // nav, so a direct request can't bypass a "hidden" module.
 @Controller('bus')
-@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @RequiresAddon('BUS')
 export class BusController {
   constructor(private busService: BusService) {}

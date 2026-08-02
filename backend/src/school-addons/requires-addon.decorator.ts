@@ -1,10 +1,15 @@
 import { SetMetadata } from '@nestjs/common';
+import { ModuleKey } from '../module-registry/module-registry';
 
-/** `addon` is an AddonDefinition.key — a free-form string now that the
- * catalog is database-driven (Platform tier's Add-ons Directory), not a
- * fixed union of hardcoded keys. */
+/** `addon` is a MODULE key from the module registry (Phase 22) — a real
+ * TypeScript union, not a free-form string, so a typo here fails
+ * `tsc --noEmit` instead of silently 403ing an endpoint forever. Paid
+ * ADDONs and THEMEs aren't gated this way today (their catalog rows are
+ * fully platform-admin-authored at runtime, nothing to type-check against)
+ * — if a paid add-on ever needs an API-level gate, add its key to
+ * module-registry.ts first, same as any module. */
 export const REQUIRES_ADDON_KEY = 'requiresAddon';
-export const RequiresAddon = (addon: string) => SetMetadata(REQUIRES_ADDON_KEY, addon);
+export const RequiresAddon = (addon: ModuleKey) => SetMetadata(REQUIRES_ADDON_KEY, addon);
 
 /**
  * Escape hatch from a class-level @RequiresAddon() for one specific method.

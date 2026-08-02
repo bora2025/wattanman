@@ -2,7 +2,6 @@ import { Controller, Get, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { RequiresAddonGuard } from '../school-addons/requires-addon.guard';
 import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 import { AuthService } from '../auth/auth.service';
 
@@ -20,7 +19,7 @@ import { AuthService } from '../auth/auth.service';
  * so a school can't request a role its portal isn't for.
  */
 @Controller('portal-manager')
-@UseGuards(JwtAuthGuard, RolesGuard, RequiresAddonGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN', 'SUPER_ADMIN')
 export class PortalManagerController {
   constructor(private authService: AuthService) {}
