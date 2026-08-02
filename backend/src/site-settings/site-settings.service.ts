@@ -24,6 +24,7 @@ export interface SiteSettingDto {
   footerTwitter?: string;
   footerYoutube?: string;
   footerCopyright?: string;
+  mode?: string;
   primaryColor?: string;
   secondaryColor?: string;
   font?: string;

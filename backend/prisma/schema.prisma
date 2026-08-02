@@ -1810,7 +1810,11 @@ model SiteSetting {
   // primaryColor once a theme became a 5-knob preset instead of just a color;
   // font/radius stay plain strings, validated against the frontend's own
   // curated lists at the UI layer only, matching primaryColor's own existing
-  // convention of no server-side validation on this school-owned endpoint)
+  // convention of no server-side validation on this school-owned endpoint.
+  // mode joined later, once app/page.tsx got real dark: support of its own —
+  // school-wide (this record), not personal like the dashboard's own
+  // light/dark toggle in localStorage)
+  mode             String   @default("light")
   primaryColor     String   @default("#4f46e5")
   secondaryColor   String   @default("#0284c7")
   font             String   @default("inter")
