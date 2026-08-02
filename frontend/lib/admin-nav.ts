@@ -1,4 +1,6 @@
-export const adminNav = [
+import { NavItem } from '../components/Sidebar';
+
+export const adminNav: NavItem[] = [
   // ── Overview ──
   { label: 'nav.dashboard', href: '/admin', icon: 'dashboard', section: 'nav.section.overview' },
   { label: 'nav.search', href: '/admin/search', icon: 'search' },
@@ -66,7 +68,7 @@ export const adminNav = [
 ]
 
 /** Navigation for CLASS_ADMIN — limited to classes, scoring, and student attendance only. */
-export const classAdminNav = [
+export const classAdminNav: NavItem[] = [
   // ── Academics ──
   { label: 'nav.manageClasses', href: '/admin/classes', icon: 'book', section: 'nav.section.academics', moduleKey: 'CLASSES' },
   { label: 'nav.scoring', href: '/admin/scoring', icon: 'trophy', moduleKey: 'EXAMS' },

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import AuthGuard from '../../components/AuthGuard'
-import Sidebar from '../../components/Sidebar'
+import Sidebar, { NavItem } from '../../components/Sidebar'
 import AnnouncementFeed from '../../components/AnnouncementFeed'
 import { ChildTimetableGrid } from '../../components/TimetableGrid'
 import { apiFetch, getCurrentUser } from '../../lib/api'
@@ -16,7 +16,7 @@ interface Child {
   class: { name: string; subject: string } | null
 }
 
-const parentNav = [
+const parentNav: NavItem[] = [
   { label: 'Dashboard', href: '/parent', icon: 'dashboard' },
   { label: 'Attendance', href: '/parent/attendance', icon: 'calendar' },
   { label: 'Grades', href: '/parent/grades', icon: 'chart' },

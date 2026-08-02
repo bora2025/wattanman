@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AuthGuard from '../../components/AuthGuard';
-import Sidebar from '../../components/Sidebar';
+import Sidebar, { NavItem } from '../../components/Sidebar';
 import AnnouncementFeed from '../../components/AnnouncementFeed';
 import TimetableGrid from '../../components/TimetableGrid';
 import { apiFetch, getCurrentUser } from '../../lib/api';
@@ -39,7 +39,7 @@ interface ExamLite {
   attempts: { status: string; score: number | null }[];
 }
 
-const studentNav = [
+const studentNav: NavItem[] = [
   { label: 'nav.dashboard', href: '/student', icon: 'dashboard' },
   { label: 'Courses', href: '/student/courses', icon: 'book' },
   { label: 'Assignments', href: '/student/assignments', icon: 'book' },

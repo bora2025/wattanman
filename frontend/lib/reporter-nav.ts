@@ -1,4 +1,6 @@
-export const reporterNav = [
+import { NavItem } from '../components/Sidebar';
+
+export const reporterNav: NavItem[] = [
   { label: 'nav.dashboard', href: '/reporter', icon: 'dashboard' },
   { label: 'nav.selfScan', href: '/employee/scan', icon: 'camera', moduleKey: 'ATTENDANCE' },
   { label: 'nav.officerReport', href: '/admin/staff-reports', icon: 'bar-chart' },
