@@ -557,11 +557,19 @@ export default function Home() {
   const secondary = settings.secondaryColor || '#7C3AED'
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: `var(--font-${settings.font || 'inter'}), sans-serif` }}>
+    <div className="min-h-screen bg-white wm-public-page" style={{ fontFamily: `var(--font-${settings.font || 'inter'}), sans-serif` }}>
       {/* Platform-admin-authored theme package CSS (Phase 20) — applied on
           top of everything above via primary/secondary/font. Self-contained
           (assets already inlined as data URIs client-side at upload time),
-          validated/sanitized server-side before ever being stored. */}
+          validated/sanitized server-side before ever being stored. The SAME
+          customCss string is also injected on the admin dashboard (see
+          lib/appearance/applyTheme.ts) — this page has no dark/light
+          concept of its own (no `dark:` classes anywhere, unlike the
+          dashboard), so a theme's public-site rules should target the
+          `.wm-public-page` class on the root div below rather than bare
+          selectors, or they'd unintentionally also override the dashboard's
+          own colors regardless of that admin's personal light/dark
+          preference. */}
       {settings.customCss && <style dangerouslySetInnerHTML={{ __html: settings.customCss }} />}
 
       {/* ══════════════ TOP BAR ══════════════ */}
