@@ -27,6 +27,7 @@ interface SiteSettings {
   footerTwitter: string
   footerYoutube: string
   footerCopyright: string
+  mode: string
   primaryColor: string
   secondaryColor: string
   font: string
@@ -54,6 +55,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   footerTwitter: '',
   footerYoutube: '',
   footerCopyright: `© ${new Date().getFullYear()} Wattaman School. All rights reserved.`,
+  mode: 'light',
   primaryColor: '#FF6B2C',
   secondaryColor: '#7C3AED',
   font: 'inter',
@@ -181,7 +183,7 @@ function LatestPosts({ primaryColor }: { primaryColor: string }) {
   const typeLabel = { text: '📝 Article', image: '🖼️ Photo', video: '🎬 Video' }
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-white dark:bg-slate-950">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-12">
           <span
@@ -190,15 +192,15 @@ function LatestPosts({ primaryColor }: { primaryColor: string }) {
           >
             Latest from the School
           </span>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">News & Updates</h2>
-          <p className="text-gray-500 max-w-xl mx-auto">Stay informed with the latest announcements, events, and stories.</p>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-slate-100 mb-3">News & Updates</h2>
+          <p className="text-gray-500 dark:text-slate-400 max-w-xl mx-auto">Stay informed with the latest announcements, events, and stories.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts.map((post) => (
             <article
               key={post.id}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden group"
+              className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-lg transition-all overflow-hidden group"
             >
               {/* Image */}
               {post.imageUrl && (
@@ -227,26 +229,26 @@ function LatestPosts({ primaryColor }: { primaryColor: string }) {
                     {typeLabel[post.type]}
                   </span>
                   {post.pinned && <span className="text-xs text-amber-600 font-medium">📌 Pinned</span>}
-                  <span className="text-xs text-gray-400 ml-auto">
+                  <span className="text-xs text-gray-400 dark:text-slate-500 ml-auto">
                     {new Date(post.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </span>
                 </div>
 
-                <h3 className="text-base font-bold text-gray-900 leading-snug">{post.title}</h3>
+                <h3 className="text-base font-bold text-gray-900 dark:text-slate-100 leading-snug">{post.title}</h3>
 
                 {post.excerpt && (
-                  <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">{post.excerpt}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed line-clamp-3">{post.excerpt}</p>
                 )}
 
                 {/* Expanded body */}
                 {expanded === post.id && post.body && (
-                  <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-line border-t border-gray-100 pt-3">
+                  <div className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed whitespace-pre-line border-t border-gray-100 dark:border-slate-700 pt-3">
                     {post.body}
                   </div>
                 )}
                 {/* Video in expanded */}
                 {expanded === post.id && post.type === 'video' && post.videoUrl && post.imageUrl && (
-                  <div className="border-t border-gray-100 pt-3">
+                  <div className="border-t border-gray-100 dark:border-slate-700 pt-3">
                     <VideoEmbed url={post.videoUrl} />
                   </div>
                 )}
@@ -255,7 +257,7 @@ function LatestPosts({ primaryColor }: { primaryColor: string }) {
                 {post.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {post.tags.slice(0, 3).map((t) => (
-                      <span key={t} className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[11px] rounded-full">{t}</span>
+                      <span key={t} className="px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 text-[11px] rounded-full">{t}</span>
                     ))}
                   </div>
                 )}
@@ -327,7 +329,7 @@ function OpenClassRegistrations() {
   if (!loaded || classes.length === 0) return null
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-gray-50 dark:bg-slate-900">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-end justify-between mb-10 gap-4 flex-wrap">
           <div>
@@ -335,8 +337,8 @@ function OpenClassRegistrations() {
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-dot" />
               Now Enrolling
             </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Trending Classes</h2>
-            <p className="text-gray-500 mt-2 max-w-xl">These classes are accepting new students right now — register online and our admin team will review your request.</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">Trending Classes</h2>
+            <p className="text-gray-500 dark:text-slate-400 mt-2 max-w-xl">These classes are accepting new students right now — register online and our admin team will review your request.</p>
           </div>
         </div>
 
@@ -347,10 +349,10 @@ function OpenClassRegistrations() {
               <Link
                 key={cls.id}
                 href={`/register?classId=${cls.id}`}
-                className="group bg-white rounded-2xl border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
+                className="group bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
               >
                 {/* Thumbnail */}
-                <div className="relative aspect-video overflow-hidden bg-gray-100">
+                <div className="relative aspect-video overflow-hidden bg-gray-100 dark:bg-slate-700">
                   {cls.thumbnail ? (
                     <img
                       src={cls.thumbnail}
@@ -369,26 +371,26 @@ function OpenClassRegistrations() {
                 </div>
 
                 <div className="p-5 flex flex-col flex-1">
-                  <h3 className="font-bold text-gray-900 text-base leading-snug line-clamp-2">{cls.name}</h3>
+                  <h3 className="font-bold text-gray-900 dark:text-slate-100 text-base leading-snug line-clamp-2">{cls.name}</h3>
                   {cls.description && (
-                    <p className="text-sm text-gray-500 mt-1.5 line-clamp-2">{cls.description}</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-1.5 line-clamp-2">{cls.description}</p>
                   )}
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {cls.subject && (
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${theme.chip}`}>{cls.subject}</span>
                     )}
                     {cls.studyYear && (
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-500">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400">
                         📅 {cls.studyYear.label || cls.studyYear.year}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
                     {cls.showPrice && cls.price != null ? (
-                      <span className="text-lg font-extrabold text-gray-900">${cls.price.toFixed(2)}</span>
+                      <span className="text-lg font-extrabold text-gray-900 dark:text-slate-100">${cls.price.toFixed(2)}</span>
                     ) : (
-                      <span className="text-sm font-semibold text-gray-400">Free to apply</span>
+                      <span className="text-sm font-semibold text-gray-400 dark:text-slate-500">Free to apply</span>
                     )}
                     <span
                       className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl text-white bg-gradient-to-r ${theme.grad} shadow-sm group-hover:shadow-md transition-all`}
@@ -555,21 +557,27 @@ export default function Home() {
   const slides = settings.heroSlides?.length > 0 ? settings.heroSlides : DEFAULT_SLIDES
   const primary = settings.primaryColor || '#FF6B2C'
   const secondary = settings.secondaryColor || '#7C3AED'
+  // Features section's background wash — not a Tailwind class (it's a fixed
+  // decorative gradient, not brand-color-driven), so mode needs its own
+  // light/dark pair computed here rather than a dark: variant.
+  const featuresBg = settings.mode === 'dark'
+    ? 'linear-gradient(135deg, #1e1b3a 0%, #1a1230 100%)'
+    : 'linear-gradient(135deg, #FFF7F0 0%, #FFF0F9 100%)'
 
   return (
-    <div className="min-h-screen bg-white wm-public-page" style={{ fontFamily: `var(--font-${settings.font || 'inter'}), sans-serif` }}>
-      {/* Platform-admin-authored theme package CSS (Phase 20) — applied on
-          top of everything above via primary/secondary/font. Self-contained
-          (assets already inlined as data URIs client-side at upload time),
-          validated/sanitized server-side before ever being stored. The SAME
-          customCss string is also injected on the admin dashboard (see
-          lib/appearance/applyTheme.ts) — this page has no dark/light
-          concept of its own (no `dark:` classes anywhere, unlike the
-          dashboard), so a theme's public-site rules should target the
-          `.wm-public-page` class on the root div below rather than bare
-          selectors, or they'd unintentionally also override the dashboard's
-          own colors regardless of that admin's personal light/dark
-          preference. */}
+    <div
+      className={`min-h-screen bg-white dark:bg-slate-950 wm-public-page ${settings.mode === 'dark' ? 'dark' : ''}`}
+      style={{ fontFamily: `var(--font-${settings.font || 'inter'}), sans-serif` }}
+    >
+      {/* This page now has real dark: support of its own, driven by
+          settings.mode (school-wide, set via a theme's Apply or the
+          public-site Appearance editor) — the `dark` class above is scoped
+          to this root div rather than <html>, since that's a personal,
+          per-device toggle for the dashboard and must stay independent of
+          this school-wide setting. Platform-admin-authored theme package
+          CSS (Phase 20) still layers on top via customCss for anything the
+          curated knobs don't cover — target `.wm-public-page` there (not
+          bare selectors) so it doesn't also bleed onto the dashboard. */}
       {settings.customCss && <style dangerouslySetInnerHTML={{ __html: settings.customCss }} />}
 
       {/* ══════════════ TOP BAR ══════════════ */}
@@ -610,7 +618,7 @@ export default function Home() {
       )}
 
       {/* ══════════════ HEADER ══════════════ */}
-      <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
+      <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 shadow-sm border-b border-gray-100 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
           {/* Logo + name */}
           <Link href="/" className="flex items-center gap-3 group">
@@ -625,9 +633,9 @@ export default function Home() {
               )}
             </div>
             <div className="leading-tight">
-              <p className="font-extrabold text-gray-900 text-[17px] tracking-tight">{settings.siteName}</p>
+              <p className="font-extrabold text-gray-900 dark:text-slate-100 text-[17px] tracking-tight">{settings.siteName}</p>
               {settings.siteTagline && (
-                <p className="text-[10px] text-gray-400 font-medium leading-none">{settings.siteTagline}</p>
+                <p className="text-[10px] text-gray-400 dark:text-slate-500 font-medium leading-none">{settings.siteTagline}</p>
               )}
             </div>
           </Link>
@@ -641,7 +649,7 @@ export default function Home() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
+                className="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-slate-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
               >
                 {item.label}
               </Link>
@@ -652,7 +660,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setLang(lang === 'en' ? 'kh' : 'en')}
-              className="hidden md:flex px-3.5 py-1.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors items-center gap-1"
+              className="hidden md:flex px-3.5 py-1.5 rounded-lg text-sm font-medium text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors items-center gap-1"
             >
               🌐 {lang === 'en' ? 'ភាសាខ្មែរ' : 'English'}
             </button>
@@ -666,7 +674,7 @@ export default function Home() {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMenuOpen((o) => !o)}
-              className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100"
+              className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 {menuOpen
@@ -679,18 +687,18 @@ export default function Home() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white px-6 py-4 space-y-1">
+          <div className="md:hidden border-t border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-4 space-y-1">
             {[
               { label: 'Home', href: '/' },
               { label: 'Sign In', href: '/login' },
             ].map((item) => (
               <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}
-                className="block px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                className="block px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800">
                 {item.label}
               </Link>
             ))}
-            <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
-              <button onClick={() => setLang(lang === 'en' ? 'kh' : 'en')} className="text-sm text-gray-500">
+            <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
+              <button onClick={() => setLang(lang === 'en' ? 'kh' : 'en')} className="text-sm text-gray-500 dark:text-slate-400">
                 🌐 {lang === 'en' ? 'ភាសាខ្មែរ' : 'English'}
               </button>
             </div>
@@ -718,13 +726,13 @@ export default function Home() {
       <OpenClassRegistrations />
 
       {/* ══════════════ ABOUT / INTRO SECTION ══════════════ */}
-      <section className="py-20 bg-white overflow-hidden">
+      <section className="py-20 bg-white dark:bg-slate-950 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
           {/* Left: image / illustration */}
           <div className="relative order-2 md:order-1">
             <div className="absolute -left-8 -top-8 w-64 h-64 rounded-full opacity-15" style={{ backgroundColor: primary }} />
-            <div className="absolute -right-4 -bottom-4 w-48 h-48 rounded-full opacity-10" style={{ backgroundColor: '#7C3AED' }} />
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-orange-100" style={{ minHeight: 340 }}>
+            <div className="absolute -right-4 -bottom-4 w-48 h-48 rounded-full opacity-10" style={{ backgroundColor: secondary }} />
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-gray-100 dark:border-slate-700" style={{ minHeight: 340 }}>
               {settings.aboutImageUrl ? (
                 <img
                   src={settings.aboutImageUrl}
@@ -733,11 +741,11 @@ export default function Home() {
                   style={{ minHeight: 340 }}
                 />
               ) : (
-                <div className="flex items-center justify-center text-center p-10 h-full bg-gradient-to-br from-orange-50 to-amber-50" style={{ minHeight: 340 }}>
+                <div className="flex items-center justify-center text-center p-10 h-full bg-gradient-to-br from-orange-50 to-amber-50 dark:from-slate-800 dark:to-slate-700" style={{ minHeight: 340 }}>
                   <div>
                     <div className="text-8xl mb-4">🏫</div>
-                    <p className="text-2xl font-bold text-gray-700">{settings.siteName}</p>
-                    <p className="text-gray-500 mt-2">{settings.siteTagline}</p>
+                    <p className="text-2xl font-bold text-gray-700 dark:text-slate-200">{settings.siteName}</p>
+                    <p className="text-gray-500 dark:text-slate-400 mt-2">{settings.siteTagline}</p>
                   </div>
                 </div>
               )}
@@ -753,11 +761,11 @@ export default function Home() {
               >
                 {settings.aboutBadge}
               </span>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-slate-100 leading-tight mb-4">
                 {settings.aboutTitle}
               </h2>
               {settings.aboutDescription && (
-                <p className="text-gray-500 leading-relaxed whitespace-pre-line">
+                <p className="text-gray-500 dark:text-slate-400 leading-relaxed whitespace-pre-line">
                   {settings.aboutDescription}
                 </p>
               )}
@@ -765,7 +773,7 @@ export default function Home() {
             {settings.aboutFeatures.length > 0 && (
               <ul className="space-y-3">
                 {settings.aboutFeatures.map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-sm text-gray-700">
+                  <li key={item} className="flex items-center gap-3 text-sm text-gray-700 dark:text-slate-300">
                     <span className="w-6 h-6 rounded-full flex items-center justify-center flex-none" style={{ backgroundColor: primary }}>
                       <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
@@ -793,7 +801,7 @@ export default function Home() {
       </section>
 
       {/* ══════════════ FEATURES / VALUES ══════════════ */}
-      <section className="py-20" style={{ background: 'linear-gradient(135deg, #FFF7F0 0%, #FFF0F9 100%)' }}>
+      <section className="py-20" style={{ background: featuresBg }}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <span
@@ -802,10 +810,10 @@ export default function Home() {
             >
               Our Core Features
             </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-slate-100 mb-3">
               Everything Your School Needs
             </h2>
-            <p className="text-gray-500 max-w-xl mx-auto">
+            <p className="text-gray-500 dark:text-slate-400 max-w-xl mx-auto">
               Built for real schools. Designed for real people.
             </p>
           </div>
@@ -813,7 +821,7 @@ export default function Home() {
             {features.map((f) => (
               <div
                 key={f.title}
-                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all group"
+                className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all group"
               >
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4 shadow-sm group-hover:scale-110 transition-transform"
@@ -821,8 +829,8 @@ export default function Home() {
                 >
                   {f.icon}
                 </div>
-                <h3 className="text-base font-bold text-gray-900 mb-2" style={{ color: f.color }}>{f.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+                <h3 className="text-base font-bold text-gray-900 dark:text-slate-100 mb-2" style={{ color: f.color }}>{f.title}</h3>
+                <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>

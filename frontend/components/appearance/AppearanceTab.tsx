@@ -95,10 +95,13 @@ function ThemeCard({ theme, isCurrent, onChanged, onApplied }: { theme: ThemeLis
     setTimeout(() => setApplied(false), 2000)
     // Fire-and-forget — the school's public site is shared, not personal, so
     // this succeeding or not doesn't block the personal dashboard change above.
+    // mode rides along here too (not part of ThemeVars — that's the
+    // dashboard's own CSS-variable set) since the public site's dark mode is
+    // a school-wide SiteSetting, unlike the dashboard's personal toggle.
     apiFetch('/api/site-settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(vars),
+      body: JSON.stringify({ ...vars, mode: c.mode }),
     }).catch(() => { /* best-effort */ })
   }
 
