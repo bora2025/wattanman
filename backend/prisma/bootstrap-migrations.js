@@ -15,6 +15,15 @@ function run(args, acceptedExitCodes = [0]) {
   return result.status;
 }
 
+function capture(args, acceptedExitCodes = [0]) {
+  const result = spawnSync(process.execPath, [prismaCli, ...args], { encoding: 'utf8', env: process.env });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  if (result.error) throw result.error;
+  if (!acceptedExitCodes.includes(result.status)) process.exit(result.status || 1);
+  return { status: result.status, stdout: result.stdout || '' };
+}
+
 function migrationNames() {
   return readdirSync(migrationsPath, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -39,8 +48,17 @@ async function migrationCount() {
   return rows[0].count;
 }
 
-async function baselineCurrentSchema() {
-  for (const migration of migrationNames()) run(['migrate', 'resolve', '--schema', schemaPath, '--applied', migration]);
+async function baselineCurrentSchema(migrations = migrationNames()) {
+  for (const migration of migrations) run(['migrate', 'resolve', '--schema', schemaPath, '--applied', migration]);
+}
+
+function isOnlyMissingPilotFeedback(sql) {
+  const statements = sql
+    .replace(/--.*$/gm, '')
+    .split(';')
+    .map((statement) => statement.trim())
+    .filter(Boolean);
+  return statements.length > 0 && statements.every((statement) => statement.includes('ExtensionPilotFeedback'));
 }
 
 async function main() {
@@ -56,10 +74,21 @@ async function main() {
     if (!process.argv.includes('--adopt-existing')) {
       throw new Error('Existing database has no Prisma migration history. Back it up, verify it matches prisma/schema.prisma, then rerun with --adopt-existing.');
     }
-    const diffStatus = run(['migrate', 'diff', '--from-url', process.env.DATABASE_URL, '--to-schema-datamodel', schemaPath, '--exit-code'], [0, 2]);
-    if (diffStatus === 2) throw new Error('Existing database does not match prisma/schema.prisma; migration history was not modified.');
-    console.log('Existing schema matches Prisma; recording the current migrations as an adopted baseline.');
-    await baselineCurrentSchema();
+    const diff = capture(['migrate', 'diff', '--from-url', process.env.DATABASE_URL, '--to-schema-datamodel', schemaPath, '--script', '--exit-code'], [0, 2]);
+    if (diff.status === 0) {
+      console.log('Existing schema matches Prisma; recording the current migrations as an adopted baseline.');
+      await baselineCurrentSchema();
+    } else if (isOnlyMissingPilotFeedback(diff.stdout)) {
+      const migrations = migrationNames();
+      const pendingMigration = '20260803000010_add_extension_pilot_feedback';
+      if (migrations[migrations.length - 1] !== pendingMigration) {
+        throw new Error('Pilot feedback recovery is not the latest migration; migration history was not modified.');
+      }
+      console.log('Existing schema predates pilot feedback; adopting prior migrations before deploying the pending migration.');
+      await baselineCurrentSchema(migrations.slice(0, -1));
+    } else {
+      throw new Error('Existing database does not match prisma/schema.prisma; migration history was not modified.');
+    }
   }
 
   run(['migrate', 'deploy', '--schema', schemaPath]);

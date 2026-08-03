@@ -26,6 +26,9 @@ bootstrap applies pending migrations when migration history exists and creates
 and baselines a completely empty database. It adopts an existing database only
 when Prisma reports zero schema differences. It never passes `--accept-data-loss`,
 and startup stops if migration preparation or schema verification fails.
+The guarded recovery also recognizes production being exactly one additive
+`ExtensionPilotFeedback` migration behind, baselines the preceding migrations,
+and applies that migration through `prisma migrate deploy`.
 
 ## 1. One-time: baseline Prisma's migration history
 
