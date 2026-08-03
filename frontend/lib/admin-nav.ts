@@ -49,6 +49,7 @@ export const adminNav: NavItem[] = [
 
   // ── Modules ──
   { label: 'School Bus', href: '/admin/bus', icon: 'calendar', section: 'Modules', moduleKey: 'BUS' },
+  { label: 'Extension Directory', href: '/admin/extensions', icon: 'design', section: 'Modules' },
 
   // ── Add-ons ──
   { label: 'Add-ons', href: '/admin/addons', icon: 'design', section: 'Add-ons' },

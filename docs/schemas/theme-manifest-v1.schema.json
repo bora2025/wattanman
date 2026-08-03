@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wattaman.app/schemas/theme-manifest-v1.schema.json",
+  "title": "Wattaman Theme Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "key", "name", "version", "runtimeType", "mode", "tokens"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "key": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,63}$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$" },
+    "runtimeType": { "const": "THEME" },
+    "mode": { "enum": ["light", "dark"] },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primaryColor", "secondaryColor", "font", "radius"],
+      "properties": {
+        "primaryColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "secondaryColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "font": { "enum": ["inter", "poppins", "nunito", "manrope", "roboto"] },
+        "radius": { "enum": ["sharp", "soft", "round"] }
+      }
+    },
+    "assets": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+  },
+  "patternProperties": { "^x-": true }
+}

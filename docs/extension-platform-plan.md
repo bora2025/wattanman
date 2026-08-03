@@ -620,6 +620,12 @@ Record agreed decisions here so later implementation does not reinterpret earlie
 | TBD | Do not execute uploaded server code in the main application | Protect tenant data and production secrets | Proposed |
 | TBD | Keep package versions immutable | Enables auditing, compatibility checks, and rollback | Proposed |
 | 2026-08-03 | Start by moving theme ZIP parsing and validation to the backend | Establishes a trustworthy upload boundary before versioning and publication workflows | In progress |
+| 2026-08-03 | Limit the initial extension program to Wattaman-internal publishers | Reduces supply-chain and support risk while the platform matures | Accepted |
+| 2026-08-03 | Use declarative modules and never execute uploaded code in the primary application | Preserves tenant isolation and protects production secrets | Accepted |
+| 2026-08-03 | Use Cloudflare R2 for package and extracted-asset storage | Provides S3-compatible object storage without storing packages in PostgreSQL | Accepted |
+| 2026-08-03 | Require school requests and platform-admin approval for installation | Keeps publication and tenant activation under platform control | Accepted |
+| 2026-08-03 | Retain extension data for 30 days after uninstall | Supports recovery while providing a defined deletion window | Accepted |
+| 2026-08-03 | Use Student Rewards as the first declarative module pilot | Exercises navigation, roles, tenant data, and workflows with lower operational risk | Accepted |
 
 ## 25. Next Discussion
 
@@ -653,7 +659,7 @@ This section is the source of truth for implementation progress. Update it in th
 | Stage 0 — Product decisions | Not started | Core publisher, runtime, storage, retention, and marketplace decisions remain open |
 | Stage 1 — Extension foundation | Partial | Server-side theme ZIP validation exists; versioned records, storage, quarantine, review, and audit lifecycle do not |
 | Stage 2 — Versioned themes | Partial | CSS ZIP upload and application exist; manifest, versions, preview isolation, publishing, installation, upgrade, and rollback do not |
-| Stage 3 — Declarative modules | Not started | Modules remain compiled into NestJS and Next.js |
+| Stage 3 — Declarative modules | In progress | Runtime navigation, schema-driven pages, tenant records, capability enforcement, and the Student Rewards ZIP are implemented; integration and upgrade gates remain |
 | Stage 4 — Marketplace operations | Not started | No publisher, review, signing, health, or emergency version controls |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
 
@@ -673,7 +679,7 @@ This section is the source of truth for implementation progress. Update it in th
 
 #### Publisher policy
 
-- [ ] Decide whether the first release is Wattaman-internal only.
+- [x] Decide whether the first release is Wattaman-internal only.
 - [ ] Decide who may upload packages.
 - [ ] Decide who may review and publish packages.
 - [ ] Decide whether uploader and reviewer must be different users.
@@ -681,17 +687,17 @@ This section is the source of truth for implementation progress. Update it in th
 
 #### Runtime model
 
-- [ ] Accept declarative runtime extensions as the first module model.
-- [ ] Accept the rule that uploaded code never executes in the primary NestJS or Next.js process.
+- [x] Accept declarative runtime extensions as the first module model.
+- [x] Accept the rule that uploaded code never executes in the primary NestJS or Next.js process.
 - [ ] Decide whether isolated code extensions are required in the initial product roadmap.
-- [ ] Select the first declarative module pilot.
+- [x] Select the first declarative module pilot.
 - [ ] Define the initial approved UI components and backend capabilities.
 
 #### Storage and retention
 
-- [ ] Select the object-storage provider.
+- [x] Select the object-storage provider.
 - [ ] Define package and asset retention periods.
-- [ ] Define extension-data behavior on deactivate and uninstall.
+- [x] Define extension-data behavior on deactivate and uninstall.
 - [ ] Define package size and tenant storage quotas.
 - [ ] Decide whether antivirus or malware scanning is required before the first production release.
 
@@ -699,7 +705,7 @@ This section is the source of truth for implementation progress. Update it in th
 
 - [ ] Decide free, one-time, recurring, and manually invoiced plan support.
 - [ ] Decide whether overdue billing automatically disables an installation.
-- [ ] Decide whether schools install free extensions or request approval.
+- [x] Decide whether schools install free extensions or request approval.
 - [ ] Separate technical runtime type from commercial catalog type.
 
 #### Stage 0 completion gate
@@ -712,24 +718,24 @@ This section is the source of truth for implementation progress. Update it in th
 
 #### Database model
 
-- [ ] Add `Extension` model with stable immutable key.
-- [ ] Add immutable `ExtensionVersion` model.
-- [ ] Add tenant-scoped `ExtensionInstallation` model.
-- [ ] Add `ExtensionAsset` model or storage metadata contract.
-- [ ] Add `ExtensionPermission` model.
-- [ ] Add `ExtensionDependency` model.
-- [ ] Add structured `ExtensionValidation` results.
+- [x] Add `Extension` model with stable immutable key.
+- [x] Add immutable `ExtensionVersion` model.
+- [x] Add tenant-scoped `ExtensionInstallation` model.
+- [x] Add `ExtensionAsset` model or storage metadata contract.
+- [x] Add `ExtensionPermission` model.
+- [x] Add `ExtensionDependency` model.
+- [x] Add structured `ExtensionValidation` results.
 - [ ] Add `ExtensionAudit` lifecycle events or extend the current audit schema.
-- [ ] Add indexes and uniqueness constraints for keys, versions, schools, and installation state.
+- [x] Add indexes and uniqueness constraints for keys, versions, schools, and installation state.
 
 #### Package storage
 
-- [ ] Upload original ZIP to quarantine storage.
-- [ ] Calculate and persist SHA-256 checksums.
+- [x] Upload original ZIP to quarantine storage.
+- [x] Calculate and persist SHA-256 checksums.
 - [ ] Store published artifacts immutably.
-- [ ] Extract approved assets into versioned storage paths.
-- [ ] Prevent public access to quarantined packages.
-- [ ] Add cleanup for abandoned or rejected uploads.
+- [x] Extract approved assets into versioned storage paths.
+- [x] Prevent public access to quarantined packages.
+- [x] Add cleanup for abandoned or rejected uploads.
 
 #### Server-side validation
 
@@ -744,51 +750,51 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Reject external CSS asset URLs.
 - [x] Reject known unsafe CSS patterns.
 - [x] Test a real generated theme ZIP fixture.
-- [ ] Detect MIME type from file content rather than extension only.
-- [ ] Validate image and font file signatures.
-- [ ] Add total extracted-size enforcement for every archive entry, including unreferenced files.
-- [ ] Add compression-ratio ZIP bomb detection before full extraction.
-- [ ] Explicitly detect and reject symlinks and unsupported ZIP entry types.
+- [x] Detect MIME type from file content rather than extension only.
+- [x] Validate image and font file signatures.
+- [x] Add total extracted-size enforcement for every archive entry, including unreferenced files.
+- [x] Add compression-ratio ZIP bomb detection before full extraction.
+- [x] Explicitly detect and reject symlinks and unsupported ZIP entry types.
 - [ ] Sanitize SVG if SVG support is introduced.
-- [ ] Produce structured validation errors and warnings.
+- [x] Produce structured validation errors and warnings.
 - [ ] Run validation asynchronously with timeout, CPU, memory, and disk limits.
 
 #### Lifecycle API and UI
 
-- [ ] Create upload-session API.
-- [ ] Create validation-status API.
-- [ ] Create structured validation-report UI.
-- [ ] Separate upload, approve, publish, install, and activate actions.
-- [ ] Add explicit rejection with reviewer notes.
+- [x] Create upload-session API.
+- [x] Create validation-status API.
+- [x] Create structured validation-report UI.
+- [x] Separate upload, approve, publish, install, and activate actions.
+- [x] Add explicit rejection with reviewer notes.
 - [ ] Add permissions and compatibility review before publication.
-- [ ] Add lifecycle audit events for every privileged transition.
-- [ ] Add idempotency protection for upload and transition requests.
+- [x] Add lifecycle audit events for every privileged transition.
+- [ ] **PARTIAL:** Add idempotency protection for upload and transition requests; identical package retries are idempotent, while transition request keys remain.
 
 #### Migration compatibility
 
-- [ ] Design backward-compatible migration from `AddonDefinition`.
-- [ ] Design migration from `SchoolAddon` to `ExtensionInstallation`.
+- [x] Design backward-compatible migration from `AddonDefinition`.
+- [x] Design migration from `SchoolAddon` to `ExtensionInstallation`.
 - [ ] Preserve every existing extension key and school enabled state.
 - [ ] Run old and new read paths in parallel behind a feature flag.
-- [ ] Add rollback procedures for each migration step.
+- [x] Add rollback procedures for each migration step.
 
 #### Stage 1 tests
 
 - [x] Focused theme package service tests pass.
 - [x] Backend production build passes.
 - [x] Frontend production build passes.
-- [ ] Controller multipart upload integration test passes.
+- [x] Controller multipart upload integration test passes.
 - [ ] Validation lifecycle integration tests pass.
 - [ ] Tenant-isolation tests cover installation records.
-- [ ] Platform role tests reject school users and unauthenticated users.
+- [x] Platform role tests reject school users and unauthenticated users.
 - [ ] Storage failure and validation timeout tests pass.
 - [ ] Migration rehearsal succeeds on a production-sized database copy.
 
 #### Stage 1 completion gate
 
 - [ ] Versioned package upload reaches quarantine storage.
-- [ ] Validation produces a persisted report without publishing automatically.
-- [ ] Invalid packages cannot be downloaded, published, or installed.
+- [x] Validation produces a persisted report without publishing automatically.
+- [x] Invalid packages cannot be downloaded, published, or installed.
 - [ ] Every lifecycle action is authorized and audited.
 - [ ] Existing school modules and themes continue working unchanged.
 
@@ -796,10 +802,10 @@ This section is the source of truth for implementation progress. Update it in th
 
 #### Theme manifest
 
-- [ ] Finalize versioned `theme.json` JSON Schema.
+- [x] Finalize versioned `theme.json` JSON Schema.
 - [ ] Require key, name, version, manifest schema, and platform compatibility.
-- [ ] Validate mode, colors, fonts, radius, spacing, shadows, and surface tokens.
-- [ ] Validate asset references against extracted package files.
+- [ ] **PARTIAL:** Validate mode, colors, fonts, radius, spacing, shadows, and surface tokens; mode, colors, font, and radius are enforced, while spacing, shadows, and surfaces remain.
+- [x] Validate asset references against extracted package files.
 - [ ] Decide and implement parent-theme inheritance.
 - [ ] Decide and implement school-level override preservation.
 
@@ -807,33 +813,33 @@ This section is the source of truth for implementation progress. Update it in th
 
 - [x] Accept one `style.css` at archive root or within one wrapping directory.
 - [x] Inline approved referenced images and fonts into stored CSS.
-- [ ] Accept and validate `theme.json`.
-- [ ] Accept and sanitize `README.md`.
-- [ ] Accept and validate screenshots.
-- [ ] Move extracted assets from base64/database storage to object storage.
+- [x] Accept and validate `theme.json`.
+- [x] Accept and sanitize `README.md`.
+- [x] Accept and validate screenshots.
+- [x] Move extracted assets from base64/database storage to object storage.
 - [ ] Scope all custom CSS beneath a Wattaman theme root.
 - [ ] Replace broad CSS freedom with approved tokens and selectors where possible.
-- [ ] Define behavior for unknown and unused files.
+- [x] Define behavior for unknown and unused files.
 
 #### Version lifecycle
 
-- [ ] Upload theme as a draft immutable version.
-- [ ] Preview the exact draft artifact before publication.
-- [ ] Approve and publish a theme version.
-- [ ] Install a published version for selected schools.
-- [ ] Activate one installed theme version per school.
-- [ ] Upgrade while preserving approved school overrides.
-- [ ] Roll back to the previous installed version.
-- [ ] Deprecate a version without breaking current installations.
-- [ ] Emergency-block a compromised version.
-- [ ] Uninstall according to the accepted retention policy.
+- [x] Upload theme as a draft immutable version.
+- [x] Preview the exact draft artifact before publication.
+- [x] Approve and publish a theme version.
+- [x] Install a published version for selected schools.
+- [x] Activate one installed theme version per school.
+- [ ] **PARTIAL:** Upgrade while preserving approved school overrides; upgrades preserve the pre-extension theme snapshot, while explicit post-install school overrides are not yet merged.
+- [x] Roll back to the previous installed version.
+- [x] Deprecate a version without breaking current installations.
+- [x] Emergency-block a compromised version.
+- [x] Uninstall according to the accepted retention policy.
 
 #### Preview safety
 
-- [ ] Render preview in an isolated frame or dedicated isolated route.
-- [ ] Prevent preview CSS from escaping into the platform admin interface.
+- [x] Render preview in an isolated frame or dedicated isolated route.
+- [x] Prevent preview CSS from escaping into the platform admin interface.
 - [ ] Preview public pages and authenticated dashboards.
-- [ ] Preview light and dark modes.
+- [x] Preview light and dark modes.
 - [ ] Display validation warnings and compatibility information during preview.
 
 #### Stage 2 tests
@@ -859,39 +865,39 @@ This section is the source of truth for implementation progress. Update it in th
 
 #### Module manifest
 
-- [ ] Finalize versioned `extension.json` JSON Schema.
+- [x] Finalize versioned `extension.json` JSON Schema.
 - [ ] Define roles, capabilities, dependencies, conflicts, and compatibility.
 - [ ] Define navigation, pages, forms, workflows, translations, and assets.
-- [ ] Validate all identifiers and reject unknown executable content.
+- [x] Validate all identifiers and reject unknown executable content.
 - [ ] Add a local package validator command for developers.
 
 #### Dynamic navigation
 
-- [ ] Add backend endpoint returning resolved navigation.
-- [ ] Merge core and installed extension navigation.
+- [x] Add backend endpoint returning resolved navigation.
+- [x] Merge core and installed extension navigation.
 - [ ] Filter by school installation, role, permission, and feature state.
 - [ ] Replace static extension-key unions for runtime extensions.
-- [ ] Preserve compiled core navigation during migration.
+- [x] Preserve compiled core navigation during migration.
 
 #### Dynamic pages and UI
 
-- [ ] Add `/extensions/[extensionKey]/[pageKey]` route.
+- [x] Add `/extensions/[extensionKey]/[pageKey]` route.
 - [ ] Build approved component registry.
 - [ ] Build schema-driven tables, forms, details, charts, filters, and actions.
-- [ ] Validate page definitions before publication.
+- [x] Validate page definitions before publication.
 - [ ] Add translation fallback and accessibility requirements.
-- [ ] Prevent arbitrary React, browser script, HTML, and remote component execution.
+- [x] Prevent arbitrary React, browser script, HTML, and remote component execution.
 
 #### Data and capabilities
 
-- [ ] Choose generic JSON records, generated tables, or another controlled model.
-- [ ] Ensure every extension-owned record includes `schoolId`.
-- [ ] Implement extension resource API namespace.
-- [ ] Enforce installation and requested capabilities on every request.
-- [ ] Add schema validation for resource data and actions.
+- [x] Choose generic JSON records, generated tables, or another controlled model.
+- [x] Ensure every extension-owned record includes `schoolId`.
+- [x] Implement extension resource API namespace.
+- [x] Enforce installation and requested capabilities on every request.
+- [x] Add schema validation for resource data and actions.
 - [ ] Add rate limits and audit policies.
 - [ ] Add controlled notifications, files, scheduled jobs, and external HTTP capabilities only when approved.
-- [ ] Prevent Prisma, raw SQL, filesystem, environment, and unrestricted network access.
+- [x] Prevent Prisma, raw SQL, filesystem, environment, and unrestricted network access.
 
 #### Dependencies and upgrades
 
@@ -903,9 +909,9 @@ This section is the source of truth for implementation progress. Update it in th
 
 #### Pilot module
 
-- [ ] Select a low-risk pilot module.
+- [x] Select a low-risk pilot module.
 - [ ] Define pilot acceptance criteria.
-- [ ] Package navigation, pages, permissions, data, and workflow in a ZIP.
+- [x] Package navigation, pages, permissions, data, and workflow in a ZIP.
 - [ ] Install the pilot without changing or rebuilding Wattaman source.
 - [ ] Validate multi-school isolation and role behavior.
 - [ ] Collect operator and school-admin feedback.
@@ -942,7 +948,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [ ] Add extension API error and latency metrics.
 - [ ] Add storage and data usage metrics.
 - [ ] Add version health dashboard.
-- [ ] Add emergency global version kill switch.
+- [x] Add emergency global version kill switch.
 - [ ] Add operator runbook for compromised packages.
 - [ ] Add alerts for repeated failures and suspicious capability use.
 

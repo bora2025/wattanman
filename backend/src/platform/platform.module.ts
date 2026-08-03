@@ -15,6 +15,15 @@ import { AddonRequestsController } from './addon-requests.controller';
 import { AddonRequestsService } from './addon-requests.service';
 import { SchoolMetricsController } from './school-metrics.controller';
 import { RailwayDomainService } from './railway-domain.service';
+import { ExtensionsController } from './extensions.controller';
+import { ExtensionsService } from './extensions.service';
+import { R2StorageService } from '../storage/r2-storage.service';
+import { ExtensionPackageValidatorService } from './extension-package-validator.service';
+import { ExtensionInstallationsService } from './extension-installations.service';
+import { PlatformExtensionInstallationsController, SchoolExtensionsController } from './extension-installations.controller';
+import { ExtensionCleanupService } from './extension-cleanup.service';
+import { ExtensionRuntimeController } from './extension-runtime.controller';
+import { ExtensionRuntimeService } from './extension-runtime.service';
 
 @Module({
   imports: [
@@ -26,7 +35,7 @@ import { RailwayDomainService } from './railway-domain.service';
       signOptions: { expiresIn: '8h' },
     }),
   ],
-  controllers: [SchoolsController, PlatformAdminsController, SchoolAddonsController, AddonDirectoryController, AddonRequestsController, SchoolMetricsController],
-  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService, AddonRequestsService, RailwayDomainService],
+  controllers: [SchoolsController, PlatformAdminsController, SchoolAddonsController, AddonDirectoryController, AddonRequestsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController],
+  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService, AddonRequestsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionInstallationsService, ExtensionCleanupService, ExtensionRuntimeService],
 })
 export class PlatformModule {}

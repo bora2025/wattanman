@@ -148,6 +148,18 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
   const { lang, setLang, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const navRef = useRef<HTMLElement>(null);
+  const [extensionNavItems, setExtensionNavItems] = useState<NavItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
+    fetch(`${apiBase}/api/extensions/navigation`, { credentials: 'include' })
+      .then(response => response.ok ? response.json() : [])
+      .then(items => { if (active && Array.isArray(items)) setExtensionNavItems(items); })
+      .catch(() => { /* platform host or unavailable runtime — keep core navigation */ });
+    return () => { active = false; };
+  }, []);
+  const effectiveNavItems = [...navItems, ...extensionNavItems.filter(item => !navItems.some(core => core.href === item.href))];
 
   // Scroll the active nav item into view whenever the page changes
   useEffect(() => {
@@ -167,7 +179,7 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
   // and only fires the request at all if some item in this nav list actually
   // uses moduleKey — most role dashboards (teacher/student/etc.) never do, so
   // they pay zero extra cost.
-  const needsModuleCheck = navItems.some(n => n.moduleKey);
+  const needsModuleCheck = effectiveNavItems.some(n => n.moduleKey);
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   useEffect(() => {
     if (!needsModuleCheck) return;
@@ -181,8 +193,8 @@ export default function Sidebar({ title, subtitle, navItems, accentColor = 'indi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [needsModuleCheck]);
   const visibleNavItems = needsModuleCheck
-    ? navItems.filter(n => !n.moduleKey || enabledModules.includes(n.moduleKey))
-    : navItems;
+    ? effectiveNavItems.filter(n => !n.moduleKey || enabledModules.includes(n.moduleKey))
+    : effectiveNavItems;
 
   const tabs = pickBottomTabs(visibleNavItems, bottomTabs);
   const hasMore = tabs.some(t => t.href === '__more__');

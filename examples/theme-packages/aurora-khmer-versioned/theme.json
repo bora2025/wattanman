@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "key": "AURORA_KHMER",
+  "name": "Aurora Khmer",
+  "version": "1.0.0",
+  "runtimeType": "THEME",
+  "mode": "dark",
+  "tokens": {
+    "primaryColor": "#14B8A6",
+    "secondaryColor": "#FBBF24",
+    "font": "poppins",
+    "radius": "soft"
+  }
+}

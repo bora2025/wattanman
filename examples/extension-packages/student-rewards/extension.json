@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "key": "STUDENT_REWARDS",
+  "name": "Student Rewards",
+  "version": "1.0.0",
+  "runtimeType": "DECLARATIVE_MODULE",
+  "permissions": ["rewards:read", "rewards:write"],
+  "navigation": [
+    {
+      "label": "Student Rewards",
+      "pageKey": "rewards",
+      "icon": "trophy",
+      "section": "Extensions",
+      "roles": ["ADMIN", "TEACHER"]
+    }
+  ],
+  "pages": [
+    {
+      "key": "rewards",
+      "title": "Student Rewards",
+      "resource": "rewards",
+      "roles": ["ADMIN", "TEACHER"],
+      "fields": [
+        { "key": "studentName", "label": "Student", "type": "text", "required": true },
+        { "key": "points", "label": "Points", "type": "number", "required": true },
+        { "key": "reason", "label": "Reason", "type": "text", "required": true },
+        { "key": "awardedOn", "label": "Awarded on", "type": "date", "required": true }
+      ]
+    }
+  ],
+  "resources": {
+    "rewards": {
+      "fields": [
+        { "key": "studentName", "type": "text", "required": true },
+        { "key": "points", "type": "number", "required": true },
+        { "key": "reason", "type": "text", "required": true },
+        { "key": "awardedOn", "type": "date", "required": true }
+      ]
+    }
+  }
+}

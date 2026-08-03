@@ -26,7 +26,7 @@ datasource db {
 model School {
   id           String   @id @default(cuid())
   subdomain    String   @unique // matches <subdomain>.wattaman.app; "platform" is the reserved sentinel
-  customDomain String? @unique // optional, e.g. "portal.someschool.com" — layered on top of subdomain, never a
+  customDomain String?  @unique // optional, e.g. "portal.someschool.com" — layered on top of subdomain, never a
   // replacement for it (see the conversion plan's custom-domain discussion). Globally unique is correct
   // here, unlike almost everything else in this schema — domain ownership is inherently public, not a
   // cross-tenant leak vector.
@@ -36,77 +36,79 @@ model School {
   updatedAt    DateTime @updatedAt
 
   // ── Relations (one array/optional field per tenant-scoped model) ──
-  users                        User[]
-  classes                      Class[]
-  students                     Student[]
-  cardAliases                  CardAlias[]
-  attendances                  Attendance[]
-  notifications                Notification[]
-  parentLinkRequests           ParentLinkRequest[]
-  classRegistrations           ClassRegistration[]
-  classRegistrationSettings    ClassRegistrationSettings?
-  classRegistrationFields      ClassRegistrationField[]
-  staffAttendances             StaffAttendance[]
-  sessionConfigs               SessionConfig[]
-  staffWeeklySchedule          StaffWeeklySchedule?
-  studyYears                   StudyYear[]
-  holidays                     Holiday[]
-  departments                  Department[]
-  refreshTokens                RefreshToken[]
-  passwordResetTokens           PasswordResetToken[]
-  auditLogs                    AuditLog[]
-  auditCleanupSchedules        AuditCleanupSchedule[]
-  schoolDailyMetrics           SchoolDailyMetric[]
-  cardTemplates                CardTemplate[]
-  attendanceFormatRules        AttendanceFormatRule[]
-  feeRecords                   FeeRecord[]
-  feePayments                  FeePayment[]
-  timetables                   Timetable[]
-  timetableSubjects            TimetableSubject[]
-  timetableClasses             TimetableClass[]
-  timetableClassrooms          TimetableClassroom[]
-  timetableTeachers            TimetableTeacher[]
-  timetableLessons             TimetableLesson[]
-  timetableEntries             TimetableEntry[]
-  timetableTeacherAttendances  TimetableTeacherAttendance[]
-  scoreSheets                  ScoreSheet[]
-  scoreSheetClasses            ScoreSheetClass[]
-  scoreSubjects                ScoreSubject[]
-  scoreExamTabs                ScoreExamTab[]
-  scoreEntries                 ScoreEntry[]
-  salaries                     Salary[]
-  staffProfiles                StaffProfile[]
-  staffEducations              StaffEducation[]
-  staffWorkExperiences         StaffWorkExperience[]
-  staffCertifications          StaffCertification[]
-  buses                        Bus[]
-  busRoutes                    BusRoute[]
-  busStops                     BusStop[]
-  busLocations                 BusLocation[]
-  exams                        Exam[]
-  examQuestions                ExamQuestion[]
-  examAttempts                 ExamAttempt[]
-  assignments                  Assignment[]
-  assignmentSubmissions        AssignmentSubmission[]
-  quizQuestions                QuizQuestion[]
-  quizAnswers                  QuizAnswer[]
-  messages                     Message[]
-  announcements                Announcement[]
-  announcementReads            AnnouncementRead[]
-  notificationPreferences      NotificationPreference[]
-  courses                      Course[]
-  courseLessons                CourseLesson[]
-  lessonPages                  LessonPage[]
-  courseEnrollments            CourseEnrollment[]
-  lessonAttempts                LessonAttempt[]
-  pageResponses                PageResponse[]
-  courseSessions               CourseSession[]
-  courseAttendances            CourseAttendance[]
-  lessonViews                  LessonView[]
-  feeSettings                  FeeSettings?
-  siteSetting                  SiteSetting?
-  posts                        Post[]
-  schoolAddons                  SchoolAddon[]
+  users                       User[]
+  classes                     Class[]
+  students                    Student[]
+  cardAliases                 CardAlias[]
+  attendances                 Attendance[]
+  notifications               Notification[]
+  parentLinkRequests          ParentLinkRequest[]
+  classRegistrations          ClassRegistration[]
+  classRegistrationSettings   ClassRegistrationSettings?
+  classRegistrationFields     ClassRegistrationField[]
+  staffAttendances            StaffAttendance[]
+  sessionConfigs              SessionConfig[]
+  staffWeeklySchedule         StaffWeeklySchedule?
+  studyYears                  StudyYear[]
+  holidays                    Holiday[]
+  departments                 Department[]
+  refreshTokens               RefreshToken[]
+  passwordResetTokens         PasswordResetToken[]
+  auditLogs                   AuditLog[]
+  auditCleanupSchedules       AuditCleanupSchedule[]
+  schoolDailyMetrics          SchoolDailyMetric[]
+  cardTemplates               CardTemplate[]
+  attendanceFormatRules       AttendanceFormatRule[]
+  feeRecords                  FeeRecord[]
+  feePayments                 FeePayment[]
+  timetables                  Timetable[]
+  timetableSubjects           TimetableSubject[]
+  timetableClasses            TimetableClass[]
+  timetableClassrooms         TimetableClassroom[]
+  timetableTeachers           TimetableTeacher[]
+  timetableLessons            TimetableLesson[]
+  timetableEntries            TimetableEntry[]
+  timetableTeacherAttendances TimetableTeacherAttendance[]
+  scoreSheets                 ScoreSheet[]
+  scoreSheetClasses           ScoreSheetClass[]
+  scoreSubjects               ScoreSubject[]
+  scoreExamTabs               ScoreExamTab[]
+  scoreEntries                ScoreEntry[]
+  salaries                    Salary[]
+  staffProfiles               StaffProfile[]
+  staffEducations             StaffEducation[]
+  staffWorkExperiences        StaffWorkExperience[]
+  staffCertifications         StaffCertification[]
+  buses                       Bus[]
+  busRoutes                   BusRoute[]
+  busStops                    BusStop[]
+  busLocations                BusLocation[]
+  exams                       Exam[]
+  examQuestions               ExamQuestion[]
+  examAttempts                ExamAttempt[]
+  assignments                 Assignment[]
+  assignmentSubmissions       AssignmentSubmission[]
+  quizQuestions               QuizQuestion[]
+  quizAnswers                 QuizAnswer[]
+  messages                    Message[]
+  announcements               Announcement[]
+  announcementReads           AnnouncementRead[]
+  notificationPreferences     NotificationPreference[]
+  courses                     Course[]
+  courseLessons               CourseLesson[]
+  lessonPages                 LessonPage[]
+  courseEnrollments           CourseEnrollment[]
+  lessonAttempts              LessonAttempt[]
+  pageResponses               PageResponse[]
+  courseSessions              CourseSession[]
+  courseAttendances           CourseAttendance[]
+  lessonViews                 LessonView[]
+  feeSettings                 FeeSettings?
+  siteSetting                 SiteSetting?
+  posts                       Post[]
+  schoolAddons                SchoolAddon[]
+  extensionInstallations      ExtensionInstallation[]
+  extensionRecords            ExtensionRecord[]
 }
 
 model User {
@@ -136,9 +138,9 @@ model User {
   staffMarkedBy       StaffAttendance[] @relation("StaffMarkedBy")
 
   // For students and parents
-  studentProfile Student?
-  parentStudents Student[]      @relation("ParentStudents")
-  refreshTokens  RefreshToken[]
+  studentProfile      Student?
+  parentStudents      Student[]            @relation("ParentStudents")
+  refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
 
   // Module 1: Salary
@@ -234,7 +236,7 @@ model Student {
 
   // Relations
   attendances           Attendance[]
-  feeRecords             FeeRecord[]
+  feeRecords            FeeRecord[]
   examAttempts          ExamAttempt[]          @relation("StudentExamAttempts")
   assignmentSubmissions AssignmentSubmission[] @relation("StudentSubmissions")
   parentLinkRequests    ParentLinkRequest[]
@@ -634,6 +636,173 @@ model AddonDefinition {
   schoolAddons SchoolAddon[]
 }
 
+/// Stable platform-global identity for an installable extension. This lives
+/// alongside AddonDefinition during the compatibility rollout; legacyAddonKey
+/// links the records without changing current school feature gates.
+model Extension {
+  id             String   @id @default(cuid())
+  key            String   @unique
+  name           String
+  description    String?
+  runtimeType    String // CORE_MODULE | DECLARATIVE_MODULE | THEME | INTEGRATION | CODE_EXTENSION
+  commercialType String // MODULE | ADDON | THEME
+  category       String?
+  publisher      String   @default("WATTAMAN")
+  status         String   @default("ACTIVE") // ACTIVE | SUSPENDED | RETIRED
+  isListed       Boolean  @default(false)
+  legacyAddonKey String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  versions      ExtensionVersion[]
+  installations ExtensionInstallation[]
+  records       ExtensionRecord[]
+  dependencies  ExtensionDependency[]   @relation("ExtensionDependencies")
+  requiredBy    ExtensionDependency[]   @relation("RequiredExtensionDependencies")
+
+  @@index([runtimeType, status])
+  @@index([commercialType, isListed])
+}
+
+/// Immutable release metadata. Published rows must never be updated in-place;
+/// lifecycle services enforce that rule and create a new semantic version.
+model ExtensionVersion {
+  id                 String    @id @default(cuid())
+  extensionId        String
+  extension          Extension @relation(fields: [extensionId], references: [id], onDelete: Cascade)
+  version            String
+  manifestSchema     Int       @default(1)
+  manifest           Json
+  packageStorageKey  String?
+  packageChecksum    String?
+  packageSize        Int?
+  compatibilityRange String?
+  lifecycleStatus    String    @default("UPLOADED") // UPLOADED | QUARANTINED | VALIDATING | VALIDATED | REJECTED | AWAITING_REVIEW | APPROVED | PUBLISHED | DEPRECATED | BLOCKED | RETIRED
+  reviewNotes        String?
+  releaseNotes       String?
+  uploadedBy         String?
+  reviewedBy         String?
+  publishedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  assets        ExtensionAsset[]
+  permissions   ExtensionPermission[]
+  validations   ExtensionValidation[]
+  installations ExtensionInstallation[]
+
+  @@unique([extensionId, version])
+  @@index([extensionId, lifecycleStatus])
+  @@index([lifecycleStatus, createdAt])
+  @@index([packageChecksum])
+}
+
+model ExtensionAsset {
+  id                 String           @id @default(cuid())
+  extensionVersionId String
+  extensionVersion   ExtensionVersion @relation(fields: [extensionVersionId], references: [id], onDelete: Cascade)
+  path               String
+  storageKey         String
+  checksum           String
+  mimeType           String
+  size               Int
+  createdAt          DateTime         @default(now())
+
+  @@unique([extensionVersionId, path])
+  @@index([extensionVersionId])
+}
+
+model ExtensionPermission {
+  id                 String           @id @default(cuid())
+  extensionVersionId String
+  extensionVersion   ExtensionVersion @relation(fields: [extensionVersionId], references: [id], onDelete: Cascade)
+  capability         String
+  description        String?
+  sensitive          Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+
+  @@unique([extensionVersionId, capability])
+  @@index([capability])
+}
+
+model ExtensionDependency {
+  id                  String    @id @default(cuid())
+  extensionId         String
+  extension           Extension @relation("ExtensionDependencies", fields: [extensionId], references: [id], onDelete: Cascade)
+  requiredExtensionId String
+  requiredExtension   Extension @relation("RequiredExtensionDependencies", fields: [requiredExtensionId], references: [id], onDelete: Restrict)
+  versionRange        String?
+  optional            Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+
+  @@unique([extensionId, requiredExtensionId])
+  @@index([requiredExtensionId])
+}
+
+model ExtensionValidation {
+  id                 String           @id @default(cuid())
+  extensionVersionId String
+  extensionVersion   ExtensionVersion @relation(fields: [extensionVersionId], references: [id], onDelete: Cascade)
+  status             String // RUNNING | PASSED | FAILED | TIMED_OUT
+  errors             Json?
+  warnings           Json?
+  validatorVersion   String?
+  startedAt          DateTime         @default(now())
+  completedAt        DateTime?
+
+  @@index([extensionVersionId, startedAt])
+  @@index([status, startedAt])
+}
+
+/// Tenant-owned installation state. This model is included in
+/// TENANT_SCOPED_MODELS so every normal request is automatically school-bound.
+model ExtensionInstallation {
+  id                 String           @id @default(cuid())
+  schoolId           String
+  school             School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  extensionId        String
+  extension          Extension        @relation(fields: [extensionId], references: [id], onDelete: Restrict)
+  installedVersionId String
+  installedVersion   ExtensionVersion @relation(fields: [installedVersionId], references: [id], onDelete: Restrict)
+  enabled            Boolean          @default(false)
+  configuration      Json?
+  billingStatus      String           @default("PENDING")
+  requestedBy        String?
+  requestedAt        DateTime?
+  approvedBy         String?
+  approvedAt         DateTime?
+  installedBy        String?
+  installedAt        DateTime?
+  uninstalledAt      DateTime?
+  purgeAfter         DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@unique([schoolId, extensionId])
+  @@index([schoolId, enabled])
+  @@index([extensionId, installedVersionId])
+  @@index([purgeAfter])
+}
+
+/// Generic tenant-scoped records for declarative modules. The platform owns
+/// storage and validation; packages only declare resource schemas.
+model ExtensionRecord {
+  id          String    @id @default(cuid())
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  extensionId String
+  extension   Extension @relation(fields: [extensionId], references: [id], onDelete: Cascade)
+  resource    String
+  data        Json
+  createdBy   String?
+  updatedBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([schoolId, extensionId, resource, createdAt])
+  @@index([extensionId, resource])
+}
+
 /// Append-only audit trail of every privileged action in the system.
 /// Designed for compliance + forensics: actor identity is denormalized so
 /// the record survives even if the user is later deleted.
@@ -727,16 +896,16 @@ model SchoolDailyMetric {
   date     DateTime // UTC midnight — the day this row summarizes
 
   /// Count of tracked (mutating) AuditLog events that day.
-  requestCount Int @default(0)
+  requestCount    Int    @default(0)
   /// Of those, how many had success: false.
-  errorCount Int @default(0)
-  avgDurationMs Float?
-  p95DurationMs Float?
+  errorCount      Int    @default(0)
+  avgDurationMs   Float?
+  p95DurationMs   Float?
   /// Distinct actorId count that day.
-  activeUserCount Int @default(0)
+  activeUserCount Int    @default(0)
   /// Snapshot (not a daily delta) of total bytes stored across all base64 image/logo/design
   /// columns for this school, as of computedAt — see SchoolMetricsService for the exact column list.
-  storageBytes BigInt @default(0)
+  storageBytes    BigInt @default(0)
 
   computedAt DateTime @default(now())
 

@@ -1,0 +1,346 @@
+'use client'
+
+import { FormEvent, useEffect, useState } from 'react'
+import AuthGuard from '../../../components/AuthGuard'
+import Sidebar from '../../../components/Sidebar'
+import { apiFetch } from '../../../lib/api'
+import { platformNav } from '../../../lib/platform-nav'
+
+interface ValidationReport {
+  id: string
+  status: string
+  errors: Array<{ code: string; path?: string; message: string }> | null
+  warnings: Array<{ code: string; path?: string; message: string }> | null
+  startedAt: string
+  completedAt?: string | null
+}
+
+interface ExtensionVersion {
+  id: string
+  version: string
+  lifecycleStatus: string
+  packageChecksum?: string | null
+  packageSize?: number | null
+  reviewNotes?: string | null
+  createdAt: string
+}
+
+interface ExtensionRecord {
+  id: string
+  key: string
+  name: string
+  runtimeType: string
+  commercialType: string
+  versions: ExtensionVersion[]
+}
+
+interface InstallationRecord {
+  id: string
+  enabled: boolean
+  requestedAt?: string | null
+  approvedAt?: string | null
+  installedAt?: string | null
+  uninstalledAt?: string | null
+  purgeAfter?: string | null
+  configuration?: { rollbackVersionId?: string } | null
+  school: { id: string; name: string; subdomain: string }
+  extension: { id: string; key: string; name: string; versions: Array<{ id: string; version: string }> }
+  installedVersion: { id: string; version: string; lifecycleStatus: string }
+}
+
+async function responseJson(res: Response) {
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`)
+  return data
+}
+
+function VersionPanel({ extension, version, reload }: { extension: ExtensionRecord; version: ExtensionVersion; reload: () => Promise<void> }) {
+  const [reports, setReports] = useState<ValidationReport[]>([])
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [preview, setPreview] = useState<{ manifest: any; css: string } | null>(null)
+
+  useEffect(() => {
+    apiFetch(`/api/platform/extensions/versions/${version.id}/validations`)
+      .then(responseJson)
+      .then(setReports)
+      .catch(() => setReports([]))
+  }, [version.id, version.lifecycleStatus])
+
+  async function upload(file: File) {
+    setBusy(true)
+    setError('')
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      await responseJson(await apiFetch(`/api/platform/extensions/versions/${version.id}/package`, { method: 'POST', body }))
+      await reload()
+    } catch (uploadError: any) {
+      setError(uploadError.message || 'Upload failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function transition(status: string) {
+    const needsNotes = status === 'APPROVED' || status === 'REJECTED'
+    const reviewNotes = needsNotes ? window.prompt(`${status === 'APPROVED' ? 'Approval' : 'Rejection'} notes`) : undefined
+    if (needsNotes && !reviewNotes) return
+    setBusy(true)
+    setError('')
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/versions/${version.id}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, reviewNotes }),
+      }))
+      await reload()
+    } catch (transitionError: any) {
+      setError(transitionError.message || 'Transition failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function openPreview() {
+    setBusy(true)
+    setError('')
+    try {
+      setPreview(await responseJson(await apiFetch(`/api/platform/extensions/versions/${version.id}/preview`)))
+    } catch (previewError: any) {
+      setError(previewError.message || 'Preview failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const nextActions: Record<string, Array<{ status: string; label: string }>> = {
+    VALIDATED: [{ status: 'AWAITING_REVIEW', label: 'Send to review' }],
+    AWAITING_REVIEW: [{ status: 'APPROVED', label: 'Approve' }, { status: 'REJECTED', label: 'Reject' }],
+    APPROVED: [{ status: 'PUBLISHED', label: 'Publish' }],
+    PUBLISHED: [{ status: 'DEPRECATED', label: 'Deprecate' }, { status: 'BLOCKED', label: 'Emergency block' }],
+    DEPRECATED: [{ status: 'BLOCKED', label: 'Block' }, { status: 'RETIRED', label: 'Retire' }],
+    BLOCKED: [{ status: 'DEPRECATED', label: 'Unblock as deprecated' }, { status: 'RETIRED', label: 'Retire' }],
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <span className="font-semibold text-slate-800 dark:text-slate-100">v{version.version}</span>
+          <span className="ml-2 text-[11px] rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-1 text-slate-600 dark:text-slate-300">{version.lifecycleStatus}</span>
+          {version.packageChecksum && <p className="text-[10px] text-slate-400 mt-1 font-mono">SHA-256 {version.packageChecksum}</p>}
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {version.lifecycleStatus === 'UPLOADED' && (
+            <label className="btn-primary btn-sm cursor-pointer">
+              {busy ? 'Uploading…' : 'Upload ZIP'}
+              <input type="file" accept=".zip" className="hidden" disabled={busy} onChange={(event) => {
+                const file = event.target.files?.[0]
+                if (file) upload(file)
+                event.target.value = ''
+              }} />
+            </label>
+          )}
+          {(nextActions[version.lifecycleStatus] || []).map(action => (
+            <button key={action.status} disabled={busy} onClick={() => transition(action.status)} className="btn-outline btn-sm">
+              {action.label}
+            </button>
+          ))}
+          {extension.runtimeType === 'THEME' && ['VALIDATED', 'AWAITING_REVIEW', 'APPROVED', 'PUBLISHED', 'DEPRECATED'].includes(version.lifecycleStatus) && <button disabled={busy} onClick={openPreview} className="btn-outline btn-sm">Preview</button>}
+        </div>
+      </div>
+      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {reports.map(report => (
+        <div key={report.id} className={`rounded-lg p-3 text-xs border ${report.status === 'PASSED' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-300' : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300'}`}>
+          <p className="font-semibold">Validation {report.status}</p>
+          {(report.errors || []).map((validationError, index) => <p key={`${validationError.code}-${index}`}>{validationError.code}{validationError.path ? ` · ${validationError.path}` : ''}: {validationError.message}</p>)}
+          {(report.warnings || []).map((warning, index) => <p key={`${warning.code}-${index}`}>Warning {warning.code}: {warning.message}</p>)}
+        </div>
+      ))}
+      {preview && <ThemePreview manifest={preview.manifest} css={preview.css} onClose={() => setPreview(null)} />}
+    </div>
+  )
+}
+
+function ThemePreview({ manifest, css, onClose }: { manifest: any; css: string; onClose: () => void }) {
+  const [previewMode, setPreviewMode] = useState<'light' | 'dark'>(manifest.mode === 'dark' ? 'dark' : 'light')
+  const safeCss = css.replace(/</g, '\\3C ')
+  const tokens = manifest.tokens || {}
+  const documentHtml = `<!doctype html><html class="${previewMode === 'dark' ? 'dark' : ''}"><head><meta charset="utf-8"><style>
+    :root{--brand-500:${tokens.primaryColor || '#14b8a6'};--brand-600:${tokens.primaryColor || '#0d9488'}}
+    *{box-sizing:border-box}body{margin:0;padding:28px;font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a}.dark body{background:#071a2b;color:#e2e8f0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card,.stat-card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:18px}.dark .card,.dark .stat-card{background:#0f2538;border-color:#334155}.btn-primary{display:inline-block;margin-top:18px;padding:10px 16px;border-radius:10px;background:#14b8a6;color:#042f2e;border:0;font-weight:700}
+    ${safeCss}
+  </style></head><body><h1>${String(manifest.name || 'Theme preview').replace(/[<>&"]/g, '')}</h1><p>Isolated dashboard preview · ${previewMode} mode</p><div class="grid"><div class="stat-card"><strong>Students</strong><h2>1,248</h2></div><div class="stat-card"><strong>Attendance</strong><h2>94%</h2></div><div class="stat-card"><strong>Classes</strong><h2>36</h2></div></div><div class="card" style="margin-top:16px"><h2>Recent activity</h2><p>Theme colors, surfaces, cards, and buttons render inside this sandbox only.</p><button class="btn-primary">Primary action</button></div></body></html>`
+  return <div className="fixed inset-0 z-[100] bg-black/60 p-4 flex items-center justify-center" role="dialog" aria-modal="true">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden">
+      <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700"><div><h3 className="font-bold text-slate-800 dark:text-slate-100">Isolated theme preview</h3><p className="text-xs text-slate-500">Sandboxed iframe; package CSS cannot affect Platform UI.</p></div><div className="flex gap-2"><button onClick={() => setPreviewMode('light')} className="btn-outline btn-sm">Light</button><button onClick={() => setPreviewMode('dark')} className="btn-outline btn-sm">Dark</button><button onClick={onClose} className="btn-outline btn-sm">Close</button></div></div>
+      <iframe title="Theme preview" sandbox="" srcDoc={documentHtml} className="w-full h-[70vh] border-0" />
+    </div>
+  </div>
+}
+
+function ExtensionCard({ extension, reload }: { extension: ExtensionRecord; reload: () => Promise<void> }) {
+  const [version, setVersion] = useState('1.0.0')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function addVersion(event: FormEvent) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/${extension.id}/versions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          version,
+          manifest: { schemaVersion: 1, key: extension.key, name: extension.name, version, runtimeType: extension.runtimeType },
+        }),
+      }))
+      await reload()
+    } catch (versionError: any) {
+      setError(versionError.message || 'Could not create version')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="card p-5 space-y-4">
+      <div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="font-bold text-slate-800 dark:text-slate-100">{extension.name}</h2>
+          <code className="text-[10px] text-slate-400">{extension.key}</code>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{extension.runtimeType} · {extension.commercialType}</p>
+      </div>
+      <form onSubmit={addVersion} className="flex gap-2 items-end flex-wrap">
+        <label className="text-xs text-slate-600 dark:text-slate-300">New version
+          <input value={version} onChange={event => setVersion(event.target.value)} className="input mt-1 w-32" required />
+        </label>
+        <button className="btn-outline btn-sm" disabled={busy}>{busy ? 'Creating…' : 'Create draft'}</button>
+      </form>
+      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      <div className="space-y-3">
+        {extension.versions.length ? extension.versions.map(item => <VersionPanel key={item.id} extension={extension} version={item} reload={reload} />) : <p className="text-xs text-slate-400">No versions yet.</p>}
+      </div>
+    </div>
+  )
+}
+
+function InstallationCard({ installation, reload }: { installation: InstallationRecord; reload: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const newestVersion = installation.extension.versions[0]
+
+  async function action(path: string, options: RequestInit = { method: 'POST' }) {
+    setBusy(true)
+    setError('')
+    try {
+      await responseJson(await apiFetch(`/api/platform/extension-installations/${installation.id}/${path}`, options))
+      await reload()
+    } catch (actionError: any) {
+      setError(actionError.message || 'Installation action failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-start justify-between gap-4 flex-wrap">
+      <div>
+        <p className="font-semibold text-slate-800 dark:text-slate-100">{installation.extension.name} <span className="text-slate-400 font-normal">for</span> {installation.school.name}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{installation.school.subdomain} · v{installation.installedVersion.version} · {installation.enabled ? 'ACTIVE' : installation.uninstalledAt ? 'UNINSTALLED' : installation.installedAt ? 'INSTALLED' : installation.approvedAt ? 'APPROVED' : 'REQUESTED'}</p>
+        {installation.purgeAfter && <p className="text-[11px] text-amber-600 dark:text-amber-400">Data purge scheduled {new Date(installation.purgeAfter).toLocaleString()}</p>}
+        {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        {!installation.approvedAt && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('approve')}>Approve</button>}
+        {installation.approvedAt && !installation.installedAt && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ versionId: installation.installedVersion.id }) })}>Install</button>}
+        {installation.installedAt && !installation.enabled && !installation.uninstalledAt && <button disabled={busy} className="btn-primary btn-sm" onClick={() => action('activation', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: true }) })}>Activate</button>}
+        {installation.enabled && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('activation', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) })}>Deactivate</button>}
+        {installation.installedAt && newestVersion && newestVersion.id !== installation.installedVersion.id && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('upgrade', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ versionId: newestVersion.id }) })}>Upgrade to v{newestVersion.version}</button>}
+        {installation.configuration?.rollbackVersionId && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('rollback')}>Roll back</button>}
+        {!installation.uninstalledAt && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('uninstall')}>Uninstall</button>}
+      </div>
+    </div>
+  )
+}
+
+function ExtensionsContent() {
+  const [extensions, setExtensions] = useState<ExtensionRecord[]>([])
+  const [installations, setInstallations] = useState<InstallationRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [form, setForm] = useState({ key: '', name: '', runtimeType: 'THEME', commercialType: 'THEME' })
+
+  async function load() {
+    setLoading(true)
+    try {
+      const [extensionData, installationData] = await Promise.all([
+        responseJson(await apiFetch('/api/platform/extensions')),
+        responseJson(await apiFetch('/api/platform/extension-installations')),
+      ])
+      setExtensions(extensionData)
+      setInstallations(installationData)
+      setError('')
+    } catch (loadError: any) {
+      setError(loadError.message || 'Failed to load extensions')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [])
+
+  async function createExtension(event: FormEvent) {
+    event.preventDefault()
+    try {
+      await responseJson(await apiFetch('/api/platform/extensions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      }))
+      setForm({ key: '', name: '', runtimeType: 'THEME', commercialType: 'THEME' })
+      await load()
+    } catch (createError: any) {
+      setError(createError.message || 'Could not create extension')
+    }
+  }
+
+  return (
+    <div className="page-shell">
+      <Sidebar title="Platform" subtitle="Wattaman" navItems={platformNav} accentColor="slate" />
+      <div className="page-content">
+        <div className="h-14 lg:hidden" />
+        <div className="page-header">
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Extensions</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Internal package quarantine, validation, review, and publication control plane.</p>
+        </div>
+        <div className="page-body space-y-5">
+          <form onSubmit={createExtension} className="card p-5 grid md:grid-cols-5 gap-3 items-end">
+            <label className="text-xs text-slate-600 dark:text-slate-300">Key<input className="input mt-1" value={form.key} onChange={event => setForm({ ...form, key: event.target.value.toUpperCase() })} placeholder="AURORA_THEME" required /></label>
+            <label className="text-xs text-slate-600 dark:text-slate-300">Name<input className="input mt-1" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /></label>
+            <label className="text-xs text-slate-600 dark:text-slate-300">Runtime<select className="input mt-1" value={form.runtimeType} onChange={event => setForm({ ...form, runtimeType: event.target.value })}><option value="THEME">Theme</option><option value="DECLARATIVE_MODULE">Declarative module</option><option value="INTEGRATION">Integration</option></select></label>
+            <label className="text-xs text-slate-600 dark:text-slate-300">Commercial type<select className="input mt-1" value={form.commercialType} onChange={event => setForm({ ...form, commercialType: event.target.value })}><option value="THEME">Theme</option><option value="MODULE">Module</option><option value="ADDON">Add-on</option></select></label>
+            <button className="btn-primary">Create extension</button>
+          </form>
+          {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
+          {loading ? <p className="text-sm text-slate-400">Loading extensions…</p> : extensions.map(extension => <ExtensionCard key={extension.id} extension={extension} reload={load} />)}
+          <div className="pt-4">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">School installation requests</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">Approval, installation, activation, and uninstall are deliberately separate audited actions.</p>
+            <div className="card p-4 space-y-3">
+              {installations.length ? installations.map(installation => <InstallationCard key={installation.id} installation={installation} reload={load} />) : <p className="text-sm text-slate-400">No extension installation requests.</p>}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function ExtensionsPage() {
+  return <AuthGuard requiredRole="PLATFORM_ADMIN"><ExtensionsContent /></AuthGuard>
+}
