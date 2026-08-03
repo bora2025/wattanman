@@ -7,6 +7,11 @@ function runtimeType(kind: string): string {
 }
 
 async function main() {
+  const publisher = await prisma.extensionPublisher.upsert({
+    where: { key: 'WATTAMAN' },
+    update: {},
+    create: { key: 'WATTAMAN', name: 'Wattaman', status: 'ACTIVE', internal: true },
+  });
   const definitions = await prisma.addonDefinition.findMany({ orderBy: { createdAt: 'asc' } });
   let extensionCount = 0;
   let installationCount = 0;
@@ -23,6 +28,7 @@ async function main() {
         commercialType: definition.kind,
         category: definition.category,
         publisher: 'WATTAMAN',
+        publisherId: publisher.id,
         status: definition.isActive ? 'ACTIVE' : 'RETIRED',
         isListed: definition.isActive,
         legacyAddonKey: definition.key,

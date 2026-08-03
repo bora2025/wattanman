@@ -640,19 +640,21 @@ model AddonDefinition {
 /// alongside AddonDefinition during the compatibility rollout; legacyAddonKey
 /// links the records without changing current school feature gates.
 model Extension {
-  id             String   @id @default(cuid())
-  key            String   @unique
-  name           String
-  description    String?
-  runtimeType    String // CORE_MODULE | DECLARATIVE_MODULE | THEME | INTEGRATION | CODE_EXTENSION
-  commercialType String // MODULE | ADDON | THEME
-  category       String?
-  publisher      String   @default("WATTAMAN")
-  status         String   @default("ACTIVE") // ACTIVE | SUSPENDED | RETIRED
-  isListed       Boolean  @default(false)
-  legacyAddonKey String?  @unique
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String             @id @default(cuid())
+  key             String             @unique
+  name            String
+  description     String?
+  runtimeType     String // CORE_MODULE | DECLARATIVE_MODULE | THEME | INTEGRATION | CODE_EXTENSION
+  commercialType  String // MODULE | ADDON | THEME
+  category        String?
+  publisher       String             @default("WATTAMAN")
+  publisherId     String
+  publisherEntity ExtensionPublisher @relation(fields: [publisherId], references: [id], onDelete: Restrict)
+  status          String             @default("ACTIVE") // ACTIVE | SUSPENDED | RETIRED
+  isListed        Boolean            @default(false)
+  legacyAddonKey  String?            @unique
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
   versions      ExtensionVersion[]
   installations ExtensionInstallation[]
@@ -662,6 +664,22 @@ model Extension {
 
   @@index([runtimeType, status])
   @@index([commercialType, isListed])
+  @@index([publisherId, status])
+}
+
+model ExtensionPublisher {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  name         String
+  status       String   @default("ACTIVE") // ACTIVE | SUSPENDED | REVOKED
+  internal     Boolean  @default(true)
+  contactEmail String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  extensions Extension[]
+
+  @@index([status, internal])
 }
 
 /// Immutable release metadata. Published rows must never be updated in-place;

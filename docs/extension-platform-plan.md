@@ -626,6 +626,16 @@ Record agreed decisions here so later implementation does not reinterpret earlie
 | 2026-08-03 | Require school requests and platform-admin approval for installation | Keeps publication and tenant activation under platform control | Accepted |
 | 2026-08-03 | Retain extension data for 30 days after uninstall | Supports recovery while providing a defined deletion window | Accepted |
 | 2026-08-03 | Use Student Rewards as the first declarative module pilot | Exercises navigation, roles, tenant data, and workflows with lower operational risk | Accepted |
+| 2026-08-03 | Allow authenticated platform admins to upload, review, and publish internal packages; separation of uploader and reviewer is not required for the initial internal release | Keeps the first operating model small while retaining named actors and audit history | Accepted |
+| 2026-08-03 | Suspend a publisher by unlisting and disabling its extensions; revoke compromised versions with the global block workflow and preserve artifacts as evidence | Provides immediate containment and forensic retention | Accepted |
+| 2026-08-03 | Defer isolated executable extensions until a later explicitly approved roadmap stage | Declarative packages satisfy the initial use cases without introducing executable supply-chain risk | Accepted |
+| 2026-08-03 | Limit v1 declarative UI to role-filtered navigation, schema-driven forms and tables, and tenant-scoped CRUD with declared read/write capabilities | Provides useful modules without arbitrary React, HTML, scripts, SQL, filesystem, or network access | Accepted |
+| 2026-08-03 | Retain published artifacts while supported and remove unreferenced rejected or retired package objects after 30 days | Balances rollback/evidence needs against storage cleanup | Accepted |
+| 2026-08-03 | Limit compressed packages to 5 MB, extracted packages to 10 MB, and each school to 100 MB of extension-owned records and assets | Establishes bounded initial quotas suitable for declarative packages | Accepted |
+| 2026-08-03 | Do not require antivirus for Wattaman-internal declarative v1 packages; require it before external publishers or executable extensions | Static allowlisting and no-code execution provide the initial boundary while avoiding false assurance | Accepted |
+| 2026-08-03 | Support manual invoicing only initially; overdue billing never disables an installation automatically | Keeps technical lifecycle changes explicit and audited | Accepted |
+| 2026-08-03 | Keep runtime type separate from commercial catalog type | Technical isolation requirements must not depend on pricing classification | Accepted |
+| 2026-08-03 | Assign the Wattaman Platform team as owner of Aurora Khmer and Student Rewards pilots | Gives both first milestones an accountable operating owner | Accepted |
 
 ## 25. Next Discussion
 
@@ -656,11 +666,11 @@ This section is the source of truth for implementation progress. Update it in th
 | Stage | Status | Current result |
 |---|---|---|
 | Existing foundation | Complete | Catalog, school enablement, guards, theme application, and platform roles already exist |
-| Stage 0 — Product decisions | Not started | Core publisher, runtime, storage, retention, and marketplace decisions remain open |
-| Stage 1 — Extension foundation | Partial | Server-side theme ZIP validation exists; versioned records, storage, quarantine, review, and audit lifecycle do not |
-| Stage 2 — Versioned themes | Partial | CSS ZIP upload and application exist; manifest, versions, preview isolation, publishing, installation, upgrade, and rollback do not |
+| Stage 0 — Product decisions | In progress | Initial internal-release defaults are accepted; formal security, product, and operations approval remains |
+| Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, and audit exist; migration and failure gates remain |
+| Stage 2 — Versioned themes | In progress | Manifest validation, isolated preview, publishing, installation, activation, upgrade, rollback, blocking, and uninstall exist; CSS restrictions and full integration gates remain |
 | Stage 3 — Declarative modules | In progress | Runtime navigation, schema-driven pages, tenant records, capability enforcement, and the Student Rewards ZIP are implemented; integration and upgrade gates remain |
-| Stage 4 — Marketplace operations | In progress | Review notes, immutable publication, permission diffs, lifecycle states, adoption queries, and emergency blocking exist; publisher identity, signing, metrics, and runbooks remain |
+| Stage 4 — Marketplace operations | In progress | Publisher governance, review notes, immutable publication, permission diffs, lifecycle metrics, adoption health, emergency blocking, and incident response exist; scoped staff permissions, signing, alerts, and update policies remain |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
 
 ### Existing foundation — verified
@@ -680,38 +690,38 @@ This section is the source of truth for implementation progress. Update it in th
 #### Publisher policy
 
 - [x] Decide whether the first release is Wattaman-internal only.
-- [ ] Decide who may upload packages.
-- [ ] Decide who may review and publish packages.
-- [ ] Decide whether uploader and reviewer must be different users.
-- [ ] Define publisher suspension and package revocation policy.
+- [x] Decide who may upload packages.
+- [x] Decide who may review and publish packages.
+- [x] Decide whether uploader and reviewer must be different users.
+- [x] Define publisher suspension and package revocation policy.
 
 #### Runtime model
 
 - [x] Accept declarative runtime extensions as the first module model.
 - [x] Accept the rule that uploaded code never executes in the primary NestJS or Next.js process.
-- [ ] Decide whether isolated code extensions are required in the initial product roadmap.
+- [x] Decide whether isolated code extensions are required in the initial product roadmap.
 - [x] Select the first declarative module pilot.
-- [ ] Define the initial approved UI components and backend capabilities.
+- [x] Define the initial approved UI components and backend capabilities.
 
 #### Storage and retention
 
 - [x] Select the object-storage provider.
-- [ ] Define package and asset retention periods.
+- [x] Define package and asset retention periods.
 - [x] Define extension-data behavior on deactivate and uninstall.
-- [ ] Define package size and tenant storage quotas.
-- [ ] Decide whether antivirus or malware scanning is required before the first production release.
+- [x] Define package size and tenant storage quotas.
+- [x] Decide whether antivirus or malware scanning is required before the first production release.
 
 #### Commercial rules
 
-- [ ] Decide free, one-time, recurring, and manually invoiced plan support.
-- [ ] Decide whether overdue billing automatically disables an installation.
+- [x] Decide free, one-time, recurring, and manually invoiced plan support.
+- [x] Decide whether overdue billing automatically disables an installation.
 - [x] Decide whether schools install free extensions or request approval.
-- [ ] Separate technical runtime type from commercial catalog type.
+- [x] Separate technical runtime type from commercial catalog type.
 
 #### Stage 0 completion gate
 
-- [ ] Every decision above has an `Accepted` entry in the decisions log.
-- [ ] The first theme milestone and first module pilot have named owners.
+- [x] Every decision above has an `Accepted` entry in the decisions log.
+- [x] The first theme milestone and first module pilot have named owners.
 - [ ] Security, product, and operations stakeholders approve the architecture.
 
 ### Stage 1 — Versioned extension foundation
@@ -928,11 +938,13 @@ Stage 3 validation note (2026-08-03): the Student Rewards artifact passes the lo
 
 Migration rehearsal note (2026-08-03): `prisma migrate deploy` against an empty PostgreSQL 16 database fails because the repository's first recorded migration is additive and assumes the legacy tables already exist (`User` is the first missing relation). Runtime E2E validation used `prisma db push` only after preserving this failure as evidence. Stage 1 migration gates remain open until a baseline/adoption strategy supports both existing production databases and greenfield environments.
 
+Publisher migration note (2026-08-03): `20260803000002_add_extension_publisher_governance` was applied successfully against PostgreSQL 16 with a legacy extension row. The rehearsal proved Wattaman publisher insertion, extension backfill, non-null enforcement, indexing, and foreign-key creation.
+
 ### Stage 4 — Marketplace and operations
 
 #### Publisher and review
 
-- [ ] Add publisher identity and status.
+- [x] Add publisher identity and status.
 - [ ] Add uploader, reviewer, and publisher permissions.
 - [ ] Enforce separation of duties if accepted in Stage 0.
 - [ ] Add review queue, reviewer notes, approval, rejection, and appeal history.
@@ -940,20 +952,20 @@ Migration rehearsal note (2026-08-03): `prisma migrate deploy` against an empty 
 
 #### Distribution and updates
 
-- [ ] Add listed, unlisted, private, deprecated, retired, and blocked states.
+- [ ] **PARTIAL:** Add listed, unlisted, private, deprecated, retired, and blocked states; listing and version lifecycle states exist, while an explicit private visibility state remains.
 - [ ] Add school update policies: manual, notify, and approved automatic updates.
 - [x] Show requested permission differences before upgrade.
-- [ ] Show version adoption and schools affected by deprecation or blocking.
+- [x] Show version adoption and schools affected by deprecation or blocking.
 - [x] Prevent mutation of published artifacts.
 
 #### Monitoring and response
 
-- [ ] Add validation, installation, activation, upgrade, and rollback metrics.
+- [x] Add validation, installation, activation, upgrade, and rollback metrics.
 - [ ] Add extension API error and latency metrics.
-- [ ] Add storage and data usage metrics.
-- [ ] Add version health dashboard.
+- [ ] **PARTIAL:** Add storage and data usage metrics; package and extracted-asset bytes are reported, while extension-record usage remains.
+- [x] Add version health dashboard.
 - [x] Add emergency global version kill switch.
-- [ ] Add operator runbook for compromised packages.
+- [x] Add operator runbook for compromised packages.
 - [ ] Add alerts for repeated failures and suspicious capability use.
 
 #### Package signing
@@ -966,8 +978,8 @@ Migration rehearsal note (2026-08-03): `prisma migrate deploy` against an empty 
 #### Stage 4 completion gate
 
 - [ ] Publisher, review, publication, update, and emergency workflows operate end to end.
-- [ ] Operators can identify every school using a version.
-- [ ] A compromised version can be blocked globally and audited.
+- [x] Operators can identify every school using a version.
+- [x] A compromised version can be blocked globally and audited.
 - [ ] Published artifacts and review history are immutable.
 
 ### Stage 5 — Isolated executable extensions

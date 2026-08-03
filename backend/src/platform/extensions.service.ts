@@ -42,7 +42,7 @@ export class ExtensionsService {
 
   list() {
     return this.prisma.extension.findMany({
-      include: { versions: { orderBy: { createdAt: 'desc' } } },
+      include: { publisherEntity: true, versions: { orderBy: { createdAt: 'desc' } } },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -68,6 +68,12 @@ export class ExtensionsService {
     const existing = await this.prisma.extension.findUnique({ where: { key } });
     if (existing) throw new ConflictException(`Extension key ${key} already exists`);
 
+    const publisher = await this.prisma.extensionPublisher.upsert({
+      where: { key: 'WATTAMAN' },
+      update: {},
+      create: { key: 'WATTAMAN', name: 'Wattaman', status: 'ACTIVE', internal: true },
+    });
+    if (publisher.status !== 'ACTIVE') throw new ConflictException('The Wattaman publisher is not active');
     const extension = await this.prisma.extension.create({
       data: {
         key,
@@ -77,6 +83,7 @@ export class ExtensionsService {
         commercialType: data.commercialType,
         category: data.category?.trim() || undefined,
         publisher: 'WATTAMAN',
+        publisherId: publisher.id,
       },
     });
     await this.log(actor, 'CREATE', 'EXTENSION', extension.id, extension.name, { after: extension });
@@ -90,8 +97,9 @@ export class ExtensionsService {
     compatibilityRange?: string;
     releaseNotes?: string;
   }, actor: Actor) {
-    const extension = await this.prisma.extension.findUnique({ where: { id: extensionId } });
+    const extension = await this.prisma.extension.findUnique({ where: { id: extensionId }, include: { publisherEntity: true } });
     if (!extension) throw new NotFoundException('Extension not found');
+    if (extension.publisherEntity.status !== 'ACTIVE') throw new ConflictException('Publisher is not active');
     const version = data.version?.trim();
     if (!version || !VERSION_PATTERN.test(version)) throw new BadRequestException('version must use semantic versioning, e.g. 1.0.0');
     if (!data.manifest || typeof data.manifest !== 'object' || Array.isArray(data.manifest)) {
@@ -141,8 +149,9 @@ export class ExtensionsService {
 
   async uploadPackage(versionId: string, file: Express.Multer.File, actor: Actor) {
     if (!file.originalname.toLowerCase().endsWith('.zip')) throw new BadRequestException('Extension package must be a .zip file');
-    const existing = await this.prisma.extensionVersion.findUnique({ where: { id: versionId }, include: { extension: true } });
+    const existing = await this.prisma.extensionVersion.findUnique({ where: { id: versionId }, include: { extension: { include: { publisherEntity: true } } } });
     if (!existing) throw new NotFoundException('Extension version not found');
+    if (existing.extension.publisherEntity.status !== 'ACTIVE') throw new ConflictException('Publisher is not active');
     const checksum = createHash('sha256').update(file.buffer).digest('hex');
     if (existing.packageChecksum === checksum && existing.packageStorageKey) return existing;
     if (existing.lifecycleStatus !== 'UPLOADED') {
@@ -229,7 +238,7 @@ export class ExtensionsService {
   }
 
   async transition(versionId: string, nextStatus: string, reviewNotes: string | undefined, actor: Actor) {
-    const existing = await this.prisma.extensionVersion.findUnique({ where: { id: versionId } });
+    const existing = await this.prisma.extensionVersion.findUnique({ where: { id: versionId }, include: { extension: { include: { publisherEntity: true } } } });
     if (!existing) throw new NotFoundException('Extension version not found');
     if (existing.lifecycleStatus === nextStatus) return existing;
     const allowed = ALLOWED_TRANSITIONS[existing.lifecycleStatus] || [];
@@ -238,6 +247,9 @@ export class ExtensionsService {
     }
     if ((nextStatus === 'APPROVED' || nextStatus === 'REJECTED') && !reviewNotes?.trim()) {
       throw new BadRequestException('reviewNotes are required when approving or rejecting a version');
+    }
+    if (nextStatus === 'PUBLISHED' && existing.extension.publisherEntity.status !== 'ACTIVE') {
+      throw new ConflictException('Publisher is not active');
     }
     let publishedStorageKey: string | undefined;
     if (nextStatus === 'PUBLISHED') {
@@ -293,6 +305,97 @@ export class ExtensionsService {
         removed: previousPermissions.filter((permission: string) => !permissions.includes(permission)),
       },
       warnings: version.compatibilityRange ? [] : ['No platform compatibility range declared'],
+    };
+  }
+
+  publishers() {
+    return this.prisma.extensionPublisher.findMany({
+      include: { _count: { select: { extensions: true } } },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async setPublisherStatus(publisherId: string, status: string, actor: Actor) {
+    if (!['ACTIVE', 'SUSPENDED', 'REVOKED'].includes(status)) {
+      throw new BadRequestException('Publisher status must be ACTIVE, SUSPENDED, or REVOKED');
+    }
+    const existing = await this.prisma.extensionPublisher.findUnique({ where: { id: publisherId } });
+    if (!existing) throw new NotFoundException('Extension publisher not found');
+    const updated = await this.prisma.extensionPublisher.update({ where: { id: publisherId }, data: { status } });
+    if (status !== 'ACTIVE') {
+      await this.prisma.extension.updateMany({
+        where: { publisherId },
+        data: { status: 'SUSPENDED', isListed: false },
+      });
+      await this.prisma.extensionInstallation.updateMany({
+        where: { extension: { publisherId }, enabled: true },
+        data: { enabled: false },
+      });
+    } else {
+      await this.prisma.extension.updateMany({
+        where: { publisherId, status: 'SUSPENDED' },
+        data: { status: 'ACTIVE' },
+      });
+    }
+    await this.log(actor, 'STATUS_CHANGE', 'EXTENSION_PUBLISHER', updated.id, updated.name, {
+      changes: { before: { status: existing.status }, after: { status } },
+    });
+    return updated;
+  }
+
+  async health() {
+    const [extensions, lifecycleActions] = await Promise.all([
+      this.prisma.extension.findMany({
+        include: {
+          publisherEntity: true,
+          versions: {
+            orderBy: { createdAt: 'desc' },
+            include: {
+              assets: { select: { size: true } },
+              validations: { select: { status: true } },
+              installations: {
+                select: { enabled: true, school: { select: { id: true, name: true, subdomain: true } } },
+              },
+            },
+          },
+        },
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.auditLog.groupBy({
+        by: ['action'],
+        where: { resource: { in: ['EXTENSION_VERSION', 'EXTENSION_PACKAGE', 'EXTENSION_INSTALLATION'] } },
+        _count: { _all: true },
+      }),
+    ]);
+    const versions = extensions.flatMap((extension) => extension.versions.map((version) => ({
+      extension: { id: extension.id, key: extension.key, name: extension.name },
+      publisher: { key: extension.publisherEntity.key, status: extension.publisherEntity.status },
+      versionId: version.id,
+      version: version.version,
+      lifecycleStatus: version.lifecycleStatus,
+      publishedAt: version.publishedAt,
+      storageBytes: (version.packageSize || 0) + version.assets.reduce((sum, asset) => sum + asset.size, 0),
+      validations: {
+        total: version.validations.length,
+        failed: version.validations.filter((validation) => ['FAILED', 'TIMED_OUT'].includes(validation.status)).length,
+      },
+      adoption: {
+        installations: version.installations.length,
+        active: version.installations.filter((installation) => installation.enabled).length,
+        schools: version.installations.map((installation) => installation.school),
+      },
+    })));
+    return {
+      generatedAt: new Date().toISOString(),
+      totals: {
+        extensions: extensions.length,
+        versions: versions.length,
+        activeInstallations: versions.reduce((sum, version) => sum + version.adoption.active, 0),
+        storageBytes: versions.reduce((sum, version) => sum + version.storageBytes, 0),
+        failedValidations: versions.reduce((sum, version) => sum + version.validations.failed, 0),
+      },
+      lifecycleActions: Object.fromEntries(lifecycleActions.map((row) => [row.action, row._count._all])),
+      versions,
     };
   }
 

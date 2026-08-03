@@ -9,7 +9,9 @@ describe('ExtensionsService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
+    extensionPublisher: { upsert: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     extensionVersion: {
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -22,6 +24,7 @@ describe('ExtensionsService', () => {
     },
     extensionInstallation: { updateMany: jest.fn() },
     extensionAsset: { upsert: jest.fn() },
+    auditLog: { groupBy: jest.fn() },
   };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
   const storage = { putPrivate: jest.fn().mockResolvedValue(undefined), getPrivate: jest.fn(), deletePrivate: jest.fn().mockResolvedValue(undefined) };
@@ -32,6 +35,7 @@ describe('ExtensionsService', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('creates an internal declarative extension', async () => {
+    prisma.extensionPublisher.upsert.mockResolvedValue({ id: 'publisher-1', status: 'ACTIVE' });
     prisma.extension.findUnique.mockResolvedValue(null);
     prisma.extension.create.mockImplementation(({ data }) => Promise.resolve({ id: 'ext-1', ...data }));
 
@@ -43,6 +47,7 @@ describe('ExtensionsService', () => {
     }, actor);
 
     expect(result.publisher).toBe('WATTAMAN');
+    expect(prisma.extension.create).toHaveBeenCalledWith({ data: expect.objectContaining({ publisherId: 'publisher-1' }) });
     expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ resource: 'EXTENSION', action: 'CREATE' }));
   });
 
@@ -77,6 +82,7 @@ describe('ExtensionsService', () => {
     prisma.extensionVersion.findUnique.mockResolvedValue({
       id: 'version-1', extensionId: 'ext-1', version: '1.0.0', lifecycleStatus: 'APPROVED',
       packageStorageKey: 'quarantine/extensions/ext-1/version-1/checksum.zip', packageChecksum: 'checksum',
+      extension: { publisherEntity: { status: 'ACTIVE' } },
     });
     prisma.extensionVersion.update.mockImplementation(({ data }) => Promise.resolve({ id: 'version-1', version: '1.0.0', ...data }));
     storage.getPrivate.mockResolvedValue(Buffer.from('package'));
@@ -153,7 +159,7 @@ describe('ExtensionsService', () => {
   it('uploads a package to a checksum-addressed quarantine key', async () => {
     prisma.extensionVersion.findUnique.mockResolvedValue({
       id: 'version-1', extensionId: 'ext-1', version: '1.0.0', lifecycleStatus: 'UPLOADED',
-      extension: { key: 'TEST_THEME', runtimeType: 'THEME' }, manifest: {},
+      extension: { key: 'TEST_THEME', runtimeType: 'THEME', publisherEntity: { status: 'ACTIVE' } }, manifest: {},
     });
     prisma.extensionVersion.update.mockImplementation(({ data }) => Promise.resolve({ id: 'version-1', version: '1.0.0', ...data }));
     prisma.extensionValidation.create.mockResolvedValue({ id: 'validation-1' });
@@ -189,7 +195,7 @@ describe('ExtensionsService', () => {
     const checksum = createHash('sha256').update(buffer).digest('hex');
     const existing = {
       id: 'version-1', extensionId: 'ext-1', version: '1.0.0', lifecycleStatus: 'QUARANTINED',
-      packageChecksum: checksum, packageStorageKey: `quarantine/extensions/ext-1/version-1/${checksum}.zip`, extension: {},
+      packageChecksum: checksum, packageStorageKey: `quarantine/extensions/ext-1/version-1/${checksum}.zip`, extension: { publisherEntity: { status: 'ACTIVE' } },
     };
     prisma.extensionVersion.findUnique.mockResolvedValue(existing);
 
@@ -197,5 +203,44 @@ describe('ExtensionsService', () => {
 
     expect(result).toBe(existing);
     expect(storage.putPrivate).not.toHaveBeenCalled();
+  });
+
+  it('suspends a publisher, unlists its catalog, and disables active installations', async () => {
+    prisma.extensionPublisher.findUnique.mockResolvedValue({ id: 'publisher-1', name: 'Wattaman', status: 'ACTIVE' });
+    prisma.extensionPublisher.update.mockResolvedValue({ id: 'publisher-1', name: 'Wattaman', status: 'SUSPENDED' });
+
+    const result = await service.setPublisherStatus('publisher-1', 'SUSPENDED', actor);
+
+    expect(result.status).toBe('SUSPENDED');
+    expect(prisma.extension.updateMany).toHaveBeenCalledWith({
+      where: { publisherId: 'publisher-1' },
+      data: { status: 'SUSPENDED', isListed: false },
+    });
+    expect(prisma.extensionInstallation.updateMany).toHaveBeenCalledWith({
+      where: { extension: { publisherId: 'publisher-1' }, enabled: true },
+      data: { enabled: false },
+    });
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ resource: 'EXTENSION_PUBLISHER' }));
+  });
+
+  it('reports version adoption, validation failures, storage, and lifecycle activity', async () => {
+    prisma.extension.findMany.mockResolvedValue([{
+      id: 'ext-1', key: 'REWARDS', name: 'Rewards', publisherEntity: { key: 'WATTAMAN', status: 'ACTIVE' },
+      versions: [{
+        id: 'version-1', version: '1.0.0', lifecycleStatus: 'PUBLISHED', publishedAt: new Date(), packageSize: 100,
+        assets: [{ size: 25 }], validations: [{ status: 'PASSED' }, { status: 'FAILED' }],
+        installations: [
+          { enabled: true, school: { id: 'school-a', name: 'School A', subdomain: 'a' } },
+          { enabled: false, school: { id: 'school-b', name: 'School B', subdomain: 'b' } },
+        ],
+      }],
+    }]);
+    prisma.auditLog.groupBy.mockResolvedValue([{ action: 'INSTALL', _count: { _all: 2 } }]);
+
+    const result = await service.health();
+
+    expect(result.totals).toEqual({ extensions: 1, versions: 1, activeInstallations: 1, storageBytes: 125, failedValidations: 1 });
+    expect(result.lifecycleActions).toEqual({ INSTALL: 2 });
+    expect(result.versions[0].adoption.schools).toHaveLength(2);
   });
 });

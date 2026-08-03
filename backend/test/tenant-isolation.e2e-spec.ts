@@ -99,12 +99,18 @@ describe('Phase 4d: Multi-Tenant Isolation', () => {
     state.teacherAId = teacherA.id;
 
     state.extensionKey = `${TEST_PREFIX}_REWARDS`.toUpperCase();
+    const publisher = await prisma.extensionPublisher.upsert({
+      where: { key: 'WATTAMAN' },
+      update: {},
+      create: { key: 'WATTAMAN', name: 'Wattaman', status: 'ACTIVE', internal: true },
+    });
     const extension = await prisma.extension.create({
       data: {
         key: state.extensionKey,
         name: 'Isolation Rewards',
         runtimeType: 'DECLARATIVE_MODULE',
         commercialType: 'MODULE',
+        publisherId: publisher.id,
         status: 'ACTIVE',
         isListed: true,
         versions: {

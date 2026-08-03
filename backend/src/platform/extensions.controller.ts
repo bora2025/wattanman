@@ -17,6 +17,21 @@ export class ExtensionsController {
     return this.extensions.list();
   }
 
+  @Get('publishers')
+  publishers() {
+    return this.extensions.publishers();
+  }
+
+  @Patch('publishers/:publisherId/status')
+  publisherStatus(@Param('publisherId') publisherId: string, @Body() body: { status: string }, @Request() req) {
+    return this.extensions.setPublisherStatus(publisherId, body.status, req.user);
+  }
+
+  @Get('health')
+  health() {
+    return this.extensions.health();
+  }
+
   @Post()
   create(@Body() body: { key: string; name: string; description?: string; runtimeType: string; commercialType: string; category?: string }, @Request() req) {
     return this.extensions.createExtension(body, req.user);

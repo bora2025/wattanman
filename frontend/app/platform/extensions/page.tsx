@@ -55,6 +55,15 @@ interface InstallationRecord {
   installedVersion: { id: string; version: string; lifecycleStatus: string }
 }
 
+interface PublisherRecord {
+  id: string
+  key: string
+  name: string
+  status: string
+  internal: boolean
+  _count: { extensions: number }
+}
+
 async function responseJson(res: Response) {
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`)
@@ -325,16 +334,22 @@ function ExtensionsContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [form, setForm] = useState({ key: '', name: '', runtimeType: 'THEME', commercialType: 'THEME' })
+  const [health, setHealth] = useState<any>(null)
+  const [publishers, setPublishers] = useState<PublisherRecord[]>([])
 
   async function load() {
     setLoading(true)
     try {
-      const [extensionData, installationData] = await Promise.all([
+      const [extensionData, installationData, healthData, publisherData] = await Promise.all([
         responseJson(await apiFetch('/api/platform/extensions')),
         responseJson(await apiFetch('/api/platform/extension-installations')),
+        responseJson(await apiFetch('/api/platform/extensions/health')),
+        responseJson(await apiFetch('/api/platform/extensions/publishers')),
       ])
       setExtensions(extensionData)
       setInstallations(installationData)
+      setHealth(healthData)
+      setPublishers(publisherData)
       setError('')
     } catch (loadError: any) {
       setError(loadError.message || 'Failed to load extensions')
@@ -344,6 +359,20 @@ function ExtensionsContent() {
   }
 
   useEffect(() => { load() }, [])
+
+  async function setPublisherStatus(publisherId: string, status: string) {
+    if (status !== 'ACTIVE' && !window.confirm('Suspending or revoking a publisher immediately unlists its extensions and disables active installations. Continue?')) return
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/publishers/${publisherId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      }))
+      await load()
+    } catch (publisherError: any) {
+      setError(publisherError.message || 'Could not update publisher')
+    }
+  }
 
   async function createExtension(event: FormEvent) {
     event.preventDefault()
@@ -370,6 +399,24 @@ function ExtensionsContent() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Internal package quarantine, validation, review, and publication control plane.</p>
         </div>
         <div className="page-body space-y-5">
+          {health && <div className="card p-5 space-y-4">
+            <div><h2 className="font-bold text-slate-800 dark:text-slate-100">Extension health</h2><p className="text-xs text-slate-500">Generated {new Date(health.generatedAt).toLocaleString()}</p></div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+              <div><p className="text-slate-400">Extensions</p><p className="font-bold">{health.totals.extensions}</p></div>
+              <div><p className="text-slate-400">Versions</p><p className="font-bold">{health.totals.versions}</p></div>
+              <div><p className="text-slate-400">Active installs</p><p className="font-bold">{health.totals.activeInstallations}</p></div>
+              <div><p className="text-slate-400">Stored</p><p className="font-bold">{Math.ceil(health.totals.storageBytes / 1024)} KB</p></div>
+              <div><p className="text-slate-400">Failed validations</p><p className="font-bold">{health.totals.failedValidations}</p></div>
+            </div>
+            <div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="text-left text-slate-400"><th className="py-2">Version</th><th>Status</th><th>Publisher</th><th>Adoption</th><th>Affected schools</th></tr></thead><tbody>{health.versions.map((item: any) => <tr key={item.versionId} className="border-t border-slate-100 dark:border-slate-800"><td className="py-2">{item.extension.name} v{item.version}</td><td>{item.lifecycleStatus}</td><td>{item.publisher.key} · {item.publisher.status}</td><td>{item.adoption.active}/{item.adoption.installations} active</td><td>{item.adoption.schools.map((school: any) => school.name).join(', ') || 'None'}</td></tr>)}</tbody></table></div>
+          </div>}
+          <div className="card p-5 space-y-3">
+            <div><h2 className="font-bold text-slate-800 dark:text-slate-100">Publishers</h2><p className="text-xs text-slate-500">Initial release accepts Wattaman-internal packages only.</p></div>
+            {publishers.map(publisher => <div key={publisher.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+              <div><p className="font-semibold text-sm">{publisher.name} <span className="text-xs text-slate-400">{publisher.key}</span></p><p className="text-xs text-slate-500">{publisher.status} · {publisher._count.extensions} extensions · {publisher.internal ? 'Internal' : 'External'}</p></div>
+              <div className="flex gap-2">{publisher.status !== 'ACTIVE' && <button className="btn-outline btn-sm" onClick={() => setPublisherStatus(publisher.id, 'ACTIVE')}>Reactivate</button>}{publisher.status === 'ACTIVE' && <button className="btn-outline btn-sm" onClick={() => setPublisherStatus(publisher.id, 'SUSPENDED')}>Suspend</button>}{publisher.status !== 'REVOKED' && <button className="btn-outline btn-sm" onClick={() => setPublisherStatus(publisher.id, 'REVOKED')}>Revoke</button>}</div>
+            </div>)}
+          </div>
           <form onSubmit={createExtension} className="card p-5 grid md:grid-cols-5 gap-3 items-end">
             <label className="text-xs text-slate-600 dark:text-slate-300">Key<input className="input mt-1" value={form.key} onChange={event => setForm({ ...form, key: event.target.value.toUpperCase() })} placeholder="AURORA_THEME" required /></label>
             <label className="text-xs text-slate-600 dark:text-slate-300">Name<input className="input mt-1" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /></label>
