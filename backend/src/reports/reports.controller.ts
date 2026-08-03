@@ -4,6 +4,7 @@ import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RequiresAddon, SkipAddonCheck } from '../school-addons/requires-addon.decorator';
 
 function getDateRange(period: string, dateStr?: string): { start: Date; end: Date } {
   const base = dateStr ? new Date(dateStr) : new Date();
@@ -27,10 +28,16 @@ function getDateRange(period: string, dateStr?: string): { start: Date; end: Dat
   }
 }
 
+// Almost every endpoint here is attendance or staff-attendance reporting —
+// gated wholesale, with @SkipAddonCheck() on the 3 that aren't (system
+// health, the audit log viewer, and a student-data-quality tool — none
+// have anything to do with attendance).
 @Controller('reports')
+@RequiresAddon('ATTENDANCE')
 export class ReportsController {
   constructor(private reportsService: ReportsService) {}
 
+  @SkipAddonCheck()
   @UseGuards(JwtAuthGuard)
   @Get('system-status')
   async getSystemStatus() {
@@ -81,6 +88,7 @@ export class ReportsController {
     return this.reportsService.getStudentAttendance(studentId, userId);
   }
 
+  @SkipAddonCheck()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Get('audit-logs')
@@ -248,6 +256,7 @@ export class ReportsController {
     res.send(bom + csv);
   }
 
+  @SkipAddonCheck()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Get('duplicate-students')

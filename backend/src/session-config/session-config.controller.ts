@@ -4,9 +4,17 @@ import { SessionConfigService } from './session-config.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
+// Every route here — including the classId-scoped config also read/written
+// from inside the Classes page's own class-editor UI — is attendance
+// session-time/format-rule data. Confirmed with the user this should gate
+// wholesale: session times are an attendance concept, so they're hidden
+// from Classes too when Attendance is off, not just from this page's own
+// nav link.
 @Controller('session-config')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@RequiresAddon('ATTENDANCE')
 export class SessionConfigController {
   constructor(private sessionConfigService: SessionConfigService) {}
 
