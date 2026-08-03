@@ -1,5 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import JSZip from 'jszip';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { ThemePackagesService } from './theme-packages.service';
 
 function uploadFile(buffer: Buffer, name = 'theme.zip'): Express.Multer.File {
@@ -44,6 +46,16 @@ describe('ThemePackagesService', () => {
 
     expect(css).toContain('url(data:image/png;base64,');
     expect(css).not.toContain('assets/bg.png');
+  });
+
+  it('accepts the Aurora Khmer manual test package', async () => {
+    const packagePath = resolve(__dirname, '../../../examples/theme-packages/aurora-khmer/aurora-khmer.zip');
+    const packageBuffer = readFileSync(packagePath);
+
+    const css = await service.extractCssFromZip(uploadFile(packageBuffer, 'aurora-khmer.zip'));
+
+    expect(css).toContain('--theme-aurora-mint: #2dd4bf');
+    expect(css).toContain('.btn-primary');
   });
 
   it('rejects external asset URLs', async () => {
