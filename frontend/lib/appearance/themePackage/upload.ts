@@ -1,13 +1,13 @@
 import { apiFetch } from '../../api'
 
-/** Sends the already-self-contained CSS produced by parseThemePackageZip()
- * to the dedicated theme-packages endpoint, which validates/sanitizes it
- * and merges it into the theme's themeConfig.customCss. */
-export async function uploadThemePackage(addonId: string, css: string): Promise<any> {
-  const res = await apiFetch(`/api/platform/theme-packages/${addonId}`, {
+/** Sends the original ZIP to the backend, where package extraction, path
+ * checks, asset allowlisting, and CSS validation form the trust boundary. */
+export async function uploadThemePackage(addonId: string, file: File): Promise<any> {
+  const body = new FormData()
+  body.append('file', file)
+  const res = await apiFetch(`/api/platform/theme-packages/${addonId}/zip`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ css }),
+    body,
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`)
