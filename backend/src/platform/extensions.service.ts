@@ -319,6 +319,7 @@ export class ExtensionsService {
       if (!existing.packageStorageKey || !existing.packageChecksum) {
         throw new ConflictException('A validated package artifact is required before publication');
       }
+      if (existing.extension.runtimeType === 'DECLARATIVE_MODULE') await this.assertDependencyGraph(existing);
       signature = await this.signing.signForPublication(existing, existing.extension.publisherId);
       publishedStorageKey = `published/extensions/${existing.extensionId}/${existing.id}/${existing.packageChecksum}.zip`;
       const packageContents = await this.storage.getPrivate(existing.packageStorageKey);
@@ -632,6 +633,49 @@ export class ExtensionsService {
 
   private platformVersion() {
     return process.env.PLATFORM_VERSION || '1.0.0';
+  }
+
+  private async assertDependencyGraph(candidate: { id: string; extensionId: string; version: string; manifest: unknown; extension: { key: string } }) {
+    const extensions = await this.prisma.extension.findMany({
+      where: { runtimeType: 'DECLARATIVE_MODULE', status: 'ACTIVE' },
+      select: { id: true, key: true, versions: { where: { lifecycleStatus: 'PUBLISHED' }, orderBy: { publishedAt: 'desc' }, take: 1, select: { version: true, manifest: true } } },
+    });
+    const graph = new Map<string, { version: string; manifest: Record<string, any> }>();
+    for (const extension of extensions) {
+      const version = extension.id === candidate.extensionId
+        ? { version: candidate.version, manifest: candidate.manifest }
+        : extension.versions[0];
+      if (version) graph.set(extension.key, { version: version.version, manifest: version.manifest as Record<string, any> });
+    }
+    graph.set(candidate.extension.key, { version: candidate.version, manifest: candidate.manifest as Record<string, any> });
+    for (const dependency of ((candidate.manifest as Record<string, any>)?.dependencies || [])) {
+      const target = graph.get(dependency.key);
+      if (!target && !dependency.optional) throw new ConflictException(`Required extension ${dependency.key} has no published version`);
+      if (target && dependency.versionRange && !this.versionMatches(target.version, dependency.versionRange)) {
+        throw new ConflictException(`${dependency.key} ${target.version} does not satisfy ${dependency.versionRange}`);
+      }
+    }
+    const visiting = new Set<string>();
+    const visited = new Set<string>();
+    const visit = (key: string) => {
+      if (visiting.has(key)) throw new ConflictException(`Extension dependency cycle detected at ${key}`);
+      if (visited.has(key)) return;
+      visiting.add(key);
+      for (const dependency of graph.get(key)?.manifest?.dependencies || []) if (graph.has(dependency.key)) visit(dependency.key);
+      visiting.delete(key);
+      visited.add(key);
+    };
+    visit(candidate.extension.key);
+  }
+
+  private versionMatches(version: string, range: string) {
+    const current = version.split('-')[0].split('.').map(Number);
+    return range.split(/\s+/).every((comparator) => {
+      const operator = comparator.match(/^(>=|>|<=|<)/)?.[1];
+      const target = comparator.replace(/^(>=|>|<=|<)/, '').split('.').map(Number);
+      const comparison = current[0] - target[0] || current[1] - target[1] || current[2] - target[2];
+      return operator === '>=' ? comparison >= 0 : operator === '>' ? comparison > 0 : operator === '<=' ? comparison <= 0 : comparison < 0;
+    });
   }
 
   private isCompatible(range: string | null | undefined) {

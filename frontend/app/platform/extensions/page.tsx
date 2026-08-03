@@ -377,6 +377,7 @@ function InstallationCard({ installation, reload }: { installation: Installation
     setBusy(true)
     setError('')
     try {
+      if (!await confirmDependencies(newestVersion.id)) return
       const review = await responseJson(await apiFetch(`/api/platform/extension-installations/${installation.id}/upgrades/${newestVersion.id}/review`))
       const added = review.permissions?.added || []
       const message = added.length
@@ -396,6 +397,29 @@ function InstallationCard({ installation, reload }: { installation: Installation
     }
   }
 
+  async function confirmDependencies(versionId: string) {
+    const review = await responseJson(await apiFetch(`/api/platform/extension-installations/${installation.id}/dependencies/${versionId}/review`))
+    const requiredBlockers = (review.dependencies || []).filter((dependency: any) => !dependency.optional && dependency.status !== 'SATISFIED')
+    if (requiredBlockers.length || review.conflicts?.length) {
+      setError([
+        ...requiredBlockers.map((dependency: any) => `${dependency.key}: ${dependency.status}`),
+        ...(review.conflicts || []).map((key: string) => `${key}: CONFLICT`),
+      ].join(' · '))
+      return false
+    }
+    const optional = (review.dependencies || []).filter((dependency: any) => dependency.optional && dependency.status !== 'SATISFIED')
+    return !optional.length || window.confirm(`Optional dependencies are unavailable: ${optional.map((dependency: any) => dependency.key).join(', ')}. Continue?`)
+  }
+
+  async function install() {
+    try {
+      if (!await confirmDependencies(installation.installedVersion.id)) return
+      await action('install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ versionId: installation.installedVersion.id }) })
+    } catch (installError: any) {
+      setError(installError.message || 'Dependency review failed')
+    }
+  }
+
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-start justify-between gap-4 flex-wrap">
       <div>
@@ -406,7 +430,7 @@ function InstallationCard({ installation, reload }: { installation: Installation
       </div>
       <div className="flex gap-2 flex-wrap">
         {!installation.approvedAt && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('approve')}>Approve</button>}
-        {installation.approvedAt && !installation.installedAt && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ versionId: installation.installedVersion.id }) })}>Install</button>}
+        {installation.approvedAt && !installation.installedAt && <button disabled={busy} className="btn-outline btn-sm" onClick={install}>Install</button>}
         {installation.installedAt && !installation.enabled && !installation.uninstalledAt && <button disabled={busy} className="btn-primary btn-sm" onClick={() => action('activation', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: true }) })}>Activate</button>}
         {installation.enabled && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('activation', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) })}>Deactivate</button>}
         {installation.installedAt && newestVersion && newestVersion.id !== installation.installedVersion.id && <button disabled={busy} className="btn-outline btn-sm" onClick={upgrade}>Upgrade to v{newestVersion.version}</button>}

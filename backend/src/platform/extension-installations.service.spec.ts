@@ -198,4 +198,55 @@ describe('ExtensionInstallationsService', () => {
       include: { assets: true, signingKey: true },
     });
   });
+
+  it('blocks installation when a required dependency is missing', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', approvedAt: new Date(),
+      extension: { key: 'REPORTS_PLUS', name: 'Reports Plus', runtimeType: 'DECLARATIVE_MODULE' },
+      installedVersion: { lifecycleStatus: 'PUBLISHED', assets: [] },
+    });
+    prisma.extensionVersion.findFirst.mockResolvedValue({
+      id: 'version-1', version: '1.0.0', manifest: { dependencies: [{ key: 'STUDENT_REWARDS', versionRange: '>=1.0.0', optional: false }] }, assets: [],
+    });
+    prisma.extensionInstallation.findMany.mockResolvedValue([]);
+
+    await expect(service.install('installation-1', 'version-1', actor)).rejects.toThrow('STUDENT_REWARDS (MISSING)');
+    expect(prisma.extensionInstallation.update).not.toHaveBeenCalled();
+  });
+
+  it('reports satisfied optional and required dependencies and conflicts', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1',
+      extension: { key: 'REPORTS_PLUS', name: 'Reports Plus' }, installedVersion: { assets: [] },
+    });
+    prisma.extensionVersion.findFirst.mockResolvedValue({
+      id: 'version-1', version: '1.0.0', manifest: {
+        dependencies: [{ key: 'STUDENT_REWARDS', versionRange: '>=1.0.0 <2.0.0', optional: false }],
+        conflicts: ['OLD_REPORTS'],
+      },
+    });
+    prisma.extensionInstallation.findMany.mockResolvedValue([
+      { id: 'rewards-install', extension: { key: 'STUDENT_REWARDS' }, installedVersion: { version: '1.2.0', manifest: {} } },
+      { id: 'old-install', extension: { key: 'OLD_REPORTS' }, installedVersion: { version: '1.0.0', manifest: {} } },
+    ]);
+
+    const review = await service.dependencyReview('installation-1', 'version-1');
+
+    expect(review.dependencies).toEqual([expect.objectContaining({ key: 'STUDENT_REWARDS', status: 'SATISFIED', installedVersion: '1.2.0' })]);
+    expect(review.conflicts).toEqual(['OLD_REPORTS']);
+  });
+
+  it('prevents uninstall while an active extension requires it', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1',
+      extension: { key: 'STUDENT_REWARDS', name: 'Student Rewards' }, installedVersion: { lifecycleStatus: 'PUBLISHED' },
+    });
+    prisma.extensionInstallation.findMany.mockResolvedValue([{
+      id: 'dependent-install', extension: { name: 'Reports Plus' },
+      installedVersion: { manifest: { dependencies: [{ key: 'STUDENT_REWARDS', optional: false }] } },
+    }]);
+
+    await expect(service.uninstall('installation-1', actor)).rejects.toThrow('Reports Plus');
+    expect(prisma.extensionInstallation.update).not.toHaveBeenCalled();
+  });
 });

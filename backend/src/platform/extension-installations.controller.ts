@@ -36,6 +36,11 @@ export class PlatformExtensionInstallationsController {
     return this.installations.upgradeReview(id, versionId);
   }
 
+  @Get(':id/dependencies/:versionId/review')
+  dependencyReview(@Param('id') id: string, @Param('versionId') versionId: string) {
+    return this.installations.dependencyReview(id, versionId);
+  }
+
   @Post(':id/rollback')
   rollback(@Param('id') id: string, @Request() req) {
     return this.installations.rollback(id, req.user);

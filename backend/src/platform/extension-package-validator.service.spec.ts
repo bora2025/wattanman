@@ -154,4 +154,19 @@ describe('ExtensionPackageValidatorService', () => {
 
     expect(result.errors.map((error) => error.code)).toEqual(expect.arrayContaining(['THEME_SPACING', 'THEME_SHADOW', 'THEME_SURFACE']));
   });
+
+  it('validates declarative dependencies and conflicts', async () => {
+    const file = await packageFile({
+      'extension.json': JSON.stringify({
+        schemaVersion: 1, key: 'REPORTS_PLUS', name: 'Reports Plus', version: '1.0.0', runtimeType: 'DECLARATIVE_MODULE',
+        permissions: ['reports:read'], navigation: [], pages: [{ key: 'reports', title: 'Reports', resource: 'reports', roles: ['ADMIN'], fields: [] }],
+        resources: { reports: { fields: [] } },
+        dependencies: [{ key: 'STUDENT_REWARDS', versionRange: '>=1.0.0 <2.0.0', optional: false }], conflicts: ['OLD_REPORTS'],
+      }),
+    });
+
+    const result = await validator.validate(file, { key: 'REPORTS_PLUS', runtimeType: 'DECLARATIVE_MODULE' }, '1.0.0');
+
+    expect(result.valid).toBe(true);
+  });
 });

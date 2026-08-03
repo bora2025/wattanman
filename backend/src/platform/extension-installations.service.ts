@@ -103,6 +103,7 @@ export class ExtensionInstallationsService {
       include: { assets: true, signingKey: true },
     });
     if (!version) throw new NotFoundException('Published extension version not found for this extension');
+    if (existing.extension.runtimeType === 'DECLARATIVE_MODULE') await this.assertDependencies(existing.schoolId, existing.extension.key, version);
     if (existing.extension.runtimeType !== 'CORE_MODULE') await this.signing.verifyPublished(version);
     const updated = await this.prisma.extensionInstallation.update({
       where: { id: installationId },
@@ -127,6 +128,7 @@ export class ExtensionInstallationsService {
       include: { assets: true, signingKey: true },
     });
     if (!version) throw new NotFoundException('Published upgrade version not found for this extension');
+    if (existing.extension.runtimeType === 'DECLARATIVE_MODULE') await this.assertDependencies(existing.schoolId, existing.extension.key, version, installationId);
     if (existing.extension.runtimeType !== 'CORE_MODULE') await this.signing.verifyPublished(version);
     const permissionReview = this.permissionReview(existing.installedVersion, version);
     if (permissionReview.added.length && !acknowledgePermissions) {
@@ -181,6 +183,15 @@ export class ExtensionInstallationsService {
     };
   }
 
+  async dependencyReview(installationId: string, versionId: string) {
+    const existing = await this.requireInstallation(installationId);
+    const version = await this.prisma.extensionVersion.findFirst({
+      where: { id: versionId, extensionId: existing.extensionId, lifecycleStatus: 'PUBLISHED' },
+    });
+    if (!version) throw new NotFoundException('Published extension version not found for this extension');
+    return this.resolveDependencies(existing.schoolId, existing.extension.key, version, installationId);
+  }
+
   async rollback(installationId: string, actor: Actor) {
     const existing = await this.requireInstallation(installationId);
     const configuration = (existing.configuration as Record<string, any> | null) || {};
@@ -215,6 +226,7 @@ export class ExtensionInstallationsService {
     if (enabled && existing.installedVersion.lifecycleStatus !== 'PUBLISHED') {
       throw new ConflictException('Only a published extension version can be activated');
     }
+    if (enabled && existing.extension.runtimeType === 'DECLARATIVE_MODULE') await this.assertDependencies(existing.schoolId, existing.extension.key, existing.installedVersion, installationId);
     if (enabled && existing.extension.runtimeType !== 'CORE_MODULE') await this.signing.verifyPublished(existing.installedVersion);
     let configuration = existing.configuration as Record<string, any> | null;
     if (existing.extension.runtimeType === 'THEME') {
@@ -266,6 +278,12 @@ export class ExtensionInstallationsService {
 
   async uninstall(installationId: string, actor: Actor) {
     const existing = await this.requireInstallation(installationId);
+    const installations = (await this.prisma.extensionInstallation.findMany({
+      where: { schoolId: existing.schoolId, enabled: true, id: { not: installationId } },
+      include: { extension: true, installedVersion: true },
+    })) || [];
+    const dependents = installations.filter((installation) => (((installation.installedVersion.manifest as Record<string, any>)?.dependencies || []) as Array<{ key: string; optional: boolean }>).some((dependency) => dependency.key === existing.extension.key && !dependency.optional));
+    if (dependents.length) throw new ConflictException(`Cannot uninstall while required by: ${dependents.map((installation) => installation.extension.name).join(', ')}`);
     const configuration = existing.configuration as Record<string, any> | null;
     if (existing.enabled && existing.extension.runtimeType === 'THEME' && configuration?.previousTheme) {
       await this.prisma.siteSetting.update({ where: { schoolId: existing.schoolId }, data: configuration.previousTheme });
@@ -297,6 +315,48 @@ export class ExtensionInstallationsService {
       added: target.filter((permission) => !current.includes(permission)),
       removed: current.filter((permission) => !target.includes(permission)),
     };
+  }
+
+  private async assertDependencies(schoolId: string, extensionKey: string, version: { version: string; manifest: unknown }, excludedInstallationId?: string) {
+    const review = await this.resolveDependencies(schoolId, extensionKey, version, excludedInstallationId);
+    const missing = review.dependencies.filter((dependency) => !dependency.optional && dependency.status !== 'SATISFIED');
+    if (missing.length) throw new ConflictException(`Required extensions are unavailable: ${missing.map((dependency) => `${dependency.key} (${dependency.status})`).join(', ')}`);
+    if (review.conflicts.length) throw new ConflictException(`Conflicting extensions are active: ${review.conflicts.join(', ')}`);
+  }
+
+  private async resolveDependencies(schoolId: string, extensionKey: string, version: { version: string; manifest: unknown }, excludedInstallationId?: string) {
+    const manifest = (version.manifest as Record<string, any>) || {};
+    const dependencies = (manifest.dependencies || []) as Array<{ key: string; versionRange?: string; optional: boolean }>;
+    const declaredConflicts = new Set<string>((manifest.conflicts || []) as string[]);
+    const installations = (await this.prisma.extensionInstallation.findMany({
+      where: { schoolId, enabled: true, ...(excludedInstallationId ? { id: { not: excludedInstallationId } } : {}) },
+      include: { extension: true, installedVersion: true },
+    })) || [];
+    const active = new Map(installations.map((installation) => [installation.extension.key, installation]));
+    const resolved = dependencies.map((dependency) => {
+      const installation = active.get(dependency.key);
+      const status = !installation
+        ? 'MISSING'
+        : dependency.versionRange && !this.versionMatches(installation.installedVersion.version, dependency.versionRange)
+          ? 'INCOMPATIBLE'
+          : 'SATISFIED';
+      return { ...dependency, status, installedVersion: installation?.installedVersion.version || null };
+    });
+    const conflicts = installations.filter((installation) => {
+      const reverse = (((installation.installedVersion.manifest as Record<string, any>)?.conflicts || []) as string[]).includes(extensionKey);
+      return declaredConflicts.has(installation.extension.key) || reverse;
+    }).map((installation) => installation.extension.key);
+    return { extensionKey, version: version.version, dependencies: resolved, conflicts };
+  }
+
+  private versionMatches(version: string, range: string) {
+    const current = version.split('-')[0].split('.').map(Number);
+    return range.split(/\s+/).every((comparator) => {
+      const operator = comparator.match(/^(>=|>|<=|<)/)?.[1];
+      const target = comparator.replace(/^(>=|>|<=|<)/, '').split('.').map(Number);
+      const comparison = current[0] - target[0] || current[1] - target[1] || current[2] - target[2];
+      return operator === '>=' ? comparison >= 0 : operator === '>' ? comparison > 0 : operator === '<=' ? comparison <= 0 : comparison < 0;
+    });
   }
 
   private async applyThemeVersion(schoolId: string, version: { manifest: any; assets: Array<{ path: string; storageKey: string }> }) {

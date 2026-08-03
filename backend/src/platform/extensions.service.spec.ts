@@ -332,4 +332,31 @@ describe('ExtensionsService', () => {
       data: { enabled: false },
     });
   });
+
+  it('rejects publication when required dependencies are unavailable', async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: 'version-1', extensionId: 'ext-1', version: '1.0.0', lifecycleStatus: 'APPROVED',
+      packageStorageKey: 'quarantine/package.zip', packageChecksum: 'checksum',
+      manifest: { dependencies: [{ key: 'MISSING_MODULE', optional: false }] },
+      extension: { key: 'REPORTS_PLUS', publisherId: 'publisher-1', runtimeType: 'DECLARATIVE_MODULE', publisherEntity: { status: 'ACTIVE' } },
+    });
+    prisma.extension.findMany.mockResolvedValue([]);
+
+    await expect(service.transition('version-1', 'PUBLISHED', undefined, actor)).rejects.toThrow('MISSING_MODULE');
+    expect(signing.signForPublication).not.toHaveBeenCalled();
+  });
+
+  it('detects dependency cycles before publication', async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: 'version-a', extensionId: 'ext-a', version: '1.0.0', lifecycleStatus: 'APPROVED',
+      packageStorageKey: 'quarantine/package.zip', packageChecksum: 'checksum',
+      manifest: { dependencies: [{ key: 'MODULE_B', optional: false }] },
+      extension: { key: 'MODULE_A', publisherId: 'publisher-1', runtimeType: 'DECLARATIVE_MODULE', publisherEntity: { status: 'ACTIVE' } },
+    });
+    prisma.extension.findMany.mockResolvedValue([{
+      id: 'ext-b', key: 'MODULE_B', versions: [{ version: '1.0.0', manifest: { dependencies: [{ key: 'MODULE_A', optional: false }] } }],
+    }]);
+
+    await expect(service.transition('version-a', 'PUBLISHED', undefined, actor)).rejects.toThrow('cycle');
+  });
 });

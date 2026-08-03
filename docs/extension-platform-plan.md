@@ -669,7 +669,7 @@ This section is the source of truth for implementation progress. Update it in th
 | Stage 0 — Product decisions | In progress | Initial internal-release defaults are accepted; formal security, product, and operations approval remains |
 | Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, and audit exist; migration and failure gates remain |
 | Stage 2 — Versioned themes | In progress | Manifest/token validation, approved scoped CSS, public/dashboard preview, publishing, installation, activation, upgrade, rollback, blocking, and uninstall exist; inheritance, override merging, visual regression, and full integration gates remain |
-| Stage 3 — Declarative modules | In progress | Runtime navigation, schema-driven pages, tenant records, capability enforcement, and the Student Rewards ZIP are implemented; integration and upgrade gates remain |
+| Stage 3 — Declarative modules | In progress | Runtime navigation, schema-driven pages, tenant records, capability enforcement, dependency/conflict resolution, cycle detection, and dependent-safe uninstall are implemented; migrations, richer UI, pilot acceptance, and full integration gates remain |
 | Stage 4 — Marketplace operations | In progress | Publisher governance, release compatibility, explicit visibility, scoped permissions, signing, update policies, operational alerts, API telemetry, adoption health, emergency blocking, and incident response exist; the full marketplace end-to-end gate remains |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
 
@@ -876,7 +876,7 @@ This section is the source of truth for implementation progress. Update it in th
 #### Module manifest
 
 - [x] Finalize versioned `extension.json` JSON Schema.
-- [ ] Define roles, capabilities, dependencies, conflicts, and compatibility.
+- [x] Define roles, capabilities, dependencies, conflicts, and compatibility.
 - [ ] Define navigation, pages, forms, workflows, translations, and assets.
 - [x] Validate all identifiers and reject unknown executable content.
 - [x] Add a local package validator command for developers.
@@ -911,9 +911,9 @@ This section is the source of truth for implementation progress. Update it in th
 
 #### Dependencies and upgrades
 
-- [ ] Resolve required and optional dependencies.
-- [ ] Detect dependency cycles and conflicts.
-- [ ] Prevent uninstall while dependents remain active.
+- [x] Resolve required and optional dependencies.
+- [x] Detect dependency cycles and conflicts.
+- [x] Prevent uninstall while dependents remain active.
 - [x] Require approval when an upgrade requests new permissions.
 - [ ] Support declarative data migrations with rollback rules.
 
@@ -935,6 +935,8 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Disabling it removes access without affecting core application startup.
 
 Stage 3 validation note (2026-08-03): the Student Rewards artifact passes the local validator, all extension-focused unit suites pass, backend type-check/build passes, and the real tenant-isolation E2E suite passes 21/21 against PostgreSQL and the compiled backend. The suite proves extension navigation, role filtering, cross-school record isolation, tenant-owned creates, undeclared-capability rejection (with focused unit coverage), and immediate disable behavior.
+
+Stage 3 dependency note (2026-08-03): declarative manifests now define required/optional dependency ranges and symmetric conflict checks. Publication rejects missing required packages, incompatible versions, and dependency cycles; install, upgrade, and activation require satisfied dependencies and no active conflicts; uninstall is blocked while an enabled dependent remains. Platform operators receive a dependency preflight before installation or upgrade. The extension suite passes 70 tests and both production builds pass.
 
 Migration rehearsal note (2026-08-03): `prisma migrate deploy` against an empty PostgreSQL 16 database fails because the repository's first recorded migration is additive and assumes the legacy tables already exist (`User` is the first missing relation). Runtime E2E validation used `prisma db push` only after preserving this failure as evidence. Stage 1 migration gates remain open until a baseline/adoption strategy supports both existing production databases and greenfield environments.
 

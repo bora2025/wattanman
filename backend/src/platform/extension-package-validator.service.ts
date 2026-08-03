@@ -228,7 +228,7 @@ export class ExtensionPackageValidatorService {
       error('MODULE_PERMISSIONS', 'Declarative module manifest requires a permissions array');
     }
     if (extension.runtimeType === 'DECLARATIVE_MODULE') {
-      const allowedKeys = new Set(['schemaVersion', 'key', 'name', 'version', 'runtimeType', 'permissions', 'navigation', 'pages', 'resources', 'assets']);
+      const allowedKeys = new Set(['schemaVersion', 'key', 'name', 'version', 'runtimeType', 'permissions', 'navigation', 'pages', 'resources', 'assets', 'dependencies', 'conflicts']);
       for (const key of Object.keys(manifest)) {
         if (!allowedKeys.has(key) && !key.startsWith('x-')) error('UNKNOWN_MANIFEST_PROPERTY', `Unknown module manifest property: ${key}`);
       }
@@ -251,6 +251,21 @@ export class ExtensionPackageValidatorService {
       }
       for (const permission of manifest.permissions || []) {
         if (typeof permission !== 'string' || !/^[a-z][a-z0-9_-]*:(read|write)$/.test(permission)) error('MODULE_PERMISSION', `Invalid capability: ${String(permission)}`);
+      }
+      const dependencyKeys = new Set<string>();
+      for (const dependency of manifest.dependencies || []) {
+        if (!dependency || typeof dependency.key !== 'string' || !/^[A-Z][A-Z0-9_]{1,63}$/.test(dependency.key) || dependency.key === manifest.key || typeof dependency.optional !== 'boolean' || (dependency.versionRange !== undefined && !/^(?:>=|>)\d+\.\d+\.\d+(?:\s+(?:<=|<)\d+\.\d+\.\d+)?$/.test(dependency.versionRange))) {
+          error('MODULE_DEPENDENCY', `Invalid dependency: ${JSON.stringify(dependency)}`);
+          continue;
+        }
+        if (dependencyKeys.has(dependency.key)) error('MODULE_DEPENDENCY_DUPLICATE', `Duplicate dependency: ${dependency.key}`);
+        dependencyKeys.add(dependency.key);
+      }
+      const conflictKeys = new Set<string>();
+      for (const conflict of manifest.conflicts || []) {
+        if (typeof conflict !== 'string' || !/^[A-Z][A-Z0-9_]{1,63}$/.test(conflict) || conflict === manifest.key || dependencyKeys.has(conflict)) error('MODULE_CONFLICT', `Invalid conflict: ${String(conflict)}`);
+        if (conflictKeys.has(conflict)) error('MODULE_CONFLICT_DUPLICATE', `Duplicate conflict: ${conflict}`);
+        conflictKeys.add(conflict);
       }
     }
   }
