@@ -797,7 +797,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Validation lifecycle integration tests pass.
 - [x] Tenant-isolation tests cover installation records.
 - [x] Platform role tests reject school users and unauthenticated users.
-- [ ] Storage failure and validation timeout tests pass.
+- [x] Storage failure and validation timeout tests pass.
 - [ ] Migration rehearsal succeeds on a production-sized database copy.
 
 #### Stage 1 completion gate
@@ -945,6 +945,8 @@ Stage 3 UI-registry note (2026-08-03): declarative pages now render only approve
 Stage 3 lifecycle note (2026-08-03): `extension-lifecycle.e2e-spec.ts` starts the real Nest application against PostgreSQL and a local R2-compatible private-object server, publishes a signed module ZIP, requests and approves its installation, activates it for one school, writes tenant data, upgrades through a declarative field migration, rolls back and restores the original record, upgrades again, and verifies that an emergency block removes runtime access. The scenario also verifies the upload, validation, publication, install, activation, upgrade, rollback, and status-change audit trail without changing or rebuilding Wattaman source.
 
 Migration bootstrap note (2026-08-03): `prisma/bootstrap-migrations.js` now creates the current schema only when PostgreSQL is completely empty, records every existing migration as the baseline, and then runs `prisma migrate deploy`. On an existing database without history it refuses by default; explicit `--adopt-existing` first requires a zero-difference `prisma migrate diff`, while a deliberately added table was rejected without changing history. Fresh bootstrap, repeat deploy, exact-schema adoption, and mismatch refusal were rehearsed on PostgreSQL 16. Railway startup no longer uses `db push --accept-data-loss`; production-sized copy rehearsal remains open.
+
+Validation-failure note (2026-08-03): quarantine upload now changes no database state when private R2 storage fails, leaving the immutable draft retryable. Package validation has a configurable `EXTENSION_VALIDATION_TIMEOUT_MS` boundary (30 seconds by default); timeout creates a structured `VALIDATION_TIMEOUT` error, completes the validation report as failed, rejects the version, and writes the normal failure audit event instead of leaving a permanent `VALIDATING` record. Focused storage-failure and timeout tests pass, and the backend production build passes. Process-level CPU, memory, and disk isolation remains part of the separate asynchronous-validator gate.
 
 Publisher migration note (2026-08-03): `20260803000002_add_extension_publisher_governance` was applied successfully against PostgreSQL 16 with a legacy extension row. The rehearsal proved Wattaman publisher insertion, extension backfill, non-null enforcement, indexing, and foreign-key creation.
 

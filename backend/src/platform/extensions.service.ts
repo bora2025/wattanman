@@ -219,7 +219,20 @@ export class ExtensionsService {
       data: { extensionVersionId: versionId, status: 'RUNNING', validatorVersion: '1' },
     });
     await this.prisma.extensionVersion.update({ where: { id: versionId }, data: { lifecycleStatus: 'VALIDATING' } });
-    const validationResult = await this.packageValidator.validate(file, existing.extension, existing.version);
+    const timeoutMs = this.validationTimeoutMs();
+    let timeout: NodeJS.Timeout | undefined;
+    const timeoutResult = new Promise<Awaited<ReturnType<ExtensionPackageValidatorService['validate']>>>((resolve) => {
+        timeout = setTimeout(() => resolve({
+          valid: false,
+          errors: [{ code: 'VALIDATION_TIMEOUT', message: `Package validation exceeded ${timeoutMs}ms` }],
+          warnings: [],
+          files: [],
+        }), timeoutMs);
+    });
+    const validationResult = await Promise.race([
+      this.packageValidator.validate(file, existing.extension, existing.version),
+      timeoutResult,
+    ]).finally(() => { if (timeout) clearTimeout(timeout); });
     if (validationResult.valid) {
       for (const asset of validationResult.files) {
         const assetStorageKey = `validated/extensions/${existing.extensionId}/${existing.id}/${asset.checksum}/${asset.path}`;
@@ -258,6 +271,11 @@ export class ExtensionsService {
       metadata: { validationId: validation.id, errorCount: validationResult.errors.length, warningCount: validationResult.warnings.length },
     });
     return finalVersion;
+  }
+
+  private validationTimeoutMs() {
+    const configured = Number(process.env.EXTENSION_VALIDATION_TIMEOUT_MS || 30_000);
+    return Number.isFinite(configured) && configured >= 100 ? Math.floor(configured) : 30_000;
   }
 
   async validationReports(versionId: string) {

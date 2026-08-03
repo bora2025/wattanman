@@ -229,6 +229,56 @@ describe('ExtensionsService', () => {
     }));
   });
 
+  it('keeps a version retryable when quarantine storage fails', async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: 'version-1', extensionId: 'ext-1', version: '1.0.0', lifecycleStatus: 'UPLOADED',
+      extension: { key: 'TEST_THEME', runtimeType: 'THEME', publisherId: 'publisher-1', publisherEntity: { status: 'ACTIVE' } },
+    });
+    storage.putPrivate.mockRejectedValueOnce(new Error('R2 unavailable'));
+    const buffer = Buffer.from('zip-content');
+
+    await expect(service.uploadPackage('version-1', {
+      originalname: 'extension.zip', buffer, size: buffer.length,
+    } as Express.Multer.File, actor)).rejects.toThrow('R2 unavailable');
+
+    expect(prisma.extensionVersion.update).not.toHaveBeenCalled();
+    expect(prisma.extensionValidation.create).not.toHaveBeenCalled();
+    expect(packageValidator.validate).not.toHaveBeenCalled();
+  });
+
+  it('persists a failed report and rejects the version when validation times out', async () => {
+    const previousTimeout = process.env.EXTENSION_VALIDATION_TIMEOUT_MS;
+    process.env.EXTENSION_VALIDATION_TIMEOUT_MS = '100';
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: 'version-1', extensionId: 'ext-1', version: '1.0.0', lifecycleStatus: 'UPLOADED',
+      extension: { key: 'TEST_THEME', runtimeType: 'THEME', publisherId: 'publisher-1', publisherEntity: { status: 'ACTIVE' } },
+    });
+    prisma.extensionVersion.update.mockImplementation(({ data }) => Promise.resolve({ id: 'version-1', version: '1.0.0', ...data }));
+    prisma.extensionValidation.create.mockResolvedValue({ id: 'validation-1' });
+    packageValidator.validate.mockReturnValue(new Promise(() => undefined));
+    const buffer = Buffer.from('zip-content');
+
+    try {
+      const result = await service.uploadPackage('version-1', {
+        originalname: 'extension.zip', buffer, size: buffer.length,
+      } as Express.Multer.File, actor);
+
+      expect(result.lifecycleStatus).toBe('REJECTED');
+      expect(prisma.extensionValidation.update).toHaveBeenCalledWith({
+        where: { id: 'validation-1' },
+        data: expect.objectContaining({
+          status: 'FAILED',
+          errors: [expect.objectContaining({ code: 'VALIDATION_TIMEOUT' })],
+          completedAt: expect.any(Date),
+        }),
+      });
+      expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'VALIDATION_FAILED' }));
+    } finally {
+      if (previousTimeout === undefined) delete process.env.EXTENSION_VALIDATION_TIMEOUT_MS;
+      else process.env.EXTENSION_VALIDATION_TIMEOUT_MS = previousTimeout;
+    }
+  });
+
   it('treats retrying the same quarantined package as idempotent', async () => {
     const buffer = Buffer.from('zip-content');
     const checksum = createHash('sha256').update(buffer).digest('hex');
