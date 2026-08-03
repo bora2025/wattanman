@@ -32,6 +32,14 @@ interface ReviewSummary {
   warnings: string[]
 }
 
+interface ReviewEvent {
+  id: string
+  action: string
+  notes?: string | null
+  actorRole?: string | null
+  createdAt: string
+}
+
 interface ExtensionRecord {
   id: string
   key: string
@@ -76,12 +84,20 @@ function VersionPanel({ extension, version, reload }: { extension: ExtensionReco
   const [error, setError] = useState('')
   const [preview, setPreview] = useState<{ manifest: any; css: string } | null>(null)
   const [review, setReview] = useState<ReviewSummary | null>(null)
+  const [reviewHistory, setReviewHistory] = useState<ReviewEvent[]>([])
 
   useEffect(() => {
     apiFetch(`/api/platform/extensions/versions/${version.id}/validations`)
       .then(responseJson)
       .then(setReports)
       .catch(() => setReports([]))
+  }, [version.id, version.lifecycleStatus])
+
+  useEffect(() => {
+    apiFetch(`/api/platform/extensions/versions/${version.id}/reviews`)
+      .then(responseJson)
+      .then(setReviewHistory)
+      .catch(() => setReviewHistory([]))
   }, [version.id, version.lifecycleStatus])
 
   useEffect(() => {
@@ -142,6 +158,23 @@ function VersionPanel({ extension, version, reload }: { extension: ExtensionReco
     }
   }
 
+  async function appeal() {
+    const notes = window.prompt('Explain what changed and why this version should be reviewed again')
+    if (!notes) return
+    setBusy(true)
+    setError('')
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/versions/${version.id}/appeal`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notes }),
+      }))
+      await reload()
+    } catch (appealError: any) {
+      setError(appealError.message || 'Appeal failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const nextActions: Record<string, Array<{ status: string; label: string }>> = {
     VALIDATED: [{ status: 'AWAITING_REVIEW', label: 'Send to review' }],
     AWAITING_REVIEW: [{ status: 'APPROVED', label: 'Approve' }, { status: 'REJECTED', label: 'Reject' }],
@@ -175,6 +208,7 @@ function VersionPanel({ extension, version, reload }: { extension: ExtensionReco
               {action.label}
             </button>
           ))}
+          {version.lifecycleStatus === 'REJECTED' && <button disabled={busy} onClick={appeal} className="btn-outline btn-sm">Appeal</button>}
           {extension.runtimeType === 'THEME' && ['VALIDATED', 'AWAITING_REVIEW', 'APPROVED', 'PUBLISHED', 'DEPRECATED'].includes(version.lifecycleStatus) && <button disabled={busy} onClick={openPreview} className="btn-outline btn-sm">Preview</button>}
         </div>
       </div>
@@ -187,6 +221,7 @@ function VersionPanel({ extension, version, reload }: { extension: ExtensionReco
         {review.permissions.removed.length > 0 && <p>Removed permissions: {review.permissions.removed.join(', ')}</p>}
         {review.warnings.map(warning => <p key={warning} className="text-amber-700 dark:text-amber-300">Warning: {warning}</p>)}
       </div>}
+      {reviewHistory.length > 0 && <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-xs space-y-2"><p className="font-semibold">Review history</p>{reviewHistory.map(event => <div key={event.id} className="flex justify-between gap-3"><span>{event.action}{event.notes ? ` · ${event.notes}` : ''}</span><span className="text-slate-400 whitespace-nowrap">{new Date(event.createdAt).toLocaleString()}</span></div>)}</div>}
       {reports.map(report => (
         <div key={report.id} className={`rounded-lg p-3 text-xs border ${report.status === 'PASSED' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-300' : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300'}`}>
           <p className="font-semibold">Validation {report.status}</p>

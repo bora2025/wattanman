@@ -12,6 +12,9 @@ describe('ExtensionsService', () => {
       updateMany: jest.fn(),
     },
     extensionPublisher: { upsert: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+    extensionPublisherMember: { findUnique: jest.fn(), upsert: jest.fn() },
+    extensionReview: { create: jest.fn(), findMany: jest.fn() },
+    user: { findFirst: jest.fn() },
     extensionVersion: {
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -32,7 +35,12 @@ describe('ExtensionsService', () => {
   const service = new ExtensionsService(prisma as any, audit as any, storage as any, packageValidator as any);
   const actor = { userId: 'platform-admin', role: 'PLATFORM_ADMIN' };
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    prisma.extensionPublisherMember.findUnique.mockResolvedValue({
+      status: 'ACTIVE', roles: ['UPLOAD', 'REVIEW', 'PUBLISH', 'MANAGE'],
+    });
+  });
 
   it('creates an internal declarative extension', async () => {
     prisma.extensionPublisher.upsert.mockResolvedValue({ id: 'publisher-1', status: 'ACTIVE' });
@@ -61,13 +69,13 @@ describe('ExtensionsService', () => {
   });
 
   it('requires review notes before approval', async () => {
-    prisma.extensionVersion.findUnique.mockResolvedValue({ id: 'version-1', version: '1.0.0', lifecycleStatus: 'AWAITING_REVIEW' });
+    prisma.extensionVersion.findUnique.mockResolvedValue({ id: 'version-1', version: '1.0.0', lifecycleStatus: 'AWAITING_REVIEW', extension: { publisherId: 'publisher-1' } });
 
     await expect(service.transition('version-1', 'APPROVED', undefined, actor)).rejects.toThrow('reviewNotes are required');
   });
 
   it('rejects lifecycle transitions that skip validation and review', async () => {
-    prisma.extensionVersion.findUnique.mockResolvedValue({ id: 'version-1', version: '1.0.0', lifecycleStatus: 'UPLOADED' });
+    prisma.extensionVersion.findUnique.mockResolvedValue({ id: 'version-1', version: '1.0.0', lifecycleStatus: 'UPLOADED', extension: { publisherId: 'publisher-1' } });
 
     await expect(service.transition('version-1', 'PUBLISHED', 'ship it', actor)).rejects.toThrow(ConflictException);
   });
@@ -132,7 +140,7 @@ describe('ExtensionsService', () => {
   });
 
   it('deactivates every installation of an emergency-blocked version', async () => {
-    prisma.extensionVersion.findUnique.mockResolvedValue({ id: 'version-1', extensionId: 'ext-1', version: '1.0.0', lifecycleStatus: 'PUBLISHED' });
+    prisma.extensionVersion.findUnique.mockResolvedValue({ id: 'version-1', extensionId: 'ext-1', version: '1.0.0', lifecycleStatus: 'PUBLISHED', extension: { publisherId: 'publisher-1' } });
     prisma.extensionVersion.update.mockImplementation(({ data }) => Promise.resolve({ id: 'version-1', version: '1.0.0', ...data }));
 
     await service.transition('version-1', 'BLOCKED', 'security response', actor);
@@ -221,6 +229,37 @@ describe('ExtensionsService', () => {
       data: { enabled: false },
     });
     expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ resource: 'EXTENSION_PUBLISHER' }));
+  });
+
+  it('rejects lifecycle actions without the required publisher permission', async () => {
+    prisma.extensionPublisherMember.findUnique.mockResolvedValue({ status: 'ACTIVE', roles: ['UPLOAD'] });
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: 'version-1', version: '1.0.0', lifecycleStatus: 'AWAITING_REVIEW', extension: { publisherId: 'publisher-1' },
+    });
+
+    await expect(service.transition('version-1', 'APPROVED', 'reviewed', actor)).rejects.toThrow('review permission is required');
+    expect(prisma.extensionVersion.update).not.toHaveBeenCalled();
+  });
+
+  it('appends review decisions and supports an audited rejection appeal', async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValueOnce({
+      id: 'version-1', version: '1.0.0', lifecycleStatus: 'AWAITING_REVIEW', extension: { publisherId: 'publisher-1' },
+    });
+    prisma.extensionVersion.update.mockImplementation(({ data }) => Promise.resolve({ id: 'version-1', version: '1.0.0', ...data }));
+
+    await service.transition('version-1', 'REJECTED', 'Clarify permissions', actor);
+    expect(prisma.extensionReview.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ extensionVersionId: 'version-1', action: 'REJECTED', notes: 'Clarify permissions' }),
+    });
+
+    prisma.extensionVersion.findUnique.mockResolvedValueOnce({
+      id: 'version-1', version: '1.0.0', lifecycleStatus: 'REJECTED', reviewedBy: 'reviewer-1',
+      extension: { publisherId: 'publisher-1', publisherEntity: { status: 'ACTIVE' } },
+    });
+    await service.appeal('version-1', 'Permission description updated', actor);
+    expect(prisma.extensionReview.create).toHaveBeenLastCalledWith({
+      data: expect.objectContaining({ extensionVersionId: 'version-1', action: 'APPEALED', notes: 'Permission description updated' }),
+    });
   });
 
   it('reports version adoption, validation failures, storage, and lifecycle activity', async () => {

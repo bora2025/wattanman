@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { R2StorageService } from '../storage/r2-storage.service';
@@ -74,6 +74,7 @@ export class ExtensionsService {
       create: { key: 'WATTAMAN', name: 'Wattaman', status: 'ACTIVE', internal: true },
     });
     if (publisher.status !== 'ACTIVE') throw new ConflictException('The Wattaman publisher is not active');
+    await this.requirePublisherRole(publisher.id, actor, 'UPLOAD');
     const extension = await this.prisma.extension.create({
       data: {
         key,
@@ -100,6 +101,7 @@ export class ExtensionsService {
     const extension = await this.prisma.extension.findUnique({ where: { id: extensionId }, include: { publisherEntity: true } });
     if (!extension) throw new NotFoundException('Extension not found');
     if (extension.publisherEntity.status !== 'ACTIVE') throw new ConflictException('Publisher is not active');
+    await this.requirePublisherRole(extension.publisherId, actor, 'UPLOAD');
     const version = data.version?.trim();
     if (!version || !VERSION_PATTERN.test(version)) throw new BadRequestException('version must use semantic versioning, e.g. 1.0.0');
     if (!data.manifest || typeof data.manifest !== 'object' || Array.isArray(data.manifest)) {
@@ -152,6 +154,7 @@ export class ExtensionsService {
     const existing = await this.prisma.extensionVersion.findUnique({ where: { id: versionId }, include: { extension: { include: { publisherEntity: true } } } });
     if (!existing) throw new NotFoundException('Extension version not found');
     if (existing.extension.publisherEntity.status !== 'ACTIVE') throw new ConflictException('Publisher is not active');
+    await this.requirePublisherRole(existing.extension.publisherId, actor, 'UPLOAD');
     const checksum = createHash('sha256').update(file.buffer).digest('hex');
     if (existing.packageChecksum === checksum && existing.packageStorageKey) return existing;
     if (existing.lifecycleStatus !== 'UPLOADED') {
@@ -241,6 +244,12 @@ export class ExtensionsService {
     const existing = await this.prisma.extensionVersion.findUnique({ where: { id: versionId }, include: { extension: { include: { publisherEntity: true } } } });
     if (!existing) throw new NotFoundException('Extension version not found');
     if (existing.lifecycleStatus === nextStatus) return existing;
+    const requiredRole = ['APPROVED', 'REJECTED'].includes(nextStatus)
+      ? 'REVIEW'
+      : nextStatus === 'AWAITING_REVIEW'
+        ? 'UPLOAD'
+        : 'PUBLISH';
+    await this.requirePublisherRole(existing.extension.publisherId, actor, requiredRole);
     const allowed = ALLOWED_TRANSITIONS[existing.lifecycleStatus] || [];
     if (!allowed.includes(nextStatus)) {
       throw new ConflictException(`Cannot transition extension version from ${existing.lifecycleStatus} to ${nextStatus}`);
@@ -280,6 +289,17 @@ export class ExtensionsService {
         data: { enabled: false },
       });
     }
+    if (['AWAITING_REVIEW', 'APPROVED', 'REJECTED'].includes(nextStatus)) {
+      await this.prisma.extensionReview.create({
+        data: {
+          extensionVersionId: versionId,
+          action: nextStatus === 'AWAITING_REVIEW' ? 'SUBMITTED' : nextStatus,
+          notes: reviewNotes?.trim() || undefined,
+          actorId: actor.userId,
+          actorRole: actor.role,
+        },
+      });
+    }
     await this.log(actor, 'STATUS_CHANGE', 'EXTENSION_VERSION', updated.id, updated.version, {
       changes: { before: { lifecycleStatus: existing.lifecycleStatus }, after: { lifecycleStatus: nextStatus } },
     });
@@ -308,11 +328,64 @@ export class ExtensionsService {
     };
   }
 
-  publishers() {
-    return this.prisma.extensionPublisher.findMany({
-      include: { _count: { select: { extensions: true } } },
+  async reviewHistory(versionId: string) {
+    const version = await this.prisma.extensionVersion.findUnique({ where: { id: versionId } });
+    if (!version) throw new NotFoundException('Extension version not found');
+    return this.prisma.extensionReview.findMany({
+      where: { extensionVersionId: versionId },
       orderBy: { createdAt: 'asc' },
     });
+  }
+
+  async appeal(versionId: string, notes: string | undefined, actor: Actor) {
+    if (!notes?.trim()) throw new BadRequestException('Appeal notes are required');
+    const existing = await this.prisma.extensionVersion.findUnique({
+      where: { id: versionId },
+      include: { extension: { include: { publisherEntity: true } } },
+    });
+    if (!existing) throw new NotFoundException('Extension version not found');
+    if (existing.lifecycleStatus !== 'REJECTED' || !existing.reviewedBy) {
+      throw new ConflictException('Only a reviewer-rejected version can be appealed');
+    }
+    if (existing.extension.publisherEntity.status !== 'ACTIVE') throw new ConflictException('Publisher is not active');
+    await this.requirePublisherRole(existing.extension.publisherId, actor, 'UPLOAD');
+    const updated = await this.prisma.extensionVersion.update({
+      where: { id: versionId },
+      data: { lifecycleStatus: 'AWAITING_REVIEW', reviewNotes: notes.trim() },
+    });
+    await this.prisma.extensionReview.create({
+      data: { extensionVersionId: versionId, action: 'APPEALED', notes: notes.trim(), actorId: actor.userId, actorRole: actor.role },
+    });
+    await this.log(actor, 'APPEAL', 'EXTENSION_VERSION', versionId, existing.version, { metadata: { notes: notes.trim() } });
+    return updated;
+  }
+
+  publishers() {
+    return this.prisma.extensionPublisher.findMany({
+      include: {
+        _count: { select: { extensions: true } },
+        members: { include: { user: { select: { id: true, name: true, email: true } } }, orderBy: { createdAt: 'asc' } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async setPublisherMemberRoles(publisherId: string, userId: string, roles: string[], actor: Actor) {
+    await this.requirePublisherRole(publisherId, actor, 'MANAGE');
+    const allowed = ['UPLOAD', 'REVIEW', 'PUBLISH', 'MANAGE'];
+    const normalized = [...new Set((roles || []).map((role) => role.toUpperCase()))];
+    if (!normalized.length || normalized.some((role) => !allowed.includes(role))) {
+      throw new BadRequestException(`Publisher roles must use one or more of ${allowed.join(', ')}`);
+    }
+    const user = await this.prisma.user.findFirst({ where: { id: userId, role: 'PLATFORM_ADMIN' } });
+    if (!user) throw new NotFoundException('Platform admin not found');
+    const membership = await this.prisma.extensionPublisherMember.upsert({
+      where: { publisherId_userId: { publisherId, userId } },
+      update: { roles: normalized, status: 'ACTIVE' },
+      create: { publisherId, userId, roles: normalized, status: 'ACTIVE' },
+    });
+    await this.log(actor, 'UPDATE', 'EXTENSION_PUBLISHER_MEMBER', membership.id, user.name, { metadata: { publisherId, roles: normalized } });
+    return membership;
   }
 
   async setPublisherStatus(publisherId: string, status: string, actor: Actor) {
@@ -321,6 +394,7 @@ export class ExtensionsService {
     }
     const existing = await this.prisma.extensionPublisher.findUnique({ where: { id: publisherId } });
     if (!existing) throw new NotFoundException('Extension publisher not found');
+    await this.requirePublisherRole(publisherId, actor, 'MANAGE');
     const updated = await this.prisma.extensionPublisher.update({ where: { id: publisherId }, data: { status } });
     if (status !== 'ACTIVE') {
       await this.prisma.extension.updateMany({
@@ -397,6 +471,17 @@ export class ExtensionsService {
       lifecycleActions: Object.fromEntries(lifecycleActions.map((row) => [row.action, row._count._all])),
       versions,
     };
+  }
+
+  private async requirePublisherRole(publisherId: string, actor: Actor, role: string) {
+    if (!actor.userId) throw new ForbiddenException('Publisher action requires an authenticated platform user');
+    const membership = await this.prisma.extensionPublisherMember.findUnique({
+      where: { publisherId_userId: { publisherId, userId: actor.userId } },
+    });
+    const roles = (membership?.roles as string[] | undefined) || [];
+    if (!membership || membership.status !== 'ACTIVE' || !roles.includes(role)) {
+      throw new ForbiddenException(`Publisher ${role.toLowerCase()} permission is required`);
+    }
   }
 
   private log(actor: Actor, action: string, resource: string, resourceId: string, resourceLabel: string, detail: Record<string, unknown>) {

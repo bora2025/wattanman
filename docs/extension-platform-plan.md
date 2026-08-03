@@ -940,14 +940,16 @@ Migration rehearsal note (2026-08-03): `prisma migrate deploy` against an empty 
 
 Publisher migration note (2026-08-03): `20260803000002_add_extension_publisher_governance` was applied successfully against PostgreSQL 16 with a legacy extension row. The rehearsal proved Wattaman publisher insertion, extension backfill, non-null enforcement, indexing, and foreign-key creation.
 
+Publisher-permission migration note (2026-08-03): `20260803000003_add_publisher_members_and_reviews` was applied successfully against PostgreSQL 16 with an existing platform admin. The rehearsal proved scoped-role backfill and creation of append-only review history tables and constraints.
+
 ### Stage 4 — Marketplace and operations
 
 #### Publisher and review
 
 - [x] Add publisher identity and status.
-- [ ] Add uploader, reviewer, and publisher permissions.
-- [ ] Enforce separation of duties if accepted in Stage 0.
-- [ ] Add review queue, reviewer notes, approval, rejection, and appeal history.
+- [x] Add uploader, reviewer, publisher, and publisher-management permissions.
+- [x] Enforce separation of duties if accepted in Stage 0; the accepted initial internal policy explicitly allows one staff member to hold multiple scoped roles.
+- [x] Add review queue, reviewer notes, approval, rejection, and appeal history.
 - [ ] Add release notes and compatibility matrix.
 
 #### Distribution and updates
@@ -980,7 +982,7 @@ Publisher migration note (2026-08-03): `20260803000002_add_extension_publisher_g
 - [ ] Publisher, review, publication, update, and emergency workflows operate end to end.
 - [x] Operators can identify every school using a version.
 - [x] A compromised version can be blocked globally and audited.
-- [ ] Published artifacts and review history are immutable.
+- [x] Published artifacts and review history are immutable.
 
 ### Stage 5 — Isolated executable extensions
 

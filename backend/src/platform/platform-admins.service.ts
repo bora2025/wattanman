@@ -46,6 +46,14 @@ export class PlatformAdminsService {
       data: { schoolId, name, email, password: hashed, role: 'PLATFORM_ADMIN' },
       select: { id: true, name: true, email: true },
     });
+    const publisher = await this.prisma.extensionPublisher.findUnique({ where: { key: 'WATTAMAN' } });
+    if (publisher) {
+      await this.prisma.extensionPublisherMember.upsert({
+        where: { publisherId_userId: { publisherId: publisher.id, userId: user.id } },
+        update: { status: 'ACTIVE' },
+        create: { publisherId: publisher.id, userId: user.id, roles: ['UPLOAD', 'REVIEW', 'PUBLISH'], status: 'ACTIVE' },
+      });
+    }
     return { admin: user, temporaryPassword: tempPassword };
   }
 

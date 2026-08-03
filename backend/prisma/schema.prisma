@@ -138,10 +138,11 @@ model User {
   staffMarkedBy       StaffAttendance[] @relation("StaffMarkedBy")
 
   // For students and parents
-  studentProfile      Student?
-  parentStudents      Student[]            @relation("ParentStudents")
-  refreshTokens       RefreshToken[]
-  passwordResetTokens PasswordResetToken[]
+  studentProfile                Student?
+  parentStudents                Student[]                  @relation("ParentStudents")
+  refreshTokens                 RefreshToken[]
+  passwordResetTokens           PasswordResetToken[]
+  extensionPublisherMemberships ExtensionPublisherMember[]
 
   // Module 1: Salary
   salaries Salary[] @relation("UserSalaries")
@@ -678,8 +679,24 @@ model ExtensionPublisher {
   updatedAt    DateTime @updatedAt
 
   extensions Extension[]
+  members    ExtensionPublisherMember[]
 
   @@index([status, internal])
+}
+
+model ExtensionPublisherMember {
+  id          String             @id @default(cuid())
+  publisherId String
+  publisher   ExtensionPublisher @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roles       Json
+  status      String             @default("ACTIVE") // ACTIVE | SUSPENDED
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([publisherId, userId])
+  @@index([userId, status])
 }
 
 /// Immutable release metadata. Published rows must never be updated in-place;
@@ -708,11 +725,26 @@ model ExtensionVersion {
   permissions   ExtensionPermission[]
   validations   ExtensionValidation[]
   installations ExtensionInstallation[]
+  reviews       ExtensionReview[]
 
   @@unique([extensionId, version])
   @@index([extensionId, lifecycleStatus])
   @@index([lifecycleStatus, createdAt])
   @@index([packageChecksum])
+}
+
+model ExtensionReview {
+  id                 String           @id @default(cuid())
+  extensionVersionId String
+  extensionVersion   ExtensionVersion @relation(fields: [extensionVersionId], references: [id], onDelete: Cascade)
+  action             String // SUBMITTED | APPROVED | REJECTED | APPEALED
+  notes              String?
+  actorId            String?
+  actorRole          String?
+  createdAt          DateTime         @default(now())
+
+  @@index([extensionVersionId, createdAt])
+  @@index([action, createdAt])
 }
 
 model ExtensionAsset {

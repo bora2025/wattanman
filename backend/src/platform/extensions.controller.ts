@@ -27,6 +27,16 @@ export class ExtensionsController {
     return this.extensions.setPublisherStatus(publisherId, body.status, req.user);
   }
 
+  @Patch('publishers/:publisherId/members/:userId')
+  publisherMemberRoles(
+    @Param('publisherId') publisherId: string,
+    @Param('userId') userId: string,
+    @Body() body: { roles: string[] },
+    @Request() req,
+  ) {
+    return this.extensions.setPublisherMemberRoles(publisherId, userId, body.roles, req.user);
+  }
+
   @Get('health')
   health() {
     return this.extensions.health();
@@ -67,6 +77,16 @@ export class ExtensionsController {
   @Get('versions/:versionId/review')
   review(@Param('versionId') versionId: string) {
     return this.extensions.reviewSummary(versionId);
+  }
+
+  @Get('versions/:versionId/reviews')
+  reviewHistory(@Param('versionId') versionId: string) {
+    return this.extensions.reviewHistory(versionId);
+  }
+
+  @Post('versions/:versionId/appeal')
+  appeal(@Param('versionId') versionId: string, @Body() body: { notes?: string }, @Request() req) {
+    return this.extensions.appeal(versionId, body.notes, req.user);
   }
 
   @Get('versions/:versionId/preview')
