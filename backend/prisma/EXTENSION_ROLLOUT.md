@@ -16,8 +16,8 @@ This rollout is additive. The existing `AddonDefinition` and `SchoolAddon` paths
 3. Deploy backend and frontend application code.
 4. Run `npm run db:backfill-extensions` from `backend/` once.
 5. Run it a second time and confirm counts remain stable; the backfill is idempotent.
-6. Compare all `AddonDefinition.key` values with `Extension.key` values.
-7. Compare enabled `SchoolAddon` rows with enabled `ExtensionInstallation` rows.
+6. Run `npm run db:verify-extension-backfill`; it must return `"valid": true` and zero errors.
+7. Archive the verifier JSON with the deployment evidence. It checks every catalog key/type/state and every school installation's enabled/billing state, not only aggregate counts.
 8. Test package upload, validation, review, publication, request, approval, installation, and activation on a non-production school.
 
 ## Verification queries
@@ -35,7 +35,7 @@ LEFT JOIN "Extension" e ON e."legacyAddonKey" = ad."key"
 WHERE e."id" IS NULL;
 ```
 
-The final query must return zero rows. Investigate count differences before enabling new extension UI in production.
+The final query must return zero rows. `npm run db:verify-extension-backfill` is authoritative because it additionally checks key identity, runtime/commercial mapping, active/listed state, and every school row's enabled and billing values. Investigate any verifier error before enabling new extension UI in production.
 
 ## Rollback
 

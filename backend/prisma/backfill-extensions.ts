@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { verifyExtensionBackfill } from './verify-extension-backfill';
 
 const prisma = new PrismaClient();
 
@@ -82,6 +83,9 @@ async function main() {
   }
 
   console.log(`Extension backfill complete: ${extensionCount} extensions, ${installationCount} installations checked.`);
+  const verification = await verifyExtensionBackfill(prisma);
+  console.log(JSON.stringify(verification, null, 2));
+  if (!verification.valid) throw new Error(`Extension backfill verification failed with ${verification.errors.length} mismatch(es)`);
 }
 
 main()

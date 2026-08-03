@@ -17,6 +17,7 @@
     "db:migrate:adopt": "node prisma/bootstrap-migrations.js --adopt-existing",
     "db:seed": "ts-node prisma/seed.ts",
     "db:backfill-extensions": "ts-node prisma/backfill-extensions.ts",
+    "db:verify-extension-backfill": "ts-node prisma/verify-extension-backfill.ts",
     "extension:validate": "ts-node src/cli/validate-extension-package.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
