@@ -18,13 +18,14 @@ be scripted/automated blindly.
 `backend/railway.json` now runs this on every boot:
 
 ```
-node prisma/bootstrap-migrations.js && node prisma/seed-prod.js && node dist/main
+node prisma/bootstrap-migrations.js --adopt-existing && node prisma/seed-prod.js && node dist/main
 ```
 
-The bootstrap applies pending migrations when migration history exists. It
-creates and baselines a completely empty database, but refuses to alter an
-existing database that has no migration history. It never passes
-`--accept-data-loss` and startup stops if migration preparation fails.
+The Railway command enables guarded adoption for legacy databases. The
+bootstrap applies pending migrations when migration history exists and creates
+and baselines a completely empty database. It adopts an existing database only
+when Prisma reports zero schema differences. It never passes `--accept-data-loss`,
+and startup stops if migration preparation or schema verification fails.
 
 ## 1. One-time: baseline Prisma's migration history
 
