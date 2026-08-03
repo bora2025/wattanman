@@ -668,7 +668,7 @@ This section is the source of truth for implementation progress. Update it in th
 | Existing foundation | Complete | Catalog, school enablement, guards, theme application, and platform roles already exist |
 | Stage 0 — Product decisions | In progress | Initial internal-release defaults are accepted; formal security, product, and operations approval remains |
 | Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, audit, and guarded greenfield/existing-schema migration bootstrap exist; production-copy and failure-injection gates remain |
-| Stage 2 — Versioned themes | In progress | A signed theme ZIP passes real private-storage preview, publication, install, activation, override-preserving upgrade/rollback, authorization, audit, and emergency-block workflows; legacy CSS mutation is retired and visual regression remains |
+| Stage 2 — Versioned themes | Complete | Signed theme ZIPs pass private-storage preview, publication, install, activation, override-preserving upgrade/rollback, authorization, audit, emergency blocking, legacy endpoint retirement, and public/dashboard visual regression |
 | Stage 3 — Declarative modules | In progress | Runtime navigation, an approved accessible component registry, translation fallback, tenant records, capability enforcement, dependency/conflict resolution, dependent-safe uninstall, reversible migrations, and a real signed-ZIP lifecycle are implemented; controlled service capabilities and pilot acceptance remain |
 | Stage 4 — Marketplace operations | Complete | Publisher governance, review, release compatibility, visibility, signing, installation, update/rollback, telemetry, emergency blocking, and audit operate through one real end-to-end workflow |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
@@ -860,7 +860,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Publish/install/activate authorization tests pass.
 - [x] Upgrade and rollback integration tests pass.
 - [x] School A cannot access or activate School B's installation.
-- [ ] Visual regression checks cover representative public and dashboard pages.
+- [x] Visual regression checks cover representative public and dashboard pages.
 - [x] Emergency blocking disables the affected version without redeployment.
 
 #### Stage 2 completion gate
@@ -966,7 +966,9 @@ Theme override note (2026-08-03): theme manifest v1 is explicitly standalone and
 
 Theme lifecycle note (2026-08-03): `extension-lifecycle.e2e-spec.ts` now publishes a signed theme ZIP through real Nest HTTP endpoints and private R2-compatible storage, previews its scoped CSS, installs and activates it for one school, rejects a school administrator at the platform activation boundary, preserves a school color override across upgrade and rollback, records privileged lifecycle actions, and globally disables the installation when the active version is blocked. Cross-school installation visibility remains covered by the separate two-school tenant-isolation E2E suite. Visual regression remains open.
 
-Legacy theme retirement note (2026-08-03): the `platform/theme-packages` raw-CSS and ZIP-to-`AddonDefinition.themeConfig` routes, module, service, tests, frontend upload client, and old platform add-on upload surface have been removed in favor of `/platform/extensions`. School appearance no longer exposes a raw CSS editor, and `PATCH /site-settings` explicitly discards attempted `customCss` mutation while retaining already-stored CSS for uninterrupted legacy rendering and versioned-theme rollback. The real lifecycle E2E verifies the removed route returns 404 and a raw CSS patch cannot change the active signed theme. Focused tests and both production builds pass; visual regression remains open.
+Legacy theme retirement note (2026-08-03): the `platform/theme-packages` raw-CSS and ZIP-to-`AddonDefinition.themeConfig` routes, module, service, tests, frontend upload client, and old platform add-on upload surface have been removed in favor of `/platform/extensions`. School appearance no longer exposes a raw CSS editor, and `PATCH /site-settings` explicitly discards attempted `customCss` mutation while retaining already-stored CSS for uninterrupted legacy rendering and versioned-theme rollback. The real lifecycle E2E verifies the removed route returns 404 and a raw CSS patch cannot change the active signed theme. Focused tests and both production builds pass.
+
+Theme visual-regression note (2026-08-03): the exact isolated preview document is built by shared production code and exercised through Playwright Chromium at a fixed 1280×720 viewport, UTC timezone, English locale, and deterministic light color scheme. Reviewed pixel baselines cover dashboard and public-site surfaces in both light and dark modes. All four snapshots pass on a clean repeat run, and transient Playwright output is excluded from source control. This closes the final Stage 2 gate.
 
 ### Stage 4 — Marketplace and operations
 

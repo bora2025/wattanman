@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { apiFetch } from '../../../lib/api'
+import { buildThemePreviewDocument } from '../../../lib/themePreviewDocument'
 import { platformNav } from '../../../lib/platform-nav'
 
 interface ValidationReport {
@@ -254,15 +255,7 @@ function ThemePreview({ preview, onClose }: { preview: { manifest: any; css: str
   const { manifest, css } = preview
   const [previewMode, setPreviewMode] = useState<'light' | 'dark'>(manifest.mode === 'dark' ? 'dark' : 'light')
   const [surface, setSurface] = useState<'dashboard' | 'public'>('dashboard')
-  const safeCss = css.replace(/</g, '\\3C ')
-  const tokens = manifest.tokens || {}
-  const dashboardHtml = `<h1>${String(manifest.name || 'Theme preview').replace(/[<>&"]/g, '')}</h1><p>Authenticated dashboard · ${previewMode} mode</p><div class="grid"><div class="stat-card"><strong>Students</strong><h2>1,248</h2></div><div class="stat-card"><strong>Attendance</strong><h2>94%</h2></div><div class="stat-card"><strong>Classes</strong><h2>36</h2></div></div><div class="card" style="margin-top:16px"><h2>Recent activity</h2><p>Theme colors, surfaces, cards, and buttons render inside this sandbox only.</p><button class="btn-primary">Primary action</button></div>`
-  const publicHtml = `<div class="page-shell"><div class="page-header"><h1>Wattaman International School</h1><p>Public website · ${previewMode} mode</p><button class="btn-primary">Apply now</button></div><div class="page-body grid"><div class="card"><h2>Our programs</h2><p>Representative public marketing content.</p></div><div class="card"><h2>Admissions</h2><p>Public surfaces use the same scoped theme package.</p></div></div></div>`
-  const documentHtml = `<!doctype html><html class="wattaman-theme ${previewMode === 'dark' ? 'dark' : ''}"><head><meta charset="utf-8"><style>
-    :root{--brand-500:${tokens.primaryColor || '#14b8a6'};--brand-600:${tokens.primaryColor || '#0d9488'}}
-    *{box-sizing:border-box}body{margin:0;padding:28px;font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a}.dark body{background:#071a2b;color:#e2e8f0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card,.stat-card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:18px}.dark .card,.dark .stat-card{background:#0f2538;border-color:#334155}.btn-primary{display:inline-block;margin-top:18px;padding:10px 16px;border-radius:10px;background:#14b8a6;color:#042f2e;border:0;font-weight:700}
-    ${safeCss}
-  </style></head><body>${surface === 'dashboard' ? dashboardHtml : publicHtml}</body></html>`
+  const documentHtml = buildThemePreviewDocument(manifest, css, previewMode, surface)
   return <div className="fixed inset-0 z-[100] bg-black/60 p-4 flex items-center justify-center" role="dialog" aria-modal="true">
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden">
       <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700"><div><h3 className="font-bold text-slate-800 dark:text-slate-100">Isolated theme preview</h3><p className="text-xs text-slate-500">Sandboxed iframe; package CSS cannot affect Platform UI.</p><p className={`text-xs ${preview.platformCompatible ? 'text-emerald-600' : 'text-red-600'}`}>Platform {preview.platformVersion} · {preview.compatibilityRange || 'No range'} · {preview.platformCompatible ? 'Compatible' : 'Not compatible'}</p>{preview.warnings?.map(warning => <p key={warning.code} className="text-xs text-amber-600">{warning.code}: {warning.message}</p>)}</div><div className="flex gap-2 flex-wrap"><button onClick={() => setSurface('dashboard')} className="btn-outline btn-sm">Dashboard</button><button onClick={() => setSurface('public')} className="btn-outline btn-sm">Public site</button><button onClick={() => setPreviewMode('light')} className="btn-outline btn-sm">Light</button><button onClick={() => setPreviewMode('dark')} className="btn-outline btn-sm">Dark</button><button onClick={onClose} className="btn-outline btn-sm">Close</button></div></div>
