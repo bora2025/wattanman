@@ -3,9 +3,14 @@ import { HolidaysService } from './holidays.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RequiresAddon } from '../school-addons/requires-addon.decorator';
 
+// Holidays only ever feed attendance calculations (day-off detection, rate
+// calculations in reports.service.ts) — confirmed via a full consumer audit,
+// no other module reads this.
 @Controller('holidays')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@RequiresAddon('ATTENDANCE')
 export class HolidaysController {
   constructor(private readonly holidaysService: HolidaysService) {}
 
