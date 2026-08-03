@@ -1,4 +1,16 @@
-# Aurora Khmer — Versioned Extension Test
+# Aurora Khmer — Complete School Theme
+
+Aurora Khmer is a polished teal, gold, and deep-navy theme for Wattaman. It
+styles the existing school public homepage and authenticated dashboards without
+injecting scripts or replacing application markup.
+
+Covered surfaces include:
+
+- public homepage shell, hero header, content areas, cards, and calls to action;
+- school-admin sidebar, page shell, page headers, dashboard body, cards, and statistics;
+- light and dark appearance modes;
+- primary and outline buttons; and
+- spacious glass surfaces with elevated shadows.
 
 Use this package with the new Platform → Extensions workflow:
 
@@ -10,3 +22,6 @@ Use this package with the new Platform → Extensions workflow:
 6. From a school, request it in Admin → Extension Directory.
 7. Approve, install, and activate it from Platform → Extensions.
 8. Deactivate or uninstall to restore the previous school theme.
+
+The package contains only approved declarative theme files. It cannot execute
+JavaScript, add routes, or replace Wattaman components.

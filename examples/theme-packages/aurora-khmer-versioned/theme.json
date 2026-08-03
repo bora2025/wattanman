@@ -9,6 +9,9 @@
     "primaryColor": "#14B8A6",
     "secondaryColor": "#FBBF24",
     "font": "poppins",
-    "radius": "soft"
+    "radius": "soft",
+    "spacing": "spacious",
+    "shadow": "elevated",
+    "surface": "glass"
   }
 }
