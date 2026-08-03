@@ -25,6 +25,14 @@
         { "key": "points", "label": "Points", "type": "number", "required": true },
         { "key": "reason", "label": "Reason", "type": "text", "required": true },
         { "key": "awardedOn", "label": "Awarded on", "type": "date", "required": true }
+      ],
+      "ariaLabel": "Student rewards management",
+      "components": [
+        { "type": "stats", "title": "Reward summary", "metrics": [{ "key": "awards", "label": "Awards", "aggregate": "count" }, { "key": "points", "label": "Total points", "aggregate": "sum", "field": "points" }] },
+        { "type": "form", "title": "Award points", "actions": ["create", "update"] },
+        { "type": "chart", "title": "Points by student", "categoryField": "studentName", "valueField": "points", "aggregate": "sum" },
+        { "type": "table", "title": "Reward history", "columns": ["studentName", "points", "reason", "awardedOn"], "actions": ["view", "edit", "delete"], "searchable": true },
+        { "type": "details", "title": "Reward details", "fields": ["studentName", "points", "reason", "awardedOn"] }
       ]
     }
   ],
@@ -37,5 +45,10 @@
         { "key": "awardedOn", "type": "date", "required": true }
       ]
     }
+  },
+  "defaultLocale": "en",
+  "translations": {
+    "en": {},
+    "km": {}
   }
 }

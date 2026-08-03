@@ -57,6 +57,18 @@ describe('ExtensionRuntimeService', () => {
     expect(result).toEqual([{ label: 'Rewards', href: '/extensions/STUDENT_REWARDS/rewards', icon: 'design', section: 'Extensions' }]);
   });
 
+  it('returns translation dictionaries and default locale with a page', async () => {
+    prisma.extensionInstallation.findFirst.mockResolvedValue({
+      ...installation,
+      installedVersion: { ...installation.installedVersion, manifest: { ...manifest, defaultLocale: 'en', translations: { en: { title: 'Rewards' }, km: { title: 'រង្វាន់' } } } },
+    });
+
+    const result = await service.page('STUDENT_REWARDS', 'rewards', { role: 'ADMIN' });
+
+    expect(result.defaultLocale).toBe('en');
+    expect(result.translations.km.title).toBe('រង្វាន់');
+  });
+
   it('creates records with the authoritative tenant school', async () => {
     prisma.extensionInstallation.findFirst.mockResolvedValue(installation);
     prisma.extensionRecord.create.mockImplementation(({ data }) => Promise.resolve({ id: 'record-1', ...data }));

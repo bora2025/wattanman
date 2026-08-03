@@ -170,4 +170,37 @@ describe('ExtensionPackageValidatorService', () => {
 
     expect(result.valid).toBe(true);
   });
+
+  it('accepts approved UI components and translation fallback', async () => {
+    const file = await packageFile({
+      'extension.json': JSON.stringify({
+        schemaVersion: 1, key: 'INSIGHTS', name: 'Insights', version: '1.0.0', runtimeType: 'DECLARATIVE_MODULE',
+        permissions: ['insights:read', 'insights:write'], navigation: [{ label: 'Insights', pageKey: 'insights', roles: ['ADMIN'] }],
+        pages: [{ key: 'insights', title: 'Insights', ariaLabel: 'Insights dashboard', resource: 'insights', roles: ['ADMIN'], fields: [{ key: 'category', label: 'Category', type: 'text' }, { key: 'amount', label: 'Amount', type: 'number' }], components: [
+          { type: 'stats', metrics: [{ key: 'total', label: 'Total', aggregate: 'sum', field: 'amount' }] },
+          { type: 'form', actions: ['create', 'update'] }, { type: 'chart', categoryField: 'category', valueField: 'amount', aggregate: 'sum' },
+          { type: 'table', columns: ['category', 'amount'], actions: ['view', 'edit', 'delete'], searchable: true }, { type: 'details', fields: ['category', 'amount'] },
+        ] }],
+        resources: { insights: { fields: [{ key: 'category', type: 'text' }, { key: 'amount', type: 'number' }] } },
+        defaultLocale: 'en', translations: { en: { 'page.title': 'Insights' }, km: { 'page.title': 'ទិន្នន័យ' } },
+      }),
+    });
+
+    const result = await validator.validate(file, { key: 'INSIGHTS', runtimeType: 'DECLARATIVE_MODULE' }, '1.0.0');
+
+    expect(result.valid).toBe(true);
+  });
+
+  it('rejects arbitrary components and invalid roles', async () => {
+    const file = await packageFile({
+      'extension.json': JSON.stringify({
+        schemaVersion: 1, key: 'INSIGHTS', name: 'Insights', version: '1.0.0', runtimeType: 'DECLARATIVE_MODULE', permissions: [], navigation: [],
+        pages: [{ key: 'insights', title: 'Insights', resource: 'insights', roles: ['ROOT'], fields: [], components: [{ type: 'html', source: '<script />' }] }], resources: { insights: { fields: [] } },
+      }),
+    });
+
+    const result = await validator.validate(file, { key: 'INSIGHTS', runtimeType: 'DECLARATIVE_MODULE' }, '1.0.0');
+
+    expect(result.errors.map((error) => error.code)).toEqual(expect.arrayContaining(['MODULE_PAGE', 'MODULE_COMPONENT']));
+  });
 });

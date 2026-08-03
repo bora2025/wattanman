@@ -13,6 +13,8 @@ const THEME_RADII = ['sharp', 'soft', 'round'];
 const THEME_SPACING = ['compact', 'comfortable', 'spacious'];
 const THEME_SHADOWS = ['none', 'soft', 'elevated'];
 const THEME_SURFACES = ['flat', 'bordered', 'glass'];
+const MODULE_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'ACCOUNTANT', 'REPORTER', 'EMPLOYEE', 'PARENT', 'STUDENT']);
+const MODULE_COMPONENTS = new Set(['stats', 'form', 'table', 'details', 'chart']);
 const APPROVED_THEME_SELECTORS = new Set([
   ':root', 'body', '.dark body', '.card', '.stat-card', '.dark .card', '.dark .stat-card',
   '.btn-primary', '.btn-primary:hover', '.btn-outline', '.btn-outline:hover', '.page-shell',
@@ -228,7 +230,7 @@ export class ExtensionPackageValidatorService {
       error('MODULE_PERMISSIONS', 'Declarative module manifest requires a permissions array');
     }
     if (extension.runtimeType === 'DECLARATIVE_MODULE') {
-      const allowedKeys = new Set(['schemaVersion', 'key', 'name', 'version', 'runtimeType', 'permissions', 'navigation', 'pages', 'resources', 'assets', 'dependencies', 'conflicts', 'migrations']);
+      const allowedKeys = new Set(['schemaVersion', 'key', 'name', 'version', 'runtimeType', 'permissions', 'navigation', 'pages', 'resources', 'assets', 'dependencies', 'conflicts', 'migrations', 'defaultLocale', 'translations']);
       for (const key of Object.keys(manifest)) {
         if (!allowedKeys.has(key) && !key.startsWith('x-')) error('UNKNOWN_MANIFEST_PROPERTY', `Unknown module manifest property: ${key}`);
       }
@@ -237,16 +239,41 @@ export class ExtensionPackageValidatorService {
       if (!manifest.resources || typeof manifest.resources !== 'object' || Array.isArray(manifest.resources)) error('MODULE_RESOURCES', 'Declarative module requires a resources object');
       const pageKeys = new Set((manifest.pages || []).map((page: any) => page?.key).filter(Boolean));
       for (const item of manifest.navigation || []) {
-        if (!item || typeof item.label !== 'string' || !pageKeys.has(item.pageKey) || !Array.isArray(item.roles)) error('MODULE_NAV_ITEM', 'Each navigation item requires label, valid pageKey, and roles');
+        if (!item || typeof item.label !== 'string' || !pageKeys.has(item.pageKey) || !Array.isArray(item.roles) || item.roles.some((role: string) => !MODULE_ROLES.has(role))) error('MODULE_NAV_ITEM', 'Each navigation item requires label, valid pageKey, and approved roles');
       }
       for (const page of manifest.pages || []) {
-        if (!page?.key || !page?.title || !page?.resource || !Array.isArray(page.roles) || !Array.isArray(page.fields)) {
-          error('MODULE_PAGE', 'Each page requires key, title, resource, roles, and fields');
+        if (!page || typeof page !== 'object') {
+          error('MODULE_PAGE', 'Each page must be an object');
           continue;
         }
+        if (!page?.key || !page?.title || !page?.resource || !Array.isArray(page.roles) || page.roles.some((role: string) => !MODULE_ROLES.has(role)) || !Array.isArray(page.fields)) {
+          error('MODULE_PAGE', 'Each page requires key, title, resource, roles, and fields');
+        }
         if (!manifest.resources?.[page.resource]) error('MODULE_PAGE_RESOURCE', `Page ${page.key} references an undeclared resource`);
-        for (const field of page.fields) {
+        for (const field of page.fields || []) {
           if (!field?.key || !field?.label || !['text', 'number', 'date', 'boolean'].includes(field?.type)) error('MODULE_FIELD', `Page ${page.key} contains an invalid field`);
+        }
+        for (const component of page.components || []) {
+          if (!component || !MODULE_COMPONENTS.has(component.type)) {
+            error('MODULE_COMPONENT', `Page ${page.key} uses an unapproved component`);
+            continue;
+          }
+          if (component.type === 'stats' && (!Array.isArray(component.metrics) || component.metrics.some((metric: any) => !metric?.key || !metric?.label || !['count', 'sum', 'average'].includes(metric.aggregate) || (metric.aggregate !== 'count' && !page.fields.some((field: any) => field.key === metric.field && field.type === 'number'))))) error('MODULE_STATS', `Page ${page.key} has invalid stats metrics`);
+          if (component.type === 'form' && component.actions?.some((action: string) => !['create', 'update'].includes(action))) error('MODULE_FORM', `Page ${page.key} has invalid form actions`);
+          if (component.type === 'table' && component.columns?.some((key: string) => !page.fields.some((field: any) => field.key === key))) error('MODULE_COLUMNS', `Page ${page.key} references an unknown column`);
+          if (component.type === 'details' && component.fields?.some((key: string) => !page.fields.some((field: any) => field.key === key))) error('MODULE_DETAILS', `Page ${page.key} references an unknown detail field`);
+          if (component.type === 'table' && component.actions?.some((action: string) => !['view', 'edit', 'delete'].includes(action))) error('MODULE_TABLE', `Page ${page.key} has invalid table actions`);
+          if (component.type === 'chart' && (!page.fields.some((field: any) => field.key === component.categoryField) || !page.fields.some((field: any) => field.key === component.valueField && field.type === 'number') || (component.aggregate && !['sum', 'average'].includes(component.aggregate)))) error('MODULE_CHART', `Page ${page.key} has an invalid chart definition`);
+        }
+      }
+      if (manifest.defaultLocale !== undefined && !/^[a-z]{2}(?:-[A-Z]{2})?$/.test(manifest.defaultLocale)) error('MODULE_LOCALE', 'defaultLocale must use a locale such as en or km');
+      if (manifest.translations !== undefined) {
+        if (!manifest.translations || typeof manifest.translations !== 'object' || Array.isArray(manifest.translations)) error('MODULE_TRANSLATIONS', 'translations must be a locale dictionary');
+        else {
+          for (const [locale, messages] of Object.entries(manifest.translations)) {
+            if (!/^[a-z]{2}(?:-[A-Z]{2})?$/.test(locale) || !messages || typeof messages !== 'object' || Array.isArray(messages) || Object.values(messages as Record<string, unknown>).some((message) => typeof message !== 'string')) error('MODULE_TRANSLATIONS', `Invalid translations for ${locale}`);
+          }
+          if (manifest.defaultLocale && !manifest.translations[manifest.defaultLocale]) error('MODULE_TRANSLATION_FALLBACK', 'translations must include defaultLocale');
         }
       }
       for (const permission of manifest.permissions || []) {

@@ -35,7 +35,12 @@ export class ExtensionRuntimeService {
     const page = (manifest.pages || []).find((candidate: any) => candidate.key === pageKey);
     if (!page) throw new NotFoundException('Extension page not found');
     if (!page.roles?.includes(user.role)) throw new ForbiddenException('Your role cannot access this extension page');
-    return { extension: { key: installation.extension.key, name: installation.extension.name }, page };
+    return {
+      extension: { key: installation.extension.key, name: installation.extension.name },
+      page,
+      defaultLocale: manifest.defaultLocale || 'en',
+      translations: manifest.translations || {},
+    };
   }
 
   async records(extensionKey: string, resource: string, user: RuntimeUser) {

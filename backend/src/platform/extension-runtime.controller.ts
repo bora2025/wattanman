@@ -1,10 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
+import { Throttle } from '@nestjs/throttler';
 import { ExtensionRuntimeService } from './extension-runtime.service';
 
 @Controller('extensions')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Throttle({ default: { limit: 120, ttl: 60000 } })
 export class ExtensionRuntimeController {
   constructor(private runtime: ExtensionRuntimeService) {}
 

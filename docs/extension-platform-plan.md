@@ -669,7 +669,7 @@ This section is the source of truth for implementation progress. Update it in th
 | Stage 0 — Product decisions | In progress | Initial internal-release defaults are accepted; formal security, product, and operations approval remains |
 | Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, and audit exist; migration and failure gates remain |
 | Stage 2 — Versioned themes | In progress | Manifest/token validation, approved scoped CSS, public/dashboard preview, publishing, installation, activation, upgrade, rollback, blocking, and uninstall exist; inheritance, override merging, visual regression, and full integration gates remain |
-| Stage 3 — Declarative modules | In progress | Runtime navigation, schema-driven pages, tenant records, capability enforcement, dependency/conflict resolution, cycle detection, dependent-safe uninstall, and reversible record migrations are implemented; richer UI, pilot acceptance, and full integration gates remain |
+| Stage 3 — Declarative modules | In progress | Runtime navigation, an approved accessible component registry, translation fallback, tenant records, capability enforcement, dependency/conflict resolution, dependent-safe uninstall, and reversible migrations are implemented; controlled service capabilities, pilot acceptance, and full integration gates remain |
 | Stage 4 — Marketplace operations | In progress | Publisher governance, release compatibility, explicit visibility, scoped permissions, signing, update policies, operational alerts, API telemetry, adoption health, emergency blocking, and incident response exist; the full marketplace end-to-end gate remains |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
 
@@ -877,7 +877,7 @@ This section is the source of truth for implementation progress. Update it in th
 
 - [x] Finalize versioned `extension.json` JSON Schema.
 - [x] Define roles, capabilities, dependencies, conflicts, and compatibility.
-- [ ] Define navigation, pages, forms, workflows, translations, and assets.
+- [x] Define navigation, pages, forms, workflows, translations, and assets.
 - [x] Validate all identifiers and reject unknown executable content.
 - [x] Add a local package validator command for developers.
 
@@ -886,16 +886,16 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Add backend endpoint returning resolved navigation.
 - [x] Merge core and installed extension navigation.
 - [x] Filter by school installation, role, permission, and feature state.
-- [ ] Replace static extension-key unions for runtime extensions.
+- [x] Replace static extension-key unions for runtime extensions.
 - [x] Preserve compiled core navigation during migration.
 
 #### Dynamic pages and UI
 
 - [x] Add `/extensions/[extensionKey]/[pageKey]` route.
-- [ ] Build approved component registry.
-- [ ] Build schema-driven tables, forms, details, charts, filters, and actions.
+- [x] Build approved component registry.
+- [x] Build schema-driven tables, forms, details, charts, filters, and actions.
 - [x] Validate page definitions before publication.
-- [ ] Add translation fallback and accessibility requirements.
+- [x] Add translation fallback and accessibility requirements.
 - [x] Prevent arbitrary React, browser script, HTML, and remote component execution.
 
 #### Data and capabilities
@@ -905,7 +905,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Implement extension resource API namespace.
 - [x] Enforce installation and requested capabilities on every request.
 - [x] Add schema validation for resource data and actions.
-- [ ] Add rate limits and audit policies.
+- [x] Add rate limits and audit policies.
 - [ ] Add controlled notifications, files, scheduled jobs, and external HTTP capabilities only when approved.
 - [x] Prevent Prisma, raw SQL, filesystem, environment, and unrestricted network access.
 
@@ -939,6 +939,8 @@ Stage 3 validation note (2026-08-03): the Student Rewards artifact passes the lo
 Stage 3 dependency note (2026-08-03): declarative manifests now define required/optional dependency ranges and symmetric conflict checks. Publication rejects missing required packages, incompatible versions, and dependency cycles; install, upgrade, and activation require satisfied dependencies and no active conflicts; uninstall is blocked while an enabled dependent remains. Platform operators receive a dependency preflight before installation or upgrade. The extension suite passes 70 tests and both production builds pass.
 
 Stage 3 data-migration note (2026-08-03): declarative manifests now support validated `renameField`, `setDefault`, and `removeField` operations for an exact source and target version. Upgrade applies record changes and byte accounting in a serializable transaction, stores per-record rollback backups, and records the migration run; rollback restores data and counters atomically and marks the run rolled back. `20260803000009_add_extension_data_migrations` was rehearsed successfully on PostgreSQL 16, and the extension suite passes 72 tests with backend type-check/build passing. The broad tenant upgrade/rollback E2E gate remains open.
+
+Stage 3 UI-registry note (2026-08-03): declarative pages now render only approved stats, form, table, details, and chart components with schema-bound fields and actions, local filtering, create/update/delete workflows, semantic table markup, labels, alerts, and keyboard-native controls. Locale dictionaries use requested-locale then default-locale then literal-label fallback. Unknown components and roles are rejected, runtime endpoints have an extension-specific request limit, and writes/denials remain audited. The extension suite passes 75 tests and both production builds pass.
 
 Migration rehearsal note (2026-08-03): `prisma migrate deploy` against an empty PostgreSQL 16 database fails because the repository's first recorded migration is additive and assumes the legacy tables already exist (`User` is the first missing relation). Runtime E2E validation used `prisma db push` only after preserving this failure as evidence. Stage 1 migration gates remain open until a baseline/adoption strategy supports both existing production databases and greenfield environments.
 
