@@ -12,11 +12,15 @@ export const adminNav: NavItem[] = [
   { label: 'nav.scoring', href: '/admin/scoring', icon: 'trophy', moduleKey: 'EXAMS' },
   { label: 'Examinations', href: '/admin/exams', icon: 'book', moduleKey: 'EXAMS' },
 
-  // ── Attendance ──
+  // ── Attendance (every stage: recording, reports, and setup) ──
   { label: 'nav.takeAttendance', href: '/admin/camera', icon: 'camera', section: 'nav.section.attendance', moduleKey: 'ATTENDANCE' },
-  { label: 'nav.officerAttendance', href: '/admin/staff-attendance', icon: 'clipboard', moduleKey: 'ATTENDANCE' },
   { label: 'nav.editAttendance', href: '/admin/attendance/edit', icon: 'edit', moduleKey: 'ATTENDANCE' },
+  { label: 'nav.officerAttendance', href: '/admin/staff-attendance', icon: 'clipboard', moduleKey: 'ATTENDANCE' },
   { label: 'nav.editOfficerAttendance', href: '/admin/staff-attendance/edit', icon: 'edit', moduleKey: 'ATTENDANCE' },
+  { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', moduleKey: 'ATTENDANCE' },
+  { label: 'nav.officerReport', href: '/admin/staff-reports', icon: 'bar-chart', moduleKey: 'ATTENDANCE' },
+  { label: 'nav.sessionSettings', href: '/admin/session-settings', icon: 'clock', moduleKey: 'ATTENDANCE' },
+  { label: 'nav.holidays', href: '/admin/holidays', icon: 'holiday', moduleKey: 'ATTENDANCE' },
 
   // ── People ──
   { label: 'nav.manageUsers', href: '/admin/users', icon: 'users', section: 'nav.section.people' },
@@ -25,6 +29,7 @@ export const adminNav: NavItem[] = [
   { label: 'Parent Portal', href: '/admin/parents', icon: 'users', moduleKey: 'PARENT_PORTAL' },
   { label: 'nav.manageOfficer', href: '/admin/employees', icon: 'briefcase' },
   { label: 'nav.manageTeachers', href: '/wattaman/scheduled-teacher', icon: 'graduation', moduleKey: 'PART_TIME_TEACHER' },
+  { label: 'nav.teacherReports', href: '/wattaman/teacher-reports', icon: 'clipboard', moduleKey: 'PART_TIME_TEACHER' },
 
   // ── Communication ──
   { label: 'Communication Hub', href: '/admin/communication', icon: 'clipboard', section: 'Communication', badgeKey: 'messages' as const, moduleKey: 'CHAT' },
@@ -35,11 +40,6 @@ export const adminNav: NavItem[] = [
   { label: 'Finance Dashboard', href: '/admin/budget-report', icon: 'bar-chart', section: 'Finance', moduleKey: 'FEES' },
   { label: 'nav.feeManagement', href: '/admin/fees', icon: 'money', moduleKey: 'FEES' },
   { label: 'Salary Management', href: '/admin/salary', icon: 'money', moduleKey: 'SALARY' },
-
-  // ── Reports ──
-  { label: 'nav.studentReport', href: '/admin/reports', icon: 'chart', section: 'nav.section.reports', moduleKey: 'ATTENDANCE' },
-  { label: 'nav.officerReport', href: '/admin/staff-reports', icon: 'bar-chart', moduleKey: 'ATTENDANCE' },
-  { label: 'nav.teacherReports', href: '/wattaman/teacher-reports', icon: 'clipboard', moduleKey: 'PART_TIME_TEACHER' },
 
   // ── Designer ──
   { label: 'nav.cardDesigner', href: '/admin/card-designer', icon: 'design', section: 'Designer', moduleKey: 'CARD_DESIGNER' },
@@ -57,9 +57,7 @@ export const adminNav: NavItem[] = [
   { label: 'LaTeX Editor', href: '/tools/latex-editor', icon: '∑', section: 'Tools', moduleKey: 'LATEX_EDITOR' },
 
   // ── Settings ──
-  { label: 'nav.sessionSettings', href: '/admin/session-settings', icon: 'clock', section: 'nav.section.settings', moduleKey: 'ATTENDANCE' },
-  { label: 'nav.holidays', href: '/admin/holidays', icon: 'holiday', moduleKey: 'ATTENDANCE' },
-  { label: 'Backup & Restore', href: '/admin/backup', icon: 'briefcase' },
+  { label: 'Backup & Restore', href: '/admin/backup', icon: 'briefcase', section: 'nav.section.settings' },
   { label: 'Audit Logs', href: '/admin/audit', icon: 'clipboard' },
   { label: 'nav.settings', href: '/admin/settings', icon: 'settings' },
   { label: 'Appearance', href: '/admin/appearance', icon: 'paint', section: 'Appearance' },
