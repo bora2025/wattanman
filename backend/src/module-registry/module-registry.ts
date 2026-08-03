@@ -10,12 +10,14 @@
  * `tsc --noEmit` instead of silently 403ing an endpoint or hiding a nav
  * item forever.
  *
- * Adding a new module: add one entry here. `backend/prisma/seed-module-registry.ts`
- * reads this array to seed the catalog (replacing four one-off scripts that
- * each hand-duplicated this same shape); `frontend/lib/moduleRegistry.ts`
- * mirrors the key list on the other side of the repo boundary, the same
- * duplicated-small-constant convention already used for
- * accentColor/themeFonts rather than a shared package.
+ * Adding a new module: add one entry here (or run
+ * `backend/scripts/new-module.ts`, Phase 24, which scaffolds the module's
+ * files and inserts the registry entry for you). `ModuleRegistrySeedService`
+ * (module-registry-seed.service.ts) reads this array to seed the catalog
+ * automatically on every app boot — no separate script to remember to run.
+ * `frontend/lib/moduleRegistry.ts` mirrors the key list on the other side of
+ * the repo boundary, the same duplicated-small-constant convention already
+ * used for accentColor/themeFonts rather than a shared package.
  */
 
 export interface ModuleRegistryEntry {

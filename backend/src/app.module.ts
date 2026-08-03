@@ -4,6 +4,7 @@ import { TenantHostMiddleware } from './tenancy/tenant-host.middleware';
 import { DatabaseModule } from './database/database.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { RequiresAddonGuard } from './school-addons/requires-addon.guard';
+import { ModuleRegistrySeedService } from './module-registry/module-registry-seed.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -96,6 +97,9 @@ import { AddonPackagesModule } from './addon-packages/addon-packages.module';
     // no-op on any route without that decorator (RequiresAddonGuard
     // returns true immediately when no metadata is present).
     { provide: APP_GUARD, useClass: RequiresAddonGuard },
+    // Phase 24 — self-seeds MODULE_REGISTRY's catalog rows on every boot,
+    // replacing the old standalone seed-module-registry.ts script.
+    ModuleRegistrySeedService,
   ],
 })
 export class AppModule implements NestModule {
