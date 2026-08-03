@@ -817,6 +817,7 @@ model ExtensionInstallation {
   enabled            Boolean          @default(false)
   configuration      Json?
   billingStatus      String           @default("PENDING")
+  dataBytes          Int              @default(0)
   requestedBy        String?
   requestedAt        DateTime?
   approvedBy         String?
@@ -844,6 +845,7 @@ model ExtensionRecord {
   extension   Extension @relation(fields: [extensionId], references: [id], onDelete: Cascade)
   resource    String
   data        Json
+  byteSize    Int       @default(0)
   createdBy   String?
   updatedBy   String?
   createdAt   DateTime  @default(now())
@@ -851,6 +853,7 @@ model ExtensionRecord {
 
   @@index([schoolId, extensionId, resource, createdAt])
   @@index([extensionId, resource])
+  @@index([schoolId, byteSize])
 }
 
 /// Append-only audit trail of every privileged action in the system.

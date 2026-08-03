@@ -942,6 +942,8 @@ Publisher migration note (2026-08-03): `20260803000002_add_extension_publisher_g
 
 Publisher-permission migration note (2026-08-03): `20260803000003_add_publisher_members_and_reviews` was applied successfully against PostgreSQL 16 with an existing platform admin. The rehearsal proved scoped-role backfill and creation of append-only review history tables and constraints.
 
+Extension-data migration note (2026-08-03): `20260803000004_add_extension_data_usage` was applied successfully against PostgreSQL 16 with existing JSON records. The rehearsal proved per-record byte backfill and exact installation usage totals. Runtime writes reserve quota atomically in serializable transactions, and expired uninstall cleanup deletes retained extension records after 30 days.
+
 ### Stage 4 — Marketplace and operations
 
 #### Publisher and review
@@ -964,7 +966,7 @@ Publisher-permission migration note (2026-08-03): `20260803000003_add_publisher_
 
 - [x] Add validation, installation, activation, upgrade, and rollback metrics.
 - [ ] Add extension API error and latency metrics.
-- [ ] **PARTIAL:** Add storage and data usage metrics; package and extracted-asset bytes are reported, while extension-record usage remains.
+- [x] Add storage and data usage metrics.
 - [x] Add version health dashboard.
 - [x] Add emergency global version kill switch.
 - [x] Add operator runbook for compromised packages.

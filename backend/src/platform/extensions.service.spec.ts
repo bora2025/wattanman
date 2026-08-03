@@ -265,6 +265,7 @@ describe('ExtensionsService', () => {
   it('reports version adoption, validation failures, storage, and lifecycle activity', async () => {
     prisma.extension.findMany.mockResolvedValue([{
       id: 'ext-1', key: 'REWARDS', name: 'Rewards', publisherEntity: { key: 'WATTAMAN', status: 'ACTIVE' },
+      records: [{ byteSize: 40, school: { id: 'school-a', name: 'School A', subdomain: 'a' } }],
       versions: [{
         id: 'version-1', version: '1.0.0', lifecycleStatus: 'PUBLISHED', publishedAt: new Date(), packageSize: 100,
         assets: [{ size: 25 }], validations: [{ status: 'PASSED' }, { status: 'FAILED' }],
@@ -278,8 +279,9 @@ describe('ExtensionsService', () => {
 
     const result = await service.health();
 
-    expect(result.totals).toEqual({ extensions: 1, versions: 1, activeInstallations: 1, storageBytes: 125, failedValidations: 1 });
+    expect(result.totals).toEqual({ extensions: 1, versions: 1, activeInstallations: 1, storageBytes: 125, recordBytes: 40, failedValidations: 1 });
     expect(result.lifecycleActions).toEqual({ INSTALL: 2 });
     expect(result.versions[0].adoption.schools).toHaveLength(2);
+    expect(result.schoolUsage).toEqual([expect.objectContaining({ school: expect.objectContaining({ id: 'school-a' }), recordBytes: 40, quotaBytes: 104857600 })]);
   });
 });

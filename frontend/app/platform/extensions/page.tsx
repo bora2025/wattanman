@@ -436,14 +436,16 @@ function ExtensionsContent() {
         <div className="page-body space-y-5">
           {health && <div className="card p-5 space-y-4">
             <div><h2 className="font-bold text-slate-800 dark:text-slate-100">Extension health</h2><p className="text-xs text-slate-500">Generated {new Date(health.generatedAt).toLocaleString()}</p></div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
               <div><p className="text-slate-400">Extensions</p><p className="font-bold">{health.totals.extensions}</p></div>
               <div><p className="text-slate-400">Versions</p><p className="font-bold">{health.totals.versions}</p></div>
               <div><p className="text-slate-400">Active installs</p><p className="font-bold">{health.totals.activeInstallations}</p></div>
               <div><p className="text-slate-400">Stored</p><p className="font-bold">{Math.ceil(health.totals.storageBytes / 1024)} KB</p></div>
+              <div><p className="text-slate-400">Record data</p><p className="font-bold">{Math.ceil(health.totals.recordBytes / 1024)} KB</p></div>
               <div><p className="text-slate-400">Failed validations</p><p className="font-bold">{health.totals.failedValidations}</p></div>
             </div>
             <div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="text-left text-slate-400"><th className="py-2">Version</th><th>Status</th><th>Publisher</th><th>Adoption</th><th>Affected schools</th></tr></thead><tbody>{health.versions.map((item: any) => <tr key={item.versionId} className="border-t border-slate-100 dark:border-slate-800"><td className="py-2">{item.extension.name} v{item.version}</td><td>{item.lifecycleStatus}</td><td>{item.publisher.key} · {item.publisher.status}</td><td>{item.adoption.active}/{item.adoption.installations} active</td><td>{item.adoption.schools.map((school: any) => school.name).join(', ') || 'None'}</td></tr>)}</tbody></table></div>
+            {health.schoolUsage?.length > 0 && <div className="text-xs space-y-1"><p className="font-semibold">School record quota</p>{health.schoolUsage.map((usage: any) => <p key={usage.school.id}>{usage.school.name}: {Math.ceil(usage.recordBytes / 1024)} KB / {Math.round(usage.quotaBytes / 1024 / 1024)} MB ({usage.percentUsed}%)</p>)}</div>}
           </div>}
           <div className="card p-5 space-y-3">
             <div><h2 className="font-bold text-slate-800 dark:text-slate-100">Publishers</h2><p className="text-xs text-slate-500">Initial release accepts Wattaman-internal packages only.</p></div>

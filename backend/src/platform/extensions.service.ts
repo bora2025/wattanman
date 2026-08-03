@@ -422,6 +422,7 @@ export class ExtensionsService {
       this.prisma.extension.findMany({
         include: {
           publisherEntity: true,
+          records: { select: { byteSize: true, school: { select: { id: true, name: true, subdomain: true } } } },
           versions: {
             orderBy: { createdAt: 'desc' },
             include: {
@@ -459,6 +460,15 @@ export class ExtensionsService {
         schools: version.installations.map((installation) => installation.school),
       },
     })));
+    const schoolUsage = new Map<string, { school: { id: string; name: string; subdomain: string }; recordBytes: number }>();
+    for (const extension of extensions) {
+      for (const record of extension.records) {
+        const usage = schoolUsage.get(record.school.id) || { school: record.school, recordBytes: 0 };
+        usage.recordBytes += record.byteSize;
+        schoolUsage.set(record.school.id, usage);
+      }
+    }
+    const recordBytes = [...schoolUsage.values()].reduce((sum, usage) => sum + usage.recordBytes, 0);
     return {
       generatedAt: new Date().toISOString(),
       totals: {
@@ -466,9 +476,15 @@ export class ExtensionsService {
         versions: versions.length,
         activeInstallations: versions.reduce((sum, version) => sum + version.adoption.active, 0),
         storageBytes: versions.reduce((sum, version) => sum + version.storageBytes, 0),
+        recordBytes,
         failedValidations: versions.reduce((sum, version) => sum + version.validations.failed, 0),
       },
       lifecycleActions: Object.fromEntries(lifecycleActions.map((row) => [row.action, row._count._all])),
+      schoolUsage: [...schoolUsage.values()].map((usage) => ({
+        ...usage,
+        quotaBytes: 100 * 1024 * 1024,
+        percentUsed: Number(((usage.recordBytes / (100 * 1024 * 1024)) * 100).toFixed(2)),
+      })),
       versions,
     };
   }

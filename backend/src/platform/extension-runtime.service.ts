@@ -1,8 +1,10 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 interface RuntimeUser { userId?: string; role?: string }
+const EXTENSION_DATA_QUOTA_BYTES = 100 * 1024 * 1024;
 
 @Injectable()
 export class ExtensionRuntimeService {
@@ -47,32 +49,69 @@ export class ExtensionRuntimeService {
     const installation = await this.authorize(extensionKey, resource, 'write', user);
     const manifest = installation.installedVersion.manifest as Record<string, any>;
     this.validateData(manifest.resources[resource], data);
-    return this.prisma.extensionRecord.create({
-      data: {
-        schoolId: getCurrentSchoolId(),
-        extensionId: installation.extensionId,
-        resource,
-        data: data as any,
-        createdBy: user.userId,
-      },
-    });
+    const schoolId = getCurrentSchoolId();
+    const byteSize = this.byteSize(data);
+    return this.prisma.$transaction(async (transaction) => {
+      await this.reserveBytes(transaction, installation.id, schoolId, byteSize);
+      return transaction.extensionRecord.create({
+        data: {
+          schoolId,
+          extensionId: installation.extensionId,
+          resource,
+          data: data as any,
+          byteSize,
+          createdBy: user.userId,
+        },
+      });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   async updateRecord(extensionKey: string, resource: string, recordId: string, data: Record<string, unknown>, user: RuntimeUser) {
     const installation = await this.authorize(extensionKey, resource, 'write', user);
     const manifest = installation.installedVersion.manifest as Record<string, any>;
     this.validateData(manifest.resources[resource], data);
-    const record = await this.prisma.extensionRecord.findFirst({ where: { id: recordId, extensionId: installation.extensionId, resource } });
-    if (!record) throw new NotFoundException('Extension record not found');
-    return this.prisma.extensionRecord.update({ where: { id: recordId }, data: { data: data as any, updatedBy: user.userId } });
+    const schoolId = getCurrentSchoolId();
+    const byteSize = this.byteSize(data);
+    return this.prisma.$transaction(async (transaction) => {
+      const record = await transaction.extensionRecord.findFirst({ where: { id: recordId, schoolId, extensionId: installation.extensionId, resource } });
+      if (!record) throw new NotFoundException('Extension record not found');
+      await this.adjustBytes(transaction, installation.id, schoolId, byteSize - record.byteSize);
+      return transaction.extensionRecord.update({ where: { id: recordId }, data: { data: data as any, byteSize, updatedBy: user.userId } });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   async deleteRecord(extensionKey: string, resource: string, recordId: string, user: RuntimeUser) {
     const installation = await this.authorize(extensionKey, resource, 'write', user);
-    const record = await this.prisma.extensionRecord.findFirst({ where: { id: recordId, extensionId: installation.extensionId, resource } });
-    if (!record) throw new NotFoundException('Extension record not found');
-    await this.prisma.extensionRecord.delete({ where: { id: recordId } });
+    const schoolId = getCurrentSchoolId();
+    await this.prisma.$transaction(async (transaction) => {
+      const record = await transaction.extensionRecord.findFirst({ where: { id: recordId, schoolId, extensionId: installation.extensionId, resource } });
+      if (!record) throw new NotFoundException('Extension record not found');
+      await this.adjustBytes(transaction, installation.id, schoolId, -record.byteSize);
+      await transaction.extensionRecord.delete({ where: { id: recordId } });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     return { deleted: true, id: recordId };
+  }
+
+  private byteSize(data: Record<string, unknown>) {
+    return Buffer.byteLength(JSON.stringify(data), 'utf8');
+  }
+
+  private async reserveBytes(transaction: any, installationId: string, schoolId: string, bytes: number) {
+    const reserved = await transaction.extensionInstallation.updateMany({
+      where: { id: installationId, schoolId, dataBytes: { lte: EXTENSION_DATA_QUOTA_BYTES - bytes } },
+      data: { dataBytes: { increment: bytes } },
+    });
+    if (reserved.count !== 1) throw new PayloadTooLargeException('Extension data quota exceeded');
+  }
+
+  private async adjustBytes(transaction: any, installationId: string, schoolId: string, delta: number) {
+    if (delta > 0) return this.reserveBytes(transaction, installationId, schoolId, delta);
+    if (delta < 0) {
+      await transaction.extensionInstallation.updateMany({
+        where: { id: installationId, schoolId },
+        data: { dataBytes: { decrement: -delta } },
+      });
+    }
   }
 
   private async authorize(extensionKey: string, resource: string, action: 'read' | 'write', user: RuntimeUser) {

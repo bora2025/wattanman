@@ -15,11 +15,18 @@ export class ExtensionCleanupService {
     const packageCutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const expiredInstallations = await this.prisma.extensionInstallation.findMany({
       where: { enabled: false, purgeAfter: { lte: now } },
-      select: { id: true },
+      select: { id: true, schoolId: true, extensionId: true },
     });
     if (expiredInstallations.length) {
-      await this.prisma.extensionInstallation.deleteMany({
-        where: { id: { in: expiredInstallations.map((installation) => installation.id) } },
+      await this.prisma.$transaction(async (transaction) => {
+        for (const installation of expiredInstallations) {
+          await transaction.extensionRecord.deleteMany({
+            where: { schoolId: installation.schoolId, extensionId: installation.extensionId },
+          });
+        }
+        await transaction.extensionInstallation.deleteMany({
+          where: { id: { in: expiredInstallations.map((installation) => installation.id) } },
+        });
       });
     }
 

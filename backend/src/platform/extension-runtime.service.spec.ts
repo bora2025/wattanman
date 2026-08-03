@@ -22,12 +22,15 @@ describe('ExtensionRuntimeService', () => {
     },
   };
   const installation = {
+    id: 'installation-1',
+    schoolId: 'school-a',
     extensionId: 'extension-1',
     extension: { key: 'STUDENT_REWARDS', name: 'Student Rewards' },
     installedVersion: { lifecycleStatus: 'PUBLISHED', manifest },
   };
   const prisma = {
-    extensionInstallation: { findMany: jest.fn(), findFirst: jest.fn() },
+    $transaction: jest.fn(),
+    extensionInstallation: { findMany: jest.fn(), findFirst: jest.fn(), updateMany: jest.fn() },
     extensionRecord: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
@@ -38,7 +41,11 @@ describe('ExtensionRuntimeService', () => {
   };
   const service = new ExtensionRuntimeService(prisma as any);
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    prisma.$transaction.mockImplementation((callback) => callback(prisma));
+    prisma.extensionInstallation.updateMany.mockResolvedValue({ count: 1 });
+  });
 
   it('returns only navigation allowed for the current role', async () => {
     prisma.extensionInstallation.findMany.mockResolvedValue([installation]);
@@ -59,8 +66,11 @@ describe('ExtensionRuntimeService', () => {
 
     expect(result.schoolId).toBe('school-a');
     expect(prisma.extensionRecord.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ schoolId: 'school-a', extensionId: 'extension-1', createdBy: 'teacher-1' }),
+      data: expect.objectContaining({ schoolId: 'school-a', extensionId: 'extension-1', byteSize: expect.any(Number), createdBy: 'teacher-1' }),
     });
+    expect(prisma.extensionInstallation.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ id: 'installation-1', schoolId: 'school-a', dataBytes: expect.any(Object) }),
+    }));
   });
 
   it('denies capabilities not declared by the extension', async () => {
@@ -91,9 +101,23 @@ describe('ExtensionRuntimeService', () => {
     prisma.extensionInstallation.findFirst.mockResolvedValue(installation);
     prisma.extensionRecord.findFirst.mockResolvedValue(null);
 
-    await expect(service.deleteRecord('STUDENT_REWARDS', 'rewards', 'other-record', { role: 'ADMIN' })).rejects.toThrow(NotFoundException);
+    await expect(tenantContext.run(
+      { schoolId: 'school-a', mode: 'scoped' },
+      () => service.deleteRecord('STUDENT_REWARDS', 'rewards', 'other-record', { role: 'ADMIN' }),
+    )).rejects.toThrow(NotFoundException);
     expect(prisma.extensionRecord.findFirst).toHaveBeenCalledWith({
-      where: { id: 'other-record', extensionId: 'extension-1', resource: 'rewards' },
+      where: { id: 'other-record', schoolId: 'school-a', extensionId: 'extension-1', resource: 'rewards' },
     });
+  });
+
+  it('rejects a record when the school extension-data quota is exhausted', async () => {
+    prisma.extensionInstallation.findFirst.mockResolvedValue(installation);
+    prisma.extensionInstallation.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(tenantContext.run(
+      { schoolId: 'school-a', mode: 'scoped' },
+      () => service.createRecord('STUDENT_REWARDS', 'rewards', { studentName: 'Sokha', points: 10 }, { role: 'TEACHER' }),
+    )).rejects.toThrow('Extension data quota exceeded');
+    expect(prisma.extensionRecord.create).not.toHaveBeenCalled();
   });
 });

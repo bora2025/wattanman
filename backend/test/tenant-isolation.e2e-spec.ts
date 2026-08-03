@@ -343,6 +343,11 @@ describe('Phase 4d: Multi-Tenant Isolation', () => {
         .send({ points: 30 })
         .expect(201);
       expect(res.body.schoolId).toBe(state.schoolAId);
+      expect(res.body.byteSize).toBeGreaterThan(0);
+      const installation = await prisma.extensionInstallation.findUnique({
+        where: { schoolId_extensionId: { schoolId: state.schoolAId, extensionId: state.extensionId } },
+      });
+      expect(installation?.dataBytes).toBeGreaterThanOrEqual(res.body.byteSize);
     });
 
     it('removes navigation and resource access immediately when disabled', async () => {
