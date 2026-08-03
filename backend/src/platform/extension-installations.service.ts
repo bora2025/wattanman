@@ -137,8 +137,10 @@ export class ExtensionInstallationsService {
     }
     let configuration = (existing.configuration as Record<string, any> | null) || {};
     if (existing.enabled && existing.extension.runtimeType === 'THEME') {
-      await this.applyThemeVersion(existing.schoolId, version);
-      configuration = { ...configuration, rollbackVersionId: existing.installedVersionId, activeThemeVersionId: version.id };
+      const current = await this.prisma.siteSetting.findUnique({ where: { schoolId: existing.schoolId } });
+      const schoolOverrides = this.themeOverrides(current, configuration.appliedTheme);
+      const appliedTheme = await this.applyThemeVersion(existing.schoolId, version, schoolOverrides);
+      configuration = { ...configuration, rollbackVersionId: existing.installedVersionId, activeThemeVersionId: version.id, schoolOverrides, appliedTheme };
     }
     const migration = existing.extension.runtimeType === 'DECLARATIVE_MODULE'
       ? this.findMigration(existing.installedVersion.version, version)
@@ -209,8 +211,11 @@ export class ExtensionInstallationsService {
     });
     if (!version) throw new NotFoundException('Rollback version is unavailable or blocked');
     if (existing.extension.runtimeType !== 'CORE_MODULE') await this.signing.verifyPublished(version);
-    if (existing.enabled && existing.extension.runtimeType === 'THEME') await this.applyThemeVersion(existing.schoolId, version);
-    const updatedConfiguration = { ...configuration, rollbackVersionId: existing.installedVersionId, activeThemeVersionId: version.id };
+    let updatedConfiguration: Record<string, any> = { ...configuration, rollbackVersionId: existing.installedVersionId, activeThemeVersionId: version.id };
+    if (existing.enabled && existing.extension.runtimeType === 'THEME') {
+      const appliedTheme = await this.applyThemeVersion(existing.schoolId, version, configuration.schoolOverrides || {});
+      updatedConfiguration = { ...updatedConfiguration, appliedTheme };
+    }
     const updated = existing.extension.runtimeType === 'DECLARATIVE_MODULE' && configuration.migrationRunId
       ? await this.rollbackMigration(existing, version, configuration.migrationRunId, updatedConfiguration)
       : await this.prisma.extensionInstallation.update({
@@ -254,6 +259,15 @@ export class ExtensionInstallationsService {
             customCss: current.customCss,
           } : null,
           activeThemeVersionId: existing.installedVersionId,
+          appliedTheme: {
+            mode: manifest.mode,
+            primaryColor: manifest.tokens.primaryColor,
+            secondaryColor: manifest.tokens.secondaryColor,
+            font: manifest.tokens.font,
+            radius: manifest.tokens.radius,
+            customCss: css,
+          },
+          schoolOverrides: {},
         };
         await this.prisma.siteSetting.upsert({
           where: { schoolId: existing.schoolId },
@@ -446,30 +460,34 @@ export class ExtensionInstallationsService {
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
-  private async applyThemeVersion(schoolId: string, version: { manifest: any; assets: Array<{ path: string; storageKey: string }> }) {
+  private async applyThemeVersion(schoolId: string, version: { manifest: any; assets: Array<{ path: string; storageKey: string }> }, overrides: Record<string, unknown> = {}) {
     const manifest = version.manifest as Record<string, any>;
     const styleAsset = version.assets.find((asset) => asset.path.toLowerCase().split('/').pop() === 'style.css');
     const customCss = styleAsset ? (await this.storage.getPrivate(styleAsset.storageKey)).toString('utf8') : '';
+    const appliedTheme = {
+      mode: manifest.mode,
+      primaryColor: manifest.tokens.primaryColor,
+      secondaryColor: manifest.tokens.secondaryColor,
+      font: manifest.tokens.font,
+      radius: manifest.tokens.radius,
+      customCss,
+    };
+    const merged = { ...appliedTheme, ...overrides };
     await this.prisma.siteSetting.upsert({
       where: { schoolId },
-      update: {
-        mode: manifest.mode,
-        primaryColor: manifest.tokens.primaryColor,
-        secondaryColor: manifest.tokens.secondaryColor,
-        font: manifest.tokens.font,
-        radius: manifest.tokens.radius,
-        customCss,
-      },
-      create: {
-        schoolId,
-        mode: manifest.mode,
-        primaryColor: manifest.tokens.primaryColor,
-        secondaryColor: manifest.tokens.secondaryColor,
-        font: manifest.tokens.font,
-        radius: manifest.tokens.radius,
-        customCss,
-      },
+      update: merged,
+      create: { schoolId, ...merged },
     });
+    return appliedTheme;
+  }
+
+  private themeOverrides(current: Record<string, any> | null, appliedTheme: Record<string, any> | null | undefined) {
+    if (!current || !appliedTheme) return {};
+    const overrides: Record<string, unknown> = {};
+    for (const key of ['mode', 'primaryColor', 'secondaryColor', 'font', 'radius', 'customCss']) {
+      if (current[key] !== appliedTheme[key]) overrides[key] = current[key];
+    }
+    return overrides;
   }
 
   private log(actor: Actor, action: string, resourceId: string, resourceLabel: string, metadata: Record<string, unknown>) {

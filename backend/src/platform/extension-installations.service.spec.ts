@@ -118,6 +118,32 @@ describe('ExtensionInstallationsService', () => {
       update: expect.objectContaining({ mode: 'dark', primaryColor: '#14B8A6', customCss: '.card { border-radius: 1rem; }' }),
     }));
     expect((result.configuration as any).previousTheme).toEqual(previousTheme);
+    expect((result.configuration as any).appliedTheme).toEqual(expect.objectContaining({ mode: 'dark', primaryColor: '#14B8A6' }));
+  });
+
+  it('preserves school appearance overrides during theme upgrade', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'theme-install', schoolId: 'school-a', extensionId: 'theme-1', installedVersionId: 'version-1', installedAt: new Date(), enabled: true,
+      configuration: { appliedTheme: { mode: 'light', primaryColor: '#111111', secondaryColor: '#222222', font: 'inter', radius: 'soft', customCss: '.old{}' } },
+      extension: { key: 'AURORA', name: 'Aurora', runtimeType: 'THEME' },
+      installedVersion: { version: '1.0.0', lifecycleStatus: 'PUBLISHED', manifest: {}, assets: [] },
+    });
+    prisma.extensionVersion.findFirst.mockResolvedValue({
+      id: 'version-2', version: '2.0.0', manifest: { mode: 'dark', tokens: { primaryColor: '#14B8A6', secondaryColor: '#FBBF24', font: 'poppins', radius: 'round' } },
+      assets: [{ path: 'style.css', storageKey: 'theme-v2.css' }],
+    });
+    prisma.siteSetting.findUnique.mockResolvedValue({ mode: 'light', primaryColor: '#AA0000', secondaryColor: '#222222', font: 'inter', radius: 'soft', customCss: '.old{}' });
+    storage.getPrivate.mockResolvedValue(Buffer.from('.wattaman-theme .card{}'));
+    prisma.siteSetting.upsert.mockResolvedValue({});
+    prisma.extensionInstallation.update.mockImplementation(({ data }) => Promise.resolve({ id: 'theme-install', ...data }));
+
+    const result = await service.upgrade('theme-install', 'version-2', actor);
+
+    expect(prisma.siteSetting.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      update: expect.objectContaining({ mode: 'dark', primaryColor: '#AA0000', secondaryColor: '#FBBF24', font: 'poppins' }),
+    }));
+    expect((result.configuration as any).schoolOverrides).toEqual({ primaryColor: '#AA0000' });
+    expect((result.configuration as any).appliedTheme.primaryColor).toBe('#14B8A6');
   });
 
   it('uninstalls immediately and schedules purge after 30 days', async () => {

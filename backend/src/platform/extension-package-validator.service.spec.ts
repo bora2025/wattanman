@@ -141,6 +141,20 @@ describe('ExtensionPackageValidatorService', () => {
     expect(result.errors).toContainEqual(expect.objectContaining({ code: 'UNAPPROVED_CSS', path: 'style.css' }));
   });
 
+  it('rejects parent-theme inheritance in standalone manifest v1', async () => {
+    const file = await packageFile({
+      'theme.json': JSON.stringify({
+        schemaVersion: 1, key: 'AURORA', name: 'Aurora', version: '1.0.0', runtimeType: 'THEME', mode: 'dark', parentTheme: 'BASE',
+        tokens: { primaryColor: '#14B8A6', secondaryColor: '#FBBF24', font: 'inter', radius: 'soft' },
+      }),
+      'style.css': '.card { color: #123456; }',
+    });
+
+    const result = await validator.validate(file, { key: 'AURORA', runtimeType: 'THEME' }, '1.0.0');
+
+    expect(result.errors).toContainEqual(expect.objectContaining({ code: 'UNKNOWN_MANIFEST_PROPERTY', message: expect.stringContaining('parentTheme') }));
+  });
+
   it('validates optional spacing, shadow, and surface tokens', async () => {
     const file = await packageFile({
       'theme.json': JSON.stringify({

@@ -668,7 +668,7 @@ This section is the source of truth for implementation progress. Update it in th
 | Existing foundation | Complete | Catalog, school enablement, guards, theme application, and platform roles already exist |
 | Stage 0 — Product decisions | In progress | Initial internal-release defaults are accepted; formal security, product, and operations approval remains |
 | Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, and audit exist; migration and failure gates remain |
-| Stage 2 — Versioned themes | In progress | Manifest/token validation, approved scoped CSS, public/dashboard preview, publishing, installation, activation, upgrade, rollback, blocking, and uninstall exist; inheritance, override merging, visual regression, and full integration gates remain |
+| Stage 2 — Versioned themes | In progress | Standalone manifests, token validation, scoped CSS, public/dashboard preview, override-preserving upgrade/rollback, blocking, and uninstall exist; visual regression and full integration gates remain |
 | Stage 3 — Declarative modules | In progress | Runtime navigation, an approved accessible component registry, translation fallback, tenant records, capability enforcement, dependency/conflict resolution, dependent-safe uninstall, and reversible migrations are implemented; controlled service capabilities, pilot acceptance, and full integration gates remain |
 | Stage 4 — Marketplace operations | In progress | Publisher governance, release compatibility, explicit visibility, scoped permissions, signing, update policies, operational alerts, API telemetry, adoption health, emergency blocking, and incident response exist; the full marketplace end-to-end gate remains |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
@@ -816,8 +816,8 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Require key, name, version, manifest schema, and platform compatibility.
 - [x] Validate mode, colors, fonts, radius, spacing, shadows, and surface tokens.
 - [x] Validate asset references against extracted package files.
-- [ ] Decide and implement parent-theme inheritance.
-- [ ] Decide and implement school-level override preservation.
+- [x] Decide and implement parent-theme inheritance; schema v1 intentionally supports standalone themes only and rejects parent declarations.
+- [x] Decide and implement school-level override preservation.
 
 #### Theme package contents
 
@@ -838,7 +838,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Approve and publish a theme version.
 - [x] Install a published version for selected schools.
 - [x] Activate one installed theme version per school.
-- [ ] **PARTIAL:** Upgrade while preserving approved school overrides; upgrades preserve the pre-extension theme snapshot, while explicit post-install school overrides are not yet merged.
+- [x] Upgrade while preserving approved school overrides.
 - [x] Roll back to the previous installed version.
 - [x] Deprecate a version without breaking current installations.
 - [x] Emergency-block a compromised version.
@@ -956,7 +956,9 @@ Update and alert migration note (2026-08-03): `20260803000006_add_extension_upda
 
 Marketplace operations migration note (2026-08-03): `20260803000008_add_extension_visibility_and_api_metrics` was applied successfully against PostgreSQL 16 with listed/unlisted backfill verification. Release notes and platform ranges are required before review and exposed as a compatibility matrix; listed, unlisted, and private visibility with per-school grants are enforced; extension API success/error counts and latency are collected hourly and shown to operators. The extension suite passes 62 tests, backend and frontend production builds pass, and the real two-school HTTP/PostgreSQL tenant suite passes 21/21. The broad Stage 4 workflow gate remains open until one real artifact is exercised through the complete publisher-to-emergency lifecycle in a single E2E scenario.
 
-Theme safety note (2026-08-03): theme packages now validate color, font, radius, spacing, shadow, and surface tokens; reject CSS outside the approved selector registry; rewrite accepted rules beneath `.wattaman-theme`; and render isolated light/dark public-site and authenticated-dashboard previews with compatibility and validator warnings. The extension suite passes 64 tests and both production builds pass. Parent inheritance, post-install override merging, visual regression, and the complete real-storage lifecycle remain open.
+Theme safety note (2026-08-03): theme packages now validate color, font, radius, spacing, shadow, and surface tokens; reject CSS outside the approved selector registry; rewrite accepted rules beneath `.wattaman-theme`; and render isolated light/dark public-site and authenticated-dashboard previews with compatibility and validator warnings. The extension suite passes 64 tests and both production builds pass.
+
+Theme override note (2026-08-03): theme manifest v1 is explicitly standalone and rejects undeclared parent inheritance. Activation records the exact package-applied appearance; upgrade compares current school settings against that snapshot, preserves only changed school overrides, applies the new package beneath them, and retains the same overrides during rollback. The extension suite passes 77 tests and backend type-check/build passes. Visual regression and complete real-storage lifecycle gates remain open.
 
 ### Stage 4 — Marketplace and operations
 
