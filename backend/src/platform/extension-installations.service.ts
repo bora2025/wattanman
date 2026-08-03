@@ -3,6 +3,7 @@ import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../database/prisma.service';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
 import { R2StorageService } from '../storage/r2-storage.service';
+import { ExtensionSigningService } from './extension-signing.service';
 
 interface Actor {
   userId?: string;
@@ -13,7 +14,12 @@ interface Actor {
 
 @Injectable()
 export class ExtensionInstallationsService {
-  constructor(private prisma: PrismaService, private audit: AuditService, private storage: R2StorageService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+    private storage: R2StorageService,
+    private signing: ExtensionSigningService,
+  ) {}
 
   async schoolDirectory() {
     return this.prisma.extension.findMany({
@@ -85,9 +91,10 @@ export class ExtensionInstallationsService {
     if (!existing.approvedAt) throw new ConflictException('Extension request must be approved before installation');
     const version = await this.prisma.extensionVersion.findFirst({
       where: { id: versionId, extensionId: existing.extensionId, lifecycleStatus: 'PUBLISHED' },
-      include: { assets: true },
+      include: { assets: true, signingKey: true },
     });
     if (!version) throw new NotFoundException('Published extension version not found for this extension');
+    if (existing.extension.runtimeType !== 'CORE_MODULE') await this.signing.verifyPublished(version);
     const updated = await this.prisma.extensionInstallation.update({
       where: { id: installationId },
       data: {
@@ -108,9 +115,10 @@ export class ExtensionInstallationsService {
     if (existing.installedVersionId === versionId) return existing;
     const version = await this.prisma.extensionVersion.findFirst({
       where: { id: versionId, extensionId: existing.extensionId, lifecycleStatus: 'PUBLISHED' },
-      include: { assets: true },
+      include: { assets: true, signingKey: true },
     });
     if (!version) throw new NotFoundException('Published upgrade version not found for this extension');
+    if (existing.extension.runtimeType !== 'CORE_MODULE') await this.signing.verifyPublished(version);
     const permissionReview = this.permissionReview(existing.installedVersion, version);
     if (permissionReview.added.length && !acknowledgePermissions) {
       throw new ConflictException(`Upgrade requests new permissions: ${permissionReview.added.join(', ')}`);
@@ -156,9 +164,10 @@ export class ExtensionInstallationsService {
     if (!rollbackVersionId) throw new ConflictException('No rollback version is available');
     const version = await this.prisma.extensionVersion.findFirst({
       where: { id: rollbackVersionId, extensionId: existing.extensionId, lifecycleStatus: { in: ['PUBLISHED', 'DEPRECATED'] } },
-      include: { assets: true },
+      include: { assets: true, signingKey: true },
     });
     if (!version) throw new NotFoundException('Rollback version is unavailable or blocked');
+    if (existing.extension.runtimeType !== 'CORE_MODULE') await this.signing.verifyPublished(version);
     if (existing.enabled && existing.extension.runtimeType === 'THEME') await this.applyThemeVersion(existing.schoolId, version);
     const updatedConfiguration = { ...configuration, rollbackVersionId: existing.installedVersionId, activeThemeVersionId: version.id };
     const updated = await this.prisma.extensionInstallation.update({
@@ -182,6 +191,7 @@ export class ExtensionInstallationsService {
     if (enabled && existing.installedVersion.lifecycleStatus !== 'PUBLISHED') {
       throw new ConflictException('Only a published extension version can be activated');
     }
+    if (enabled && existing.extension.runtimeType !== 'CORE_MODULE') await this.signing.verifyPublished(existing.installedVersion);
     let configuration = existing.configuration as Record<string, any> | null;
     if (existing.extension.runtimeType === 'THEME') {
       if (enabled) {
@@ -249,7 +259,7 @@ export class ExtensionInstallationsService {
   private async requireInstallation(id: string) {
     const installation = await this.prisma.extensionInstallation.findUnique({
       where: { id },
-      include: { extension: true, installedVersion: { include: { assets: true } } },
+      include: { extension: true, installedVersion: { include: { assets: true, signingKey: true } } },
     });
     if (!installation) throw new NotFoundException('Extension installation not found');
     return installation;

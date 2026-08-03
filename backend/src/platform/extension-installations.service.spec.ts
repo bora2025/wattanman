@@ -17,7 +17,8 @@ describe('ExtensionInstallationsService', () => {
   };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
   const storage = { getPrivate: jest.fn() };
-  const service = new ExtensionInstallationsService(prisma as any, audit as any, storage as any);
+  const signing = { verifyPublished: jest.fn().mockResolvedValue(true) };
+  const service = new ExtensionInstallationsService(prisma as any, audit as any, storage as any, signing as any);
   const actor = { userId: 'admin-1', role: 'ADMIN' };
 
   beforeEach(() => jest.clearAllMocks());
@@ -54,8 +55,21 @@ describe('ExtensionInstallationsService', () => {
     await expect(service.install('installation-1', 'other-version', actor)).rejects.toThrow(NotFoundException);
     expect(prisma.extensionVersion.findFirst).toHaveBeenCalledWith({
       where: { id: 'other-version', extensionId: 'extension-1', lifecycleStatus: 'PUBLISHED' },
-      include: { assets: true },
+      include: { assets: true, signingKey: true },
     });
+  });
+
+  it('refuses installation when package signature verification fails', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', extensionId: 'extension-1', approvedAt: new Date(),
+      extension: { name: 'Rewards', runtimeType: 'DECLARATIVE_MODULE' },
+      installedVersion: { lifecycleStatus: 'PUBLISHED' },
+    });
+    prisma.extensionVersion.findFirst.mockResolvedValue({ id: 'version-1', assets: [], signingKey: { status: 'REVOKED' } });
+    signing.verifyPublished.mockRejectedValueOnce(new ConflictException('Package signing key has been revoked'));
+
+    await expect(service.install('installation-1', 'version-1', actor)).rejects.toThrow('revoked');
+    expect(prisma.extensionInstallation.update).not.toHaveBeenCalled();
   });
 
   it('requires approval and installation before activation', async () => {
@@ -127,7 +141,7 @@ describe('ExtensionInstallationsService', () => {
     expect(result.installedVersionId).toBe('version-2');
     expect(prisma.extensionVersion.findFirst).toHaveBeenCalledWith({
       where: { id: 'version-2', extensionId: 'extension-1', lifecycleStatus: 'PUBLISHED' },
-      include: { assets: true },
+      include: { assets: true, signingKey: true },
     });
   });
 
@@ -168,7 +182,7 @@ describe('ExtensionInstallationsService', () => {
     expect(result.installedVersionId).toBe('version-1');
     expect(prisma.extensionVersion.findFirst).toHaveBeenCalledWith({
       where: { id: 'version-1', extensionId: 'extension-1', lifecycleStatus: { in: ['PUBLISHED', 'DEPRECATED'] } },
-      include: { assets: true },
+      include: { assets: true, signingKey: true },
     });
   });
 });

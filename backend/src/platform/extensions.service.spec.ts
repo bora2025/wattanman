@@ -14,11 +14,13 @@ describe('ExtensionsService', () => {
     extensionPublisher: { upsert: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     extensionPublisherMember: { findUnique: jest.fn(), upsert: jest.fn() },
     extensionReview: { create: jest.fn(), findMany: jest.fn() },
+    extensionSigningKey: { findMany: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
     user: { findFirst: jest.fn() },
     extensionVersion: {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
     extensionValidation: {
       create: jest.fn(),
@@ -32,7 +34,8 @@ describe('ExtensionsService', () => {
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
   const storage = { putPrivate: jest.fn().mockResolvedValue(undefined), getPrivate: jest.fn(), deletePrivate: jest.fn().mockResolvedValue(undefined) };
   const packageValidator = { validate: jest.fn() };
-  const service = new ExtensionsService(prisma as any, audit as any, storage as any, packageValidator as any);
+  const signing = { signForPublication: jest.fn(), validatePublicKey: jest.fn() };
+  const service = new ExtensionsService(prisma as any, audit as any, storage as any, packageValidator as any, signing as any);
   const actor = { userId: 'platform-admin', role: 'PLATFORM_ADMIN' };
 
   beforeEach(() => {
@@ -40,6 +43,7 @@ describe('ExtensionsService', () => {
     prisma.extensionPublisherMember.findUnique.mockResolvedValue({
       status: 'ACTIVE', roles: ['UPLOAD', 'REVIEW', 'PUBLISH', 'MANAGE'],
     });
+    signing.signForPublication.mockResolvedValue({ signingKeyId: 'key-1', packageSignature: 'signature', signedAt: new Date() });
   });
 
   it('creates an internal declarative extension', async () => {
@@ -108,6 +112,9 @@ describe('ExtensionsService', () => {
         lifecycleStatus: 'PUBLISHED',
         publishedAt: expect.any(Date),
         packageStorageKey: 'published/extensions/ext-1/version-1/checksum.zip',
+        signingKeyId: 'key-1',
+        packageSignature: 'signature',
+        signedAt: expect.any(Date),
       }),
     }));
     expect(prisma.extension.update).toHaveBeenCalledWith({ where: { id: 'ext-1' }, data: { isListed: true, status: 'ACTIVE' } });
@@ -283,5 +290,22 @@ describe('ExtensionsService', () => {
     expect(result.lifecycleActions).toEqual({ INSTALL: 2 });
     expect(result.versions[0].adoption.schools).toHaveLength(2);
     expect(result.schoolUsage).toEqual([expect.objectContaining({ school: expect.objectContaining({ id: 'school-a' }), recordBytes: 40, quotaBytes: 104857600 })]);
+  });
+
+  it('revokes a signing key and blocks every affected version and installation', async () => {
+    prisma.extensionSigningKey.findUnique.mockResolvedValue({ id: 'key-1', keyId: 'wattaman-2026', publisherId: 'publisher-1', status: 'ACTIVE' });
+    prisma.extensionSigningKey.update.mockResolvedValue({ id: 'key-1', keyId: 'wattaman-2026', publisherId: 'publisher-1', status: 'REVOKED' });
+    prisma.extensionVersion.updateMany.mockResolvedValue({ count: 2 });
+
+    await service.setSigningKeyStatus('key-1', 'REVOKED', actor);
+
+    expect(prisma.extensionVersion.updateMany).toHaveBeenCalledWith({
+      where: { signingKeyId: 'key-1', lifecycleStatus: { in: ['PUBLISHED', 'DEPRECATED'] } },
+      data: { lifecycleStatus: 'BLOCKED' },
+    });
+    expect(prisma.extensionInstallation.updateMany).toHaveBeenCalledWith({
+      where: { installedVersion: { signingKeyId: 'key-1' }, enabled: true },
+      data: { enabled: false },
+    });
   });
 });

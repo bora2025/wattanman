@@ -37,6 +37,21 @@ export class ExtensionsController {
     return this.extensions.setPublisherMemberRoles(publisherId, userId, body.roles, req.user);
   }
 
+  @Get('publishers/:publisherId/signing-keys')
+  signingKeys(@Param('publisherId') publisherId: string) {
+    return this.extensions.signingKeys(publisherId);
+  }
+
+  @Post('publishers/:publisherId/signing-keys')
+  registerSigningKey(@Param('publisherId') publisherId: string, @Body() body: { keyId?: string; publicKeyPem?: string }, @Request() req) {
+    return this.extensions.registerSigningKey(publisherId, body, req.user);
+  }
+
+  @Patch('signing-keys/:keyId/status')
+  signingKeyStatus(@Param('keyId') keyId: string, @Body() body: { status: string }, @Request() req) {
+    return this.extensions.setSigningKeyStatus(keyId, body.status, req.user);
+  }
+
   @Get('health')
   health() {
     return this.extensions.health();

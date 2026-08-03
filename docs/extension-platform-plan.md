@@ -944,6 +944,8 @@ Publisher-permission migration note (2026-08-03): `20260803000003_add_publisher_
 
 Extension-data migration note (2026-08-03): `20260803000004_add_extension_data_usage` was applied successfully against PostgreSQL 16 with existing JSON records. The rehearsal proved per-record byte backfill and exact installation usage totals. Runtime writes reserve quota atomically in serializable transactions, and expired uninstall cleanup deletes retained extension records after 30 days.
 
+Package-signing migration note (2026-08-03): `20260803000005_add_extension_package_signing` was applied successfully against PostgreSQL 16. Ed25519 tests prove exact-byte signing, checksum verification, signature verification, tamper rejection, retired-key continuity, and irreversible revocation that blocks affected versions and installations.
+
 ### Stage 4 — Marketplace and operations
 
 #### Publisher and review
@@ -974,10 +976,10 @@ Extension-data migration note (2026-08-03): `20260803000004_add_extension_data_u
 
 #### Package signing
 
-- [ ] Define publisher key management.
-- [ ] Sign trusted package versions.
-- [ ] Verify signatures before publication and installation.
-- [ ] Define key rotation and revocation.
+- [x] Define publisher key management.
+- [x] Sign trusted package versions.
+- [x] Verify signatures before publication and installation.
+- [x] Define key rotation and revocation.
 
 #### Stage 4 completion gate
 

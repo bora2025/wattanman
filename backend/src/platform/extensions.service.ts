@@ -4,6 +4,7 @@ import { AuditService } from '../audit/audit.service';
 import { R2StorageService } from '../storage/r2-storage.service';
 import { createHash } from 'crypto';
 import { ExtensionPackageValidatorService } from './extension-package-validator.service';
+import { ExtensionSigningService } from './extension-signing.service';
 
 const KEY_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
@@ -38,6 +39,7 @@ export class ExtensionsService {
     private audit: AuditService,
     private storage: R2StorageService,
     private packageValidator: ExtensionPackageValidatorService,
+    private signing: ExtensionSigningService,
   ) {}
 
   list() {
@@ -261,10 +263,12 @@ export class ExtensionsService {
       throw new ConflictException('Publisher is not active');
     }
     let publishedStorageKey: string | undefined;
+    let signature: { signingKeyId: string; packageSignature: string; signedAt: Date } | undefined;
     if (nextStatus === 'PUBLISHED') {
       if (!existing.packageStorageKey || !existing.packageChecksum) {
         throw new ConflictException('A validated package artifact is required before publication');
       }
+      signature = await this.signing.signForPublication(existing, existing.extension.publisherId);
       publishedStorageKey = `published/extensions/${existing.extensionId}/${existing.id}/${existing.packageChecksum}.zip`;
       const packageContents = await this.storage.getPrivate(existing.packageStorageKey);
       await this.storage.putPrivate(publishedStorageKey, packageContents, 'application/zip');
@@ -277,6 +281,7 @@ export class ExtensionsService {
         reviewedBy: nextStatus === 'APPROVED' || nextStatus === 'REJECTED' ? actor.userId : undefined,
         publishedAt: nextStatus === 'PUBLISHED' ? new Date() : undefined,
         packageStorageKey: publishedStorageKey,
+        ...signature,
       },
     });
     if (nextStatus === 'PUBLISHED') {
@@ -365,6 +370,7 @@ export class ExtensionsService {
       include: {
         _count: { select: { extensions: true } },
         members: { include: { user: { select: { id: true, name: true, email: true } } }, orderBy: { createdAt: 'asc' } },
+        signingKeys: { orderBy: { createdAt: 'desc' } },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -386,6 +392,57 @@ export class ExtensionsService {
     });
     await this.log(actor, 'UPDATE', 'EXTENSION_PUBLISHER_MEMBER', membership.id, user.name, { metadata: { publisherId, roles: normalized } });
     return membership;
+  }
+
+  signingKeys(publisherId: string) {
+    return this.prisma.extensionSigningKey.findMany({ where: { publisherId }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async registerSigningKey(publisherId: string, data: { keyId?: string; publicKeyPem?: string }, actor: Actor) {
+    await this.requirePublisherRole(publisherId, actor, 'MANAGE');
+    const keyId = data.keyId?.trim();
+    const publicKeyPem = data.publicKeyPem?.trim();
+    if (!keyId || !/^[A-Za-z0-9._-]{3,100}$/.test(keyId)) throw new BadRequestException('A valid signing key ID is required');
+    if (!publicKeyPem) throw new BadRequestException('publicKeyPem is required');
+    this.signing.validatePublicKey(publicKeyPem);
+    const duplicate = await this.prisma.extensionSigningKey.findUnique({ where: { keyId } });
+    if (duplicate) throw new ConflictException('Signing key ID already exists');
+    const created = await this.prisma.extensionSigningKey.create({
+      data: { publisherId, keyId, algorithm: 'Ed25519', publicKeyPem, status: 'ACTIVE' },
+    });
+    await this.log(actor, 'CREATE', 'EXTENSION_SIGNING_KEY', created.id, keyId, { metadata: { publisherId, algorithm: 'Ed25519' } });
+    return created;
+  }
+
+  async setSigningKeyStatus(keyId: string, status: string, actor: Actor) {
+    if (!['ACTIVE', 'RETIRED', 'REVOKED'].includes(status)) throw new BadRequestException('Signing key status must be ACTIVE, RETIRED, or REVOKED');
+    const existing = await this.prisma.extensionSigningKey.findUnique({ where: { id: keyId } });
+    if (!existing) throw new NotFoundException('Extension signing key not found');
+    await this.requirePublisherRole(existing.publisherId, actor, 'MANAGE');
+    if (existing.status === 'REVOKED' && status !== 'REVOKED') throw new ConflictException('A revoked signing key cannot be reactivated');
+    const now = new Date();
+    const updated = await this.prisma.extensionSigningKey.update({
+      where: { id: keyId },
+      data: {
+        status,
+        retiredAt: status === 'RETIRED' ? now : undefined,
+        revokedAt: status === 'REVOKED' ? now : undefined,
+      },
+    });
+    if (status === 'REVOKED') {
+      await this.prisma.extensionVersion.updateMany({
+        where: { signingKeyId: keyId, lifecycleStatus: { in: ['PUBLISHED', 'DEPRECATED'] } },
+        data: { lifecycleStatus: 'BLOCKED' },
+      });
+      await this.prisma.extensionInstallation.updateMany({
+        where: { installedVersion: { signingKeyId: keyId }, enabled: true },
+        data: { enabled: false },
+      });
+    }
+    await this.log(actor, 'STATUS_CHANGE', 'EXTENSION_SIGNING_KEY', updated.id, updated.keyId, {
+      changes: { before: { status: existing.status }, after: { status } },
+    });
+    return updated;
   }
 
   async setPublisherStatus(publisherId: string, status: string, actor: Actor) {

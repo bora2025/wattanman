@@ -678,10 +678,28 @@ model ExtensionPublisher {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  extensions Extension[]
-  members    ExtensionPublisherMember[]
+  extensions  Extension[]
+  members     ExtensionPublisherMember[]
+  signingKeys ExtensionSigningKey[]
 
   @@index([status, internal])
+}
+
+model ExtensionSigningKey {
+  id           String             @id @default(cuid())
+  publisherId  String
+  publisher    ExtensionPublisher @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  keyId        String             @unique
+  algorithm    String             @default("Ed25519")
+  publicKeyPem String
+  status       String             @default("ACTIVE") // ACTIVE | RETIRED | REVOKED
+  createdAt    DateTime           @default(now())
+  retiredAt    DateTime?
+  revokedAt    DateTime?
+
+  versions ExtensionVersion[]
+
+  @@index([publisherId, status])
 }
 
 model ExtensionPublisherMember {
@@ -702,24 +720,28 @@ model ExtensionPublisherMember {
 /// Immutable release metadata. Published rows must never be updated in-place;
 /// lifecycle services enforce that rule and create a new semantic version.
 model ExtensionVersion {
-  id                 String    @id @default(cuid())
+  id                 String               @id @default(cuid())
   extensionId        String
-  extension          Extension @relation(fields: [extensionId], references: [id], onDelete: Cascade)
+  extension          Extension            @relation(fields: [extensionId], references: [id], onDelete: Cascade)
   version            String
-  manifestSchema     Int       @default(1)
+  manifestSchema     Int                  @default(1)
   manifest           Json
   packageStorageKey  String?
   packageChecksum    String?
   packageSize        Int?
   compatibilityRange String?
-  lifecycleStatus    String    @default("UPLOADED") // UPLOADED | QUARANTINED | VALIDATING | VALIDATED | REJECTED | AWAITING_REVIEW | APPROVED | PUBLISHED | DEPRECATED | BLOCKED | RETIRED
+  lifecycleStatus    String               @default("UPLOADED") // UPLOADED | QUARANTINED | VALIDATING | VALIDATED | REJECTED | AWAITING_REVIEW | APPROVED | PUBLISHED | DEPRECATED | BLOCKED | RETIRED
   reviewNotes        String?
   releaseNotes       String?
   uploadedBy         String?
   reviewedBy         String?
   publishedAt        DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  signingKeyId       String?
+  signingKey         ExtensionSigningKey? @relation(fields: [signingKeyId], references: [id], onDelete: Restrict)
+  packageSignature   String?
+  signedAt           DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
   assets        ExtensionAsset[]
   permissions   ExtensionPermission[]
@@ -731,6 +753,7 @@ model ExtensionVersion {
   @@index([extensionId, lifecycleStatus])
   @@index([lifecycleStatus, createdAt])
   @@index([packageChecksum])
+  @@index([signingKeyId])
 }
 
 model ExtensionReview {

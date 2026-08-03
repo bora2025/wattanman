@@ -70,6 +70,7 @@ interface PublisherRecord {
   status: string
   internal: boolean
   _count: { extensions: number }
+  signingKeys: Array<{ id: string; keyId: string; algorithm: string; status: string; createdAt: string }>
 }
 
 async function responseJson(res: Response) {
@@ -409,6 +410,33 @@ function ExtensionsContent() {
     }
   }
 
+  async function registerSigningKey(publisherId: string) {
+    const keyId = window.prompt('Signing key ID (for example wattaman-2026-01)')
+    if (!keyId) return
+    const publicKeyPem = window.prompt('Paste the Ed25519 public key PEM. Never paste the private key.')
+    if (!publicKeyPem) return
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/publishers/${publisherId}/signing-keys`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyId, publicKeyPem }),
+      }))
+      await load()
+    } catch (keyError: any) {
+      setError(keyError.message || 'Could not register signing key')
+    }
+  }
+
+  async function setSigningKeyStatus(keyId: string, status: string) {
+    if (status === 'REVOKED' && !window.confirm('Revoking a signing key is irreversible and immediately blocks every version signed by it. Continue?')) return
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/signing-keys/${keyId}/status`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
+      }))
+      await load()
+    } catch (keyError: any) {
+      setError(keyError.message || 'Could not update signing key')
+    }
+  }
+
   async function createExtension(event: FormEvent) {
     event.preventDefault()
     try {
@@ -449,9 +477,10 @@ function ExtensionsContent() {
           </div>}
           <div className="card p-5 space-y-3">
             <div><h2 className="font-bold text-slate-800 dark:text-slate-100">Publishers</h2><p className="text-xs text-slate-500">Initial release accepts Wattaman-internal packages only.</p></div>
-            {publishers.map(publisher => <div key={publisher.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
-              <div><p className="font-semibold text-sm">{publisher.name} <span className="text-xs text-slate-400">{publisher.key}</span></p><p className="text-xs text-slate-500">{publisher.status} · {publisher._count.extensions} extensions · {publisher.internal ? 'Internal' : 'External'}</p></div>
-              <div className="flex gap-2">{publisher.status !== 'ACTIVE' && <button className="btn-outline btn-sm" onClick={() => setPublisherStatus(publisher.id, 'ACTIVE')}>Reactivate</button>}{publisher.status === 'ACTIVE' && <button className="btn-outline btn-sm" onClick={() => setPublisherStatus(publisher.id, 'SUSPENDED')}>Suspend</button>}{publisher.status !== 'REVOKED' && <button className="btn-outline btn-sm" onClick={() => setPublisherStatus(publisher.id, 'REVOKED')}>Revoke</button>}</div>
+            {publishers.map(publisher => <div key={publisher.id} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3">
+              <div className="flex items-center justify-between gap-3"><div><p className="font-semibold text-sm">{publisher.name} <span className="text-xs text-slate-400">{publisher.key}</span></p><p className="text-xs text-slate-500">{publisher.status} · {publisher._count.extensions} extensions · {publisher.internal ? 'Internal' : 'External'}</p></div>
+              <div className="flex gap-2">{publisher.status !== 'ACTIVE' && <button className="btn-outline btn-sm" onClick={() => setPublisherStatus(publisher.id, 'ACTIVE')}>Reactivate</button>}{publisher.status === 'ACTIVE' && <button className="btn-outline btn-sm" onClick={() => setPublisherStatus(publisher.id, 'SUSPENDED')}>Suspend</button>}{publisher.status !== 'REVOKED' && <button className="btn-outline btn-sm" onClick={() => setPublisherStatus(publisher.id, 'REVOKED')}>Revoke</button>}</div></div>
+              <div className="text-xs space-y-2"><div className="flex items-center justify-between"><p className="font-semibold">Ed25519 signing keys</p><button className="btn-outline btn-sm" onClick={() => registerSigningKey(publisher.id)}>Register public key</button></div>{publisher.signingKeys?.map(key => <div key={key.id} className="flex justify-between gap-3"><span><code>{key.keyId}</code> · {key.status}</span><span className="flex gap-2">{key.status === 'ACTIVE' && <button onClick={() => setSigningKeyStatus(key.id, 'RETIRED')} className="text-amber-600">Retire</button>}{key.status !== 'REVOKED' && <button onClick={() => setSigningKeyStatus(key.id, 'REVOKED')} className="text-red-600">Revoke</button>}</span></div>)}{!publisher.signingKeys?.length && <p className="text-slate-400">No signing key registered. Publication is blocked until one matches the configured secret key ID.</p>}</div>
             </div>)}
           </div>
           <form onSubmit={createExtension} className="card p-5 grid md:grid-cols-5 gap-3 items-end">
