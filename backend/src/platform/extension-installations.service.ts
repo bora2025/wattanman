@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
 import { R2StorageService } from '../storage/r2-storage.service';
@@ -139,10 +140,15 @@ export class ExtensionInstallationsService {
       await this.applyThemeVersion(existing.schoolId, version);
       configuration = { ...configuration, rollbackVersionId: existing.installedVersionId, activeThemeVersionId: version.id };
     }
-    const updated = await this.prisma.extensionInstallation.update({
-      where: { id: installationId },
-      data: { installedVersionId: version.id, installedBy: actor.userId, installedAt: new Date(), configuration, availableVersionId: null, updateNotifiedAt: null },
-    });
+    const migration = existing.extension.runtimeType === 'DECLARATIVE_MODULE'
+      ? this.findMigration(existing.installedVersion.version, version)
+      : null;
+    const updated = migration
+      ? await this.applyMigration(existing, version, migration, actor, configuration)
+      : await this.prisma.extensionInstallation.update({
+          where: { id: installationId },
+          data: { installedVersionId: version.id, installedBy: actor.userId, installedAt: new Date(), configuration, availableVersionId: null, updateNotifiedAt: null },
+        });
     await this.log(actor, 'UPGRADE', updated.id, existing.extension.name, {
       schoolId: existing.schoolId,
       extensionId: existing.extensionId,
@@ -205,10 +211,12 @@ export class ExtensionInstallationsService {
     if (existing.extension.runtimeType !== 'CORE_MODULE') await this.signing.verifyPublished(version);
     if (existing.enabled && existing.extension.runtimeType === 'THEME') await this.applyThemeVersion(existing.schoolId, version);
     const updatedConfiguration = { ...configuration, rollbackVersionId: existing.installedVersionId, activeThemeVersionId: version.id };
-    const updated = await this.prisma.extensionInstallation.update({
-      where: { id: installationId },
-      data: { installedVersionId: version.id, configuration: updatedConfiguration },
-    });
+    const updated = existing.extension.runtimeType === 'DECLARATIVE_MODULE' && configuration.migrationRunId
+      ? await this.rollbackMigration(existing, version, configuration.migrationRunId, updatedConfiguration)
+      : await this.prisma.extensionInstallation.update({
+          where: { id: installationId },
+          data: { installedVersionId: version.id, configuration: updatedConfiguration },
+        });
     await this.log(actor, 'ROLLBACK', updated.id, existing.extension.name, {
       schoolId: existing.schoolId,
       extensionId: existing.extensionId,
@@ -357,6 +365,85 @@ export class ExtensionInstallationsService {
       const comparison = current[0] - target[0] || current[1] - target[1] || current[2] - target[2];
       return operator === '>=' ? comparison >= 0 : operator === '>' ? comparison > 0 : operator === '<=' ? comparison <= 0 : comparison < 0;
     });
+  }
+
+  private findMigration(fromVersion: string, targetVersion: { version: string; manifest: unknown }) {
+    const migrations = (((targetVersion.manifest as Record<string, any>)?.migrations || []) as Array<{ fromVersion: string; toVersion: string; operations: any[] }>);
+    return migrations.find((migration) => migration.fromVersion === fromVersion && migration.toVersion === targetVersion.version) || null;
+  }
+
+  private async applyMigration(existing: any, version: any, migration: { operations: any[] }, actor: Actor, configuration: Record<string, any>) {
+    return this.prisma.$transaction(async (transaction) => {
+      const resources = [...new Set(migration.operations.map((operation) => operation.resource))] as string[];
+      const records = await transaction.extensionRecord.findMany({
+        where: { schoolId: existing.schoolId, extensionId: existing.extensionId, resource: { in: resources } },
+      });
+      const run = await transaction.extensionMigrationRun.create({
+        data: {
+          installationId: existing.id,
+          schoolId: existing.schoolId,
+          extensionId: existing.extensionId,
+          fromVersionId: existing.installedVersionId,
+          toVersionId: version.id,
+          operations: migration.operations as Prisma.InputJsonValue,
+        },
+      });
+      let byteDelta = 0;
+      for (const record of records) {
+        const original = record.data as Record<string, unknown>;
+        const migrated = { ...original };
+        for (const operation of migration.operations.filter((candidate) => candidate.resource === record.resource)) {
+          if (operation.type === 'renameField' && Object.prototype.hasOwnProperty.call(migrated, operation.from)) {
+            if (Object.prototype.hasOwnProperty.call(migrated, operation.to)) throw new ConflictException(`Migration target field already exists: ${operation.to}`);
+            migrated[operation.to] = migrated[operation.from];
+            delete migrated[operation.from];
+          } else if (operation.type === 'setDefault' && !Object.prototype.hasOwnProperty.call(migrated, operation.field)) {
+            migrated[operation.field] = operation.value;
+          } else if (operation.type === 'removeField') {
+            delete migrated[operation.field];
+          }
+        }
+        const byteSize = Buffer.byteLength(JSON.stringify(migrated), 'utf8');
+        byteDelta += byteSize - record.byteSize;
+        await transaction.extensionMigrationBackup.create({ data: { migrationRunId: run.id, recordId: record.id, resource: record.resource, data: original as Prisma.InputJsonValue, byteSize: record.byteSize } });
+        await transaction.extensionRecord.update({ where: { id: record.id }, data: { data: migrated as Prisma.InputJsonValue, byteSize, updatedBy: actor.userId } });
+      }
+      return transaction.extensionInstallation.update({
+        where: { id: existing.id },
+        data: {
+          installedVersionId: version.id,
+          installedBy: actor.userId,
+          installedAt: new Date(),
+          configuration: { ...configuration, rollbackVersionId: existing.installedVersionId, migrationRunId: run.id },
+          dataBytes: { increment: byteDelta },
+          availableVersionId: null,
+          updateNotifiedAt: null,
+        },
+      });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
+  private async rollbackMigration(existing: any, version: any, migrationRunId: string, configuration: Record<string, any>) {
+    return this.prisma.$transaction(async (transaction) => {
+      const run = await transaction.extensionMigrationRun.findUnique({ where: { id: migrationRunId }, include: { backups: true } });
+      if (!run || run.status !== 'APPLIED' || run.installationId !== existing.id || run.toVersionId !== existing.installedVersionId || run.fromVersionId !== version.id) {
+        throw new ConflictException('Declarative migration rollback state is invalid');
+      }
+      let byteDelta = 0;
+      for (const backup of run.backups) {
+        const record = await transaction.extensionRecord.findUnique({ where: { id: backup.recordId } });
+        if (!record) throw new ConflictException(`Cannot roll back deleted migrated record ${backup.recordId}`);
+        byteDelta += backup.byteSize - record.byteSize;
+        await transaction.extensionRecord.update({ where: { id: backup.recordId }, data: { data: backup.data, byteSize: backup.byteSize } });
+      }
+      const { migrationRunId: ignored, ...rest } = configuration;
+      const updated = await transaction.extensionInstallation.update({
+        where: { id: existing.id },
+        data: { installedVersionId: version.id, configuration: rest, dataBytes: { increment: byteDelta } },
+      });
+      await transaction.extensionMigrationRun.update({ where: { id: run.id }, data: { status: 'ROLLED_BACK', rolledBackAt: new Date() } });
+      return updated;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   private async applyThemeVersion(schoolId: string, version: { manifest: any; assets: Array<{ path: string; storageKey: string }> }) {

@@ -889,18 +889,18 @@ model ExtensionValidation {
 /// Tenant-owned installation state. This model is included in
 /// TENANT_SCOPED_MODELS so every normal request is automatically school-bound.
 model ExtensionInstallation {
-  id                 String           @id @default(cuid())
+  id                 String                  @id @default(cuid())
   schoolId           String
-  school             School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school             School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   extensionId        String
-  extension          Extension        @relation(fields: [extensionId], references: [id], onDelete: Restrict)
+  extension          Extension               @relation(fields: [extensionId], references: [id], onDelete: Restrict)
   installedVersionId String
-  installedVersion   ExtensionVersion @relation(fields: [installedVersionId], references: [id], onDelete: Restrict)
-  enabled            Boolean          @default(false)
+  installedVersion   ExtensionVersion        @relation(fields: [installedVersionId], references: [id], onDelete: Restrict)
+  enabled            Boolean                 @default(false)
   configuration      Json?
-  billingStatus      String           @default("PENDING")
-  dataBytes          Int              @default(0)
-  updatePolicy       String           @default("MANUAL") // MANUAL | NOTIFY | AUTO_APPROVED
+  billingStatus      String                  @default("PENDING")
+  dataBytes          Int                     @default(0)
+  updatePolicy       String                  @default("MANUAL") // MANUAL | NOTIFY | AUTO_APPROVED
   availableVersionId String?
   updateNotifiedAt   DateTime?
   requestedBy        String?
@@ -911,14 +911,47 @@ model ExtensionInstallation {
   installedAt        DateTime?
   uninstalledAt      DateTime?
   purgeAfter         DateTime?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  migrationRuns      ExtensionMigrationRun[]
 
   @@unique([schoolId, extensionId])
   @@index([schoolId, enabled])
   @@index([extensionId, installedVersionId])
   @@index([purgeAfter])
   @@index([updatePolicy, availableVersionId])
+}
+
+model ExtensionMigrationRun {
+  id             String                     @id @default(cuid())
+  installationId String
+  installation   ExtensionInstallation      @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  schoolId       String
+  extensionId    String
+  fromVersionId  String
+  toVersionId    String
+  status         String                     @default("APPLIED") // APPLIED | ROLLED_BACK
+  operations     Json
+  createdAt      DateTime                   @default(now())
+  rolledBackAt   DateTime?
+  backups        ExtensionMigrationBackup[]
+
+  @@index([installationId, createdAt])
+  @@index([schoolId, extensionId, status])
+}
+
+model ExtensionMigrationBackup {
+  id             String                @id @default(cuid())
+  migrationRunId String
+  migrationRun   ExtensionMigrationRun @relation(fields: [migrationRunId], references: [id], onDelete: Cascade)
+  recordId       String
+  resource       String
+  data           Json
+  byteSize       Int
+  createdAt      DateTime              @default(now())
+
+  @@unique([migrationRunId, recordId])
+  @@index([recordId])
 }
 
 /// Generic tenant-scoped records for declarative modules. The platform owns

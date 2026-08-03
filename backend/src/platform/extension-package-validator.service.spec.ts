@@ -162,6 +162,7 @@ describe('ExtensionPackageValidatorService', () => {
         permissions: ['reports:read'], navigation: [], pages: [{ key: 'reports', title: 'Reports', resource: 'reports', roles: ['ADMIN'], fields: [] }],
         resources: { reports: { fields: [] } },
         dependencies: [{ key: 'STUDENT_REWARDS', versionRange: '>=1.0.0 <2.0.0', optional: false }], conflicts: ['OLD_REPORTS'],
+        migrations: [{ fromVersion: '0.9.0', toVersion: '1.0.0', operations: [{ type: 'renameField', resource: 'reports', from: 'total', to: 'amount' }] }],
       }),
     });
 

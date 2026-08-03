@@ -228,7 +228,7 @@ export class ExtensionPackageValidatorService {
       error('MODULE_PERMISSIONS', 'Declarative module manifest requires a permissions array');
     }
     if (extension.runtimeType === 'DECLARATIVE_MODULE') {
-      const allowedKeys = new Set(['schemaVersion', 'key', 'name', 'version', 'runtimeType', 'permissions', 'navigation', 'pages', 'resources', 'assets', 'dependencies', 'conflicts']);
+      const allowedKeys = new Set(['schemaVersion', 'key', 'name', 'version', 'runtimeType', 'permissions', 'navigation', 'pages', 'resources', 'assets', 'dependencies', 'conflicts', 'migrations']);
       for (const key of Object.keys(manifest)) {
         if (!allowedKeys.has(key) && !key.startsWith('x-')) error('UNKNOWN_MANIFEST_PROPERTY', `Unknown module manifest property: ${key}`);
       }
@@ -266,6 +266,20 @@ export class ExtensionPackageValidatorService {
         if (typeof conflict !== 'string' || !/^[A-Z][A-Z0-9_]{1,63}$/.test(conflict) || conflict === manifest.key || dependencyKeys.has(conflict)) error('MODULE_CONFLICT', `Invalid conflict: ${String(conflict)}`);
         if (conflictKeys.has(conflict)) error('MODULE_CONFLICT_DUPLICATE', `Duplicate conflict: ${conflict}`);
         conflictKeys.add(conflict);
+      }
+      for (const migration of manifest.migrations || []) {
+        if (!migration || !VERSION_PATTERN.test(migration.fromVersion || '') || migration.toVersion !== expectedVersion || !Array.isArray(migration.operations) || !migration.operations.length) {
+          error('MODULE_MIGRATION', 'Each migration requires a semantic fromVersion, the current toVersion, and operations');
+          continue;
+        }
+        for (const operation of migration.operations) {
+          const validResource = typeof operation?.resource === 'string' && /^[a-z][a-z0-9_-]*$/.test(operation.resource) && manifest.resources?.[operation.resource];
+          const validField = typeof operation?.field === 'string' && /^[a-z][a-zA-Z0-9_]*$/.test(operation.field);
+          const validRename = operation?.type === 'renameField' && /^[a-z][a-zA-Z0-9_]*$/.test(operation?.from || '') && /^[a-z][a-zA-Z0-9_]*$/.test(operation?.to || '') && operation.from !== operation.to;
+          const validDefault = operation?.type === 'setDefault' && validField && Object.prototype.hasOwnProperty.call(operation, 'value');
+          const validRemove = operation?.type === 'removeField' && validField;
+          if (!validResource || (!validRename && !validDefault && !validRemove)) error('MODULE_MIGRATION_OPERATION', `Invalid migration operation: ${JSON.stringify(operation)}`);
+        }
       }
     }
   }

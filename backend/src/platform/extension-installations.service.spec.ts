@@ -4,6 +4,7 @@ import { ExtensionInstallationsService } from './extension-installations.service
 
 describe('ExtensionInstallationsService', () => {
   const prisma = {
+    $transaction: jest.fn(),
     extension: { findMany: jest.fn(), findFirst: jest.fn() },
     extensionVersion: { findFirst: jest.fn() },
     extensionInstallation: {
@@ -13,6 +14,9 @@ describe('ExtensionInstallationsService', () => {
       create: jest.fn(),
       update: jest.fn(),
     },
+    extensionRecord: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+    extensionMigrationRun: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+    extensionMigrationBackup: { create: jest.fn() },
     siteSetting: { findUnique: jest.fn(), upsert: jest.fn(), update: jest.fn() },
   };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
@@ -21,7 +25,10 @@ describe('ExtensionInstallationsService', () => {
   const service = new ExtensionInstallationsService(prisma as any, audit as any, storage as any, signing as any);
   const actor = { userId: 'admin-1', role: 'ADMIN' };
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    prisma.$transaction.mockImplementation((callback) => callback(prisma));
+  });
 
   it('creates a request using the authoritative tenant school', async () => {
     prisma.extension.findFirst.mockResolvedValue({
@@ -248,5 +255,54 @@ describe('ExtensionInstallationsService', () => {
 
     await expect(service.uninstall('installation-1', actor)).rejects.toThrow('Reports Plus');
     expect(prisma.extensionInstallation.update).not.toHaveBeenCalled();
+  });
+
+  it('applies a controlled record migration and stores rollback backups', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-1', installedAt: new Date(), enabled: false, configuration: null,
+      extension: { key: 'REWARDS', name: 'Rewards', runtimeType: 'DECLARATIVE_MODULE' },
+      installedVersion: { id: 'version-1', version: '1.0.0', lifecycleStatus: 'PUBLISHED', manifest: {}, assets: [] },
+    });
+    prisma.extensionVersion.findFirst.mockResolvedValue({
+      id: 'version-2', version: '2.0.0', assets: [], manifest: {
+        migrations: [{ fromVersion: '1.0.0', toVersion: '2.0.0', operations: [{ type: 'renameField', resource: 'rewards', from: 'points', to: 'score' }] }],
+      },
+    });
+    prisma.extensionInstallation.findMany.mockResolvedValue([]);
+    prisma.extensionRecord.findMany.mockResolvedValue([{ id: 'record-1', resource: 'rewards', data: { points: 10 }, byteSize: 13 }]);
+    prisma.extensionMigrationRun.create.mockResolvedValue({ id: 'migration-1' });
+    prisma.extensionMigrationBackup.create.mockResolvedValue({});
+    prisma.extensionRecord.update.mockResolvedValue({});
+    prisma.extensionInstallation.update.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
+
+    const result = await service.upgrade('installation-1', 'version-2', actor);
+
+    expect(prisma.extensionMigrationBackup.create).toHaveBeenCalledWith({ data: expect.objectContaining({ recordId: 'record-1', data: { points: 10 } }) });
+    expect(prisma.extensionRecord.update).toHaveBeenCalledWith({ where: { id: 'record-1' }, data: expect.objectContaining({ data: { score: 10 } }) });
+    expect(result.configuration).toEqual(expect.objectContaining({ migrationRunId: 'migration-1', rollbackVersionId: 'version-1' }));
+  });
+
+  it('restores migrated records during version rollback', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-2', enabled: false,
+      configuration: { rollbackVersionId: 'version-1', migrationRunId: 'migration-1' },
+      extension: { key: 'REWARDS', name: 'Rewards', runtimeType: 'DECLARATIVE_MODULE' },
+      installedVersion: { id: 'version-2', version: '2.0.0', lifecycleStatus: 'PUBLISHED', manifest: {}, assets: [] },
+    });
+    prisma.extensionVersion.findFirst.mockResolvedValue({ id: 'version-1', version: '1.0.0', manifest: {}, assets: [] });
+    prisma.extensionMigrationRun.findUnique.mockResolvedValue({
+      id: 'migration-1', installationId: 'installation-1', fromVersionId: 'version-1', toVersionId: 'version-2', status: 'APPLIED',
+      backups: [{ recordId: 'record-1', resource: 'rewards', data: { points: 10 }, byteSize: 13 }],
+    });
+    prisma.extensionRecord.findUnique.mockResolvedValue({ id: 'record-1', byteSize: 12 });
+    prisma.extensionRecord.update.mockResolvedValue({});
+    prisma.extensionMigrationRun.update.mockResolvedValue({});
+    prisma.extensionInstallation.update.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
+
+    const result = await service.rollback('installation-1', actor);
+
+    expect(prisma.extensionRecord.update).toHaveBeenCalledWith({ where: { id: 'record-1' }, data: { data: { points: 10 }, byteSize: 13 } });
+    expect(prisma.extensionMigrationRun.update).toHaveBeenCalledWith({ where: { id: 'migration-1' }, data: { status: 'ROLLED_BACK', rolledBackAt: expect.any(Date) } });
+    expect((result.configuration as any).migrationRunId).toBeUndefined();
   });
 });
