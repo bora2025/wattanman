@@ -29,6 +29,29 @@ async function seed() {
   });
   const schoolId = school.id;
 
+  const publisher = await prisma.extensionPublisher.upsert({
+    where: { key: 'WATTAMAN' },
+    update: {},
+    create: { key: 'WATTAMAN', name: 'Wattaman', status: 'ACTIVE', internal: true },
+  });
+  const platformAdmins = await prisma.user.findMany({
+    where: { role: 'PLATFORM_ADMIN' },
+    select: { id: true },
+  });
+  for (const platformAdmin of platformAdmins) {
+    await prisma.extensionPublisherMember.upsert({
+      where: { publisherId_userId: { publisherId: publisher.id, userId: platformAdmin.id } },
+      update: { roles: ['UPLOAD', 'REVIEW', 'PUBLISH', 'MANAGE'], status: 'ACTIVE' },
+      create: {
+        publisherId: publisher.id,
+        userId: platformAdmin.id,
+        roles: ['UPLOAD', 'REVIEW', 'PUBLISH', 'MANAGE'],
+        status: 'ACTIVE',
+      },
+    });
+  }
+  console.log(`Publisher access synchronized for ${platformAdmins.length} platform administrator(s)`);
+
   // Only seed the admin if no admin user exists for this school
   const existing = await prisma.user.findUnique({ where: { schoolId_email: { schoolId, email: 'admin@gmail.com' } } });
   if (existing) {
@@ -70,4 +93,4 @@ async function seed() {
 
 seed()
   .then(() => process.exit(0))
-  .catch((e) => { console.error('Seed error:', e.message); process.exit(0); });
+  .catch((e) => { console.error('Seed error:', e.message); process.exit(1); });

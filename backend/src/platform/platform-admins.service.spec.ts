@@ -13,7 +13,7 @@ describe('PlatformAdminsService publisher membership', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  it('grants new platform admins scoped upload, review, and publish roles', async () => {
+  it('grants new platform admins all internal publisher roles', async () => {
     prisma.school.findUnique.mockResolvedValue({ id: 'platform-school' });
     prisma.user.findFirst.mockResolvedValue(null);
     prisma.user.create.mockResolvedValue({ id: 'admin-2', name: 'Operator', email: 'operator@example.com' });
@@ -23,11 +23,11 @@ describe('PlatformAdminsService publisher membership', () => {
 
     expect(prisma.extensionPublisherMember.upsert).toHaveBeenCalledWith({
       where: { publisherId_userId: { publisherId: 'publisher-1', userId: 'admin-2' } },
-      update: { status: 'ACTIVE' },
+      update: { roles: ['UPLOAD', 'REVIEW', 'PUBLISH', 'MANAGE'], status: 'ACTIVE' },
       create: {
         publisherId: 'publisher-1',
         userId: 'admin-2',
-        roles: ['UPLOAD', 'REVIEW', 'PUBLISH'],
+        roles: ['UPLOAD', 'REVIEW', 'PUBLISH', 'MANAGE'],
         status: 'ACTIVE',
       },
     });

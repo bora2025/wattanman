@@ -50,8 +50,8 @@ export class PlatformAdminsService {
     if (publisher) {
       await this.prisma.extensionPublisherMember.upsert({
         where: { publisherId_userId: { publisherId: publisher.id, userId: user.id } },
-        update: { status: 'ACTIVE' },
-        create: { publisherId: publisher.id, userId: user.id, roles: ['UPLOAD', 'REVIEW', 'PUBLISH'], status: 'ACTIVE' },
+        update: { roles: ['UPLOAD', 'REVIEW', 'PUBLISH', 'MANAGE'], status: 'ACTIVE' },
+        create: { publisherId: publisher.id, userId: user.id, roles: ['UPLOAD', 'REVIEW', 'PUBLISH', 'MANAGE'], status: 'ACTIVE' },
       });
     }
     return { admin: user, temporaryPassword: tempPassword };
