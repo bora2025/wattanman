@@ -688,6 +688,18 @@ real people; they are intentionally not represented as unfinished coding work:
 Stage 5 remains an optional future initiative and must not start unless a new
 accepted decision authorizes isolated executable extensions.
 
+Completion audit (2026-08-03): all 94 backend unit/integration tests pass and
+the 173-file backend production build compiles. Against an isolated PostgreSQL
+16 database, the real extension lifecycle E2E passes both signed module and
+signed theme workflows, including publication, installation, activation,
+declarative data upgrade/rollback, theme override rollback, and emergency
+blocking; the tenant-isolation E2E passes 28/28. The frontend production build
+generates all 124 routes and all four deterministic Playwright theme-preview
+baselines pass. Railway `/health` reports `status: ok` on deployed commit
+`badf1b2`, proving guarded migration startup reaches the running Nest service.
+These results validate the implemented Stage 0–4 engineering gates but do not
+substitute for the four external evidence categories listed above.
+
 ### Existing foundation — verified
 
 - [x] Platform-wide catalog supports `MODULE`, `ADDON`, and `THEME` listings.
