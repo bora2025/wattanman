@@ -16,7 +16,7 @@ function extOf(name: string): string {
 /** Parses an uploaded catalog package .zip entirely client-side — a
  * screenshot image (any file literally named "screenshot.*") and/or a
  * README (readme.md or readme.txt), anywhere in the archive. Deliberately
- * metadata-only, unlike theme packages (parseThemePackageZip): this never
+ * metadata-only, unlike versioned theme packages: this never
  * looks for or extracts a stylesheet, and the result only ever populates
  * AddonDefinition.screenshotUrl/detailDescription — nothing that changes
  * what a listing *does*, only what's shown about it in the catalog. */

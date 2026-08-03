@@ -976,17 +976,6 @@ function AppearanceContent() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Custom CSS">
-            <Field label="Advanced CSS" hint="Injected into the <head> of every page. Use sparingly — this overrides built-in styles.">
-              <textarea
-                value={settings.customCss}
-                onChange={(e) => patch('customCss', e.target.value)}
-                rows={10}
-                placeholder={`:root {\n  /* Override CSS variables here */\n}`}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500 bg-gray-50 dark:bg-slate-800 resize-y"
-              />
-            </Field>
-          </SectionCard>
         </div>
       )}
 

@@ -29,7 +29,6 @@ export interface SiteSettingDto {
   secondaryColor?: string;
   font?: string;
   radius?: string;
-  customCss?: string;
   // About section
   aboutBadge?: string;
   aboutTitle?: string;
@@ -67,7 +66,8 @@ export class SiteSettingsService {
   /** Upsert the current school's settings record. */
   async update(dto: SiteSettingDto) {
     const schoolId = getCurrentSchoolId();
-    const data: Record<string, unknown> = { ...dto };
+    const { customCss: _legacyCustomCss, ...safeDto } = dto as SiteSettingDto & { customCss?: unknown };
+    const data: Record<string, unknown> = { ...safeDto };
     if (dto.heroSlides !== undefined) {
       data.heroSlides = JSON.stringify(dto.heroSlides);
     }

@@ -7,7 +7,6 @@ import { platformNav } from '../../../lib/platform-nav'
 import { apiFetch } from '../../../lib/api'
 import { THEME_FONTS, ThemeFont } from '../../../lib/appearance/themeFonts'
 import { THEME_RADIUS_PRESETS, ThemeRadius } from '../../../lib/appearance/themeRadius'
-import { uploadThemePackage } from '../../../lib/appearance/themePackage'
 import { parseAddonPackageZip, uploadAddonPackage } from '../../../lib/addonPackage'
 
 interface ThemeConfig {
@@ -248,54 +247,6 @@ function ThemeConfigFields({ mode, primaryColor, secondaryColor, font, radius, o
   )
 }
 
-/** Upload a real theme package (.zip: style.css + optional local assets) —
- * parsed and validated server-side before its self-contained CSS is stored.
- * Only meaningful once the theme already exists (needs an
- * addonId), so this only ever appears in EditForm, not the create form. */
-function ThemePackageUpload({ addonId, currentCss, onUploaded }: { addonId: string; currentCss?: string; onUploaded: (updated: AddonDefinition) => void }) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
-
-  async function handleFile(file: File) {
-    setBusy(true)
-    setError('')
-    setSuccess(false)
-    try {
-      const updated = await uploadThemePackage(addonId, file)
-      onUploaded(updated)
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 2500)
-    } catch (e: any) {
-      setError(e.message || 'Failed to upload theme package')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <div className="space-y-2 p-3 rounded-lg bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900">
-      <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">Theme package (.zip)</label>
-      <p className="text-[11px] text-slate-500 dark:text-slate-400">
-        A .zip with a <code>style.css</code> (plus optional local images/fonts it references) — restyles the dashboard and public site
-        on top of the colors/font/radius above. Optional; leave unset to use those alone.
-      </p>
-      {currentCss && !busy && (
-        <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">✓ Package uploaded ({(new Blob([currentCss]).size / 1024).toFixed(1)} KB)</p>
-      )}
-      <div className="flex items-center gap-2">
-        <button type="button" onClick={() => inputRef.current?.click()} disabled={busy} className="btn-outline btn-sm disabled:opacity-50">
-          {busy ? 'Uploading…' : currentCss ? 'Replace package' : 'Upload package'}
-        </button>
-        {success && <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Uploaded ✓</span>}
-      </div>
-      <input ref={inputRef} type="file" accept=".zip" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
-      {error && <p className="text-[11px] text-red-600 dark:text-red-400">{error}</p>}
-    </div>
-  )
-}
-
 /** Richer catalog authoring, for any listing kind — upload a .zip bundling
  * a screenshot.* and/or a README.md instead of pasting a URL and typing a
  * description by hand. Metadata only, same as ThemePackageUpload's CSS
@@ -362,7 +313,6 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [customCss, setCustomCss] = useState(addon.themeConfig?.customCss)
 
   const kindChanged = form.kind !== addon.kind
 
@@ -447,13 +397,6 @@ function EditForm({ addon, onCancel, onSaved }: { addon: AddonDefinition; onCanc
             ...(next.font !== undefined && { themeFont: next.font }),
             ...(next.radius !== undefined && { themeRadius: next.radius }),
           })}
-        />
-      )}
-      {form.kind === 'THEME' && (
-        <ThemePackageUpload
-          addonId={addon.id}
-          currentCss={customCss}
-          onUploaded={(updated) => { setCustomCss(updated.themeConfig?.customCss); onSaved(updated) }}
         />
       )}
       <AddonPackageUpload

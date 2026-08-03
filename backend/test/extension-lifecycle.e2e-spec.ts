@@ -176,6 +176,7 @@ describe('Extension marketplace lifecycle E2E', () => {
   });
 
   it('previews, activates, upgrades, rolls back, and blocks a signed theme ZIP', async () => {
+    await api.post('/platform/theme-packages/legacy-theme/zip').set(tenant('platform.test.local')).set(auth(platformToken)).expect(404);
     const extension = await api.post('/platform/extensions').set(tenant('platform.test.local')).set(auth(platformToken)).send({
       key: `${TEST_PREFIX}_THEME`.toUpperCase(), name: 'Lifecycle Theme', runtimeType: 'THEME', commercialType: 'THEME',
     }).expect(201);
@@ -200,6 +201,10 @@ describe('Extension marketplace lifecycle E2E', () => {
     let appearance = await prisma.siteSetting.findUniqueOrThrow({ where: { schoolId } });
     expect(appearance).toMatchObject({ mode: 'light', primaryColor: '#112233', secondaryColor: '#445566', font: 'inter', radius: 'soft' });
     expect(appearance.customCss).toContain('.wattaman-theme');
+    const immutableCss = appearance.customCss;
+    await api.patch('/site-settings').set(tenant(SCHOOL_HOST)).set(auth(schoolToken)).send({ customCss: 'body { display: none; }' }).expect(200);
+    appearance = await prisma.siteSetting.findUniqueOrThrow({ where: { schoolId } });
+    expect(appearance.customCss).toBe(immutableCss);
 
     await prisma.siteSetting.update({ where: { schoolId }, data: { secondaryColor: '#abcdef' } });
     const version2Manifest = {

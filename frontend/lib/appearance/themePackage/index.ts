@@ -1,1 +1,0 @@
-export { uploadThemePackage } from './upload'

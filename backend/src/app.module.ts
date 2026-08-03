@@ -39,7 +39,6 @@ import { StaffCvModule } from './staff-cv/staff-cv.module';
 import { PlatformModule } from './platform/platform.module';
 import { SchoolAddonsModule } from './school-addons/school-addons.module';
 import { PortalManagerModule } from './portal-manager/portal-manager.module';
-import { ThemePackagesModule } from './theme-packages/theme-packages.module';
 import { AddonPackagesModule } from './addon-packages/addon-packages.module';
 
 @Module({
@@ -83,7 +82,6 @@ import { AddonPackagesModule } from './addon-packages/addon-packages.module';
     PlatformModule,
     SchoolAddonsModule,
     PortalManagerModule,
-    ThemePackagesModule,
     AddonPackagesModule,
   ],
   controllers: [AppController],

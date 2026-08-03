@@ -668,7 +668,7 @@ This section is the source of truth for implementation progress. Update it in th
 | Existing foundation | Complete | Catalog, school enablement, guards, theme application, and platform roles already exist |
 | Stage 0 — Product decisions | In progress | Initial internal-release defaults are accepted; formal security, product, and operations approval remains |
 | Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, audit, and guarded greenfield/existing-schema migration bootstrap exist; production-copy and failure-injection gates remain |
-| Stage 2 — Versioned themes | In progress | A signed theme ZIP now passes real private-storage preview, publication, install, activation, override-preserving upgrade/rollback, authorization, audit, and emergency-block workflows; visual regression and legacy endpoint retirement remain |
+| Stage 2 — Versioned themes | In progress | A signed theme ZIP passes real private-storage preview, publication, install, activation, override-preserving upgrade/rollback, authorization, audit, and emergency-block workflows; legacy CSS mutation is retired and visual regression remains |
 | Stage 3 — Declarative modules | In progress | Runtime navigation, an approved accessible component registry, translation fallback, tenant records, capability enforcement, dependency/conflict resolution, dependent-safe uninstall, reversible migrations, and a real signed-ZIP lifecycle are implemented; controlled service capabilities and pilot acceptance remain |
 | Stage 4 — Marketplace operations | Complete | Publisher governance, review, release compatibility, visibility, signing, installation, update/rollback, telemetry, emergency blocking, and audit operate through one real end-to-end workflow |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
@@ -806,7 +806,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Validation produces a persisted report without publishing automatically.
 - [x] Invalid packages cannot be downloaded, published, or installed.
 - [x] Every lifecycle action is authorized and audited.
-- [ ] Existing school modules and themes continue working unchanged.
+- [x] Existing school modules and themes continue working unchanged.
 
 ### Stage 2 — Versioned theme lifecycle
 
@@ -869,7 +869,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] A published version can be installed and activated for one school.
 - [x] The school can upgrade and roll back without redeploying Wattaman.
 - [x] The full lifecycle appears in audit history.
-- [ ] The old direct CSS upload endpoint is retired after migration.
+- [x] The old direct CSS upload endpoint is retired after migration.
 
 ### Stage 3 — Declarative module runtime
 
@@ -964,7 +964,9 @@ Theme safety note (2026-08-03): theme packages now validate color, font, radius,
 
 Theme override note (2026-08-03): theme manifest v1 is explicitly standalone and rejects undeclared parent inheritance. Activation records the exact package-applied appearance; upgrade compares current school settings against that snapshot, preserves only changed school overrides, applies the new package beneath them, and retains the same overrides during rollback. The extension suite passes 77 tests and backend type-check/build passes. Visual regression and complete real-storage lifecycle gates remain open.
 
-Theme lifecycle note (2026-08-03): `extension-lifecycle.e2e-spec.ts` now publishes a signed theme ZIP through real Nest HTTP endpoints and private R2-compatible storage, previews its scoped CSS, installs and activates it for one school, rejects a school administrator at the platform activation boundary, preserves a school color override across upgrade and rollback, records privileged lifecycle actions, and globally disables the installation when the active version is blocked. Cross-school installation visibility remains covered by the separate two-school tenant-isolation E2E suite. Visual regression and retirement of the legacy direct-CSS endpoint remain open.
+Theme lifecycle note (2026-08-03): `extension-lifecycle.e2e-spec.ts` now publishes a signed theme ZIP through real Nest HTTP endpoints and private R2-compatible storage, previews its scoped CSS, installs and activates it for one school, rejects a school administrator at the platform activation boundary, preserves a school color override across upgrade and rollback, records privileged lifecycle actions, and globally disables the installation when the active version is blocked. Cross-school installation visibility remains covered by the separate two-school tenant-isolation E2E suite. Visual regression remains open.
+
+Legacy theme retirement note (2026-08-03): the `platform/theme-packages` raw-CSS and ZIP-to-`AddonDefinition.themeConfig` routes, module, service, tests, frontend upload client, and old platform add-on upload surface have been removed in favor of `/platform/extensions`. School appearance no longer exposes a raw CSS editor, and `PATCH /site-settings` explicitly discards attempted `customCss` mutation while retaining already-stored CSS for uninterrupted legacy rendering and versioned-theme rollback. The real lifecycle E2E verifies the removed route returns 404 and a raw CSS patch cannot change the active signed theme. Focused tests and both production builds pass; visual regression remains open.
 
 ### Stage 4 — Marketplace and operations
 

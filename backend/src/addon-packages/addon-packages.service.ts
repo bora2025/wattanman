@@ -8,7 +8,7 @@ const MAX_README_BYTES = 200 * 1024; // 200KB of markdown/text is a very long RE
  * Richer catalog authoring for a listing (module, paid add-on, or theme) —
  * a platform admin uploads a .zip bundling a screenshot and a README
  * instead of typing/pasting them field by field, mirroring how theme
- * packages (backend/src/theme-packages) work for CSS. Deliberately
+ * extension packages (`platform/extension-package-validator.service.ts`) work for themes. Deliberately
  * metadata-only: this can only ever change what's *shown* about a listing
  * (AddonDefinition.screenshotUrl/detailDescription, both plain columns
  * already), never what it *does* — no code, no new functionality. The zip
