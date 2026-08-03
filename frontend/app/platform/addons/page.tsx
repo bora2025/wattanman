@@ -7,7 +7,7 @@ import { platformNav } from '../../../lib/platform-nav'
 import { apiFetch } from '../../../lib/api'
 import { THEME_FONTS, ThemeFont } from '../../../lib/appearance/themeFonts'
 import { THEME_RADIUS_PRESETS, ThemeRadius } from '../../../lib/appearance/themeRadius'
-import { parseThemePackageZip, uploadThemePackage } from '../../../lib/appearance/themePackage'
+import { uploadThemePackage } from '../../../lib/appearance/themePackage'
 import { parseAddonPackageZip, uploadAddonPackage } from '../../../lib/addonPackage'
 
 interface ThemeConfig {
@@ -249,9 +249,8 @@ function ThemeConfigFields({ mode, primaryColor, secondaryColor, font, radius, o
 }
 
 /** Upload a real theme package (.zip: style.css + optional local assets) —
- * parsed entirely client-side (frontend/lib/appearance/themePackage), then
- * POSTed as one self-contained CSS string to the dedicated theme-packages
- * endpoint. Only meaningful once the theme already exists (needs an
+ * parsed and validated server-side before its self-contained CSS is stored.
+ * Only meaningful once the theme already exists (needs an
  * addonId), so this only ever appears in EditForm, not the create form. */
 function ThemePackageUpload({ addonId, currentCss, onUploaded }: { addonId: string; currentCss?: string; onUploaded: (updated: AddonDefinition) => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -264,8 +263,7 @@ function ThemePackageUpload({ addonId, currentCss, onUploaded }: { addonId: stri
     setError('')
     setSuccess(false)
     try {
-      const { css } = await parseThemePackageZip(file)
-      const updated = await uploadThemePackage(addonId, css)
+      const updated = await uploadThemePackage(addonId, file)
       onUploaded(updated)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 2500)
