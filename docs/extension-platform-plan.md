@@ -671,7 +671,22 @@ This section is the source of truth for implementation progress. Update it in th
 | Stage 2 — Versioned themes | Complete | Signed theme ZIPs pass private-storage preview, publication, install, activation, override-preserving upgrade/rollback, authorization, audit, emergency blocking, legacy endpoint retirement, and public/dashboard visual regression |
 | Stage 3 — Declarative modules | In progress | Runtime navigation, accessible components, tenant data, capability enforcement, dependencies, reversible migrations, a signed-ZIP lifecycle, and audited school/operator pilot feedback are implemented; unapproved service capabilities remain denied and only human pilot sign-off remains |
 | Stage 4 — Marketplace operations | Complete | Publisher governance, review, release compatibility, visibility, signing, installation, update/rollback, telemetry, emergency blocking, and audit operate through one real end-to-end workflow |
-| Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
+| Stage 5 — Isolated code extensions | Deferred (optional) | Explicitly outside the accepted Stage 0 scope; no uploaded code executes in Wattaman, and this stage requires a new architecture decision before work begins |
+
+### Planning completion boundary
+
+The Stage 0–4 engineering plan is finalized and implemented. No additional
+module or theme functionality is planned in this document. The unchecked items
+below are release evidence that must come from authorized production data or
+real people; they are intentionally not represented as unfinished coding work:
+
+- formal security, product, and operations architecture approval;
+- rehearsal and evidence capture against an authorized production-sized restore;
+- real operator and school-admin pilot submissions; and
+- final manual release acceptance.
+
+Stage 5 remains an optional future initiative and must not start unless a new
+accepted decision authorizes isolated executable extensions.
 
 ### Existing foundation — verified
 
@@ -784,7 +799,7 @@ This section is the source of truth for implementation progress. Update it in th
 
 - [x] Design backward-compatible migration from `AddonDefinition`.
 - [x] Design migration from `SchoolAddon` to `ExtensionInstallation`.
-- [ ] Preserve every existing extension key and school enabled state.
+- [x] Preserve every existing extension key and school enabled state.
 - [x] Run old and new read paths in parallel behind a feature flag.
 - [x] Add rollback procedures for each migration step.
 
@@ -938,7 +953,7 @@ Stage 3 validation note (2026-08-03): the Student Rewards artifact passes the lo
 
 Stage 3 dependency note (2026-08-03): declarative manifests now define required/optional dependency ranges and symmetric conflict checks. Publication rejects missing required packages, incompatible versions, and dependency cycles; install, upgrade, and activation require satisfied dependencies and no active conflicts; uninstall is blocked while an enabled dependent remains. Platform operators receive a dependency preflight before installation or upgrade. The extension suite passes 70 tests and both production builds pass.
 
-Stage 3 data-migration note (2026-08-03): declarative manifests now support validated `renameField`, `setDefault`, and `removeField` operations for an exact source and target version. Upgrade applies record changes and byte accounting in a serializable transaction, stores per-record rollback backups, and records the migration run; rollback restores data and counters atomically and marks the run rolled back. `20260803000009_add_extension_data_migrations` was rehearsed successfully on PostgreSQL 16, and the extension suite passes 72 tests with backend type-check/build passing. The broad tenant upgrade/rollback E2E gate remains open.
+Stage 3 data-migration note (2026-08-03): declarative manifests now support validated `renameField`, `setDefault`, and `removeField` operations for an exact source and target version. Upgrade applies record changes and byte accounting in a serializable transaction, stores per-record rollback backups, and records the migration run; rollback restores data and counters atomically and marks the run rolled back. `20260803000009_add_extension_data_migrations` was rehearsed successfully on PostgreSQL 16, and the extension suite passes 72 tests with backend type-check/build passing. The later real lifecycle E2E closes the tenant upgrade/rollback gate by upgrading, restoring the original record on rollback, and upgrading again.
 
 Stage 3 UI-registry note (2026-08-03): declarative pages now render only approved stats, form, table, details, and chart components with schema-bound fields and actions, local filtering, create/update/delete workflows, semantic table markup, labels, alerts, and keyboard-native controls. Locale dictionaries use requested-locale then default-locale then literal-label fallback. Unknown components and roles are rejected, runtime endpoints have an extension-specific request limit, and writes/denials remain audited. The extension suite passes 75 tests and both production builds pass.
 
@@ -966,13 +981,13 @@ Package-signing migration note (2026-08-03): `20260803000005_add_extension_packa
 
 Update and alert migration note (2026-08-03): `20260803000006_add_extension_update_policies` and `20260803000007_add_extension_operational_alerts` were applied successfully against PostgreSQL 16. The focused extension suite passes 55 tests, backend type-check/build and frontend production build pass, school policies enforce manual/notify/safe automatic behavior, and hourly alert scanning detects repeated validation failures and denied capabilities with operator acknowledgement and resolution.
 
-Marketplace operations migration note (2026-08-03): `20260803000008_add_extension_visibility_and_api_metrics` was applied successfully against PostgreSQL 16 with listed/unlisted backfill verification. Release notes and platform ranges are required before review and exposed as a compatibility matrix; listed, unlisted, and private visibility with per-school grants are enforced; extension API success/error counts and latency are collected hourly and shown to operators. The extension suite passes 62 tests, backend and frontend production builds pass, and the real two-school HTTP/PostgreSQL tenant suite passes 21/21. The broad Stage 4 workflow gate remains open until one real artifact is exercised through the complete publisher-to-emergency lifecycle in a single E2E scenario.
+Marketplace operations migration note (2026-08-03): `20260803000008_add_extension_visibility_and_api_metrics` was applied successfully against PostgreSQL 16 with listed/unlisted backfill verification. Release notes and platform ranges are required before review and exposed as a compatibility matrix; listed, unlisted, and private visibility with per-school grants are enforced; extension API success/error counts and latency are collected hourly and shown to operators. The extension suite passes 62 tests, backend and frontend production builds pass, and the real two-school HTTP/PostgreSQL tenant suite passes 21/21. The later signed-package lifecycle E2E closes the broad Stage 4 workflow gate from publisher upload and review through installation, upgrade/rollback, emergency blocking, and audit verification.
 
 Theme safety note (2026-08-03): theme packages now validate color, font, radius, spacing, shadow, and surface tokens; reject CSS outside the approved selector registry; rewrite accepted rules beneath `.wattaman-theme`; and render isolated light/dark public-site and authenticated-dashboard previews with compatibility and validator warnings. The extension suite passes 64 tests and both production builds pass.
 
-Theme override note (2026-08-03): theme manifest v1 is explicitly standalone and rejects undeclared parent inheritance. Activation records the exact package-applied appearance; upgrade compares current school settings against that snapshot, preserves only changed school overrides, applies the new package beneath them, and retains the same overrides during rollback. The extension suite passes 77 tests and backend type-check/build passes. Visual regression and complete real-storage lifecycle gates remain open.
+Theme override note (2026-08-03): theme manifest v1 is explicitly standalone and rejects undeclared parent inheritance. Activation records the exact package-applied appearance; upgrade compares current school settings against that snapshot, preserves only changed school overrides, applies the new package beneath them, and retains the same overrides during rollback. The extension suite passes 77 tests and backend type-check/build passes. The lifecycle and visual-regression notes below record completion of the remaining gates.
 
-Theme lifecycle note (2026-08-03): `extension-lifecycle.e2e-spec.ts` now publishes a signed theme ZIP through real Nest HTTP endpoints and private R2-compatible storage, previews its scoped CSS, installs and activates it for one school, rejects a school administrator at the platform activation boundary, preserves a school color override across upgrade and rollback, records privileged lifecycle actions, and globally disables the installation when the active version is blocked. Cross-school installation visibility remains covered by the separate two-school tenant-isolation E2E suite. Visual regression remains open.
+Theme lifecycle note (2026-08-03): `extension-lifecycle.e2e-spec.ts` now publishes a signed theme ZIP through real Nest HTTP endpoints and private R2-compatible storage, previews its scoped CSS, installs and activates it for one school, rejects a school administrator at the platform activation boundary, preserves a school color override across upgrade and rollback, records privileged lifecycle actions, and globally disables the installation when the active version is blocked. Cross-school installation visibility remains covered by the separate two-school tenant-isolation E2E suite, and the later deterministic Playwright suite closes visual regression.
 
 Legacy theme retirement note (2026-08-03): the `platform/theme-packages` raw-CSS and ZIP-to-`AddonDefinition.themeConfig` routes, module, service, tests, frontend upload client, and old platform add-on upload surface have been removed in favor of `/platform/extensions`. School appearance no longer exposes a raw CSS editor, and `PATCH /site-settings` explicitly discards attempted `customCss` mutation while retaining already-stored CSS for uninterrupted legacy rendering and versioned-theme rollback. The real lifecycle E2E verifies the removed route returns 404 and a raw CSS patch cannot change the active signed theme. Focused tests and both production builds pass.
 
