@@ -4,9 +4,10 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { PlatformScopeGuard } from '../tenancy/platform-scope.guard';
 import { ExtensionInstallationsService } from './extension-installations.service';
+import { ExtensionPlatformGuard } from './extension-platform.guard';
 
 @Controller('platform/extension-installations')
-@UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard, ExtensionPlatformGuard)
 @Roles('PLATFORM_ADMIN')
 export class PlatformExtensionInstallationsController {
   constructor(private installations: ExtensionInstallationsService) {}
@@ -73,7 +74,7 @@ export class PlatformExtensionInstallationsController {
 }
 
 @Controller('extensions')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, ExtensionPlatformGuard)
 @Roles('ADMIN', 'SUPER_ADMIN')
 export class SchoolExtensionsController {
   constructor(private installations: ExtensionInstallationsService) {}

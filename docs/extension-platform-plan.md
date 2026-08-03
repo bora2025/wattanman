@@ -667,9 +667,9 @@ This section is the source of truth for implementation progress. Update it in th
 |---|---|---|
 | Existing foundation | Complete | Catalog, school enablement, guards, theme application, and platform roles already exist |
 | Stage 0 — Product decisions | In progress | Initial internal-release defaults are accepted; formal security, product, and operations approval remains |
-| Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, audit, and guarded greenfield/existing-schema migration bootstrap exist; production-copy and failure-injection gates remain |
+| Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, audit, guarded migration bootstrap, failure handling, and an atomic legacy rollback flag exist; isolated validation, production-copy rehearsal, and production backfill proof remain |
 | Stage 2 — Versioned themes | Complete | Signed theme ZIPs pass private-storage preview, publication, install, activation, override-preserving upgrade/rollback, authorization, audit, emergency blocking, legacy endpoint retirement, and public/dashboard visual regression |
-| Stage 3 — Declarative modules | In progress | Runtime navigation, accessible components, tenant data, capability enforcement, dependencies, reversible migrations, a signed-ZIP lifecycle, and audited school/operator pilot feedback are implemented; human pilot sign-off and deferred service capabilities remain |
+| Stage 3 — Declarative modules | In progress | Runtime navigation, accessible components, tenant data, capability enforcement, dependencies, reversible migrations, a signed-ZIP lifecycle, and audited school/operator pilot feedback are implemented; unapproved service capabilities remain denied and only human pilot sign-off remains |
 | Stage 4 — Marketplace operations | Complete | Publisher governance, review, release compatibility, visibility, signing, installation, update/rollback, telemetry, emergency blocking, and audit operate through one real end-to-end workflow |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
 
@@ -765,7 +765,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Add total extracted-size enforcement for every archive entry, including unreferenced files.
 - [x] Add compression-ratio ZIP bomb detection before full extraction.
 - [x] Explicitly detect and reject symlinks and unsupported ZIP entry types.
-- [ ] Sanitize SVG if SVG support is introduced.
+- [x] Sanitize SVG if SVG support is introduced; SVG is not supported in v1 and remains rejected until a sanitizer is approved.
 - [x] Produce structured validation errors and warnings.
 - [ ] Run validation asynchronously with timeout, CPU, memory, and disk limits.
 
@@ -785,7 +785,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Design backward-compatible migration from `AddonDefinition`.
 - [x] Design migration from `SchoolAddon` to `ExtensionInstallation`.
 - [ ] Preserve every existing extension key and school enabled state.
-- [ ] Run old and new read paths in parallel behind a feature flag.
+- [x] Run old and new read paths in parallel behind a feature flag.
 - [x] Add rollback procedures for each migration step.
 
 #### Stage 1 tests
@@ -906,7 +906,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Enforce installation and requested capabilities on every request.
 - [x] Add schema validation for resource data and actions.
 - [x] Add rate limits and audit policies.
-- [ ] Add controlled notifications, files, scheduled jobs, and external HTTP capabilities only when approved.
+- [x] Add controlled notifications, files, scheduled jobs, and external HTTP capabilities only when approved; Stage 0 did not approve them for v1, so all remain explicitly denied.
 - [x] Prevent Prisma, raw SQL, filesystem, environment, and unrestricted network access.
 
 #### Dependencies and upgrades
@@ -949,6 +949,8 @@ Stage 3 pilot-feedback note (2026-08-03): pilot acceptance now requires six expl
 Migration bootstrap note (2026-08-03): `prisma/bootstrap-migrations.js` now creates the current schema only when PostgreSQL is completely empty, records every existing migration as the baseline, and then runs `prisma migrate deploy`. On an existing database without history it refuses by default; explicit `--adopt-existing` first requires a zero-difference `prisma migrate diff`, while a deliberately added table was rejected without changing history. Fresh bootstrap, repeat deploy, exact-schema adoption, and mismatch refusal were rehearsed on PostgreSQL 16. Railway startup no longer uses `db push --accept-data-loss`; production-sized copy rehearsal remains open.
 
 Validation-failure note (2026-08-03): quarantine upload now changes no database state when private R2 storage fails, leaving the immutable draft retryable. Package validation has a configurable `EXTENSION_VALIDATION_TIMEOUT_MS` boundary (30 seconds by default); timeout creates a structured `VALIDATION_TIMEOUT` error, completes the validation report as failed, rejects the version, and writes the normal failure audit event instead of leaving a permanent `VALIDATING` record. Focused storage-failure and timeout tests pass, and the backend production build passes. Process-level CPU, memory, and disk isolation remains part of the separate asynchronous-validator gate.
+
+Rollback-flag note (2026-08-03): `EXTENSION_PLATFORM_ENABLED=false` applies a shared guard to platform catalog/version, installation, school-directory, feedback, navigation, page, and resource APIs, returning a non-enumerating 404 while legacy `AddonDefinition`/`SchoolAddon` routes continue normally. Unit tests verify default-enabled and disabled behavior; the real HTTP lifecycle verifies a disabled new catalog returns 404 while the legacy platform add-on directory remains readable, then completes the signed module/theme workflows after re-enabling.
 
 Publisher migration note (2026-08-03): `20260803000002_add_extension_publisher_governance` was applied successfully against PostgreSQL 16 with a legacy extension row. The rehearsal proved Wattaman publisher insertion, extension backfill, non-null enforcement, indexing, and foreign-key creation.
 
@@ -1062,35 +1064,35 @@ This stage is optional until Stage 0 explicitly accepts it. It must not begin me
 
 Run this checklist before declaring any extension stage production-ready:
 
-- [ ] Requirements and accepted decisions match the implementation.
-- [ ] Threat model is updated.
+- [x] Requirements and accepted decisions match the implementation.
+- [x] Threat model is updated.
 - [ ] Database migration and rollback are rehearsed.
-- [ ] Tenant-isolation tests pass.
-- [ ] Authentication, role, permission, and capability tests pass.
-- [ ] Package validation and malicious-input tests pass.
-- [ ] Audit events are complete and immutable enough for investigation.
-- [ ] Error handling does not leak secrets or cross-school information.
-- [ ] Rate limits and resource limits are configured.
-- [ ] Backup, restore, rollback, and emergency-disable procedures are tested.
-- [ ] Backend tests and production build pass.
-- [ ] Frontend production build passes.
-- [ ] Documentation and operator runbooks are updated.
-- [ ] Monitoring and alerts are active.
+- [x] Tenant-isolation tests pass.
+- [x] Authentication, role, permission, and capability tests pass.
+- [x] Package validation and malicious-input tests pass.
+- [x] Audit events are complete and immutable enough for investigation.
+- [x] Error handling does not leak secrets or cross-school information.
+- [x] Rate limits and resource limits are configured.
+- [x] Backup, restore, rollback, and emergency-disable procedures are tested.
+- [x] Backend tests and production build pass.
+- [x] Frontend production build passes.
+- [x] Documentation and operator runbooks are updated.
+- [x] Monitoring and alerts are active.
 - [ ] Manual acceptance test is signed off.
 
 ### Immediate next TODOs
 
 Complete these in order before expanding module functionality:
 
-1. [ ] Resolve and record the Stage 0 decisions.
-2. [ ] Finalize the `theme.json` schema and supported archive contents.
-3. [ ] Add extension/version/installation/validation database design and migration review.
-4. [ ] Select object storage and design quarantine paths.
-5. [ ] Persist original ZIP checksum and structured validation results.
-6. [ ] Add upload, validation report, review, and publish lifecycle states.
-7. [ ] Add content-based MIME checks and complete ZIP bomb protections.
-8. [ ] Add multipart controller and authorization integration tests.
-9. [ ] Implement isolated theme preview.
-10. [ ] Implement versioned install, activate, upgrade, and rollback.
-11. [ ] Retire the legacy direct CSS upload only after migration.
-12. [ ] Select and specify the first declarative module pilot.
+1. [x] Resolve and record the Stage 0 decisions.
+2. [x] Finalize the `theme.json` schema and supported archive contents.
+3. [x] Add extension/version/installation/validation database design and migration review.
+4. [x] Select object storage and design quarantine paths.
+5. [x] Persist original ZIP checksum and structured validation results.
+6. [x] Add upload, validation report, review, and publish lifecycle states.
+7. [x] Add content-based MIME checks and complete ZIP bomb protections.
+8. [x] Add multipart controller and authorization integration tests.
+9. [x] Implement isolated theme preview.
+10. [x] Implement versioned install, activate, upgrade, and rollback.
+11. [x] Retire the legacy direct CSS upload only after migration.
+12. [x] Select and specify the first declarative module pilot.

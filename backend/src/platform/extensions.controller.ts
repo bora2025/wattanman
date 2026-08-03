@@ -7,9 +7,10 @@ import { PlatformScopeGuard } from '../tenancy/platform-scope.guard';
 import { ExtensionsService } from './extensions.service';
 import { ExtensionAlertService } from './extension-alert.service';
 import { ExtensionApiMetricsService } from './extension-api-metrics.service';
+import { ExtensionPlatformGuard } from './extension-platform.guard';
 
 @Controller('platform/extensions')
-@UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard, ExtensionPlatformGuard)
 @Roles('PLATFORM_ADMIN')
 export class ExtensionsController {
   constructor(private extensions: ExtensionsService, private alerts: ExtensionAlertService, private apiMetrics: ExtensionApiMetricsService) {}

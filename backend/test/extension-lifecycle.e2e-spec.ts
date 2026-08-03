@@ -130,6 +130,13 @@ describe('Extension marketplace lifecycle E2E', () => {
   }
 
   it('publishes, installs, migrates, rolls back, and emergency-blocks a signed ZIP', async () => {
+    process.env.EXTENSION_PLATFORM_ENABLED = 'false';
+    try {
+      await api.get('/platform/extensions').set(tenant('platform.test.local')).set(auth(platformToken)).expect(404);
+      await api.get('/platform/addon-directory').set(tenant('platform.test.local')).set(auth(platformToken)).expect(200);
+    } finally {
+      process.env.EXTENSION_PLATFORM_ENABLED = 'true';
+    }
     const extension = await api.post('/platform/extensions').set(tenant('platform.test.local')).set(auth(platformToken)).send({
       key: `${TEST_PREFIX}_REWARDS`.toUpperCase(), name: 'Lifecycle Rewards', runtimeType: 'DECLARATIVE_MODULE', commercialType: 'ADDON',
     }).expect(201);
