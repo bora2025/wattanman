@@ -65,6 +65,7 @@ interface InstallationRecord {
   school: { id: string; name: string; subdomain: string }
   extension: { id: string; key: string; name: string; versions: Array<{ id: string; version: string }> }
   installedVersion: { id: string; version: string; lifecycleStatus: string }
+  pilotFeedback?: Array<{ source: string; outcome: string; rating: number; comments?: string | null }>
 }
 
 interface PublisherRecord {
@@ -413,6 +414,29 @@ function InstallationCard({ installation, reload }: { installation: Installation
     }
   }
 
+  async function submitPilotFeedback() {
+    setBusy(true)
+    setError('')
+    try {
+      const criteria: Array<{ key: string; label: string }> = await responseJson(await apiFetch('/api/platform/extension-installations/pilot-criteria'))
+      const checklist = Object.fromEntries(criteria.map(criterion => [criterion.key, window.confirm(`Operator pilot check:\n\n${criterion.label}\n\nDid this criterion pass?`)]))
+      const accepted = criteria.every(criterion => checklist[criterion.key])
+      const rating = Number(window.prompt('Rate operator confidence from 1 to 5:', accepted ? '5' : '3'))
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw new Error('Pilot rating must be an integer from 1 to 5.')
+      const comments = window.prompt(accepted ? 'Optional operator comments:' : 'Describe the operational blocker:') || ''
+      if (!accepted && !comments.trim()) throw new Error('Comments are required when criteria need work.')
+      await responseJson(await apiFetch(`/api/platform/extension-installations/${installation.id}/pilot-feedback`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outcome: accepted ? 'ACCEPTED' : 'NEEDS_WORK', rating, checklist, comments }),
+      }))
+      await reload()
+    } catch (feedbackError: any) {
+      setError(feedbackError.message || 'Could not submit operator pilot feedback')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-start justify-between gap-4 flex-wrap">
       <div>
@@ -428,8 +452,10 @@ function InstallationCard({ installation, reload }: { installation: Installation
         {installation.enabled && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('activation', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) })}>Deactivate</button>}
         {installation.installedAt && newestVersion && newestVersion.id !== installation.installedVersion.id && <button disabled={busy} className="btn-outline btn-sm" onClick={upgrade}>Upgrade to v{newestVersion.version}</button>}
         {installation.configuration?.rollbackVersionId && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('rollback')}>Roll back</button>}
+        {installation.installedAt && <button disabled={busy} className="btn-outline btn-sm" onClick={submitPilotFeedback}>{installation.pilotFeedback?.some(feedback => feedback.source === 'OPERATOR') ? 'Update operator feedback' : 'Operator feedback'}</button>}
         {!installation.uninstalledAt && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('uninstall')}>Uninstall</button>}
       </div>
+      {!!installation.pilotFeedback?.length && <div className="basis-full flex gap-2 flex-wrap">{installation.pilotFeedback.map(feedback => <span key={feedback.source} className="text-[11px] rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-1 text-slate-600 dark:text-slate-300">{feedback.source}: {feedback.outcome} · {feedback.rating}/5</span>)}</div>}
     </div>
   )
 }

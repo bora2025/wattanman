@@ -110,6 +110,7 @@ model School {
   extensionInstallations      ExtensionInstallation[]
   extensionRecords            ExtensionRecord[]
   extensionVisibilityGrants   ExtensionVisibilityGrant[]
+  extensionPilotFeedback     ExtensionPilotFeedback[]
 }
 
 model User {
@@ -914,12 +915,34 @@ model ExtensionInstallation {
   createdAt          DateTime                @default(now())
   updatedAt          DateTime                @updatedAt
   migrationRuns      ExtensionMigrationRun[]
+  pilotFeedback      ExtensionPilotFeedback[]
 
   @@unique([schoolId, extensionId])
   @@index([schoolId, enabled])
   @@index([extensionId, installedVersionId])
   @@index([purgeAfter])
   @@index([updatePolicy, availableVersionId])
+}
+
+model ExtensionPilotFeedback {
+  id             String                @id @default(cuid())
+  installationId String
+  installation   ExtensionInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  schoolId       String
+  school         School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  source         String // SCHOOL_ADMIN | OPERATOR
+  outcome        String // ACCEPTED | NEEDS_WORK | BLOCKED
+  rating         Int
+  checklist      Json
+  comments       String?
+  actorId        String?
+  actorRole      String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@unique([installationId, source])
+  @@index([schoolId, createdAt])
+  @@index([outcome, updatedAt])
 }
 
 model ExtensionMigrationRun {

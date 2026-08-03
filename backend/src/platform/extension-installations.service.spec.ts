@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { tenantContext } from '../tenancy/tenant-context';
 import { ExtensionInstallationsService } from './extension-installations.service';
 
@@ -17,6 +17,7 @@ describe('ExtensionInstallationsService', () => {
     extensionRecord: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     extensionMigrationRun: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     extensionMigrationBackup: { create: jest.fn() },
+    extensionPilotFeedback: { upsert: jest.fn() },
     siteSetting: { findUnique: jest.fn(), upsert: jest.fn(), update: jest.fn() },
   };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
@@ -43,6 +44,45 @@ describe('ExtensionInstallationsService', () => {
     expect(prisma.extensionInstallation.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-1' }),
     });
+  });
+
+  it('publishes a complete pilot acceptance checklist', () => {
+    expect(service.pilotAcceptanceCriteria().map((criterion) => criterion.key)).toEqual([
+      'install_without_rebuild', 'role_navigation', 'tenant_isolation', 'core_stability', 'upgrade_rollback', 'operator_runbook',
+    ]);
+  });
+
+  it('rejects accepted pilot feedback when any criterion failed', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedAt: new Date(),
+      extension: { name: 'Rewards' }, installedVersion: { assets: [] },
+    });
+    const checklist = Object.fromEntries(service.pilotAcceptanceCriteria().map((criterion) => [criterion.key, true]));
+    checklist.tenant_isolation = false;
+
+    await expect(service.submitPilotFeedback('installation-1', {
+      outcome: 'ACCEPTED', rating: 5, checklist,
+    }, actor, 'SCHOOL_ADMIN')).rejects.toThrow(BadRequestException);
+    expect(prisma.extensionPilotFeedback.upsert).not.toHaveBeenCalled();
+  });
+
+  it('upserts and audits complete pilot feedback by source', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedAt: new Date(),
+      extension: { name: 'Rewards' }, installedVersion: { assets: [] },
+    });
+    const checklist = Object.fromEntries(service.pilotAcceptanceCriteria().map((criterion) => [criterion.key, true]));
+    prisma.extensionPilotFeedback.upsert.mockImplementation(({ create }) => Promise.resolve({ id: 'feedback-1', ...create }));
+
+    const result = await service.submitPilotFeedback('installation-1', {
+      outcome: 'ACCEPTED', rating: 5, checklist, comments: 'Pilot passed.',
+    }, { userId: 'operator-1', role: 'PLATFORM_ADMIN' }, 'OPERATOR');
+
+    expect(result).toEqual(expect.objectContaining({ schoolId: 'school-a', source: 'OPERATOR', outcome: 'ACCEPTED' }));
+    expect(prisma.extensionPilotFeedback.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      where: { installationId_source: { installationId: 'installation-1', source: 'OPERATOR' } },
+    }));
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'PILOT_FEEDBACK' }));
   });
 
   it('cannot install before platform approval', async () => {

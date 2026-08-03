@@ -168,11 +168,25 @@ describe('Extension marketplace lifecycle E2E', () => {
     expect(restored.body[0].data).toEqual({ points: 10 });
 
     await api.post(`/platform/extension-installations/${installationId}/upgrade`).set(tenant('platform.test.local')).set(auth(platformToken)).send({ versionId: version2Id }).expect(201);
+    const criteria = await api.get('/extensions/pilot-criteria').set(tenant(SCHOOL_HOST)).set(auth(schoolToken)).expect(200);
+    const checklist = Object.fromEntries(criteria.body.map((criterion: { key: string }) => [criterion.key, true]));
+    expect(Object.keys(checklist)).toHaveLength(6);
+    await api.post(`/extensions/installations/${installationId}/pilot-feedback`).set(tenant(SCHOOL_HOST)).set(auth(schoolToken)).send({
+      outcome: 'ACCEPTED', rating: 5, checklist, comments: 'School administrator pilot acceptance.',
+    }).expect(201);
+    await api.post(`/platform/extension-installations/${installationId}/pilot-feedback`).set(tenant('platform.test.local')).set(auth(platformToken)).send({
+      outcome: 'ACCEPTED', rating: 5, checklist, comments: 'Operator pilot acceptance.',
+    }).expect(201);
+    const installations = await api.get(`/platform/extension-installations?schoolId=${schoolId}`).set(tenant('platform.test.local')).set(auth(platformToken)).expect(200);
+    expect(installations.body[0].pilotFeedback).toEqual(expect.arrayContaining([
+      expect.objectContaining({ source: 'SCHOOL_ADMIN', outcome: 'ACCEPTED' }),
+      expect.objectContaining({ source: 'OPERATOR', outcome: 'ACCEPTED' }),
+    ]));
     await api.post(`/platform/extensions/versions/${version2Id}/transition`).set(tenant('platform.test.local')).set(auth(platformToken)).send({ status: 'BLOCKED', reviewNotes: 'Emergency E2E block' }).expect(201);
     await api.get(`/extensions/${key}/resources/rewards`).set(tenant(SCHOOL_HOST)).set(auth(schoolToken)).expect(404);
 
     const actions = await prisma.auditLog.findMany({ where: { resource: { in: ['EXTENSION_VERSION', 'EXTENSION_INSTALLATION'] }, resourceId: { in: [version1Id, version2Id, installationId] } }, select: { action: true } });
-    expect(actions.map(action => action.action)).toEqual(expect.arrayContaining(['STATUS_CHANGE', 'INSTALL', 'ACTIVATE', 'UPGRADE', 'ROLLBACK']));
+    expect(actions.map(action => action.action)).toEqual(expect.arrayContaining(['STATUS_CHANGE', 'INSTALL', 'ACTIVATE', 'UPGRADE', 'ROLLBACK', 'PILOT_FEEDBACK']));
   });
 
   it('previews, activates, upgrades, rolls back, and blocks a signed theme ZIP', async () => {

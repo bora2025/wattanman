@@ -13,6 +13,15 @@ interface Actor {
   email?: string;
 }
 
+const PILOT_ACCEPTANCE_CRITERIA = [
+  { key: 'install_without_rebuild', label: 'Installs from the signed ZIP without a Wattaman rebuild' },
+  { key: 'role_navigation', label: 'Navigation and pages appear only for approved roles' },
+  { key: 'tenant_isolation', label: 'School data remains tenant-isolated' },
+  { key: 'core_stability', label: 'Core startup and workflows remain stable when enabled or disabled' },
+  { key: 'upgrade_rollback', label: 'Upgrade and rollback preserve valid school data' },
+  { key: 'operator_runbook', label: 'Operators can diagnose, disable, and recover the extension' },
+] as const;
+
 @Injectable()
 export class ExtensionInstallationsService {
   constructor(
@@ -37,7 +46,7 @@ export class ExtensionInstallationsService {
 
   schoolInstallations() {
     return this.prisma.extensionInstallation.findMany({
-      include: { extension: true, installedVersion: true },
+      include: { extension: true, installedVersion: true, pilotFeedback: true },
       orderBy: { updatedAt: 'desc' },
     });
   }
@@ -80,9 +89,54 @@ export class ExtensionInstallationsService {
         school: true,
         extension: { include: { versions: { where: { lifecycleStatus: 'PUBLISHED' }, orderBy: { publishedAt: 'desc' } } } },
         installedVersion: true,
+        pilotFeedback: { orderBy: { updatedAt: 'desc' } },
       },
       orderBy: { updatedAt: 'desc' },
     });
+  }
+
+  pilotAcceptanceCriteria() {
+    return PILOT_ACCEPTANCE_CRITERIA;
+  }
+
+  async submitPilotFeedback(
+    installationId: string,
+    data: { outcome?: string; rating?: number; checklist?: Record<string, boolean>; comments?: string },
+    actor: Actor,
+    source: 'SCHOOL_ADMIN' | 'OPERATOR',
+  ) {
+    const installation = await this.requireInstallation(installationId);
+    if (!installation.installedAt) throw new ConflictException('Pilot feedback requires an installed extension');
+    if (!['ACCEPTED', 'NEEDS_WORK', 'BLOCKED'].includes(data.outcome || '')) throw new BadRequestException('outcome must be ACCEPTED, NEEDS_WORK, or BLOCKED');
+    if (!Number.isInteger(data.rating) || Number(data.rating) < 1 || Number(data.rating) > 5) throw new BadRequestException('rating must be an integer from 1 to 5');
+    const checklist = data.checklist || {};
+    const unknown = Object.keys(checklist).filter((key) => !PILOT_ACCEPTANCE_CRITERIA.some((criterion) => criterion.key === key));
+    const missing = PILOT_ACCEPTANCE_CRITERIA.filter((criterion) => typeof checklist[criterion.key] !== 'boolean');
+    if (unknown.length || missing.length) throw new BadRequestException('checklist must contain every published pilot acceptance criterion and no unknown keys');
+    if (data.outcome === 'ACCEPTED' && PILOT_ACCEPTANCE_CRITERIA.some((criterion) => checklist[criterion.key] !== true)) {
+      throw new BadRequestException('Every acceptance criterion must pass before feedback can be ACCEPTED');
+    }
+    const comments = data.comments?.trim();
+    if (data.outcome !== 'ACCEPTED' && !comments) throw new BadRequestException('comments are required when pilot feedback is not accepted');
+    const feedback = await this.prisma.extensionPilotFeedback.upsert({
+      where: { installationId_source: { installationId, source } },
+      update: { outcome: data.outcome, rating: data.rating, checklist, comments: comments || null, actorId: actor.userId, actorRole: actor.role },
+      create: {
+        installationId,
+        schoolId: installation.schoolId,
+        source,
+        outcome: data.outcome!,
+        rating: data.rating!,
+        checklist,
+        comments: comments || null,
+        actorId: actor.userId,
+        actorRole: actor.role,
+      },
+    });
+    await this.log(actor, 'PILOT_FEEDBACK', installation.id, installation.extension.name, {
+      schoolId: installation.schoolId, extensionId: installation.extensionId, source, outcome: data.outcome, rating: data.rating,
+    });
+    return feedback;
   }
 
   async approve(installationId: string, actor: Actor) {

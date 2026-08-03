@@ -669,7 +669,7 @@ This section is the source of truth for implementation progress. Update it in th
 | Stage 0 — Product decisions | In progress | Initial internal-release defaults are accepted; formal security, product, and operations approval remains |
 | Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, audit, and guarded greenfield/existing-schema migration bootstrap exist; production-copy and failure-injection gates remain |
 | Stage 2 — Versioned themes | Complete | Signed theme ZIPs pass private-storage preview, publication, install, activation, override-preserving upgrade/rollback, authorization, audit, emergency blocking, legacy endpoint retirement, and public/dashboard visual regression |
-| Stage 3 — Declarative modules | In progress | Runtime navigation, an approved accessible component registry, translation fallback, tenant records, capability enforcement, dependency/conflict resolution, dependent-safe uninstall, reversible migrations, and a real signed-ZIP lifecycle are implemented; controlled service capabilities and pilot acceptance remain |
+| Stage 3 — Declarative modules | In progress | Runtime navigation, accessible components, tenant data, capability enforcement, dependencies, reversible migrations, a signed-ZIP lifecycle, and audited school/operator pilot feedback are implemented; human pilot sign-off and deferred service capabilities remain |
 | Stage 4 — Marketplace operations | Complete | Publisher governance, review, release compatibility, visibility, signing, installation, update/rollback, telemetry, emergency blocking, and audit operate through one real end-to-end workflow |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
 
@@ -920,7 +920,7 @@ This section is the source of truth for implementation progress. Update it in th
 #### Pilot module
 
 - [x] Select a low-risk pilot module.
-- [ ] Define pilot acceptance criteria.
+- [x] Define pilot acceptance criteria.
 - [x] Package navigation, pages, permissions, data, and workflow in a ZIP.
 - [x] Install the pilot without changing or rebuilding Wattaman source.
 - [x] Validate multi-school isolation and role behavior.
@@ -943,6 +943,8 @@ Stage 3 data-migration note (2026-08-03): declarative manifests now support vali
 Stage 3 UI-registry note (2026-08-03): declarative pages now render only approved stats, form, table, details, and chart components with schema-bound fields and actions, local filtering, create/update/delete workflows, semantic table markup, labels, alerts, and keyboard-native controls. Locale dictionaries use requested-locale then default-locale then literal-label fallback. Unknown components and roles are rejected, runtime endpoints have an extension-specific request limit, and writes/denials remain audited. The extension suite passes 75 tests and both production builds pass.
 
 Stage 3 lifecycle note (2026-08-03): `extension-lifecycle.e2e-spec.ts` starts the real Nest application against PostgreSQL and a local R2-compatible private-object server, publishes a signed module ZIP, requests and approves its installation, activates it for one school, writes tenant data, upgrades through a declarative field migration, rolls back and restores the original record, upgrades again, and verifies that an emergency block removes runtime access. The scenario also verifies the upload, validation, publication, install, activation, upgrade, rollback, and status-change audit trail without changing or rebuilding Wattaman source.
+
+Stage 3 pilot-feedback note (2026-08-03): pilot acceptance now requires six explicit checks: signed-ZIP installation without rebuild, role-filtered navigation, tenant isolation, core stability across enable/disable, data-safe upgrade/rollback, and operator diagnosis/recovery. `ExtensionPilotFeedback` stores one tenant-scoped school-admin assessment and one operator assessment per installation, validates complete checklists and ratings, requires every check before `ACCEPTED`, requires comments for non-acceptance, and audits every submission. School and platform screens can submit and display assessments. Migration `20260803000010_add_extension_pilot_feedback` was rehearsed on PostgreSQL 16; focused tests and both production builds pass; the real lifecycle E2E records and retrieves both sources. The human feedback/sign-off checkbox remains open until actual pilot users submit their assessments.
 
 Migration bootstrap note (2026-08-03): `prisma/bootstrap-migrations.js` now creates the current schema only when PostgreSQL is completely empty, records every existing migration as the baseline, and then runs `prisma migrate deploy`. On an existing database without history it refuses by default; explicit `--adopt-existing` first requires a zero-difference `prisma migrate diff`, while a deliberately added table was rejected without changing history. Fresh bootstrap, repeat deploy, exact-schema adoption, and mismatch refusal were rehearsed on PostgreSQL 16. Railway startup no longer uses `db push --accept-data-loss`; production-sized copy rehearsal remains open.
 

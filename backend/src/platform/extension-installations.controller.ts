@@ -16,6 +16,11 @@ export class PlatformExtensionInstallationsController {
     return this.installations.platformInstallations(schoolId);
   }
 
+  @Get('pilot-criteria')
+  pilotCriteria() {
+    return this.installations.pilotAcceptanceCriteria();
+  }
+
   @Post(':id/approve')
   approve(@Param('id') id: string, @Request() req) {
     return this.installations.approve(id, req.user);
@@ -60,6 +65,11 @@ export class PlatformExtensionInstallationsController {
   uninstall(@Param('id') id: string, @Request() req) {
     return this.installations.uninstall(id, req.user);
   }
+
+  @Post(':id/pilot-feedback')
+  pilotFeedback(@Param('id') id: string, @Body() body: { outcome?: string; rating?: number; checklist?: Record<string, boolean>; comments?: string }, @Request() req) {
+    return this.installations.submitPilotFeedback(id, body, req.user, 'OPERATOR');
+  }
 }
 
 @Controller('extensions')
@@ -78,6 +88,11 @@ export class SchoolExtensionsController {
     return this.installations.schoolInstallations();
   }
 
+  @Get('pilot-criteria')
+  pilotCriteria() {
+    return this.installations.pilotAcceptanceCriteria();
+  }
+
   @Post(':extensionId/request')
   request(@Param('extensionId') extensionId: string, @Request() req) {
     return this.installations.request(extensionId, req.user);
@@ -86,5 +101,10 @@ export class SchoolExtensionsController {
   @Patch('installations/:id/update-policy')
   updatePolicy(@Param('id') id: string, @Body() body: { policy: string }, @Request() req) {
     return this.installations.setUpdatePolicy(id, body.policy, req.user);
+  }
+
+  @Post('installations/:id/pilot-feedback')
+  pilotFeedback(@Param('id') id: string, @Body() body: { outcome?: string; rating?: number; checklist?: Record<string, boolean>; comments?: string }, @Request() req) {
+    return this.installations.submitPilotFeedback(id, body, req.user, 'SCHOOL_ADMIN');
   }
 }
