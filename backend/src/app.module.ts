@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { TenantHostMiddleware } from './tenancy/tenant-host.middleware';
 import { DatabaseModule } from './database/database.module';
@@ -104,6 +104,9 @@ export class AppModule implements NestModule {
   // Resolves the tenant (School) from the request Host before anything else runs —
   // including pre-auth routes like /auth/login. See tenancy/tenant-host.middleware.ts.
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(TenantHostMiddleware).forRoutes('*');
+    consumer
+      .apply(TenantHostMiddleware)
+      .exclude({ path: 'health', method: RequestMethod.GET })
+      .forRoutes('*');
   }
 }
