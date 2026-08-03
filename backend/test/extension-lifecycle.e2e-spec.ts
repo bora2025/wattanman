@@ -25,8 +25,10 @@ function auth(token: string) { return { Authorization: `Bearer ${token}` }; }
 
 async function packageZip(manifest: Record<string, unknown>) {
   const zip = new JSZip();
-  zip.file('extension.json', JSON.stringify(manifest));
+  const isTheme = manifest.runtimeType === 'THEME';
+  zip.file(isTheme ? 'theme.json' : 'extension.json', JSON.stringify(manifest));
   zip.file('readme.md', '# Lifecycle E2E');
+  if (isTheme) zip.file('style.css', `body { background: ${(manifest.tokens as Record<string, string>).primaryColor}; }`);
   return zip.generateAsync({ type: 'nodebuffer' });
 }
 
@@ -43,6 +45,8 @@ describe('Extension marketplace lifecycle E2E', () => {
   let version2Id: string;
   let platformToken: string;
   let schoolToken: string;
+  const extensionIds: string[] = [];
+  const installationIds: string[] = [];
 
   beforeAll(async () => {
     storageServer = createServer((request, response) => {
@@ -102,8 +106,8 @@ describe('Extension marketplace lifecycle E2E', () => {
   });
 
   afterAll(async () => {
-    if (installationId) await prisma.extensionInstallation.deleteMany({ where: { id: installationId } });
-    if (extensionId) await prisma.extension.deleteMany({ where: { id: extensionId } });
+    if (installationIds.length) await prisma.extensionInstallation.deleteMany({ where: { id: { in: installationIds } } });
+    if (extensionIds.length) await prisma.extension.deleteMany({ where: { id: { in: extensionIds } } });
     if (schoolId) await prisma.school.deleteMany({ where: { id: schoolId } });
     await prisma.user.deleteMany({ where: { email: `${TEST_PREFIX}@platform.test` } });
     if (platformSchoolId) {
@@ -130,6 +134,7 @@ describe('Extension marketplace lifecycle E2E', () => {
       key: `${TEST_PREFIX}_REWARDS`.toUpperCase(), name: 'Lifecycle Rewards', runtimeType: 'DECLARATIVE_MODULE', commercialType: 'ADDON',
     }).expect(201);
     extensionId = extension.body.id;
+    extensionIds.push(extensionId);
     const key = extension.body.key;
     const baseManifest = {
       schemaVersion: 1, key, name: 'Lifecycle Rewards', version: '1.0.0', runtimeType: 'DECLARATIVE_MODULE', permissions: ['rewards:read', 'rewards:write'],
@@ -141,6 +146,7 @@ describe('Extension marketplace lifecycle E2E', () => {
 
     const requested = await api.post(`/extensions/${extensionId}/request`).set(tenant(SCHOOL_HOST)).set(auth(schoolToken)).expect(201);
     installationId = requested.body.id;
+    installationIds.push(installationId);
     await api.post(`/platform/extension-installations/${installationId}/approve`).set(tenant('platform.test.local')).set(auth(platformToken)).expect(201);
     await api.post(`/platform/extension-installations/${installationId}/install`).set(tenant('platform.test.local')).set(auth(platformToken)).send({ versionId: version1Id }).expect(201);
     await api.patch(`/platform/extension-installations/${installationId}/activation`).set(tenant('platform.test.local')).set(auth(platformToken)).send({ enabled: true }).expect(200);
@@ -167,5 +173,53 @@ describe('Extension marketplace lifecycle E2E', () => {
 
     const actions = await prisma.auditLog.findMany({ where: { resource: { in: ['EXTENSION_VERSION', 'EXTENSION_INSTALLATION'] }, resourceId: { in: [version1Id, version2Id, installationId] } }, select: { action: true } });
     expect(actions.map(action => action.action)).toEqual(expect.arrayContaining(['STATUS_CHANGE', 'INSTALL', 'ACTIVATE', 'UPGRADE', 'ROLLBACK']));
+  });
+
+  it('previews, activates, upgrades, rolls back, and blocks a signed theme ZIP', async () => {
+    const extension = await api.post('/platform/extensions').set(tenant('platform.test.local')).set(auth(platformToken)).send({
+      key: `${TEST_PREFIX}_THEME`.toUpperCase(), name: 'Lifecycle Theme', runtimeType: 'THEME', commercialType: 'THEME',
+    }).expect(201);
+    extensionId = extension.body.id;
+    extensionIds.push(extensionId);
+    const baseManifest = {
+      schemaVersion: 1, key: extension.body.key, name: 'Lifecycle Theme', version: '1.0.0', runtimeType: 'THEME', mode: 'light',
+      tokens: { primaryColor: '#112233', secondaryColor: '#445566', font: 'inter', radius: 'soft', spacing: 'comfortable', shadow: 'soft', surface: 'bordered' },
+    };
+    version1Id = await createAndPublishVersion('1.0.0', baseManifest, 'Initial lifecycle theme');
+    const preview = await api.get(`/platform/extensions/versions/${version1Id}/preview`).set(tenant('platform.test.local')).set(auth(platformToken)).expect(200);
+    expect(preview.body.css).toContain('.wattaman-theme');
+    expect(preview.body.css).not.toContain('body {');
+
+    const requested = await api.post(`/extensions/${extensionId}/request`).set(tenant(SCHOOL_HOST)).set(auth(schoolToken)).expect(201);
+    installationId = requested.body.id;
+    installationIds.push(installationId);
+    await api.post(`/platform/extension-installations/${installationId}/approve`).set(tenant('platform.test.local')).set(auth(platformToken)).expect(201);
+    await api.post(`/platform/extension-installations/${installationId}/install`).set(tenant('platform.test.local')).set(auth(platformToken)).send({ versionId: version1Id }).expect(201);
+    await api.patch(`/platform/extension-installations/${installationId}/activation`).set(tenant(SCHOOL_HOST)).set(auth(schoolToken)).send({ enabled: true }).expect(403);
+    await api.patch(`/platform/extension-installations/${installationId}/activation`).set(tenant('platform.test.local')).set(auth(platformToken)).send({ enabled: true }).expect(200);
+    let appearance = await prisma.siteSetting.findUniqueOrThrow({ where: { schoolId } });
+    expect(appearance).toMatchObject({ mode: 'light', primaryColor: '#112233', secondaryColor: '#445566', font: 'inter', radius: 'soft' });
+    expect(appearance.customCss).toContain('.wattaman-theme');
+
+    await prisma.siteSetting.update({ where: { schoolId }, data: { secondaryColor: '#abcdef' } });
+    const version2Manifest = {
+      ...baseManifest, version: '2.0.0', mode: 'dark',
+      tokens: { ...baseManifest.tokens, primaryColor: '#223344', secondaryColor: '#556677', font: 'poppins', radius: 'round' },
+    };
+    version2Id = await createAndPublishVersion('2.0.0', version2Manifest, 'Dark lifecycle theme');
+    await api.post(`/platform/extension-installations/${installationId}/upgrade`).set(tenant('platform.test.local')).set(auth(platformToken)).send({ versionId: version2Id }).expect(201);
+    appearance = await prisma.siteSetting.findUniqueOrThrow({ where: { schoolId } });
+    expect(appearance).toMatchObject({ mode: 'dark', primaryColor: '#223344', secondaryColor: '#abcdef', font: 'poppins', radius: 'round' });
+
+    await api.post(`/platform/extension-installations/${installationId}/rollback`).set(tenant('platform.test.local')).set(auth(platformToken)).expect(201);
+    appearance = await prisma.siteSetting.findUniqueOrThrow({ where: { schoolId } });
+    expect(appearance).toMatchObject({ mode: 'light', primaryColor: '#112233', secondaryColor: '#abcdef', font: 'inter', radius: 'soft' });
+
+    await api.post(`/platform/extension-installations/${installationId}/upgrade`).set(tenant('platform.test.local')).set(auth(platformToken)).send({ versionId: version2Id }).expect(201);
+    await api.post(`/platform/extensions/versions/${version2Id}/transition`).set(tenant('platform.test.local')).set(auth(platformToken)).send({ status: 'BLOCKED', reviewNotes: 'Emergency theme block' }).expect(201);
+    const blocked = await prisma.extensionInstallation.findUniqueOrThrow({ where: { id: installationId } });
+    expect(blocked.enabled).toBe(false);
+    const actions = await prisma.auditLog.findMany({ where: { resourceId: { in: [version1Id, version2Id, installationId] } }, select: { action: true } });
+    expect(actions.map(action => action.action)).toEqual(expect.arrayContaining(['VALIDATE', 'STATUS_CHANGE', 'INSTALL', 'ACTIVATE', 'UPGRADE', 'ROLLBACK']));
   });
 });
