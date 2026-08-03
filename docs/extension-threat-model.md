@@ -50,7 +50,7 @@ Declarative packages receive no Prisma client, raw SQL, filesystem, process envi
 
 ## Residual risks and release conditions
 
-- Validation currently has a wall-clock timeout but does not yet run in a disposable OS/container sandbox with enforced CPU and memory cgroups. Internal declarative publishers, strict package size limits, and no executable content reduce exposure; external publishing must not launch until isolated validation and malware scanning are added.
+- Validation runs in a terminable worker with bounded V8 heaps/stacks, a hard wall-clock deadline, and no filesystem extraction. It is process-isolated rather than a disposable OS/container sandbox; external publishing must not launch until container isolation and malware scanning are added.
 - SVG is not accepted. SVG sanitization is required before adding it to the allowlist.
 - A production-sized database-copy rehearsal and human security/product/operations approval remain mandatory before production sign-off.
 - Pixel baselines protect representative preview documents, not every school-specific content combination.

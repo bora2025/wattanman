@@ -5,6 +5,7 @@ import JSZip from 'jszip';
 import { createServer, Server } from 'http';
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { resolve } from 'path';
 import { AppModule } from '../src/app.module';
 
 const R2_PORT = Number(process.env.E2E_R2_PORT || 3909);
@@ -72,6 +73,7 @@ describe('Extension marketplace lifecycle E2E', () => {
     process.env.R2_SECRET_ACCESS_KEY = 'e2e-secret';
     process.env.EXTENSION_SIGNING_KEY_ID = SIGNING_KEY_ID;
     process.env.EXTENSION_SIGNING_PRIVATE_KEY_BASE64 = 'LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1DNENBUUF3QlFZREsyVndCQ0lFSU5PR0Zzc25GYUUzaDh3R3YwblBFY2FQcTJ3a3VPOTR4SnpKTWJpUFoyVXkKLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLQo=';
+    process.env.EXTENSION_VALIDATION_WORKER_PATH = resolve(__dirname, '../dist/platform/extension-validation.worker.js');
     app = await NestFactory.create(AppModule, { logger: false });
     await app.init();
     api = supertest.default(app.getHttpServer());

@@ -3,7 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { R2StorageService } from '../storage/r2-storage.service';
 import { createHash } from 'crypto';
-import { ExtensionPackageValidatorService } from './extension-package-validator.service';
+import { ExtensionValidationRunnerService } from './extension-validation-runner.service';
 import { ExtensionSigningService } from './extension-signing.service';
 
 const KEY_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/;
@@ -40,7 +40,7 @@ export class ExtensionsService {
     private prisma: PrismaService,
     private audit: AuditService,
     private storage: R2StorageService,
-    private packageValidator: ExtensionPackageValidatorService,
+    private packageValidator: ExtensionValidationRunnerService,
     private signing: ExtensionSigningService,
   ) {}
 
@@ -219,20 +219,7 @@ export class ExtensionsService {
       data: { extensionVersionId: versionId, status: 'RUNNING', validatorVersion: '1' },
     });
     await this.prisma.extensionVersion.update({ where: { id: versionId }, data: { lifecycleStatus: 'VALIDATING' } });
-    const timeoutMs = this.validationTimeoutMs();
-    let timeout: NodeJS.Timeout | undefined;
-    const timeoutResult = new Promise<Awaited<ReturnType<ExtensionPackageValidatorService['validate']>>>((resolve) => {
-        timeout = setTimeout(() => resolve({
-          valid: false,
-          errors: [{ code: 'VALIDATION_TIMEOUT', message: `Package validation exceeded ${timeoutMs}ms` }],
-          warnings: [],
-          files: [],
-        }), timeoutMs);
-    });
-    const validationResult = await Promise.race([
-      this.packageValidator.validate(file, existing.extension, existing.version),
-      timeoutResult,
-    ]).finally(() => { if (timeout) clearTimeout(timeout); });
+    const validationResult = await this.packageValidator.validate(file, existing.extension, existing.version);
     if (validationResult.valid) {
       for (const asset of validationResult.files) {
         const assetStorageKey = `validated/extensions/${existing.extensionId}/${existing.id}/${asset.checksum}/${asset.path}`;
@@ -271,11 +258,6 @@ export class ExtensionsService {
       metadata: { validationId: validation.id, errorCount: validationResult.errors.length, warningCount: validationResult.warnings.length },
     });
     return finalVersion;
-  }
-
-  private validationTimeoutMs() {
-    const configured = Number(process.env.EXTENSION_VALIDATION_TIMEOUT_MS || 30_000);
-    return Number.isFinite(configured) && configured >= 100 ? Math.floor(configured) : 30_000;
   }
 
   async validationReports(versionId: string) {

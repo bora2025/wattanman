@@ -247,36 +247,34 @@ describe('ExtensionsService', () => {
   });
 
   it('persists a failed report and rejects the version when validation times out', async () => {
-    const previousTimeout = process.env.EXTENSION_VALIDATION_TIMEOUT_MS;
-    process.env.EXTENSION_VALIDATION_TIMEOUT_MS = '100';
     prisma.extensionVersion.findUnique.mockResolvedValue({
       id: 'version-1', extensionId: 'ext-1', version: '1.0.0', lifecycleStatus: 'UPLOADED',
       extension: { key: 'TEST_THEME', runtimeType: 'THEME', publisherId: 'publisher-1', publisherEntity: { status: 'ACTIVE' } },
     });
     prisma.extensionVersion.update.mockImplementation(({ data }) => Promise.resolve({ id: 'version-1', version: '1.0.0', ...data }));
     prisma.extensionValidation.create.mockResolvedValue({ id: 'validation-1' });
-    packageValidator.validate.mockReturnValue(new Promise(() => undefined));
+    packageValidator.validate.mockResolvedValue({
+      valid: false,
+      errors: [{ code: 'VALIDATION_TIMEOUT', message: 'Package validation exceeded 100ms' }],
+      warnings: [],
+      files: [],
+    });
     const buffer = Buffer.from('zip-content');
 
-    try {
-      const result = await service.uploadPackage('version-1', {
-        originalname: 'extension.zip', buffer, size: buffer.length,
-      } as Express.Multer.File, actor);
+    const result = await service.uploadPackage('version-1', {
+      originalname: 'extension.zip', buffer, size: buffer.length,
+    } as Express.Multer.File, actor);
 
-      expect(result.lifecycleStatus).toBe('REJECTED');
-      expect(prisma.extensionValidation.update).toHaveBeenCalledWith({
-        where: { id: 'validation-1' },
-        data: expect.objectContaining({
-          status: 'FAILED',
-          errors: [expect.objectContaining({ code: 'VALIDATION_TIMEOUT' })],
-          completedAt: expect.any(Date),
-        }),
-      });
-      expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'VALIDATION_FAILED' }));
-    } finally {
-      if (previousTimeout === undefined) delete process.env.EXTENSION_VALIDATION_TIMEOUT_MS;
-      else process.env.EXTENSION_VALIDATION_TIMEOUT_MS = previousTimeout;
-    }
+    expect(result.lifecycleStatus).toBe('REJECTED');
+    expect(prisma.extensionValidation.update).toHaveBeenCalledWith({
+      where: { id: 'validation-1' },
+      data: expect.objectContaining({
+        status: 'FAILED',
+        errors: [expect.objectContaining({ code: 'VALIDATION_TIMEOUT' })],
+        completedAt: expect.any(Date),
+      }),
+    });
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'VALIDATION_FAILED' }));
   });
 
   it('treats retrying the same quarantined package as idempotent', async () => {

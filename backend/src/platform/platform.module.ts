@@ -31,6 +31,7 @@ import { ExtensionAlertService } from './extension-alert.service';
 import { ExtensionApiMetricsService } from './extension-api-metrics.service';
 import { ExtensionApiMetricsInterceptor } from './extension-api-metrics.interceptor';
 import { ExtensionPlatformGuard } from './extension-platform.guard';
+import { ExtensionValidationRunnerService } from './extension-validation-runner.service';
 
 @Module({
   imports: [
@@ -43,6 +44,6 @@ import { ExtensionPlatformGuard } from './extension-platform.guard';
     }),
   ],
   controllers: [SchoolsController, PlatformAdminsController, SchoolAddonsController, AddonDirectoryController, AddonRequestsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController],
-  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService, AddonRequestsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionInstallationsService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionPlatformGuard, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
+  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService, AddonRequestsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, ExtensionInstallationsService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionPlatformGuard, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
 })
 export class PlatformModule {}
