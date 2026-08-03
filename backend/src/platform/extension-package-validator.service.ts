@@ -10,6 +10,14 @@ const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
 const THEME_FONTS = ['inter', 'poppins', 'nunito', 'manrope', 'roboto'];
 const THEME_RADII = ['sharp', 'soft', 'round'];
+const THEME_SPACING = ['compact', 'comfortable', 'spacious'];
+const THEME_SHADOWS = ['none', 'soft', 'elevated'];
+const THEME_SURFACES = ['flat', 'bordered', 'glass'];
+const APPROVED_THEME_SELECTORS = new Set([
+  ':root', 'body', '.dark body', '.card', '.stat-card', '.dark .card', '.dark .stat-card',
+  '.btn-primary', '.btn-primary:hover', '.btn-outline', '.btn-outline:hover', '.page-shell',
+  '.page-content', '.page-header', '.page-body', '.sidebar',
+]);
 const EXECUTABLE_EXTENSIONS = new Set(['js', 'mjs', 'cjs', 'ts', 'tsx', 'jsx', 'exe', 'dll', 'so', 'dylib', 'sh', 'bat', 'cmd', 'ps1']);
 const ALLOWED_EXTENSIONS = new Set(['json', 'md', 'txt', 'css', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'woff', 'woff2', 'ttf', 'otf']);
 
@@ -51,6 +59,33 @@ function detectMime(path: string, contents: Buffer): string | null {
   if (extension === 'md') return 'text/markdown';
   if (extension === 'txt') return 'text/plain';
   return null;
+}
+
+function scopeThemeCss(css: string): { css?: string; error?: string } {
+  const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  if (/@[a-z-]+/i.test(withoutComments)) return { error: 'CSS at-rules are not allowed in theme packages' };
+  let cursor = 0;
+  const blocks: string[] = [];
+  const rulePattern = /([^{}]+)\{([^{}]*)\}/g;
+  for (const match of withoutComments.matchAll(rulePattern)) {
+    if (match.index !== cursor && withoutComments.slice(cursor, match.index).trim()) return { error: 'CSS contains malformed or nested rules' };
+    cursor = (match.index || 0) + match[0].length;
+    const selectors = match[1].split(',').map((selector) => selector.trim());
+    if (selectors.some((selector) => !APPROVED_THEME_SELECTORS.has(selector))) {
+      return { error: `CSS selector is not approved: ${selectors.find((selector) => !APPROVED_THEME_SELECTORS.has(selector))}` };
+    }
+    if (/behavior\s*:|-moz-binding\s*:|position\s*:\s*fixed/i.test(match[2])) return { error: 'CSS contains a restricted declaration' };
+    const scoped = selectors.map((selector) => selector === ':root'
+      ? '.wattaman-theme'
+      : selector === 'body'
+        ? '.wattaman-theme'
+        : selector.startsWith('.dark ')
+          ? selector === '.dark body' ? '.wattaman-theme.dark' : `.wattaman-theme.dark ${selector.slice(6)}`
+          : `.wattaman-theme ${selector}`).join(',\n');
+    blocks.push(`${scoped} {${match[2]}}`);
+  }
+  if (withoutComments.slice(cursor).trim()) return { error: 'CSS contains malformed rules' };
+  return { css: blocks.join('\n\n') };
 }
 
 @Injectable()
@@ -104,7 +139,7 @@ export class ExtensionPackageValidatorService {
 
     let totalBytes = 0;
     for (const [path, entry] of paths) {
-      const contents = await entry.async('nodebuffer');
+      let contents = await entry.async('nodebuffer');
       totalBytes += contents.length;
       if (totalBytes > MAX_EXTRACTED_BYTES) {
         result.errors.push({ code: 'EXTRACTED_SIZE', message: 'Package exceeds the 10MB extracted-size limit' });
@@ -120,6 +155,14 @@ export class ExtensionPackageValidatorService {
         if (/@import\b|expression\s*\(|javascript\s*:/i.test(css) || /url\(\s*['"]?(?:https?:)?\/\//i.test(css)) {
           result.errors.push({ code: 'UNSAFE_CSS', path, message: 'CSS imports, expressions, JavaScript URLs, and external asset URLs are not allowed' });
           continue;
+        }
+        if (extension.runtimeType === 'THEME') {
+          const scoped = scopeThemeCss(css);
+          if (!scoped.css) {
+            result.errors.push({ code: 'UNAPPROVED_CSS', path, message: scoped.error || 'Theme CSS is not approved' });
+            continue;
+          }
+          contents = Buffer.from(scoped.css, 'utf8');
         }
       }
       if (mimeType === 'text/markdown' && /<\s*script\b|javascript\s*:|onerror\s*=/i.test(contents.toString('utf8'))) {
@@ -176,6 +219,9 @@ export class ExtensionPackageValidatorService {
       if (!HEX_PATTERN.test(tokens.secondaryColor || '')) error('THEME_SECONDARY', 'tokens.secondaryColor must be a six-digit hex color');
       if (!THEME_FONTS.includes(tokens.font)) error('THEME_FONT', `tokens.font must be one of ${THEME_FONTS.join(', ')}`);
       if (!THEME_RADII.includes(tokens.radius)) error('THEME_RADIUS', `tokens.radius must be one of ${THEME_RADII.join(', ')}`);
+      if (tokens.spacing !== undefined && !THEME_SPACING.includes(tokens.spacing)) error('THEME_SPACING', `tokens.spacing must be one of ${THEME_SPACING.join(', ')}`);
+      if (tokens.shadow !== undefined && !THEME_SHADOWS.includes(tokens.shadow)) error('THEME_SHADOW', `tokens.shadow must be one of ${THEME_SHADOWS.join(', ')}`);
+      if (tokens.surface !== undefined && !THEME_SURFACES.includes(tokens.surface)) error('THEME_SURFACE', `tokens.surface must be one of ${THEME_SURFACES.join(', ')}`);
     }
 
     if (extension.runtimeType === 'DECLARATIVE_MODULE' && !Array.isArray(manifest.permissions)) {

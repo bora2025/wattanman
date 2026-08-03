@@ -269,7 +269,7 @@ export class ExtensionsService {
   async themePreview(versionId: string) {
     const version = await this.prisma.extensionVersion.findUnique({
       where: { id: versionId },
-      include: { extension: true, assets: true },
+      include: { extension: true, assets: true, validations: { orderBy: { startedAt: 'desc' }, take: 1, select: { warnings: true } } },
     });
     if (!version) throw new NotFoundException('Extension version not found');
     if (version.extension.runtimeType !== 'THEME') throw new BadRequestException('Preview is only available for theme extensions');
@@ -278,7 +278,16 @@ export class ExtensionsService {
     }
     const styleAsset = version.assets.find((asset) => asset.path.toLowerCase().split('/').pop() === 'style.css');
     const css = styleAsset ? (await this.storage.getPrivate(styleAsset.storageKey)).toString('utf8') : '';
-    return { versionId: version.id, version: version.version, manifest: version.manifest, css };
+    return {
+      versionId: version.id,
+      version: version.version,
+      manifest: version.manifest,
+      css,
+      compatibilityRange: version.compatibilityRange,
+      platformVersion: this.platformVersion(),
+      platformCompatible: this.isCompatible(version.compatibilityRange),
+      warnings: (version.validations?.[0]?.warnings as Array<{ code: string; message: string }> | null) || [],
+    };
   }
 
   async transition(versionId: string, nextStatus: string, reviewNotes: string | undefined, actor: Actor) {

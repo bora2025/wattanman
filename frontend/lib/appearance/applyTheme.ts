@@ -31,8 +31,10 @@ function setCustomCssTag(css: string) {
   let tag = document.getElementById(CUSTOM_CSS_STYLE_ID) as HTMLStyleElement | null
   if (!css) {
     tag?.remove()
+    document.documentElement.classList.remove('wattaman-theme')
     return
   }
+  document.documentElement.classList.add('wattaman-theme')
   if (!tag) {
     tag = document.createElement('style')
     tag.id = CUSTOM_CSS_STYLE_ID

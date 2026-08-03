@@ -668,7 +668,7 @@ This section is the source of truth for implementation progress. Update it in th
 | Existing foundation | Complete | Catalog, school enablement, guards, theme application, and platform roles already exist |
 | Stage 0 — Product decisions | In progress | Initial internal-release defaults are accepted; formal security, product, and operations approval remains |
 | Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, and audit exist; migration and failure gates remain |
-| Stage 2 — Versioned themes | In progress | Manifest validation, isolated preview, publishing, installation, activation, upgrade, rollback, blocking, and uninstall exist; CSS restrictions and full integration gates remain |
+| Stage 2 — Versioned themes | In progress | Manifest/token validation, approved scoped CSS, public/dashboard preview, publishing, installation, activation, upgrade, rollback, blocking, and uninstall exist; inheritance, override merging, visual regression, and full integration gates remain |
 | Stage 3 — Declarative modules | In progress | Runtime navigation, schema-driven pages, tenant records, capability enforcement, and the Student Rewards ZIP are implemented; integration and upgrade gates remain |
 | Stage 4 — Marketplace operations | In progress | Publisher governance, release compatibility, explicit visibility, scoped permissions, signing, update policies, operational alerts, API telemetry, adoption health, emergency blocking, and incident response exist; the full marketplace end-to-end gate remains |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
@@ -813,8 +813,8 @@ This section is the source of truth for implementation progress. Update it in th
 #### Theme manifest
 
 - [x] Finalize versioned `theme.json` JSON Schema.
-- [ ] Require key, name, version, manifest schema, and platform compatibility.
-- [ ] **PARTIAL:** Validate mode, colors, fonts, radius, spacing, shadows, and surface tokens; mode, colors, font, and radius are enforced, while spacing, shadows, and surfaces remain.
+- [x] Require key, name, version, manifest schema, and platform compatibility.
+- [x] Validate mode, colors, fonts, radius, spacing, shadows, and surface tokens.
 - [x] Validate asset references against extracted package files.
 - [ ] Decide and implement parent-theme inheritance.
 - [ ] Decide and implement school-level override preservation.
@@ -827,8 +827,8 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Accept and sanitize `README.md`.
 - [x] Accept and validate screenshots.
 - [x] Move extracted assets from base64/database storage to object storage.
-- [ ] Scope all custom CSS beneath a Wattaman theme root.
-- [ ] Replace broad CSS freedom with approved tokens and selectors where possible.
+- [x] Scope all custom CSS beneath a Wattaman theme root.
+- [x] Replace broad CSS freedom with approved tokens and selectors where possible.
 - [x] Define behavior for unknown and unused files.
 
 #### Version lifecycle
@@ -848,20 +848,20 @@ This section is the source of truth for implementation progress. Update it in th
 
 - [x] Render preview in an isolated frame or dedicated isolated route.
 - [x] Prevent preview CSS from escaping into the platform admin interface.
-- [ ] Preview public pages and authenticated dashboards.
+- [x] Preview public pages and authenticated dashboards.
 - [x] Preview light and dark modes.
-- [ ] Display validation warnings and compatibility information during preview.
+- [x] Display validation warnings and compatibility information during preview.
 
 #### Stage 2 tests
 
-- [ ] Manifest schema tests pass for valid and invalid versions.
-- [ ] CSS scoping and sanitization tests pass.
+- [x] Manifest schema tests pass for valid and invalid versions.
+- [x] CSS scoping and sanitization tests pass.
 - [x] Asset storage and retrieval tests pass.
 - [ ] Publish/install/activate authorization tests pass.
 - [ ] Upgrade and rollback integration tests pass.
 - [ ] School A cannot access or activate School B's installation.
 - [ ] Visual regression checks cover representative public and dashboard pages.
-- [ ] Emergency blocking disables the affected version without redeployment.
+- [x] Emergency blocking disables the affected version without redeployment.
 
 #### Stage 2 completion gate
 
@@ -949,6 +949,8 @@ Package-signing migration note (2026-08-03): `20260803000005_add_extension_packa
 Update and alert migration note (2026-08-03): `20260803000006_add_extension_update_policies` and `20260803000007_add_extension_operational_alerts` were applied successfully against PostgreSQL 16. The focused extension suite passes 55 tests, backend type-check/build and frontend production build pass, school policies enforce manual/notify/safe automatic behavior, and hourly alert scanning detects repeated validation failures and denied capabilities with operator acknowledgement and resolution.
 
 Marketplace operations migration note (2026-08-03): `20260803000008_add_extension_visibility_and_api_metrics` was applied successfully against PostgreSQL 16 with listed/unlisted backfill verification. Release notes and platform ranges are required before review and exposed as a compatibility matrix; listed, unlisted, and private visibility with per-school grants are enforced; extension API success/error counts and latency are collected hourly and shown to operators. The extension suite passes 62 tests, backend and frontend production builds pass, and the real two-school HTTP/PostgreSQL tenant suite passes 21/21. The broad Stage 4 workflow gate remains open until one real artifact is exercised through the complete publisher-to-emergency lifecycle in a single E2E scenario.
+
+Theme safety note (2026-08-03): theme packages now validate color, font, radius, spacing, shadow, and surface tokens; reject CSS outside the approved selector registry; rewrite accepted rules beneath `.wattaman-theme`; and render isolated light/dark public-site and authenticated-dashboard previews with compatibility and validator warnings. The extension suite passes 64 tests and both production builds pass. Parent inheritance, post-install override merging, visual regression, and the complete real-storage lifecycle remain open.
 
 ### Stage 4 — Marketplace and operations
 

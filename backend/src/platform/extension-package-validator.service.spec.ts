@@ -32,6 +32,7 @@ describe('ExtensionPackageValidatorService', () => {
     expect(result.valid).toBe(true);
     expect(result.errors).toEqual([]);
     expect(result.files).toHaveLength(2);
+    expect(result.files.find((asset) => asset.path === 'aurora/style.css')?.contents.toString()).toContain('.wattaman-theme');
   });
 
   it('accepts the versioned Aurora Khmer manual test package', async () => {
@@ -124,5 +125,33 @@ describe('ExtensionPackageValidatorService', () => {
     const result = await validator.validate(file, { key: 'AURORA', runtimeType: 'THEME' }, '1.0.0');
 
     expect(result.errors).toContainEqual(expect.objectContaining({ code: 'MIME_SIGNATURE', path: 'screenshot.png' }));
+  });
+
+  it('rejects unapproved global theme selectors', async () => {
+    const file = await packageFile({
+      'theme.json': JSON.stringify({
+        schemaVersion: 1, key: 'AURORA', name: 'Aurora', version: '1.0.0', runtimeType: 'THEME', mode: 'dark',
+        tokens: { primaryColor: '#14B8A6', secondaryColor: '#FBBF24', font: 'inter', radius: 'soft' },
+      }),
+      'style.css': 'input, a { display: none; }',
+    });
+
+    const result = await validator.validate(file, { key: 'AURORA', runtimeType: 'THEME' }, '1.0.0');
+
+    expect(result.errors).toContainEqual(expect.objectContaining({ code: 'UNAPPROVED_CSS', path: 'style.css' }));
+  });
+
+  it('validates optional spacing, shadow, and surface tokens', async () => {
+    const file = await packageFile({
+      'theme.json': JSON.stringify({
+        schemaVersion: 1, key: 'AURORA', name: 'Aurora', version: '1.0.0', runtimeType: 'THEME', mode: 'dark',
+        tokens: { primaryColor: '#14B8A6', secondaryColor: '#FBBF24', font: 'inter', radius: 'soft', spacing: 'huge', shadow: 'unsafe', surface: 'animated' },
+      }),
+      'style.css': '.card { color: #123456; }',
+    });
+
+    const result = await validator.validate(file, { key: 'AURORA', runtimeType: 'THEME' }, '1.0.0');
+
+    expect(result.errors.map((error) => error.code)).toEqual(expect.arrayContaining(['THEME_SPACING', 'THEME_SHADOW', 'THEME_SURFACE']));
   });
 });

@@ -20,7 +20,10 @@
         "primaryColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
         "secondaryColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
         "font": { "enum": ["inter", "poppins", "nunito", "manrope", "roboto"] },
-        "radius": { "enum": ["sharp", "soft", "round"] }
+        "radius": { "enum": ["sharp", "soft", "round"] },
+        "spacing": { "enum": ["compact", "comfortable", "spacious"] },
+        "shadow": { "enum": ["none", "soft", "elevated"] },
+        "surface": { "enum": ["flat", "bordered", "glass"] }
       }
     },
     "assets": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }

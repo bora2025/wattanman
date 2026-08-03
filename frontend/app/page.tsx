@@ -566,7 +566,7 @@ export default function Home() {
 
   return (
     <div
-      className={`min-h-screen bg-white dark:bg-slate-950 wm-public-page ${settings.mode === 'dark' ? 'dark' : ''}`}
+      className={`min-h-screen bg-white dark:bg-slate-950 wm-public-page wattaman-theme ${settings.mode === 'dark' ? 'dark' : ''}`}
       style={{ fontFamily: `var(--font-${settings.font || 'inter'}), sans-serif` }}
     >
       {/* This page now has real dark: support of its own, driven by
