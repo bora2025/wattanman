@@ -23,6 +23,8 @@ interface ExtensionVersion {
   packageSize?: number | null
   reviewNotes?: string | null
   createdAt: string
+  compatibilityRange?: string | null
+  releaseNotes?: string | null
 }
 
 interface ReviewSummary {
@@ -46,6 +48,7 @@ interface ExtensionRecord {
   name: string
   runtimeType: string
   commercialType: string
+  visibility: 'LISTED' | 'UNLISTED' | 'PRIVATE'
   versions: ExtensionVersion[]
 }
 
@@ -202,6 +205,7 @@ function VersionPanel({ extension, version, reload }: { extension: ExtensionReco
           <span className="font-semibold text-slate-800 dark:text-slate-100">v{version.version}</span>
           <span className="ml-2 text-[11px] rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-1 text-slate-600 dark:text-slate-300">{version.lifecycleStatus}</span>
           {version.packageChecksum && <p className="text-[10px] text-slate-400 mt-1 font-mono">SHA-256 {version.packageChecksum}</p>}
+          <p className="text-[11px] text-slate-500 mt-1">Platform {version.compatibilityRange || 'compatibility not set'}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {version.lifecycleStatus === 'UPLOADED' && (
@@ -224,6 +228,7 @@ function VersionPanel({ extension, version, reload }: { extension: ExtensionReco
         </div>
       </div>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {version.releaseNotes && <div className="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 text-xs"><p className="font-semibold">Release notes</p><p className="whitespace-pre-wrap text-slate-600 dark:text-slate-300">{version.releaseNotes}</p></div>}
       {review && <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200 space-y-1">
         <p className="font-semibold">Permission and compatibility review</p>
         <p>Compatibility: {review.compatibilityRange || 'Not declared'} · Previous: {review.previousVersion ? `v${review.previousVersion}` : 'First release'}</p>
@@ -264,6 +269,8 @@ function ThemePreview({ manifest, css, onClose }: { manifest: any; css: string; 
 
 function ExtensionCard({ extension, reload }: { extension: ExtensionRecord; reload: () => Promise<void> }) {
   const [version, setVersion] = useState('1.0.0')
+  const [compatibilityRange, setCompatibilityRange] = useState('>=1.0.0 <2.0.0')
+  const [releaseNotes, setReleaseNotes] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -278,6 +285,8 @@ function ExtensionCard({ extension, reload }: { extension: ExtensionRecord; relo
         body: JSON.stringify({
           version,
           manifest: { schemaVersion: 1, key: extension.key, name: extension.name, version, runtimeType: extension.runtimeType },
+          compatibilityRange,
+          releaseNotes,
         }),
       }))
       await reload()
@@ -288,6 +297,33 @@ function ExtensionCard({ extension, reload }: { extension: ExtensionRecord; relo
     }
   }
 
+  async function setVisibility(visibility: string) {
+    setBusy(true)
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/${extension.id}/visibility`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ visibility }),
+      }))
+      await reload()
+    } catch (visibilityError: any) {
+      setError(visibilityError.message || 'Could not update visibility')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function grantPrivateSchool() {
+    const schoolId = window.prompt('School ID to grant private access')
+    if (!schoolId) return
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/${extension.id}/private-schools/${schoolId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ granted: true }),
+      }))
+      await reload()
+    } catch (grantError: any) {
+      setError(grantError.message || 'Could not grant private access')
+    }
+  }
+
   return (
     <div className="card p-5 space-y-4">
       <div>
@@ -295,12 +331,15 @@ function ExtensionCard({ extension, reload }: { extension: ExtensionRecord; relo
           <h2 className="font-bold text-slate-800 dark:text-slate-100">{extension.name}</h2>
           <code className="text-[10px] text-slate-400">{extension.key}</code>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400">{extension.runtimeType} · {extension.commercialType}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{extension.runtimeType} · {extension.commercialType} · {extension.visibility}</p>
+        <div className="flex gap-2 mt-2"><select className="input py-1 text-xs" value={extension.visibility} disabled={busy} onChange={event => setVisibility(event.target.value)}><option value="LISTED">Listed</option><option value="UNLISTED">Unlisted</option><option value="PRIVATE">Private</option></select>{extension.visibility === 'PRIVATE' && <button type="button" className="btn-outline btn-sm" onClick={grantPrivateSchool}>Grant school</button>}</div>
       </div>
       <form onSubmit={addVersion} className="flex gap-2 items-end flex-wrap">
         <label className="text-xs text-slate-600 dark:text-slate-300">New version
           <input value={version} onChange={event => setVersion(event.target.value)} className="input mt-1 w-32" required />
         </label>
+        <label className="text-xs text-slate-600 dark:text-slate-300">Platform range<input value={compatibilityRange} onChange={event => setCompatibilityRange(event.target.value)} className="input mt-1 w-44" required /></label>
+        <label className="text-xs text-slate-600 dark:text-slate-300 flex-1 min-w-56">Release notes<input value={releaseNotes} onChange={event => setReleaseNotes(event.target.value)} className="input mt-1 w-full" required /></label>
         <button className="btn-outline btn-sm" disabled={busy}>{busy ? 'Creating…' : 'Create draft'}</button>
       </form>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
@@ -383,22 +422,25 @@ function ExtensionsContent() {
   const [health, setHealth] = useState<any>(null)
   const [publishers, setPublishers] = useState<PublisherRecord[]>([])
   const [alerts, setAlerts] = useState<ExtensionAlert[]>([])
+  const [apiMetrics, setApiMetrics] = useState<any>(null)
 
   async function load() {
     setLoading(true)
     try {
-      const [extensionData, installationData, healthData, publisherData, alertData] = await Promise.all([
+      const [extensionData, installationData, healthData, publisherData, alertData, metricData] = await Promise.all([
         responseJson(await apiFetch('/api/platform/extensions')),
         responseJson(await apiFetch('/api/platform/extension-installations')),
         responseJson(await apiFetch('/api/platform/extensions/health')),
         responseJson(await apiFetch('/api/platform/extensions/publishers')),
         responseJson(await apiFetch('/api/platform/extensions/alerts')),
+        responseJson(await apiFetch('/api/platform/extensions/api-metrics')),
       ])
       setExtensions(extensionData)
       setInstallations(installationData)
       setHealth(healthData)
       setPublishers(publisherData)
       setAlerts(alertData)
+      setApiMetrics(metricData)
       setError('')
     } catch (loadError: any) {
       setError(loadError.message || 'Failed to load extensions')
@@ -506,6 +548,7 @@ function ExtensionsContent() {
               {alert.status !== 'RESOLVED' && <div className="flex gap-2">{alert.status === 'OPEN' && <button className="btn-outline btn-sm" onClick={() => setAlertStatus(alert.id, 'ACKNOWLEDGED')}>Acknowledge</button>}<button className="btn-outline btn-sm" onClick={() => setAlertStatus(alert.id, 'RESOLVED')}>Resolve</button></div>}
             </div>) : <p className="text-sm text-slate-400">No operational alerts.</p>}
           </div>
+          {apiMetrics && <div className="card p-5 space-y-3"><div><h2 className="font-bold text-slate-800 dark:text-slate-100">Extension API telemetry</h2><p className="text-xs text-slate-500">Rolling 24-hour request health.</p></div><div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm"><div><p className="text-slate-400">Requests</p><p className="font-bold">{apiMetrics.requests}</p></div><div><p className="text-slate-400">Errors</p><p className="font-bold">{apiMetrics.errors}</p></div><div><p className="text-slate-400">Error rate</p><p className="font-bold">{apiMetrics.errorRate}%</p></div><div><p className="text-slate-400">Average</p><p className="font-bold">{apiMetrics.averageDurationMs} ms</p></div><div><p className="text-slate-400">Maximum</p><p className="font-bold">{apiMetrics.maxDurationMs} ms</p></div></div></div>}
           <div className="card p-5 space-y-3">
             <div><h2 className="font-bold text-slate-800 dark:text-slate-100">Publishers</h2><p className="text-xs text-slate-500">Initial release accepts Wattaman-internal packages only.</p></div>
             {publishers.map(publisher => <div key={publisher.id} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3">

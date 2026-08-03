@@ -6,12 +6,13 @@ import { RolesGuard } from '../auth/roles.guard';
 import { PlatformScopeGuard } from '../tenancy/platform-scope.guard';
 import { ExtensionsService } from './extensions.service';
 import { ExtensionAlertService } from './extension-alert.service';
+import { ExtensionApiMetricsService } from './extension-api-metrics.service';
 
 @Controller('platform/extensions')
 @UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard)
 @Roles('PLATFORM_ADMIN')
 export class ExtensionsController {
-  constructor(private extensions: ExtensionsService, private alerts: ExtensionAlertService) {}
+  constructor(private extensions: ExtensionsService, private alerts: ExtensionAlertService, private apiMetrics: ExtensionApiMetricsService) {}
 
   @Get()
   list() {
@@ -56,6 +57,26 @@ export class ExtensionsController {
   @Get('health')
   health() {
     return this.extensions.health();
+  }
+
+  @Get('api-metrics')
+  apiMetricSummary() {
+    return this.apiMetrics.summary();
+  }
+
+  @Patch(':extensionId/visibility')
+  visibility(@Param('extensionId') extensionId: string, @Body() body: { visibility: string }, @Request() req) {
+    return this.extensions.setVisibility(extensionId, body.visibility, req.user);
+  }
+
+  @Patch(':extensionId/private-schools/:schoolId')
+  privateSchool(@Param('extensionId') extensionId: string, @Param('schoolId') schoolId: string, @Body() body: { granted: boolean }, @Request() req) {
+    return this.extensions.grantPrivateAccess(extensionId, schoolId, body.granted === true, req.user);
+  }
+
+  @Get(':extensionId/compatibility')
+  compatibility(@Param('extensionId') extensionId: string) {
+    return this.extensions.compatibilityMatrix(extensionId);
   }
 
   @Get('alerts')

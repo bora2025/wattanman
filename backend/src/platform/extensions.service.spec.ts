@@ -28,6 +28,8 @@ describe('ExtensionsService', () => {
       findMany: jest.fn(),
     },
     extensionInstallation: { updateMany: jest.fn() },
+    extensionVisibilityGrant: { upsert: jest.fn(), deleteMany: jest.fn() },
+    school: { findUnique: jest.fn() },
     extensionAsset: { upsert: jest.fn() },
     auditLog: { groupBy: jest.fn() },
   };
@@ -117,7 +119,7 @@ describe('ExtensionsService', () => {
         signedAt: expect.any(Date),
       }),
     }));
-    expect(prisma.extension.update).toHaveBeenCalledWith({ where: { id: 'ext-1' }, data: { isListed: true, status: 'ACTIVE' } });
+    expect(prisma.extension.update).toHaveBeenCalledWith({ where: { id: 'ext-1' }, data: { isListed: true, visibility: 'LISTED', status: 'ACTIVE' } });
     expect(storage.deletePrivate).toHaveBeenCalledWith('quarantine/extensions/ext-1/version-1/checksum.zip');
   });
 
@@ -144,6 +146,28 @@ describe('ExtensionsService', () => {
     expect(result.permissions.added).toEqual(['rewards:write']);
     expect(result.permissions.removed).toEqual(['reports:read']);
     expect(result.previousVersion).toBe('1.0.0');
+    expect(result.platformCompatible).toBe(true);
+  });
+
+  it('requires release notes and compatibility before review', async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: 'version-1', version: '1.0.0', lifecycleStatus: 'VALIDATED', releaseNotes: null, compatibilityRange: null,
+      extension: { publisherId: 'publisher-1' },
+    });
+    await expect(service.transition('version-1', 'AWAITING_REVIEW', undefined, actor)).rejects.toThrow('Release notes');
+  });
+
+  it('controls private extension visibility and school grants', async () => {
+    prisma.extension.findUnique.mockResolvedValue({ id: 'ext-1', name: 'Rewards', publisherId: 'publisher-1', visibility: 'LISTED' });
+    prisma.extension.update.mockResolvedValue({ id: 'ext-1', visibility: 'PRIVATE', isListed: false });
+    await expect(service.setVisibility('ext-1', 'PRIVATE', actor)).resolves.toEqual(expect.objectContaining({ visibility: 'PRIVATE' }));
+    expect(prisma.extension.update).toHaveBeenCalledWith({ where: { id: 'ext-1' }, data: { visibility: 'PRIVATE', isListed: false } });
+
+    prisma.school.findUnique.mockResolvedValue({ id: 'school-1', name: 'School One' });
+    await service.grantPrivateAccess('ext-1', 'school-1', true, actor);
+    expect(prisma.extensionVisibilityGrant.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      where: { extensionId_schoolId: { extensionId: 'ext-1', schoolId: 'school-1' } },
+    }));
   });
 
   it('deactivates every installation of an emergency-blocked version', async () => {

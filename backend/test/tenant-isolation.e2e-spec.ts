@@ -113,6 +113,7 @@ describe('Phase 4d: Multi-Tenant Isolation', () => {
         publisherId: publisher.id,
         status: 'ACTIVE',
         isListed: true,
+        visibility: 'LISTED',
         versions: {
           create: {
             version: '1.0.0',

@@ -22,8 +22,13 @@ export class ExtensionInstallationsService {
   ) {}
 
   async schoolDirectory() {
+    const schoolId = getCurrentSchoolId();
     return this.prisma.extension.findMany({
-      where: { isListed: true, status: 'ACTIVE', versions: { some: { lifecycleStatus: 'PUBLISHED' } } },
+      where: {
+        status: 'ACTIVE',
+        versions: { some: { lifecycleStatus: 'PUBLISHED' } },
+        OR: [{ visibility: 'LISTED' }, { visibility: 'PRIVATE', visibilityGrants: { some: { schoolId } } }],
+      },
       include: { versions: { where: { lifecycleStatus: 'PUBLISHED' }, orderBy: { publishedAt: 'desc' }, take: 1 } },
       orderBy: { name: 'asc' },
     });
@@ -39,7 +44,11 @@ export class ExtensionInstallationsService {
   async request(extensionId: string, actor: Actor) {
     const schoolId = getCurrentSchoolId();
     const extension = await this.prisma.extension.findFirst({
-      where: { id: extensionId, isListed: true, status: 'ACTIVE' },
+      where: {
+        id: extensionId,
+        status: 'ACTIVE',
+        OR: [{ visibility: { in: ['LISTED', 'UNLISTED'] } }, { visibility: 'PRIVATE', visibilityGrants: { some: { schoolId } } }],
+      },
       include: { versions: { where: { lifecycleStatus: 'PUBLISHED' }, orderBy: { publishedAt: 'desc' }, take: 1 } },
     });
     if (!extension || !extension.versions[0]) throw new NotFoundException('No published extension version is available');

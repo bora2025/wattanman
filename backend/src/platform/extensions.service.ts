@@ -8,6 +8,8 @@ import { ExtensionSigningService } from './extension-signing.service';
 
 const KEY_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
+const COMPATIBILITY_PATTERN = /^(?:(?:>=|>)\d+\.\d+\.\d+)(?:\s+(?:<=|<)\d+\.\d+\.\d+)?$/;
+const VISIBILITIES = ['LISTED', 'UNLISTED', 'PRIVATE'];
 const RUNTIME_TYPES = ['CORE_MODULE', 'DECLARATIVE_MODULE', 'THEME', 'INTEGRATION', 'CODE_EXTENSION'];
 const COMMERCIAL_TYPES = ['MODULE', 'ADDON', 'THEME'];
 const MUTABLE_VERSION_STATUSES = new Set(['UPLOADED', 'QUARANTINED', 'VALIDATING', 'VALIDATED', 'REJECTED', 'AWAITING_REVIEW']);
@@ -47,6 +49,37 @@ export class ExtensionsService {
       include: { publisherEntity: true, versions: { orderBy: { createdAt: 'desc' } } },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async setVisibility(extensionId: string, visibility: string, actor: Actor) {
+    if (!VISIBILITIES.includes(visibility)) throw new BadRequestException('visibility must be LISTED, UNLISTED, or PRIVATE');
+    const existing = await this.prisma.extension.findUnique({ where: { id: extensionId } });
+    if (!existing) throw new NotFoundException('Extension not found');
+    await this.requirePublisherRole(existing.publisherId, actor, 'PUBLISH');
+    const updated = await this.prisma.extension.update({ where: { id: extensionId }, data: { visibility, isListed: visibility === 'LISTED' } });
+    await this.log(actor, 'VISIBILITY_CHANGE', 'EXTENSION', extensionId, existing.name, {
+      changes: { before: { visibility: existing.visibility }, after: { visibility } },
+    });
+    return updated;
+  }
+
+  async grantPrivateAccess(extensionId: string, schoolId: string, granted: boolean, actor: Actor) {
+    const extension = await this.prisma.extension.findUnique({ where: { id: extensionId } });
+    if (!extension) throw new NotFoundException('Extension not found');
+    await this.requirePublisherRole(extension.publisherId, actor, 'PUBLISH');
+    const school = await this.prisma.school.findUnique({ where: { id: schoolId }, select: { id: true, name: true } });
+    if (!school) throw new NotFoundException('School not found');
+    if (granted) {
+      await this.prisma.extensionVisibilityGrant.upsert({
+        where: { extensionId_schoolId: { extensionId, schoolId } },
+        update: { grantedBy: actor.userId },
+        create: { extensionId, schoolId, grantedBy: actor.userId },
+      });
+    } else {
+      await this.prisma.extensionVisibilityGrant.deleteMany({ where: { extensionId, schoolId } });
+    }
+    await this.log(actor, granted ? 'GRANT_PRIVATE_ACCESS' : 'REVOKE_PRIVATE_ACCESS', 'EXTENSION', extensionId, extension.name, { metadata: { schoolId, schoolName: school.name } });
+    return { extensionId, schoolId, granted };
   }
 
   async createExtension(data: {
@@ -109,6 +142,9 @@ export class ExtensionsService {
     if (!data.manifest || typeof data.manifest !== 'object' || Array.isArray(data.manifest)) {
       throw new BadRequestException('manifest must be a JSON object');
     }
+    if (data.compatibilityRange?.trim() && !COMPATIBILITY_PATTERN.test(data.compatibilityRange.trim())) {
+      throw new BadRequestException('compatibilityRange must use comparators such as >=1.0.0 <2.0.0');
+    }
     const duplicate = await this.prisma.extensionVersion.findUnique({
       where: { extensionId_version: { extensionId, version } },
     });
@@ -138,6 +174,9 @@ export class ExtensionsService {
     if (!existing) throw new NotFoundException('Extension version not found');
     if (!MUTABLE_VERSION_STATUSES.has(existing.lifecycleStatus)) {
       throw new ConflictException('Approved and published extension versions are immutable; create a new version instead');
+    }
+    if (data.compatibilityRange?.trim() && !COMPATIBILITY_PATTERN.test(data.compatibilityRange.trim())) {
+      throw new BadRequestException('compatibilityRange must use comparators such as >=1.0.0 <2.0.0');
     }
     const updated = await this.prisma.extensionVersion.update({
       where: { id: versionId },
@@ -259,6 +298,9 @@ export class ExtensionsService {
     if ((nextStatus === 'APPROVED' || nextStatus === 'REJECTED') && !reviewNotes?.trim()) {
       throw new BadRequestException('reviewNotes are required when approving or rejecting a version');
     }
+    if (nextStatus === 'AWAITING_REVIEW' && (!existing.releaseNotes?.trim() || !existing.compatibilityRange?.trim())) {
+      throw new ConflictException('Release notes and a platform compatibility range are required before review');
+    }
     if (nextStatus === 'PUBLISHED' && existing.extension.publisherEntity.status !== 'ACTIVE') {
       throw new ConflictException('Publisher is not active');
     }
@@ -285,7 +327,7 @@ export class ExtensionsService {
       },
     });
     if (nextStatus === 'PUBLISHED') {
-      await this.prisma.extension.update({ where: { id: existing.extensionId }, data: { isListed: true, status: 'ACTIVE' } });
+      await this.prisma.extension.update({ where: { id: existing.extensionId }, data: { isListed: true, visibility: 'LISTED', status: 'ACTIVE' } });
       await this.storage.deletePrivate(existing.packageStorageKey!).catch(() => undefined);
     }
     if (nextStatus === 'BLOCKED') {
@@ -323,13 +365,35 @@ export class ExtensionsService {
     return {
       versionId: version.id,
       compatibilityRange: version.compatibilityRange,
+      platformVersion: this.platformVersion(),
+      platformCompatible: this.isCompatible(version.compatibilityRange),
       previousVersion: previous?.version || null,
       permissions: {
         requested: permissions,
         added: permissions.filter((permission: string) => !previousPermissions.includes(permission)),
         removed: previousPermissions.filter((permission: string) => !permissions.includes(permission)),
       },
-      warnings: version.compatibilityRange ? [] : ['No platform compatibility range declared'],
+      warnings: this.isCompatible(version.compatibilityRange) ? [] : ['This version is not compatible with the current platform version'],
+    };
+  }
+
+  async compatibilityMatrix(extensionId: string) {
+    const extension = await this.prisma.extension.findUnique({
+      where: { id: extensionId },
+      include: { versions: { orderBy: { createdAt: 'desc' } } },
+    });
+    if (!extension) throw new NotFoundException('Extension not found');
+    return {
+      extension: { id: extension.id, key: extension.key, name: extension.name },
+      platformVersion: this.platformVersion(),
+      versions: extension.versions.map((version) => ({
+        id: version.id,
+        version: version.version,
+        lifecycleStatus: version.lifecycleStatus,
+        compatibilityRange: version.compatibilityRange,
+        compatible: this.isCompatible(version.compatibilityRange),
+        releaseNotes: version.releaseNotes,
+      })),
     };
   }
 
@@ -555,6 +619,21 @@ export class ExtensionsService {
     if (!membership || membership.status !== 'ACTIVE' || !roles.includes(role)) {
       throw new ForbiddenException(`Publisher ${role.toLowerCase()} permission is required`);
     }
+  }
+
+  private platformVersion() {
+    return process.env.PLATFORM_VERSION || '1.0.0';
+  }
+
+  private isCompatible(range: string | null | undefined) {
+    if (!range || !COMPATIBILITY_PATTERN.test(range)) return false;
+    const current = this.platformVersion().split('.').map(Number);
+    return range.split(/\s+/).every((comparator) => {
+      const operator = comparator.match(/^(>=|>|<=|<)/)?.[1];
+      const target = comparator.replace(/^(>=|>|<=|<)/, '').split('.').map(Number);
+      const comparison = current[0] - target[0] || current[1] - target[1] || current[2] - target[2];
+      return operator === '>=' ? comparison >= 0 : operator === '>' ? comparison > 0 : operator === '<=' ? comparison <= 0 : comparison < 0;
+    });
   }
 
   private log(actor: Actor, action: string, resource: string, resourceId: string, resourceLabel: string, detail: Record<string, unknown>) {

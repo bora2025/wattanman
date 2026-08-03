@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { DatabaseModule } from '../database/database.module';
 import { AuditModule } from '../audit/audit.module';
@@ -27,6 +28,8 @@ import { ExtensionRuntimeService } from './extension-runtime.service';
 import { ExtensionSigningService } from './extension-signing.service';
 import { ExtensionUpdateService } from './extension-update.service';
 import { ExtensionAlertService } from './extension-alert.service';
+import { ExtensionApiMetricsService } from './extension-api-metrics.service';
+import { ExtensionApiMetricsInterceptor } from './extension-api-metrics.interceptor';
 
 @Module({
   imports: [
@@ -39,6 +42,6 @@ import { ExtensionAlertService } from './extension-alert.service';
     }),
   ],
   controllers: [SchoolsController, PlatformAdminsController, SchoolAddonsController, AddonDirectoryController, AddonRequestsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController],
-  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService, AddonRequestsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionInstallationsService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService],
+  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService, AddonRequestsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionInstallationsService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
 })
 export class PlatformModule {}

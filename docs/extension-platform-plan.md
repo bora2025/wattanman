@@ -670,7 +670,7 @@ This section is the source of truth for implementation progress. Update it in th
 | Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, and audit exist; migration and failure gates remain |
 | Stage 2 — Versioned themes | In progress | Manifest validation, isolated preview, publishing, installation, activation, upgrade, rollback, blocking, and uninstall exist; CSS restrictions and full integration gates remain |
 | Stage 3 — Declarative modules | In progress | Runtime navigation, schema-driven pages, tenant records, capability enforcement, and the Student Rewards ZIP are implemented; integration and upgrade gates remain |
-| Stage 4 — Marketplace operations | In progress | Publisher governance, scoped permissions, signing, update policies, operational alerts, lifecycle metrics, adoption health, emergency blocking, and incident response exist; release metadata, visibility, API telemetry, and the full end-to-end gate remain |
+| Stage 4 — Marketplace operations | In progress | Publisher governance, release compatibility, explicit visibility, scoped permissions, signing, update policies, operational alerts, API telemetry, adoption health, emergency blocking, and incident response exist; the full marketplace end-to-end gate remains |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
 
 ### Existing foundation — verified
@@ -948,6 +948,8 @@ Package-signing migration note (2026-08-03): `20260803000005_add_extension_packa
 
 Update and alert migration note (2026-08-03): `20260803000006_add_extension_update_policies` and `20260803000007_add_extension_operational_alerts` were applied successfully against PostgreSQL 16. The focused extension suite passes 55 tests, backend type-check/build and frontend production build pass, school policies enforce manual/notify/safe automatic behavior, and hourly alert scanning detects repeated validation failures and denied capabilities with operator acknowledgement and resolution.
 
+Marketplace operations migration note (2026-08-03): `20260803000008_add_extension_visibility_and_api_metrics` was applied successfully against PostgreSQL 16 with listed/unlisted backfill verification. Release notes and platform ranges are required before review and exposed as a compatibility matrix; listed, unlisted, and private visibility with per-school grants are enforced; extension API success/error counts and latency are collected hourly and shown to operators. The extension suite passes 62 tests, backend and frontend production builds pass, and the real two-school HTTP/PostgreSQL tenant suite passes 21/21. The broad Stage 4 workflow gate remains open until one real artifact is exercised through the complete publisher-to-emergency lifecycle in a single E2E scenario.
+
 ### Stage 4 — Marketplace and operations
 
 #### Publisher and review
@@ -956,11 +958,11 @@ Update and alert migration note (2026-08-03): `20260803000006_add_extension_upda
 - [x] Add uploader, reviewer, publisher, and publisher-management permissions.
 - [x] Enforce separation of duties if accepted in Stage 0; the accepted initial internal policy explicitly allows one staff member to hold multiple scoped roles.
 - [x] Add review queue, reviewer notes, approval, rejection, and appeal history.
-- [ ] Add release notes and compatibility matrix.
+- [x] Add release notes and compatibility matrix.
 
 #### Distribution and updates
 
-- [ ] **PARTIAL:** Add listed, unlisted, private, deprecated, retired, and blocked states; listing and version lifecycle states exist, while an explicit private visibility state remains.
+- [x] Add listed, unlisted, private, deprecated, retired, and blocked states.
 - [x] Add school update policies: manual, notify, and approved automatic updates.
 - [x] Show requested permission differences before upgrade.
 - [x] Show version adoption and schools affected by deprecation or blocking.
@@ -969,7 +971,7 @@ Update and alert migration note (2026-08-03): `20260803000006_add_extension_upda
 #### Monitoring and response
 
 - [x] Add validation, installation, activation, upgrade, and rollback metrics.
-- [ ] Add extension API error and latency metrics.
+- [x] Add extension API error and latency metrics.
 - [x] Add storage and data usage metrics.
 - [x] Add version health dashboard.
 - [x] Add emergency global version kill switch.

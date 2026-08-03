@@ -109,6 +109,7 @@ model School {
   schoolAddons                SchoolAddon[]
   extensionInstallations      ExtensionInstallation[]
   extensionRecords            ExtensionRecord[]
+  extensionVisibilityGrants   ExtensionVisibilityGrant[]
 }
 
 model User {
@@ -653,19 +654,35 @@ model Extension {
   publisherEntity ExtensionPublisher @relation(fields: [publisherId], references: [id], onDelete: Restrict)
   status          String             @default("ACTIVE") // ACTIVE | SUSPENDED | RETIRED
   isListed        Boolean            @default(false)
+  visibility      String             @default("UNLISTED") // LISTED | UNLISTED | PRIVATE
   legacyAddonKey  String?            @unique
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
-  versions      ExtensionVersion[]
-  installations ExtensionInstallation[]
-  records       ExtensionRecord[]
-  dependencies  ExtensionDependency[]   @relation("ExtensionDependencies")
-  requiredBy    ExtensionDependency[]   @relation("RequiredExtensionDependencies")
+  versions         ExtensionVersion[]
+  installations    ExtensionInstallation[]
+  records          ExtensionRecord[]
+  visibilityGrants ExtensionVisibilityGrant[]
+  dependencies     ExtensionDependency[]      @relation("ExtensionDependencies")
+  requiredBy       ExtensionDependency[]      @relation("RequiredExtensionDependencies")
 
   @@index([runtimeType, status])
   @@index([commercialType, isListed])
+  @@index([visibility, status])
   @@index([publisherId, status])
+}
+
+model ExtensionVisibilityGrant {
+  id          String    @id @default(cuid())
+  extensionId String
+  extension   Extension @relation(fields: [extensionId], references: [id], onDelete: Cascade)
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  grantedBy   String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([extensionId, schoolId])
+  @@index([schoolId, createdAt])
 }
 
 model ExtensionPublisher {
@@ -778,7 +795,7 @@ model ExtensionAlert {
   status         String    @default("OPEN") // OPEN | ACKNOWLEDGED | RESOLVED
   extensionId    String?
   versionId      String?
-  schoolId       String?
+  schoolId       String    @default("PLATFORM")
   message        String
   occurrences    Int       @default(1)
   details        Json?
@@ -791,6 +808,25 @@ model ExtensionAlert {
 
   @@index([status, severity, lastSeenAt])
   @@index([extensionId, lastSeenAt])
+}
+
+model ExtensionApiMetric {
+  id              String   @id @default(cuid())
+  bucket          DateTime
+  route           String
+  method          String
+  statusClass     String
+  schoolId        String?
+  requestCount    Int      @default(0)
+  errorCount      Int      @default(0)
+  totalDurationMs Int      @default(0)
+  maxDurationMs   Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([bucket, route, method, statusClass, schoolId])
+  @@index([bucket, route])
+  @@index([schoolId, bucket])
 }
 
 model ExtensionAsset {
