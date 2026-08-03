@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
-import AppearanceTab from '../../../components/appearance/AppearanceTab'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { useAccentColor } from '../../../lib/appearance/accentColor'
@@ -225,20 +224,12 @@ function AddonDetailModal({ addon, onClose, onChanged }: { addon: DirectoryAddon
   )
 }
 
-type PageTab = 'addons' | 'appearance'
-
 function AddonsContent() {
   const { accentColor } = useAccentColor()
   const [addons, setAddons] = useState<DirectoryAddon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [openKey, setOpenKey] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<PageTab>('addons')
-
-  const tabs: { id: PageTab; label: string }[] = [
-    { id: 'addons', label: 'Modules & Add-ons' },
-    { id: 'appearance', label: 'Appearance' },
-  ]
 
   useEffect(() => {
     apiFetch('/api/school-addons/directory')
@@ -256,7 +247,6 @@ function AddonsContent() {
 
   const modules = addons.filter(a => a.kind === 'MODULE')
   const paidAddons = addons.filter(a => a.kind === 'ADDON')
-  const themes = addons.filter(a => a.kind === 'THEME')
   const openAddon = addons.find(a => a.addonKey === openKey) ?? null
 
   return (
@@ -267,29 +257,10 @@ function AddonsContent() {
         <div className="page-header">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Modules &amp; Add-ons</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Turn free modules on or off yourself. Paid add-ons need a quick approval — request one and we'll follow up to enable it once billing is sorted. Click any card for details.</p>
-
-          <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl w-fit mt-4">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-white dark:bg-slate-700 text-brand-700 dark:text-brand-300 shadow-sm'
-                    : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Looking for dashboard/site themes? They've moved to Appearance in the sidebar.</p>
         </div>
 
         <div className="page-body space-y-6">
-          {activeTab === 'appearance' ? (
-            <AppearanceTab themes={themes} onThemeChanged={handleChanged} />
-          ) : (
-          <>
           {error && <div className="px-4 py-3 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-900">{error}</div>}
 
           {loading ? (
@@ -322,8 +293,6 @@ function AddonsContent() {
                 )}
               </div>
             </>
-          )}
-          </>
           )}
         </div>
       </div>
