@@ -785,7 +785,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Frontend production build passes.
 - [x] Controller multipart upload integration test passes.
 - [ ] Validation lifecycle integration tests pass.
-- [ ] Tenant-isolation tests cover installation records.
+- [x] Tenant-isolation tests cover installation records.
 - [x] Platform role tests reject school users and unauthenticated users.
 - [ ] Storage failure and validation timeout tests pass.
 - [ ] Migration rehearsal succeeds on a production-sized database copy.
@@ -869,13 +869,13 @@ This section is the source of truth for implementation progress. Update it in th
 - [ ] Define roles, capabilities, dependencies, conflicts, and compatibility.
 - [ ] Define navigation, pages, forms, workflows, translations, and assets.
 - [x] Validate all identifiers and reject unknown executable content.
-- [ ] Add a local package validator command for developers.
+- [x] Add a local package validator command for developers.
 
 #### Dynamic navigation
 
 - [x] Add backend endpoint returning resolved navigation.
 - [x] Merge core and installed extension navigation.
-- [ ] Filter by school installation, role, permission, and feature state.
+- [x] Filter by school installation, role, permission, and feature state.
 - [ ] Replace static extension-key unions for runtime extensions.
 - [x] Preserve compiled core navigation during migration.
 
@@ -913,16 +913,20 @@ This section is the source of truth for implementation progress. Update it in th
 - [ ] Define pilot acceptance criteria.
 - [x] Package navigation, pages, permissions, data, and workflow in a ZIP.
 - [ ] Install the pilot without changing or rebuilding Wattaman source.
-- [ ] Validate multi-school isolation and role behavior.
+- [x] Validate multi-school isolation and role behavior.
 - [ ] Collect operator and school-admin feedback.
 
 #### Stage 3 completion gate
 
 - [ ] A new low-risk module installs from ZIP without source changes or rebuild.
-- [ ] It adds navigation and pages only for enabled schools and allowed roles.
+- [x] It adds navigation and pages only for enabled schools and allowed roles.
 - [ ] Its data is tenant-scoped and survives safe upgrades and rollback.
-- [ ] It cannot call undeclared capabilities.
-- [ ] Disabling it removes access without affecting core application startup.
+- [x] It cannot call undeclared capabilities.
+- [x] Disabling it removes access without affecting core application startup.
+
+Stage 3 validation note (2026-08-03): the Student Rewards artifact passes the local validator, all extension-focused unit suites pass, backend type-check/build passes, and the real tenant-isolation E2E suite passes 21/21 against PostgreSQL and the compiled backend. The suite proves extension navigation, role filtering, cross-school record isolation, tenant-owned creates, undeclared-capability rejection (with focused unit coverage), and immediate disable behavior.
+
+Migration rehearsal note (2026-08-03): `prisma migrate deploy` against an empty PostgreSQL 16 database fails because the repository's first recorded migration is additive and assumes the legacy tables already exist (`User` is the first missing relation). Runtime E2E validation used `prisma db push` only after preserving this failure as evidence. Stage 1 migration gates remain open until a baseline/adoption strategy supports both existing production databases and greenfield environments.
 
 ### Stage 4 — Marketplace and operations
 

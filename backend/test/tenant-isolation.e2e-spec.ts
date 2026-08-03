@@ -67,6 +67,10 @@ const state: {
   studyYearAId: string;
   classAId: string;
   classBId: string;
+  extensionId: string;
+  extensionKey: string;
+  extensionRecordAId: string;
+  extensionRecordBId: string;
 } = {} as any;
 
 describe('Phase 4d: Multi-Tenant Isolation', () => {
@@ -75,6 +79,12 @@ describe('Phase 4d: Multi-Tenant Isolation', () => {
     const schoolB = await prisma.school.create({ data: { subdomain: SCHOOL_B_SUBDOMAIN, name: 'E2E Isolation School B' } });
     state.schoolAId = schoolA.id;
     state.schoolBId = schoolB.id;
+    await prisma.schoolAddon.createMany({
+      data: [
+        { schoolId: schoolA.id, addonKey: 'CLASSES', enabled: true, billingStatus: 'ACTIVE' },
+        { schoolId: schoolB.id, addonKey: 'CLASSES', enabled: true, billingStatus: 'ACTIVE' },
+      ],
+    });
 
     const password = await bcrypt.hash(PASSWORD, 10);
     await prisma.user.create({
@@ -87,6 +97,48 @@ describe('Phase 4d: Multi-Tenant Isolation', () => {
       data: { schoolId: schoolA.id, email: `${TEST_PREFIX}_teacher_a@test.com`, password, name: 'Teacher A', role: 'TEACHER' },
     });
     state.teacherAId = teacherA.id;
+
+    state.extensionKey = `${TEST_PREFIX}_REWARDS`.toUpperCase();
+    const extension = await prisma.extension.create({
+      data: {
+        key: state.extensionKey,
+        name: 'Isolation Rewards',
+        runtimeType: 'DECLARATIVE_MODULE',
+        commercialType: 'MODULE',
+        status: 'ACTIVE',
+        isListed: true,
+        versions: {
+          create: {
+            version: '1.0.0',
+            lifecycleStatus: 'PUBLISHED',
+            manifest: {
+              schemaVersion: 1,
+              key: state.extensionKey,
+              name: 'Isolation Rewards',
+              version: '1.0.0',
+              runtimeType: 'DECLARATIVE_MODULE',
+              permissions: ['rewards:read', 'rewards:write'],
+              navigation: [{ label: 'Rewards', pageKey: 'rewards', roles: ['ADMIN'] }],
+              pages: [{ key: 'rewards', title: 'Rewards', resource: 'rewards', roles: ['ADMIN'] }],
+              resources: { rewards: { fields: [{ key: 'points', type: 'number', required: true }] } },
+            },
+          },
+        },
+      },
+      include: { versions: true },
+    });
+    state.extensionId = extension.id;
+    const versionId = extension.versions[0].id;
+    await prisma.extensionInstallation.createMany({
+      data: [
+        { schoolId: schoolA.id, extensionId: extension.id, installedVersionId: versionId, enabled: true, installedAt: new Date(), approvedAt: new Date() },
+        { schoolId: schoolB.id, extensionId: extension.id, installedVersionId: versionId, enabled: true, installedAt: new Date(), approvedAt: new Date() },
+      ],
+    });
+    const recordA = await prisma.extensionRecord.create({ data: { schoolId: schoolA.id, extensionId: extension.id, resource: 'rewards', data: { points: 10 } } });
+    const recordB = await prisma.extensionRecord.create({ data: { schoolId: schoolB.id, extensionId: extension.id, resource: 'rewards', data: { points: 20 } } });
+    state.extensionRecordAId = recordA.id;
+    state.extensionRecordBId = recordB.id;
   });
 
   afterAll(async () => {
@@ -94,6 +146,7 @@ describe('Phase 4d: Multi-Tenant Isolation', () => {
     // created in any tenant-scoped table (Phase 1's onDelete: Cascade on
     // every schoolId relation) — no per-table cleanup needed.
     await prisma.school.deleteMany({ where: { id: { in: [state.schoolAId, state.schoolBId] } } });
+    await prisma.extension.deleteMany({ where: { id: state.extensionId } });
     await prisma.$disconnect();
   });
 
@@ -247,6 +300,57 @@ describe('Phase 4d: Multi-Tenant Isolation', () => {
         .set(authHeader(state.adminBToken))
         .expect(200);
       expect(res.body).toEqual([]);
+    });
+  });
+
+  describe('Declarative extension data and activation stay tenant-scoped', () => {
+    it('returns runtime navigation only from the current school installation', async () => {
+      const res = await api.get('/extensions/navigation').set(tenantHeader(HOST_A)).set(authHeader(state.adminAToken)).expect(200);
+      expect(res.body).toContainEqual(expect.objectContaining({ href: `/extensions/${state.extensionKey}/rewards` }));
+    });
+
+    it("School A sees its extension record but never School B's", async () => {
+      const res = await api
+        .get(`/extensions/${state.extensionKey}/resources/rewards`)
+        .set(tenantHeader(HOST_A))
+        .set(authHeader(state.adminAToken))
+        .expect(200);
+      const ids = res.body.map((record: any) => record.id);
+      expect(ids).toContain(state.extensionRecordAId);
+      expect(ids).not.toContain(state.extensionRecordBId);
+    });
+
+    it("School A cannot delete School B's extension record by id", async () => {
+      await api
+        .delete(`/extensions/${state.extensionKey}/resources/rewards/${state.extensionRecordBId}`)
+        .set(tenantHeader(HOST_A))
+        .set(authHeader(state.adminAToken))
+        .expect(404);
+      expect(await prisma.extensionRecord.findUnique({ where: { id: state.extensionRecordBId } })).not.toBeNull();
+    });
+
+    it('creates extension records under the authenticated request tenant', async () => {
+      const res = await api
+        .post(`/extensions/${state.extensionKey}/resources/rewards`)
+        .set(tenantHeader(HOST_A))
+        .set(authHeader(state.adminAToken))
+        .send({ points: 30 })
+        .expect(201);
+      expect(res.body.schoolId).toBe(state.schoolAId);
+    });
+
+    it('removes navigation and resource access immediately when disabled', async () => {
+      await prisma.extensionInstallation.update({
+        where: { schoolId_extensionId: { schoolId: state.schoolAId, extensionId: state.extensionId } },
+        data: { enabled: false },
+      });
+      const navigation = await api.get('/extensions/navigation').set(tenantHeader(HOST_A)).set(authHeader(state.adminAToken)).expect(200);
+      expect(navigation.body).not.toContainEqual(expect.objectContaining({ href: `/extensions/${state.extensionKey}/rewards` }));
+      await api
+        .get(`/extensions/${state.extensionKey}/resources/rewards`)
+        .set(tenantHeader(HOST_A))
+        .set(authHeader(state.adminAToken))
+        .expect(404);
     });
   });
 
