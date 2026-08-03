@@ -11,13 +11,14 @@ This rollout is additive. The existing `AddonDefinition` and `SchoolAddon` paths
 
 ## Deploy order
 
-1. Deploy migration `20260803000001_add_extension_platform_foundation`.
-2. Deploy backend and frontend application code.
-3. Run `npm run db:backfill-extensions` from `backend/` once.
-4. Run it a second time and confirm counts remain stable; the backfill is idempotent.
-5. Compare all `AddonDefinition.key` values with `Extension.key` values.
-6. Compare enabled `SchoolAddon` rows with enabled `ExtensionInstallation` rows.
-7. Test package upload, validation, review, publication, request, approval, installation, and activation on a non-production school.
+1. For a pre-existing schema without migration history, back it up and run `npm run db:migrate:adopt`; the command refuses adoption when Prisma detects drift.
+2. Run `npm run db:migrate:bootstrap` to deploy all pending migrations, including `20260803000001_add_extension_platform_foundation`.
+3. Deploy backend and frontend application code.
+4. Run `npm run db:backfill-extensions` from `backend/` once.
+5. Run it a second time and confirm counts remain stable; the backfill is idempotent.
+6. Compare all `AddonDefinition.key` values with `Extension.key` values.
+7. Compare enabled `SchoolAddon` rows with enabled `ExtensionInstallation` rows.
+8. Test package upload, validation, review, publication, request, approval, installation, and activation on a non-production school.
 
 ## Verification queries
 

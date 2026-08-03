@@ -13,6 +13,8 @@
     "start:prod": "node dist/main",
     "postinstall": "prisma generate --schema=prisma/schema.prisma",
     "db:push": "prisma db push --schema=prisma/schema.prisma",
+    "db:migrate:bootstrap": "node prisma/bootstrap-migrations.js",
+    "db:migrate:adopt": "node prisma/bootstrap-migrations.js --adopt-existing",
     "db:seed": "ts-node prisma/seed.ts",
     "db:backfill-extensions": "ts-node prisma/backfill-extensions.ts",
     "extension:validate": "ts-node src/cli/validate-extension-package.ts",

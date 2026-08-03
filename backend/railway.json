@@ -5,7 +5,7 @@
     "watchPatterns": ["backend/**"]
   },
   "deploy": {
-    "startCommand": "sh -c './node_modules/.bin/prisma db push --schema=prisma/schema.prisma --skip-generate --accept-data-loss || true; node prisma/seed-prod.js; node dist/main'",
+    "startCommand": "sh -c 'node prisma/bootstrap-migrations.js && node prisma/seed-prod.js && node dist/main'",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

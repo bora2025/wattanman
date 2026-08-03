@@ -13,30 +13,18 @@ sandbox has no access to it. Every step below is written for a human with
 real production access to execute deliberately, one step at a time — not to
 be scripted/automated blindly.
 
-## 0. Prerequisite: fix the deploy command first
+## 0. Safe deploy command
 
-`backend/railway.json` / `backend/Dockerfile`'s startCommand currently runs
-this on **every boot**:
+`backend/railway.json` now runs this on every boot:
 
 ```
-prisma db push --schema=prisma/schema.prisma --skip-generate --accept-data-loss || true; node prisma/seed-prod.js; node dist/main
+node prisma/bootstrap-migrations.js && node prisma/seed-prod.js && node dist/main
 ```
 
-This auto-applies whatever `schema.prisma` is in the deployed branch
-directly against the database, with `--accept-data-loss`, no review. If this
-repo's `main` branch (with this conversion's final schema already on it) is
-deployed as-is with this startCommand still in place, it will attempt to
-apply the *final* multi-tenant schema directly against a database that has
-never been backfilled — `schoolId NOT NULL` on tables that already have
-rows fails at the Postgres level, at best crash-looping the app, at worst
-taking a destructive path under `--accept-data-loss`.
-
-**Before doing anything else below**, change the startCommand so schema
-changes are no longer auto-applied on boot — e.g. drop the `prisma db push`
-call entirely and apply schema changes as their own deliberate step (which
-is exactly what migrations 1 and 2 below are for). This wasn't done as part
-of this pass since it changes how the app deploys generally, independent of
-this specific migration — it needs your sign-off.
+The bootstrap applies pending migrations when migration history exists. It
+creates and baselines a completely empty database, but refuses to alter an
+existing database that has no migration history. It never passes
+`--accept-data-loss` and startup stops if migration preparation fails.
 
 ## 1. One-time: baseline Prisma's migration history
 
@@ -48,18 +36,22 @@ has no history for without an explicit baseline step, since otherwise it
 would try to `CREATE TABLE "User"` etc. that already exist and fail
 immediately.
 
-```bash
-# Create an empty baseline migration matching today's already-deployed schema
-mkdir -p prisma/migrations/<today>000000_baseline
-touch prisma/migrations/<today>000000_baseline/migration.sql   # deliberately empty — the schema already exists
+Back up the existing database, then run the guarded adoption command once:
 
-# Tell Prisma this migration is already applied, without running it
-DATABASE_URL="<production URL>" npx prisma migrate resolve --applied <today>000000_baseline
+```bash
+cd backend
+DATABASE_URL="<production URL>" npm run db:migrate:adopt
 ```
 
-After this, `npx prisma migrate deploy` becomes the mechanism for every
-future schema change — `db push` should not be used against production
-again.
+The command first runs `prisma migrate diff` against `schema.prisma`. It
+records the existing migrations as applied only when no schema difference
+exists. A missing table, extra table, column, index, or constraint causes a
+failure without modifying migration history. Do not force adoption after a
+failure; reconcile and review the reported drift first.
+
+After this, `npm run db:migrate:bootstrap`/`prisma migrate deploy` becomes
+the mechanism for every future schema change. Do not use `db push` against
+production again.
 
 ## 2. 8a — Pre-flight backup
 
