@@ -669,8 +669,8 @@ This section is the source of truth for implementation progress. Update it in th
 | Stage 0 — Product decisions | In progress | Initial internal-release defaults are accepted; formal security, product, and operations approval remains |
 | Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, and audit exist; migration and failure gates remain |
 | Stage 2 — Versioned themes | In progress | Standalone manifests, token validation, scoped CSS, public/dashboard preview, override-preserving upgrade/rollback, blocking, and uninstall exist; visual regression and full integration gates remain |
-| Stage 3 — Declarative modules | In progress | Runtime navigation, an approved accessible component registry, translation fallback, tenant records, capability enforcement, dependency/conflict resolution, dependent-safe uninstall, and reversible migrations are implemented; controlled service capabilities, pilot acceptance, and full integration gates remain |
-| Stage 4 — Marketplace operations | In progress | Publisher governance, release compatibility, explicit visibility, scoped permissions, signing, update policies, operational alerts, API telemetry, adoption health, emergency blocking, and incident response exist; the full marketplace end-to-end gate remains |
+| Stage 3 — Declarative modules | In progress | Runtime navigation, an approved accessible component registry, translation fallback, tenant records, capability enforcement, dependency/conflict resolution, dependent-safe uninstall, reversible migrations, and a real signed-ZIP lifecycle are implemented; controlled service capabilities and pilot acceptance remain |
+| Stage 4 — Marketplace operations | Complete | Publisher governance, review, release compatibility, visibility, signing, installation, update/rollback, telemetry, emergency blocking, and audit operate through one real end-to-end workflow |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
 
 ### Existing foundation — verified
@@ -735,7 +735,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Add `ExtensionPermission` model.
 - [x] Add `ExtensionDependency` model.
 - [x] Add structured `ExtensionValidation` results.
-- [ ] Add `ExtensionAudit` lifecycle events or extend the current audit schema.
+- [x] Add `ExtensionAudit` lifecycle events or extend the current audit schema.
 - [x] Add indexes and uniqueness constraints for keys, versions, schools, and installation state.
 
 #### Package storage
@@ -794,7 +794,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Backend production build passes.
 - [x] Frontend production build passes.
 - [x] Controller multipart upload integration test passes.
-- [ ] Validation lifecycle integration tests pass.
+- [x] Validation lifecycle integration tests pass.
 - [x] Tenant-isolation tests cover installation records.
 - [x] Platform role tests reject school users and unauthenticated users.
 - [ ] Storage failure and validation timeout tests pass.
@@ -802,10 +802,10 @@ This section is the source of truth for implementation progress. Update it in th
 
 #### Stage 1 completion gate
 
-- [ ] Versioned package upload reaches quarantine storage.
+- [x] Versioned package upload reaches quarantine storage.
 - [x] Validation produces a persisted report without publishing automatically.
 - [x] Invalid packages cannot be downloaded, published, or installed.
-- [ ] Every lifecycle action is authorized and audited.
+- [x] Every lifecycle action is authorized and audited.
 - [ ] Existing school modules and themes continue working unchanged.
 
 ### Stage 2 — Versioned theme lifecycle
@@ -922,15 +922,15 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Select a low-risk pilot module.
 - [ ] Define pilot acceptance criteria.
 - [x] Package navigation, pages, permissions, data, and workflow in a ZIP.
-- [ ] Install the pilot without changing or rebuilding Wattaman source.
+- [x] Install the pilot without changing or rebuilding Wattaman source.
 - [x] Validate multi-school isolation and role behavior.
 - [ ] Collect operator and school-admin feedback.
 
 #### Stage 3 completion gate
 
-- [ ] A new low-risk module installs from ZIP without source changes or rebuild.
+- [x] A new low-risk module installs from ZIP without source changes or rebuild.
 - [x] It adds navigation and pages only for enabled schools and allowed roles.
-- [ ] Its data is tenant-scoped and survives safe upgrades and rollback.
+- [x] Its data is tenant-scoped and survives safe upgrades and rollback.
 - [x] It cannot call undeclared capabilities.
 - [x] Disabling it removes access without affecting core application startup.
 
@@ -941,6 +941,8 @@ Stage 3 dependency note (2026-08-03): declarative manifests now define required/
 Stage 3 data-migration note (2026-08-03): declarative manifests now support validated `renameField`, `setDefault`, and `removeField` operations for an exact source and target version. Upgrade applies record changes and byte accounting in a serializable transaction, stores per-record rollback backups, and records the migration run; rollback restores data and counters atomically and marks the run rolled back. `20260803000009_add_extension_data_migrations` was rehearsed successfully on PostgreSQL 16, and the extension suite passes 72 tests with backend type-check/build passing. The broad tenant upgrade/rollback E2E gate remains open.
 
 Stage 3 UI-registry note (2026-08-03): declarative pages now render only approved stats, form, table, details, and chart components with schema-bound fields and actions, local filtering, create/update/delete workflows, semantic table markup, labels, alerts, and keyboard-native controls. Locale dictionaries use requested-locale then default-locale then literal-label fallback. Unknown components and roles are rejected, runtime endpoints have an extension-specific request limit, and writes/denials remain audited. The extension suite passes 75 tests and both production builds pass.
+
+Stage 3 lifecycle note (2026-08-03): `extension-lifecycle.e2e-spec.ts` starts the real Nest application against PostgreSQL and a local R2-compatible private-object server, publishes a signed module ZIP, requests and approves its installation, activates it for one school, writes tenant data, upgrades through a declarative field migration, rolls back and restores the original record, upgrades again, and verifies that an emergency block removes runtime access. The scenario also verifies the upload, validation, publication, install, activation, upgrade, rollback, and status-change audit trail without changing or rebuilding Wattaman source.
 
 Migration rehearsal note (2026-08-03): `prisma migrate deploy` against an empty PostgreSQL 16 database fails because the repository's first recorded migration is additive and assumes the legacy tables already exist (`User` is the first missing relation). Runtime E2E validation used `prisma db push` only after preserving this failure as evidence. Stage 1 migration gates remain open until a baseline/adoption strategy supports both existing production databases and greenfield environments.
 
@@ -997,7 +999,7 @@ Theme override note (2026-08-03): theme manifest v1 is explicitly standalone and
 
 #### Stage 4 completion gate
 
-- [ ] Publisher, review, publication, update, and emergency workflows operate end to end.
+- [x] Publisher, review, publication, update, and emergency workflows operate end to end.
 - [x] Operators can identify every school using a version.
 - [x] A compromised version can be blocked globally and audited.
 - [x] Published artifacts and review history are immutable.
