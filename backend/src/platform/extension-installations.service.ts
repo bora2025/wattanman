@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../database/prisma.service';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
@@ -130,7 +130,7 @@ export class ExtensionInstallationsService {
     }
     const updated = await this.prisma.extensionInstallation.update({
       where: { id: installationId },
-      data: { installedVersionId: version.id, installedBy: actor.userId, installedAt: new Date(), configuration },
+      data: { installedVersionId: version.id, installedBy: actor.userId, installedAt: new Date(), configuration, availableVersionId: null, updateNotifiedAt: null },
     });
     await this.log(actor, 'UPGRADE', updated.id, existing.extension.name, {
       schoolId: existing.schoolId,
@@ -138,6 +138,21 @@ export class ExtensionInstallationsService {
       fromVersionId: existing.installedVersionId,
       toVersionId: version.id,
       permissionReview,
+    });
+    return updated;
+  }
+
+  async setUpdatePolicy(installationId: string, policy: string, actor: Actor) {
+    if (!['MANUAL', 'NOTIFY', 'AUTO_APPROVED'].includes(policy)) {
+        throw new BadRequestException('Update policy must be MANUAL, NOTIFY, or AUTO_APPROVED');
+    }
+    const existing = await this.requireInstallation(installationId);
+    const updated = await this.prisma.extensionInstallation.update({
+      where: { id: installationId },
+      data: { updatePolicy: policy },
+    });
+    await this.log(actor, 'UPDATE_POLICY', updated.id, existing.extension.name, {
+      schoolId: existing.schoolId, extensionId: existing.extensionId, before: existing.updatePolicy, after: policy,
     });
     return updated;
   }

@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
 interface RuntimeUser { userId?: string; role?: string }
@@ -8,7 +9,7 @@ const EXTENSION_DATA_QUOTA_BYTES = 100 * 1024 * 1024;
 
 @Injectable()
 export class ExtensionRuntimeService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService) {}
 
   async navigation(user: RuntimeUser) {
     const installations = await this.prisma.extensionInstallation.findMany({
@@ -117,7 +118,20 @@ export class ExtensionRuntimeService {
   private async authorize(extensionKey: string, resource: string, action: 'read' | 'write', user: RuntimeUser) {
     const installation = await this.installation(extensionKey);
     const manifest = installation.installedVersion.manifest as Record<string, any>;
-    if (!(manifest.permissions || []).includes(`${resource}:${action}`)) throw new ForbiddenException(`Extension did not declare ${resource}:${action}`);
+    if (!(manifest.permissions || []).includes(`${resource}:${action}`)) {
+      await this.audit.log({
+        actorId: user.userId,
+        actorRole: user.role,
+        action: 'CAPABILITY_DENIED',
+        resource: 'EXTENSION_RUNTIME',
+        resourceId: installation.extension.key,
+        resourceLabel: installation.extension.name,
+        success: false,
+        errorMessage: `Extension did not declare ${resource}:${action}`,
+        metadata: { extensionId: installation.extensionId, capability: `${resource}:${action}` },
+      });
+      throw new ForbiddenException(`Extension did not declare ${resource}:${action}`);
+    }
     const roleAllowed = (manifest.pages || []).some((page: any) => page.resource === resource && page.roles?.includes(user.role));
     if (!roleAllowed) throw new ForbiddenException('Your role cannot access this extension resource');
     if (!manifest.resources?.[resource]) throw new NotFoundException('Extension resource not found');

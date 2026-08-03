@@ -25,6 +25,8 @@ import { ExtensionCleanupService } from './extension-cleanup.service';
 import { ExtensionRuntimeController } from './extension-runtime.controller';
 import { ExtensionRuntimeService } from './extension-runtime.service';
 import { ExtensionSigningService } from './extension-signing.service';
+import { ExtensionUpdateService } from './extension-update.service';
+import { ExtensionAlertService } from './extension-alert.service';
 
 @Module({
   imports: [
@@ -37,6 +39,6 @@ import { ExtensionSigningService } from './extension-signing.service';
     }),
   ],
   controllers: [SchoolsController, PlatformAdminsController, SchoolAddonsController, AddonDirectoryController, AddonRequestsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController],
-  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService, AddonRequestsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionInstallationsService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService],
+  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService, AddonRequestsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionInstallationsService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService],
 })
 export class PlatformModule {}

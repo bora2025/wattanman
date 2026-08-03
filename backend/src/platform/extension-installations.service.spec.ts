@@ -167,6 +167,19 @@ describe('ExtensionInstallationsService', () => {
     }));
   });
 
+  it('stores an audited school update policy', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', updatePolicy: 'MANUAL',
+      extension: { name: 'Rewards' }, installedVersion: { assets: [] },
+    });
+    prisma.extensionInstallation.update.mockResolvedValue({ id: 'installation-1', updatePolicy: 'NOTIFY' });
+
+    const result = await service.setUpdatePolicy('installation-1', 'NOTIFY', actor);
+
+    expect(result.updatePolicy).toBe('NOTIFY');
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'UPDATE_POLICY' }));
+  });
+
   it('rolls back only to a published or deprecated non-blocked version', async () => {
     prisma.extensionInstallation.findUnique.mockResolvedValue({
       id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-2',

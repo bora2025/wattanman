@@ -770,6 +770,29 @@ model ExtensionReview {
   @@index([action, createdAt])
 }
 
+model ExtensionAlert {
+  id             String    @id @default(cuid())
+  fingerprint    String    @unique
+  type           String // VALIDATION_FAILURE | CAPABILITY_DENIED
+  severity       String // WARNING | CRITICAL
+  status         String    @default("OPEN") // OPEN | ACKNOWLEDGED | RESOLVED
+  extensionId    String?
+  versionId      String?
+  schoolId       String?
+  message        String
+  occurrences    Int       @default(1)
+  details        Json?
+  firstSeenAt    DateTime  @default(now())
+  lastSeenAt     DateTime  @default(now())
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  resolvedBy     String?
+  resolvedAt     DateTime?
+
+  @@index([status, severity, lastSeenAt])
+  @@index([extensionId, lastSeenAt])
+}
+
 model ExtensionAsset {
   id                 String           @id @default(cuid())
   extensionVersionId String
@@ -841,6 +864,9 @@ model ExtensionInstallation {
   configuration      Json?
   billingStatus      String           @default("PENDING")
   dataBytes          Int              @default(0)
+  updatePolicy       String           @default("MANUAL") // MANUAL | NOTIFY | AUTO_APPROVED
+  availableVersionId String?
+  updateNotifiedAt   DateTime?
   requestedBy        String?
   requestedAt        DateTime?
   approvedBy         String?
@@ -856,6 +882,7 @@ model ExtensionInstallation {
   @@index([schoolId, enabled])
   @@index([extensionId, installedVersionId])
   @@index([purgeAfter])
+  @@index([updatePolicy, availableVersionId])
 }
 
 /// Generic tenant-scoped records for declarative modules. The platform owns

@@ -670,7 +670,7 @@ This section is the source of truth for implementation progress. Update it in th
 | Stage 1 — Extension foundation | In progress | Versioned records, private R2 storage, quarantine, validation, review, immutable publication, installation, cleanup, and audit exist; migration and failure gates remain |
 | Stage 2 — Versioned themes | In progress | Manifest validation, isolated preview, publishing, installation, activation, upgrade, rollback, blocking, and uninstall exist; CSS restrictions and full integration gates remain |
 | Stage 3 — Declarative modules | In progress | Runtime navigation, schema-driven pages, tenant records, capability enforcement, and the Student Rewards ZIP are implemented; integration and upgrade gates remain |
-| Stage 4 — Marketplace operations | In progress | Publisher governance, review notes, immutable publication, permission diffs, lifecycle metrics, adoption health, emergency blocking, and incident response exist; scoped staff permissions, signing, alerts, and update policies remain |
+| Stage 4 — Marketplace operations | In progress | Publisher governance, scoped permissions, signing, update policies, operational alerts, lifecycle metrics, adoption health, emergency blocking, and incident response exist; release metadata, visibility, API telemetry, and the full end-to-end gate remain |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
 
 ### Existing foundation — verified
@@ -946,6 +946,8 @@ Extension-data migration note (2026-08-03): `20260803000004_add_extension_data_u
 
 Package-signing migration note (2026-08-03): `20260803000005_add_extension_package_signing` was applied successfully against PostgreSQL 16. Ed25519 tests prove exact-byte signing, checksum verification, signature verification, tamper rejection, retired-key continuity, and irreversible revocation that blocks affected versions and installations.
 
+Update and alert migration note (2026-08-03): `20260803000006_add_extension_update_policies` and `20260803000007_add_extension_operational_alerts` were applied successfully against PostgreSQL 16. The focused extension suite passes 55 tests, backend type-check/build and frontend production build pass, school policies enforce manual/notify/safe automatic behavior, and hourly alert scanning detects repeated validation failures and denied capabilities with operator acknowledgement and resolution.
+
 ### Stage 4 — Marketplace and operations
 
 #### Publisher and review
@@ -959,7 +961,7 @@ Package-signing migration note (2026-08-03): `20260803000005_add_extension_packa
 #### Distribution and updates
 
 - [ ] **PARTIAL:** Add listed, unlisted, private, deprecated, retired, and blocked states; listing and version lifecycle states exist, while an explicit private visibility state remains.
-- [ ] Add school update policies: manual, notify, and approved automatic updates.
+- [x] Add school update policies: manual, notify, and approved automatic updates.
 - [x] Show requested permission differences before upgrade.
 - [x] Show version adoption and schools affected by deprecation or blocking.
 - [x] Prevent mutation of published artifacts.
@@ -972,7 +974,7 @@ Package-signing migration note (2026-08-03): `20260803000005_add_extension_packa
 - [x] Add version health dashboard.
 - [x] Add emergency global version kill switch.
 - [x] Add operator runbook for compromised packages.
-- [ ] Add alerts for repeated failures and suspicious capability use.
+- [x] Add alerts for repeated failures and suspicious capability use.
 
 #### Package signing
 

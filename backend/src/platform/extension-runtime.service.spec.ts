@@ -39,12 +39,14 @@ describe('ExtensionRuntimeService', () => {
       delete: jest.fn(),
     },
   };
-  const service = new ExtensionRuntimeService(prisma as any);
+  const audit = { log: jest.fn() };
+  const service = new ExtensionRuntimeService(prisma as any, audit as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
     prisma.$transaction.mockImplementation((callback) => callback(prisma));
     prisma.extensionInstallation.updateMany.mockResolvedValue({ count: 1 });
+    audit.log.mockResolvedValue(undefined);
   });
 
   it('returns only navigation allowed for the current role', async () => {
@@ -80,6 +82,12 @@ describe('ExtensionRuntimeService', () => {
     });
 
     await expect(service.createRecord('STUDENT_REWARDS', 'rewards', {}, { role: 'TEACHER' })).rejects.toThrow(ForbiddenException);
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'CAPABILITY_DENIED',
+      resource: 'EXTENSION_RUNTIME',
+      resourceId: 'STUDENT_REWARDS',
+      success: false,
+    }));
   });
 
   it('denies access when no active published installation exists', async () => {

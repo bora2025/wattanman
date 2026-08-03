@@ -5,12 +5,13 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { PlatformScopeGuard } from '../tenancy/platform-scope.guard';
 import { ExtensionsService } from './extensions.service';
+import { ExtensionAlertService } from './extension-alert.service';
 
 @Controller('platform/extensions')
 @UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard)
 @Roles('PLATFORM_ADMIN')
 export class ExtensionsController {
-  constructor(private extensions: ExtensionsService) {}
+  constructor(private extensions: ExtensionsService, private alerts: ExtensionAlertService) {}
 
   @Get()
   list() {
@@ -55,6 +56,21 @@ export class ExtensionsController {
   @Get('health')
   health() {
     return this.extensions.health();
+  }
+
+  @Get('alerts')
+  alertsList() {
+    return this.alerts.list();
+  }
+
+  @Post('alerts/scan')
+  scanAlerts() {
+    return this.alerts.scan();
+  }
+
+  @Patch('alerts/:alertId/status')
+  alertStatus(@Param('alertId') alertId: string, @Body() body: { status: string }, @Request() req) {
+    return this.alerts.setStatus(alertId, body.status, req.user?.userId);
   }
 
   @Post()

@@ -41,6 +41,11 @@ export class PlatformExtensionInstallationsController {
     return this.installations.rollback(id, req.user);
   }
 
+  @Patch(':id/update-policy')
+  updatePolicy(@Param('id') id: string, @Body() body: { policy: string }, @Request() req) {
+    return this.installations.setUpdatePolicy(id, body.policy, req.user);
+  }
+
   @Patch(':id/activation')
   activate(@Param('id') id: string, @Body() body: { enabled: boolean }, @Request() req) {
     return this.installations.activate(id, body.enabled, req.user);
@@ -71,5 +76,10 @@ export class SchoolExtensionsController {
   @Post(':extensionId/request')
   request(@Param('extensionId') extensionId: string, @Request() req) {
     return this.installations.request(extensionId, req.user);
+  }
+
+  @Patch('installations/:id/update-policy')
+  updatePolicy(@Param('id') id: string, @Body() body: { policy: string }, @Request() req) {
+    return this.installations.setUpdatePolicy(id, body.policy, req.user);
   }
 }

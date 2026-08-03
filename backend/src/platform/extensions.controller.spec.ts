@@ -6,6 +6,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { PlatformScopeGuard } from '../tenancy/platform-scope.guard';
 import { ExtensionsController } from './extensions.controller';
 import { ExtensionsService } from './extensions.service';
+import { ExtensionAlertService } from './extension-alert.service';
 
 class HeaderAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -29,6 +30,7 @@ describe('ExtensionsController authorization and upload', () => {
       controllers: [ExtensionsController],
       providers: [
         { provide: ExtensionsService, useValue: extensions },
+        { provide: ExtensionAlertService, useValue: { list: jest.fn(), scan: jest.fn(), setStatus: jest.fn() } },
         RolesGuard,
         PlatformScopeGuard,
         JwtAuthGuard,

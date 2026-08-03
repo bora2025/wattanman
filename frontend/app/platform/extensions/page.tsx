@@ -73,6 +73,16 @@ interface PublisherRecord {
   signingKeys: Array<{ id: string; keyId: string; algorithm: string; status: string; createdAt: string }>
 }
 
+interface ExtensionAlert {
+  id: string
+  type: string
+  severity: string
+  status: string
+  message: string
+  occurrences: number
+  lastSeenAt: string
+}
+
 async function responseJson(res: Response) {
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`)
@@ -372,20 +382,23 @@ function ExtensionsContent() {
   const [form, setForm] = useState({ key: '', name: '', runtimeType: 'THEME', commercialType: 'THEME' })
   const [health, setHealth] = useState<any>(null)
   const [publishers, setPublishers] = useState<PublisherRecord[]>([])
+  const [alerts, setAlerts] = useState<ExtensionAlert[]>([])
 
   async function load() {
     setLoading(true)
     try {
-      const [extensionData, installationData, healthData, publisherData] = await Promise.all([
+      const [extensionData, installationData, healthData, publisherData, alertData] = await Promise.all([
         responseJson(await apiFetch('/api/platform/extensions')),
         responseJson(await apiFetch('/api/platform/extension-installations')),
         responseJson(await apiFetch('/api/platform/extensions/health')),
         responseJson(await apiFetch('/api/platform/extensions/publishers')),
+        responseJson(await apiFetch('/api/platform/extensions/alerts')),
       ])
       setExtensions(extensionData)
       setInstallations(installationData)
       setHealth(healthData)
       setPublishers(publisherData)
+      setAlerts(alertData)
       setError('')
     } catch (loadError: any) {
       setError(loadError.message || 'Failed to load extensions')
@@ -452,6 +465,17 @@ function ExtensionsContent() {
     }
   }
 
+  async function setAlertStatus(alertId: string, status: 'ACKNOWLEDGED' | 'RESOLVED') {
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/alerts/${alertId}/status`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
+      }))
+      await load()
+    } catch (alertError: any) {
+      setError(alertError.message || 'Could not update alert')
+    }
+  }
+
   return (
     <div className="page-shell">
       <Sidebar title="Platform" subtitle="Wattaman" navItems={platformNav} accentColor="slate" />
@@ -475,6 +499,13 @@ function ExtensionsContent() {
             <div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="text-left text-slate-400"><th className="py-2">Version</th><th>Status</th><th>Publisher</th><th>Adoption</th><th>Affected schools</th></tr></thead><tbody>{health.versions.map((item: any) => <tr key={item.versionId} className="border-t border-slate-100 dark:border-slate-800"><td className="py-2">{item.extension.name} v{item.version}</td><td>{item.lifecycleStatus}</td><td>{item.publisher.key} · {item.publisher.status}</td><td>{item.adoption.active}/{item.adoption.installations} active</td><td>{item.adoption.schools.map((school: any) => school.name).join(', ') || 'None'}</td></tr>)}</tbody></table></div>
             {health.schoolUsage?.length > 0 && <div className="text-xs space-y-1"><p className="font-semibold">School record quota</p>{health.schoolUsage.map((usage: any) => <p key={usage.school.id}>{usage.school.name}: {Math.ceil(usage.recordBytes / 1024)} KB / {Math.round(usage.quotaBytes / 1024 / 1024)} MB ({usage.percentUsed}%)</p>)}</div>}
           </div>}
+          <div className="card p-5 space-y-3">
+            <div><h2 className="font-bold text-slate-800 dark:text-slate-100">Operational alerts</h2><p className="text-xs text-slate-500">Repeated package failures and suspicious denied capabilities.</p></div>
+            {alerts.length ? alerts.map(alert => <div key={alert.id} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 flex items-start justify-between gap-3 flex-wrap">
+              <div><p className="text-sm font-semibold">{alert.severity} · {alert.type}</p><p className="text-xs text-slate-600 dark:text-slate-300">{alert.message}</p><p className="text-[11px] text-slate-400">{alert.status} · {alert.occurrences} occurrences · {new Date(alert.lastSeenAt).toLocaleString()}</p></div>
+              {alert.status !== 'RESOLVED' && <div className="flex gap-2">{alert.status === 'OPEN' && <button className="btn-outline btn-sm" onClick={() => setAlertStatus(alert.id, 'ACKNOWLEDGED')}>Acknowledge</button>}<button className="btn-outline btn-sm" onClick={() => setAlertStatus(alert.id, 'RESOLVED')}>Resolve</button></div>}
+            </div>) : <p className="text-sm text-slate-400">No operational alerts.</p>}
+          </div>
           <div className="card p-5 space-y-3">
             <div><h2 className="font-bold text-slate-800 dark:text-slate-100">Publishers</h2><p className="text-xs text-slate-500">Initial release accepts Wattaman-internal packages only.</p></div>
             {publishers.map(publisher => <div key={publisher.id} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3">
