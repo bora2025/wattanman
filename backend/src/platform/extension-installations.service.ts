@@ -102,7 +102,7 @@ export class ExtensionInstallationsService {
     return updated;
   }
 
-  async upgrade(installationId: string, versionId: string, actor: Actor) {
+  async upgrade(installationId: string, versionId: string, actor: Actor, acknowledgePermissions = false) {
     const existing = await this.requireInstallation(installationId);
     if (!existing.installedAt) throw new ConflictException('Extension must be installed before it can be upgraded');
     if (existing.installedVersionId === versionId) return existing;
@@ -111,6 +111,10 @@ export class ExtensionInstallationsService {
       include: { assets: true },
     });
     if (!version) throw new NotFoundException('Published upgrade version not found for this extension');
+    const permissionReview = this.permissionReview(existing.installedVersion, version);
+    if (permissionReview.added.length && !acknowledgePermissions) {
+      throw new ConflictException(`Upgrade requests new permissions: ${permissionReview.added.join(', ')}`);
+    }
     let configuration = (existing.configuration as Record<string, any> | null) || {};
     if (existing.enabled && existing.extension.runtimeType === 'THEME') {
       await this.applyThemeVersion(existing.schoolId, version);
@@ -125,8 +129,24 @@ export class ExtensionInstallationsService {
       extensionId: existing.extensionId,
       fromVersionId: existing.installedVersionId,
       toVersionId: version.id,
+      permissionReview,
     });
     return updated;
+  }
+
+  async upgradeReview(installationId: string, versionId: string) {
+    const existing = await this.requireInstallation(installationId);
+    const version = await this.prisma.extensionVersion.findFirst({
+      where: { id: versionId, extensionId: existing.extensionId, lifecycleStatus: 'PUBLISHED' },
+    });
+    if (!version) throw new NotFoundException('Published upgrade version not found for this extension');
+    return {
+      installationId,
+      fromVersion: existing.installedVersion.version,
+      toVersion: version.version,
+      permissions: this.permissionReview(existing.installedVersion, version),
+      compatibilityRange: version.compatibilityRange,
+    };
   }
 
   async rollback(installationId: string, actor: Actor) {
@@ -233,6 +253,16 @@ export class ExtensionInstallationsService {
     });
     if (!installation) throw new NotFoundException('Extension installation not found');
     return installation;
+  }
+
+  private permissionReview(currentVersion: { manifest: unknown }, targetVersion: { manifest: unknown }) {
+    const current = ((currentVersion.manifest as Record<string, any>)?.permissions || []) as string[];
+    const target = ((targetVersion.manifest as Record<string, any>)?.permissions || []) as string[];
+    return {
+      requested: target,
+      added: target.filter((permission) => !current.includes(permission)),
+      removed: current.filter((permission) => !target.includes(permission)),
+    };
   }
 
   private async applyThemeVersion(schoolId: string, version: { manifest: any; assets: Array<{ path: string; storageKey: string }> }) {

@@ -231,12 +231,22 @@ export class ExtensionsService {
   async transition(versionId: string, nextStatus: string, reviewNotes: string | undefined, actor: Actor) {
     const existing = await this.prisma.extensionVersion.findUnique({ where: { id: versionId } });
     if (!existing) throw new NotFoundException('Extension version not found');
+    if (existing.lifecycleStatus === nextStatus) return existing;
     const allowed = ALLOWED_TRANSITIONS[existing.lifecycleStatus] || [];
     if (!allowed.includes(nextStatus)) {
       throw new ConflictException(`Cannot transition extension version from ${existing.lifecycleStatus} to ${nextStatus}`);
     }
     if ((nextStatus === 'APPROVED' || nextStatus === 'REJECTED') && !reviewNotes?.trim()) {
       throw new BadRequestException('reviewNotes are required when approving or rejecting a version');
+    }
+    let publishedStorageKey: string | undefined;
+    if (nextStatus === 'PUBLISHED') {
+      if (!existing.packageStorageKey || !existing.packageChecksum) {
+        throw new ConflictException('A validated package artifact is required before publication');
+      }
+      publishedStorageKey = `published/extensions/${existing.extensionId}/${existing.id}/${existing.packageChecksum}.zip`;
+      const packageContents = await this.storage.getPrivate(existing.packageStorageKey);
+      await this.storage.putPrivate(publishedStorageKey, packageContents, 'application/zip');
     }
     const updated = await this.prisma.extensionVersion.update({
       where: { id: versionId },
@@ -245,10 +255,12 @@ export class ExtensionsService {
         reviewNotes: reviewNotes?.trim() || undefined,
         reviewedBy: nextStatus === 'APPROVED' || nextStatus === 'REJECTED' ? actor.userId : undefined,
         publishedAt: nextStatus === 'PUBLISHED' ? new Date() : undefined,
+        packageStorageKey: publishedStorageKey,
       },
     });
     if (nextStatus === 'PUBLISHED') {
       await this.prisma.extension.update({ where: { id: existing.extensionId }, data: { isListed: true, status: 'ACTIVE' } });
+      await this.storage.deletePrivate(existing.packageStorageKey!).catch(() => undefined);
     }
     if (nextStatus === 'BLOCKED') {
       await this.prisma.extensionInstallation.updateMany({
@@ -260,6 +272,28 @@ export class ExtensionsService {
       changes: { before: { lifecycleStatus: existing.lifecycleStatus }, after: { lifecycleStatus: nextStatus } },
     });
     return updated;
+  }
+
+  async reviewSummary(versionId: string) {
+    const version = await this.prisma.extensionVersion.findUnique({
+      where: { id: versionId },
+      include: { extension: { include: { versions: { where: { lifecycleStatus: { in: ['PUBLISHED', 'DEPRECATED'] } }, orderBy: { publishedAt: 'desc' } } } } },
+    });
+    if (!version) throw new NotFoundException('Extension version not found');
+    const permissions = (version.manifest as Record<string, any>)?.permissions || [];
+    const previous = version.extension.versions.find((candidate) => candidate.id !== version.id);
+    const previousPermissions = previous ? ((previous.manifest as Record<string, any>)?.permissions || []) : [];
+    return {
+      versionId: version.id,
+      compatibilityRange: version.compatibilityRange,
+      previousVersion: previous?.version || null,
+      permissions: {
+        requested: permissions,
+        added: permissions.filter((permission: string) => !previousPermissions.includes(permission)),
+        removed: previousPermissions.filter((permission: string) => !permissions.includes(permission)),
+      },
+      warnings: version.compatibilityRange ? [] : ['No platform compatibility range declared'],
+    };
   }
 
   private log(actor: Actor, action: string, resource: string, resourceId: string, resourceLabel: string, detail: Record<string, unknown>) {

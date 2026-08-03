@@ -131,6 +131,28 @@ describe('ExtensionInstallationsService', () => {
     });
   });
 
+  it('requires explicit acknowledgement when an upgrade adds permissions', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-1',
+      installedAt: new Date(), enabled: false, configuration: null,
+      extension: { name: 'Rewards', runtimeType: 'DECLARATIVE_MODULE' },
+      installedVersion: { version: '1.0.0', lifecycleStatus: 'PUBLISHED', manifest: { permissions: ['rewards:read'] }, assets: [] },
+    });
+    prisma.extensionVersion.findFirst.mockResolvedValue({
+      id: 'version-2', version: '2.0.0', manifest: { permissions: ['rewards:read', 'rewards:write'] }, assets: [],
+    });
+
+    await expect(service.upgrade('installation-1', 'version-2', actor)).rejects.toThrow('Upgrade requests new permissions: rewards:write');
+    expect(prisma.extensionInstallation.update).not.toHaveBeenCalled();
+
+    prisma.extensionInstallation.update.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
+    const result = await service.upgrade('installation-1', 'version-2', actor, true);
+    expect(result.installedVersionId).toBe('version-2');
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({
+      metadata: expect.objectContaining({ permissionReview: expect.objectContaining({ added: ['rewards:write'] }) }),
+    }));
+  });
+
   it('rolls back only to a published or deprecated non-blocked version', async () => {
     prisma.extensionInstallation.findUnique.mockResolvedValue({
       id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-2',

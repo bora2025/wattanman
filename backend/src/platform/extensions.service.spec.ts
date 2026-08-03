@@ -24,7 +24,7 @@ describe('ExtensionsService', () => {
     extensionAsset: { upsert: jest.fn() },
   };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
-  const storage = { putPrivate: jest.fn().mockResolvedValue(undefined), getPrivate: jest.fn() };
+  const storage = { putPrivate: jest.fn().mockResolvedValue(undefined), getPrivate: jest.fn(), deletePrivate: jest.fn().mockResolvedValue(undefined) };
   const packageValidator = { validate: jest.fn() };
   const service = new ExtensionsService(prisma as any, audit as any, storage as any, packageValidator as any);
   const actor = { userId: 'platform-admin', role: 'PLATFORM_ADMIN' };
@@ -74,15 +74,55 @@ describe('ExtensionsService', () => {
   });
 
   it('publishes only from approved and records publication time', async () => {
-    prisma.extensionVersion.findUnique.mockResolvedValue({ id: 'version-1', extensionId: 'ext-1', version: '1.0.0', lifecycleStatus: 'APPROVED' });
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: 'version-1', extensionId: 'ext-1', version: '1.0.0', lifecycleStatus: 'APPROVED',
+      packageStorageKey: 'quarantine/extensions/ext-1/version-1/checksum.zip', packageChecksum: 'checksum',
+    });
     prisma.extensionVersion.update.mockImplementation(({ data }) => Promise.resolve({ id: 'version-1', version: '1.0.0', ...data }));
+    storage.getPrivate.mockResolvedValue(Buffer.from('package'));
 
     await service.transition('version-1', 'PUBLISHED', undefined, actor);
 
+    expect(storage.getPrivate).toHaveBeenCalledWith('quarantine/extensions/ext-1/version-1/checksum.zip');
+    expect(storage.putPrivate).toHaveBeenCalledWith(
+      'published/extensions/ext-1/version-1/checksum.zip',
+      Buffer.from('package'),
+      'application/zip',
+    );
     expect(prisma.extensionVersion.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ lifecycleStatus: 'PUBLISHED', publishedAt: expect.any(Date) }),
+      data: expect.objectContaining({
+        lifecycleStatus: 'PUBLISHED',
+        publishedAt: expect.any(Date),
+        packageStorageKey: 'published/extensions/ext-1/version-1/checksum.zip',
+      }),
     }));
     expect(prisma.extension.update).toHaveBeenCalledWith({ where: { id: 'ext-1' }, data: { isListed: true, status: 'ACTIVE' } });
+    expect(storage.deletePrivate).toHaveBeenCalledWith('quarantine/extensions/ext-1/version-1/checksum.zip');
+  });
+
+  it('treats retrying a completed lifecycle transition as idempotent', async () => {
+    const published = { id: 'version-1', version: '1.0.0', lifecycleStatus: 'PUBLISHED', packageStorageKey: 'published/package.zip' };
+    prisma.extensionVersion.findUnique.mockResolvedValue(published);
+
+    const result = await service.transition('version-1', 'PUBLISHED', undefined, actor);
+
+    expect(result).toBe(published);
+    expect(prisma.extensionVersion.update).not.toHaveBeenCalled();
+    expect(storage.getPrivate).not.toHaveBeenCalled();
+  });
+
+  it('reports permission changes against the latest published version', async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: 'version-2', version: '2.0.0', compatibilityRange: '>=1.0.0',
+      manifest: { permissions: ['rewards:read', 'rewards:write'] },
+      extension: { versions: [{ id: 'version-1', version: '1.0.0', manifest: { permissions: ['rewards:read', 'reports:read'] } }] },
+    });
+
+    const result = await service.reviewSummary('version-2');
+
+    expect(result.permissions.added).toEqual(['rewards:write']);
+    expect(result.permissions.removed).toEqual(['reports:read']);
+    expect(result.previousVersion).toBe('1.0.0');
   });
 
   it('deactivates every installation of an emergency-blocked version', async () => {

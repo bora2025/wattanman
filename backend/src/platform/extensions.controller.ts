@@ -49,6 +49,11 @@ export class ExtensionsController {
     return this.extensions.validationReports(versionId);
   }
 
+  @Get('versions/:versionId/review')
+  review(@Param('versionId') versionId: string) {
+    return this.extensions.reviewSummary(versionId);
+  }
+
   @Get('versions/:versionId/preview')
   preview(@Param('versionId') versionId: string) {
     return this.extensions.themePreview(versionId);

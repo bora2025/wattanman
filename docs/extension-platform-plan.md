@@ -660,7 +660,7 @@ This section is the source of truth for implementation progress. Update it in th
 | Stage 1 — Extension foundation | Partial | Server-side theme ZIP validation exists; versioned records, storage, quarantine, review, and audit lifecycle do not |
 | Stage 2 — Versioned themes | Partial | CSS ZIP upload and application exist; manifest, versions, preview isolation, publishing, installation, upgrade, and rollback do not |
 | Stage 3 — Declarative modules | In progress | Runtime navigation, schema-driven pages, tenant records, capability enforcement, and the Student Rewards ZIP are implemented; integration and upgrade gates remain |
-| Stage 4 — Marketplace operations | Not started | No publisher, review, signing, health, or emergency version controls |
+| Stage 4 — Marketplace operations | In progress | Review notes, immutable publication, permission diffs, lifecycle states, adoption queries, and emergency blocking exist; publisher identity, signing, metrics, and runbooks remain |
 | Stage 5 — Isolated code extensions | Not started | No plugin SDK, isolated build, service deployment, or scoped plugin identity |
 
 ### Existing foundation — verified
@@ -732,7 +732,7 @@ This section is the source of truth for implementation progress. Update it in th
 
 - [x] Upload original ZIP to quarantine storage.
 - [x] Calculate and persist SHA-256 checksums.
-- [ ] Store published artifacts immutably.
+- [x] Store published artifacts immutably.
 - [x] Extract approved assets into versioned storage paths.
 - [x] Prevent public access to quarantined packages.
 - [x] Add cleanup for abandoned or rejected uploads.
@@ -766,9 +766,9 @@ This section is the source of truth for implementation progress. Update it in th
 - [x] Create structured validation-report UI.
 - [x] Separate upload, approve, publish, install, and activate actions.
 - [x] Add explicit rejection with reviewer notes.
-- [ ] Add permissions and compatibility review before publication.
+- [x] Add permissions and compatibility review before publication.
 - [x] Add lifecycle audit events for every privileged transition.
-- [ ] **PARTIAL:** Add idempotency protection for upload and transition requests; identical package retries are idempotent, while transition request keys remain.
+- [x] Add idempotency protection for upload and transition requests; identical package and completed transition retries return the existing result without repeating side effects.
 
 #### Migration compatibility
 
@@ -846,7 +846,7 @@ This section is the source of truth for implementation progress. Update it in th
 
 - [ ] Manifest schema tests pass for valid and invalid versions.
 - [ ] CSS scoping and sanitization tests pass.
-- [ ] Asset storage and retrieval tests pass.
+- [x] Asset storage and retrieval tests pass.
 - [ ] Publish/install/activate authorization tests pass.
 - [ ] Upgrade and rollback integration tests pass.
 - [ ] School A cannot access or activate School B's installation.
@@ -904,7 +904,7 @@ This section is the source of truth for implementation progress. Update it in th
 - [ ] Resolve required and optional dependencies.
 - [ ] Detect dependency cycles and conflicts.
 - [ ] Prevent uninstall while dependents remain active.
-- [ ] Require approval when an upgrade requests new permissions.
+- [x] Require approval when an upgrade requests new permissions.
 - [ ] Support declarative data migrations with rollback rules.
 
 #### Pilot module
@@ -942,9 +942,9 @@ Migration rehearsal note (2026-08-03): `prisma migrate deploy` against an empty 
 
 - [ ] Add listed, unlisted, private, deprecated, retired, and blocked states.
 - [ ] Add school update policies: manual, notify, and approved automatic updates.
-- [ ] Show requested permission differences before upgrade.
+- [x] Show requested permission differences before upgrade.
 - [ ] Show version adoption and schools affected by deprecation or blocking.
-- [ ] Prevent mutation of published artifacts.
+- [x] Prevent mutation of published artifacts.
 
 #### Monitoring and response
 

@@ -25,6 +25,13 @@ interface ExtensionVersion {
   createdAt: string
 }
 
+interface ReviewSummary {
+  compatibilityRange?: string | null
+  previousVersion?: string | null
+  permissions: { requested: string[]; added: string[]; removed: string[] }
+  warnings: string[]
+}
+
 interface ExtensionRecord {
   id: string
   key: string
@@ -59,12 +66,24 @@ function VersionPanel({ extension, version, reload }: { extension: ExtensionReco
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [preview, setPreview] = useState<{ manifest: any; css: string } | null>(null)
+  const [review, setReview] = useState<ReviewSummary | null>(null)
 
   useEffect(() => {
     apiFetch(`/api/platform/extensions/versions/${version.id}/validations`)
       .then(responseJson)
       .then(setReports)
       .catch(() => setReports([]))
+  }, [version.id, version.lifecycleStatus])
+
+  useEffect(() => {
+    if (!['AWAITING_REVIEW', 'APPROVED'].includes(version.lifecycleStatus)) {
+      setReview(null)
+      return
+    }
+    apiFetch(`/api/platform/extensions/versions/${version.id}/review`)
+      .then(responseJson)
+      .then(setReview)
+      .catch(() => setReview(null))
   }, [version.id, version.lifecycleStatus])
 
   async function upload(file: File) {
@@ -151,6 +170,14 @@ function VersionPanel({ extension, version, reload }: { extension: ExtensionReco
         </div>
       </div>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {review && <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200 space-y-1">
+        <p className="font-semibold">Permission and compatibility review</p>
+        <p>Compatibility: {review.compatibilityRange || 'Not declared'} · Previous: {review.previousVersion ? `v${review.previousVersion}` : 'First release'}</p>
+        <p>Requested: {review.permissions.requested.join(', ') || 'None'}</p>
+        {review.permissions.added.length > 0 && <p className="text-amber-700 dark:text-amber-300">New permissions: {review.permissions.added.join(', ')}</p>}
+        {review.permissions.removed.length > 0 && <p>Removed permissions: {review.permissions.removed.join(', ')}</p>}
+        {review.warnings.map(warning => <p key={warning} className="text-amber-700 dark:text-amber-300">Warning: {warning}</p>)}
+      </div>}
       {reports.map(report => (
         <div key={report.id} className={`rounded-lg p-3 text-xs border ${report.status === 'PASSED' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-300' : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300'}`}>
           <p className="font-semibold">Validation {report.status}</p>
@@ -247,6 +274,30 @@ function InstallationCard({ installation, reload }: { installation: Installation
     }
   }
 
+  async function upgrade() {
+    if (!newestVersion) return
+    setBusy(true)
+    setError('')
+    try {
+      const review = await responseJson(await apiFetch(`/api/platform/extension-installations/${installation.id}/upgrades/${newestVersion.id}/review`))
+      const added = review.permissions?.added || []
+      const message = added.length
+        ? `This upgrade requests new permissions:\n\n${added.join('\n')}\n\nApprove these permissions and continue?`
+        : `Upgrade ${installation.extension.name} from v${review.fromVersion} to v${review.toVersion}?`
+      if (!window.confirm(message)) return
+      await responseJson(await apiFetch(`/api/platform/extension-installations/${installation.id}/upgrade`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ versionId: newestVersion.id, acknowledgePermissions: added.length > 0 }),
+      }))
+      await reload()
+    } catch (upgradeError: any) {
+      setError(upgradeError.message || 'Upgrade failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-start justify-between gap-4 flex-wrap">
       <div>
@@ -260,7 +311,7 @@ function InstallationCard({ installation, reload }: { installation: Installation
         {installation.approvedAt && !installation.installedAt && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ versionId: installation.installedVersion.id }) })}>Install</button>}
         {installation.installedAt && !installation.enabled && !installation.uninstalledAt && <button disabled={busy} className="btn-primary btn-sm" onClick={() => action('activation', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: true }) })}>Activate</button>}
         {installation.enabled && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('activation', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) })}>Deactivate</button>}
-        {installation.installedAt && newestVersion && newestVersion.id !== installation.installedVersion.id && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('upgrade', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ versionId: newestVersion.id }) })}>Upgrade to v{newestVersion.version}</button>}
+        {installation.installedAt && newestVersion && newestVersion.id !== installation.installedVersion.id && <button disabled={busy} className="btn-outline btn-sm" onClick={upgrade}>Upgrade to v{newestVersion.version}</button>}
         {installation.configuration?.rollbackVersionId && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('rollback')}>Roll back</button>}
         {!installation.uninstalledAt && <button disabled={busy} className="btn-outline btn-sm" onClick={() => action('uninstall')}>Uninstall</button>}
       </div>

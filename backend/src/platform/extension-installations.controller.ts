@@ -27,8 +27,13 @@ export class PlatformExtensionInstallationsController {
   }
 
   @Post(':id/upgrade')
-  upgrade(@Param('id') id: string, @Body() body: { versionId: string }, @Request() req) {
-    return this.installations.upgrade(id, body.versionId, req.user);
+  upgrade(@Param('id') id: string, @Body() body: { versionId: string; acknowledgePermissions?: boolean }, @Request() req) {
+    return this.installations.upgrade(id, body.versionId, req.user, body.acknowledgePermissions === true);
+  }
+
+  @Get(':id/upgrades/:versionId/review')
+  upgradeReview(@Param('id') id: string, @Param('versionId') versionId: string) {
+    return this.installations.upgradeReview(id, versionId);
   }
 
   @Post(':id/rollback')
