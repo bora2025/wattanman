@@ -83,6 +83,8 @@ model School {
   busRoutes                   BusRoute[]
   busStops                    BusStop[]
   busLocations                BusLocation[]
+  busStudentAssignments       BusStudentAssignment[]
+  busSchedules                BusSchedule[]
   exams                       Exam[]
   examQuestions               ExamQuestion[]
   examAttempts                ExamAttempt[]
@@ -110,7 +112,7 @@ model School {
   extensionInstallations      ExtensionInstallation[]
   extensionRecords            ExtensionRecord[]
   extensionVisibilityGrants   ExtensionVisibilityGrant[]
-  extensionPilotFeedback     ExtensionPilotFeedback[]
+  extensionPilotFeedback      ExtensionPilotFeedback[]
 }
 
 model User {
@@ -145,6 +147,8 @@ model User {
   refreshTokens                 RefreshToken[]
   passwordResetTokens           PasswordResetToken[]
   extensionPublisherMemberships ExtensionPublisherMember[]
+  busesDriven                   Bus[]                      @relation("BusDriver")
+  busesAssisted                 Bus[]                      @relation("BusAssistant")
 
   // Module 1: Salary
   salaries Salary[] @relation("UserSalaries")
@@ -247,6 +251,7 @@ model Student {
   courseEnrollments     CourseEnrollment[]     @relation("StudentCourseEnrollments")
   courseAttendances     CourseAttendance[]     @relation("StudentCourseAttendances")
   lessonViews           LessonView[]           @relation("StudentLessonViews")
+  busAssignments        BusStudentAssignment[]
 
   @@unique([schoolId, qrCode])
   @@index([schoolId])
@@ -890,18 +895,18 @@ model ExtensionValidation {
 /// Tenant-owned installation state. This model is included in
 /// TENANT_SCOPED_MODELS so every normal request is automatically school-bound.
 model ExtensionInstallation {
-  id                 String                  @id @default(cuid())
+  id                 String                   @id @default(cuid())
   schoolId           String
-  school             School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school             School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   extensionId        String
-  extension          Extension               @relation(fields: [extensionId], references: [id], onDelete: Restrict)
+  extension          Extension                @relation(fields: [extensionId], references: [id], onDelete: Restrict)
   installedVersionId String
-  installedVersion   ExtensionVersion        @relation(fields: [installedVersionId], references: [id], onDelete: Restrict)
-  enabled            Boolean                 @default(false)
+  installedVersion   ExtensionVersion         @relation(fields: [installedVersionId], references: [id], onDelete: Restrict)
+  enabled            Boolean                  @default(false)
   configuration      Json?
-  billingStatus      String                  @default("PENDING")
-  dataBytes          Int                     @default(0)
-  updatePolicy       String                  @default("MANUAL") // MANUAL | NOTIFY | AUTO_APPROVED
+  billingStatus      String                   @default("PENDING")
+  dataBytes          Int                      @default(0)
+  updatePolicy       String                   @default("MANUAL") // MANUAL | NOTIFY | AUTO_APPROVED
   availableVersionId String?
   updateNotifiedAt   DateTime?
   requestedBy        String?
@@ -912,8 +917,8 @@ model ExtensionInstallation {
   installedAt        DateTime?
   uninstalledAt      DateTime?
   purgeAfter         DateTime?
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
   migrationRuns      ExtensionMigrationRun[]
   pilotFeedback      ExtensionPilotFeedback[]
 
@@ -1569,53 +1574,141 @@ model StaffCertification {
 // ─── Module 2: School Bus Tracking ───────────────────────────────────────────
 
 model Bus {
-  id          String        @id @default(cuid())
-  schoolId    String
-  school      School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  name        String
-  plateNumber String // Unique per-school, not globally — see @@unique below. Real-world plates are
+  id                 String                 @id @default(cuid())
+  schoolId           String
+  school             School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name               String
+  plateNumber        String // Unique per-school, not globally — see @@unique below. Real-world plates are
   // globally unique, but the app has no legitimate need to enforce that, and doing so would let
   // one school's "plate already exists" error leak the existence of another school's bus.
-  capacity    Int           @default(40)
-  status      String        @default("ACTIVE") // ACTIVE, INACTIVE, MAINTENANCE
-  driverId    String?
-  routeId     String?
-  route       BusRoute?     @relation(fields: [routeId], references: [id])
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  locations   BusLocation[]
+  capacity           Int                    @default(40)
+  status             String                 @default("ACTIVE") // ACTIVE | INACTIVE | MAINTENANCE
+  statusReason       String?
+  driverId           String?
+  driver             User?                  @relation("BusDriver", fields: [driverId], references: [id], onDelete: SetNull)
+  assistantId        String?
+  assistant          User?                  @relation("BusAssistant", fields: [assistantId], references: [id], onDelete: SetNull)
+  routeId            String?
+  route              BusRoute?              @relation(fields: [routeId], references: [id])
+  make               String?
+  model              String?
+  year               Int?
+  color              String?
+  accessible         Boolean                @default(false)
+  gpsDeviceId        String?
+  lastServiceAt      DateTime?
+  nextServiceAt      DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  locations          BusLocation[]
+  studentAssignments BusStudentAssignment[]
+  schedules          BusSchedule[]
 
   @@unique([schoolId, plateNumber])
+  @@unique([schoolId, gpsDeviceId])
   @@index([schoolId])
+  @@index([driverId])
+  @@index([assistantId])
+  @@index([routeId])
 }
 
 model BusRoute {
-  id          String    @id @default(cuid())
-  schoolId    String
-  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  name        String
-  description String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  buses       Bus[]
-  stops       BusStop[]
+  id                 String                 @id @default(cuid())
+  schoolId           String
+  school             School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name               String
+  description        String?
+  status             String                 @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+  direction          String                 @default("BOTH") // INBOUND | OUTBOUND | BOTH
+  effectiveFrom      DateTime?
+  effectiveTo        DateTime?
+  distanceMeters     Int?
+  durationSeconds    Int?
+  routeGeometry      Json?
+  geometryProvider   String?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  buses              Bus[]
+  stops              BusStop[]
+  studentAssignments BusStudentAssignment[]
+  schedules          BusSchedule[]
 
   @@index([schoolId])
 }
 
 model BusStop {
-  id        String   @id @default(cuid())
-  schoolId  String
-  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  name      String
-  latitude  Float
-  longitude Float
-  order     Int      @default(0)
-  routeId   String
-  route     BusRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id                   String                 @id @default(cuid())
+  schoolId             String
+  school               School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name                 String
+  latitude             Float
+  longitude            Float
+  order                Int                    @default(0)
+  pickupTime           String?
+  dropoffTime          String?
+  dwellSeconds         Int                    @default(60)
+  geofenceRadiusMeters Int                    @default(150)
+  instructions         String?
+  routeId              String
+  route                BusRoute               @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  pickupAssignments    BusStudentAssignment[] @relation("BusPickupStop")
+  dropoffAssignments   BusStudentAssignment[] @relation("BusDropoffStop")
+  createdAt            DateTime               @default(now())
 
   @@index([schoolId])
+  @@index([routeId, order])
+}
+
+model BusStudentAssignment {
+  id            String    @id @default(cuid())
+  schoolId      String
+  school        School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  busId         String?
+  bus           Bus?      @relation(fields: [busId], references: [id], onDelete: SetNull)
+  routeId       String
+  route         BusRoute  @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  pickupStopId  String?
+  pickupStop    BusStop?  @relation("BusPickupStop", fields: [pickupStopId], references: [id], onDelete: SetNull)
+  dropoffStopId String?
+  dropoffStop   BusStop?  @relation("BusDropoffStop", fields: [dropoffStopId], references: [id], onDelete: SetNull)
+  direction     String    @default("BOTH") // INBOUND | OUTBOUND | BOTH
+  status        String    @default("ACTIVE") // ACTIVE | PAUSED | ENDED
+  handoffPolicy String    @default("GUARDIAN") // GUARDIAN | SELF_RELEASE | SCHOOL_STAFF
+  effectiveFrom DateTime  @default(now())
+  effectiveTo   DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([schoolId, status])
+  @@index([studentId, status])
+  @@index([routeId, direction])
+  @@index([busId, status])
+}
+
+model BusSchedule {
+  id            String    @id @default(cuid())
+  schoolId      String
+  school        School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  routeId       String
+  route         BusRoute  @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  busId         String?
+  bus           Bus?      @relation(fields: [busId], references: [id], onDelete: SetNull)
+  name          String
+  direction     String // INBOUND | OUTBOUND
+  departureTime String
+  weekdays      String[]
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  status        String    @default("ACTIVE") // ACTIVE | PAUSED | ENDED
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([schoolId, status])
+  @@index([routeId, status])
+  @@index([busId, status])
 }
 
 model BusLocation {

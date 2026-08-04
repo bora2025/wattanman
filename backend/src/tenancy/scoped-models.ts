@@ -52,6 +52,8 @@ export const TENANT_SCOPED_MODELS = new Set<string>([
   'BusRoute',
   'BusStop',
   'BusLocation',
+  'BusStudentAssignment',
+  'BusSchedule',
   'Exam',
   'ExamQuestion',
   'ExamAttempt',

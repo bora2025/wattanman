@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "key": "SCHOOL_BUS",
+  "name": "School Bus Operations",
+  "version": "1.0.0",
+  "runtimeType": "DECLARATIVE_MODULE",
+  "permissions": [
+    "fleet:read",
+    "fleet:write",
+    "routes:read",
+    "routes:write",
+    "stops:read",
+    "stops:write",
+    "riders:read",
+    "riders:write",
+    "schedules:read",
+    "schedules:write"
+  ],
+  "navigation": [
+    { "label": "Bus Fleet", "pageKey": "fleet", "icon": "bus", "section": "Transport", "roles": ["ADMIN", "EMPLOYEE"] },
+    { "label": "Bus Routes", "pageKey": "routes", "icon": "map", "section": "Transport", "roles": ["ADMIN", "EMPLOYEE"] },
+    { "label": "Bus Stops", "pageKey": "stops", "icon": "map-pin", "section": "Transport", "roles": ["ADMIN", "EMPLOYEE"] },
+    { "label": "Bus Riders", "pageKey": "riders", "icon": "users", "section": "Transport", "roles": ["ADMIN", "EMPLOYEE"] },
+    { "label": "Bus Schedules", "pageKey": "schedules", "icon": "calendar", "section": "Transport", "roles": ["ADMIN", "EMPLOYEE", "TEACHER"] }
+  ],
+  "pages": [
+    {
+      "key": "fleet",
+      "title": "Bus Fleet",
+      "resource": "fleet",
+      "roles": ["ADMIN", "EMPLOYEE"],
+      "ariaLabel": "School bus fleet management",
+      "fields": [
+        { "key": "busName", "label": "Bus name", "type": "text", "required": true },
+        { "key": "plateNumber", "label": "Plate number", "type": "text", "required": true },
+        { "key": "capacity", "label": "Seat capacity", "type": "number", "required": true },
+        { "key": "driverName", "label": "Driver", "type": "text", "required": true },
+        { "key": "driverPhone", "label": "Driver phone", "type": "text", "required": false },
+        { "key": "assistantName", "label": "Assistant", "type": "text", "required": false },
+        { "key": "routeName", "label": "Assigned route", "type": "text", "required": false },
+        { "key": "status", "label": "Status", "type": "text", "required": true },
+        { "key": "accessible", "label": "Accessible vehicle", "type": "boolean", "required": false },
+        { "key": "nextServiceDate", "label": "Next service", "type": "date", "required": false }
+      ],
+      "components": [
+        { "type": "stats", "title": "Fleet summary", "metrics": [{ "key": "vehicles", "label": "Vehicles", "aggregate": "count" }, { "key": "capacity", "label": "Total seats", "aggregate": "sum", "field": "capacity" }] },
+        { "type": "form", "title": "Register vehicle", "actions": ["create", "update"] },
+        { "type": "table", "title": "Vehicles", "columns": ["busName", "plateNumber", "capacity", "driverName", "routeName", "status", "nextServiceDate"], "actions": ["view", "edit", "delete"], "searchable": true },
+        { "type": "details", "title": "Vehicle details", "fields": ["busName", "plateNumber", "capacity", "driverName", "driverPhone", "assistantName", "routeName", "status", "accessible", "nextServiceDate"] }
+      ]
+    },
+    {
+      "key": "routes",
+      "title": "Bus Routes",
+      "resource": "routes",
+      "roles": ["ADMIN", "EMPLOYEE"],
+      "ariaLabel": "School bus route management",
+      "fields": [
+        { "key": "routeName", "label": "Route name", "type": "text", "required": true },
+        { "key": "direction", "label": "Direction", "type": "text", "required": true },
+        { "key": "description", "label": "Description", "type": "text", "required": false },
+        { "key": "distanceKm", "label": "Distance (km)", "type": "number", "required": false },
+        { "key": "durationMinutes", "label": "Duration (minutes)", "type": "number", "required": false },
+        { "key": "status", "label": "Status", "type": "text", "required": true },
+        { "key": "effectiveFrom", "label": "Effective from", "type": "date", "required": false }
+      ],
+      "components": [
+        { "type": "stats", "title": "Route summary", "metrics": [{ "key": "routes", "label": "Routes", "aggregate": "count" }, { "key": "distance", "label": "Total distance", "aggregate": "sum", "field": "distanceKm" }] },
+        { "type": "form", "title": "Create route", "actions": ["create", "update"] },
+        { "type": "table", "title": "Routes", "columns": ["routeName", "direction", "distanceKm", "durationMinutes", "status", "effectiveFrom"], "actions": ["view", "edit", "delete"], "searchable": true },
+        { "type": "chart", "title": "Distance by route", "categoryField": "routeName", "valueField": "distanceKm", "aggregate": "sum" }
+      ]
+    },
+    {
+      "key": "stops",
+      "title": "Bus Stops",
+      "resource": "stops",
+      "roles": ["ADMIN", "EMPLOYEE"],
+      "ariaLabel": "School bus stop management",
+      "fields": [
+        { "key": "routeName", "label": "Route name", "type": "text", "required": true },
+        { "key": "stopOrder", "label": "Stop order", "type": "number", "required": true },
+        { "key": "stopName", "label": "Stop name", "type": "text", "required": true },
+        { "key": "latitude", "label": "Latitude", "type": "number", "required": true },
+        { "key": "longitude", "label": "Longitude", "type": "number", "required": true },
+        { "key": "pickupTime", "label": "Pickup time", "type": "text", "required": false },
+        { "key": "dropoffTime", "label": "Drop-off time", "type": "text", "required": false },
+        { "key": "instructions", "label": "Safety instructions", "type": "text", "required": false }
+      ],
+      "components": [
+        { "type": "form", "title": "Add stop", "actions": ["create", "update"] },
+        { "type": "table", "title": "Route stops", "columns": ["routeName", "stopOrder", "stopName", "pickupTime", "dropoffTime"], "actions": ["view", "edit", "delete"], "searchable": true },
+        { "type": "details", "title": "Stop details", "fields": ["routeName", "stopOrder", "stopName", "latitude", "longitude", "pickupTime", "dropoffTime", "instructions"] }
+      ]
+    },
+    {
+      "key": "riders",
+      "title": "Bus Riders",
+      "resource": "riders",
+      "roles": ["ADMIN", "EMPLOYEE"],
+      "ariaLabel": "Student bus rider assignments",
+      "fields": [
+        { "key": "studentName", "label": "Student name", "type": "text", "required": true },
+        { "key": "studentNumber", "label": "Student number", "type": "text", "required": false },
+        { "key": "className", "label": "Class", "type": "text", "required": false },
+        { "key": "busName", "label": "Bus", "type": "text", "required": true },
+        { "key": "routeName", "label": "Route", "type": "text", "required": true },
+        { "key": "pickupStop", "label": "Pickup stop", "type": "text", "required": true },
+        { "key": "dropoffStop", "label": "Drop-off stop", "type": "text", "required": true },
+        { "key": "direction", "label": "Direction", "type": "text", "required": true },
+        { "key": "handoffPolicy", "label": "Handoff policy", "type": "text", "required": true },
+        { "key": "guardianPhone", "label": "Guardian phone", "type": "text", "required": false },
+        { "key": "active", "label": "Active", "type": "boolean", "required": true }
+      ],
+      "components": [
+        { "type": "stats", "title": "Rider summary", "metrics": [{ "key": "riders", "label": "Assigned riders", "aggregate": "count" }] },
+        { "type": "form", "title": "Assign rider", "actions": ["create", "update"] },
+        { "type": "table", "title": "Rider assignments", "columns": ["studentName", "studentNumber", "className", "busName", "routeName", "pickupStop", "dropoffStop", "active"], "actions": ["view", "edit", "delete"], "searchable": true },
+        { "type": "details", "title": "Rider safety details", "fields": ["studentName", "studentNumber", "className", "busName", "routeName", "pickupStop", "dropoffStop", "direction", "handoffPolicy", "guardianPhone", "active"] }
+      ]
+    },
+    {
+      "key": "schedules",
+      "title": "Bus Schedules",
+      "resource": "schedules",
+      "roles": ["ADMIN", "EMPLOYEE", "TEACHER"],
+      "ariaLabel": "School bus schedule management",
+      "fields": [
+        { "key": "scheduleName", "label": "Schedule name", "type": "text", "required": true },
+        { "key": "routeName", "label": "Route", "type": "text", "required": true },
+        { "key": "busName", "label": "Bus", "type": "text", "required": true },
+        { "key": "direction", "label": "Direction", "type": "text", "required": true },
+        { "key": "departureTime", "label": "Departure time", "type": "text", "required": true },
+        { "key": "weekdays", "label": "Weekdays", "type": "text", "required": true },
+        { "key": "effectiveFrom", "label": "Effective from", "type": "date", "required": true },
+        { "key": "effectiveTo", "label": "Effective to", "type": "date", "required": false },
+        { "key": "active", "label": "Active", "type": "boolean", "required": true }
+      ],
+      "components": [
+        { "type": "form", "title": "Add schedule", "actions": ["create", "update"] },
+        { "type": "table", "title": "Schedules", "columns": ["scheduleName", "routeName", "busName", "direction", "departureTime", "weekdays", "effectiveFrom", "active"], "actions": ["view", "edit", "delete"], "searchable": true },
+        { "type": "details", "title": "Schedule details", "fields": ["scheduleName", "routeName", "busName", "direction", "departureTime", "weekdays", "effectiveFrom", "effectiveTo", "active"] }
+      ]
+    }
+  ],
+  "resources": {
+    "fleet": { "fields": [{ "key": "busName", "type": "text", "required": true }, { "key": "plateNumber", "type": "text", "required": true }, { "key": "capacity", "type": "number", "required": true }, { "key": "driverName", "type": "text", "required": true }, { "key": "driverPhone", "type": "text", "required": false }, { "key": "assistantName", "type": "text", "required": false }, { "key": "routeName", "type": "text", "required": false }, { "key": "status", "type": "text", "required": true }, { "key": "accessible", "type": "boolean", "required": false }, { "key": "nextServiceDate", "type": "date", "required": false }] },
+    "routes": { "fields": [{ "key": "routeName", "type": "text", "required": true }, { "key": "direction", "type": "text", "required": true }, { "key": "description", "type": "text", "required": false }, { "key": "distanceKm", "type": "number", "required": false }, { "key": "durationMinutes", "type": "number", "required": false }, { "key": "status", "type": "text", "required": true }, { "key": "effectiveFrom", "type": "date", "required": false }] },
+    "stops": { "fields": [{ "key": "routeName", "type": "text", "required": true }, { "key": "stopOrder", "type": "number", "required": true }, { "key": "stopName", "type": "text", "required": true }, { "key": "latitude", "type": "number", "required": true }, { "key": "longitude", "type": "number", "required": true }, { "key": "pickupTime", "type": "text", "required": false }, { "key": "dropoffTime", "type": "text", "required": false }, { "key": "instructions", "type": "text", "required": false }] },
+    "riders": { "fields": [{ "key": "studentName", "type": "text", "required": true }, { "key": "studentNumber", "type": "text", "required": false }, { "key": "className", "type": "text", "required": false }, { "key": "busName", "type": "text", "required": true }, { "key": "routeName", "type": "text", "required": true }, { "key": "pickupStop", "type": "text", "required": true }, { "key": "dropoffStop", "type": "text", "required": true }, { "key": "direction", "type": "text", "required": true }, { "key": "handoffPolicy", "type": "text", "required": true }, { "key": "guardianPhone", "type": "text", "required": false }, { "key": "active", "type": "boolean", "required": true }] },
+    "schedules": { "fields": [{ "key": "scheduleName", "type": "text", "required": true }, { "key": "routeName", "type": "text", "required": true }, { "key": "busName", "type": "text", "required": true }, { "key": "direction", "type": "text", "required": true }, { "key": "departureTime", "type": "text", "required": true }, { "key": "weekdays", "type": "text", "required": true }, { "key": "effectiveFrom", "type": "date", "required": true }, { "key": "effectiveTo", "type": "date", "required": false }, { "key": "active", "type": "boolean", "required": true }] }
+  },
+  "defaultLocale": "en",
+  "translations": { "en": {}, "km": {} }
+}
