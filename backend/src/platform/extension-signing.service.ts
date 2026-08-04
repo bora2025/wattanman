@@ -72,6 +72,19 @@ export class ExtensionSigningService {
     }
   }
 
+  normalizePublicKey(publicKeyPem: string): string {
+    const match = publicKeyPem.trim().match(/-----BEGIN PUBLIC KEY-----([\s\S]*?)-----END PUBLIC KEY-----/);
+    if (!match) throw new BadRequestException('publicKeyPem must contain a valid Ed25519 public key');
+    const encoded = match[1].replace(/\s+/g, '');
+    if (!encoded || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) {
+      throw new BadRequestException('publicKeyPem must contain a valid Ed25519 public key');
+    }
+    const lines = encoded.match(/.{1,64}/g) || [];
+    const normalized = `-----BEGIN PUBLIC KEY-----\n${lines.join('\n')}\n-----END PUBLIC KEY-----`;
+    this.validatePublicKey(normalized);
+    return normalized;
+  }
+
   private assertChecksum(contents: Buffer, expected: string) {
     const actual = createHash('sha256').update(contents).digest('hex');
     if (actual !== expected) throw new ConflictException('Published package checksum verification failed');

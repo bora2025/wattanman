@@ -10,6 +10,11 @@ describe('ExtensionSigningService', () => {
   const privateKeyPem = keys.privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
   const publicKeyPem = keys.publicKey.export({ type: 'spki', format: 'pem' }).toString();
 
+  it('normalizes a public PEM flattened by a browser prompt', () => {
+    const flattened = publicKeyPem.replace(/\r?\n/g, ' ');
+    expect(service.normalizePublicKey(flattened)).toBe(publicKeyPem.trim());
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.EXTENSION_SIGNING_KEY_ID = 'wattaman-test-1';

@@ -475,10 +475,9 @@ export class ExtensionsService {
   async registerSigningKey(publisherId: string, data: { keyId?: string; publicKeyPem?: string }, actor: Actor) {
     await this.requirePublisherRole(publisherId, actor, 'MANAGE');
     const keyId = data.keyId?.trim();
-    const publicKeyPem = data.publicKeyPem?.trim();
+    const publicKeyPem = data.publicKeyPem ? this.signing.normalizePublicKey(data.publicKeyPem) : undefined;
     if (!keyId || !/^[A-Za-z0-9._-]{3,100}$/.test(keyId)) throw new BadRequestException('A valid signing key ID is required');
     if (!publicKeyPem) throw new BadRequestException('publicKeyPem is required');
-    this.signing.validatePublicKey(publicKeyPem);
     const duplicate = await this.prisma.extensionSigningKey.findUnique({ where: { keyId } });
     if (duplicate) throw new ConflictException('Signing key ID already exists');
     const created = await this.prisma.extensionSigningKey.create({
