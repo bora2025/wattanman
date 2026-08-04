@@ -705,27 +705,102 @@ describe("ExtensionsService", () => {
       runtimeType: "DECLARATIVE_MODULE",
       publisherId: "publisher-1",
       legacyAddonKey: null,
-      _count: { versions: 0, installations: 0, records: 0 },
+      versions: [],
+      installations: [],
+      _count: { records: 0 },
     });
     await expect(
       service.deleteExtension("extension-empty", actor),
-    ).resolves.toEqual({ deleted: true, extensionId: "extension-empty" });
+    ).resolves.toEqual({
+      deleted: true,
+      extensionId: "extension-empty",
+      versions: 0,
+      installations: 0,
+      records: 0,
+      storageObjects: 0,
+    });
     expect(prisma.extension.delete).toHaveBeenCalledWith({
       where: { id: "extension-empty" },
     });
 
     prisma.extension.findUnique.mockResolvedValueOnce({
-      id: "extension-history",
-      key: "HISTORY",
-      name: "History",
+      id: "extension-installed",
+      key: "INSTALLED",
+      name: "Installed",
       runtimeType: "DECLARATIVE_MODULE",
       publisherId: "publisher-1",
       legacyAddonKey: null,
-      _count: { versions: 1, installations: 0, records: 0 },
+      versions: [
+        {
+          id: "version-1",
+          version: "1.0.0",
+          lifecycleStatus: "PUBLISHED",
+          packageStorageKey: null,
+          assets: [],
+        },
+      ],
+      installations: [
+        {
+          id: "installation-1",
+          schoolId: "school-1",
+          enabled: false,
+          installedAt: new Date(),
+          uninstalledAt: null,
+        },
+      ],
+      _count: { records: 0 },
     });
     await expect(
-      service.deleteExtension("extension-history", actor),
-    ).rejects.toThrow("Delete all draft versions first");
+      service.deleteExtension("extension-installed", actor),
+    ).rejects.toThrow("Uninstall this extension from every school");
+  });
+
+  it("purges releases, storage, records, and fully uninstalled history", async () => {
+    prisma.extension.findUnique.mockResolvedValueOnce({
+      id: "extension-purge",
+      key: "PURGE",
+      name: "Purge",
+      runtimeType: "THEME",
+      publisherId: "publisher-1",
+      legacyAddonKey: null,
+      versions: [
+        {
+          id: "version-1",
+          version: "1.0.0",
+          lifecycleStatus: "DEPRECATED",
+          packageStorageKey: "packages/one.zip",
+          assets: [{ storageKey: "assets/one.css" }],
+        },
+      ],
+      installations: [
+        {
+          id: "installation-1",
+          schoolId: "school-1",
+          enabled: false,
+          installedAt: new Date(),
+          uninstalledAt: new Date(),
+        },
+      ],
+      _count: { records: 4 },
+    });
+
+    await expect(
+      service.deleteExtension("extension-purge", actor),
+    ).resolves.toEqual({
+      deleted: true,
+      extensionId: "extension-purge",
+      versions: 1,
+      installations: 1,
+      records: 4,
+      storageObjects: 2,
+    });
+    expect(storage.deletePrivate).toHaveBeenCalledTimes(2);
+    expect(prisma.extensionAlert.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { extensionId: null, versionId: null } }),
+    );
+    expect(prisma.extension.delete).toHaveBeenCalledWith({
+      where: { id: "extension-purge" },
+    });
   });
 
   it("reports version adoption, validation failures, storage, and lifecycle activity", async () => {

@@ -678,12 +678,10 @@ function ExtensionCard({
   }
 
   async function deleteExtension() {
-    if (
-      !window.confirm(
-        `Permanently delete the empty extension ${extension.name}? Delete all draft versions first. This cannot be undone.`,
-      )
-    )
-      return;
+    const confirmation = window.prompt(
+      `Permanently delete ${extension.name}, every release, stored package, extension record, and fully uninstalled history?\n\nThis cannot be undone. Type ${extension.key} to confirm.`,
+    );
+    if (confirmation !== extension.key) return;
     setBusy(true);
     setError("");
     try {
@@ -716,13 +714,23 @@ function ExtensionCard({
             {extension.versions.length === 1 ? "" : "s"}
           </p>
         </div>
-        <button
-          type="button"
-          className="btn-outline btn-sm"
-          onClick={() => setExpanded((value) => !value)}
-        >
-          {expanded ? "Collapse" : "Manage"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            disabled={busy}
+            className="btn-outline btn-sm text-red-600"
+            onClick={deleteExtension}
+          >
+            Delete
+          </button>
+          <button
+            type="button"
+            className="btn-outline btn-sm"
+            onClick={() => setExpanded((value) => !value)}
+          >
+            {expanded ? "Collapse" : "Manage"}
+          </button>
+        </div>
       </div>
       {expanded && (
         <>
@@ -744,16 +752,6 @@ function ExtensionCard({
                 onClick={grantPrivateSchool}
               >
                 Grant school
-              </button>
-            )}
-            {extension.versions.length === 0 && (
-              <button
-                type="button"
-                disabled={busy}
-                className="btn-outline btn-sm text-red-600"
-                onClick={deleteExtension}
-              >
-                Delete extension
               </button>
             )}
           </div>

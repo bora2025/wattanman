@@ -826,9 +826,25 @@ export class ExtensionsService {
     const existing = await this.prisma.extension.findUnique({
       where: { id: extensionId },
       include: {
-        _count: {
-          select: { versions: true, installations: true, records: true },
+        versions: {
+          select: {
+            id: true,
+            version: true,
+            lifecycleStatus: true,
+            packageStorageKey: true,
+            assets: { select: { storageKey: true } },
+          },
         },
+        installations: {
+          select: {
+            id: true,
+            schoolId: true,
+            enabled: true,
+            installedAt: true,
+            uninstalledAt: true,
+          },
+        },
+        _count: { select: { records: true } },
       },
     });
     if (!existing) throw new NotFoundException("Extension not found");
@@ -838,24 +854,61 @@ export class ExtensionsService {
         "A legacy-linked extension cannot be deleted",
       );
     }
-    if (
-      existing._count.versions ||
-      existing._count.installations ||
-      existing._count.records
-    ) {
+    const stillInstalled = existing.installations.filter(
+      (installation) =>
+        installation.enabled ||
+        (installation.installedAt && !installation.uninstalledAt),
+    );
+    if (stillInstalled.length) {
       throw new ConflictException(
-        "Delete all draft versions first; extensions with installation or data history cannot be deleted",
+        "Uninstall this extension from every school before permanently deleting it",
       );
     }
+
+    const storageKeys = new Set<string>();
+    for (const version of existing.versions) {
+      if (version.packageStorageKey) storageKeys.add(version.packageStorageKey);
+      for (const asset of version.assets) storageKeys.add(asset.storageKey);
+    }
+    for (const storageKey of storageKeys)
+      await this.storage.deletePrivate(storageKey);
+
+    const versionIds = existing.versions.map((version) => version.id);
+    await this.prisma.extensionAlert.updateMany({
+      where: {
+        OR: [
+          { extensionId },
+          ...(versionIds.length ? [{ versionId: { in: versionIds } }] : []),
+        ],
+      },
+      data: { extensionId: null, versionId: null },
+    });
     await this.prisma.extension.delete({ where: { id: extensionId } });
     await this.log(actor, "DELETE", "EXTENSION", extensionId, existing.name, {
       before: {
         key: existing.key,
         name: existing.name,
         runtimeType: existing.runtimeType,
+        versions: existing.versions.map((version) => ({
+          version: version.version,
+          lifecycleStatus: version.lifecycleStatus,
+        })),
+      },
+      metadata: {
+        deletedVersions: existing.versions.length,
+        deletedInstallations: existing.installations.length,
+        deletedRecords: existing._count.records,
+        deletedStorageObjects: storageKeys.size,
       },
     });
-    return { deleted: true, extensionId };
+    return {
+      deleted: true,
+      extensionId,
+      versions: existing.versions.length,
+      installations: existing.installations.length,
+      records: existing._count.records,
+      storageObjects: storageKeys.size,
+    };
   }
 
   publishers() {
