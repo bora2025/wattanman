@@ -40,12 +40,14 @@ describe("ExtensionsService", () => {
       update: jest.fn(),
       findMany: jest.fn(),
     },
-    extensionInstallation: { updateMany: jest.fn() },
+    extensionInstallation: { updateMany: jest.fn(), deleteMany: jest.fn() },
+    extensionDependency: { deleteMany: jest.fn() },
     extensionVisibilityGrant: { upsert: jest.fn(), deleteMany: jest.fn() },
     school: { findUnique: jest.fn() },
     extensionAsset: { upsert: jest.fn() },
     extensionAlert: { updateMany: jest.fn() },
     auditLog: { groupBy: jest.fn() },
+    $transaction: jest.fn((callback: any) => callback(prisma)),
   };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
   const storage = {
@@ -798,6 +800,17 @@ describe("ExtensionsService", () => {
     expect(prisma.extensionAlert.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ data: { extensionId: null, versionId: null } }),
     );
+    expect(prisma.extensionDependency.deleteMany).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          { extensionId: "extension-purge" },
+          { requiredExtensionId: "extension-purge" },
+        ],
+      },
+    });
+    expect(prisma.extensionInstallation.deleteMany).toHaveBeenCalledWith({
+      where: { extensionId: "extension-purge" },
+    });
     expect(prisma.extension.delete).toHaveBeenCalledWith({
       where: { id: "extension-purge" },
     });

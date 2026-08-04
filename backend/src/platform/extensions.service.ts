@@ -874,16 +874,24 @@ export class ExtensionsService {
       await this.storage.deletePrivate(storageKey);
 
     const versionIds = existing.versions.map((version) => version.id);
-    await this.prisma.extensionAlert.updateMany({
-      where: {
-        OR: [
-          { extensionId },
-          ...(versionIds.length ? [{ versionId: { in: versionIds } }] : []),
-        ],
-      },
-      data: { extensionId: null, versionId: null },
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.extensionAlert.updateMany({
+        where: {
+          OR: [
+            { extensionId },
+            ...(versionIds.length ? [{ versionId: { in: versionIds } }] : []),
+          ],
+        },
+        data: { extensionId: null, versionId: null },
+      });
+      await transaction.extensionDependency.deleteMany({
+        where: { OR: [{ extensionId }, { requiredExtensionId: extensionId }] },
+      });
+      await transaction.extensionInstallation.deleteMany({
+        where: { extensionId },
+      });
+      await transaction.extension.delete({ where: { id: extensionId } });
     });
-    await this.prisma.extension.delete({ where: { id: extensionId } });
     await this.log(actor, "DELETE", "EXTENSION", extensionId, existing.name, {
       before: {
         key: existing.key,
