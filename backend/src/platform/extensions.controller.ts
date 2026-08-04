@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -140,6 +140,11 @@ export class ExtensionsController {
   @Post('versions/:versionId/appeal')
   appeal(@Param('versionId') versionId: string, @Body() body: { notes?: string }, @Request() req) {
     return this.extensions.appeal(versionId, body.notes, req.user);
+  }
+
+  @Delete('versions/:versionId')
+  deleteRejectedVersion(@Param('versionId') versionId: string, @Request() req) {
+    return this.extensions.deleteRejectedVersion(versionId, req.user);
   }
 
   @Get('versions/:versionId/preview')

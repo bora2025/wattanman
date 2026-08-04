@@ -439,6 +439,38 @@ export class ExtensionsService {
     return updated;
   }
 
+  async deleteRejectedVersion(versionId: string, actor: Actor) {
+    const existing = await this.prisma.extensionVersion.findUnique({
+      where: { id: versionId },
+      include: {
+        extension: { include: { publisherEntity: true } },
+        assets: { select: { storageKey: true } },
+        installations: { select: { id: true }, take: 1 },
+      },
+    });
+    if (!existing) throw new NotFoundException('Extension version not found');
+    await this.requirePublisherRole(existing.extension.publisherId, actor, 'MANAGE');
+    if (existing.lifecycleStatus !== 'REJECTED') {
+      throw new ConflictException('Only rejected extension versions can be deleted');
+    }
+    if (existing.installations.length) {
+      throw new ConflictException('An extension version with installation history cannot be deleted');
+    }
+
+    const storageKeys = new Set<string>();
+    if (existing.packageStorageKey) storageKeys.add(existing.packageStorageKey);
+    for (const asset of existing.assets) storageKeys.add(asset.storageKey);
+    for (const storageKey of storageKeys) await this.storage.deletePrivate(storageKey);
+
+    await this.prisma.extensionAlert.updateMany({ where: { versionId }, data: { versionId: null } });
+    await this.prisma.extensionVersion.delete({ where: { id: versionId } });
+    await this.log(actor, 'DELETE', 'EXTENSION_VERSION', versionId, existing.version, {
+      before: { extensionId: existing.extensionId, version: existing.version, lifecycleStatus: existing.lifecycleStatus },
+      metadata: { deletedStorageObjects: storageKeys.size },
+    });
+    return { deleted: true, versionId, storageObjects: storageKeys.size };
+  }
+
   publishers() {
     return this.prisma.extensionPublisher.findMany({
       include: {

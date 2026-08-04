@@ -191,6 +191,20 @@ function VersionPanel({ extension, version, reload }: { extension: ExtensionReco
     }
   }
 
+  async function deleteRejectedVersion() {
+    if (!window.confirm(`Permanently delete rejected ${extension.name} v${version.version} and its stored package? This cannot be undone.`)) return
+    setBusy(true)
+    setError('')
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/versions/${version.id}`, { method: 'DELETE' }))
+      await reload()
+    } catch (deleteError: any) {
+      setError(deleteError.message || 'Could not delete rejected version')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const nextActions: Record<string, Array<{ status: string; label: string }>> = {
     VALIDATED: [{ status: 'AWAITING_REVIEW', label: 'Send to review' }],
     AWAITING_REVIEW: [{ status: 'APPROVED', label: 'Approve' }, { status: 'REJECTED', label: 'Reject' }],
@@ -226,6 +240,7 @@ function VersionPanel({ extension, version, reload }: { extension: ExtensionReco
             </button>
           ))}
           {version.lifecycleStatus === 'REJECTED' && <button disabled={busy} onClick={appeal} className="btn-outline btn-sm">Appeal</button>}
+          {version.lifecycleStatus === 'REJECTED' && <button disabled={busy} onClick={deleteRejectedVersion} className="btn-outline btn-sm text-red-600">Delete</button>}
           {extension.runtimeType === 'THEME' && ['VALIDATED', 'AWAITING_REVIEW', 'APPROVED', 'PUBLISHED', 'DEPRECATED'].includes(version.lifecycleStatus) && <button disabled={busy} onClick={openPreview} className="btn-outline btn-sm">Preview</button>}
         </div>
       </div>

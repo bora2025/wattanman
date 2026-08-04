@@ -21,6 +21,7 @@ describe('ExtensionsService', () => {
       create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      delete: jest.fn(),
     },
     extensionValidation: {
       create: jest.fn(),
@@ -31,12 +32,13 @@ describe('ExtensionsService', () => {
     extensionVisibilityGrant: { upsert: jest.fn(), deleteMany: jest.fn() },
     school: { findUnique: jest.fn() },
     extensionAsset: { upsert: jest.fn() },
+    extensionAlert: { updateMany: jest.fn() },
     auditLog: { groupBy: jest.fn() },
   };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
   const storage = { putPrivate: jest.fn().mockResolvedValue(undefined), getPrivate: jest.fn(), deletePrivate: jest.fn().mockResolvedValue(undefined) };
   const packageValidator = { validate: jest.fn() };
-  const signing = { signForPublication: jest.fn(), validatePublicKey: jest.fn() };
+  const signing = { signForPublication: jest.fn(), validatePublicKey: jest.fn(), normalizePublicKey: jest.fn((value) => value) };
   const service = new ExtensionsService(prisma as any, audit as any, storage as any, packageValidator as any, signing as any);
   const actor = { userId: 'platform-admin', role: 'PLATFORM_ADMIN' };
 
@@ -339,6 +341,37 @@ describe('ExtensionsService', () => {
     expect(prisma.extensionReview.create).toHaveBeenLastCalledWith({
       data: expect.objectContaining({ extensionVersionId: 'version-1', action: 'APPEALED', notes: 'Permission description updated' }),
     });
+  });
+
+  it('deletes an uninstalled rejected version and its private storage objects', async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: 'version-rejected', extensionId: 'extension-1', version: '1.0.0', lifecycleStatus: 'REJECTED',
+      packageStorageKey: 'quarantine/package.zip', assets: [{ storageKey: 'assets/theme.css' }], installations: [],
+      extension: { publisherId: 'publisher-1', publisherEntity: { status: 'ACTIVE' } },
+    });
+
+    await expect(service.deleteRejectedVersion('version-rejected', actor)).resolves.toEqual({
+      deleted: true, versionId: 'version-rejected', storageObjects: 2,
+    });
+    expect(storage.deletePrivate).toHaveBeenCalledTimes(2);
+    expect(prisma.extensionAlert.updateMany).toHaveBeenCalledWith({ where: { versionId: 'version-rejected' }, data: { versionId: null } });
+    expect(prisma.extensionVersion.delete).toHaveBeenCalledWith({ where: { id: 'version-rejected' } });
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'DELETE', resource: 'EXTENSION_VERSION' }));
+  });
+
+  it('refuses to delete non-rejected or installed extension versions', async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValueOnce({
+      id: 'version-published', version: '1.0.0', lifecycleStatus: 'PUBLISHED', assets: [], installations: [],
+      extension: { publisherId: 'publisher-1', publisherEntity: { status: 'ACTIVE' } },
+    });
+    await expect(service.deleteRejectedVersion('version-published', actor)).rejects.toThrow('Only rejected extension versions can be deleted');
+
+    prisma.extensionVersion.findUnique.mockResolvedValueOnce({
+      id: 'version-installed', version: '1.0.0', lifecycleStatus: 'REJECTED', assets: [], installations: [{ id: 'installation-1' }],
+      extension: { publisherId: 'publisher-1', publisherEntity: { status: 'ACTIVE' } },
+    });
+    await expect(service.deleteRejectedVersion('version-installed', actor)).rejects.toThrow('installation history cannot be deleted');
+    expect(prisma.extensionVersion.delete).not.toHaveBeenCalled();
   });
 
   it('reports version adoption, validation failures, storage, and lifecycle activity', async () => {
