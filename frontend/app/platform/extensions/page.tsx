@@ -104,6 +104,19 @@ interface ExtensionAlert {
   lastSeenAt: string;
 }
 
+const LIFECYCLE_GUIDANCE: Record<string, string> = {
+  UPLOADED: "Upload a ZIP package",
+  VALIDATING: "Validation is running",
+  VALIDATED: "Ready to send for review",
+  AWAITING_REVIEW: "Reviewer decision required",
+  APPROVED: "Ready to publish",
+  PUBLISHED: "Available for installation",
+  DEPRECATED: "Existing installs supported; use a newer release",
+  REJECTED: "Fix package issues or delete this draft",
+  BLOCKED: "Disabled for every school",
+  RETIRED: "Lifecycle complete; retained for audit history",
+};
+
 async function responseJson(res: Response) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
@@ -132,6 +145,7 @@ function VersionPanel({
   } | null>(null);
   const [review, setReview] = useState<ReviewSummary | null>(null);
   const [reviewHistory, setReviewHistory] = useState<ReviewEvent[]>([]);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     apiFetch(`/api/platform/extensions/versions/${version.id}/validations`)
@@ -316,6 +330,11 @@ function VersionPanel({
           <p className="text-[11px] text-slate-500 mt-1">
             Platform {version.compatibilityRange || "compatibility not set"}
           </p>
+          <p className="text-[11px] text-slate-400 mt-1">
+            Next:{" "}
+            {LIFECYCLE_GUIDANCE[version.lifecycleStatus] ||
+              "Review lifecycle status"}
+          </p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {version.lifecycleStatus === "UPLOADED" && (
@@ -380,81 +399,99 @@ function VersionPanel({
                 Preview
               </button>
             )}
+          <button
+            type="button"
+            onClick={() => setShowDetails((value) => !value)}
+            className="btn-outline btn-sm"
+          >
+            {showDetails ? "Hide details" : "Details"}
+          </button>
         </div>
       </div>
       {error && (
         <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
       )}
-      {version.releaseNotes && (
-        <div className="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 text-xs">
-          <p className="font-semibold">Release notes</p>
-          <p className="whitespace-pre-wrap text-slate-600 dark:text-slate-300">
-            {version.releaseNotes}
-          </p>
-        </div>
-      )}
-      {review && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200 space-y-1">
-          <p className="font-semibold">Permission and compatibility review</p>
-          <p>
-            Compatibility: {review.compatibilityRange || "Not declared"} ·
-            Previous:{" "}
-            {review.previousVersion
-              ? `v${review.previousVersion}`
-              : "First release"}
-          </p>
-          <p>Requested: {review.permissions.requested.join(", ") || "None"}</p>
-          {review.permissions.added.length > 0 && (
-            <p className="text-amber-700 dark:text-amber-300">
-              New permissions: {review.permissions.added.join(", ")}
-            </p>
+      {showDetails && (
+        <>
+          {version.releaseNotes && (
+            <div className="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 text-xs">
+              <p className="font-semibold">Release notes</p>
+              <p className="whitespace-pre-wrap text-slate-600 dark:text-slate-300">
+                {version.releaseNotes}
+              </p>
+            </div>
           )}
-          {review.permissions.removed.length > 0 && (
-            <p>Removed permissions: {review.permissions.removed.join(", ")}</p>
+          {review && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200 space-y-1">
+              <p className="font-semibold">
+                Permission and compatibility review
+              </p>
+              <p>
+                Compatibility: {review.compatibilityRange || "Not declared"} ·
+                Previous:{" "}
+                {review.previousVersion
+                  ? `v${review.previousVersion}`
+                  : "First release"}
+              </p>
+              <p>
+                Requested: {review.permissions.requested.join(", ") || "None"}
+              </p>
+              {review.permissions.added.length > 0 && (
+                <p className="text-amber-700 dark:text-amber-300">
+                  New permissions: {review.permissions.added.join(", ")}
+                </p>
+              )}
+              {review.permissions.removed.length > 0 && (
+                <p>
+                  Removed permissions: {review.permissions.removed.join(", ")}
+                </p>
+              )}
+              {review.warnings.map((warning) => (
+                <p key={warning} className="text-amber-700 dark:text-amber-300">
+                  Warning: {warning}
+                </p>
+              ))}
+            </div>
           )}
-          {review.warnings.map((warning) => (
-            <p key={warning} className="text-amber-700 dark:text-amber-300">
-              Warning: {warning}
-            </p>
-          ))}
-        </div>
-      )}
-      {reviewHistory.length > 0 && (
-        <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-xs space-y-2">
-          <p className="font-semibold">Review history</p>
-          {reviewHistory.map((event) => (
-            <div key={event.id} className="flex justify-between gap-3">
-              <span>
-                {event.action}
-                {event.notes ? ` · ${event.notes}` : ""}
-              </span>
-              <span className="text-slate-400 whitespace-nowrap">
-                {new Date(event.createdAt).toLocaleString()}
-              </span>
+          {reviewHistory.length > 0 && (
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-xs space-y-2">
+              <p className="font-semibold">Review history</p>
+              {reviewHistory.map((event) => (
+                <div key={event.id} className="flex justify-between gap-3">
+                  <span>
+                    {event.action}
+                    {event.notes ? ` · ${event.notes}` : ""}
+                  </span>
+                  <span className="text-slate-400 whitespace-nowrap">
+                    {new Date(event.createdAt).toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          {reports.map((report) => (
+            <div
+              key={report.id}
+              className={`rounded-lg p-3 text-xs border ${report.status === "PASSED" ? "bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-300" : "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300"}`}
+            >
+              <p className="font-semibold">Validation {report.status}</p>
+              {(report.errors || []).map((validationError, index) => (
+                <p key={`${validationError.code}-${index}`}>
+                  {validationError.code}
+                  {validationError.path
+                    ? ` · ${validationError.path}`
+                    : ""}: {validationError.message}
+                </p>
+              ))}
+              {(report.warnings || []).map((warning, index) => (
+                <p key={`${warning.code}-${index}`}>
+                  Warning {warning.code}: {warning.message}
+                </p>
+              ))}
             </div>
           ))}
-        </div>
+        </>
       )}
-      {reports.map((report) => (
-        <div
-          key={report.id}
-          className={`rounded-lg p-3 text-xs border ${report.status === "PASSED" ? "bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-300" : "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300"}`}
-        >
-          <p className="font-semibold">Validation {report.status}</p>
-          {(report.errors || []).map((validationError, index) => (
-            <p key={`${validationError.code}-${index}`}>
-              {validationError.code}
-              {validationError.path ? ` · ${validationError.path}` : ""}:{" "}
-              {validationError.message}
-            </p>
-          ))}
-          {(report.warnings || []).map((warning, index) => (
-            <p key={`${warning.code}-${index}`}>
-              Warning {warning.code}: {warning.message}
-            </p>
-          ))}
-        </div>
-      ))}
       {preview && (
         <ThemePreview preview={preview} onClose={() => setPreview(null)} />
       )}
@@ -569,6 +606,7 @@ function ExtensionCard({
   const [releaseNotes, setReleaseNotes] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   async function addVersion(event: FormEvent) {
     event.preventDefault();
@@ -664,98 +702,115 @@ function ExtensionCard({
 
   return (
     <div className="card p-5 space-y-4">
-      <div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="font-bold text-slate-800 dark:text-slate-100">
-            {extension.name}
-          </h2>
-          <code className="text-[10px] text-slate-400">{extension.key}</code>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-bold text-slate-800 dark:text-slate-100">
+              {extension.name}
+            </h2>
+            <code className="text-[10px] text-slate-400">{extension.key}</code>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {extension.runtimeType} · {extension.commercialType} ·{" "}
+            {extension.visibility} · {extension.versions.length} release
+            {extension.versions.length === 1 ? "" : "s"}
+          </p>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          {extension.runtimeType} · {extension.commercialType} ·{" "}
-          {extension.visibility}
-        </p>
-        <div className="flex gap-2 mt-2 flex-wrap">
-          <select
-            className="input py-1 text-xs"
-            value={extension.visibility}
-            disabled={busy}
-            onChange={(event) => setVisibility(event.target.value)}
-          >
-            <option value="LISTED">Listed</option>
-            <option value="UNLISTED">Unlisted</option>
-            <option value="PRIVATE">Private</option>
-          </select>
-          {extension.visibility === "PRIVATE" && (
-            <button
-              type="button"
-              className="btn-outline btn-sm"
-              onClick={grantPrivateSchool}
-            >
-              Grant school
-            </button>
-          )}
-          {extension.versions.length === 0 && (
-            <button
-              type="button"
-              disabled={busy}
-              className="btn-outline btn-sm text-red-600"
-              onClick={deleteExtension}
-            >
-              Delete extension
-            </button>
-          )}
-        </div>
-      </div>
-      <form onSubmit={addVersion} className="flex gap-2 items-end flex-wrap">
-        <label className="text-xs text-slate-600 dark:text-slate-300">
-          New version
-          <input
-            value={version}
-            onChange={(event) => setVersion(event.target.value)}
-            className="input mt-1 w-32"
-            required
-          />
-        </label>
-        <label className="text-xs text-slate-600 dark:text-slate-300">
-          Platform range
-          <input
-            value={compatibilityRange}
-            onChange={(event) => setCompatibilityRange(event.target.value)}
-            className="input mt-1 w-44"
-            required
-          />
-        </label>
-        <label className="text-xs text-slate-600 dark:text-slate-300 flex-1 min-w-56">
-          Release notes
-          <input
-            value={releaseNotes}
-            onChange={(event) => setReleaseNotes(event.target.value)}
-            className="input mt-1 w-full"
-            required
-          />
-        </label>
-        <button className="btn-outline btn-sm" disabled={busy}>
-          {busy ? "Creating…" : "Create draft"}
+        <button
+          type="button"
+          className="btn-outline btn-sm"
+          onClick={() => setExpanded((value) => !value)}
+        >
+          {expanded ? "Collapse" : "Manage"}
         </button>
-      </form>
-      {error && (
-        <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
-      )}
-      <div className="space-y-3">
-        {extension.versions.length ? (
-          extension.versions.map((item) => (
-            <VersionPanel
-              key={item.id}
-              extension={extension}
-              version={item}
-              reload={reload}
-            />
-          ))
-        ) : (
-          <p className="text-xs text-slate-400">No versions yet.</p>
-        )}
       </div>
+      {expanded && (
+        <>
+          <div className="flex gap-2 mt-2 flex-wrap">
+            <select
+              className="input py-1 text-xs"
+              value={extension.visibility}
+              disabled={busy}
+              onChange={(event) => setVisibility(event.target.value)}
+            >
+              <option value="LISTED">Listed</option>
+              <option value="UNLISTED">Unlisted</option>
+              <option value="PRIVATE">Private</option>
+            </select>
+            {extension.visibility === "PRIVATE" && (
+              <button
+                type="button"
+                className="btn-outline btn-sm"
+                onClick={grantPrivateSchool}
+              >
+                Grant school
+              </button>
+            )}
+            {extension.versions.length === 0 && (
+              <button
+                type="button"
+                disabled={busy}
+                className="btn-outline btn-sm text-red-600"
+                onClick={deleteExtension}
+              >
+                Delete extension
+              </button>
+            )}
+          </div>
+          <form
+            onSubmit={addVersion}
+            className="flex gap-2 items-end flex-wrap"
+          >
+            <label className="text-xs text-slate-600 dark:text-slate-300">
+              New version
+              <input
+                value={version}
+                onChange={(event) => setVersion(event.target.value)}
+                className="input mt-1 w-32"
+                required
+              />
+            </label>
+            <label className="text-xs text-slate-600 dark:text-slate-300">
+              Platform range
+              <input
+                value={compatibilityRange}
+                onChange={(event) => setCompatibilityRange(event.target.value)}
+                className="input mt-1 w-44"
+                required
+              />
+            </label>
+            <label className="text-xs text-slate-600 dark:text-slate-300 flex-1 min-w-56">
+              Release notes
+              <input
+                value={releaseNotes}
+                onChange={(event) => setReleaseNotes(event.target.value)}
+                className="input mt-1 w-full"
+                required
+              />
+            </label>
+            <button className="btn-outline btn-sm" disabled={busy}>
+              {busy ? "Creating…" : "Create draft"}
+            </button>
+          </form>
+          {error && (
+            <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+          )}
+          <div className="space-y-3">
+            {extension.versions.length ? (
+              extension.versions.map((item) => (
+                <VersionPanel
+                  key={item.id}
+                  extension={extension}
+                  version={item}
+                  reload={reload}
+                />
+              ))
+            ) : (
+              <p className="text-xs text-slate-400">No versions yet.</p>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1092,6 +1147,42 @@ function ExtensionsContent() {
   const [publishers, setPublishers] = useState<PublisherRecord[]>([]);
   const [alerts, setAlerts] = useState<ExtensionAlert[]>([]);
   const [apiMetrics, setApiMetrics] = useState<any>(null);
+  const [activeView, setActiveView] = useState<
+    "catalog" | "installations" | "operations"
+  >("catalog");
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [releaseFilter, setReleaseFilter] = useState("ALL");
+  const [installationFilter, setInstallationFilter] = useState("ACTIVE");
+
+  const filteredExtensions = extensions.filter((extension) => {
+    const matchesSearch =
+      !catalogSearch ||
+      `${extension.name} ${extension.key}`
+        .toLowerCase()
+        .includes(catalogSearch.toLowerCase());
+    const matchesRelease =
+      releaseFilter === "ALL" ||
+      extension.versions.some(
+        (version) => version.lifecycleStatus === releaseFilter,
+      );
+    return matchesSearch && matchesRelease;
+  });
+  const filteredInstallations = installations.filter((installation) => {
+    if (installationFilter === "ALL") return true;
+    if (installationFilter === "ACTIVE") return installation.enabled;
+    if (installationFilter === "PENDING") return !installation.approvedAt;
+    if (installationFilter === "READY")
+      return !!installation.approvedAt && !installation.installedAt;
+    if (installationFilter === "INACTIVE")
+      return (
+        !!installation.installedAt &&
+        !installation.enabled &&
+        !installation.uninstalledAt
+      );
+    if (installationFilter === "UNINSTALLED")
+      return !!installation.uninstalledAt;
+    return true;
+  });
 
   async function load() {
     setLoading(true);
@@ -1265,394 +1356,501 @@ function ExtensionsContent() {
           </p>
         </div>
         <div className="page-body space-y-5">
-          {health && (
-            <div className="card p-5 space-y-4">
-              <div>
-                <h2 className="font-bold text-slate-800 dark:text-slate-100">
-                  Extension health
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Generated {new Date(health.generatedAt).toLocaleString()}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
-                <div>
-                  <p className="text-slate-400">Extensions</p>
-                  <p className="font-bold">{health.totals.extensions}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400">Versions</p>
-                  <p className="font-bold">{health.totals.versions}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400">Active installs</p>
-                  <p className="font-bold">
-                    {health.totals.activeInstallations}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-400">Stored</p>
-                  <p className="font-bold">
-                    {Math.ceil(health.totals.storageBytes / 1024)} KB
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-400">Record data</p>
-                  <p className="font-bold">
-                    {Math.ceil(health.totals.recordBytes / 1024)} KB
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-400">Failed validations</p>
-                  <p className="font-bold">{health.totals.failedValidations}</p>
-                </div>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-left text-slate-400">
-                      <th className="py-2">Version</th>
-                      <th>Status</th>
-                      <th>Publisher</th>
-                      <th>Adoption</th>
-                      <th>Affected schools</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {health.versions.map((item: any) => (
-                      <tr
-                        key={item.versionId}
-                        className="border-t border-slate-100 dark:border-slate-800"
-                      >
-                        <td className="py-2">
-                          {item.extension.name} v{item.version}
-                        </td>
-                        <td>{item.lifecycleStatus}</td>
-                        <td>
-                          {item.publisher.key} · {item.publisher.status}
-                        </td>
-                        <td>
-                          {item.adoption.active}/{item.adoption.installations}{" "}
-                          active
-                        </td>
-                        <td>
-                          {item.adoption.schools
-                            .map((school: any) => school.name)
-                            .join(", ") || "None"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {health.schoolUsage?.length > 0 && (
-                <div className="text-xs space-y-1">
-                  <p className="font-semibold">School record quota</p>
-                  {health.schoolUsage.map((usage: any) => (
-                    <p key={usage.school.id}>
-                      {usage.school.name}: {Math.ceil(usage.recordBytes / 1024)}{" "}
-                      KB / {Math.round(usage.quotaBytes / 1024 / 1024)} MB (
-                      {usage.percentUsed}%)
-                    </p>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-          <div className="card p-5 space-y-3">
-            <div>
-              <h2 className="font-bold text-slate-800 dark:text-slate-100">
-                Operational alerts
-              </h2>
-              <p className="text-xs text-slate-500">
-                Repeated package failures and suspicious denied capabilities.
-              </p>
-            </div>
-            {alerts.length ? (
-              alerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 flex items-start justify-between gap-3 flex-wrap"
+          <div className="sticky top-0 z-20 -mx-1 rounded-xl border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  ["catalog", "Catalog", extensions.length],
+                  ["installations", "Installations", installations.length],
+                  [
+                    "operations",
+                    "Operations",
+                    alerts.filter((item) => item.status !== "RESOLVED").length,
+                  ],
+                ] as const
+              ).map(([value, label, count]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setActiveView(value)}
+                  className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${activeView === value ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
                 >
+                  {label}{" "}
+                  <span className="ml-1 text-xs opacity-70">{count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {activeView === "operations" && (
+            <>
+              {health && (
+                <div className="card p-5 space-y-4">
                   <div>
-                    <p className="text-sm font-semibold">
-                      {alert.severity} · {alert.type}
-                    </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-300">
-                      {alert.message}
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      {alert.status} · {alert.occurrences} occurrences ·{" "}
-                      {new Date(alert.lastSeenAt).toLocaleString()}
+                    <h2 className="font-bold text-slate-800 dark:text-slate-100">
+                      Extension health
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Generated {new Date(health.generatedAt).toLocaleString()}
                     </p>
                   </div>
-                  {alert.status !== "RESOLVED" && (
-                    <div className="flex gap-2">
-                      {alert.status === "OPEN" && (
-                        <button
-                          className="btn-outline btn-sm"
-                          onClick={() =>
-                            setAlertStatus(alert.id, "ACKNOWLEDGED")
-                          }
-                        >
-                          Acknowledge
-                        </button>
-                      )}
-                      <button
-                        className="btn-outline btn-sm"
-                        onClick={() => setAlertStatus(alert.id, "RESOLVED")}
-                      >
-                        Resolve
-                      </button>
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
+                    <div>
+                      <p className="text-slate-400">Extensions</p>
+                      <p className="font-bold">{health.totals.extensions}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Versions</p>
+                      <p className="font-bold">{health.totals.versions}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Active installs</p>
+                      <p className="font-bold">
+                        {health.totals.activeInstallations}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Stored</p>
+                      <p className="font-bold">
+                        {Math.ceil(health.totals.storageBytes / 1024)} KB
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Record data</p>
+                      <p className="font-bold">
+                        {Math.ceil(health.totals.recordBytes / 1024)} KB
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Failed validations</p>
+                      <p className="font-bold">
+                        {health.totals.failedValidations}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-left text-slate-400">
+                          <th className="py-2">Version</th>
+                          <th>Status</th>
+                          <th>Publisher</th>
+                          <th>Adoption</th>
+                          <th>Affected schools</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {health.versions.map((item: any) => (
+                          <tr
+                            key={item.versionId}
+                            className="border-t border-slate-100 dark:border-slate-800"
+                          >
+                            <td className="py-2">
+                              {item.extension.name} v{item.version}
+                            </td>
+                            <td>{item.lifecycleStatus}</td>
+                            <td>
+                              {item.publisher.key} · {item.publisher.status}
+                            </td>
+                            <td>
+                              {item.adoption.active}/
+                              {item.adoption.installations} active
+                            </td>
+                            <td>
+                              {item.adoption.schools
+                                .map((school: any) => school.name)
+                                .join(", ") || "None"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {health.schoolUsage?.length > 0 && (
+                    <div className="text-xs space-y-1">
+                      <p className="font-semibold">School record quota</p>
+                      {health.schoolUsage.map((usage: any) => (
+                        <p key={usage.school.id}>
+                          {usage.school.name}:{" "}
+                          {Math.ceil(usage.recordBytes / 1024)} KB /{" "}
+                          {Math.round(usage.quotaBytes / 1024 / 1024)} MB (
+                          {usage.percentUsed}%)
+                        </p>
+                      ))}
                     </div>
                   )}
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-slate-400">No operational alerts.</p>
-            )}
-          </div>
-          {apiMetrics && (
-            <div className="card p-5 space-y-3">
-              <div>
-                <h2 className="font-bold text-slate-800 dark:text-slate-100">
-                  Extension API telemetry
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Rolling 24-hour request health.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+              )}
+              <div className="card p-5 space-y-3">
                 <div>
-                  <p className="text-slate-400">Requests</p>
-                  <p className="font-bold">{apiMetrics.requests}</p>
+                  <h2 className="font-bold text-slate-800 dark:text-slate-100">
+                    Operational alerts
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Repeated package failures and suspicious denied
+                    capabilities.
+                  </p>
                 </div>
-                <div>
-                  <p className="text-slate-400">Errors</p>
-                  <p className="font-bold">{apiMetrics.errors}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400">Error rate</p>
-                  <p className="font-bold">{apiMetrics.errorRate}%</p>
-                </div>
-                <div>
-                  <p className="text-slate-400">Average</p>
-                  <p className="font-bold">{apiMetrics.averageDurationMs} ms</p>
-                </div>
-                <div>
-                  <p className="text-slate-400">Maximum</p>
-                  <p className="font-bold">{apiMetrics.maxDurationMs} ms</p>
-                </div>
-              </div>
-            </div>
-          )}
-          <div className="card p-5 space-y-3">
-            <div>
-              <h2 className="font-bold text-slate-800 dark:text-slate-100">
-                Publishers
-              </h2>
-              <p className="text-xs text-slate-500">
-                Initial release accepts Wattaman-internal packages only.
-              </p>
-            </div>
-            {publishers.map((publisher) => (
-              <div
-                key={publisher.id}
-                className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-sm">
-                      {publisher.name}{" "}
-                      <span className="text-xs text-slate-400">
-                        {publisher.key}
-                      </span>
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {publisher.status} · {publisher._count.extensions}{" "}
-                      extensions ·{" "}
-                      {publisher.internal ? "Internal" : "External"}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    {publisher.status !== "ACTIVE" && (
-                      <button
-                        className="btn-outline btn-sm"
-                        onClick={() =>
-                          setPublisherStatus(publisher.id, "ACTIVE")
-                        }
-                      >
-                        Reactivate
-                      </button>
-                    )}
-                    {publisher.status === "ACTIVE" && (
-                      <button
-                        className="btn-outline btn-sm"
-                        onClick={() =>
-                          setPublisherStatus(publisher.id, "SUSPENDED")
-                        }
-                      >
-                        Suspend
-                      </button>
-                    )}
-                    {publisher.status !== "REVOKED" && (
-                      <button
-                        className="btn-outline btn-sm"
-                        onClick={() =>
-                          setPublisherStatus(publisher.id, "REVOKED")
-                        }
-                      >
-                        Revoke
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="text-xs space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold">Ed25519 signing keys</p>
-                    <button
-                      className="btn-outline btn-sm"
-                      onClick={() => registerSigningKey(publisher.id)}
+                {alerts.length ? (
+                  alerts.map((alert) => (
+                    <div
+                      key={alert.id}
+                      className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 flex items-start justify-between gap-3 flex-wrap"
                     >
-                      Register public key
-                    </button>
-                  </div>
-                  {publisher.signingKeys?.map((key) => (
-                    <div key={key.id} className="flex justify-between gap-3">
-                      <span>
-                        <code>{key.keyId}</code> · {key.status}
-                      </span>
-                      <span className="flex gap-2">
-                        {key.status === "ACTIVE" && (
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {alert.severity} · {alert.type}
+                        </p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300">
+                          {alert.message}
+                        </p>
+                        <p className="text-[11px] text-slate-400">
+                          {alert.status} · {alert.occurrences} occurrences ·{" "}
+                          {new Date(alert.lastSeenAt).toLocaleString()}
+                        </p>
+                      </div>
+                      {alert.status !== "RESOLVED" && (
+                        <div className="flex gap-2">
+                          {alert.status === "OPEN" && (
+                            <button
+                              className="btn-outline btn-sm"
+                              onClick={() =>
+                                setAlertStatus(alert.id, "ACKNOWLEDGED")
+                              }
+                            >
+                              Acknowledge
+                            </button>
+                          )}
                           <button
-                            onClick={() =>
-                              setSigningKeyStatus(key.id, "RETIRED")
-                            }
-                            className="text-amber-600"
+                            className="btn-outline btn-sm"
+                            onClick={() => setAlertStatus(alert.id, "RESOLVED")}
                           >
-                            Retire
+                            Resolve
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400">
+                    No operational alerts.
+                  </p>
+                )}
+              </div>
+              {apiMetrics && (
+                <div className="card p-5 space-y-3">
+                  <div>
+                    <h2 className="font-bold text-slate-800 dark:text-slate-100">
+                      Extension API telemetry
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Rolling 24-hour request health.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                    <div>
+                      <p className="text-slate-400">Requests</p>
+                      <p className="font-bold">{apiMetrics.requests}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Errors</p>
+                      <p className="font-bold">{apiMetrics.errors}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Error rate</p>
+                      <p className="font-bold">{apiMetrics.errorRate}%</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Average</p>
+                      <p className="font-bold">
+                        {apiMetrics.averageDurationMs} ms
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Maximum</p>
+                      <p className="font-bold">{apiMetrics.maxDurationMs} ms</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="card p-5 space-y-3">
+                <div>
+                  <h2 className="font-bold text-slate-800 dark:text-slate-100">
+                    Publishers
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Initial release accepts Wattaman-internal packages only.
+                  </p>
+                </div>
+                {publishers.map((publisher) => (
+                  <div
+                    key={publisher.id}
+                    className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-sm">
+                          {publisher.name}{" "}
+                          <span className="text-xs text-slate-400">
+                            {publisher.key}
+                          </span>
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {publisher.status} · {publisher._count.extensions}{" "}
+                          extensions ·{" "}
+                          {publisher.internal ? "Internal" : "External"}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        {publisher.status !== "ACTIVE" && (
+                          <button
+                            className="btn-outline btn-sm"
+                            onClick={() =>
+                              setPublisherStatus(publisher.id, "ACTIVE")
+                            }
+                          >
+                            Reactivate
                           </button>
                         )}
-                        {key.status !== "REVOKED" && (
+                        {publisher.status === "ACTIVE" && (
                           <button
+                            className="btn-outline btn-sm"
                             onClick={() =>
-                              setSigningKeyStatus(key.id, "REVOKED")
+                              setPublisherStatus(publisher.id, "SUSPENDED")
                             }
-                            className="text-red-600"
+                          >
+                            Suspend
+                          </button>
+                        )}
+                        {publisher.status !== "REVOKED" && (
+                          <button
+                            className="btn-outline btn-sm"
+                            onClick={() =>
+                              setPublisherStatus(publisher.id, "REVOKED")
+                            }
                           >
                             Revoke
                           </button>
                         )}
-                      </span>
+                      </div>
                     </div>
+                    <div className="text-xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold">Ed25519 signing keys</p>
+                        <button
+                          className="btn-outline btn-sm"
+                          onClick={() => registerSigningKey(publisher.id)}
+                        >
+                          Register public key
+                        </button>
+                      </div>
+                      {publisher.signingKeys?.map((key) => (
+                        <div
+                          key={key.id}
+                          className="flex justify-between gap-3"
+                        >
+                          <span>
+                            <code>{key.keyId}</code> · {key.status}
+                          </span>
+                          <span className="flex gap-2">
+                            {key.status === "ACTIVE" && (
+                              <button
+                                onClick={() =>
+                                  setSigningKeyStatus(key.id, "RETIRED")
+                                }
+                                className="text-amber-600"
+                              >
+                                Retire
+                              </button>
+                            )}
+                            {key.status !== "REVOKED" && (
+                              <button
+                                onClick={() =>
+                                  setSigningKeyStatus(key.id, "REVOKED")
+                                }
+                                className="text-red-600"
+                              >
+                                Revoke
+                              </button>
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                      {!publisher.signingKeys?.length && (
+                        <p className="text-slate-400">
+                          No signing key registered. Publication is blocked
+                          until one matches the configured secret key ID.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {activeView === "catalog" && (
+            <>
+              <div className="card p-4 grid gap-3 md:grid-cols-[1fr_220px]">
+                <label className="text-xs font-medium text-slate-500">
+                  Search catalog
+                  <input
+                    className="input mt-1"
+                    value={catalogSearch}
+                    onChange={(event) => setCatalogSearch(event.target.value)}
+                    placeholder="Name or extension key"
+                  />
+                </label>
+                <label className="text-xs font-medium text-slate-500">
+                  Release status
+                  <select
+                    className="input mt-1"
+                    value={releaseFilter}
+                    onChange={(event) => setReleaseFilter(event.target.value)}
+                  >
+                    <option value="ALL">All statuses</option>
+                    <option value="UPLOADED">Drafts</option>
+                    <option value="VALIDATED">Validated</option>
+                    <option value="AWAITING_REVIEW">In review</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="PUBLISHED">Published</option>
+                    <option value="DEPRECATED">Deprecated</option>
+                    <option value="REJECTED">Rejected</option>
+                    <option value="BLOCKED">Blocked</option>
+                    <option value="RETIRED">Retired</option>
+                  </select>
+                </label>
+              </div>
+              <form
+                onSubmit={createExtension}
+                className="card p-5 grid md:grid-cols-5 gap-3 items-end"
+              >
+                <label className="text-xs text-slate-600 dark:text-slate-300">
+                  Key
+                  <input
+                    className="input mt-1"
+                    value={form.key}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        key: event.target.value.toUpperCase(),
+                      })
+                    }
+                    placeholder="AURORA_THEME"
+                    required
+                  />
+                </label>
+                <label className="text-xs text-slate-600 dark:text-slate-300">
+                  Name
+                  <input
+                    className="input mt-1"
+                    value={form.name}
+                    onChange={(event) =>
+                      setForm({ ...form, name: event.target.value })
+                    }
+                    required
+                  />
+                </label>
+                <label className="text-xs text-slate-600 dark:text-slate-300">
+                  Runtime
+                  <select
+                    className="input mt-1"
+                    value={form.runtimeType}
+                    onChange={(event) =>
+                      setForm({ ...form, runtimeType: event.target.value })
+                    }
+                  >
+                    <option value="THEME">Theme</option>
+                    <option value="DECLARATIVE_MODULE">
+                      Declarative module
+                    </option>
+                    <option value="INTEGRATION">Integration</option>
+                  </select>
+                </label>
+                <label className="text-xs text-slate-600 dark:text-slate-300">
+                  Commercial type
+                  <select
+                    className="input mt-1"
+                    value={form.commercialType}
+                    onChange={(event) =>
+                      setForm({ ...form, commercialType: event.target.value })
+                    }
+                  >
+                    <option value="THEME">Theme</option>
+                    <option value="MODULE">Module</option>
+                    <option value="ADDON">Add-on</option>
+                  </select>
+                </label>
+                <button className="btn-primary">Create extension</button>
+              </form>
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+                  {error}
+                </div>
+              )}
+              {loading ? (
+                <p className="text-sm text-slate-400">Loading extensions…</p>
+              ) : (
+                filteredExtensions.map((extension) => (
+                  <ExtensionCard
+                    key={extension.id}
+                    extension={extension}
+                    reload={load}
+                  />
+                ))
+              )}
+              {!loading && filteredExtensions.length === 0 && (
+                <div className="card p-10 text-center text-sm text-slate-400">
+                  No extensions match these filters.
+                </div>
+              )}
+            </>
+          )}
+          {activeView === "installations" && (
+            <>
+              <div className="pt-4">
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                  School installation requests
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">
+                  Approval, installation, activation, and uninstall are
+                  deliberately separate audited actions.
+                </p>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {[
+                    "ACTIVE",
+                    "PENDING",
+                    "READY",
+                    "INACTIVE",
+                    "UNINSTALLED",
+                    "ALL",
+                  ].map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setInstallationFilter(status)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold ${installationFilter === status ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}
+                    >
+                      {status}
+                    </button>
                   ))}
-                  {!publisher.signingKeys?.length && (
-                    <p className="text-slate-400">
-                      No signing key registered. Publication is blocked until
-                      one matches the configured secret key ID.
+                </div>
+                <div className="card p-4 space-y-3">
+                  {filteredInstallations.length ? (
+                    filteredInstallations.map((installation) => (
+                      <InstallationCard
+                        key={installation.id}
+                        installation={installation}
+                        reload={load}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-sm text-slate-400">
+                      No extension installation requests.
                     </p>
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-          <form
-            onSubmit={createExtension}
-            className="card p-5 grid md:grid-cols-5 gap-3 items-end"
-          >
-            <label className="text-xs text-slate-600 dark:text-slate-300">
-              Key
-              <input
-                className="input mt-1"
-                value={form.key}
-                onChange={(event) =>
-                  setForm({ ...form, key: event.target.value.toUpperCase() })
-                }
-                placeholder="AURORA_THEME"
-                required
-              />
-            </label>
-            <label className="text-xs text-slate-600 dark:text-slate-300">
-              Name
-              <input
-                className="input mt-1"
-                value={form.name}
-                onChange={(event) =>
-                  setForm({ ...form, name: event.target.value })
-                }
-                required
-              />
-            </label>
-            <label className="text-xs text-slate-600 dark:text-slate-300">
-              Runtime
-              <select
-                className="input mt-1"
-                value={form.runtimeType}
-                onChange={(event) =>
-                  setForm({ ...form, runtimeType: event.target.value })
-                }
-              >
-                <option value="THEME">Theme</option>
-                <option value="DECLARATIVE_MODULE">Declarative module</option>
-                <option value="INTEGRATION">Integration</option>
-              </select>
-            </label>
-            <label className="text-xs text-slate-600 dark:text-slate-300">
-              Commercial type
-              <select
-                className="input mt-1"
-                value={form.commercialType}
-                onChange={(event) =>
-                  setForm({ ...form, commercialType: event.target.value })
-                }
-              >
-                <option value="THEME">Theme</option>
-                <option value="MODULE">Module</option>
-                <option value="ADDON">Add-on</option>
-              </select>
-            </label>
-            <button className="btn-primary">Create extension</button>
-          </form>
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
-              {error}
-            </div>
+            </>
           )}
-          {loading ? (
-            <p className="text-sm text-slate-400">Loading extensions…</p>
-          ) : (
-            extensions.map((extension) => (
-              <ExtensionCard
-                key={extension.id}
-                extension={extension}
-                reload={load}
-              />
-            ))
-          )}
-          <div className="pt-4">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-              School installation requests
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">
-              Approval, installation, activation, and uninstall are deliberately
-              separate audited actions.
-            </p>
-            <div className="card p-4 space-y-3">
-              {installations.length ? (
-                installations.map((installation) => (
-                  <InstallationCard
-                    key={installation.id}
-                    installation={installation}
-                    reload={load}
-                  />
-                ))
-              ) : (
-                <p className="text-sm text-slate-400">
-                  No extension installation requests.
-                </p>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     </div>
