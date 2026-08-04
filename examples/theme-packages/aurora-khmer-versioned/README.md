@@ -15,7 +15,7 @@ Covered surfaces include:
 Use this package with the new Platform → Extensions workflow:
 
 1. Create extension key `AURORA_KHMER`, runtime `THEME`, commercial type `THEME`.
-2. Create version `1.0.0`.
+2. Create version `1.0.2`.
 3. Upload `aurora-khmer-versioned.zip`.
 4. Review the persisted validation report.
 5. Send to review, approve, and publish.

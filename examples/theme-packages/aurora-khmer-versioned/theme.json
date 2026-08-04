@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "key": "AURORA_KHMER",
   "name": "Aurora Khmer",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "runtimeType": "THEME",
   "mode": "dark",
   "tokens": {
