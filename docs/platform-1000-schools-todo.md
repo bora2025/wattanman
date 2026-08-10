@@ -57,10 +57,8 @@ An item is complete only when implementation, automated tests, documentation, de
 ### Tenant resolver
 
 - [x] Replace first-label host parsing with exact verified-domain lookup.
-- [~] Remove the single-school fallback.
-  - Exact verified domains now take precedence; the fallback remains temporarily enabled unless `ALLOW_SINGLE_SCHOOL_HOST_FALLBACK=false` to avoid locking out the current Railway school before domain backfill.
-- [~] Reject unknown and unverified hosts.
-  - Unknown hosts fail closed when the temporary fallback flag is disabled.
+- [x] Remove the single-school fallback.
+- [x] Reject unknown and unverified hosts.
 - [x] Normalize forwarded host headers safely.
 - [x] Add trusted-proxy configuration.
 - [x] Add cache with explicit domain-change invalidation.

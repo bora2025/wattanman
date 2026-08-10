@@ -6,30 +6,25 @@ describe('TenantHostMiddleware', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnvironment };
-    delete process.env.ALLOW_SINGLE_SCHOOL_HOST_FALLBACK;
   });
 
   afterAll(() => {
     process.env = originalEnvironment;
   });
 
-  function createMiddleware(resolvedSchool: any, fallbackSchools: any[] = []) {
-    const prisma = {
-      school: { findMany: jest.fn().mockResolvedValue(fallbackSchools) },
-    } as any;
+  function createMiddleware(resolvedSchool: any) {
     const domains = {
       resolve: jest.fn().mockResolvedValue(resolvedSchool),
     } as any;
     return {
-      middleware: new TenantHostMiddleware(prisma, domains),
-      prisma,
+      middleware: new TenantHostMiddleware(domains),
       domains,
     };
   }
 
   it('opens tenant context for an exactly resolved active school', async () => {
     const school = { id: 'school-a', status: 'ACTIVE' };
-    const { middleware, prisma } = createMiddleware(school);
+    const { middleware } = createMiddleware(school);
     const request: any = { headers: { host: 'alpha.example.com' } };
     const next = jest.fn();
 
@@ -37,14 +32,10 @@ describe('TenantHostMiddleware', () => {
 
     expect(request.tenantSchool).toBe(school);
     expect(next).toHaveBeenCalledTimes(1);
-    expect(prisma.school.findMany).not.toHaveBeenCalled();
   });
 
-  it('fails closed for an unknown host when fallback is disabled', async () => {
-    process.env.ALLOW_SINGLE_SCHOOL_HOST_FALLBACK = 'false';
-    const { middleware, prisma } = createMiddleware(null, [
-      { id: 'school-a', status: 'ACTIVE' },
-    ]);
+  it('fails closed for an unknown host', async () => {
+    const { middleware } = createMiddleware(null);
 
     await expect(
       middleware.use(
@@ -53,20 +44,6 @@ describe('TenantHostMiddleware', () => {
         jest.fn(),
       ),
     ).rejects.toBeInstanceOf(NotFoundException);
-    expect(prisma.school.findMany).not.toHaveBeenCalled();
-  });
-
-  it('keeps the explicitly enabled migration fallback temporary', async () => {
-    process.env.ALLOW_SINGLE_SCHOOL_HOST_FALLBACK = 'true';
-    const school = { id: 'school-a', status: 'ACTIVE' };
-    const { middleware } = createMiddleware(null, [school]);
-    const request: any = { headers: { host: 'legacy.railway.app' } };
-    const next = jest.fn();
-
-    await middleware.use(request, {} as any, next);
-
-    expect(request.tenantSchool).toBe(school);
-    expect(next).toHaveBeenCalledTimes(1);
   });
 
   it('rejects suspended schools before routing', async () => {

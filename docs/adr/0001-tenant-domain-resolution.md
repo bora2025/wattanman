@@ -13,7 +13,7 @@ The API resolves a normalized request hostname through an exact `SchoolDomain.ho
 
 Proxy-provided host headers are accepted only when proxy trust is configured. Authentication must additionally prove that the JWT `schoolId` equals the resolved school. Platform endpoints use a separate platform scope and never inherit a school from hostname guessing.
 
-The temporary single-school fallback is a deployment migration flag only. Production must set `ALLOW_SINGLE_SCHOOL_HOST_FALLBACK=false` after domain backfill verification.
+The former single-school fallback is removed. Compatibility requires an explicit verified alias record.
 
 ## Consequences
 
