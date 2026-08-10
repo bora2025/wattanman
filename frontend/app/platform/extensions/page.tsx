@@ -1255,10 +1255,10 @@ function ExtensionsContent() {
   const [apiMetrics, setApiMetrics] = useState<any>(null);
   const [activeView, setActiveView] = useState<
     "catalog" | "installations" | "operations"
-  >("catalog");
+  >("installations");
   const [catalogSearch, setCatalogSearch] = useState("");
   const [releaseFilter, setReleaseFilter] = useState("ALL");
-  const [installationFilter, setInstallationFilter] = useState("ACTIVE");
+  const [installationFilter, setInstallationFilter] = useState("REQUESTED");
   const [showCreate, setShowCreate] = useState(false);
   const [paymentSettings, setPaymentSettings] = useState<any>({ currency: "USD", hasQr: false });
   const [paymentQr, setPaymentQr] = useState<File | null>(null);
@@ -1280,7 +1280,10 @@ function ExtensionsContent() {
   const filteredInstallations = installations.filter((installation) => {
     if (installationFilter === "ALL") return true;
     if (installationFilter === "ACTIVE") return installation.enabled;
-    if (installationFilter === "PENDING") return !installation.approvedAt;
+    if (installationFilter === "REQUESTED")
+      return !!installation.requestedAt && !installation.approvedAt;
+    if (installationFilter === "PAYMENT")
+      return !!installation.paymentSubmittedAt && installation.billingStatus === "PENDING";
     if (installationFilter === "READY")
       return !!installation.approvedAt && !installation.installedAt;
     if (installationFilter === "INACTIVE")
@@ -1494,7 +1497,11 @@ function ExtensionsContent() {
               {(
                 [
                   ["catalog", "Catalog", extensions.length],
-                  ["installations", "Installations", installations.length],
+                  [
+                    "installations",
+                    "Requests & installs",
+                    installations.filter((item) => item.requestedAt && !item.approvedAt).length,
+                  ],
                   [
                     "operations",
                     "Operations",
@@ -1956,20 +1963,21 @@ function ExtensionsContent() {
                 </p>
                 <div className="mb-3 flex flex-wrap gap-2">
                   {[
-                    "ACTIVE",
-                    "PENDING",
-                    "READY",
-                    "INACTIVE",
-                    "UNINSTALLED",
-                    "ALL",
-                  ].map((status) => (
+                    ["REQUESTED", installations.filter(item => item.requestedAt && !item.approvedAt).length],
+                    ["PAYMENT", installations.filter(item => item.paymentSubmittedAt && item.billingStatus === "PENDING").length],
+                    ["READY", installations.filter(item => item.approvedAt && !item.installedAt).length],
+                    ["ACTIVE", installations.filter(item => item.enabled).length],
+                    ["INACTIVE", installations.filter(item => item.installedAt && !item.enabled && !item.uninstalledAt).length],
+                    ["UNINSTALLED", installations.filter(item => item.uninstalledAt).length],
+                    ["ALL", installations.length],
+                  ].map(([status, count]) => (
                     <button
                       key={status}
                       type="button"
-                      onClick={() => setInstallationFilter(status)}
+                      onClick={() => setInstallationFilter(String(status))}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold ${installationFilter === status ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}
                     >
-                      {status}
+                      {status} <span className="ml-1 opacity-70">{count}</span>
                     </button>
                   ))}
                 </div>
