@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -253,6 +254,11 @@ export class SchoolExtensionsController {
     @Request() req,
   ) {
     return this.installations.setUpdatePolicy(id, body.policy, req.user);
+  }
+
+  @Delete("installations/:id")
+  removeUninstalled(@Param("id") id: string, @Request() req) {
+    return this.installations.removeUninstalled(id, req.user);
   }
 
   @Post("installations/:id/pilot-feedback")

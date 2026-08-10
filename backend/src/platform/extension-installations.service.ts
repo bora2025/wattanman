@@ -667,6 +667,32 @@ export class ExtensionInstallationsService {
     return updated;
   }
 
+  async removeUninstalled(installationId: string, actor: Actor) {
+    const installation = await this.requireInstallation(installationId);
+    if (!installation.uninstalledAt || installation.enabled)
+      throw new ConflictException(
+        "Only an uninstalled extension can be removed from school history",
+      );
+    if (installation.invoiceStorageKey)
+      await this.storage.deletePrivate(installation.invoiceStorageKey).catch(() => undefined);
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.extensionRecord.deleteMany({
+        where: {
+          schoolId: installation.schoolId,
+          extensionId: installation.extensionId,
+        },
+      });
+      await transaction.extensionInstallation.delete({
+        where: { id: installationId },
+      });
+    });
+    await this.log(actor, "REMOVE_HISTORY", installationId, installation.extension.name, {
+      schoolId: installation.schoolId,
+      extensionId: installation.extensionId,
+    });
+    return { removed: true, installationId };
+  }
+
   async upgradeReview(installationId: string, versionId: string) {
     const existing = await this.requireInstallation(installationId);
     const version = await this.prisma.extensionVersion.findFirst({
