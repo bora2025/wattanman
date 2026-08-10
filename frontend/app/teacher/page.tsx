@@ -1,112 +1,131 @@
-"use client"
+"use client";
 
-import React from 'react'
-import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import AuthGuard from '../../components/AuthGuard'
-import Sidebar from '../../components/Sidebar'
-import AnnouncementFeed from '../../components/AnnouncementFeed'
-import TimetableGrid from '../../components/TimetableGrid'
-import { teacherNav } from '../../lib/teacher-nav'
-import { apiFetch, getCurrentUser } from '../../lib/api'
-import { useLanguage } from '../../lib/i18n'
-import { todayCambodia } from '../../lib/dateUtils'
+import React from "react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import AuthGuard from "../../components/AuthGuard";
+import Sidebar from "../../components/Sidebar";
+import AnnouncementFeed from "../../components/AnnouncementFeed";
+import TimetableGrid from "../../components/TimetableGrid";
+import { teacherNav } from "../../lib/teacher-nav";
+import { apiFetch, getCurrentUser } from "../../lib/api";
+import { useLanguage } from "../../lib/i18n";
+import { todayCambodia } from "../../lib/dateUtils";
 
 interface Class {
-  id: string
-  name: string
-  subject: string
-  schedule: string | null
+  id: string;
+  name: string;
+  subject: string;
+  schedule: string | null;
   teacher: {
-    name: string
-  }
+    name: string;
+  };
 }
 
 interface ClassSummary {
-  classId: string
-  className: string
-  subject: string | null
-  totalStudents: number
-  present: number
-  absent: number
-  late: number
-  permission: number
-  attendanceRate: number
+  classId: string;
+  className: string;
+  subject: string | null;
+  totalStudents: number;
+  present: number;
+  absent: number;
+  late: number;
+  permission: number;
+  attendanceRate: number;
 }
 
 export default function TeacherDashboard() {
-  const [classes, setClasses] = useState<Class[]>([])
-  const [teacherId, setTeacherId] = useState<string | null>(null)
-  const [teacherName, setTeacherName] = useState<string>('')
-  const [summaries, setSummaries] = useState<ClassSummary[]>([])
-  const [selectedDate, setSelectedDate] = useState(() => todayCambodia())
-  const [loadingSummary, setLoadingSummary] = useState(false)
-  const [attendanceEnabled, setAttendanceEnabled] = useState<boolean | null>(null)
-  const { t } = useLanguage()
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [teacherId, setTeacherId] = useState<string | null>(null);
+  const [teacherName, setTeacherName] = useState<string>("");
+  const [summaries, setSummaries] = useState<ClassSummary[]>([]);
+  const [selectedDate, setSelectedDate] = useState(() => todayCambodia());
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [attendanceEnabled, setAttendanceEnabled] = useState<boolean | null>(
+    null,
+  );
+  const { t } = useLanguage();
 
   useEffect(() => {
-    getCurrentUser().then(user => {
-      if (user) { setTeacherId(user.userId); setTeacherName(user.name || '') }
-    })
-  }, [])
+    getCurrentUser().then((user) => {
+      if (user) {
+        setTeacherId(user.userId);
+        setTeacherName(user.name || "");
+      }
+    });
+  }, []);
 
   useEffect(() => {
-    apiFetch('/api/school-addons')
-      .then(r => (r.ok ? r.json() : null))
-      .then(data => setAttendanceEnabled((data?.enabled ?? []).includes('ATTENDANCE')))
-      .catch(() => setAttendanceEnabled(false))
-  }, [])
+    apiFetch("/api/extensions/enabled")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) =>
+        setAttendanceEnabled((data?.enabled ?? []).includes("ATTENDANCE")),
+      )
+      .catch(() => setAttendanceEnabled(false));
+  }, []);
 
   useEffect(() => {
     if (teacherId) {
-      fetchClasses()
+      fetchClasses();
       // Class summaries are pure attendance computation — skip the call
       // entirely when the school doesn't have Attendance enabled, same
       // reasoning as the admin dashboard's attendance gating.
-      if (attendanceEnabled) fetchSummaries()
+      if (attendanceEnabled) fetchSummaries();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teacherId, selectedDate, attendanceEnabled])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teacherId, selectedDate, attendanceEnabled]);
 
   const fetchClasses = async () => {
     try {
-      const res = await apiFetch(`/api/classes/mine`)
-      const data = await res.json()
-      setClasses(data)
+      const res = await apiFetch(`/api/classes/mine`);
+      const data = await res.json();
+      setClasses(data);
     } catch (error) {
-      console.error('Error fetching classes:', error)
+      console.error("Error fetching classes:", error);
     }
-  }
+  };
 
   const fetchSummaries = async () => {
-    if (!teacherId) return
-    setLoadingSummary(true)
+    if (!teacherId) return;
+    setLoadingSummary(true);
     try {
-      const res = await apiFetch(`/api/reports/class-summaries?teacherId=${teacherId}&date=${selectedDate}`)
-      if (res.ok) setSummaries(await res.json())
-    } catch { /* ignore */ }
-    setLoadingSummary(false)
-  }
+      const res = await apiFetch(
+        `/api/reports/class-summaries?teacherId=${teacherId}&date=${selectedDate}`,
+      );
+      if (res.ok) setSummaries(await res.json());
+    } catch {
+      /* ignore */
+    }
+    setLoadingSummary(false);
+  };
 
   const goDay = (offset: number) => {
-    const d = new Date(selectedDate)
-    d.setDate(d.getDate() + offset)
-    setSelectedDate(d.toISOString().split('T')[0])
-  }
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + offset);
+    setSelectedDate(d.toISOString().split("T")[0]);
+  };
 
   const formatSchedule = (schedule: string | null): string => {
-    if (!schedule) return ''
+    if (!schedule) return "";
     try {
-      const parsed = JSON.parse(schedule)
-      const abbr: Record<string, string> = { MON: 'Mon', TUE: 'Tue', WED: 'Wed', THU: 'Thu', FRI: 'Fri', SAT: 'Sat', SUN: 'Sun' }
+      const parsed = JSON.parse(schedule);
+      const abbr: Record<string, string> = {
+        MON: "Mon",
+        TUE: "Tue",
+        WED: "Wed",
+        THU: "Thu",
+        FRI: "Fri",
+        SAT: "Sat",
+        SUN: "Sun",
+      };
       const days = Object.entries(parsed)
-        .filter(([, v]) => v !== 'day-off')
-        .map(([k]) => abbr[k] || k)
-      return days.join(', ')
+        .filter(([, v]) => v !== "day-off")
+        .map(([k]) => abbr[k] || k);
+      return days.join(", ");
     } catch {
-      return schedule
+      return schedule;
     }
-  }
+  };
 
   const totals = summaries.reduce(
     (acc, s) => ({
@@ -117,34 +136,69 @@ export default function TeacherDashboard() {
       permission: acc.permission + s.permission,
     }),
     { total: 0, present: 0, late: 0, absent: 0, permission: 0 },
-  )
+  );
 
   return (
     <AuthGuard requiredRole="TEACHER">
       <div className="page-shell">
-        <Sidebar title="Teacher Portal" subtitle="Wattanman" navItems={teacherNav} accentColor="emerald" />
+        <Sidebar
+          title="Teacher Portal"
+          subtitle="Wattanman"
+          navItems={teacherNav}
+          accentColor="emerald"
+        />
         <div className="page-content">
           <div className="h-14 lg:hidden" />
           <div className="page-header">
             <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">
-              {teacherName ? `👋 ${t('common.hello') || 'Hello'}, ${teacherName}` : t('teacher.title')}
+              {teacherName
+                ? `👋 ${t("common.hello") || "Hello"}, ${teacherName}`
+                : t("teacher.title")}
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('teacher.subtitle')}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {t("teacher.subtitle")}
+            </p>
           </div>
 
           <div className="page-body space-y-4 sm:space-y-6">
             {/* Quick Actions */}
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {[
-                { href: '/teacher/camera', icon: '📷', label: t('teacher.takeAttendance') || 'Attendance', bg: 'from-emerald-500 to-teal-500' },
-                { href: '/teacher/messages', icon: '💬', label: 'Messages', bg: 'from-sky-500 to-blue-500' },
-                { href: '/teacher/assignments', icon: '📝', label: 'Assignments', bg: 'from-violet-500 to-purple-500' },
-                { href: '/teacher/gradebook', icon: '📊', label: 'Gradebook', bg: 'from-amber-500 to-orange-500' },
-              ].map(a => (
+                {
+                  href: "/teacher/camera",
+                  icon: "📷",
+                  label: t("teacher.takeAttendance") || "Attendance",
+                  bg: "from-emerald-500 to-teal-500",
+                },
+                {
+                  href: "/teacher/messages",
+                  icon: "💬",
+                  label: "Messages",
+                  bg: "from-sky-500 to-blue-500",
+                },
+                {
+                  href: "/teacher/assignments",
+                  icon: "📝",
+                  label: "Assignments",
+                  bg: "from-violet-500 to-purple-500",
+                },
+                {
+                  href: "/teacher/gradebook",
+                  icon: "📊",
+                  label: "Gradebook",
+                  bg: "from-amber-500 to-orange-500",
+                },
+              ].map((a) => (
                 <Link key={a.href} href={a.href} className="group">
-                  <div className={`rounded-2xl bg-gradient-to-br ${a.bg} p-3 sm:p-4 text-white shadow-sm active:scale-[0.97] transition-transform h-full flex flex-col items-center justify-center gap-1`}>
-                    <span className="text-2xl sm:text-3xl" aria-hidden>{a.icon}</span>
-                    <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{a.label}</span>
+                  <div
+                    className={`rounded-2xl bg-gradient-to-br ${a.bg} p-3 sm:p-4 text-white shadow-sm active:scale-[0.97] transition-transform h-full flex flex-col items-center justify-center gap-1`}
+                  >
+                    <span className="text-2xl sm:text-3xl" aria-hidden>
+                      {a.icon}
+                    </span>
+                    <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">
+                      {a.label}
+                    </span>
                   </div>
                 </Link>
               ))}
@@ -152,77 +206,129 @@ export default function TeacherDashboard() {
             {/* Announcements */}
             <div className="card p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">📣 Announcements</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  📣 Announcements
+                </h3>
               </div>
               <AnnouncementFeed accent="emerald" limit={5} />
             </div>
             {/* Student Attendance Summary */}
-            {classes.length > 0 && <div className="card p-4 space-y-4">
-              {/* Date navigation */}
-              <div className="flex items-center gap-2">
-                <button onClick={() => goDay(-1)} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 text-sm transition-colors">◀</button>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={e => setSelectedDate(e.target.value)}
-                  className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white dark:bg-slate-900"
-                />
-                <button onClick={() => goDay(1)} className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 text-sm transition-colors">▶</button>
-              </div>
-
-              {loadingSummary ? (
-                <div className="flex justify-center py-6">
-                  <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            {classes.length > 0 && (
+              <div className="card p-4 space-y-4">
+                {/* Date navigation */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => goDay(-1)}
+                    className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 text-sm transition-colors"
+                  >
+                    ◀
+                  </button>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white dark:bg-slate-900"
+                  />
+                  <button
+                    onClick={() => goDay(1)}
+                    className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 text-sm transition-colors"
+                  >
+                    ▶
+                  </button>
                 </div>
-              ) : (
-                <>
-                  {/* Aggregate stat cards */}
-                  <div className="grid grid-cols-4 gap-2 sm:gap-3">
-                    <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 p-3 text-center">
-                      <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">{t('common.present')}</p>
-                      <p className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">{totals.present}</p>
-                    </div>
-                    <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/40 p-3 text-center">
-                      <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">{t('common.late')}</p>
-                      <p className="text-2xl font-extrabold text-amber-700 dark:text-amber-300">{totals.late}</p>
-                    </div>
-                    <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 p-3 text-center">
-                      <p className="text-[10px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">{t('common.absent')}</p>
-                      <p className="text-2xl font-extrabold text-red-700 dark:text-red-300">{totals.absent}</p>
-                    </div>
-                    <div className="rounded-2xl bg-blue-50 dark:bg-blue-950/40 p-3 text-center">
-                      <p className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">{t('common.dayOff')}</p>
-                      <p className="text-2xl font-extrabold text-blue-700 dark:text-blue-300">{totals.permission}</p>
-                    </div>
-                  </div>
 
-                  {/* Per-class breakdown */}
-                  {summaries.length > 0 ? (
-                    <div className="space-y-2 pt-1">
-                      {summaries.map(cls => (
-                        <div key={cls.classId} className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden">
-                          <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800">
-                            <div>
-                              <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{cls.className}</span>
-                              {cls.subject && <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">{cls.subject}</span>}
-                            </div>
-                            <span className="text-xs text-slate-400 dark:text-slate-500">{cls.totalStudents} {t('teacher.students') || 'students'}</span>
-                          </div>
-                          <div className="px-3 py-2 flex gap-4 text-xs">
-                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">✓ {cls.present}</span>
-                            <span className="text-amber-600 dark:text-amber-400 font-semibold">⏰ {cls.late}</span>
-                            <span className="text-red-600 dark:text-red-400 font-semibold">✗ {cls.absent}</span>
-                            <span className="text-blue-600 dark:text-blue-400 font-semibold">📋 {cls.permission}</span>
-                          </div>
-                        </div>
-                      ))}
+                {loadingSummary ? (
+                  <div className="flex justify-center py-6">
+                    <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : (
+                  <>
+                    {/* Aggregate stat cards */}
+                    <div className="grid grid-cols-4 gap-2 sm:gap-3">
+                      <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 p-3 text-center">
+                        <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">
+                          {t("common.present")}
+                        </p>
+                        <p className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">
+                          {totals.present}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/40 p-3 text-center">
+                        <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">
+                          {t("common.late")}
+                        </p>
+                        <p className="text-2xl font-extrabold text-amber-700 dark:text-amber-300">
+                          {totals.late}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 p-3 text-center">
+                        <p className="text-[10px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-1">
+                          {t("common.absent")}
+                        </p>
+                        <p className="text-2xl font-extrabold text-red-700 dark:text-red-300">
+                          {totals.absent}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-blue-50 dark:bg-blue-950/40 p-3 text-center">
+                        <p className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">
+                          {t("common.dayOff")}
+                        </p>
+                        <p className="text-2xl font-extrabold text-blue-700 dark:text-blue-300">
+                          {totals.permission}
+                        </p>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="text-center py-4 text-sm text-slate-400 dark:text-slate-500">{t('reports.noAttendanceData') || 'No attendance data'}</div>
-                  )}
-                </>
-              )}
-            </div>}
+
+                    {/* Per-class breakdown */}
+                    {summaries.length > 0 ? (
+                      <div className="space-y-2 pt-1">
+                        {summaries.map((cls) => (
+                          <div
+                            key={cls.classId}
+                            className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden"
+                          >
+                            <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800">
+                              <div>
+                                <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
+                                  {cls.className}
+                                </span>
+                                {cls.subject && (
+                                  <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
+                                    {cls.subject}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-xs text-slate-400 dark:text-slate-500">
+                                {cls.totalStudents}{" "}
+                                {t("teacher.students") || "students"}
+                              </span>
+                            </div>
+                            <div className="px-3 py-2 flex gap-4 text-xs">
+                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                ✓ {cls.present}
+                              </span>
+                              <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                                ⏰ {cls.late}
+                              </span>
+                              <span className="text-red-600 dark:text-red-400 font-semibold">
+                                ✗ {cls.absent}
+                              </span>
+                              <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                                📋 {cls.permission}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-sm text-slate-400 dark:text-slate-500">
+                        {t("reports.noAttendanceData") || "No attendance data"}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Quick Action — Staff Attendance (desktop only) */}
             <Link href="/teacher/staff-attendance" className="hidden lg:block">
@@ -232,8 +338,12 @@ export default function TeacherDashboard() {
                     👔
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-white font-bold text-lg">{t('teacher.staffAttendance')}</h3>
-                    <p className="text-white/80 text-sm mt-0.5">{t('teacher.staffAttendanceDesc')}</p>
+                    <h3 className="text-white font-bold text-lg">
+                      {t("teacher.staffAttendance")}
+                    </h3>
+                    <p className="text-white/80 text-sm mt-0.5">
+                      {t("teacher.staffAttendanceDesc")}
+                    </p>
                   </div>
                   <div className="text-white/60 text-2xl shrink-0">→</div>
                 </div>
@@ -243,48 +353,68 @@ export default function TeacherDashboard() {
             {/* My Timetable Schedule */}
             {teacherId && (
               <div className="card p-4">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">📅 My Teaching Schedule</h3>
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
+                  📅 My Teaching Schedule
+                </h3>
                 <TimetableGrid userId={teacherId} role="teacher" />
               </div>
             )}
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div className="stat-card">
-                <p className="stat-label">{t('teacher.myClasses')}</p>
+                <p className="stat-label">{t("teacher.myClasses")}</p>
                 <p className="stat-value">{classes.length}</p>
               </div>
               <div className="stat-card">
-                <p className="stat-label">{t('teacher.today')}</p>
-                <p className="stat-value text-base sm:text-lg">{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                <p className="stat-label">{t("teacher.today")}</p>
+                <p className="stat-value text-base sm:text-lg">
+                  {new Date().toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
               </div>
             </div>
 
             {/* My Classes */}
             <div>
-              <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-3 sm:mb-4">{t('teacher.myClasses')}</h2>
+              <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-3 sm:mb-4">
+                {t("teacher.myClasses")}
+              </h2>
               {classes.length === 0 ? (
                 <div className="card p-8 sm:p-12">
                   <div className="empty-state">
                     <p className="text-5xl mb-3">📚</p>
-                    <p className="font-semibold text-slate-600 dark:text-slate-300">{t('teacher.noClasses')}</p>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('teacher.noClassesHint')}</p>
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">
+                      {t("teacher.noClasses")}
+                    </p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                      {t("teacher.noClassesHint")}
+                    </p>
                   </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  {classes.map(cls => (
+                  {classes.map((cls) => (
                     <div key={cls.id} className="card-hover p-4 sm:p-5">
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-lg shadow-sm mb-3">
                         📖
                       </div>
-                      <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-base sm:text-lg">{cls.name}</h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{cls.subject}</p>
+                      <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-base sm:text-lg">
+                        {cls.name}
+                      </h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                        {cls.subject}
+                      </p>
                       {cls.schedule && (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">🕐 {formatSchedule(cls.schedule)}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                          🕐 {formatSchedule(cls.schedule)}
+                        </p>
                       )}
                       <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
                         <Link href={`/teacher/attendance?classId=${cls.id}`}>
                           <button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-3 sm:py-2.5 px-4 rounded-xl shadow-md shadow-emerald-200 active:scale-[0.98] transition-all text-sm">
-                            📷 {t('teacher.takeAttendance')}
+                            📷 {t("teacher.takeAttendance")}
                           </button>
                         </Link>
                       </div>
@@ -297,5 +427,5 @@ export default function TeacherDashboard() {
         </div>
       </div>
     </AuthGuard>
-  )
+  );
 }

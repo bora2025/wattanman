@@ -1,6 +1,6 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { MODULE_REGISTRY } from './module-registry';
+import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
+import { PrismaService } from "../database/prisma.service";
+import { MODULE_REGISTRY } from "./module-registry";
 
 /**
  * Phase 24 — replaces the old standalone `prisma/seed-module-registry.ts`
@@ -18,6 +18,16 @@ export class ModuleRegistrySeedService implements OnApplicationBootstrap {
   constructor(private prisma: PrismaService) {}
 
   async onApplicationBootstrap() {
+    const publisher = await this.prisma.extensionPublisher.upsert({
+      where: { key: "WATTAMAN" },
+      update: {},
+      create: {
+        key: "WATTAMAN",
+        name: "Wattaman",
+        status: "ACTIVE",
+        internal: true,
+      },
+    });
     for (const m of MODULE_REGISTRY) {
       await this.prisma.addonDefinition.upsert({
         where: { key: m.key },
@@ -25,9 +35,58 @@ export class ModuleRegistrySeedService implements OnApplicationBootstrap {
         // category/isActive/kind) on every restart — same reasoning the
         // old script's `update: {}` already had.
         update: {},
-        create: { key: m.key, kind: 'MODULE', name: m.name, description: m.description, category: m.category },
+        create: {
+          key: m.key,
+          kind: "MODULE",
+          name: m.name,
+          description: m.description,
+          category: m.category,
+        },
+      });
+      const extension = await this.prisma.extension.upsert({
+        where: { key: m.key },
+        update: {},
+        create: {
+          key: m.key,
+          name: m.name,
+          description: m.description,
+          runtimeType: "CORE_MODULE",
+          commercialType: "MODULE",
+          category: m.category,
+          publisher: "WATTAMAN",
+          publisherId: publisher.id,
+          status: "ACTIVE",
+          isListed: true,
+          visibility: "LISTED",
+          legacyAddonKey: m.key,
+        },
+      });
+      await this.prisma.extensionVersion.upsert({
+        where: {
+          extensionId_version: { extensionId: extension.id, version: "1.0.0" },
+        },
+        update: {},
+        create: {
+          extensionId: extension.id,
+          version: "1.0.0",
+          manifestSchema: 1,
+          manifest: {
+            schemaVersion: 1,
+            key: m.key,
+            name: m.name,
+            version: "1.0.0",
+            runtimeType: "CORE_MODULE",
+            core: true,
+          },
+          compatibilityRange: ">=1.0.0 <2.0.0",
+          lifecycleStatus: "PUBLISHED",
+          releaseNotes: "Wattaman core module.",
+          publishedAt: new Date(),
+        },
       });
     }
-    this.logger.log(`Module registry seeded (${MODULE_REGISTRY.length} entries checked).`);
+    this.logger.log(
+      `Core extension registry seeded (${MODULE_REGISTRY.length} entries checked).`,
+    );
   }
 }
