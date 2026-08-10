@@ -13,7 +13,7 @@ export const adminNav: NavItem[] = [
   // ── Academics ──
   {
     label: "nav.manageClasses",
-    href: "/admin/classes",
+    href: "/extensions/CLASSES/manage",
     icon: "book",
     section: "nav.section.academics",
     moduleKey: "CLASSES",

@@ -29,9 +29,21 @@ export class ModuleRegistrySeedService implements OnApplicationBootstrap {
       },
     });
     for (const m of MODULE_REGISTRY) {
+      const versionNumber = "version" in m ? m.version : "1.0.0";
       const extension = await this.prisma.extension.upsert({
         where: { key: m.key },
-        update: {},
+        update: {
+          name: m.name,
+          description: m.description,
+          category: m.category,
+          runtimeType: "CORE_MODULE",
+          commercialType: "MODULE",
+          publisher: "WATTAMAN",
+          publisherId: publisher.id,
+          status: "ACTIVE",
+          isListed: true,
+          visibility: "LISTED",
+        },
         create: {
           key: m.key,
           name: m.name,
@@ -46,32 +58,56 @@ export class ModuleRegistrySeedService implements OnApplicationBootstrap {
           visibility: "LISTED",
         },
       });
-      await this.prisma.extensionVersion.upsert({
+      const version = await this.prisma.extensionVersion.upsert({
         where: {
-          extensionId_version: { extensionId: extension.id, version: "1.0.0" },
+          extensionId_version: {
+            extensionId: extension.id,
+            version: versionNumber,
+          },
         },
         update: {},
         create: {
           extensionId: extension.id,
-          version: "1.0.0",
+          version: versionNumber,
           manifestSchema: 1,
-          manifest: {
-            schemaVersion: 1,
-            key: m.key,
-            name: m.name,
-            version: "1.0.0",
-            runtimeType: "CORE_MODULE",
-            core: true,
-          },
+          manifest: this.manifest(m, versionNumber),
           compatibilityRange: ">=1.0.0 <2.0.0",
           lifecycleStatus: "PUBLISHED",
-          releaseNotes: "Wattaman core module.",
+          releaseNotes:
+            "releaseNotes" in m ? m.releaseNotes : "Wattaman core module.",
           publishedAt: new Date(),
         },
+      });
+      await this.prisma.extensionInstallation.updateMany({
+        where: {
+          extensionId: extension.id,
+          installedVersionId: { not: version.id },
+          uninstalledAt: null,
+        },
+        data: { availableVersionId: version.id },
       });
     }
     this.logger.log(
       `Core extension registry seeded (${MODULE_REGISTRY.length} entries checked).`,
     );
+  }
+
+  private manifest(
+    module: (typeof MODULE_REGISTRY)[number],
+    version: string,
+  ) {
+    return {
+      schemaVersion: 1,
+      key: module.key,
+      name: module.name,
+      version,
+      runtimeType: "CORE_MODULE",
+      core: true,
+      managementPath: "managementPath" in module ? module.managementPath : undefined,
+      capabilities: "capabilities" in module ? module.capabilities : [],
+      sharedCapabilities:
+        "sharedCapabilities" in module ? module.sharedCapabilities : [],
+      dependencies: "dependencies" in module ? module.dependencies : [],
+    };
   }
 }

@@ -25,6 +25,14 @@ export interface ModuleRegistryEntry {
   name: string;
   description: string;
   category: string;
+  version?: string;
+  releaseNotes?: string;
+  /** First-party extension metadata used by the marketplace and capability
+   * gate. Core modules keep their relational data in platform-owned tables. */
+  managementPath?: string;
+  capabilities?: readonly string[];
+  sharedCapabilities?: readonly string[];
+  dependencies?: readonly string[];
   /** false only for a module with no backend enforcement at all — nav
    * visibility is the only gate. Must always come with ungatedReason. */
   backendGated?: boolean;
@@ -33,7 +41,32 @@ export interface ModuleRegistryEntry {
 
 export const MODULE_REGISTRY = [
   { key: 'ATTENDANCE', name: 'Attendance', description: 'Camera/QR gate scanning, manual attendance edits, staff attendance.', category: 'Academics' },
-  { key: 'CLASSES', name: 'Class Management', description: 'Classes, study years, and timetable.', category: 'Academics' },
+  {
+    key: 'CLASSES',
+    name: 'Class Management',
+    description: 'Create and organize classes, assign teachers and class administrators, connect study years, configure registration visibility, and link timetables.',
+    category: 'Academics',
+    version: '1.1.0',
+    releaseNotes: 'Complete first-party Class Management extension with explicit core-data capabilities and a dedicated extension route.',
+    managementPath: '/extensions/CLASSES/manage',
+    capabilities: [
+      'classes:create',
+      'classes:update',
+      'classes:delete',
+      'classes:registration_settings',
+      'classes:timetable_link',
+      'teachers:lookup',
+      'class_admins:lookup',
+      'study_years:lookup',
+      'timetables:lookup',
+    ],
+    sharedCapabilities: [
+      'classes:read',
+      'classes:read_assigned',
+      'classes:roster_read',
+    ],
+    dependencies: [],
+  },
   { key: 'FEES', name: 'Fee Management', description: 'Student fee records, payments, and the finance/budget dashboard.', category: 'Finance' },
   { key: 'SALARY', name: 'Salary Management', description: 'Staff salary records and payment tracking.', category: 'Finance' },
   { key: 'EXAMS', name: 'Exams & Scoring', description: 'Exams, score sheets, and grading.', category: 'Academics' },
