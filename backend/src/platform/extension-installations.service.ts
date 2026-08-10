@@ -284,6 +284,23 @@ export class ExtensionInstallationsService {
     return updated;
   }
 
+  async setBillingStatus(installationId: string, status: string, actor: Actor) {
+    const allowed = ["PENDING", "ACTIVE", "OVERDUE", "CANCELLED"];
+    if (!allowed.includes(status))
+      throw new BadRequestException(`billingStatus must be one of ${allowed.join(", ")}`);
+    const existing = await this.requireInstallation(installationId);
+    const updated = await this.prisma.extensionInstallation.update({
+      where: { id: installationId },
+      data: { billingStatus: status, enabled: status === "ACTIVE" ? undefined : false },
+    });
+    await this.log(actor, "BILLING_STATUS", updated.id, existing.extension.name, {
+      schoolId: existing.schoolId,
+      extensionId: existing.extensionId,
+      billingStatus: status,
+    });
+    return updated;
+  }
+
   async install(installationId: string, versionId: string, actor: Actor) {
     const existing = await this.requireInstallation(installationId);
     if (!existing.approvedAt)
@@ -562,6 +579,16 @@ export class ExtensionInstallationsService {
     if (enabled && existing.installedVersion.lifecycleStatus !== "PUBLISHED") {
       throw new ConflictException(
         "Only a published extension version can be activated",
+      );
+    }
+    if (
+      enabled &&
+      existing.extension.price != null &&
+      existing.extension.price > 0 &&
+      existing.billingStatus !== "ACTIVE"
+    ) {
+      throw new ConflictException(
+        "Paid extension billing must be active before activation",
       );
     }
     if (enabled && existing.extension.runtimeType === "DECLARATIVE_MODULE")

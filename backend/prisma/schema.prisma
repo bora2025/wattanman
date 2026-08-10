@@ -654,6 +654,8 @@ model Extension {
   description     String?
   runtimeType     String // CORE_MODULE | DECLARATIVE_MODULE | THEME | INTEGRATION | CODE_EXTENSION
   commercialType  String // MODULE | ADDON | THEME
+  price           Float?
+  priceNote       String?
   category        String?
   publisher       String             @default("WATTAMAN")
   publisherId     String

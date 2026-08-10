@@ -49,6 +49,8 @@ interface ExtensionRecord {
   name: string;
   runtimeType: string;
   commercialType: string;
+  price?: number | null;
+  priceNote?: string | null;
   visibility: "LISTED" | "UNLISTED" | "PRIVATE";
   versions: ExtensionVersion[];
 }
@@ -56,6 +58,7 @@ interface ExtensionRecord {
 interface InstallationRecord {
   id: string;
   enabled: boolean;
+  billingStatus: string;
   requestedAt?: string | null;
   approvedAt?: string | null;
   installedAt?: string | null;
@@ -67,6 +70,8 @@ interface InstallationRecord {
     id: string;
     key: string;
     name: string;
+    price?: number | null;
+    priceNote?: string | null;
     versions: Array<{ id: string; version: string }>;
   };
   installedVersion: { id: string; version: string; lifecycleStatus: string };
@@ -607,6 +612,8 @@ function ExtensionCard({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [price, setPrice] = useState(extension.price?.toString() ?? "");
+  const [priceNote, setPriceNote] = useState(extension.priceNote ?? "");
 
   async function addVersion(event: FormEvent) {
     event.preventDefault();
@@ -677,6 +684,28 @@ function ExtensionCard({
     }
   }
 
+  async function savePricing() {
+    setBusy(true);
+    setError("");
+    try {
+      await responseJson(
+        await apiFetch(`/api/platform/extensions/${extension.id}/pricing`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            price: price.trim() === "" ? null : Number(price),
+            priceNote,
+          }),
+        }),
+      );
+      await reload();
+    } catch (pricingError: any) {
+      setError(pricingError.message || "Could not update pricing");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function deleteExtension() {
     const confirmation = window.prompt(
       `Permanently delete ${extension.name}, every release, stored package, extension record, and fully uninstalled history?\n\nThis cannot be undone. Type ${extension.key} to confirm.`,
@@ -712,6 +741,7 @@ function ExtensionCard({
             {extension.runtimeType} · {extension.commercialType} ·{" "}
             {extension.visibility} · {extension.versions.length} release
             {extension.versions.length === 1 ? "" : "s"}
+            {extension.price != null ? ` · $${extension.price}${extension.priceNote ? ` ${extension.priceNote}` : ""}` : " · Free"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -754,6 +784,32 @@ function ExtensionCard({
                 Grant school
               </button>
             )}
+          </div>
+          <div className="flex gap-2 items-end flex-wrap rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+            <label className="text-xs text-slate-600 dark:text-slate-300">
+              Price (USD)
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={price}
+                onChange={(event) => setPrice(event.target.value)}
+                placeholder="Free"
+                className="input mt-1 w-32"
+              />
+            </label>
+            <label className="text-xs text-slate-600 dark:text-slate-300">
+              Billing note
+              <input
+                value={priceNote}
+                onChange={(event) => setPriceNote(event.target.value)}
+                placeholder="per month"
+                className="input mt-1 w-40"
+              />
+            </label>
+            <button type="button" className="btn-outline btn-sm" disabled={busy} onClick={savePricing}>
+              Save pricing
+            </button>
           </div>
           <form
             onSubmit={addVersion}
@@ -1021,6 +1077,28 @@ function InstallationCard({
         )}
       </div>
       <div className="flex gap-2 flex-wrap">
+        {installation.extension.price != null && installation.extension.price > 0 && (
+          <label className="text-xs text-slate-500">
+            Billing
+            <select
+              className="input ml-2 py-1 text-xs"
+              value={installation.billingStatus}
+              disabled={busy}
+              onChange={(event) =>
+                action("billing", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: event.target.value }),
+                })
+              }
+            >
+              <option value="PENDING">Pending</option>
+              <option value="ACTIVE">Active</option>
+              <option value="OVERDUE">Overdue</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </label>
+        )}
         {!installation.approvedAt && (
           <button
             disabled={busy}
@@ -1155,9 +1233,9 @@ function ExtensionsContent() {
   const filteredExtensions = extensions.filter((extension) => {
     const matchesSearch =
       !catalogSearch ||
-      `${extension.name} ${extension.key}`
+      `${extension.name} ${extension.key} ${extension.runtimeType} ${extension.commercialType}`
         .toLowerCase()
-        .includes(catalogSearch.toLowerCase());
+        .includes(catalogSearch.trim().toLowerCase());
     const matchesRelease =
       releaseFilter === "ALL" ||
       extension.versions.some(
@@ -1694,7 +1772,7 @@ function ExtensionsContent() {
                     className="input mt-1"
                     value={catalogSearch}
                     onChange={(event) => setCatalogSearch(event.target.value)}
-                    placeholder="Name or extension key"
+                    placeholder="Search name, key, or type"
                   />
                 </label>
                 <label className="text-xs font-medium text-slate-500">

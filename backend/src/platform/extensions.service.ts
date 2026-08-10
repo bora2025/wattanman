@@ -104,6 +104,34 @@ export class ExtensionsService {
     return updated;
   }
 
+  async setPricing(
+    extensionId: string,
+    data: { price?: number | null; priceNote?: string | null },
+    actor: Actor,
+  ) {
+    if (data.price != null && (!Number.isFinite(data.price) || data.price < 0))
+      throw new BadRequestException("price must be a non-negative number");
+    const existing = await this.prisma.extension.findUnique({
+      where: { id: extensionId },
+    });
+    if (!existing) throw new NotFoundException("Extension not found");
+    await this.requirePublisherRole(existing.publisherId, actor, "PUBLISH");
+    const updated = await this.prisma.extension.update({
+      where: { id: extensionId },
+      data: {
+        price: data.price == null ? null : data.price,
+        priceNote: data.price == null ? null : data.priceNote?.trim() || null,
+      },
+    });
+    await this.log(actor, "PRICING_CHANGE", "EXTENSION", extensionId, existing.name, {
+      changes: {
+        before: { price: existing.price, priceNote: existing.priceNote },
+        after: { price: updated.price, priceNote: updated.priceNote },
+      },
+    });
+    return updated;
+  }
+
   async grantPrivateAccess(
     extensionId: string,
     schoolId: string,

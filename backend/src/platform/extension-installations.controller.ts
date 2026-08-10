@@ -37,6 +37,15 @@ export class PlatformExtensionInstallationsController {
     return this.installations.approve(id, req.user);
   }
 
+  @Patch(":id/billing")
+  billing(
+    @Param("id") id: string,
+    @Body() body: { status: string },
+    @Request() req,
+  ) {
+    return this.installations.setBillingStatus(id, body.status, req.user);
+  }
+
   @Post(":id/install")
   install(
     @Param("id") id: string,

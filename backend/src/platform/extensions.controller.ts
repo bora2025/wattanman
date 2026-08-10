@@ -116,6 +116,15 @@ export class ExtensionsController {
     );
   }
 
+  @Patch(":extensionId/pricing")
+  pricing(
+    @Param("extensionId") extensionId: string,
+    @Body() body: { price?: number | null; priceNote?: string | null },
+    @Request() req,
+  ) {
+    return this.extensions.setPricing(extensionId, body, req.user);
+  }
+
   @Patch(":extensionId/private-schools/:schoolId")
   privateSchool(
     @Param("extensionId") extensionId: string,
