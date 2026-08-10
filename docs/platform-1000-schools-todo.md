@@ -70,7 +70,7 @@ An item is complete only when implementation, automated tests, documentation, de
 - [ ] Add a transaction-local tenant identifier.
 - [ ] Enable row-level security on every tenant-owned core table.
 - [ ] Add deny-by-default RLS policies.
-- [ ] Restrict unscoped operations to audited platform paths.
+- [x] Restrict unscoped operations to audited platform paths.
 - [ ] Verify background jobs explicitly establish tenant scope.
 - [ ] Add school ID to every tenant-owned unique key and index where required.
 
@@ -80,8 +80,8 @@ An item is complete only when implementation, automated tests, documentation, de
 - [ ] Test cross-school reads for every retained controller.
 - [ ] Test cross-school writes and deletes.
 - [x] Test forged host headers.
-- [ ] Test valid token on wrong school domain.
-- [ ] Test platform-scope authorization.
+- [x] Test valid token on wrong school domain.
+- [x] Test platform-scope authorization.
 - [ ] Test tenant isolation in extension records, assets, metrics, and jobs.
 - [ ] Add tenant isolation tests to required CI checks.
 

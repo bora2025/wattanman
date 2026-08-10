@@ -6,7 +6,7 @@ export function assertSessionTenant(
   userSchoolId: string | undefined,
   tenantSchoolId: string | undefined,
 ) {
-  if (userSchoolId && tenantSchoolId && userSchoolId !== tenantSchoolId) {
+  if (!userSchoolId || !tenantSchoolId || userSchoolId !== tenantSchoolId) {
     throw new UnauthorizedException('Session does not match the current school');
   }
 }
@@ -35,10 +35,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const user = req.user as { schoolId?: string } | undefined;
     const store = tenantContext.getStore();
 
-    if (user?.schoolId && store) {
-      assertSessionTenant(user.schoolId, store.schoolId);
-      store.schoolId = user.schoolId;
-    }
+    assertSessionTenant(user?.schoolId, store?.schoolId);
+    store!.schoolId = user!.schoolId!;
 
     return true;
   }

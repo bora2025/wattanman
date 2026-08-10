@@ -12,8 +12,8 @@ describe('assertSessionTenant', () => {
     );
   });
 
-  it('does not invent a tenant when either side is absent', () => {
-    expect(() => assertSessionTenant(undefined, 'school-a')).not.toThrow();
-    expect(() => assertSessionTenant('school-a', undefined)).not.toThrow();
+  it('fails closed when either tenant identity is absent', () => {
+    expect(() => assertSessionTenant(undefined, 'school-a')).toThrow(UnauthorizedException);
+    expect(() => assertSessionTenant('school-a', undefined)).toThrow(UnauthorizedException);
   });
 });

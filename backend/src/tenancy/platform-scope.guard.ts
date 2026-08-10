@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { tenantContext } from './tenant-context';
 
 /**
@@ -17,10 +17,12 @@ import { tenantContext } from './tenant-context';
 @Injectable()
 export class PlatformScopeGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
     const store = tenantContext.getStore();
-    if (store) {
-      store.mode = 'unscoped';
+    if (request.user?.role !== 'PLATFORM_ADMIN' || !store) {
+      throw new ForbiddenException('Platform scope requires an authenticated platform administrator');
     }
+    store.mode = 'unscoped';
     return true;
   }
 }
