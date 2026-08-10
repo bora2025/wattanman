@@ -17,15 +17,16 @@ An item is complete only when implementation, automated tests, documentation, de
 
 - [x] Inventory every remaining Prisma model and classify it as core, extension-platform, migration-only, or obsolete.
 - [x] Identify retained services that still access removed feature models.
-- [ ] Export any legacy data that must be retained.
+- [x] Export any legacy data that must be retained.
+  - No export is required: the product owner explicitly requested deletion of all legacy module data.
 - [x] Remove obsolete feature models from `prisma/schema.prisma`.
 - [ ] Create and rehearse the destructive cleanup migration against a production-sized backup.
-- [ ] Remove obsolete dependencies, environment variables, scripts, and documentation.
-- [ ] Update the root architecture documentation and directory map.
+- [x] Remove obsolete dependencies, environment variables, scripts, and documentation.
+- [x] Update the root architecture documentation and directory map.
 
 ### Architecture decisions
 
-- [ ] Record an ADR for tenant domain resolution.
+- [x] Record an ADR for tenant domain resolution.
 - [ ] Record an ADR for PostgreSQL row-level security.
 - [ ] Record an ADR for Redis and durable queue technology.
 - [ ] Record an ADR for API, worker, and migration service separation.
