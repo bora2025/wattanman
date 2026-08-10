@@ -7,6 +7,7 @@ import { generatePassword, isValidEmail } from '../common/identity';
 import { PLATFORM_SCHOOL_SUBDOMAIN } from '../tenancy/constants';
 import { RailwayDomainService } from './railway-domain.service';
 import { SchoolDomainService } from '../tenancy/school-domain.service';
+import { AuthDeliveryService } from '../auth/auth-delivery.service';
 
 const SUBDOMAIN_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const RESERVED_SUBDOMAINS = new Set([PLATFORM_SCHOOL_SUBDOMAIN, 'www', 'api', 'app']);
@@ -30,6 +31,7 @@ export class SchoolsService {
     private audit: AuditService,
     private railwayDomain: RailwayDomainService,
     private schoolDomains: SchoolDomainService,
+    private delivery: AuthDeliveryService,
   ) {}
 
   /** Every real school — the platform sentinel row is never a management target. */
@@ -181,6 +183,10 @@ export class SchoolsService {
       });
     });
 
+    if (domainResult.ok === true) {
+      await this.notifySchoolReady(result.admin.email, result.school.name, domainResult.domain, result.school.id);
+    }
+
     return {
       school: { ...result.school, status: domainResult.ok === true ? 'ACTIVE' : 'PROVISIONING' },
       admin: { id: result.admin.id, name: result.admin.name, email: result.admin.email },
@@ -224,7 +230,44 @@ export class SchoolsService {
         });
       }
     });
+    if (domainResult.ok === true && job?.status !== 'COMPLETED') {
+      const admin = await this.prisma.user.findFirst({
+        where: { schoolId: id, role: { in: ['ADMIN', 'SUPER_ADMIN'] }, email: { not: null } },
+        orderBy: { createdAt: 'asc' },
+        select: { email: true },
+      });
+      if (admin?.email) {
+        await this.notifySchoolReady(admin.email, school.name, domainResult.domain, school.id);
+      }
+    }
     return { ...formatDomainResult(domainResult), status: domainResult.ok === true ? 'ACTIVE' : 'PROVISIONING' };
+  }
+
+  private async notifySchoolReady(email: string, schoolName: string, domain: string, schoolId: string) {
+    try {
+      await this.delivery.sendEmail(
+        email,
+        `${schoolName} is ready on Wattaman`,
+        `${schoolName} is ready. Sign in at https://${domain}/login using the administrator credentials provided securely by your platform operator.`,
+      );
+      await this.audit.log({
+        action: 'NOTIFY',
+        resource: 'SCHOOL_PROVISIONING',
+        resourceId: schoolId,
+        resourceLabel: schoolName,
+        metadata: { channel: 'EMAIL', recipient: email, readiness: 'READY' },
+      });
+    } catch (error: any) {
+      await this.audit.log({
+        action: 'NOTIFY',
+        resource: 'SCHOOL_PROVISIONING',
+        resourceId: schoolId,
+        resourceLabel: schoolName,
+        success: false,
+        errorMessage: error?.message || 'Onboarding email delivery failed',
+        metadata: { channel: 'EMAIL', recipient: email, readiness: 'READY' },
+      });
+    }
   }
 
   async listDomains(id: string) {

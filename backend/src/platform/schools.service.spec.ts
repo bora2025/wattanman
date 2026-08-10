@@ -17,7 +17,9 @@ describe('SchoolsService provisioning', () => {
   };
   const domains = { registerManagedDomain: jest.fn(), registerVerifiedDomain: jest.fn() };
   const railway = { provisionDomain: jest.fn() };
-  const service = new SchoolsService(prisma as any, {} as any, {} as any, railway as any, domains as any);
+  const audit = { log: jest.fn() };
+  const delivery = { sendEmail: jest.fn() };
+  const service = new SchoolsService(prisma as any, {} as any, audit as any, railway as any, domains as any, delivery as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -30,6 +32,7 @@ describe('SchoolsService provisioning', () => {
     tx.school.update.mockResolvedValue({ ...school, status: 'ACTIVE' });
     tx.schoolProvisioningJob.update.mockResolvedValue({ ...job, status: 'COMPLETED' });
     railway.provisionDomain.mockResolvedValue({ ok: true, domain: 'aurora.wattaman.app' });
+    delivery.sendEmail.mockResolvedValue(undefined);
   });
 
   it('creates the school, first admin, and provisioning job transactionally', async () => {
@@ -49,6 +52,11 @@ describe('SchoolsService provisioning', () => {
     expect(tx.siteSetting.create).toHaveBeenCalledWith({ data: { schoolId: school.id } });
     expect(result.school.status).toBe('ACTIVE');
     expect(result.domainProvisioned).toBe(true);
+    expect(delivery.sendEmail).toHaveBeenCalledWith(
+      admin.email,
+      expect.stringContaining(school.name),
+      expect.stringContaining('https://aurora.wattaman.app/login'),
+    );
   });
 
   it('returns the existing job for an idempotent replay', async () => {
@@ -80,5 +88,20 @@ describe('SchoolsService provisioning', () => {
     expect(tx.school.update).toHaveBeenCalledWith({ where: { id: school.id }, data: { status: 'PROVISIONING' } });
     expect(result.domainProvisioned).toBe(false);
     expect(result.school.status).toBe('PROVISIONING');
+    expect(delivery.sendEmail).not.toHaveBeenCalled();
+  });
+
+  it('does not roll back readiness when onboarding delivery fails', async () => {
+    delivery.sendEmail.mockRejectedValueOnce(new Error('Email provider unavailable'));
+
+    const result = await service.create({
+      name: school.name,
+      subdomain: school.subdomain,
+      adminName: admin.name,
+      adminEmail: admin.email,
+    }, job.requestKey);
+
+    expect(result.school.status).toBe('ACTIVE');
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
   });
 });

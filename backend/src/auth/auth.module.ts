@@ -18,6 +18,6 @@ import { AuthDeliveryService } from './auth-delivery.service';
   ],
   providers: [AuthService, AuthDeliveryService, JwtStrategy],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, AuthDeliveryService],
 })
 export class AuthModule {}

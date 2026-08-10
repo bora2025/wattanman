@@ -95,7 +95,7 @@ An item is complete only when implementation, automated tests, documentation, de
 - [x] Do not create module or extension installation rows by default.
 - [x] Add provisioning retry and failure recovery.
 - [x] Add provisioning status UI for platform administrators.
-- [ ] Add onboarding notification after readiness checks pass.
+- [x] Add onboarding notification after readiness checks pass.
 
 ### Stage 1 gate
 
