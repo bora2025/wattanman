@@ -716,7 +716,9 @@ function ExtensionCard({
 
   async function deleteExtension() {
     const confirmation = window.prompt(
-      `Permanently delete ${extension.name}, every release, stored package, extension record, and fully uninstalled history?\n\nThis cannot be undone. Type ${extension.key} to confirm.`,
+      extension.runtimeType === "CORE_MODULE"
+        ? `Remove ${extension.name} from the extension catalog and disable every school installation?\n\nThe built-in code remains in the platform, but the extension will be retired. Type ${extension.key} to confirm.`
+        : `Permanently delete ${extension.name}, every release, stored package, extension record, and fully uninstalled history?\n\nThis cannot be undone. Type ${extension.key} to confirm.`,
     );
     if (confirmation !== extension.key) return;
     setBusy(true);
@@ -764,8 +766,9 @@ function ExtensionCard({
             disabled={busy}
             className="btn-outline btn-sm text-red-600"
             onClick={deleteExtension}
+            title={extension.runtimeType === "CORE_MODULE" ? "Retire and remove core module from the catalog" : "Permanently delete extension"}
           >
-            Delete
+            {extension.runtimeType === "CORE_MODULE" ? "Remove" : "Delete"}
           </button>
           <button
             type="button"
@@ -776,6 +779,11 @@ function ExtensionCard({
           </button>
         </div>
       </div>
+      {error && !expanded && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+          {error}
+        </div>
+      )}
       {expanded && (
         <>
           <div className="flex gap-2 mt-2 flex-wrap">

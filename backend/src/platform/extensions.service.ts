@@ -66,6 +66,7 @@ export class ExtensionsService {
 
   list() {
     return this.prisma.extension.findMany({
+      where: { status: { not: "RETIRED" } },
       include: {
         publisherEntity: true,
         versions: { orderBy: { createdAt: "desc" } },
@@ -879,9 +880,26 @@ export class ExtensionsService {
     if (!existing) throw new NotFoundException("Extension not found");
     await this.requirePublisherRole(existing.publisherId, actor, "MANAGE");
     if (existing.runtimeType === "CORE_MODULE") {
-      throw new ConflictException(
-        "Core platform modules cannot be permanently deleted",
-      );
+      await this.prisma.$transaction([
+        this.prisma.extensionInstallation.updateMany({
+          where: { extensionId },
+          data: { enabled: false },
+        }),
+        this.prisma.extension.update({
+          where: { id: extensionId },
+          data: {
+            status: "RETIRED",
+            isListed: false,
+            visibility: "UNLISTED",
+          },
+        }),
+      ]);
+      await this.log(actor, "RETIRE", "EXTENSION", extensionId, existing.name, {
+        before: { status: existing.status, visibility: existing.visibility },
+        after: { status: "RETIRED", visibility: "UNLISTED" },
+        metadata: { reason: "Core modules are retired instead of physically deleted" },
+      });
+      return { deleted: true, retired: true, extensionId };
     }
     const stillInstalled = existing.installations.filter(
       (installation) =>
