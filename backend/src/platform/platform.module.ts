@@ -27,6 +27,7 @@ import { ExtensionApiMetricsInterceptor } from './extension-api-metrics.intercep
 import { ExtensionPlatformGuard } from './extension-platform.guard';
 import { ExtensionValidationRunnerService } from './extension-validation-runner.service';
 import { TenancyModule } from '../tenancy/tenancy.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { TenancyModule } from '../tenancy/tenancy.module';
     AuditModule,
     SchoolMetricsModule,
     TenancyModule,
+    AuthModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'change-me-in-production-use-a-strong-random-key',
       signOptions: { expiresIn: '8h' },

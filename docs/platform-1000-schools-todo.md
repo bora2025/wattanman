@@ -77,14 +77,14 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Isolation tests
 
-- [ ] Add two-school fixtures with overlapping email, names, and extension keys.
+- [x] Add two-school fixtures with overlapping email, names, and extension keys.
 - [ ] Test cross-school reads for every retained controller.
-- [ ] Test cross-school writes and deletes.
+- [x] Test cross-school writes and deletes.
 - [x] Test forged host headers.
 - [x] Test valid token on wrong school domain.
 - [x] Test platform-scope authorization.
 - [ ] Test tenant isolation in extension records, assets, metrics, and jobs.
-- [ ] Add tenant isolation tests to required CI checks.
+- [x] Add tenant isolation tests to required CI checks.
 
 ### Provisioning workflow
 

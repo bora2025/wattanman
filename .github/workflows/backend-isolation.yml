@@ -1,0 +1,48 @@
+name: Backend tenant isolation
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-isolation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-isolation.yml'
+
+jobs:
+  tenant-isolation:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wattaman
+          POSTGRES_PASSWORD: wattaman
+          POSTGRES_DB: wattaman_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U wattaman -d wattaman_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgresql://wattaman:wattaman@localhost:5432/wattaman_test?schema=public
+      JWT_SECRET: isolation-ci-secret
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci --legacy-peer-deps
+      - run: npx prisma migrate deploy --schema=prisma/schema.prisma
+      - run: npm run test:isolation
+      - run: npm run build
