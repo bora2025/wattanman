@@ -212,15 +212,10 @@ export const adminNav: NavItem[] = [
     moduleKey: "BUS",
   },
   {
-    label: "Get Extensions",
-    href: "/admin/extensions",
-    icon: "design",
-    section: "Modules",
-  },
-  {
     label: "Manage Extensions",
     href: "/admin/extensions/manage",
     icon: "settings",
+    section: "Modules",
   },
 
   // ── Tools ──

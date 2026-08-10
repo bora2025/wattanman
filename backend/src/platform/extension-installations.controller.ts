@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,8 +8,14 @@ import {
   Post,
   Query,
   Request,
+  Res,
+  StreamableFile,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { Response } from "express";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
@@ -30,6 +37,43 @@ export class PlatformExtensionInstallationsController {
   @Get("pilot-criteria")
   pilotCriteria() {
     return this.installations.pilotAcceptanceCriteria();
+  }
+
+  @Get("payment-settings")
+  paymentSettings() {
+    return this.installations.paymentSettings();
+  }
+
+  @Post("payment-settings")
+  @UseInterceptors(FileInterceptor("qr", { limits: { fileSize: 5 * 1024 * 1024, files: 1 } }))
+  updatePaymentSettings(
+    @UploadedFile() qr: Express.Multer.File | undefined,
+    @Body() body: { bankName?: string; accountName?: string; accountNumber?: string; currency?: string; instructions?: string },
+    @Request() req,
+  ) {
+    return this.installations.updatePaymentSettings(body, qr, req.user);
+  }
+
+  @Get("payment-qr")
+  async platformPaymentQr(@Res({ passthrough: true }) response: Response) {
+    const qr = await this.installations.paymentQr();
+    response.setHeader("Content-Type", qr.contentType);
+    response.setHeader("Cache-Control", "private, max-age=300");
+    return new StreamableFile(qr.contents);
+  }
+
+  @Get(":id/payment-invoice")
+  async paymentInvoice(
+    @Param("id") id: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const invoice = await this.installations.paymentInvoice(id);
+    response.setHeader("Content-Type", invoice.contentType);
+    response.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${invoice.fileName.replace(/"/g, "")}"`,
+    );
+    return new StreamableFile(invoice.contents);
   }
 
   @Post(":id/approve")
@@ -172,9 +216,34 @@ export class SchoolExtensionsController {
     return this.installations.pilotAcceptanceCriteria();
   }
 
+  @Get("request-context")
+  requestContext(@Request() req) {
+    return this.installations.schoolRequestContext(req.user);
+  }
+
+  @Get("payment-qr")
+  async paymentQr(@Res({ passthrough: true }) response: Response) {
+    const qr = await this.installations.paymentQr();
+    response.setHeader("Content-Type", qr.contentType);
+    response.setHeader("Cache-Control", "private, max-age=300");
+    return new StreamableFile(qr.contents);
+  }
+
   @Post(":extensionId/request")
   request(@Param("extensionId") extensionId: string, @Request() req) {
     return this.installations.request(extensionId, req.user);
+  }
+
+  @Post(":extensionId/request-payment")
+  @UseInterceptors(FileInterceptor("invoice", { limits: { fileSize: 5 * 1024 * 1024, files: 1 } }))
+  requestPayment(
+    @Param("extensionId") extensionId: string,
+    @UploadedFile() invoice: Express.Multer.File | undefined,
+    @Body() body: { paymentReference?: string; paymentNotes?: string },
+    @Request() req,
+  ) {
+    if (!invoice) throw new BadRequestException("Payment invoice is required");
+    return this.installations.requestPaid(extensionId, invoice, body, req.user);
   }
 
   @Patch("installations/:id/update-policy")

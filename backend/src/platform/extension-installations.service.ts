@@ -80,6 +80,108 @@ export class ExtensionInstallationsService {
     });
   }
 
+  async schoolRequestContext(actor: Actor) {
+    const schoolId = getCurrentSchoolId();
+    const [school, admin] = await Promise.all([
+      this.prisma.school.findUnique({ where: { id: schoolId }, select: { id: true, name: true, subdomain: true } }),
+      actor.userId
+        ? this.prisma.user.findUnique({ where: { id: actor.userId }, select: { id: true, name: true, email: true, phone: true } })
+        : null,
+    ]);
+    if (!school || !admin) throw new NotFoundException("School administrator not found");
+    const payment = await this.paymentSettings();
+    return { school, admin, payment };
+  }
+
+  async paymentSettings() {
+    const setting = await this.prisma.extensionPaymentSetting.findUnique({
+      where: { id: "default" },
+    });
+    return setting
+      ? {
+          bankName: setting.bankName,
+          accountName: setting.accountName,
+          accountNumber: setting.accountNumber,
+          currency: setting.currency,
+          instructions: setting.instructions,
+          hasQr: !!setting.qrStorageKey,
+          updatedAt: setting.updatedAt,
+        }
+      : { currency: "USD", hasQr: false };
+  }
+
+  async updatePaymentSettings(
+    data: {
+      bankName?: string;
+      accountName?: string;
+      accountNumber?: string;
+      currency?: string;
+      instructions?: string;
+    },
+    qrFile: Express.Multer.File | undefined,
+    actor: Actor,
+  ) {
+    if (qrFile && !["image/png", "image/jpeg", "image/webp"].includes(qrFile.mimetype))
+      throw new BadRequestException("Bank QR must be a PNG, JPG, or WebP image");
+    const existing = await this.prisma.extensionPaymentSetting.findUnique({
+      where: { id: "default" },
+    });
+    let qrStorageKey = existing?.qrStorageKey;
+    if (qrFile) {
+      qrStorageKey = `billing/payment-qr/${Date.now()}-${qrFile.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      await this.storage.putPrivate(qrStorageKey, qrFile.buffer, qrFile.mimetype);
+    }
+    const setting = await this.prisma.extensionPaymentSetting.upsert({
+      where: { id: "default" },
+      update: {
+        bankName: data.bankName?.trim() || null,
+        accountName: data.accountName?.trim() || null,
+        accountNumber: data.accountNumber?.trim() || null,
+        currency: data.currency?.trim().toUpperCase() || "USD",
+        instructions: data.instructions?.trim() || null,
+        ...(qrFile
+          ? {
+              qrStorageKey,
+              qrContentType: qrFile.mimetype,
+              qrFileName: qrFile.originalname,
+            }
+          : {}),
+        updatedBy: actor.userId,
+      },
+      create: {
+        id: "default",
+        bankName: data.bankName?.trim() || null,
+        accountName: data.accountName?.trim() || null,
+        accountNumber: data.accountNumber?.trim() || null,
+        currency: data.currency?.trim().toUpperCase() || "USD",
+        instructions: data.instructions?.trim() || null,
+        qrStorageKey,
+        qrContentType: qrFile?.mimetype,
+        qrFileName: qrFile?.originalname,
+        updatedBy: actor.userId,
+      },
+    });
+    if (qrFile && existing?.qrStorageKey && existing.qrStorageKey !== qrStorageKey)
+      await this.storage.deletePrivate(existing.qrStorageKey).catch(() => undefined);
+    await this.log(actor, "PAYMENT_QR_UPDATE", setting.id, "Extension payment settings", {
+      bankName: setting.bankName,
+      accountName: setting.accountName,
+      currency: setting.currency,
+    });
+    return this.paymentSettings();
+  }
+
+  async paymentQr() {
+    const setting = await this.prisma.extensionPaymentSetting.findUnique({
+      where: { id: "default" },
+    });
+    if (!setting?.qrStorageKey) throw new NotFoundException("Bank QR is not configured");
+    return {
+      contents: await this.storage.getPrivate(setting.qrStorageKey),
+      contentType: setting.qrContentType || "image/png",
+    };
+  }
+
   async enabledExtensionKeys() {
     const installations = await this.prisma.extensionInstallation.findMany({
       where: {
@@ -152,6 +254,102 @@ export class ExtensionInstallationsService {
       schoolId,
     });
     return installation;
+  }
+
+  async requestPaid(
+    extensionId: string,
+    file: Express.Multer.File,
+    data: { paymentReference?: string; paymentNotes?: string },
+    actor: Actor,
+  ) {
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+    if (!allowedTypes.includes(file.mimetype))
+      throw new BadRequestException("Invoice must be a PDF, JPG, or PNG file");
+    const schoolId = getCurrentSchoolId();
+    const extension = await this.prisma.extension.findFirst({
+      where: {
+        id: extensionId,
+        status: "ACTIVE",
+        price: { gt: 0 },
+        OR: [
+          { visibility: { in: ["LISTED", "UNLISTED"] } },
+          { visibility: "PRIVATE", visibilityGrants: { some: { schoolId } } },
+        ],
+      },
+      include: {
+        versions: {
+          where: { lifecycleStatus: "PUBLISHED" },
+          orderBy: { publishedAt: "desc" },
+          take: 1,
+        },
+      },
+    });
+    if (!extension?.versions[0])
+      throw new NotFoundException("Paid extension is not available");
+    const [school, admin, existing] = await Promise.all([
+      this.prisma.school.findUnique({ where: { id: schoolId } }),
+      actor.userId
+        ? this.prisma.user.findUnique({ where: { id: actor.userId } })
+        : null,
+      this.prisma.extensionInstallation.findFirst({ where: { extensionId } }),
+    ]);
+    if (!school || !admin) throw new NotFoundException("School administrator not found");
+    if (existing?.enabled)
+      throw new ConflictException("Extension is already active for this school");
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const storageKey = `billing/extensions/${schoolId}/${extensionId}/${Date.now()}-${safeName}`;
+    await this.storage.putPrivate(storageKey, file.buffer, file.mimetype);
+    const requestData = {
+      installedVersionId: extension.versions[0].id,
+      requestedAt: new Date(),
+      requestedBy: actor.userId,
+      approvedAt: null,
+      approvedBy: null,
+      billingStatus: "PENDING",
+      requestSchoolName: school.name,
+      requestAdminName: admin.name,
+      requestAdminEmail: admin.email,
+      paymentReference: data.paymentReference?.trim() || null,
+      paymentNotes: data.paymentNotes?.trim() || null,
+      invoiceStorageKey: storageKey,
+      invoiceFileName: safeName,
+      invoiceContentType: file.mimetype,
+      invoiceUploadedAt: new Date(),
+      paymentSubmittedAt: new Date(),
+      uninstalledAt: null,
+      purgeAfter: null,
+    };
+    const installation = existing
+      ? await this.prisma.extensionInstallation.update({
+          where: { id: existing.id },
+          data: requestData,
+        })
+      : await this.prisma.extensionInstallation.create({
+          data: { schoolId, extensionId, ...requestData },
+        });
+    if (existing?.invoiceStorageKey && existing.invoiceStorageKey !== storageKey)
+      await this.storage.deletePrivate(existing.invoiceStorageKey).catch(() => undefined);
+    await this.log(actor, "PAID_REQUEST", installation.id, extension.name, {
+      extensionId,
+      schoolId,
+      price: extension.price,
+      paymentReference: requestData.paymentReference,
+    });
+    return installation;
+  }
+
+  async paymentInvoice(installationId: string) {
+    const installation = await this.prisma.extensionInstallation.findUnique({
+      where: { id: installationId },
+      select: { invoiceStorageKey: true, invoiceFileName: true, invoiceContentType: true },
+    });
+    if (!installation?.invoiceStorageKey)
+      throw new NotFoundException("Payment invoice not found");
+    return {
+      contents: await this.storage.getPrivate(installation.invoiceStorageKey),
+      fileName: installation.invoiceFileName || "invoice",
+      contentType: installation.invoiceContentType || "application/octet-stream",
+    };
   }
 
   platformInstallations(schoolId?: string) {

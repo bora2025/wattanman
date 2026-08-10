@@ -1,0 +1,10 @@
+ALTER TABLE "ExtensionInstallation" ADD COLUMN "requestSchoolName" TEXT;
+ALTER TABLE "ExtensionInstallation" ADD COLUMN "requestAdminName" TEXT;
+ALTER TABLE "ExtensionInstallation" ADD COLUMN "requestAdminEmail" TEXT;
+ALTER TABLE "ExtensionInstallation" ADD COLUMN "paymentReference" TEXT;
+ALTER TABLE "ExtensionInstallation" ADD COLUMN "paymentNotes" TEXT;
+ALTER TABLE "ExtensionInstallation" ADD COLUMN "invoiceStorageKey" TEXT;
+ALTER TABLE "ExtensionInstallation" ADD COLUMN "invoiceFileName" TEXT;
+ALTER TABLE "ExtensionInstallation" ADD COLUMN "invoiceContentType" TEXT;
+ALTER TABLE "ExtensionInstallation" ADD COLUMN "invoiceUploadedAt" TIMESTAMP(3);
+ALTER TABLE "ExtensionInstallation" ADD COLUMN "paymentSubmittedAt" TIMESTAMP(3);

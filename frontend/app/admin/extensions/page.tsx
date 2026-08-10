@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
@@ -52,17 +52,24 @@ function AdminExtensionsContent() {
   const [criteria, setCriteria] = useState<PilotCriterion[]>([])
   const [activeTab, setActiveTab] = useState<'DISCOVER' | 'MODULE' | 'THEME'>('DISCOVER')
   const [selectedExtension, setSelectedExtension] = useState<DirectoryExtension | null>(null)
+  const [paymentExtension, setPaymentExtension] = useState<DirectoryExtension | null>(null)
+  const [requestContext, setRequestContext] = useState<{ school: { name: string; subdomain: string }; admin: { name: string; email?: string | null; phone?: string | null }; payment: { bankName?: string | null; accountName?: string | null; accountNumber?: string | null; currency: string; instructions?: string | null; hasQr: boolean; updatedAt?: string } } | null>(null)
+  const [invoice, setInvoice] = useState<File | null>(null)
+  const [paymentReference, setPaymentReference] = useState('')
+  const [paymentNotes, setPaymentNotes] = useState('')
 
   async function load() {
     try {
-      const [available, installed, pilotCriteria] = await Promise.all([
+      const [available, installed, pilotCriteria, context] = await Promise.all([
         json(await apiFetch('/api/extensions/directory')),
         json(await apiFetch('/api/extensions/installations')),
         json(await apiFetch('/api/extensions/pilot-criteria')),
+        json(await apiFetch('/api/extensions/request-context')),
       ])
       setDirectory(available)
       setInstallations(installed)
       setCriteria(pilotCriteria)
+      setRequestContext(context)
       setError('')
     } catch (loadError: any) {
       setError(loadError.message || 'Failed to load extension directory')
@@ -93,12 +100,40 @@ function AdminExtensionsContent() {
   useEffect(() => { load() }, [])
 
   async function request(extensionId: string) {
+    const extension = directory.find(item => item.id === extensionId)
+    if (extension?.price != null && extension.price > 0) {
+      setSelectedExtension(null)
+      setPaymentExtension(extension)
+      return
+    }
     setBusy(extensionId)
     try {
       await json(await apiFetch(`/api/extensions/${extensionId}/request`, { method: 'POST' }))
       await load()
     } catch (requestError: any) {
       setError(requestError.message || 'Request failed')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function submitPaymentRequest(event: FormEvent) {
+    event.preventDefault()
+    if (!paymentExtension || !invoice) return setError('Payment invoice is required.')
+    setBusy(paymentExtension.id)
+    try {
+      const formData = new FormData()
+      formData.append('invoice', invoice)
+      formData.append('paymentReference', paymentReference)
+      formData.append('paymentNotes', paymentNotes)
+      await json(await apiFetch(`/api/extensions/${paymentExtension.id}/request-payment`, { method: 'POST', body: formData }))
+      setPaymentExtension(null)
+      setInvoice(null)
+      setPaymentReference('')
+      setPaymentNotes('')
+      await load()
+    } catch (paymentError: any) {
+      setError(paymentError.message || 'Could not submit payment request')
     } finally {
       setBusy(null)
     }
@@ -146,6 +181,7 @@ function AdminExtensionsContent() {
     const state = extensionState(installation)
     const isPaid = extension.price != null && extension.price > 0
     return (
+      <>
       <article className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-blue-700">
         <button type="button" className="block h-36 w-full bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-700 p-5 text-left" onClick={() => setSelectedExtension(extension)}>
           <div className="flex h-full items-center justify-center rounded-xl border border-white/10 bg-white/5">
@@ -172,6 +208,9 @@ function AdminExtensionsContent() {
           </div>
         </div>
       </article>
+      {paymentExtension?.id === extension.id && requestContext?.payment.hasQr && <aside className="fixed left-4 top-1/2 z-[60] hidden w-56 -translate-y-1/2 rounded-2xl bg-white p-4 text-center shadow-2xl dark:bg-slate-900 lg:block"><p className="text-sm font-bold text-slate-900 dark:text-white">Scan to pay</p><img src={`/api/extensions/payment-qr?v=${requestContext.payment.updatedAt || '1'}`} alt="Bank payment QR" className="mx-auto mt-3 h-44 w-44 rounded-xl object-contain" /><p className="mt-3 text-sm font-semibold text-indigo-700 dark:text-indigo-300">{requestContext.payment.currency || 'USD'} {extension.price}</p>{requestContext.payment.bankName && <p className="mt-1 text-xs text-slate-500">{requestContext.payment.bankName}</p>}{requestContext.payment.accountName && <p className="text-xs text-slate-500">{requestContext.payment.accountName}</p>}{requestContext.payment.accountNumber && <p className="text-xs text-slate-500">{requestContext.payment.accountNumber}</p>}{requestContext.payment.instructions && <p className="mt-2 text-xs text-slate-400">{requestContext.payment.instructions}</p>}</aside>}
+      {paymentExtension?.id === extension.id && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true"><form onSubmit={submitPaymentRequest} className="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900"><div className="bg-gradient-to-r from-indigo-700 to-blue-600 p-6 text-white"><div className="flex items-start justify-between"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-200">Paid extension request</p><h2 className="mt-1 text-2xl font-bold">{extension.name}</h2><p className="mt-1 text-blue-100">${extension.price}{extension.priceNote ? ` ${extension.priceNote}` : ''}</p></div><button type="button" className="text-2xl text-white/70 hover:text-white" onClick={() => setPaymentExtension(null)}>×</button></div></div><div className="space-y-4 p-6"><div className="grid gap-3 rounded-xl bg-slate-50 p-4 text-sm dark:bg-slate-800 sm:grid-cols-2"><div><span className="block text-xs text-slate-400">School</span><strong className="text-slate-800 dark:text-white">{requestContext?.school.name || 'Current school'}</strong><p className="text-xs text-slate-500">{requestContext?.school.subdomain}</p></div><div><span className="block text-xs text-slate-400">School administrator</span><strong className="text-slate-800 dark:text-white">{requestContext?.admin.name || 'Signed-in administrator'}</strong><p className="text-xs text-slate-500">{requestContext?.admin.email || requestContext?.admin.phone}</p></div></div><p className="text-xs text-slate-500">School and administrator information is securely filled from your account.</p><label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Payment reference<input className="input mt-1 w-full" value={paymentReference} onChange={event => setPaymentReference(event.target.value)} placeholder="Bank transfer or invoice reference" /></label><label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Payment invoice or receipt <span className="text-red-500">*</span><input type="file" required accept="application/pdf,image/jpeg,image/png" className="mt-1 block w-full rounded-lg border border-slate-300 p-2 text-sm dark:border-slate-700" onChange={event => setInvoice(event.target.files?.[0] || null)} /><span className="mt-1 block text-xs font-normal text-slate-400">PDF, JPG, or PNG, maximum 5 MB.</span></label><label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Notes<textarea className="input mt-1 min-h-20 w-full" value={paymentNotes} onChange={event => setPaymentNotes(event.target.value)} placeholder="Optional payment details" /></label><div className="flex justify-end gap-3"><button type="button" className="btn-outline" onClick={() => setPaymentExtension(null)}>Cancel</button><button className="btn-primary" disabled={busy === extension.id}>{busy === extension.id ? 'Submitting…' : 'Submit payment request'}</button></div></div></form></div>}
+      </>
     )
   }
 

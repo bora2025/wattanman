@@ -907,6 +907,16 @@ model ExtensionInstallation {
   enabled            Boolean                  @default(false)
   configuration      Json?
   billingStatus      String                   @default("PENDING")
+  requestSchoolName  String?
+  requestAdminName   String?
+  requestAdminEmail  String?
+  paymentReference   String?
+  paymentNotes       String?
+  invoiceStorageKey  String?
+  invoiceFileName    String?
+  invoiceContentType String?
+  invoiceUploadedAt  DateTime?
+  paymentSubmittedAt DateTime?
   dataBytes          Int                      @default(0)
   updatePolicy       String                   @default("MANUAL") // MANUAL | NOTIFY | AUTO_APPROVED
   availableVersionId String?
@@ -929,6 +939,21 @@ model ExtensionInstallation {
   @@index([extensionId, installedVersionId])
   @@index([purgeAfter])
   @@index([updatePolicy, availableVersionId])
+}
+
+model ExtensionPaymentSetting {
+  id            String   @id @default("default")
+  bankName      String?
+  accountName   String?
+  accountNumber String?
+  currency      String   @default("USD")
+  instructions String?
+  qrStorageKey  String?
+  qrContentType String?
+  qrFileName    String?
+  updatedBy     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model ExtensionPilotFeedback {

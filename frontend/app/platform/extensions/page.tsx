@@ -59,6 +59,14 @@ interface InstallationRecord {
   id: string;
   enabled: boolean;
   billingStatus: string;
+  requestSchoolName?: string | null;
+  requestAdminName?: string | null;
+  requestAdminEmail?: string | null;
+  paymentReference?: string | null;
+  paymentNotes?: string | null;
+  invoiceFileName?: string | null;
+  invoiceUploadedAt?: string | null;
+  paymentSubmittedAt?: string | null;
   requestedAt?: string | null;
   approvedAt?: string | null;
   installedAt?: string | null;
@@ -1081,6 +1089,18 @@ function InstallationCard({
             {new Date(installation.purgeAfter).toLocaleString()}
           </p>
         )}
+        {installation.paymentSubmittedAt && (
+          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            <p className="font-semibold">Payment request submitted</p>
+            <p>{installation.requestSchoolName || installation.school.name} · {installation.requestAdminName || "School administrator"}{installation.requestAdminEmail ? ` · ${installation.requestAdminEmail}` : ""}</p>
+            {installation.paymentReference && <p>Reference: {installation.paymentReference}</p>}
+            {installation.paymentNotes && <p>Notes: {installation.paymentNotes}</p>}
+            <div className="mt-2 flex items-center gap-3">
+              <a className="font-semibold text-blue-700 underline dark:text-blue-300" href={`/api/platform/extension-installations/${installation.id}/payment-invoice`} target="_blank" rel="noreferrer">View payment invoice</a>
+              <span>Submitted {new Date(installation.paymentSubmittedAt).toLocaleString()}</span>
+            </div>
+          </div>
+        )}
         {error && (
           <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
         )}
@@ -1240,6 +1260,9 @@ function ExtensionsContent() {
   const [releaseFilter, setReleaseFilter] = useState("ALL");
   const [installationFilter, setInstallationFilter] = useState("ACTIVE");
   const [showCreate, setShowCreate] = useState(false);
+  const [paymentSettings, setPaymentSettings] = useState<any>({ currency: "USD", hasQr: false });
+  const [paymentQr, setPaymentQr] = useState<File | null>(null);
+  const [savingPayment, setSavingPayment] = useState(false);
 
   const filteredExtensions = extensions.filter((extension) => {
     const matchesSearch =
@@ -1281,6 +1304,7 @@ function ExtensionsContent() {
         publisherData,
         alertData,
         metricData,
+        paymentData,
       ] = await Promise.all([
         responseJson(await apiFetch("/api/platform/extensions")),
         responseJson(await apiFetch("/api/platform/extension-installations")),
@@ -1288,6 +1312,7 @@ function ExtensionsContent() {
         responseJson(await apiFetch("/api/platform/extensions/publishers")),
         responseJson(await apiFetch("/api/platform/extensions/alerts")),
         responseJson(await apiFetch("/api/platform/extensions/api-metrics")),
+        responseJson(await apiFetch("/api/platform/extension-installations/payment-settings")),
       ]);
       setExtensions(extensionData);
       setInstallations(installationData);
@@ -1295,11 +1320,36 @@ function ExtensionsContent() {
       setPublishers(publisherData);
       setAlerts(alertData);
       setApiMetrics(metricData);
+      setPaymentSettings(paymentData);
       setError("");
     } catch (loadError: any) {
       setError(loadError.message || "Failed to load extensions");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function savePaymentSettings(event: FormEvent) {
+    event.preventDefault();
+    setSavingPayment(true);
+    setError("");
+    try {
+      const data = new FormData();
+      data.append("bankName", paymentSettings.bankName || "");
+      data.append("accountName", paymentSettings.accountName || "");
+      data.append("accountNumber", paymentSettings.accountNumber || "");
+      data.append("currency", paymentSettings.currency || "USD");
+      data.append("instructions", paymentSettings.instructions || "");
+      if (paymentQr) data.append("qr", paymentQr);
+      const updated = await responseJson(
+        await apiFetch("/api/platform/extension-installations/payment-settings", { method: "POST", body: data }),
+      );
+      setPaymentSettings(updated);
+      setPaymentQr(null);
+    } catch (paymentError: any) {
+      setError(paymentError.message || "Could not update payment QR");
+    } finally {
+      setSavingPayment(false);
     }
   }
 
@@ -1889,6 +1939,13 @@ function ExtensionsContent() {
           )}
           {activeView === "installations" && (
             <>
+              <form onSubmit={savePaymentSettings} className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50 p-5 shadow-sm dark:border-indigo-900 dark:from-indigo-950/30 dark:to-blue-950/20">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900 dark:text-white">Extension payment QR</h2><p className="text-xs text-slate-500">This bank QR and account information appears in every paid-extension request form.</p></div><span className={`rounded-full px-3 py-1 text-xs font-semibold ${paymentSettings.hasQr ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{paymentSettings.hasQr ? "QR configured" : "QR required"}</span></div>
+                <div className="grid gap-4 lg:grid-cols-[160px_1fr]">
+                  <div className="flex h-40 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-indigo-300 bg-white dark:bg-slate-900">{paymentSettings.hasQr ? <img src={`/api/platform/extension-installations/payment-qr?v=${paymentSettings.updatedAt || "1"}`} alt="Current bank payment QR" className="h-full w-full object-contain p-2" /> : <span className="px-4 text-center text-xs text-slate-400">Upload bank QR image</span>}</div>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"><label className="text-xs text-slate-600 dark:text-slate-300">Bank name<input className="input mt-1 w-full" value={paymentSettings.bankName || ""} onChange={event => setPaymentSettings({ ...paymentSettings, bankName: event.target.value })} /></label><label className="text-xs text-slate-600 dark:text-slate-300">Account name<input className="input mt-1 w-full" value={paymentSettings.accountName || ""} onChange={event => setPaymentSettings({ ...paymentSettings, accountName: event.target.value })} /></label><label className="text-xs text-slate-600 dark:text-slate-300">Account number<input className="input mt-1 w-full" value={paymentSettings.accountNumber || ""} onChange={event => setPaymentSettings({ ...paymentSettings, accountNumber: event.target.value })} /></label><label className="text-xs text-slate-600 dark:text-slate-300">Currency<input className="input mt-1 w-full" value={paymentSettings.currency || "USD"} onChange={event => setPaymentSettings({ ...paymentSettings, currency: event.target.value.toUpperCase() })} /></label><label className="text-xs text-slate-600 dark:text-slate-300 sm:col-span-2">Payment instructions<input className="input mt-1 w-full" value={paymentSettings.instructions || ""} onChange={event => setPaymentSettings({ ...paymentSettings, instructions: event.target.value })} placeholder="Scan QR, enter the extension price, then upload receipt" /></label><label className="text-xs text-slate-600 dark:text-slate-300 sm:col-span-2">Change QR image<input type="file" accept="image/png,image/jpeg,image/webp" className="mt-1 block w-full rounded-lg border border-slate-300 bg-white p-2 text-sm dark:border-slate-700 dark:bg-slate-900" onChange={event => setPaymentQr(event.target.files?.[0] || null)} /></label><div className="flex items-end"><button className="btn-primary w-full" disabled={savingPayment}>{savingPayment ? "Saving…" : paymentSettings.hasQr ? "Update payment settings" : "Save payment QR"}</button></div></div>
+                </div>
+              </form>
               <div>
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                   School installation requests
