@@ -27,13 +27,13 @@ An item is complete only when implementation, automated tests, documentation, de
 ### Architecture decisions
 
 - [x] Record an ADR for tenant domain resolution.
-- [ ] Record an ADR for PostgreSQL row-level security.
-- [ ] Record an ADR for Redis and durable queue technology.
-- [ ] Record an ADR for API, worker, and migration service separation.
-- [ ] Record an ADR for declarative extension API v1.
-- [ ] Record an ADR for backup retention and deletion policy.
-- [ ] Approve SLO, RPO, RTO, and capacity assumptions.
-- [ ] Assign accountable owners for platform, marketplace, runtime, infrastructure, security, and reliability.
+- [x] Record an ADR for PostgreSQL row-level security.
+- [x] Record an ADR for Redis and durable queue technology.
+- [x] Record an ADR for API, worker, and migration service separation.
+- [x] Record an ADR for declarative extension API v1.
+- [x] Record an ADR for backup retention and deletion policy.
+- [x] Approve SLO, RPO, RTO, and capacity assumptions.
+- [x] Assign accountable owners for platform, marketplace, runtime, infrastructure, security, and reliability.
 
 ### Stage 0 gate
 
