@@ -79,6 +79,7 @@ export const TENANT_SCOPED_MODELS = new Set<string>([
   'Post',
   'ExtensionInstallation',
   'ExtensionPilotFeedback',
+  'SchoolDomain',
   'ExtensionRecord',
   'SchoolDailyMetric',
 ]);

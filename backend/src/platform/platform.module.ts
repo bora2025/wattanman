@@ -26,12 +26,14 @@ import { ExtensionApiMetricsService } from './extension-api-metrics.service';
 import { ExtensionApiMetricsInterceptor } from './extension-api-metrics.interceptor';
 import { ExtensionPlatformGuard } from './extension-platform.guard';
 import { ExtensionValidationRunnerService } from './extension-validation-runner.service';
+import { TenancyModule } from '../tenancy/tenancy.module';
 
 @Module({
   imports: [
     DatabaseModule,
     AuditModule,
     SchoolMetricsModule,
+    TenancyModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'change-me-in-production-use-a-strong-random-key',
       signOptions: { expiresIn: '8h' },

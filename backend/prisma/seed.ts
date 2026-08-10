@@ -21,6 +21,37 @@ async function main() {
   });
   const schoolId = school.id;
 
+  const rootDomain = (process.env.SCHOOL_ROOT_DOMAIN || '').trim().toLowerCase().replace(/^\.+|\.+$/g, '');
+  const schoolHostname = rootDomain ? `${school.subdomain}.${rootDomain}` : school.subdomain;
+  await prisma.schoolDomain.upsert({
+    where: { hostname: schoolHostname },
+    update: { schoolId },
+    create: {
+      schoolId,
+      hostname: schoolHostname,
+      type: rootDomain ? 'MANAGED' : 'LEGACY_ALIAS',
+      status: 'VERIFIED',
+      verifiedAt: new Date(),
+    },
+  });
+
+  const deploymentHostname = (process.env.SEED_SCHOOL_HOSTNAME || '').trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0].split(':')[0];
+  if (deploymentHostname) {
+    await prisma.schoolDomain.upsert({
+      where: { hostname: deploymentHostname },
+      update: { schoolId, type: 'MANAGED', status: 'VERIFIED', verifiedAt: new Date(), routingStatus: 'READY', routingCheckedAt: new Date(), routingError: null },
+      create: {
+        schoolId,
+        hostname: deploymentHostname,
+        type: 'MANAGED',
+        status: 'VERIFIED',
+        verifiedAt: new Date(),
+        routingStatus: 'READY',
+        routingCheckedAt: new Date(),
+      },
+    });
+  }
+
   await prisma.user.upsert({
     where: { schoolId_email: { schoolId, email: 'admin@test.com' } },
     update: {},

@@ -12,6 +12,7 @@ import { AuditModule } from './audit/audit.module';
 import { SiteSettingsModule } from './site-settings/site-settings.module';
 import { PostsModule } from './posts/posts.module';
 import { PlatformModule } from './platform/platform.module';
+import { TenancyModule } from './tenancy/tenancy.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PlatformModule } from './platform/platform.module';
     // PrismaService; Nest's DI doesn't resolve middleware dependencies through
     // other modules' imports the way it does for controllers/services.
     DatabaseModule,
+    TenancyModule,
     AuditModule,
     AuthModule,
     BackupModule,

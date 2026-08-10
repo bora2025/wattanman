@@ -18,6 +18,20 @@ interface SchoolDetail {
   counts: { students: number; staff: number; classes: number };
 }
 
+interface SchoolDomain {
+  id: string;
+  hostname: string;
+  type: string;
+  status: string;
+  verificationToken: string | null;
+  verifiedAt: string | null;
+  lastCheckedAt: string | null;
+  verificationError: string | null;
+  routingStatus: string;
+  routingCheckedAt: string | null;
+  routingError: string | null;
+}
+
 const SCHOOL_ROOT_DOMAIN =
   process.env.NEXT_PUBLIC_SCHOOL_ROOT_DOMAIN || "wattaman.app";
 
@@ -64,6 +78,10 @@ function SchoolDetailContent() {
     domainProvisioned: boolean;
     domainError: string | null;
   } | null>(null);
+  const [domains, setDomains] = useState<SchoolDomain[]>([]);
+  const [customHostname, setCustomHostname] = useState("");
+  const [domainBusy, setDomainBusy] = useState("");
+  const [domainError, setDomainError] = useState("");
 
   useEffect(() => {
     load();
@@ -72,9 +90,13 @@ function SchoolDetailContent() {
   async function load() {
     setLoading(true);
     try {
-      const res = await apiFetch(`/api/platform/schools/${id}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setSchool(await res.json());
+      const [schoolResponse, domainsResponse] = await Promise.all([
+        apiFetch(`/api/platform/schools/${id}`),
+        apiFetch(`/api/platform/schools/${id}/domains`),
+      ]);
+      if (!schoolResponse.ok) throw new Error(`HTTP ${schoolResponse.status}`);
+      setSchool(await schoolResponse.json());
+      if (domainsResponse.ok) setDomains(await domainsResponse.json());
     } catch {
       setError("Failed to load school");
     } finally {
@@ -189,6 +211,75 @@ function SchoolDetailContent() {
     } finally {
       setDomainChecking(false);
     }
+  }
+
+  async function registerCustomDomain() {
+    if (!school || !customHostname.trim()) return;
+    setDomainBusy("register");
+    setDomainError("");
+    try {
+      const response = await apiFetch(
+        `/api/platform/schools/${school.id}/domains`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hostname: customHostname.trim() }),
+        },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || `HTTP ${response.status}`);
+      setCustomHostname("");
+      await loadDomains();
+    } catch (e: any) {
+      setDomainError(e.message || "Failed to register custom domain");
+    } finally {
+      setDomainBusy("");
+    }
+  }
+
+  async function verifyCustomDomain(domainId: string) {
+    if (!school) return;
+    setDomainBusy(domainId);
+    setDomainError("");
+    try {
+      const response = await apiFetch(
+        `/api/platform/schools/${school.id}/domains/${domainId}/verify`,
+        { method: "POST" },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || `HTTP ${response.status}`);
+      if (!data.verified) setDomainError(data.error || "Domain is not verified yet");
+      await loadDomains();
+    } catch (e: any) {
+      setDomainError(e.message || "Failed to verify custom domain");
+    } finally {
+      setDomainBusy("");
+    }
+  }
+
+  async function retryDomainRouting(domainId: string) {
+    if (!school) return;
+    setDomainBusy(`routing-${domainId}`);
+    setDomainError("");
+    try {
+      const response = await apiFetch(
+        `/api/platform/schools/${school.id}/domains/${domainId}/retry-routing`,
+        { method: "POST" },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || `HTTP ${response.status}`);
+      if (!data.routed) setDomainError(data.routingError || "Domain routing is not ready");
+      await loadDomains();
+    } catch (e: any) {
+      setDomainError(e.message || "Failed to provision domain routing");
+    } finally {
+      setDomainBusy("");
+    }
+  }
+
+  async function loadDomains() {
+    const response = await apiFetch(`/api/platform/schools/${id}/domains`);
+    if (response.ok) setDomains(await response.json());
   }
 
   async function handleDelete() {
@@ -362,17 +453,120 @@ function SchoolDetailContent() {
                       </button>
                     </div>
 
+                    <div className="card p-5 space-y-4">
+                      <div>
+                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Verified school domains
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Custom domains remain inactive until their DNS TXT challenge is verified.
+                        </p>
+                      </div>
+
+                      {domainError && (
+                        <div className="px-3 py-2 rounded-lg text-xs bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900">
+                          {domainError}
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        {domains.map((domain) => (
+                          <div
+                            key={domain.id}
+                            className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-2"
+                          >
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                              <div>
+                                <div className="font-medium text-sm text-slate-800 dark:text-slate-100">
+                                  {domain.hostname}
+                                </div>
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  {domain.type}
+                                </div>
+                              </div>
+                              <span className={`text-[11px] font-semibold px-2 py-1 rounded-full ${domain.status === "VERIFIED" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"}`}>
+                                {domain.status}
+                              </span>
+                            </div>
+
+                            {domain.type === "CUSTOM" && domain.status !== "VERIFIED" && domain.verificationToken && (
+                              <div className="space-y-2 text-xs">
+                                <p className="text-slate-600 dark:text-slate-300">
+                                  Add this DNS TXT record, then verify:
+                                </p>
+                                <div className="grid gap-1 rounded-lg bg-slate-50 dark:bg-slate-900 p-3 font-mono break-all">
+                                  <span>_wattaman-verification.{domain.hostname}</span>
+                                  <span>wattaman-verification={domain.verificationToken}</span>
+                                </div>
+                                {domain.verificationError && (
+                                  <p className="text-amber-700 dark:text-amber-300">
+                                    {domain.verificationError}
+                                  </p>
+                                )}
+                                <button
+                                  onClick={() => verifyCustomDomain(domain.id)}
+                                  disabled={domainBusy === domain.id}
+                                  className="btn-outline text-xs px-3 py-1.5 rounded-lg disabled:opacity-50"
+                                >
+                                  {domainBusy === domain.id ? "Checking…" : "Verify DNS"}
+                                </button>
+                              </div>
+                            )}
+                            {domain.status === "VERIFIED" && (
+                              <div className="flex items-center justify-between gap-3 flex-wrap text-xs">
+                                <div>
+                                  <span className={domain.routingStatus === "READY" ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}>
+                                    Routing: {domain.routingStatus}
+                                  </span>
+                                  {domain.routingError && (
+                                    <p className="text-red-600 dark:text-red-400 mt-1">
+                                      {domain.routingError}
+                                    </p>
+                                  )}
+                                </div>
+                                {domain.routingStatus !== "READY" && (
+                                  <button
+                                    onClick={() => retryDomainRouting(domain.id)}
+                                    disabled={domainBusy === `routing-${domain.id}`}
+                                    className="btn-outline text-xs px-3 py-1.5 rounded-lg disabled:opacity-50"
+                                  >
+                                    {domainBusy === `routing-${domain.id}` ? "Provisioning…" : "Retry routing"}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          value={customHostname}
+                          onChange={(event) => setCustomHostname(event.target.value)}
+                          placeholder="portal.school.example"
+                          className="flex-1"
+                        />
+                        <button
+                          onClick={registerCustomDomain}
+                          disabled={!customHostname.trim() || domainBusy === "register"}
+                          className="btn-outline text-sm px-4 py-2 rounded-lg disabled:opacity-50"
+                        >
+                          {domainBusy === "register" ? "Registering…" : "Add custom domain"}
+                        </button>
+                      </div>
+                    </div>
+
                     <Link
                       href="/platform/extensions"
                       className="card p-5 flex items-center justify-between gap-3 hover:shadow-md transition-all"
                     >
                       <div>
                         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                          Modules & Add-ons
+                          Extensions
                         </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          Manage free modules (Attendance, Fees, etc.) and
-                          billing-gated paid features.
+                          Manage the marketplace, releases, installations, and
+                          billing-gated extensions.
                         </p>
                       </div>
                       <span className="text-slate-400 dark:text-slate-500">

@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { PrismaService } from '../database/prisma.service';
 import { tenantContext } from './tenant-context';
 import { PLATFORM_SCHOOL_SUBDOMAIN } from './constants';
+import { SchoolDomainService } from './school-domain.service';
 
 /**
  * Resolves which school a request is for, from the Host header, and opens the
@@ -21,7 +22,10 @@ import { PLATFORM_SCHOOL_SUBDOMAIN } from './constants';
  */
 @Injectable()
 export class TenantHostMiddleware implements NestMiddleware {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private schoolDomains: SchoolDomainService,
+  ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
     // The frontend's API proxy (frontend/app/api/[...path]/route.ts) forwards the
@@ -30,21 +34,14 @@ export class TenantHostMiddleware implements NestMiddleware {
     // the tenant the browser actually visited). Direct backend callers without a
     // proxy in front (e.g. the mobile app) fall back to the raw Host header.
     const rawHost = (req.headers['x-tenant-host'] as string) || req.headers.host || '';
-    const hostname = rawHost.split(':')[0].trim().toLowerCase();
-
-    const platformHost = (process.env.PLATFORM_HOST || '').split(':')[0].trim().toLowerCase();
-    const subdomain = platformHost && hostname === platformHost
-      ? PLATFORM_SCHOOL_SUBDOMAIN
-      : hostname.split('.')[0];
-
-    if (!subdomain) {
+    if (!rawHost) {
       throw new NotFoundException('Unable to determine school from request host');
     }
 
     // Intentionally the one unscoped School lookup in the codebase outside the
     // Platform module — this is the query that *establishes* tenancy, so there's
     // no tenant context yet for it to be scoped by.
-    let school = await this.prisma.school.findUnique({ where: { subdomain } });
+    let school = await this.schoolDomains.resolve(rawHost);
 
     // Transition fallback: the Railway service domain (e.g.
     // wattanman-production.up.railway.app) doesn't match the subdomain a school
@@ -58,7 +55,8 @@ export class TenantHostMiddleware implements NestMiddleware {
     // This only ever applies to the sentinel-less case: if the host resolved to
     // PLATFORM_SCHOOL_SUBDOMAIN it already matched above (the Platform row
     // always exists), so we never accidentally fall back for Platform requests.
-    if (!school && subdomain !== PLATFORM_SCHOOL_SUBDOMAIN) {
+    const allowLegacyFallback = process.env.ALLOW_SINGLE_SCHOOL_HOST_FALLBACK !== 'false';
+    if (!school && allowLegacyFallback) {
       const candidates = await this.prisma.school.findMany({
         where: { subdomain: { not: PLATFORM_SCHOOL_SUBDOMAIN } },
         take: 2,

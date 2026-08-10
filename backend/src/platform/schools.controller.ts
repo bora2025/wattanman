@@ -65,4 +65,24 @@ export class SchoolsController {
   retryDomainProvisioning(@Param('id') id: string) {
     return this.schools.retryDomainProvisioning(id);
   }
+
+  @Get(':id/domains')
+  listDomains(@Param('id') id: string) {
+    return this.schools.listDomains(id);
+  }
+
+  @Post(':id/domains')
+  registerDomain(@Param('id') id: string, @Body() body: { hostname: string }) {
+    return this.schools.registerDomain(id, body?.hostname || '');
+  }
+
+  @Post(':id/domains/:domainId/verify')
+  verifyDomain(@Param('id') id: string, @Param('domainId') domainId: string) {
+    return this.schools.verifyDomain(id, domainId);
+  }
+
+  @Post(':id/domains/:domainId/retry-routing')
+  retryDomainRouting(@Param('id') id: string, @Param('domainId') domainId: string) {
+    return this.schools.retryDomainRouting(id, domainId);
+  }
 }

@@ -65,15 +65,18 @@ export class RailwayDomainService {
    * clicking "retry" on an already-working school) — checks for an existing
    * match first rather than creating a stray duplicate domain. */
   async provisionDomain(subdomain: string): Promise<{ ok: true; domain: string } | { ok: false; reason: string }> {
+    return this.provisionHostname(`${subdomain}.up.railway.app`);
+  }
+
+  async provisionHostname(targetDomain: string): Promise<{ ok: true; domain: string } | { ok: false; reason: string }> {
     if (!this.configured) {
       this.logger.warn('Railway domain automation is not configured — skipping domain provisioning.');
       return { ok: false, reason: 'Domain automation is not configured on this deployment' };
     }
-    const desiredDomain = `${subdomain}.up.railway.app`;
     try {
-      const existing = await this.findExistingDomain(desiredDomain);
+      const existing = await this.findExistingDomain(targetDomain);
       if (existing) {
-        return { ok: true, domain: desiredDomain };
+        return { ok: true, domain: targetDomain };
       }
       const created = await this.graphql<{ serviceDomainCreate: { id: string } }>(
         'mutation($input: ServiceDomainCreateInput!) { serviceDomainCreate(input: $input) { id } }',
@@ -87,14 +90,14 @@ export class RailwayDomainService {
             serviceDomainId,
             environmentId: this.environmentId,
             serviceId: this.serviceId,
-            domain: desiredDomain,
+            domain: targetDomain,
             targetPort: this.targetPort,
           },
         },
       );
-      return { ok: true, domain: desiredDomain };
+      return { ok: true, domain: targetDomain };
     } catch (err: any) {
-      this.logger.error(`Failed to provision domain for subdomain "${subdomain}": ${err.message}`);
+      this.logger.error(`Failed to provision domain "${targetDomain}": ${err.message}`);
       return { ok: false, reason: err.message || 'Unknown error provisioning domain' };
     }
   }

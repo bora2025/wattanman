@@ -6,6 +6,7 @@ import { AuditService } from '../audit/audit.service';
 import { generatePassword, isValidEmail } from '../common/identity';
 import { PLATFORM_SCHOOL_SUBDOMAIN } from '../tenancy/constants';
 import { RailwayDomainService } from './railway-domain.service';
+import { SchoolDomainService } from '../tenancy/school-domain.service';
 
 const SUBDOMAIN_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const RESERVED_SUBDOMAINS = new Set([PLATFORM_SCHOOL_SUBDOMAIN, 'www', 'api', 'app']);
@@ -28,6 +29,7 @@ export class SchoolsService {
     private jwtService: JwtService,
     private audit: AuditService,
     private railwayDomain: RailwayDomainService,
+    private schoolDomains: SchoolDomainService,
   ) {}
 
   /** Every real school — the platform sentinel row is never a management target. */
@@ -119,11 +121,20 @@ export class SchoolsService {
       return { school, admin };
     });
 
+    await this.schoolDomains.registerManagedDomain(result.school.id, subdomain);
+
     // Best-effort — this deployment has no wildcard DNS, so a school is only
     // actually reachable once a matching Railway domain exists (Phase 18).
     // Never blocks/fails school creation itself: the DB row + first admin
     // account above are the important, already-durable part.
     const domainResult = await this.railwayDomain.provisionDomain(subdomain);
+    if (domainResult.ok === true) {
+      await this.schoolDomains.registerVerifiedDomain(
+        result.school.id,
+        domainResult.domain,
+        'MANAGED',
+      );
+    }
 
     return {
       school: result.school,
@@ -139,7 +150,66 @@ export class SchoolsService {
   async retryDomainProvisioning(id: string) {
     const school = await this.getOne(id);
     const domainResult = await this.railwayDomain.provisionDomain(school.subdomain);
+    if (domainResult.ok === true) {
+      await this.schoolDomains.registerVerifiedDomain(
+        school.id,
+        domainResult.domain,
+        'MANAGED',
+      );
+    }
     return formatDomainResult(domainResult);
+  }
+
+  async listDomains(id: string) {
+    await this.getOne(id);
+    return this.schoolDomains.listForSchool(id);
+  }
+
+  async registerDomain(id: string, hostname: string) {
+    await this.getOne(id);
+    return this.schoolDomains.requestCustomDomain(id, hostname);
+  }
+
+  async verifyDomain(id: string, domainId: string) {
+    await this.getOne(id);
+    const verification = await this.schoolDomains.verifyCustomDomain(id, domainId);
+    if (!verification.verified) return verification;
+
+    const routing = await this.railwayDomain.provisionHostname(
+      verification.domain.hostname,
+    );
+    const domain = await this.schoolDomains.updateRoutingState(
+      id,
+      domainId,
+      routing.ok === true ? { ok: true } : routing,
+    );
+    return {
+      verified: true,
+      routed: routing.ok === true,
+      domain,
+      routingError: routing.ok === true ? null : routing.reason,
+    };
+  }
+
+  async retryDomainRouting(id: string, domainId: string) {
+    await this.getOne(id);
+    const domains = await this.schoolDomains.listForSchool(id);
+    const domain = domains.find((candidate) => candidate.id === domainId);
+    if (!domain) throw new NotFoundException('School domain not found');
+    if (domain.status !== 'VERIFIED') {
+      throw new BadRequestException('Verify domain ownership before routing');
+    }
+    const routing = await this.railwayDomain.provisionHostname(domain.hostname);
+    const updated = await this.schoolDomains.updateRoutingState(
+      id,
+      domainId,
+      routing.ok === true ? { ok: true } : routing,
+    );
+    return {
+      routed: routing.ok === true,
+      domain: updated,
+      routingError: routing.ok === true ? null : routing.reason,
+    };
   }
 
   async update(id: string, data: { name?: string; status?: string }) {
