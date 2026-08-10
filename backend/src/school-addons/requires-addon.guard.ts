@@ -12,14 +12,9 @@ import {
 } from "./requires-addon.decorator";
 
 /**
- * Enforces Phase 7a's paid-addon gate at the API level. No current controller
- * uses this yet — the feature it's meant to protect (e.g. face-recognition
- * attendance) doesn't exist in this codebase — but it's built now so that
- * work has a billing gate to attach to on day one. Unlike RequiresModuleGuard
- * (Phase 7), this can't read off `req.tenantSchool` — SchoolAddon is its own
- * table, not a School column — so it queries `schoolAddon.findFirst`, which
- * PrismaService's tenant-scoping middleware auto-scopes to the current
- * school, same as every other query in the app.
+ * Enforces the installed-extension gate for both built-in and uploaded
+ * modules. The historical decorator name is retained to avoid touching every
+ * controller, but SchoolAddon is no longer consulted.
  */
 @Injectable()
 export class RequiresAddonGuard implements CanActivate {

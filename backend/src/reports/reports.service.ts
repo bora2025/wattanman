@@ -387,8 +387,16 @@ export class ReportsService {
    * and returns a cheap, correctly-shaped empty result instead of 403ing.
    */
   private async isAttendanceEnabled(): Promise<boolean> {
-    const row = await this.prisma.schoolAddon.findFirst({ where: { addonKey: 'ATTENDANCE' } });
-    return !!row?.enabled;
+    const installation = await this.prisma.extensionInstallation.findFirst({
+      where: {
+        enabled: true,
+        installedAt: { not: null },
+        uninstalledAt: null,
+        extension: { key: 'ATTENDANCE', status: 'ACTIVE' },
+        installedVersion: { lifecycleStatus: { in: ['PUBLISHED', 'DEPRECATED'] } },
+      },
+    });
+    return !!installation;
   }
 
   /** Apply attendance format rules: convert accumulated lates/permissions into absences */

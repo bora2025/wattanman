@@ -31,12 +31,11 @@ interface CreateResult {
 interface ModuleListing {
   id: string
   key: string
-  kind: string
+  commercialType: string
+  runtimeType: string
   name: string
   description: string | null
   category: string | null
-  icon: string | null
-  isActive: boolean
 }
 
 function NewSchoolContent() {
@@ -58,9 +57,9 @@ function NewSchoolContent() {
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    apiFetch('/api/platform/addon-directory')
+    apiFetch('/api/platform/extensions')
       .then(res => res.ok ? res.json() : [])
-      .then((data: ModuleListing[]) => setModules((data || []).filter(a => a.kind === 'MODULE' && a.isActive)))
+      .then((data: ModuleListing[]) => setModules((data || []).filter(extension => extension.commercialType === 'MODULE')))
       .catch(() => setModules([]))
   }, [])
 
@@ -211,7 +210,7 @@ function NewSchoolContent() {
                       <label key={m.key} className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer text-sm ${selectedModules.includes(m.key) ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
                         <input type="checkbox" checked={selectedModules.includes(m.key)} onChange={() => toggleModule(m.key)} className="mt-0.5" />
                         <span>
-                          <span className="font-medium text-slate-700 dark:text-slate-200 flex items-center gap-1">{m.icon && <span>{m.icon}</span>}{m.name}</span>
+                          <span className="font-medium text-slate-700 dark:text-slate-200 flex items-center gap-1">{m.name}</span>
                           {m.description && <span className="block text-xs text-slate-400 dark:text-slate-500 mt-0.5">{m.description}</span>}
                         </span>
                       </label>

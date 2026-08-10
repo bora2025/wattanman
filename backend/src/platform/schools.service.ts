@@ -110,7 +110,21 @@ export class SchoolsService {
 
     const requestedKeys = (data.moduleKeys ?? []).filter(Boolean);
     const validModules = requestedKeys.length
-      ? await this.prisma.addonDefinition.findMany({ where: { key: { in: requestedKeys }, kind: 'MODULE', isActive: true } })
+      ? await this.prisma.extension.findMany({
+          where: {
+            key: { in: requestedKeys },
+            commercialType: 'MODULE',
+            status: 'ACTIVE',
+            versions: { some: { lifecycleStatus: 'PUBLISHED' } },
+          },
+          include: {
+            versions: {
+              where: { lifecycleStatus: 'PUBLISHED' },
+              orderBy: { publishedAt: 'desc' },
+              take: 1,
+            },
+          },
+        })
       : [];
 
     const tempPassword = generatePassword(12);
@@ -129,8 +143,21 @@ export class SchoolsService {
         },
       });
       if (validModules.length > 0) {
-        await tx.schoolAddon.createMany({
-          data: validModules.map((m) => ({ schoolId: school.id, addonKey: m.key, enabled: true })),
+        const provisionedAt = new Date();
+        await tx.extensionInstallation.createMany({
+          data: validModules.map((module) => ({
+            schoolId: school.id,
+            extensionId: module.id,
+            installedVersionId: module.versions[0].id,
+            enabled: true,
+            billingStatus: 'ACTIVE',
+            requestedBy: admin.id,
+            requestedAt: provisionedAt,
+            approvedBy: admin.id,
+            approvedAt: provisionedAt,
+            installedBy: admin.id,
+            installedAt: provisionedAt,
+          })),
         });
       }
       return { school, admin };

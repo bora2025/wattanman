@@ -29,20 +29,6 @@ export class ModuleRegistrySeedService implements OnApplicationBootstrap {
       },
     });
     for (const m of MODULE_REGISTRY) {
-      await this.prisma.addonDefinition.upsert({
-        where: { key: m.key },
-        // Don't clobber a platform admin's own edits (name/description/
-        // category/isActive/kind) on every restart — same reasoning the
-        // old script's `update: {}` already had.
-        update: {},
-        create: {
-          key: m.key,
-          kind: "MODULE",
-          name: m.name,
-          description: m.description,
-          category: m.category,
-        },
-      });
       const extension = await this.prisma.extension.upsert({
         where: { key: m.key },
         update: {},
@@ -58,7 +44,6 @@ export class ModuleRegistrySeedService implements OnApplicationBootstrap {
           status: "ACTIVE",
           isListed: true,
           visibility: "LISTED",
-          legacyAddonKey: m.key,
         },
       });
       await this.prisma.extensionVersion.upsert({
