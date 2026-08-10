@@ -10,6 +10,7 @@ Implementation started on 2026-08-10. The first-party extension foundation is co
 - Added explicit managed and shared capability ownership to the core extension registry.
 - Added the dedicated `/extensions/CLASSES/manage` extension route.
 - Kept the full existing class-management interface available through that route.
+- Retired `/admin/classes` as a management entry point; it now redirects to the extension route for backward-compatible bookmarks.
 - Kept student mutations assigned to `STUDENT_PORTAL`.
 - Kept class and roster reads available as shared contracts for attendance, exams, reports, and other dependent extensions.
 - Published the new extension metadata as immutable version `1.1.0` rather than modifying `1.0.0`.

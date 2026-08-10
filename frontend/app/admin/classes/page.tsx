@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense, useMemo } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Sidebar from "../../../components/Sidebar";
 import { adminNav, classAdminNav } from "../../../lib/admin-nav";
 import { apiFetch } from "../../../lib/api";
@@ -254,11 +254,25 @@ const REGISTRATION_STATUS_META: Record<
   },
 };
 
-export default function ManageClassesPage() {
+export function ClassManagementExtensionPage() {
   return (
     <Suspense>
       <ManageClasses />
     </Suspense>
+  );
+}
+
+export default function LegacyManageClassesPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/extensions/CLASSES/manage");
+  }, [router]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">
+      Opening Class Management extension…
+    </div>
   );
 }
 

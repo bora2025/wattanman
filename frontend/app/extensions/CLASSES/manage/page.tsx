@@ -1,1 +1,1 @@
-export { default } from '../../../admin/classes/page'
+export { ClassManagementExtensionPage as default } from '../../../admin/classes/page'
