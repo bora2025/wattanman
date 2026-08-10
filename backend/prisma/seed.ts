@@ -10,14 +10,14 @@ async function main() {
   await prisma.school.upsert({
     where: { subdomain: PLATFORM_SCHOOL_SUBDOMAIN },
     update: {},
-    create: { subdomain: PLATFORM_SCHOOL_SUBDOMAIN, name: 'Wattaman Platform' },
+    create: { subdomain: PLATFORM_SCHOOL_SUBDOMAIN, name: 'Wattaman Platform', storagePrefix: 'schools/platform' },
   });
 
   // Dev/test school with only the base administrator account.
   const school = await prisma.school.upsert({
     where: { subdomain: 'demo' },
     update: {},
-    create: { subdomain: 'demo', name: 'Demo School' },
+    create: { subdomain: 'demo', name: 'Demo School', storagePrefix: 'schools/demo' },
   });
   const schoolId = school.id;
 

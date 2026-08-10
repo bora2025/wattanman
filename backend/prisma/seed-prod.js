@@ -19,13 +19,13 @@ async function seed() {
   await prisma.school.upsert({
     where: { subdomain: PLATFORM_SCHOOL_SUBDOMAIN },
     update: {},
-    create: { subdomain: PLATFORM_SCHOOL_SUBDOMAIN, name: 'Wattaman Platform' },
+    create: { subdomain: PLATFORM_SCHOOL_SUBDOMAIN, name: 'Wattaman Platform', storagePrefix: 'schools/platform' },
   });
 
   const school = await prisma.school.upsert({
     where: { subdomain: SEED_SCHOOL_SUBDOMAIN },
     update: {},
-    create: { subdomain: SEED_SCHOOL_SUBDOMAIN, name: 'Wattaman School' },
+    create: { subdomain: SEED_SCHOOL_SUBDOMAIN, name: 'Wattaman School', storagePrefix: `schools/${SEED_SCHOOL_SUBDOMAIN}` },
   });
   const schoolId = school.id;
 

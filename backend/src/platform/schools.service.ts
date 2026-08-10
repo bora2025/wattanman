@@ -128,7 +128,13 @@ export class SchoolsService {
     const hashed = await bcrypt.hash(tempPassword, 12);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const school = await tx.school.create({ data: { name, subdomain, status: 'PROVISIONING' } });
+      const createdSchool = await tx.school.create({
+        data: { name, subdomain, status: 'PROVISIONING', storagePrefix: `pending:${requestKey}` },
+      });
+      const school = await tx.school.update({
+        where: { id: createdSchool.id },
+        data: { storagePrefix: `schools/${createdSchool.id}` },
+      });
       const admin = await tx.user.create({
         data: {
           schoolId: school.id,
@@ -142,6 +148,7 @@ export class SchoolsService {
       const provisioning = await tx.schoolProvisioningJob.create({
         data: { schoolId: school.id, requestKey, status: 'RUNNING', attempts: 1, startedAt: new Date() },
       });
+      await tx.siteSetting.create({ data: { schoolId: school.id } });
       return { school, admin, provisioning };
     });
 

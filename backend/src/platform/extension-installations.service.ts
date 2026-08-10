@@ -297,7 +297,7 @@ export class ExtensionInstallationsService {
     if (existing?.enabled)
       throw new ConflictException("Extension is already active for this school");
     const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const storageKey = `billing/extensions/${schoolId}/${extensionId}/${Date.now()}-${safeName}`;
+    const storageKey = `schools/${schoolId}/billing/extensions/${extensionId}/${Date.now()}-${safeName}`;
     await this.storage.putPrivate(storageKey, file.buffer, file.mimetype);
     const requestData = {
       installedVersionId: extension.versions[0].id,

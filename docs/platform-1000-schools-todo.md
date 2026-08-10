@@ -91,7 +91,7 @@ An item is complete only when implementation, automated tests, documentation, de
 - [x] Add school lifecycle states: `PROVISIONING`, `ACTIVE`, `SUSPENDED`, `DELETION_SCHEDULED`, `DELETED`.
 - [x] Add idempotent provisioning job model.
 - [x] Create the school and first administrator transactionally.
-- [ ] Create only base settings and storage prefixes.
+- [x] Create only base settings and storage prefixes.
 - [x] Do not create module or extension installation rows by default.
 - [x] Add provisioning retry and failure recovery.
 - [x] Add provisioning status UI for platform administrators.

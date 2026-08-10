@@ -80,13 +80,13 @@ describe('Extension marketplace lifecycle E2E', () => {
 
     const password = await bcrypt.hash(PASSWORD, 10);
     const platformSchool = await prisma.school.upsert({
-      where: { subdomain: 'platform' }, update: {}, create: { subdomain: 'platform', name: 'Wattaman Platform' },
+      where: { subdomain: 'platform' }, update: {}, create: { subdomain: 'platform', name: 'Wattaman Platform', storagePrefix: 'schools/platform' },
     });
     platformSchoolId = platformSchool.id;
     const platformAdmin = await prisma.user.create({
       data: { schoolId: platformSchool.id, email: `${TEST_PREFIX}@platform.test`, password, name: 'Lifecycle Publisher', role: 'PLATFORM_ADMIN' },
     });
-    const school = await prisma.school.create({ data: { subdomain: TEST_PREFIX, name: 'Lifecycle School' } });
+    const school = await prisma.school.create({ data: { subdomain: TEST_PREFIX, name: 'Lifecycle School', storagePrefix: `schools/${TEST_PREFIX}` } });
     schoolId = school.id;
     await prisma.user.create({ data: { schoolId: school.id, email: `${TEST_PREFIX}@school.test`, password, name: 'School Admin', role: 'ADMIN' } });
     const publisher = await prisma.extensionPublisher.upsert({

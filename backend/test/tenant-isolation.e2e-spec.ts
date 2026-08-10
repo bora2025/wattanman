@@ -75,8 +75,8 @@ const state: {
 
 describe('Phase 4d: Multi-Tenant Isolation', () => {
   beforeAll(async () => {
-    const schoolA = await prisma.school.create({ data: { subdomain: SCHOOL_A_SUBDOMAIN, name: 'E2E Isolation School A' } });
-    const schoolB = await prisma.school.create({ data: { subdomain: SCHOOL_B_SUBDOMAIN, name: 'E2E Isolation School B' } });
+    const schoolA = await prisma.school.create({ data: { subdomain: SCHOOL_A_SUBDOMAIN, name: 'E2E Isolation School A', storagePrefix: `schools/${SCHOOL_A_SUBDOMAIN}` } });
+    const schoolB = await prisma.school.create({ data: { subdomain: SCHOOL_B_SUBDOMAIN, name: 'E2E Isolation School B', storagePrefix: `schools/${SCHOOL_B_SUBDOMAIN}` } });
     state.schoolAId = schoolA.id;
     state.schoolBId = schoolB.id;
     await prisma.schoolAddon.createMany({

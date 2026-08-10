@@ -32,6 +32,7 @@ model School {
   // cross-tenant leak vector.
   name         String
   status       String   @default("PROVISIONING") // PROVISIONING | ACTIVE | SUSPENDED | DELETION_SCHEDULED | DELETED
+  storagePrefix String  @unique
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

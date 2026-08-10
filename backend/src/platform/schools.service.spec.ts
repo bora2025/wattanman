@@ -8,6 +8,7 @@ describe('SchoolsService provisioning', () => {
     school: { create: jest.fn(), update: jest.fn() },
     user: { create: jest.fn() },
     schoolProvisioningJob: { create: jest.fn(), update: jest.fn() },
+    siteSetting: { create: jest.fn() },
   };
   const prisma = {
     school: { findUnique: jest.fn() },
@@ -22,7 +23,8 @@ describe('SchoolsService provisioning', () => {
     jest.clearAllMocks();
     prisma.school.findUnique.mockResolvedValue(null);
     prisma.schoolProvisioningJob.findUnique.mockResolvedValue(null);
-    tx.school.create.mockResolvedValue(school);
+    tx.school.create.mockResolvedValue({ ...school, storagePrefix: `pending:${job.requestKey}` });
+    tx.school.update.mockResolvedValue({ ...school, storagePrefix: `schools/${school.id}` });
     tx.user.create.mockResolvedValue(admin);
     tx.schoolProvisioningJob.create.mockResolvedValue(job);
     tx.school.update.mockResolvedValue({ ...school, status: 'ACTIVE' });
@@ -39,10 +41,12 @@ describe('SchoolsService provisioning', () => {
     }, job.requestKey);
 
     expect(tx.school.create).toHaveBeenCalledWith({ data: expect.objectContaining({ status: 'PROVISIONING' }) });
+    expect(tx.school.update).toHaveBeenCalledWith({ where: { id: school.id }, data: { storagePrefix: `schools/${school.id}` } });
     expect(tx.user.create).toHaveBeenCalledWith({ data: expect.objectContaining({ schoolId: school.id, role: 'ADMIN' }) });
     expect(tx.schoolProvisioningJob.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ schoolId: school.id, requestKey: job.requestKey, status: 'RUNNING' }),
     });
+    expect(tx.siteSetting.create).toHaveBeenCalledWith({ data: { schoolId: school.id } });
     expect(result.school.status).toBe('ACTIVE');
     expect(result.domainProvisioned).toBe(true);
   });
