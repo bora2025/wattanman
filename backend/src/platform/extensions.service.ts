@@ -870,6 +870,7 @@ export class ExtensionsService {
             enabled: true,
             installedAt: true,
             uninstalledAt: true,
+            invoiceStorageKey: true,
           },
         },
         _count: { select: { records: true } },
@@ -877,9 +878,9 @@ export class ExtensionsService {
     });
     if (!existing) throw new NotFoundException("Extension not found");
     await this.requirePublisherRole(existing.publisherId, actor, "MANAGE");
-    if (existing.legacyAddonKey) {
+    if (existing.runtimeType === "CORE_MODULE") {
       throw new ConflictException(
-        "A legacy-linked extension cannot be deleted",
+        "Core platform modules cannot be permanently deleted",
       );
     }
     const stillInstalled = existing.installations.filter(
@@ -898,8 +899,19 @@ export class ExtensionsService {
       if (version.packageStorageKey) storageKeys.add(version.packageStorageKey);
       for (const asset of version.assets) storageKeys.add(asset.storageKey);
     }
-    for (const storageKey of storageKeys)
-      await this.storage.deletePrivate(storageKey);
+    const invoiceStorageKeys = existing.installations
+      .map((installation: any) => installation.invoiceStorageKey)
+      .filter(Boolean) as string[];
+    for (const storageKey of invoiceStorageKeys) storageKeys.add(storageKey);
+    let deletedStorageObjects = 0;
+    for (const storageKey of storageKeys) {
+      try {
+        await this.storage.deletePrivate(storageKey);
+        deletedStorageObjects += 1;
+      } catch {
+        // Database cleanup must not be blocked by an already-missing R2 object.
+      }
+    }
 
     const versionIds = existing.versions.map((version) => version.id);
     await this.prisma.$transaction(async (transaction) => {
@@ -918,6 +930,14 @@ export class ExtensionsService {
       await transaction.extensionInstallation.deleteMany({
         where: { extensionId },
       });
+      if (existing.legacyAddonKey) {
+        await transaction.schoolAddon.deleteMany({
+          where: { addonKey: existing.legacyAddonKey },
+        });
+        await transaction.addonDefinition.deleteMany({
+          where: { key: existing.legacyAddonKey },
+        });
+      }
       await transaction.extension.delete({ where: { id: extensionId } });
     });
     await this.log(actor, "DELETE", "EXTENSION", extensionId, existing.name, {
@@ -934,7 +954,7 @@ export class ExtensionsService {
         deletedVersions: existing.versions.length,
         deletedInstallations: existing.installations.length,
         deletedRecords: existing._count.records,
-        deletedStorageObjects: storageKeys.size,
+        deletedStorageObjects,
       },
     });
     return {
@@ -943,7 +963,7 @@ export class ExtensionsService {
       versions: existing.versions.length,
       installations: existing.installations.length,
       records: existing._count.records,
-      storageObjects: storageKeys.size,
+      storageObjects: deletedStorageObjects,
     };
   }
 
