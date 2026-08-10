@@ -728,14 +728,19 @@ function ExtensionCard({
   }
 
   return (
-    <div className="card p-5 space-y-4">
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-indigo-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-indigo-700">
+      <div className="h-1.5 bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400" />
+      <div className="p-5 space-y-4">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="flex min-w-0 gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-blue-500 font-bold text-white shadow-sm">{extension.name.slice(0, 2).toUpperCase()}</div>
+          <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="font-bold text-slate-800 dark:text-slate-100">
               {extension.name}
             </h2>
             <code className="text-[10px] text-slate-400">{extension.key}</code>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${extension.visibility === "LISTED" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300" : extension.visibility === "PRIVATE" ? "bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{extension.visibility}</span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {extension.runtimeType} · {extension.commercialType} ·{" "}
@@ -743,6 +748,7 @@ function ExtensionCard({
             {extension.versions.length === 1 ? "" : "s"}
             {extension.price != null ? ` · $${extension.price}${extension.priceNote ? ` ${extension.priceNote}` : ""}` : " · Free"}
           </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <button
@@ -865,7 +871,8 @@ function ExtensionCard({
           </div>
         </>
       )}
-    </div>
+      </div>
+    </article>
   );
 }
 
@@ -1046,8 +1053,10 @@ function InstallationCard({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-start justify-between gap-4 flex-wrap">
-      <div>
+    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 flex items-start justify-between gap-4 flex-wrap">
+      <div className="flex gap-3">
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-bold text-white ${installation.enabled ? "bg-emerald-500" : "bg-slate-500"}`}>{installation.extension.name.slice(0, 2).toUpperCase()}</div>
+        <div>
         <p className="font-semibold text-slate-800 dark:text-slate-100">
           {installation.extension.name}{" "}
           <span className="text-slate-400 font-normal">for</span>{" "}
@@ -1075,6 +1084,7 @@ function InstallationCard({
         {error && (
           <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
         )}
+        </div>
       </div>
       <div className="flex gap-2 flex-wrap">
         {installation.extension.price != null && installation.extension.price > 0 && (
@@ -1204,7 +1214,7 @@ function InstallationCard({
           ))}
         </div>
       )}
-    </div>
+    </article>
   );
 }
 
@@ -1229,6 +1239,7 @@ function ExtensionsContent() {
   const [catalogSearch, setCatalogSearch] = useState("");
   const [releaseFilter, setReleaseFilter] = useState("ALL");
   const [installationFilter, setInstallationFilter] = useState("ACTIVE");
+  const [showCreate, setShowCreate] = useState(false);
 
   const filteredExtensions = extensions.filter((extension) => {
     const matchesSearch =
@@ -1422,17 +1433,13 @@ function ExtensionsContent() {
       />
       <div className="page-content">
         <div className="h-14 lg:hidden" />
-        <div className="page-header">
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-            Extensions
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Internal package quarantine, validation, review, and publication
-            control plane.
-          </p>
+        <div className="page-header flex flex-wrap items-center justify-between gap-4">
+          <div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">Platform control center</p><h1 className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">Extensions</h1><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Publish marketplace content, manage school installations, and monitor extension health.</p></div>
+          {activeView === "catalog" && <button type="button" className="btn-primary" onClick={() => setShowCreate(value => !value)}>{showCreate ? "Close creator" : "+ New extension"}</button>}
         </div>
         <div className="page-body space-y-5">
-          <div className="sticky top-0 z-20 -mx-1 rounded-xl border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><div className="card p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Catalog</p><p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{extensions.length}</p><p className="text-xs text-slate-500">Total extensions</p></div><div className="card p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Published</p><p className="mt-2 text-3xl font-bold text-emerald-600">{extensions.filter(item => item.versions.some(version => version.lifecycleStatus === "PUBLISHED")).length}</p><p className="text-xs text-slate-500">Visible releases</p></div><div className="card p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Active schools</p><p className="mt-2 text-3xl font-bold text-blue-600">{installations.filter(item => item.enabled).length}</p><p className="text-xs text-slate-500">Enabled installations</p></div><div className="card p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Needs attention</p><p className="mt-2 text-3xl font-bold text-amber-600">{alerts.filter(item => item.status !== "RESOLVED").length}</p><p className="text-xs text-slate-500">Open operational alerts</p></div></div>
+          <div className="sticky top-0 z-20 -mx-1 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
@@ -1449,7 +1456,7 @@ function ExtensionsContent() {
                   key={value}
                   type="button"
                   onClick={() => setActiveView(value)}
-                  className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${activeView === value ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+                  className={`rounded-xl px-3 py-3 text-sm font-semibold transition ${activeView === value ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
                 >
                   {label}{" "}
                   <span className="ml-1 text-xs opacity-70">{count}</span>
@@ -1765,7 +1772,7 @@ function ExtensionsContent() {
           )}
           {activeView === "catalog" && (
             <>
-              <div className="card p-4 grid gap-3 md:grid-cols-[1fr_220px]">
+              <div className="card grid gap-3 p-4 md:grid-cols-[1fr_220px]">
                 <label className="text-xs font-medium text-slate-500">
                   Search catalog
                   <input
@@ -1795,9 +1802,9 @@ function ExtensionsContent() {
                   </select>
                 </label>
               </div>
-              <form
+              {showCreate && <form
                 onSubmit={createExtension}
-                className="card p-5 grid md:grid-cols-5 gap-3 items-end"
+                className="rounded-2xl border border-indigo-200 bg-indigo-50/60 p-5 shadow-sm dark:border-indigo-900 dark:bg-indigo-950/20 grid md:grid-cols-5 gap-3 items-end"
               >
                 <label className="text-xs text-slate-600 dark:text-slate-300">
                   Key
@@ -1856,7 +1863,7 @@ function ExtensionsContent() {
                   </select>
                 </label>
                 <button className="btn-primary">Create extension</button>
-              </form>
+              </form>}
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
                   {error}
@@ -1865,13 +1872,13 @@ function ExtensionsContent() {
               {loading ? (
                 <p className="text-sm text-slate-400">Loading extensions…</p>
               ) : (
-                filteredExtensions.map((extension) => (
+                <div className="space-y-4">{filteredExtensions.map((extension) => (
                   <ExtensionCard
                     key={extension.id}
                     extension={extension}
                     reload={load}
                   />
-                ))
+                ))}</div>
               )}
               {!loading && filteredExtensions.length === 0 && (
                 <div className="card p-10 text-center text-sm text-slate-400">
@@ -1882,7 +1889,7 @@ function ExtensionsContent() {
           )}
           {activeView === "installations" && (
             <>
-              <div className="pt-4">
+              <div>
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                   School installation requests
                 </h2>
@@ -1909,7 +1916,7 @@ function ExtensionsContent() {
                     </button>
                   ))}
                 </div>
-                <div className="card p-4 space-y-3">
+                <div className="space-y-3">
                   {filteredInstallations.length ? (
                     filteredInstallations.map((installation) => (
                       <InstallationCard
