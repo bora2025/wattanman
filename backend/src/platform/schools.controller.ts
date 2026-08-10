@@ -32,7 +32,7 @@ export class SchoolsController {
   }
 
   @Post()
-  create(@Body() body: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string; moduleKeys?: string[] }) {
+  create(@Body() body: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string }) {
     return this.schools.create(body);
   }
 

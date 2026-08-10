@@ -8,12 +8,6 @@ import { SchoolsController } from './schools.controller';
 import { SchoolsService } from './schools.service';
 import { PlatformAdminsController } from './platform-admins.controller';
 import { PlatformAdminsService } from './platform-admins.service';
-import { SchoolAddonsController } from './school-addons.controller';
-import { SchoolAddonsService } from './school-addons.service';
-import { AddonDirectoryController } from './addon-directory.controller';
-import { AddonDirectoryService } from './addon-directory.service';
-import { AddonRequestsController } from './addon-requests.controller';
-import { AddonRequestsService } from './addon-requests.service';
 import { SchoolMetricsController } from './school-metrics.controller';
 import { RailwayDomainService } from './railway-domain.service';
 import { ExtensionsController } from './extensions.controller';
@@ -43,7 +37,7 @@ import { ExtensionValidationRunnerService } from './extension-validation-runner.
       signOptions: { expiresIn: '8h' },
     }),
   ],
-  controllers: [SchoolsController, PlatformAdminsController, SchoolAddonsController, AddonDirectoryController, AddonRequestsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController],
-  providers: [SchoolsService, PlatformAdminsService, SchoolAddonsService, AddonDirectoryService, AddonRequestsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, ExtensionInstallationsService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionPlatformGuard, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
+  controllers: [SchoolsController, PlatformAdminsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController],
+  providers: [SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, ExtensionInstallationsService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionPlatformGuard, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
 })
 export class PlatformModule {}

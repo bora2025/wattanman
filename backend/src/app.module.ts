@@ -3,7 +3,6 @@ import { APP_GUARD } from '@nestjs/core';
 import { TenantHostMiddleware } from './tenancy/tenant-host.middleware';
 import { DatabaseModule } from './database/database.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { ModuleRegistrySeedService } from './module-registry/module-registry-seed.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -37,8 +36,6 @@ import { PlatformModule } from './platform/platform.module';
     TenantHostMiddleware,
     // Apply rate limiting globally to all endpoints
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    // Keeps the internal registry cleanup idempotent after feature removal.
-    ModuleRegistrySeedService,
   ],
 })
 export class AppModule implements NestModule {

@@ -77,7 +77,6 @@ export const TENANT_SCOPED_MODELS = new Set<string>([
   'FeeSettings',
   'SiteSetting',
   'Post',
-  'SchoolAddon',
   'ExtensionInstallation',
   'ExtensionPilotFeedback',
   'ExtensionRecord',

@@ -2,7 +2,7 @@
   "name": "wattaman-mono",
   "version": "1.0.0",
   "private": true,
-  "description": "A modernized school attendance system using QR codes.",
+  "description": "An extension-first multi-tenant school platform.",
   "scripts": {
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",

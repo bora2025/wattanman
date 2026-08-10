@@ -6,7 +6,6 @@ import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
 import { useAccentColor } from '../../../lib/appearance/accentColor'
-import AppearanceTab, { ThemeListing } from '../../../components/appearance/AppearanceTab'
 
 /* ─── Types ─────────────────────────────────────────────── */
 
@@ -487,7 +486,7 @@ function SlideCard({
 
 /* ─── Main page ──────────────────────────────────────────── */
 
-type Tab = 'dashboard' | 'header' | 'hero' | 'footer' | 'theme'
+type Tab = 'header' | 'hero' | 'footer' | 'theme'
 
 function AppearanceContent() {
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT)
@@ -496,21 +495,6 @@ function AppearanceContent() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('hero')
-
-  // Dashboard & Themes tab (merged in from the old Add-ons page "Appearance"
-  // tab) — a separate personal-preference + marketplace surface from the
-  // public-site settings the rest of this page edits, so it gets its own
-  // fetch/state rather than folding into `settings`.
-  const [themes, setThemes] = useState<ThemeListing[]>([])
-  useEffect(() => {
-    apiFetch('/api/school-addons/directory')
-      .then(async (res) => (res.ok ? await res.json() : []))
-      .then((addons: ThemeListing[]) => setThemes(addons.filter((a: any) => a.kind === 'THEME')))
-      .catch(() => {})
-  }, [])
-  function handleThemeChanged(updated: Partial<ThemeListing> & { addonKey: string }) {
-    setThemes((prev) => prev.map((t) => (t.addonKey === updated.addonKey ? { ...t, ...updated } : t)))
-  }
 
   /* Load settings on mount */
   useEffect(() => {
@@ -577,15 +561,6 @@ function AppearanceContent() {
   /* Tabs */
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     {
-      id: 'dashboard',
-      label: 'Dashboard & Themes',
-      icon: (
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3v18M3 9h18M3 15h6M15 15h6"/>
-        </svg>
-      ),
-    },
-    {
       id: 'hero',
       label: 'Hero Banner',
       icon: (
@@ -637,9 +612,8 @@ function AppearanceContent() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Appearance</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Your dashboard, ready-made themes, and the public-facing web frontend</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Manage the school website, branding, and public presentation.</p>
         </div>
-        {activeTab !== 'dashboard' && (
           <div className="flex items-center gap-3">
             {saved && (
               <span className="flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
@@ -665,7 +639,6 @@ function AppearanceContent() {
               {saving ? 'Saving…' : 'Save Changes'}
             </button>
           </div>
-        )}
       </div>
 
       {/* Tab bar */}
@@ -685,11 +658,6 @@ function AppearanceContent() {
           </button>
         ))}
       </div>
-
-      {/* ── Dashboard & Themes (merged in from the old Add-ons "Appearance" tab) ── */}
-      {activeTab === 'dashboard' && (
-        <AppearanceTab themes={themes} onThemeChanged={handleThemeChanged} />
-      )}
 
       {/* ── Hero Banner ── */}
       {activeTab === 'hero' && (
@@ -979,9 +947,7 @@ function AppearanceContent() {
         </div>
       )}
 
-      {/* Bottom save bar — not shown on Dashboard & Themes, which has no
-          `settings` to save (every action there self-saves immediately). */}
-      {activeTab !== 'dashboard' && (
+      {/* Bottom save bar */}
       <div className="sticky bottom-0 bg-white/90 backdrop-blur border-t border-gray-200 dark:border-slate-700 -mx-6 px-6 py-4 flex items-center justify-between">
         <p className="text-sm text-gray-500 dark:text-slate-400">
           Changes are applied site-wide after saving.
@@ -1007,7 +973,6 @@ function AppearanceContent() {
           </button>
         </div>
       </div>
-      )}
     </div>
   )
 }

@@ -10,7 +10,6 @@ export const adminNav: NavItem[] = [
   { label: 'nav.settings', href: '/admin/settings', icon: 'settings' },
   { label: 'Appearance', href: '/admin/appearance', icon: 'paint', section: 'Appearance' },
   { label: 'Posts', href: '/admin/appearance/posts', icon: 'edit' },
-  { label: 'About', href: '/admin/appearance/about', icon: 'users' },
 ]
 
 export const classAdminNav: NavItem[] = []

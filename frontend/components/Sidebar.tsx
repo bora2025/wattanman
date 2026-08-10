@@ -6,8 +6,6 @@ import { useState, useEffect, useRef } from "react";
 import { useLanguage } from "../lib/i18n";
 import { useTheme } from "../lib/appearance/theme";
 import { iconMap, IconGlobe, IconLogout, IconSun, IconMoon } from "./Icons";
-import InstallAppButton from "./InstallAppButton";
-import { ModuleKey } from "../lib/moduleRegistry";
 
 /** Renders an icon: if `key` maps to an SVG component, uses it; otherwise falls back to text/emoji. */
 function NavIcon({
@@ -37,14 +35,6 @@ export interface NavItem {
   icon: string;
   /** If set, renders a section header above this item */
   section?: string;
-  /** If set, displays an unread badge driven by /api/<key>/unread-count. */
-  badgeKey?:
-    | "messages"
-    | "announcements"
-    | "class-registrations"
-    | "addon-requests";
-  /** If set, this item is only shown when the corresponding extension installation is enabled. */
-  moduleKey?: ModuleKey;
 }
 
 interface SidebarProps {
@@ -117,79 +107,15 @@ function pickBottomTabs(navItems: NavItem[], bottomTabs?: string[]): NavItem[] {
       .filter(Boolean) as NavItem[];
   }
 
-  // UX-specific fixed tab order where camera stays centered.
-  const hasTeacherRoot = navItems.some((n) => n.href === "/teacher");
-  const hasStudentRoot = navItems.some((n) => n.href === "/student");
-  const hasParentRoot = navItems.some((n) => n.href === "/parent");
-
-  if (hasTeacherRoot) {
-    const teacherOrder = [
-      "/teacher",
-      "/teacher/classes",
-      "/teacher/camera",
-      "/teacher/messages",
-    ];
-    const teacherTabs = teacherOrder
-      .map((href) => navItems.find((n) => n.href === href))
-      .filter(Boolean) as NavItem[];
-    if (teacherTabs.length === 4) {
-      return [
-        ...teacherTabs,
-        { label: "common.more", href: "__more__", icon: "settings" },
-      ];
-    }
-  }
-
-  if (hasStudentRoot) {
-    const studentOrder = [
-      "/student",
-      "/student/assignments",
-      "/student/scores",
-      "/student/messages",
-    ];
-    const studentTabs = studentOrder
-      .map((href) => navItems.find((n) => n.href === href))
-      .filter(Boolean) as NavItem[];
-    if (studentTabs.length === 4) {
-      return [
-        ...studentTabs,
-        { label: "common.more", href: "__more__", icon: "settings" },
-      ];
-    }
-  }
-
-  if (hasParentRoot) {
-    const parentOrder = [
-      "/parent",
-      "/parent/attendance",
-      "/parent/grades",
-      "/parent/messages",
-    ];
-    const parentTabs = parentOrder
-      .map((href) => navItems.find((n) => n.href === href))
-      .filter(Boolean) as NavItem[];
-    if (parentTabs.length === 4) {
-      return [
-        ...parentTabs,
-        { label: "common.more", href: "__more__", icon: "settings" },
-      ];
-    }
-  }
-
-  // Admin falls through to the generic auto-pick below (no fixed 4-tab order).
-
   // Auto-pick: first item (dashboard) + up to 3 most important + last (settings)
   if (navItems.length <= 5) return navItems;
   const picked = [navItems[0]];
   // Find scan/attendance, reports, classes/users
   const priorities = [
-    "camera",
-    "scan",
-    "reports",
-    "classes",
     "users",
     "search",
-    "attendance",
+    "extensions",
+    "settings",
   ];
   for (const p of priorities) {
     if (picked.length >= 4) break;
@@ -258,141 +184,11 @@ export default function Sidebar({
     }
   }, [pathname]);
 
-  // Phase 9 module toggles: opt-IN, not opt-out — a moduleKey-tagged nav item
-  // only shows if this school explicitly has it enabled (modules now live in
-  // the same SchoolAddon table as paid add-ons, see the multi-tenant plan's
-  // Phase 9). Fetched once (not polled — a platform admin enabling a module
-  // mid-session is rare enough that a page refresh picking it up is fine),
-  // and only fires the request at all if some item in this nav list actually
-  // uses moduleKey — most role dashboards (teacher/student/etc.) never do, so
-  // they pay zero extra cost.
-  const needsModuleCheck = effectiveNavItems.some((n) => n.moduleKey);
-  const [enabledModules, setEnabledModules] = useState<string[]>([]);
-  useEffect(() => {
-    if (!needsModuleCheck) return;
-    let active = true;
-    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "";
-    fetch(`${apiBase}/api/extensions/enabled`, { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (active && data) setEnabledModules(data.enabled ?? []);
-      })
-      .catch(() => {
-        /* silent — worst case, an enabled module's nav item stays hidden until refresh */
-      });
-    return () => {
-      active = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [needsModuleCheck]);
-  const visibleNavItems = needsModuleCheck
-    ? effectiveNavItems.filter(
-        (n) => !n.moduleKey || enabledModules.includes(n.moduleKey),
-      )
-    : effectiveNavItems;
+  const visibleNavItems = effectiveNavItems;
 
   const tabs = pickBottomTabs(visibleNavItems, bottomTabs);
   const hasMore = tabs.some((t) => t.href === "__more__");
 
-  // Unread counts for badge-bearing nav items. Lightweight, polls every 30s.
-  const needMessages = navItems.some((n) => n.badgeKey === "messages");
-  const needAnnouncements = navItems.some(
-    (n) => n.badgeKey === "announcements",
-  );
-  const needClassRegistrations = navItems.some(
-    (n) => n.badgeKey === "class-registrations",
-  );
-  const needAddonRequests = navItems.some(
-    (n) => n.badgeKey === "addon-requests",
-  );
-  const [unread, setUnread] = useState<{
-    messages: number;
-    announcements: number;
-    "class-registrations": number;
-    "addon-requests": number;
-  }>({
-    messages: 0,
-    announcements: 0,
-    "class-registrations": 0,
-    "addon-requests": 0,
-  });
-  useEffect(() => {
-    let active = true;
-    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "";
-    const tick = async () => {
-      try {
-        const reqs: Promise<Response>[] = [];
-        if (needMessages)
-          reqs.push(
-            fetch(`${apiBase}/api/messages/unread-count`, {
-              credentials: "include",
-            }),
-          );
-        if (needAnnouncements)
-          reqs.push(
-            fetch(`${apiBase}/api/announcements/unread-count`, {
-              credentials: "include",
-            }),
-          );
-        if (needClassRegistrations)
-          reqs.push(
-            fetch(`${apiBase}/api/class-registrations/unread-count`, {
-              credentials: "include",
-            }),
-          );
-        if (needAddonRequests)
-          reqs.push(
-            fetch(`${apiBase}/api/platform/addon-requests/count`, {
-              credentials: "include",
-            }),
-          );
-        const results = await Promise.all(reqs);
-        let i = 0;
-        let next = { ...unread };
-        if (needMessages) {
-          const r = results[i++];
-          if (r.ok) next.messages = (await r.json()).count ?? 0;
-        }
-        if (needAnnouncements) {
-          const r = results[i++];
-          if (r.ok) next.announcements = (await r.json()).count ?? 0;
-        }
-        if (needClassRegistrations) {
-          const r = results[i++];
-          if (r.ok) next["class-registrations"] = (await r.json()).count ?? 0;
-        }
-        if (needAddonRequests) {
-          const r = results[i++];
-          if (r.ok) next["addon-requests"] = (await r.json()).count ?? 0;
-        }
-        if (active) setUnread(next);
-      } catch {
-        /* silent */
-      }
-    };
-    if (
-      needMessages ||
-      needAnnouncements ||
-      needClassRegistrations ||
-      needAddonRequests
-    ) {
-      tick();
-      const id = setInterval(tick, 30_000);
-      return () => {
-        active = false;
-        clearInterval(id);
-      };
-    }
-    return () => {
-      active = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    needMessages,
-    needAnnouncements,
-    needClassRegistrations,
-    needAddonRequests,
-  ]);
 
   const handleLogout = async () => {
     try {
@@ -432,7 +228,6 @@ export default function Sidebar({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <InstallAppButton variant="compact" />
             <button
               onClick={toggleTheme}
               className="w-10 h-10 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur flex items-center justify-center shadow-sm ring-1 ring-white/70 dark:ring-slate-600/70"
@@ -493,7 +288,6 @@ export default function Sidebar({
             }
             const isActive = pathname === tab.href;
             const isCameraCenter = tabs.length === 5 && idx === 2;
-            const badgeCount = tab.badgeKey ? unread[tab.badgeKey] : 0;
             return (
               <Link
                 key={tab.href}
@@ -505,14 +299,7 @@ export default function Sidebar({
                     : "var(--color-text-secondary)",
                 }}
               >
-                <span className="relative inline-flex">
-                  <NavIcon icon={tab.icon} size={22} />
-                  {badgeCount > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                      {badgeCount > 9 ? "9+" : badgeCount}
-                    </span>
-                  )}
-                </span>
+                <NavIcon icon={tab.icon} size={22} />
                 {isActive && (
                   <span
                     className="mobile-tab-indicator"
@@ -633,9 +420,6 @@ export default function Sidebar({
                 })}
             </nav>
             <div className="px-3 pb-4 space-y-0.5">
-              <div className="px-1 pb-2">
-                <InstallAppButton variant="row" />
-              </div>
               <Link
                 href="/"
                 onClick={() => {
@@ -767,8 +551,6 @@ export default function Sidebar({
             )?.href;
             const isChild = !!parentHref;
 
-            const badgeCount = item.badgeKey ? unread[item.badgeKey] : 0;
-
             return (
               <div key={item.href}>
                 {sidebarOpen && item.section && (
@@ -808,28 +590,16 @@ export default function Sidebar({
                   {isChild && sidebarOpen && (
                     <span className="absolute left-3 top-0 bottom-0 w-px bg-white/20" />
                   )}
-                  <span className="relative inline-flex flex-none">
-                    <NavIcon
-                      icon={item.icon}
-                      size={isChild ? 15 : 17}
-                      className={isActive ? "opacity-100" : "opacity-80"}
-                    />
-                    {badgeCount > 0 && !sidebarOpen && (
-                      <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
-                        {badgeCount > 9 ? "9+" : badgeCount}
-                      </span>
-                    )}
-                  </span>
+                  <NavIcon
+                    icon={item.icon}
+                    size={isChild ? 15 : 17}
+                    className={isActive ? "opacity-100" : "opacity-80"}
+                  />
                   {sidebarOpen && (
                     <span
                       className={`truncate flex-1 ${isChild ? "text-[13px]" : ""}`}
                     >
                       {t(item.label)}
-                    </span>
-                  )}
-                  {sidebarOpen && badgeCount > 0 && (
-                    <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold">
-                      {badgeCount > 99 ? "99+" : badgeCount}
                     </span>
                   )}
                   {/* Active dot for collapsed mode */}
@@ -846,10 +616,6 @@ export default function Sidebar({
         <div
           className={`px-2 py-2 border-t border-white/10 flex items-center gap-0.5 ${sidebarOpen ? "justify-center" : "flex-col"}`}
         >
-          <InstallAppButton
-            variant="icon"
-            className={`${colors.text} hover:bg-white/10`}
-          />
           <button
             onClick={toggleTheme}
             title={

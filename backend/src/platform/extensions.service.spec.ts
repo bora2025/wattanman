@@ -706,7 +706,6 @@ describe("ExtensionsService", () => {
       name: "Empty",
       runtimeType: "DECLARATIVE_MODULE",
       publisherId: "publisher-1",
-      legacyAddonKey: null,
       versions: [],
       installations: [],
       _count: { records: 0 },
@@ -731,7 +730,6 @@ describe("ExtensionsService", () => {
       name: "Installed",
       runtimeType: "DECLARATIVE_MODULE",
       publisherId: "publisher-1",
-      legacyAddonKey: null,
       versions: [
         {
           id: "version-1",
@@ -764,7 +762,6 @@ describe("ExtensionsService", () => {
       name: "Purge",
       runtimeType: "THEME",
       publisherId: "publisher-1",
-      legacyAddonKey: null,
       versions: [
         {
           id: "version-1",

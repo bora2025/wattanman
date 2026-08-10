@@ -948,14 +948,6 @@ export class ExtensionsService {
       await transaction.extensionInstallation.deleteMany({
         where: { extensionId },
       });
-      if (existing.legacyAddonKey) {
-        await transaction.schoolAddon.deleteMany({
-          where: { addonKey: existing.legacyAddonKey },
-        });
-        await transaction.addonDefinition.deleteMany({
-          where: { key: existing.legacyAddonKey },
-        });
-      }
       await transaction.extension.delete({ where: { id: extensionId } });
     });
     await this.log(actor, "DELETE", "EXTENSION", extensionId, existing.name, {

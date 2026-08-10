@@ -81,21 +81,14 @@ export class SchoolsService {
     return { ...school, counts: { students, staff, classes } };
   }
 
-  /** Create a school + its first ADMIN account + its selected free modules,
+  /** Create a school and its first ADMIN account,
    * all in one step (the onboarding wizard's final submit). Runs while the
    * caller is on the platform host — mode is 'unscoped' there (see
    * PlatformScopeGuard), so nothing here can rely on ambient tenant context;
    * every schoolId below is explicit.
    *
-   * `moduleKeys` (Phase 9) is opt-in, not opt-out — unlike the old
-   * disabledModules array, a module is only usable if explicitly selected
-   * here (or enabled later via the per-school Modules tab). Invalid/unknown
-   * keys, or keys for a retired or paid (kind: "ADDON") listing, are
-   * silently dropped rather than rejected — this step only ever offers
-   * checkboxes sourced from the live MODULE catalog, so a mismatch here
-   * means the catalog changed between page load and submit, not a client
-   * bug worth failing the whole school creation over. */
-  async create(data: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string; moduleKeys?: string[] }) {
+   * with no feature extensions installed by default. */
+  async create(data: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string }) {
     const name = (data.name || '').trim();
     const subdomain = (data.subdomain || '').trim().toLowerCase();
     const adminName = (data.adminName || '').trim();
@@ -107,25 +100,6 @@ export class SchoolsService {
 
     const availability = await this.checkSubdomainAvailable(subdomain);
     if (!availability.available) throw new ConflictException(availability.reason || 'Subdomain unavailable');
-
-    const requestedKeys = (data.moduleKeys ?? []).filter(Boolean);
-    const validModules = requestedKeys.length
-      ? await this.prisma.extension.findMany({
-          where: {
-            key: { in: requestedKeys },
-            commercialType: 'MODULE',
-            status: 'ACTIVE',
-            versions: { some: { lifecycleStatus: 'PUBLISHED' } },
-          },
-          include: {
-            versions: {
-              where: { lifecycleStatus: 'PUBLISHED' },
-              orderBy: { publishedAt: 'desc' },
-              take: 1,
-            },
-          },
-        })
-      : [];
 
     const tempPassword = generatePassword(12);
     const hashed = await bcrypt.hash(tempPassword, 12);
@@ -142,24 +116,6 @@ export class SchoolsService {
           role: 'ADMIN',
         },
       });
-      if (validModules.length > 0) {
-        const provisionedAt = new Date();
-        await tx.extensionInstallation.createMany({
-          data: validModules.map((module) => ({
-            schoolId: school.id,
-            extensionId: module.id,
-            installedVersionId: module.versions[0].id,
-            enabled: true,
-            billingStatus: 'ACTIVE',
-            requestedBy: admin.id,
-            requestedAt: provisionedAt,
-            approvedBy: admin.id,
-            approvedAt: provisionedAt,
-            installedBy: admin.id,
-            installedAt: provisionedAt,
-          })),
-        });
-      }
       return { school, admin };
     });
 
