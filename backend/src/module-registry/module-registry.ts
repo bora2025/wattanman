@@ -39,55 +39,8 @@ export interface ModuleRegistryEntry {
   ungatedReason?: string;
 }
 
-export const MODULE_REGISTRY = [
-  { key: 'ATTENDANCE', name: 'Attendance', description: 'Camera/QR gate scanning, manual attendance edits, staff attendance.', category: 'Academics' },
-  {
-    key: 'CLASSES',
-    name: 'Class Management',
-    description: 'Create and organize classes, assign teachers and class administrators, connect study years, configure registration visibility, and link timetables.',
-    category: 'Academics',
-    version: '1.1.0',
-    releaseNotes: 'Complete first-party Class Management extension with explicit core-data capabilities and a dedicated extension route.',
-    managementPath: '/extensions/CLASSES/manage',
-    capabilities: [
-      'classes:create',
-      'classes:update',
-      'classes:delete',
-      'classes:registration_settings',
-      'classes:timetable_link',
-      'teachers:lookup',
-      'class_admins:lookup',
-      'study_years:lookup',
-      'timetables:lookup',
-    ],
-    sharedCapabilities: [
-      'classes:read',
-      'classes:read_assigned',
-      'classes:roster_read',
-    ],
-    dependencies: [],
-  },
-  { key: 'FEES', name: 'Fee Management', description: 'Student fee records, payments, and the finance/budget dashboard.', category: 'Finance' },
-  { key: 'SALARY', name: 'Salary Management', description: 'Staff salary records and payment tracking.', category: 'Finance' },
-  { key: 'EXAMS', name: 'Exams & Scoring', description: 'Exams, score sheets, and grading.', category: 'Academics' },
-  { key: 'CARD_DESIGNER', name: 'ID Card Designer', description: 'Design and print student/staff ID card and certificate templates.', category: 'Tools' },
-  { key: 'BUS', name: 'School Bus', description: 'Bus routes, stops, and live location tracking.', category: 'Transport' },
-  { key: 'STUDENT_PORTAL', name: 'Student Portal', description: 'Add, edit, remove, and bulk-import student accounts.', category: 'People' },
-  { key: 'TEACHER_PORTAL', name: 'Teacher Portal', description: 'Add, edit, and remove teacher accounts.', category: 'People' },
-  { key: 'PARENT_PORTAL', name: 'Parent Portal', description: 'Add, edit, and remove parent accounts.', category: 'People' },
-  { key: 'TIMETABLE', name: 'Timetable', description: 'Build and manage the weekly class schedule — subjects, classrooms, lessons, and entries.', category: 'Academics' },
-  { key: 'PART_TIME_TEACHER', name: 'Part-Time Teacher & Reports', description: 'Manage the roster of scheduled/part-time teachers and their attendance reports.', category: 'People' },
-  { key: 'CHAT', name: 'Communication Hub', description: 'Admin messaging and announcement moderation dashboard.', category: 'Communication' },
-  {
-    key: 'LATEX_EDITOR',
-    name: 'LaTeX Editor',
-    description: 'Standalone LaTeX equation editor and reference tool.',
-    category: 'Tools',
-    backendGated: false,
-    ungatedReason: 'Purely client-side (/tools/latex-editor) — no backend controller calls it, so there is nothing to @RequiresAddon()-gate at the API level. Nav visibility (Sidebar.tsx filtering on moduleKey) is the only enforcement.',
-  },
-] as const satisfies readonly ModuleRegistryEntry[];
+export const MODULE_REGISTRY = [] as const satisfies readonly ModuleRegistryEntry[];
 
 /** A real union of every valid key, generated from the array above — not a
  * hand-maintained enum that can drift from it. */
-export type ModuleKey = (typeof MODULE_REGISTRY)[number]['key'];
+export type ModuleKey = string;

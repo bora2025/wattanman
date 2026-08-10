@@ -30,6 +30,16 @@ const ROLE_DASHBOARD_PREFIXES = [
   '/wattaman',
 ];
 
+const PRESERVED_ADMIN_PREFIXES = [
+  '/admin/extensions',
+  '/admin/backup',
+  '/admin/audit',
+  '/admin/settings',
+  '/admin/appearance',
+  '/admin/users',
+  '/admin/search',
+];
+
 function matchesAnyPrefix(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
@@ -42,6 +52,21 @@ export function middleware(req: NextRequest) {
 
   const isRoleDashboardPath = matchesAnyPrefix(pathname, ROLE_DASHBOARD_PREFIXES);
   const isPlatformPath = pathname === '/platform' || pathname.startsWith('/platform/');
+
+  if (!isPlatformHost && pathname.startsWith('/admin/')) {
+    const preserved = matchesAnyPrefix(pathname, PRESERVED_ADMIN_PREFIXES);
+    if (!preserved) return NextResponse.redirect(new URL('/admin', req.url));
+  }
+
+  if (
+    !isPlatformHost &&
+    (matchesAnyPrefix(pathname, ['/teacher', '/student', '/parent', '/accounter', '/employee', '/reporter', '/wattaman']) ||
+      pathname === '/register' ||
+      pathname.startsWith('/tools/') ||
+      pathname.startsWith('/extensions/CLASSES'))
+  ) {
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
 
   if (isPlatformHost && isRoleDashboardPath) {
     return NextResponse.redirect(new URL('/platform', req.url));
