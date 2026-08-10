@@ -15,7 +15,7 @@ interface SchoolDetail {
   customDomain: string | null;
   status: string;
   createdAt: string;
-  counts: { students: number; staff: number; classes: number };
+  counts: { students: number; staff: number };
 }
 
 interface SchoolDomain {
@@ -362,7 +362,7 @@ function SchoolDetailContent() {
 
                 {tab === "overview" && (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="stat-card">
                         <div className="stat-label">Students</div>
                         <div className="stat-value">
@@ -372,12 +372,6 @@ function SchoolDetailContent() {
                       <div className="stat-card">
                         <div className="stat-label">Staff</div>
                         <div className="stat-value">{school.counts.staff}</div>
-                      </div>
-                      <div className="stat-card">
-                        <div className="stat-label">Classes</div>
-                        <div className="stat-value">
-                          {school.counts.classes}
-                        </div>
                       </div>
                     </div>
                     <div className="card p-5 space-y-2 text-sm">

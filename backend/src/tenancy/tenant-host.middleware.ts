@@ -33,7 +33,13 @@ export class TenantHostMiddleware implements NestMiddleware {
     // header (which would otherwise just describe the proxy's own hostname, not
     // the tenant the browser actually visited). Direct backend callers without a
     // proxy in front (e.g. the mobile app) fall back to the raw Host header.
-    const rawHost = (req.headers['x-tenant-host'] as string) || req.headers.host || '';
+    const trustTenantProxyHeader =
+      process.env.TRUST_TENANT_PROXY_HEADER !== 'false';
+    const forwardedTenantHost = req.headers['x-tenant-host'];
+    const rawHost =
+      trustTenantProxyHeader && typeof forwardedTenantHost === 'string'
+        ? forwardedTenantHost
+        : req.headers.host || '';
     if (!rawHost) {
       throw new NotFoundException('Unable to determine school from request host');
     }

@@ -20,11 +20,28 @@ export function normalizeHostname(rawHost: string): string {
 
 @Injectable()
 export class SchoolDomainService {
+  private readonly cache = new Map<
+    string,
+    { school: any; expiresAt: number }
+  >();
+  private readonly cacheTtlMs = Math.max(
+    1_000,
+    Number(process.env.SCHOOL_DOMAIN_CACHE_TTL_MS || 10_000),
+  );
+  private readonly cacheMaxEntries = Math.max(
+    100,
+    Number(process.env.SCHOOL_DOMAIN_CACHE_MAX_ENTRIES || 5_000),
+  );
+
   constructor(private readonly prisma: PrismaService) {}
 
   async resolve(rawHost: string) {
     const hostname = normalizeHostname(rawHost);
     if (!hostname) return null;
+
+    const cached = this.cache.get(hostname);
+    if (cached && cached.expiresAt > Date.now()) return cached.school;
+    if (cached) this.cache.delete(hostname);
 
     const platformHost = normalizeHostname(process.env.PLATFORM_HOST || '');
     if (platformHost && hostname === platformHost) {
@@ -37,7 +54,10 @@ export class SchoolDomainService {
       where: { hostname, status: 'VERIFIED' },
       include: { school: true },
     });
-    if (domain) return domain.school;
+    if (domain) {
+      this.setCached(hostname, domain.school);
+      return domain.school;
+    }
 
     const rootDomain = normalizeHostname(process.env.SCHOOL_ROOT_DOMAIN || '');
     if (rootDomain && hostname.endsWith(`.${rootDomain}`)) {
@@ -51,7 +71,10 @@ export class SchoolDomainService {
           },
           include: { school: true },
         });
-        if (legacyAlias) return legacyAlias.school;
+        if (legacyAlias) {
+          this.setCached(hostname, legacyAlias.school);
+          return legacyAlias.school;
+        }
       }
     }
 
@@ -61,7 +84,7 @@ export class SchoolDomainService {
   async registerManagedDomain(schoolId: string, subdomain: string) {
     const rootDomain = normalizeHostname(process.env.SCHOOL_ROOT_DOMAIN || '');
     const hostname = rootDomain ? `${subdomain}.${rootDomain}` : subdomain;
-    return this.prisma.schoolDomain.upsert({
+    const domain = await this.prisma.schoolDomain.upsert({
       where: { hostname },
       update: { schoolId, type: rootDomain ? 'MANAGED' : 'LEGACY_ALIAS' },
       create: {
@@ -72,6 +95,8 @@ export class SchoolDomainService {
         verifiedAt: new Date(),
       },
     });
+    this.invalidateHostname(hostname);
+    return domain;
   }
 
   async registerVerifiedDomain(
@@ -91,7 +116,7 @@ export class SchoolDomainService {
       throw new ConflictException('Hostname is already assigned to another school');
     }
 
-    return this.prisma.schoolDomain.upsert({
+    const domain = await this.prisma.schoolDomain.upsert({
       where: { hostname },
       update: {
         schoolId,
@@ -112,6 +137,8 @@ export class SchoolDomainService {
         routingCheckedAt: new Date(),
       },
     });
+    this.invalidateHostname(hostname);
+    return domain;
   }
 
   async requestCustomDomain(schoolId: string, rawHostname: string) {
@@ -147,6 +174,7 @@ export class SchoolDomainService {
         verificationToken,
       },
     });
+    this.invalidateHostname(hostname);
 
     return {
       ...domain,
@@ -190,6 +218,7 @@ export class SchoolDomainService {
           verificationError: null,
         },
       });
+      this.invalidateHostname(domain.hostname);
       return { verified: true, domain: verified };
     } catch (error: any) {
       const verificationError =
@@ -221,13 +250,36 @@ export class SchoolDomainService {
     });
     if (!domain) throw new BadRequestException('School domain was not found');
 
-    return this.prisma.schoolDomain.update({
+    const updated = await this.prisma.schoolDomain.update({
       where: { id: domain.id },
       data: {
         routingStatus: result.ok === true ? 'READY' : 'FAILED',
         routingCheckedAt: new Date(),
         routingError: result.ok === true ? null : result.reason,
       },
+    });
+    this.invalidateHostname(domain.hostname);
+    return updated;
+  }
+
+  invalidateSchool(schoolId: string) {
+    for (const [hostname, cached] of this.cache.entries()) {
+      if (cached.school?.id === schoolId) this.cache.delete(hostname);
+    }
+  }
+
+  private invalidateHostname(hostname: string) {
+    this.cache.delete(hostname);
+  }
+
+  private setCached(hostname: string, school: any) {
+    if (this.cache.size >= this.cacheMaxEntries) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) this.cache.delete(oldestKey);
+    }
+    this.cache.set(hostname, {
+      school,
+      expiresAt: Date.now() + this.cacheTtlMs,
     });
   }
 }

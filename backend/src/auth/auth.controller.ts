@@ -252,9 +252,9 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Post('register')
-  async register(@Body() body: RegisterDto & { departmentId?: string }) {
+  async register(@Body() body: RegisterDto) {
     try {
-      return await this.authService.register(body.email, body.password, body.name, body.role, body.departmentId, body.phone);
+      return await this.authService.register(body.email, body.password, body.name, body.role, body.phone);
     } catch (error: any) {
       if (error.message === 'Email already exists' || error.message === 'Phone number already registered' || error.message === 'Email or phone is required' || error.message === 'Invalid email address') {
         throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
@@ -317,7 +317,7 @@ export class AuthController {
   @Put('users/:id')
   async updateUser(
     @Param('id') id: string,
-    @Body() body: { name?: string; email?: string; role?: string; phone?: string; departmentId?: string | null },
+    @Body() body: { name?: string; email?: string; role?: string; phone?: string },
     @Request() req: any,
   ) {
     await this.assertCanManageTarget(req.user?.role, id);
@@ -335,20 +335,6 @@ export class AuthController {
         throw new HttpException('Invalid role', HttpStatus.BAD_REQUEST);
       }
       throw error;
-    }
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @Put('users/:id/parent')
-  async setStudentParent(
-    @Param('id') studentUserId: string,
-    @Body() body: { parentId: string | null },
-  ) {
-    try {
-      return await this.authService.setStudentParent(studentUserId, body?.parentId ?? null);
-    } catch (e: any) {
-      throw new HttpException(e?.message ?? 'Failed to set parent', HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -373,41 +359,4 @@ export class AuthController {
     }
   }
 
-  @SkipThrottle()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @Get('users/:id/schedule')
-  getStudentSchedule(@Param('id') id: string) {
-    return this.authService.getStudentSchedule(id);
-  }
-
-  @SkipThrottle()
-  @UseGuards(JwtAuthGuard)
-  @Get('my-schedule')
-  getMySchedule(@Request() req: any) {
-    return this.authService.getStudentSchedule(req.user.userId);
-  }
-
-  @SkipThrottle()
-  @UseGuards(JwtAuthGuard)
-  @Get('my-teacher-schedule')
-  getMyTeacherSchedule(@Request() req: any) {
-    return this.authService.getTeacherSchedule(req.user.userId);
-  }
-
-  @SkipThrottle()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('PARENT', 'ADMIN', 'SUPER_ADMIN')
-  @Get('child-schedule/:childUserId')
-  getChildSchedule(@Param('childUserId') childUserId: string) {
-    return this.authService.getStudentSchedule(childUserId);
-  }
-
-  @SkipThrottle()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @Get('users/:id/full-profile')
-  getFullProfile(@Param('id') id: string) {
-    return this.authService.getFullProfile(id);
-  }
 }

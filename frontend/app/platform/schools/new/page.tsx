@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Sidebar from '../../../../components/Sidebar'
@@ -21,11 +21,12 @@ function slugify(input: string): string {
 
 interface CreateResult {
   school: { id: string; name: string; subdomain: string }
-  admin: { id: string; name: string; email: string }
-  temporaryPassword: string
+  admin: { id: string; name: string; email: string } | null
+  temporaryPassword: string | null
   domain: string | null
   domainProvisioned: boolean
   domainError: string | null
+  idempotentReplay?: boolean
 }
 
 function NewSchoolContent() {
@@ -43,6 +44,7 @@ function NewSchoolContent() {
   const [error, setError] = useState('')
   const [result, setResult] = useState<CreateResult | null>(null)
   const [copied, setCopied] = useState(false)
+  const idempotencyKey = useRef<string | null>(null)
 
   // Auto-derive subdomain from name until the user edits it directly.
   useEffect(() => {
@@ -74,9 +76,10 @@ function NewSchoolContent() {
     setSubmitting(true)
     setError('')
     try {
+      idempotencyKey.current ||= crypto.randomUUID()
       const res = await apiFetch('/api/platform/schools', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey.current },
         body: JSON.stringify({ name: name.trim(), subdomain: subdomain.trim(), adminName: adminName.trim(), adminEmail: adminEmail.trim(), adminPhone: adminPhone.trim() || undefined }),
       })
       const data = await res.json().catch(() => ({}))
@@ -94,6 +97,7 @@ function NewSchoolContent() {
 
   function copyPassword() {
     if (!result) return
+    if (!result.temporaryPassword) return
     navigator.clipboard?.writeText(result.temporaryPassword).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
@@ -130,7 +134,7 @@ function NewSchoolContent() {
                   <p className="mt-1 text-xs">You can retry this from the school's page.</p>
                 </div>
               )}
-              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl p-4 space-y-2">
+              {result.admin && result.temporaryPassword ? <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl p-4 space-y-2">
                 <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wide">Temporary admin credentials — shown once</p>
                 <div className="text-sm text-slate-700 dark:text-slate-200"><span className="text-slate-500 dark:text-slate-400">Email:</span> {result.admin.email}</div>
                 <div className="flex items-center gap-2">
@@ -138,7 +142,7 @@ function NewSchoolContent() {
                   <button onClick={copyPassword} className="btn-outline btn-sm">{copied ? 'Copied!' : 'Copy'}</button>
                 </div>
                 <p className="text-xs text-amber-700 dark:text-amber-300">Share this securely with the school's admin — it will not be shown again.</p>
-              </div>
+              </div> : <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-sm text-slate-600 dark:text-slate-300">This request was already processed. Open the school record to continue provisioning.</div>}
               <div className="flex gap-2 mt-5">
                 <Link href={`/platform/schools/${result.school.id}`} className="btn-primary text-sm px-4 py-2 rounded-lg">View School</Link>
                 <Link href="/platform/schools" className="btn-outline text-sm px-4 py-2 rounded-lg">Back to List</Link>

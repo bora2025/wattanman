@@ -2,6 +2,15 @@ import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/com
 import { AuthGuard } from '@nestjs/passport';
 import { tenantContext } from '../tenancy/tenant-context';
 
+export function assertSessionTenant(
+  userSchoolId: string | undefined,
+  tenantSchoolId: string | undefined,
+) {
+  if (userSchoolId && tenantSchoolId && userSchoolId !== tenantSchoolId) {
+    throw new UnauthorizedException('Session does not match the current school');
+  }
+}
+
 /**
  * Extends Passport's JWT guard with the multi-tenant auth boundary: the Host
  * header (resolved by TenantHostMiddleware before this guard runs) says which
@@ -27,9 +36,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const store = tenantContext.getStore();
 
     if (user?.schoolId && store) {
-      if (store.schoolId !== user.schoolId) {
-        throw new UnauthorizedException('Session does not match the current school');
-      }
+      assertSessionTenant(user.schoolId, store.schoolId);
       store.schoolId = user.schoolId;
     }
 

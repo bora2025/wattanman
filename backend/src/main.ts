@@ -9,7 +9,7 @@ import helmet from 'helmet';
 import express from 'express';
 
 /**
- * Cached set of registered custom domains (School.customDomain), refreshed on
+ * Cached set of verified, routed custom domains, refreshed on
  * an interval rather than queried per-request — CORS preflight is latency
  * sensitive, and this is the "cached, not a per-request DB hit" requirement
  * from the conversion plan's Phase 2a-ii. A school's own `*.wattaman.app`
@@ -20,11 +20,11 @@ let customDomainCache = new Set<string>();
 
 async function refreshCustomDomainCache(prisma: PrismaService) {
   try {
-    const schools = await prisma.school.findMany({
-      where: { customDomain: { not: null } },
-      select: { customDomain: true },
+    const domains = await prisma.schoolDomain.findMany({
+      where: { type: 'CUSTOM', status: 'VERIFIED', routingStatus: 'READY' },
+      select: { hostname: true },
     });
-    customDomainCache = new Set(schools.map((s) => (s.customDomain as string).toLowerCase()));
+    customDomainCache = new Set(domains.map((domain) => domain.hostname.toLowerCase()));
   } catch {
     // Transient DB error — keep serving the last known-good cache rather than
     // rejecting every custom-domain origin until the next refresh.
@@ -37,6 +37,14 @@ async function bootstrap() {
       ? ['error', 'warn']
       : ['log', 'error', 'warn'],
   });
+
+  const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS || 1);
+  app.getHttpAdapter().getInstance().set(
+    'trust proxy',
+    Number.isFinite(trustProxyHops) && trustProxyHops >= 0
+      ? trustProxyHops
+      : 1,
+  );
 
   // Fallback mapping for well-known Prisma errors (P2025 -> 404, P2002 -> 409)
   // that no controller-level try/catch already handles — see the conversion

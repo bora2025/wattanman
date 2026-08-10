@@ -45,15 +45,15 @@ export class SchoolsService {
    * per-school data. */
   async stats() {
     const schoolFilter = { subdomain: { not: PLATFORM_SCHOOL_SUBDOMAIN } };
-    const [totalSchools, activeSchools, suspendedSchools, trialSchools, totalStudents, totalStaff] = await Promise.all([
+    const [totalSchools, activeSchools, suspendedSchools, provisioningSchools, totalStudents, totalStaff] = await Promise.all([
       this.prisma.school.count({ where: schoolFilter }),
       this.prisma.school.count({ where: { ...schoolFilter, status: 'ACTIVE' } }),
       this.prisma.school.count({ where: { ...schoolFilter, status: 'SUSPENDED' } }),
-      this.prisma.school.count({ where: { ...schoolFilter, status: 'TRIAL' } }),
+      this.prisma.school.count({ where: { ...schoolFilter, status: 'PROVISIONING' } }),
       this.prisma.user.count({ where: { role: 'STUDENT', school: schoolFilter } }),
       this.prisma.user.count({ where: { role: { not: 'STUDENT' }, school: schoolFilter } }),
     ]);
-    return { totalSchools, activeSchools, suspendedSchools, trialSchools, totalStudents, totalStaff };
+    return { totalSchools, activeSchools, suspendedSchools, provisioningSchools, totalStudents, totalStaff };
   }
 
   async checkSubdomainAvailable(slug: string): Promise<{ available: boolean; reason?: string }> {
@@ -69,18 +69,20 @@ export class SchoolsService {
   }
 
   async getOne(id: string) {
-    const school = await this.prisma.school.findUnique({ where: { id } });
+    const school = await this.prisma.school.findUnique({
+      where: { id },
+      include: { provisioningJobs: { orderBy: { createdAt: 'desc' }, take: 1 } },
+    });
     if (!school || school.subdomain === PLATFORM_SCHOOL_SUBDOMAIN) {
       throw new NotFoundException('School not found');
     }
     // Lightweight usage counts for the Overview tab — cheap enough to compute
     // on read given these are simple indexed counts, no need to cache yet.
-    const [students, staff, classes] = await Promise.all([
+    const [students, staff] = await Promise.all([
       this.prisma.user.count({ where: { schoolId: id, role: 'STUDENT' } }),
       this.prisma.user.count({ where: { schoolId: id, role: { not: 'STUDENT' } } }),
-      this.prisma.class.count({ where: { schoolId: id } }),
     ]);
-    return { ...school, counts: { students, staff, classes } };
+    return { ...school, counts: { students, staff } };
   }
 
   /** Create a school and its first ADMIN account,
@@ -90,15 +92,34 @@ export class SchoolsService {
    * every schoolId below is explicit.
    *
    * with no feature extensions installed by default. */
-  async create(data: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string }) {
+  async create(data: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string }, idempotencyKey?: string) {
     const name = (data.name || '').trim();
     const subdomain = (data.subdomain || '').trim().toLowerCase();
     const adminName = (data.adminName || '').trim();
     const adminEmail = (data.adminEmail || '').trim().toLowerCase();
+    const requestKey = (idempotencyKey || `school:${subdomain}`).trim();
 
     if (!name) throw new BadRequestException('School name is required');
     if (!adminName) throw new BadRequestException("Admin's name is required");
     if (!adminEmail || !isValidEmail(adminEmail)) throw new BadRequestException('A valid admin email is required');
+    if (!requestKey || requestKey.length > 200) throw new BadRequestException('Invalid idempotency key');
+
+    const existingJob = await this.prisma.schoolProvisioningJob.findUnique({
+      where: { requestKey },
+      include: { school: true },
+    });
+    if (existingJob) {
+      return {
+        school: existingJob.school,
+        admin: null,
+        temporaryPassword: null,
+        provisioning: existingJob,
+        idempotentReplay: true,
+        domain: null,
+        domainProvisioned: existingJob.status === 'COMPLETED',
+        domainError: existingJob.lastError,
+      };
+    }
 
     const availability = await this.checkSubdomainAvailable(subdomain);
     if (!availability.available) throw new ConflictException(availability.reason || 'Subdomain unavailable');
@@ -107,7 +128,7 @@ export class SchoolsService {
     const hashed = await bcrypt.hash(tempPassword, 12);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const school = await tx.school.create({ data: { name, subdomain, status: 'ACTIVE' } });
+      const school = await tx.school.create({ data: { name, subdomain, status: 'PROVISIONING' } });
       const admin = await tx.user.create({
         data: {
           schoolId: school.id,
@@ -118,7 +139,10 @@ export class SchoolsService {
           role: 'ADMIN',
         },
       });
-      return { school, admin };
+      const provisioning = await tx.schoolProvisioningJob.create({
+        data: { schoolId: school.id, requestKey, status: 'RUNNING', attempts: 1, startedAt: new Date() },
+      });
+      return { school, admin, provisioning };
     });
 
     await this.schoolDomains.registerManagedDomain(result.school.id, subdomain);
@@ -136,10 +160,25 @@ export class SchoolsService {
       );
     }
 
+    const provisioning = await this.prisma.$transaction(async (tx) => {
+      const now = new Date();
+      await tx.school.update({
+        where: { id: result.school.id },
+        data: { status: domainResult.ok === true ? 'ACTIVE' : 'PROVISIONING' },
+      });
+      return tx.schoolProvisioningJob.update({
+        where: { id: result.provisioning.id },
+        data: domainResult.ok === true
+          ? { status: 'COMPLETED', completedAt: now, lastError: null }
+          : { status: 'FAILED', lastError: domainResult.reason },
+      });
+    });
+
     return {
-      school: result.school,
+      school: { ...result.school, status: domainResult.ok === true ? 'ACTIVE' : 'PROVISIONING' },
       admin: { id: result.admin.id, name: result.admin.name, email: result.admin.email },
       temporaryPassword: tempPassword,
+      provisioning,
       ...formatDomainResult(domainResult),
     };
   }
@@ -149,6 +188,13 @@ export class SchoolsService {
    * that predates this automation (Phase 18). */
   async retryDomainProvisioning(id: string) {
     const school = await this.getOne(id);
+    const job = school.provisioningJobs[0];
+    if (job) {
+      await this.prisma.schoolProvisioningJob.update({
+        where: { id: job.id },
+        data: { status: 'RUNNING', attempts: { increment: 1 }, startedAt: new Date(), lastError: null },
+      });
+    }
     const domainResult = await this.railwayDomain.provisionDomain(school.subdomain);
     if (domainResult.ok === true) {
       await this.schoolDomains.registerVerifiedDomain(
@@ -157,7 +203,21 @@ export class SchoolsService {
         'MANAGED',
       );
     }
-    return formatDomainResult(domainResult);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.school.update({
+        where: { id },
+        data: { status: domainResult.ok === true ? 'ACTIVE' : 'PROVISIONING' },
+      });
+      if (job) {
+        await tx.schoolProvisioningJob.update({
+          where: { id: job.id },
+          data: domainResult.ok === true
+            ? { status: 'COMPLETED', completedAt: new Date(), lastError: null }
+            : { status: 'FAILED', lastError: domainResult.reason },
+        });
+      }
+    });
+    return { ...formatDomainResult(domainResult), status: domainResult.ok === true ? 'ACTIVE' : 'PROVISIONING' };
   }
 
   async listDomains(id: string) {
@@ -214,13 +274,15 @@ export class SchoolsService {
 
   async update(id: string, data: { name?: string; status?: string }) {
     const school = await this.getOne(id);
-    if (data.status && !['ACTIVE', 'SUSPENDED', 'TRIAL'].includes(data.status)) {
-      throw new BadRequestException('status must be one of ACTIVE, SUSPENDED, TRIAL');
+    if (data.status && !['ACTIVE', 'SUSPENDED', 'DELETION_SCHEDULED'].includes(data.status)) {
+      throw new BadRequestException('status must be one of ACTIVE, SUSPENDED, DELETION_SCHEDULED');
     }
-    return this.prisma.school.update({
+    const updated = await this.prisma.school.update({
       where: { id },
       data: { name: data.name?.trim() || undefined, status: data.status },
     });
+    this.schoolDomains.invalidateSchool(id);
+    return updated;
   }
 
   /** Irreversible — requires the caller to echo the school's exact current

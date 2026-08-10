@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -32,8 +32,8 @@ export class SchoolsController {
   }
 
   @Post()
-  create(@Body() body: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string }) {
-    return this.schools.create(body);
+  create(@Body() body: { name: string; subdomain: string; adminName: string; adminEmail: string; adminPhone?: string }, @Headers('idempotency-key') idempotencyKey?: string) {
+    return this.schools.create(body, idempotencyKey);
   }
 
   @Patch(':id')

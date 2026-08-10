@@ -41,6 +41,22 @@ describe('SchoolDomainService', () => {
     });
   });
 
+  it('reuses a bounded short-lived exact-domain cache', async () => {
+    const school = { id: 'school-a', subdomain: 'alpha' };
+    const prisma = {
+      school: { findUnique: jest.fn() },
+      schoolDomain: {
+        findFirst: jest.fn().mockResolvedValue({ school }),
+      },
+    } as any;
+    const service = new SchoolDomainService(prisma);
+
+    await service.resolve('alpha.example.com');
+    await service.resolve('alpha.example.com');
+
+    expect(prisma.schoolDomain.findFirst).toHaveBeenCalledTimes(1);
+  });
+
   it('resolves the configured platform host to the sentinel school', async () => {
     process.env.PLATFORM_HOST = 'platform.example.com';
     const platformSchool = { id: 'platform-school', subdomain: 'platform' };

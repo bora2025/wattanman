@@ -83,4 +83,23 @@ describe('TenantHostMiddleware', () => {
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
+
+  it('ignores x-tenant-host when proxy header trust is disabled', async () => {
+    process.env.TRUST_TENANT_PROXY_HEADER = 'false';
+    const school = { id: 'school-a', status: 'ACTIVE' };
+    const { middleware, domains } = createMiddleware(school);
+
+    await middleware.use(
+      {
+        headers: {
+          host: 'backend.internal',
+          'x-tenant-host': 'forged.example.com',
+        },
+      } as any,
+      {} as any,
+      jest.fn(),
+    );
+
+    expect(domains.resolve).toHaveBeenCalledWith('backend.internal');
+  });
 });

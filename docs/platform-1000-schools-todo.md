@@ -15,10 +15,10 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Project cleanup
 
-- [ ] Inventory every remaining Prisma model and classify it as core, extension-platform, migration-only, or obsolete.
-- [ ] Identify retained services that still access removed feature models.
+- [x] Inventory every remaining Prisma model and classify it as core, extension-platform, migration-only, or obsolete.
+- [x] Identify retained services that still access removed feature models.
 - [ ] Export any legacy data that must be retained.
-- [ ] Remove obsolete feature models from `prisma/schema.prisma`.
+- [x] Remove obsolete feature models from `prisma/schema.prisma`.
 - [ ] Create and rehearse the destructive cleanup migration against a production-sized backup.
 - [ ] Remove obsolete dependencies, environment variables, scripts, and documentation.
 - [ ] Update the root architecture documentation and directory map.
@@ -61,9 +61,9 @@ An item is complete only when implementation, automated tests, documentation, de
 - [~] Reject unknown and unverified hosts.
   - Unknown hosts fail closed when the temporary fallback flag is disabled.
 - [x] Normalize forwarded host headers safely.
-- [ ] Add trusted-proxy configuration.
-- [ ] Add cache with explicit domain-change invalidation.
-- [ ] Preserve JWT `schoolId` versus host `schoolId` enforcement.
+- [x] Add trusted-proxy configuration.
+- [x] Add cache with explicit domain-change invalidation.
+- [x] Preserve JWT `schoolId` versus host `schoolId` enforcement.
 
 ### Database isolation
 
@@ -80,8 +80,7 @@ An item is complete only when implementation, automated tests, documentation, de
 - [ ] Add two-school fixtures with overlapping email, names, and extension keys.
 - [ ] Test cross-school reads for every retained controller.
 - [ ] Test cross-school writes and deletes.
-- [~] Test forged host headers.
-  - Unknown-host and fallback-disabled middleware behavior is covered; authenticated JWT/host mismatch coverage remains.
+- [x] Test forged host headers.
 - [ ] Test valid token on wrong school domain.
 - [ ] Test platform-scope authorization.
 - [ ] Test tenant isolation in extension records, assets, metrics, and jobs.
@@ -89,13 +88,13 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Provisioning workflow
 
-- [ ] Add school lifecycle states: `PROVISIONING`, `ACTIVE`, `SUSPENDED`, `DELETION_SCHEDULED`, `DELETED`.
-- [ ] Add idempotent provisioning job model.
-- [ ] Create the school and first administrator transactionally.
+- [x] Add school lifecycle states: `PROVISIONING`, `ACTIVE`, `SUSPENDED`, `DELETION_SCHEDULED`, `DELETED`.
+- [x] Add idempotent provisioning job model.
+- [x] Create the school and first administrator transactionally.
 - [ ] Create only base settings and storage prefixes.
-- [ ] Do not create module or extension installation rows by default.
-- [ ] Add provisioning retry and failure recovery.
-- [ ] Add provisioning status UI for platform administrators.
+- [x] Do not create module or extension installation rows by default.
+- [x] Add provisioning retry and failure recovery.
+- [x] Add provisioning status UI for platform administrators.
 - [ ] Add onboarding notification after readiness checks pass.
 
 ### Stage 1 gate

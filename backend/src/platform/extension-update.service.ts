@@ -41,20 +41,6 @@ export class ExtensionUpdateService {
         data: { availableVersionId: target.id, updateNotifiedAt: newlyAvailable && installation.updatePolicy !== 'MANUAL' ? new Date() : installation.updateNotifiedAt },
       });
       if (newlyAvailable && installation.updatePolicy !== 'MANUAL') {
-        const admins = await this.prisma.user.findMany({
-          where: { schoolId: installation.schoolId, role: { in: ['ADMIN', 'SUPER_ADMIN'] } },
-          select: { id: true },
-        });
-        if (admins.length) {
-          await this.prisma.notification.createMany({
-            data: admins.map((admin) => ({
-              schoolId: installation.schoolId,
-              userId: admin.id,
-              type: 'EXTENSION_UPDATE',
-              message: `${installation.extension.name} ${target.version} is available${addedPermissions.length ? ` and requests: ${addedPermissions.join(', ')}` : ''}.`,
-            })),
-          });
-        }
         notified += 1;
       }
     }

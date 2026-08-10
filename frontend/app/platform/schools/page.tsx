@@ -18,8 +18,9 @@ interface School {
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900',
+  PROVISIONING: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
   SUSPENDED: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900',
-  TRIAL: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
+  DELETION_SCHEDULED: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900',
 }
 
 function SchoolsListContent() {
@@ -27,7 +28,7 @@ function SchoolsListContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'ACTIVE' | 'SUSPENDED' | 'TRIAL'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'PROVISIONING' | 'ACTIVE' | 'SUSPENDED' | 'DELETION_SCHEDULED'>('all')
 
   useEffect(() => { load() }, [])
 
@@ -85,9 +86,10 @@ function SchoolsListContent() {
             />
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)} className="sm:w-44">
               <option value="all">All statuses</option>
+              <option value="PROVISIONING">Provisioning</option>
               <option value="ACTIVE">Active</option>
               <option value="SUSPENDED">Suspended</option>
-              <option value="TRIAL">Trial</option>
+              <option value="DELETION_SCHEDULED">Deletion scheduled</option>
             </select>
           </div>
 
