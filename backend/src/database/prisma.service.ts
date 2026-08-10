@@ -1,7 +1,8 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { tenantContext } from '../tenancy/tenant-context';
 import { TENANT_SCOPED_MODELS } from '../tenancy/scoped-models';
+import { applyTenantQueryPolicy } from './tenant-query-policy';
 
 function toDelegateName(modelName: string): string {
   return modelName.charAt(0).toLowerCase() + modelName.slice(1);
@@ -18,18 +19,6 @@ function toDelegateName(modelName: string): string {
  * general filter) can never contain a relation filter at this position, so
  * "nested plain object → flatten it" has no other case to collide with.
  */
-function flattenUniqueWhere(where: Record<string, unknown>): Record<string, unknown> {
-  const flat: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(where)) {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      Object.assign(flat, value as Record<string, unknown>);
-    } else {
-      flat[key] = value;
-    }
-  }
-  return flat;
-}
-
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
@@ -119,76 +108,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         return next(params);
       }
 
-      const schoolId = store.schoolId;
-      params.args = params.args ?? {};
-
-      switch (params.action) {
-        case 'findMany':
-        case 'findFirst':
-        case 'findFirstOrThrow':
-        case 'count':
-        case 'aggregate':
-        case 'groupBy':
-        case 'updateMany':
-        case 'deleteMany':
-          params.args.where = { ...(params.args.where ?? {}), schoolId };
-          break;
-
-        case 'create':
-          params.args.data = { ...(params.args.data ?? {}), schoolId: params.args.data?.schoolId ?? schoolId };
-          break;
-
-        case 'createMany':
-          // Preserve an explicitly-set schoolId per row (same "don't silently mask a
-          // caller's explicit value" reasoning as `create` above) — row spreads first,
-          // schoolId only fills in if the row didn't already set one.
-          if (Array.isArray(params.args.data)) {
-            params.args.data = params.args.data.map((row: Record<string, unknown>) => ({
-              ...row,
-              schoolId: (row.schoolId as string | undefined) ?? schoolId,
-            }));
-          }
-          break;
-
-        case 'findUnique':
-        case 'findUniqueOrThrow':
-          params.action = 'findFirst';
-          params.args.where = { ...(params.args.where ?? {}), schoolId };
-          break;
-
-        case 'update':
-        case 'delete': {
-          const delegate = (this as any)[toDelegateName(modelName)];
-          const found = await delegate.findFirst({
-            where: { ...flattenUniqueWhere(params.args.where ?? {}), schoolId },
-            select: { id: true },
-          });
-          if (!found) {
-            throw new Prisma.PrismaClientKnownRequestError(
-              `An operation failed because it depends on one or more records that were required but not found. No '${modelName}' record found for the given where (or it belongs to another school).`,
-              { code: 'P2025', clientVersion: Prisma.prismaVersion.client },
-            );
-          }
-          break; // ownership confirmed — let the original, still-unique-keyed op run natively
-        }
-
-        case 'upsert': {
-          const delegate = (this as any)[toDelegateName(modelName)];
-          const found = await delegate.findFirst({
-            where: { ...flattenUniqueWhere(params.args.where ?? {}), schoolId },
-            select: { id: true },
-          });
-          if (!found) {
-            params.args.create = { ...(params.args.create ?? {}), schoolId };
-          }
-          // else: row confirmed to belong to this school — native upsert's update
-          // branch will resolve to it correctly, no rewrite needed.
-          break;
-        }
-
-        default:
-          break;
-      }
+      await applyTenantQueryPolicy(params, store.schoolId, async (ownedModel, where, schoolId) => {
+        const delegate = (this as any)[toDelegateName(ownedModel)];
+        const found = await delegate.findFirst({
+          where: { ...where, schoolId },
+          select: { id: true },
+        });
+        return Boolean(found);
+      });
 
       return next(params);
     });
