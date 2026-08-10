@@ -4,7 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { authenticator } from 'otplib';
 import { PrismaService } from '../database/prisma.service';
-import { NotificationService } from '../notification/notification.service';
+import { AuthDeliveryService } from './auth-delivery.service';
 import { isValidEmail, looksLikeEmail, normalizePhone } from '../common/identity';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
 
@@ -15,7 +15,7 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private prisma: PrismaService,
-    private notifications: NotificationService,
+    private notifications: AuthDeliveryService,
   ) {}
 
   /** `identifier` is whatever the user typed into the login field — an email
