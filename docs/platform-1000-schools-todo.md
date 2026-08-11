@@ -207,7 +207,8 @@ An item is complete only when implementation, automated tests, documentation, de
   - Review summaries expose validator evidence, capability deltas, privacy/data-use declarations, and platform compatibility. Reviewers must record PASS/WARN/FAIL plus notes for all four domains; approvals cannot contain failures and rejections must identify one. Assessments are append-only review-event JSON and the platform UI provides an in-page decision form. A clean 35-migration rehearsal had zero drift, the 256-test backend suite and both builds passed, and Railway deployments `9307aa79-d30f-4534-b0fc-58801df643b4` (API) and `2a75a813-90ca-473e-84dd-e1c67df6540b` (frontend) succeeded on 2026-08-11.
 - [x] Require review notes for every decision.
   - Approval and rejection require overall decision notes plus non-empty notes for every structured review domain; rejection appeals already require an explanation. Missing notes fail before lifecycle mutation, and append-only review events retain the actor, role, decision, assessment, and timestamp.
-- [ ] Add appeal workflow and audit history.
+- [x] Add appeal workflow and audit history.
+  - Only an active publisher uploader can appeal a reviewer rejection with mandatory notes. A conditional transaction atomically claims the rejected state, clears the prior decision, requeues review, and appends an APPEALED event linked to the prior reviewer; concurrent retries fail without duplicate history. Cursor-paged history and the platform UI expose decision actors and structured domain outcomes, while audit logs retain appeal metadata. The 257-test backend suite and both builds passed, and Railway deployments `0eb6c06e-4cc7-4fd3-975a-a0a655476604` (API) and `c388440d-2ad9-49f6-a7c2-0dcb06d578af` (frontend) succeeded on 2026-08-11.
 - [ ] Add publication checklist.
 - [ ] Add deprecate, delist, emergency block, retire, and purge controls.
 

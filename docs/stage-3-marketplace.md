@@ -401,3 +401,21 @@ API deployment `9307aa79-d30f-4534-b0fc-58801df643b4` and frontend deployment
 `2a75a813-90ca-473e-84dd-e1c67df6540b` completed successfully on 2026-08-11.
 Validation passed with 256 backend tests, one intentional skip, and successful
 backend and frontend production builds.
+
+## Rejection appeals and history
+
+An appeal is available only for a reviewer-rejected release owned by an active
+publisher, requires `UPLOAD` authority and non-empty explanation, and never
+overwrites the prior review event. A conditional database transaction claims
+the exact rejection, clears the prior current reviewer, returns the release to
+`AWAITING_REVIEW`, and appends an `APPEALED` event carrying the prior reviewer
+identity. Concurrent or retried appeals cannot append duplicate history.
+
+Review history remains cursor-paged and append-only. The platform interface
+shows decision notes, actor role, and structured domain outcomes, while the
+general audit stream records appeal notes and prior-reviewer metadata.
+
+Production API deployment `0eb6c06e-4cc7-4fd3-975a-a0a655476604` and frontend
+deployment `c388440d-2ad9-49f6-a7c2-0dcb06d578af` completed successfully on
+2026-08-11. Validation passed with 257 backend tests, one intentional skip, and
+successful backend and frontend production builds.
