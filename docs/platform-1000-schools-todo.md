@@ -100,9 +100,9 @@ An item is complete only when implementation, automated tests, documentation, de
 ### Stage 1 gate
 
 - [ ] Provision 1,000 synthetic schools without manual intervention.
-- [ ] No tenant-isolation test failure.
-- [ ] Unknown hosts fail closed.
-- [ ] Provisioning retries create no duplicate schools, users, or domains.
+- [x] No tenant-isolation test failure.
+- [x] Unknown hosts fail closed.
+- [x] Provisioning retries create no duplicate schools, users, or domains.
 
 ## Stage 2 — Production Deployment Foundation
 
