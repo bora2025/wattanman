@@ -11,6 +11,7 @@ import { R2StorageService } from "../storage/r2-storage.service";
 import { createHash } from "crypto";
 import { ExtensionValidationRunnerService } from "./extension-validation-runner.service";
 import { ExtensionSigningService } from "./extension-signing.service";
+import { QueueInfrastructureService } from "../jobs/queue-infrastructure.service";
 import { dateIdPage, dateIdPageBy, decodeDateIdCursor, parsePageLimit } from "../common/cursor-pagination";
 import {
   ExtensionCatalogMetadataInput,
@@ -67,7 +68,29 @@ export class ExtensionsService {
     private storage: R2StorageService,
     private packageValidator: ExtensionValidationRunnerService,
     private signing: ExtensionSigningService,
+    private queues: QueueInfrastructureService,
   ) {}
+
+  private uploadValidationId(versionId: string, checksum: string) {
+    return createHash("sha256")
+      .update(`extension-upload:${versionId}:${checksum}`)
+      .digest("hex");
+  }
+
+  private async enqueueUploadCompletion(
+    versionId: string,
+    checksum: string,
+    validationId: string,
+    actor: Actor,
+  ) {
+    await this.queues.enqueue("extensions", {
+      type: "extension.package.complete",
+      tenant: { mode: "PLATFORM", schoolId: "PLATFORM" },
+      actor: { id: actor.userId, role: actor.role || "PLATFORM_ADMIN", name: actor.name },
+      idempotencyKey: `extension-package:${versionId}:${checksum}`,
+      payload: { versionId, checksum, validationId },
+    });
+  }
 
   async list(input: { cursor?: string; limit?: string; search?: string; lifecycleStatus?: string } = {}) {
     const limit = parsePageLimit(input.limit);
@@ -431,8 +454,23 @@ export class ExtensionsService {
       "UPLOAD",
     );
     const checksum = createHash("sha256").update(file.buffer).digest("hex");
-    if (existing.packageChecksum === checksum && existing.packageStorageKey)
+    const validationId = this.uploadValidationId(versionId, checksum);
+    if (existing.packageChecksum === checksum && existing.packageStorageKey) {
+      if (["QUARANTINED", "VALIDATING"].includes(existing.lifecycleStatus)) {
+        await this.prisma.extensionValidation.upsert({
+          where: { id: validationId },
+          update: {},
+          create: {
+            id: validationId,
+            extensionVersionId: versionId,
+            status: "PENDING",
+            validatorVersion: "1",
+          },
+        });
+        await this.enqueueUploadCompletion(versionId, checksum, validationId, actor);
+      }
       return existing;
+    }
     if (existing.lifecycleStatus !== "UPLOADED") {
       throw new ConflictException(
         "A package can only be uploaded while the version is in UPLOADED state",
@@ -440,14 +478,27 @@ export class ExtensionsService {
     }
     const storageKey = `quarantine/extensions/${existing.extensionId}/${existing.id}/${checksum}.zip`;
     await this.storage.putPrivate(storageKey, file.buffer, "application/zip");
-    const updated = await this.prisma.extensionVersion.update({
-      where: { id: versionId },
-      data: {
-        packageStorageKey: storageKey,
-        packageChecksum: checksum,
-        packageSize: file.size,
-        lifecycleStatus: "QUARANTINED",
-      },
+    const updated = await this.prisma.$transaction(async (transaction) => {
+      const version = await transaction.extensionVersion.update({
+        where: { id: versionId },
+        data: {
+          packageStorageKey: storageKey,
+          packageChecksum: checksum,
+          packageSize: file.size,
+          lifecycleStatus: "QUARANTINED",
+        },
+      });
+      await transaction.extensionValidation.upsert({
+        where: { id: validationId },
+        update: {},
+        create: {
+          id: validationId,
+          extensionVersionId: versionId,
+          status: "PENDING",
+          validatorVersion: "1",
+        },
+      });
+      return version;
     });
     await this.log(
       actor,
@@ -459,19 +510,46 @@ export class ExtensionsService {
         metadata: { storageKey, checksum, size: file.size },
       },
     );
-    const validation = await this.prisma.extensionValidation.create({
-      data: {
-        extensionVersionId: versionId,
-        status: "RUNNING",
-        validatorVersion: "1",
-      },
+    await this.enqueueUploadCompletion(versionId, checksum, validationId, actor);
+    return updated;
+  }
+
+  async completePackageUpload(
+    payload: { versionId: string; checksum: string; validationId: string },
+    actor: Actor,
+  ) {
+    if (!payload?.versionId || !/^[a-f0-9]{64}$/.test(payload.checksum) || !/^[a-f0-9]{64}$/.test(payload.validationId))
+      throw new BadRequestException("Invalid extension package completion payload");
+    const existing = await this.prisma.extensionVersion.findUnique({
+      where: { id: payload.versionId },
+      include: { extension: true },
     });
-    await this.prisma.extensionVersion.update({
-      where: { id: versionId },
+    if (!existing) throw new NotFoundException("Extension version not found");
+    if (existing.packageChecksum !== payload.checksum || !existing.packageStorageKey)
+      throw new ConflictException("Extension package identity does not match the queued completion");
+    const validation = await this.prisma.extensionValidation.findUnique({ where: { id: payload.validationId } });
+    if (!validation || validation.extensionVersionId !== existing.id)
+      throw new ConflictException("Extension package validation identity does not match");
+    if (["PASSED", "FAILED"].includes(validation.status)) return existing;
+    await this.prisma.extensionValidation.updateMany({
+      where: { id: payload.validationId, status: { in: ["PENDING", "RUNNING"] } },
+      data: { status: "RUNNING", completedAt: null },
+    });
+    await this.prisma.extensionVersion.updateMany({
+      where: { id: existing.id, lifecycleStatus: { in: ["QUARANTINED", "VALIDATING"] } },
       data: { lifecycleStatus: "VALIDATING" },
     });
+    const packageBuffer = await this.storage.getPrivate(existing.packageStorageKey);
+    const downloadedChecksum = createHash("sha256").update(packageBuffer).digest("hex");
+    if (downloadedChecksum !== payload.checksum)
+      throw new ConflictException("Quarantined extension package checksum mismatch");
     const validationResult = await this.packageValidator.validate(
-      file,
+      {
+        originalname: `${existing.extension.key}-${existing.version}.zip`,
+        buffer: packageBuffer,
+        size: packageBuffer.length,
+        mimetype: "application/zip",
+      } as Express.Multer.File,
       existing.extension,
       existing.version,
     );
@@ -486,13 +564,13 @@ export class ExtensionsService {
         await this.prisma.extensionAsset.upsert({
           where: {
             extensionVersionId_path: {
-              extensionVersionId: versionId,
+              extensionVersionId: existing.id,
               path: asset.path,
             },
           },
           update: {},
           create: {
-            extensionVersionId: versionId,
+            extensionVersionId: existing.id,
             path: asset.path,
             storageKey: assetStorageKey,
             checksum: asset.checksum,
@@ -502,23 +580,25 @@ export class ExtensionsService {
         });
       }
     }
-    await this.prisma.extensionValidation.update({
-      where: { id: validation.id },
-      data: {
-        status: validationResult.valid ? "PASSED" : "FAILED",
-        errors: validationResult.errors as any,
-        warnings: validationResult.warnings as any,
-        completedAt: new Date(),
-      },
-    });
-    const finalVersion = await this.prisma.extensionVersion.update({
-      where: { id: versionId },
-      data: {
-        lifecycleStatus: validationResult.valid ? "VALIDATED" : "REJECTED",
-        manifest: validationResult.manifest
-          ? (validationResult.manifest as any)
-          : existing.manifest,
-      },
+    const finalVersion = await this.prisma.$transaction(async (transaction) => {
+      await transaction.extensionValidation.update({
+        where: { id: payload.validationId },
+        data: {
+          status: validationResult.valid ? "PASSED" : "FAILED",
+          errors: validationResult.errors as any,
+          warnings: validationResult.warnings as any,
+          completedAt: new Date(),
+        },
+      });
+      return transaction.extensionVersion.update({
+        where: { id: existing.id },
+        data: {
+          lifecycleStatus: validationResult.valid ? "VALIDATED" : "REJECTED",
+          manifest: validationResult.manifest
+            ? (validationResult.manifest as any)
+            : existing.manifest,
+        },
+      });
     });
     await this.log(
       actor,
@@ -528,7 +608,7 @@ export class ExtensionsService {
       finalVersion.version,
       {
         metadata: {
-          validationId: validation.id,
+          validationId: payload.validationId,
           errorCount: validationResult.errors.length,
           warningCount: validationResult.warnings.length,
         },

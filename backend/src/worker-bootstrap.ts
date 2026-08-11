@@ -10,7 +10,7 @@ export async function bootstrapWorker(module: Type<unknown>, options: { role: st
   const app = await NestFactory.createApplicationContext(module, { logger: ['error', 'warn', 'log'] });
   const startedAt = new Date().toISOString();
   let ready = true;
-  const port = Number(process.env.WORKER_HEALTH_PORT || options.defaultPort);
+  const port = Number(process.env.PORT || process.env.WORKER_HEALTH_PORT || options.defaultPort);
   const server = createServer((request, response) => {
     if (!['/health', '/live', '/ready'].includes(request.url || '')) return void response.writeHead(404).end('Not found');
     const readiness = request.url === '/ready';

@@ -48,6 +48,6 @@ import { QueueOperationsController } from './queue-operations.controller';
   ],
   controllers: [SchoolsController, PlatformAdminsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController, QueueOperationsController],
   providers: [SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, ExtensionInstallationsService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionPlatformGuard, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
-  exports: [ExtensionCleanupService, ExtensionUpdateService, ExtensionAlertService],
+  exports: [ExtensionsService, ExtensionCleanupService, ExtensionUpdateService, ExtensionAlertService],
 })
 export class PlatformModule {}

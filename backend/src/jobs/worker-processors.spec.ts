@@ -8,8 +8,11 @@ describe('dedicated queue processors', () => {
     const cleanup = { run: jest.fn().mockResolvedValue('clean') };
     const updates = { run: jest.fn().mockResolvedValue('update') };
     const alerts = { scan: jest.fn().mockResolvedValue('alert') };
-    new ExtensionWorkerProcessorService(queues as any, cleanup as any, updates as any, alerts as any).onModuleInit();
+    const extensions = { completePackageUpload: jest.fn().mockResolvedValue('complete') };
+    new ExtensionWorkerProcessorService(queues as any, cleanup as any, updates as any, alerts as any, extensions as any).onModuleInit();
     expect(queues.createWorker).toHaveBeenCalledWith('extensions', expect.any(Function));
+    await expect(handler!({ type: 'extension.package.complete', payload: { versionId: 'v', checksum: 'c', validationId: 'x' }, actor: { id: 'u', role: 'PLATFORM_ADMIN' } })).resolves.toBe('complete');
+    expect(extensions.completePackageUpload).toHaveBeenCalledWith(expect.objectContaining({ versionId: 'v' }), expect.objectContaining({ userId: 'u' }));
     await expect(handler!({ type: 'extension.cleanup' })).resolves.toBe('clean');
     await expect(handler!({ type: 'unknown' })).rejects.toThrow('Unsupported extension job type');
   });

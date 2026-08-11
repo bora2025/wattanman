@@ -157,6 +157,7 @@ interface CatalogCollectionRecord {
 
 const LIFECYCLE_GUIDANCE: Record<string, string> = {
   UPLOADED: "Upload a ZIP package",
+  QUARANTINED: "Upload accepted; waiting for validation",
   VALIDATING: "Validation is running",
   VALIDATED: "Ready to send for review",
   AWAITING_REVIEW: "Reviewer decision required",
@@ -197,6 +198,12 @@ function VersionPanel({
   const [review, setReview] = useState<ReviewSummary | null>(null);
   const [reviewHistory, setReviewHistory] = useState<ReviewEvent[]>([]);
   const [showDetails, setShowDetails] = useState(false);
+
+  useEffect(() => {
+    if (!["QUARANTINED", "VALIDATING"].includes(version.lifecycleStatus)) return;
+    const timer = window.setInterval(() => void reload(), 2_000);
+    return () => window.clearInterval(timer);
+  }, [reload, version.id, version.lifecycleStatus]);
 
   useEffect(() => {
     apiCursorItems<ValidationReport>(`/api/platform/extensions/versions/${version.id}/validations`)

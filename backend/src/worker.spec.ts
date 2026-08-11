@@ -22,6 +22,7 @@ describe('worker process separation', () => {
     const worker = readFileSync(join(process.cwd(), 'src', 'worker-bootstrap.ts'), 'utf8');
     expect(worker).toContain("['/health', '/live', '/ready']");
     expect(worker).toContain("request.url === '/ready'");
+    expect(worker).toContain('process.env.PORT || process.env.WORKER_HEALTH_PORT');
     expect(worker).toContain('ready = false');
     expect(worker).toContain("process.once('SIGTERM'");
     expect(worker).toContain('await app.close()');
@@ -40,6 +41,13 @@ describe('worker process separation', () => {
     expect(operations).toContain("role: 'operations'");
     expect(extensions).toContain("role: 'extension'");
     expect(notifications).toContain("role: 'notification'");
+  });
+
+  it('ships a Railway manifest for the dedicated extension worker', () => {
+    const manifest = JSON.parse(readFileSync(join(process.cwd(), 'extension-worker.railway.json'), 'utf8'));
+    expect(manifest.deploy.preDeployCommand).toBe('node prisma/check-schema-compatibility.js');
+    expect(manifest.deploy.startCommand).toBe('node dist/extension-worker');
+    expect(manifest.deploy.startCommand).not.toContain('dist/main');
   });
 
   it('establishes tenant context from every durable queue envelope', () => {

@@ -51,7 +51,10 @@ describe("ExtensionsService", () => {
     },
     extensionValidation: {
       create: jest.fn(),
+      upsert: jest.fn(),
+      findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       findMany: jest.fn(),
     },
     extensionInstallation: { updateMany: jest.fn(), deleteMany: jest.fn() },
@@ -75,12 +78,14 @@ describe("ExtensionsService", () => {
     validatePublicKey: jest.fn(),
     normalizePublicKey: jest.fn((value) => value),
   };
+  const queues = { enqueue: jest.fn().mockResolvedValue({ id: "job-1" }) };
   const service = new ExtensionsService(
     prisma as any,
     audit as any,
     storage as any,
     packageValidator as any,
     signing as any,
+    queues as any,
   );
   const actor = { userId: "platform-admin", role: "PLATFORM_ADMIN" };
 
@@ -502,22 +507,6 @@ describe("ExtensionsService", () => {
     prisma.extensionVersion.update.mockImplementation(({ data }) =>
       Promise.resolve({ id: "version-1", version: "1.0.0", ...data }),
     );
-    prisma.extensionValidation.create.mockResolvedValue({ id: "validation-1" });
-    packageValidator.validate.mockResolvedValue({
-      valid: true,
-      manifest: { key: "TEST_THEME" },
-      errors: [],
-      warnings: [],
-      files: [
-        {
-          path: "theme.json",
-          size: 2,
-          checksum: "asset-checksum",
-          mimeType: "application/json",
-          contents: Buffer.from("{}"),
-        },
-      ],
-    });
     const buffer = Buffer.from("zip-content");
     const file = {
       originalname: "extension.zip",
@@ -534,25 +523,40 @@ describe("ExtensionsService", () => {
       buffer,
       "application/zip",
     );
+    expect(result.lifecycleStatus).toBe("QUARANTINED");
+    expect(prisma.extensionValidation.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ create: expect.objectContaining({ status: "PENDING" }) }),
+    );
+    expect(queues.enqueue).toHaveBeenCalledWith("extensions", expect.objectContaining({
+      type: "extension.package.complete",
+      idempotencyKey: expect.stringMatching(/^extension-package:version-1:[a-f0-9]{64}$/),
+    }));
+    expect(packageValidator.validate).not.toHaveBeenCalled();
+  });
+
+  it("completes quarantined package validation asynchronously", async () => {
+    const buffer = Buffer.from("zip-content");
+    const checksum = createHash("sha256").update(buffer).digest("hex");
+    const validationId = createHash("sha256").update(`extension-upload:version-1:${checksum}`).digest("hex");
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: "version-1", extensionId: "ext-1", version: "1.0.0", lifecycleStatus: "QUARANTINED",
+      packageChecksum: checksum, packageStorageKey: `quarantine/extensions/ext-1/version-1/${checksum}.zip`,
+      manifest: {}, extension: { key: "TEST_THEME", runtimeType: "THEME" },
+    });
+    prisma.extensionValidation.findUnique.mockResolvedValue({ id: validationId, extensionVersionId: "version-1", status: "PENDING" });
+    prisma.extensionVersion.update.mockImplementation(({ data }) => Promise.resolve({ id: "version-1", version: "1.0.0", ...data }));
+    storage.getPrivate.mockResolvedValue(buffer);
+    packageValidator.validate.mockResolvedValue({
+      valid: true, manifest: { key: "TEST_THEME" }, errors: [], warnings: [],
+      files: [{ path: "theme.json", size: 2, checksum: "asset-checksum", mimeType: "application/json", contents: Buffer.from("{}") }],
+    });
+
+    const result = await service.completePackageUpload({ versionId: "version-1", checksum, validationId }, actor);
+
     expect(result.lifecycleStatus).toBe("VALIDATED");
-    expect(storage.putPrivate).toHaveBeenCalledWith(
-      "validated/extensions/ext-1/version-1/asset-checksum/theme.json",
-      Buffer.from("{}"),
-      "application/json",
-    );
-    expect(prisma.extensionAsset.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        create: expect.objectContaining({
-          path: "theme.json",
-          checksum: "asset-checksum",
-        }),
-      }),
-    );
-    expect(prisma.extensionValidation.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ status: "PASSED" }),
-      }),
-    );
+    expect(storage.getPrivate).toHaveBeenCalledWith(`quarantine/extensions/ext-1/version-1/${checksum}.zip`);
+    expect(storage.putPrivate).toHaveBeenCalledWith("validated/extensions/ext-1/version-1/asset-checksum/theme.json", Buffer.from("{}"), "application/json");
+    expect(prisma.extensionValidation.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "PASSED" }) }));
   });
 
   it("keeps a version retryable when quarantine storage fails", async () => {
@@ -584,7 +588,7 @@ describe("ExtensionsService", () => {
     ).rejects.toThrow("R2 unavailable");
 
     expect(prisma.extensionVersion.update).not.toHaveBeenCalled();
-    expect(prisma.extensionValidation.create).not.toHaveBeenCalled();
+    expect(prisma.extensionValidation.upsert).not.toHaveBeenCalled();
     expect(packageValidator.validate).not.toHaveBeenCalled();
   });
 
@@ -593,18 +597,22 @@ describe("ExtensionsService", () => {
       id: "version-1",
       extensionId: "ext-1",
       version: "1.0.0",
-      lifecycleStatus: "UPLOADED",
+      lifecycleStatus: "QUARANTINED",
+      packageChecksum: createHash("sha256").update(Buffer.from("zip-content")).digest("hex"),
+      packageStorageKey: "quarantine/extensions/ext-1/version-1/package.zip",
+      manifest: {},
       extension: {
         key: "TEST_THEME",
         runtimeType: "THEME",
-        publisherId: "publisher-1",
-        publisherEntity: { status: "ACTIVE" },
       },
     });
     prisma.extensionVersion.update.mockImplementation(({ data }) =>
       Promise.resolve({ id: "version-1", version: "1.0.0", ...data }),
     );
-    prisma.extensionValidation.create.mockResolvedValue({ id: "validation-1" });
+    const checksum = createHash("sha256").update(Buffer.from("zip-content")).digest("hex");
+    const validationId = createHash("sha256").update(`extension-upload:version-1:${checksum}`).digest("hex");
+    prisma.extensionValidation.findUnique.mockResolvedValue({ id: validationId, extensionVersionId: "version-1", status: "PENDING" });
+    storage.getPrivate.mockResolvedValue(Buffer.from("zip-content"));
     packageValidator.validate.mockResolvedValue({
       valid: false,
       errors: [
@@ -618,19 +626,11 @@ describe("ExtensionsService", () => {
     });
     const buffer = Buffer.from("zip-content");
 
-    const result = await service.uploadPackage(
-      "version-1",
-      {
-        originalname: "extension.zip",
-        buffer,
-        size: buffer.length,
-      } as Express.Multer.File,
-      actor,
-    );
+    const result = await service.completePackageUpload({ versionId: "version-1", checksum, validationId }, actor);
 
     expect(result.lifecycleStatus).toBe("REJECTED");
     expect(prisma.extensionValidation.update).toHaveBeenCalledWith({
-      where: { id: "validation-1" },
+      where: { id: validationId },
       data: expect.objectContaining({
         status: "FAILED",
         errors: [expect.objectContaining({ code: "VALIDATION_TIMEOUT" })],
@@ -668,6 +668,31 @@ describe("ExtensionsService", () => {
 
     expect(result).toBe(existing);
     expect(storage.putPrivate).not.toHaveBeenCalled();
+    expect(prisma.extensionValidation.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: expect.stringMatching(/^[a-f0-9]{64}$/) },
+      create: expect.objectContaining({ status: "PENDING" }),
+    }));
+    expect(queues.enqueue).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-enqueues a persisted upload after a transient queue failure", async () => {
+    const buffer = Buffer.from("zip-content");
+    const checksum = createHash("sha256").update(buffer).digest("hex");
+    const uploaded = {
+      id: "version-1", extensionId: "ext-1", version: "1.0.0", lifecycleStatus: "QUARANTINED",
+      packageChecksum: checksum, packageStorageKey: `quarantine/extensions/ext-1/version-1/${checksum}.zip`,
+      extension: { publisherId: "publisher-1", publisherEntity: { status: "ACTIVE" } },
+    };
+    prisma.extensionVersion.findUnique.mockResolvedValue(uploaded);
+    queues.enqueue.mockRejectedValueOnce(new Error("Redis unavailable")).mockResolvedValueOnce({ id: "job-1" });
+    const file = { originalname: "extension.zip", buffer, size: buffer.length } as Express.Multer.File;
+
+    await expect(service.uploadPackage("version-1", file, actor)).rejects.toThrow("Redis unavailable");
+    await expect(service.uploadPackage("version-1", file, actor)).resolves.toBe(uploaded);
+
+    expect(storage.putPrivate).not.toHaveBeenCalled();
+    expect(queues.enqueue).toHaveBeenCalledTimes(2);
+    expect(queues.enqueue.mock.calls[0][1].idempotencyKey).toBe(queues.enqueue.mock.calls[1][1].idempotencyKey);
   });
 
   it("suspends a publisher, unlists its catalog, and disables active installations", async () => {

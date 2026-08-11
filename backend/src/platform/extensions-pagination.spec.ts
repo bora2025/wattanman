@@ -17,7 +17,7 @@ describe('ExtensionsService secondary collection pagination', () => {
     extensionValidation: { findMany: jest.fn() },
     extensionReview: { findMany: jest.fn() },
   };
-  const service = new ExtensionsService(prisma as any, {} as any, {} as any, {} as any, {} as any);
+  const service = new ExtensionsService(prisma as any, {} as any, {} as any, {} as any, {} as any, {} as any);
 
   beforeEach(() => jest.clearAllMocks());
 

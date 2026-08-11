@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -332,6 +333,7 @@ export class ExtensionsController {
   }
 
   @Post("versions/:versionId/package")
+  @HttpCode(202)
   @UseInterceptors(
     FileInterceptor("file", {
       limits: { fileSize: 5 * 1024 * 1024, files: 1 },

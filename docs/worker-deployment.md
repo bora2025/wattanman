@@ -14,6 +14,12 @@ and closes BullMQ workers and Redis clients before exit. Set a distinct
 `WORKER_HEALTH_PORT` per service when services share a host. Production requires
 TLS Redis through `REDIS_URL=rediss://...`.
 
+The Railway extension-worker service uses `backend/extension-worker.railway.json`.
+Configure repository root `/backend`, config path
+`/backend/extension-worker.railway.json`, and the same `DATABASE_URL`,
+`CONTROL_PLANE_DATABASE_URL`, `REDIS_URL`, and private R2 credentials as the API.
+The worker checks schema compatibility and never runs release migrations.
+
 Durable jobs carry a validated versioned envelope. `QueueInfrastructureService`
 establishes `tenantContext` from that envelope for every execution; scoped jobs
 must identify their school and platform jobs explicitly use the platform scope.

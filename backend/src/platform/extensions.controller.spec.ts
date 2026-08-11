@@ -29,7 +29,7 @@ describe('ExtensionsController authorization and upload', () => {
   let app: INestApplication;
   const extensions = {
     list: jest.fn().mockResolvedValue([]),
-    uploadPackage: jest.fn().mockResolvedValue({ id: 'version-1', lifecycleStatus: 'VALIDATED' }),
+    uploadPackage: jest.fn().mockResolvedValue({ id: 'version-1', lifecycleStatus: 'QUARANTINED' }),
   };
 
   beforeAll(async () => {
@@ -64,8 +64,8 @@ describe('ExtensionsController authorization and upload', () => {
       .post('/platform/extensions/versions/version-1/package')
       .set('x-test-role', 'PLATFORM_ADMIN')
       .attach('file', Buffer.from('zip-content'), { filename: 'extension.zip', contentType: 'application/zip' })
-      .expect(201)
-      .expect(({ body }) => expect(body.lifecycleStatus).toBe('VALIDATED'));
+      .expect(202)
+      .expect(({ body }) => expect(body.lifecycleStatus).toBe('QUARANTINED'));
 
     expect(extensions.uploadPackage).toHaveBeenCalledWith(
       'version-1',
