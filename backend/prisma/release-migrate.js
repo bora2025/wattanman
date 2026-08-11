@@ -54,7 +54,10 @@ async function synchronizeHistoricalBaselineChecksum(transaction) {
 async function main() {
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
   await prisma.$transaction(async (transaction) => {
-    await transaction.$queryRawUnsafe(`SELECT pg_advisory_xact_lock(${RELEASE_LOCK_ID})`);
+    // PostgreSQL 18 exposes the function's `void` result to Prisma. Cast it to
+    // text so the lock is still acquired while the driver receives a supported
+    // scalar type instead of failing during result deserialization.
+    await transaction.$queryRawUnsafe(`SELECT pg_advisory_xact_lock(${RELEASE_LOCK_ID})::text AS locked`);
     console.log(`Acquired migration advisory lock ${RELEASE_LOCK_ID}.`);
     await resolveHistoricalBaseline(transaction);
     await synchronizeHistoricalBaselineChecksum(transaction);
