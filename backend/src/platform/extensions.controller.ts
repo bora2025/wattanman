@@ -380,6 +380,11 @@ export class ExtensionsController {
     return this.extensions.reviewSummary(versionId);
   }
 
+  @Get("versions/:versionId/publication-checklist")
+  publicationChecklist(@Param("versionId") versionId: string) {
+    return this.extensions.publicationChecklist(versionId);
+  }
+
   @Get("versions/:versionId/reviews")
   reviewHistory(@Param("versionId") versionId: string, @Query("cursor") cursor?: string, @Query("limit") limit?: string) {
     return this.extensions.reviewHistory(versionId, cursor, limit);

@@ -33,7 +33,7 @@ describe("ExtensionsService", () => {
       update: jest.fn(),
     },
     extensionCatalogCollectionItem: { deleteMany: jest.fn(), createMany: jest.fn() },
-    extensionReview: { create: jest.fn(), findMany: jest.fn() },
+    extensionReview: { create: jest.fn(), findMany: jest.fn(), findFirst: jest.fn() },
     extensionSigningKey: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -56,6 +56,7 @@ describe("ExtensionsService", () => {
       update: jest.fn(),
       updateMany: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
     },
     extensionInstallation: { updateMany: jest.fn(), deleteMany: jest.fn() },
     extensionDependency: { deleteMany: jest.fn() },
@@ -117,6 +118,11 @@ describe("ExtensionsService", () => {
       signedAt: new Date(),
     });
     prisma.extensionVersion.updateMany.mockResolvedValue({ count: 1 });
+    prisma.extensionValidation.findFirst.mockResolvedValue({ status: "PASSED", reportSchema: 1 });
+    prisma.extensionReview.findFirst.mockResolvedValue({ assessment: passingAssessment });
+    prisma.extensionSigningKey.findFirst.mockResolvedValue({ id: "key-1", keyId: "wattaman-test-1", status: "ACTIVE" });
+    process.env.EXTENSION_SIGNING_KEY_ID = "wattaman-test-1";
+    process.env.EXTENSION_SIGNING_PRIVATE_KEY_BASE64 = "configured";
   });
 
   it("creates an internal declarative extension", async () => {
@@ -379,7 +385,12 @@ describe("ExtensionsService", () => {
       lifecycleStatus: "APPROVED",
       packageStorageKey: `quarantine/extensions/ext-1/version-1/${packageChecksum}.zip`,
       packageChecksum,
-      extension: { publisherEntity: { status: "ACTIVE" } },
+      packageSize: packageContents.length,
+      releaseNotes: "Ready for publication",
+      compatibilityRange: ">=1.0.0 <2.0.0",
+      uploadedBy: "uploader-1",
+      reviewedBy: "reviewer-1",
+      extension: { publisherId: "publisher-1", runtimeType: "THEME", publisherEntity: { status: "ACTIVE" } },
     });
     prisma.extensionVersion.update.mockImplementation(({ data }) =>
       Promise.resolve({ id: "version-1", version: "1.0.0", ...data }),
@@ -417,6 +428,31 @@ describe("ExtensionsService", () => {
     expect(storage.deletePrivate).toHaveBeenCalledWith(
       `quarantine/extensions/ext-1/version-1/${packageChecksum}.zip`,
     );
+  });
+
+  it("returns publication blockers and enforces the checklist before signing", async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: "version-1",
+      extensionId: "ext-1",
+      version: "1.0.0",
+      lifecycleStatus: "APPROVED",
+      packageStorageKey: null,
+      packageChecksum: null,
+      packageSize: null,
+      releaseNotes: null,
+      compatibilityRange: null,
+      uploadedBy: "uploader-1",
+      reviewedBy: "reviewer-1",
+      extension: { publisherId: "publisher-1", runtimeType: "THEME", publisherEntity: { status: "ACTIVE" } },
+    });
+
+    const checklist = await service.publicationChecklist("version-1");
+    expect(checklist.ready).toBe(false);
+    expect(checklist.items.filter((item) => !item.passed).map((item) => item.key))
+      .toEqual(expect.arrayContaining(["artifact", "release_notes", "compatibility"]));
+    await expect(service.transition("version-1", "PUBLISHED", undefined, actor))
+      .rejects.toThrow("Publication checklist is incomplete");
+    expect(signing.signForPublication).not.toHaveBeenCalled();
   });
 
   it("treats retrying a completed lifecycle transition as idempotent", async () => {
@@ -1256,8 +1292,13 @@ describe("ExtensionsService", () => {
       extensionId: "ext-1",
       version: "1.0.0",
       lifecycleStatus: "APPROVED",
-      packageStorageKey: "quarantine/package.zip",
+      packageStorageKey: "quarantine/extensions/ext-1/version-1/checksum.zip",
       packageChecksum: "checksum",
+      packageSize: 100,
+      releaseNotes: "Dependency validation",
+      compatibilityRange: ">=1.0.0 <2.0.0",
+      uploadedBy: "uploader-1",
+      reviewedBy: "reviewer-1",
       manifest: { dependencies: [{ key: "MISSING_MODULE", optional: false }] },
       extension: {
         key: "REPORTS_PLUS",
@@ -1280,8 +1321,13 @@ describe("ExtensionsService", () => {
       extensionId: "ext-a",
       version: "1.0.0",
       lifecycleStatus: "APPROVED",
-      packageStorageKey: "quarantine/package.zip",
+      packageStorageKey: "quarantine/extensions/ext-a/version-a/checksum.zip",
       packageChecksum: "checksum",
+      packageSize: 100,
+      releaseNotes: "Dependency validation",
+      compatibilityRange: ">=1.0.0 <2.0.0",
+      uploadedBy: "uploader-1",
+      reviewedBy: "reviewer-1",
       manifest: { dependencies: [{ key: "MODULE_B", optional: false }] },
       extension: {
         key: "MODULE_A",

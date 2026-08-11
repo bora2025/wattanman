@@ -42,6 +42,10 @@ interface ReviewSummary {
 
 type ReviewDomain = "technical" | "permissions" | "privacy" | "compatibility";
 type ReviewAssessment = Record<ReviewDomain, { status: "PASS" | "WARN" | "FAIL"; notes: string }>;
+interface PublicationChecklist {
+  ready: boolean;
+  items: Array<{ key: string; label: string; passed: boolean; detail: string }>;
+}
 
 interface ReviewEvent {
   id: string;
@@ -214,6 +218,7 @@ function VersionPanel({
     privacy: { status: "PASS", notes: "" },
     compatibility: { status: "PASS", notes: "" },
   });
+  const [publicationChecklist, setPublicationChecklist] = useState<PublicationChecklist | null>(null);
 
   useEffect(() => {
     if (!["QUARANTINED", "VALIDATING"].includes(version.lifecycleStatus)) return;
@@ -225,6 +230,17 @@ function VersionPanel({
     apiCursorItems<ValidationReport>(`/api/platform/extensions/versions/${version.id}/validations`)
       .then(setReports)
       .catch(() => setReports([]));
+  }, [version.id, version.lifecycleStatus]);
+
+  useEffect(() => {
+    if (version.lifecycleStatus !== "APPROVED") {
+      setPublicationChecklist(null);
+      return;
+    }
+    apiFetch(`/api/platform/extensions/versions/${version.id}/publication-checklist`)
+      .then(responseJson)
+      .then(setPublicationChecklist)
+      .catch(() => setPublicationChecklist(null));
   }, [version.id, version.lifecycleStatus]);
 
   useEffect(() => {
@@ -436,7 +452,7 @@ function VersionPanel({
           {(nextActions[version.lifecycleStatus] || []).map((action) => (
             <button
               key={action.status}
-              disabled={busy}
+              disabled={busy || (action.status === "PUBLISHED" && publicationChecklist?.ready !== true)}
               onClick={() => transition(action.status)}
               className="btn-outline btn-sm"
             >
@@ -493,6 +509,18 @@ function VersionPanel({
       )}
       {showDetails && (
         <>
+          {publicationChecklist && (
+            <div className={`rounded-lg border p-3 text-xs space-y-2 ${publicationChecklist.ready ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30" : "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30"}`}>
+              <p className="font-semibold">Publication checklist · {publicationChecklist.ready ? "Ready" : "Blocked"}</p>
+              <div className="grid gap-1 sm:grid-cols-2">
+                {publicationChecklist.items.map(item => (
+                  <p key={item.key} className={item.passed ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}>
+                    {item.passed ? "✓" : "✕"} {item.label} · {item.detail}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
           {version.releaseNotes && (
             <div className="rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 text-xs">
               <p className="font-semibold">Release notes</p>

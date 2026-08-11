@@ -786,6 +786,12 @@ export class ExtensionsService {
       | { signingKeyId: string; packageSignature: string; signedAt: Date }
       | undefined;
     if (nextStatus === "PUBLISHED") {
+      const checklist = await this.publicationChecklist(versionId);
+      if (!checklist.ready) {
+        throw new ConflictException(
+          `Publication checklist is incomplete: ${checklist.items.filter((item) => !item.passed).map((item) => `${item.label} (${item.detail})`).join(', ')}`,
+        );
+      }
       if (!existing.packageStorageKey || !existing.packageChecksum) {
         throw new ConflictException(
           "A validated package artifact is required before publication",
@@ -948,6 +954,62 @@ export class ExtensionsService {
         ? []
         : ["This version is not compatible with the current platform version"],
     };
+  }
+
+  async publicationChecklist(versionId: string) {
+    const version = await this.prisma.extensionVersion.findUnique({
+      where: { id: versionId },
+      include: { extension: { include: { publisherEntity: true } } },
+    });
+    if (!version) throw new NotFoundException('Extension version not found');
+    const [validation, review] = await Promise.all([
+      this.prisma.extensionValidation.findFirst({
+        where: { extensionVersionId: versionId, status: 'PASSED' },
+        orderBy: { completedAt: 'desc' },
+      }),
+      this.prisma.extensionReview.findFirst({
+        where: { extensionVersionId: versionId, action: 'APPROVED' },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+    const configuredKeyId = process.env.EXTENSION_SIGNING_KEY_ID?.trim();
+    const signingKey = configuredKeyId
+      ? await this.prisma.extensionSigningKey.findFirst({
+          where: { publisherId: version.extension.publisherId, keyId: configuredKeyId, status: 'ACTIVE' },
+        })
+      : null;
+    const assessment = (review?.assessment || {}) as Record<string, { status?: string; notes?: string }>;
+    const reviewDomains = ['technical', 'permissions', 'privacy', 'compatibility'];
+    const structuredReviewPassed = reviewDomains.every((domain) =>
+      ['PASS', 'WARN'].includes(assessment[domain]?.status || '') && Boolean(assessment[domain]?.notes?.trim()),
+    );
+    const expectedStorageKey = version.packageChecksum
+      ? `quarantine/extensions/${version.extensionId}/${version.id}/${version.packageChecksum}.zip`
+      : null;
+    let dependenciesPassed = true;
+    let dependencyDetail = 'Not required';
+    if (version.extension.runtimeType === 'DECLARATIVE_MODULE') {
+      try {
+        await this.assertDependencyGraph(version);
+        dependencyDetail = 'Dependency graph is valid';
+      } catch (error: any) {
+        dependenciesPassed = false;
+        dependencyDetail = error?.message || 'Dependency graph is invalid';
+      }
+    }
+    const items = [
+      { key: 'approved_state', label: 'Release is approved', passed: version.lifecycleStatus === 'APPROVED', detail: version.lifecycleStatus },
+      { key: 'validation', label: 'Package validation passed', passed: Boolean(validation), detail: validation ? `Report v${validation.reportSchema || 1}` : 'No passing report' },
+      { key: 'structured_review', label: 'Structured review passed', passed: Boolean(review) && structuredReviewPassed, detail: review ? 'Technical, permission, privacy, and compatibility review recorded' : 'No approval event' },
+      { key: 'separation', label: 'Uploader/reviewer policy satisfied', passed: !this.reviewSeparationRequired() || Boolean(version.uploadedBy && version.reviewedBy && version.uploadedBy !== version.reviewedBy), detail: `${version.uploadedBy || 'unknown uploader'} / ${version.reviewedBy || 'unknown reviewer'}` },
+      { key: 'artifact', label: 'Immutable package artifact is ready', passed: Boolean(expectedStorageKey && version.packageStorageKey === expectedStorageKey && version.packageSize && version.packageSize > 0), detail: version.packageChecksum || 'Checksum missing' },
+      { key: 'release_notes', label: 'Release notes are present', passed: Boolean(version.releaseNotes?.trim()), detail: version.releaseNotes?.trim() ? 'Present' : 'Missing' },
+      { key: 'compatibility', label: 'Platform compatibility is satisfied', passed: Boolean(version.compatibilityRange?.trim()) && this.isCompatible(version.compatibilityRange), detail: version.compatibilityRange || 'Missing range' },
+      { key: 'publisher', label: 'Publisher is active', passed: version.extension.publisherEntity.status === 'ACTIVE', detail: version.extension.publisherEntity.status },
+      { key: 'signing', label: 'Active signing configuration is available', passed: Boolean(signingKey && process.env.EXTENSION_SIGNING_PRIVATE_KEY_BASE64?.trim()), detail: signingKey?.keyId || configuredKeyId || 'Signing key not configured' },
+      { key: 'dependencies', label: 'Dependency graph is valid', passed: dependenciesPassed, detail: dependencyDetail },
+    ];
+    return { versionId, ready: items.every((item) => item.passed), items };
   }
 
   async compatibilityMatrix(extensionId: string) {
