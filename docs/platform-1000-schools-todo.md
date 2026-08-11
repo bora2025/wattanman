@@ -146,7 +146,8 @@ An item is complete only when implementation, automated tests, documentation, de
 - [x] Add request size and response size limits.
 - [x] Add cursor pagination requirements.
   - Verified by the 17-route collection registry, 195 backend tests, both production builds, and Railway deployment `bf11d7b0-5abe-4e0c-b299-2cd08e70a675` readiness on 2026-08-11.
-- [ ] Add circuit breakers for R2, email, SMS, and external integrations.
+- [x] Add circuit breakers for R2, email, SMS, and external integrations.
+  - Redis-shared protection covers R2, SendGrid, Twilio, Railway GraphQL, and external image fetches; 201 backend tests, both builds, and Railway deployment `2de1f553-7638-4c9f-ac99-f880af8f185b` passed on 2026-08-11.
 
 ### Stage 2 gate
 
