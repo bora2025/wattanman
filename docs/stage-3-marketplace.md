@@ -364,3 +364,20 @@ Production API deployment `f92c1323-cf28-418a-bd53-5aacb7469756` and extension
 worker deployment `abc447d6-2542-4ee7-98a9-131e189bef99` completed successfully
 on 2026-08-11. Validation passed with 254 backend tests, one intentional skip,
 and successful backend and frontend production builds.
+
+## Uploader and reviewer separation
+
+Approval and rejection remain protected by publisher-scoped `REVIEW` authority,
+but production now also requires the reviewer to differ from the recorded
+uploader. Missing actor provenance fails closed because separation cannot be
+proven. Submission remains an uploader action, and publication remains a
+separate `PUBLISH` authority check.
+
+`EXTENSION_REVIEW_SEPARATION_REQUIRED` defaults to enabled under
+`NODE_ENV=production`. It can be explicitly disabled only where a documented
+single-operator policy has been accepted; actor identities, mandatory decision
+notes, append-only review events, and audit logs still apply.
+
+Production API deployment `4b2255b2-ff7c-4e09-b5d8-9259023014a2` completed
+successfully on 2026-08-11. Validation passed with 255 backend tests, one
+intentional skip, and successful backend and frontend production builds.

@@ -201,7 +201,8 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Review and publication
 
-- [ ] Enforce uploader/reviewer separation when required.
+- [x] Enforce uploader/reviewer separation when required.
+  - Approval and rejection require a verifiable reviewer identity different from the recorded uploader whenever policy is enabled; production defaults to separation, with an explicit environment override only for an accepted single-operator workflow. Existing scoped publisher roles and review-note requirements remain independent gates. The 255-test backend suite and both builds passed, and Railway API deployment `4b2255b2-ff7c-4e09-b5d8-9259023014a2` succeeded on 2026-08-11.
 - [ ] Add structured technical, permission, privacy, and compatibility review.
 - [ ] Require review notes for every decision.
 - [ ] Add appeal workflow and audit history.
