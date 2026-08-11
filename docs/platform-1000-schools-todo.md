@@ -159,7 +159,8 @@ An item is complete only when implementation, automated tests, documentation, de
   - Every cron path has a Redis time-bucket claim; independent-replica contention and loser no-side-effect tests pass, and three-replica deployment `ee0859e9-1882-4f38-9acb-176bff0f39e5` is ready.
 - [x] Complete a rolling deployment without incompatible-schema errors.
   - Three-replica redeploy `15c77d65-c3a3-4f05-b468-ffab9f9373c1` completed with 26/26 continuous readiness probes and no compatibility error.
-- [ ] Recover and replay a dead-letter job successfully.
+- [x] Recover and replay a dead-letter job successfully.
+  - A real Redis/BullMQ failure-to-dead-letter-to-replay rehearsal passed; audited platform controls shipped in deployment `2d348bda-ecbd-4255-b725-b7aadcd01fae`.
 
 ## Stage 3 — Marketplace Production Hardening
 

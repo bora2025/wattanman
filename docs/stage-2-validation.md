@@ -34,3 +34,12 @@ Railway redeploy `15c77d65-c3a3-4f05-b468-ffab9f9373c1` rolled the schema-
 compatibility-checked API across three replicas. Continuous public readiness
 probing recorded 26 successful responses and zero failures from trigger through
 deployment success.
+
+## Dead-letter recovery
+
+A Redis 7 integration rehearsal ran a BullMQ worker configured for one attempt,
+forced a terminal provider failure, observed the generated dead-letter job,
+restarted with a healthy handler, replayed the validated original envelope, and
+confirmed successful delivery and dead-letter removal. Open-handle detection
+also exposed and drove removal of a worker Redis connection leak. Production
+deployment `2d348bda-ecbd-4255-b725-b7aadcd01fae` is ready on three replicas.
