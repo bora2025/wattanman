@@ -80,6 +80,7 @@ describe("ExtensionsService", () => {
     normalizePublicKey: jest.fn((value) => value),
   };
   const queues = { enqueue: jest.fn().mockResolvedValue({ id: "job-1" }) };
+  const antivirus = { scan: jest.fn().mockResolvedValue({ clean: true, engine: "clamav" }) };
   const service = new ExtensionsService(
     prisma as any,
     audit as any,
@@ -87,6 +88,7 @@ describe("ExtensionsService", () => {
     packageValidator as any,
     signing as any,
     queues as any,
+    antivirus as any,
   );
   const actor = { userId: "platform-admin", role: "PLATFORM_ADMIN" };
 
@@ -562,6 +564,29 @@ describe("ExtensionsService", () => {
     expect(storage.getPrivate).toHaveBeenCalledWith(`quarantine/extensions/ext-1/version-1/${checksum}.zip`);
     expect(storage.putPrivateImmutable).toHaveBeenCalledWith("validated/extensions/ext-1/version-1/asset-checksum/theme.json", Buffer.from("{}"), "application/json", "asset-checksum");
     expect(prisma.extensionValidation.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "PASSED" }) }));
+  });
+
+  it("rejects an infected package before archive validation", async () => {
+    const buffer = Buffer.from("EICAR test package");
+    const checksum = createHash("sha256").update(buffer).digest("hex");
+    const validationId = createHash("sha256").update(`extension-upload:version-1:${checksum}`).digest("hex");
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: "version-1", extensionId: "ext-1", version: "1.0.0", lifecycleStatus: "QUARANTINED",
+      packageChecksum: checksum, packageStorageKey: `quarantine/extensions/ext-1/version-1/${checksum}.zip`,
+      manifest: {}, extension: { key: "TEST_THEME", runtimeType: "THEME" },
+    });
+    prisma.extensionValidation.findUnique.mockResolvedValue({ id: validationId, extensionVersionId: "version-1", status: "PENDING" });
+    prisma.extensionVersion.update.mockImplementation(({ data }) => Promise.resolve({ id: "version-1", version: "1.0.0", ...data }));
+    storage.getPrivate.mockResolvedValue(buffer);
+    antivirus.scan.mockResolvedValueOnce({ clean: false, engine: "clamav", signature: "Win.Test.EICAR_HDB-1" });
+
+    const result = await service.completePackageUpload({ versionId: "version-1", checksum, validationId }, actor);
+
+    expect(result.lifecycleStatus).toBe("REJECTED");
+    expect(packageValidator.validate).not.toHaveBeenCalled();
+    expect(prisma.extensionValidation.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: "FAILED", errors: [expect.objectContaining({ code: "MALWARE_DETECTED" })] }),
+    }));
   });
 
   it("keeps a version retryable when quarantine storage fails", async () => {

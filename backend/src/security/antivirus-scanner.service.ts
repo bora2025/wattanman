@@ -1,0 +1,67 @@
+import { Injectable, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
+import { createConnection } from 'net';
+
+export interface AntivirusScanResult {
+  clean: boolean;
+  engine: 'clamav';
+  signature?: string;
+}
+
+@Injectable()
+export class AntivirusScannerService implements OnModuleInit {
+  async onModuleInit() {
+    if (process.env.WORKER_ROLE === 'extension') await this.scan(Buffer.alloc(0));
+  }
+
+  async scan(contents: Buffer): Promise<AntivirusScanResult> {
+    const host = process.env.CLAMAV_HOST?.trim();
+    const port = Number(process.env.CLAMAV_PORT || 3310);
+    const timeoutMs = Number(process.env.CLAMAV_SCAN_TIMEOUT_MS || 30_000);
+    if (!host) throw new ServiceUnavailableException('ClamAV scanner is not configured');
+    if (!Number.isInteger(port) || port < 1 || port > 65_535) throw new ServiceUnavailableException('CLAMAV_PORT is invalid');
+    if (!Number.isInteger(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 120_000) throw new ServiceUnavailableException('CLAMAV_SCAN_TIMEOUT_MS is invalid');
+
+    return new Promise<AntivirusScanResult>((resolve, reject) => {
+      const socket = createConnection({ host, port });
+      const responseChunks: Buffer[] = [];
+      let responseBytes = 0;
+      let settled = false;
+      const finish = (error?: Error, result?: AntivirusScanResult) => {
+        if (settled) return;
+        settled = true;
+        socket.destroy();
+        if (error) reject(error);
+        else resolve(result!);
+      };
+
+      socket.setTimeout(timeoutMs);
+      socket.once('connect', () => {
+        socket.write(Buffer.from('zINSTREAM\0'));
+        for (let offset = 0; offset < contents.length; offset += 64 * 1024) {
+          const chunk = contents.subarray(offset, Math.min(contents.length, offset + 64 * 1024));
+          const length = Buffer.allocUnsafe(4);
+          length.writeUInt32BE(chunk.length);
+          socket.write(length);
+          socket.write(chunk);
+        }
+        socket.write(Buffer.alloc(4));
+      });
+      socket.on('data', (chunk: Buffer) => {
+        responseBytes += chunk.length;
+        if (responseBytes > 4 * 1024) return finish(new ServiceUnavailableException('ClamAV response exceeded the safety limit'));
+        responseChunks.push(chunk);
+        const response = Buffer.concat(responseChunks);
+        const terminator = response.indexOf(0);
+        if (terminator < 0) return;
+        const message = response.subarray(0, terminator).toString('utf8').trim();
+        if (message === 'stream: OK') return finish(undefined, { clean: true, engine: 'clamav' });
+        const infected = /^stream: (.+) FOUND$/.exec(message);
+        if (infected) return finish(undefined, { clean: false, engine: 'clamav', signature: infected[1] });
+        return finish(new ServiceUnavailableException(`ClamAV returned an invalid response: ${message.slice(0, 200)}`));
+      });
+      socket.once('timeout', () => finish(new ServiceUnavailableException('ClamAV scan timed out')));
+      socket.once('error', (error) => finish(new ServiceUnavailableException(`ClamAV scan failed: ${error.message}`)));
+      socket.once('close', () => finish(new ServiceUnavailableException('ClamAV closed the scan before returning a result')));
+    });
+  }
+}

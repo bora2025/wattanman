@@ -12,6 +12,7 @@ import { createHash } from "crypto";
 import { ExtensionValidationRunnerService } from "./extension-validation-runner.service";
 import { ExtensionSigningService } from "./extension-signing.service";
 import { QueueInfrastructureService } from "../jobs/queue-infrastructure.service";
+import { AntivirusScannerService } from "../security/antivirus-scanner.service";
 import { dateIdPage, dateIdPageBy, decodeDateIdCursor, parsePageLimit } from "../common/cursor-pagination";
 import {
   ExtensionCatalogMetadataInput,
@@ -69,6 +70,7 @@ export class ExtensionsService {
     private packageValidator: ExtensionValidationRunnerService,
     private signing: ExtensionSigningService,
     private queues: QueueInfrastructureService,
+    private antivirus: AntivirusScannerService,
   ) {}
 
   private uploadValidationId(versionId: string, checksum: string) {
@@ -543,16 +545,25 @@ export class ExtensionsService {
     const downloadedChecksum = createHash("sha256").update(packageBuffer).digest("hex");
     if (downloadedChecksum !== payload.checksum)
       throw new ConflictException("Quarantined extension package checksum mismatch");
-    const validationResult = await this.packageValidator.validate(
-      {
-        originalname: `${existing.extension.key}-${existing.version}.zip`,
-        buffer: packageBuffer,
-        size: packageBuffer.length,
-        mimetype: "application/zip",
-      } as Express.Multer.File,
-      existing.extension,
-      existing.version,
-    );
+    const antivirusResult = await this.antivirus.scan(packageBuffer);
+    const validationResult = antivirusResult.clean
+      ? await this.packageValidator.validate(
+          {
+            originalname: `${existing.extension.key}-${existing.version}.zip`,
+            buffer: packageBuffer,
+            size: packageBuffer.length,
+            mimetype: "application/zip",
+          } as Express.Multer.File,
+          existing.extension,
+          existing.version,
+        )
+      : {
+          valid: false,
+          errors: [{ code: "MALWARE_DETECTED", message: `ClamAV detected ${antivirusResult.signature || "malware"}` }],
+          warnings: [],
+          files: [],
+          manifest: undefined,
+        };
     if (validationResult.valid) {
       for (const asset of validationResult.files) {
         const assetStorageKey = `validated/extensions/${existing.extensionId}/${existing.id}/${asset.checksum}/${asset.path}`;
@@ -612,6 +623,8 @@ export class ExtensionsService {
           validationId: payload.validationId,
           errorCount: validationResult.errors.length,
           warningCount: validationResult.warnings.length,
+          antivirusEngine: antivirusResult.engine,
+          antivirusSignature: antivirusResult.signature,
         },
       },
     );

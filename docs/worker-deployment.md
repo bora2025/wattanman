@@ -19,6 +19,9 @@ Configure repository root `/backend`, config path
 `/backend/extension-worker.railway.json`, and the same `DATABASE_URL`,
 `CONTROL_PLANE_DATABASE_URL`, `REDIS_URL`, and private R2 credentials as the API.
 The worker checks schema compatibility and never runs release migrations.
+Set `CLAMAV_HOST` to the ClamAV service's Railway private domain and
+`CLAMAV_PORT=3310`. Extension-worker startup performs a real empty-stream scan
+and fails readiness when the scanner is unavailable or returns an invalid result.
 
 Durable jobs carry a validated versioned envelope. `QueueInfrastructureService`
 establishes `tenantContext` from that envelope for every execution; scoped jobs
