@@ -173,6 +173,33 @@ extension-worker deployment `28b04468-a62f-4976-b973-0c26c7abe0ca` completed
 successfully on 2026-08-11. Validation passed with 235 backend tests, one
 intentional skip, and successful backend and frontend production builds.
 
+## Antivirus scanning
+
+Before ZIP parsing, the extension worker streams quarantined bytes to a
+dedicated ClamAV 1.4 service with the framed `INSTREAM` protocol. The scanner is
+reachable only through Railway private networking on port 3310. Clean results
+continue to structural validation; detected signatures produce a persisted
+`MALWARE_DETECTED` validation failure and reject the version without extracting
+assets. Timeouts, connection failures, oversized responses, and malformed
+responses fail closed and remain retryable through BullMQ.
+
+The extension worker performs a real empty-stream scan during startup, so it
+cannot become ready while ClamAV is unavailable. The client bounds scan time,
+response size, and stream chunk size. The protocol and deployment follow the
+official [ClamD protocol](https://docs.clamav.net/manual/Usage/ClamdProtocol.html)
+and [ClamAV Docker guidance](https://docs.clamav.net/manual/Installing/Docker.html).
+
+Rollback first pauses package upload processing, scales the extension worker to
+zero, restores the previous worker/API images, and retains rejected quarantine
+objects and validation reports. The private scanner can then be removed only
+after no deployed worker references it.
+
+Production API deployment `61857840-3eca-4ad5-9205-d25064311c8b`,
+extension-worker deployment `11aac888-8f98-45ab-a756-cd2f48a082f6`, and ClamAV
+deployment `3ee08ffa-632d-4c7b-89c5-6ab10fed4cbd` completed successfully on
+2026-08-11. Validation passed with 239 backend tests, one intentional skip, and
+successful backend and frontend production builds.
+
 ## Asynchronous package completion
 
 The upload endpoint performs only bounded request-path work: it validates the
