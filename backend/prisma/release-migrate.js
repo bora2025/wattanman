@@ -39,6 +39,8 @@ async function resolveHistoricalBaseline(transaction) {
 }
 
 async function synchronizeHistoricalBaselineChecksum(transaction) {
+  const history = await transaction.$queryRawUnsafe(`SELECT to_regclass('"_prisma_migrations"')::text AS relation`);
+  if (!history[0]?.relation) return;
   const checksum = createHash('sha256').update(readFileSync(legacyBaselinePath)).digest('hex');
   const changed = await transaction.$executeRawUnsafe(`
     UPDATE "_prisma_migrations"

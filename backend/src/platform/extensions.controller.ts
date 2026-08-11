@@ -354,7 +354,11 @@ export class ExtensionsController {
   @Post("versions/:versionId/transition")
   transition(
     @Param("versionId") versionId: string,
-    @Body() body: { status: string; reviewNotes?: string },
+    @Body() body: {
+      status: string;
+      reviewNotes?: string;
+      assessment?: Record<'technical' | 'permissions' | 'privacy' | 'compatibility', { status: string; notes: string }>;
+    },
     @Request() req,
   ) {
     return this.extensions.transition(
@@ -362,6 +366,7 @@ export class ExtensionsController {
       body.status,
       body.reviewNotes,
       req.user,
+      body.assessment,
     );
   }
 

@@ -35,8 +35,13 @@ interface ReviewSummary {
   compatibilityRange?: string | null;
   previousVersion?: string | null;
   permissions: { requested: string[]; added: string[]; removed: string[] };
+  technical: { validationStatus?: string | null; errors: unknown[]; warnings: unknown[] };
+  privacy: { policyUrl?: string | null; dataUse?: Record<string, unknown> | null };
   warnings: string[];
 }
+
+type ReviewDomain = "technical" | "permissions" | "privacy" | "compatibility";
+type ReviewAssessment = Record<ReviewDomain, { status: "PASS" | "WARN" | "FAIL"; notes: string }>;
 
 interface ReviewEvent {
   id: string;
@@ -201,6 +206,13 @@ function VersionPanel({
   const [review, setReview] = useState<ReviewSummary | null>(null);
   const [reviewHistory, setReviewHistory] = useState<ReviewEvent[]>([]);
   const [showDetails, setShowDetails] = useState(false);
+  const [decisionNotes, setDecisionNotes] = useState("");
+  const [assessment, setAssessment] = useState<ReviewAssessment>({
+    technical: { status: "PASS", notes: "" },
+    permissions: { status: "PASS", notes: "" },
+    privacy: { status: "PASS", notes: "" },
+    compatibility: { status: "PASS", notes: "" },
+  });
 
   useEffect(() => {
     if (!["QUARANTINED", "VALIDATING"].includes(version.lifecycleStatus)) return;
@@ -251,14 +263,22 @@ function VersionPanel({
     }
   }
 
-  async function transition(status: string) {
+  async function transition(status: string, structuredAssessment?: ReviewAssessment) {
     const needsNotes = status === "APPROVED" || status === "REJECTED";
-    const reviewNotes = needsNotes
-      ? window.prompt(
-          `${status === "APPROVED" ? "Approval" : "Rejection"} notes`,
-        )
-      : undefined;
-    if (needsNotes && !reviewNotes) return;
+    if (needsNotes && !structuredAssessment) {
+      setShowDetails(true);
+      setError("Complete the structured review below before deciding.");
+      return;
+    }
+    const reviewNotes = needsNotes ? decisionNotes.trim() : undefined;
+    if (needsNotes && !reviewNotes) {
+      setError("Decision notes are required.");
+      return;
+    }
+    if (needsNotes && Object.values(structuredAssessment!).some(item => !item.notes.trim())) {
+      setError("Every review domain requires notes.");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -268,7 +288,7 @@ function VersionPanel({
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status, reviewNotes }),
+            body: JSON.stringify({ status, reviewNotes, assessment: structuredAssessment }),
           },
         ),
       );
@@ -483,8 +503,9 @@ function VersionPanel({
           {review && (
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200 space-y-1">
               <p className="font-semibold">
-                Permission and compatibility review
+                Structured review evidence
               </p>
+              <p>Technical validation: {review.technical.validationStatus || "No report"}</p>
               <p>
                 Compatibility: {review.compatibilityRange || "Not declared"} ·
                 Previous:{" "}
@@ -494,6 +515,9 @@ function VersionPanel({
               </p>
               <p>
                 Requested: {review.permissions.requested.join(", ") || "None"}
+              </p>
+              <p>
+                Privacy policy: {review.privacy.policyUrl || "Not provided"} · Data use: {JSON.stringify(review.privacy.dataUse || {})}
               </p>
               {review.permissions.added.length > 0 && (
                 <p className="text-amber-700 dark:text-amber-300">
@@ -510,6 +534,47 @@ function VersionPanel({
                   Warning: {warning}
                 </p>
               ))}
+            </div>
+          )}
+          {review && version.lifecycleStatus === "AWAITING_REVIEW" && (
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3 text-xs">
+              <p className="font-semibold">Reviewer assessment</p>
+              {(["technical", "permissions", "privacy", "compatibility"] as ReviewDomain[]).map(domain => (
+                <div key={domain} className="grid gap-2 md:grid-cols-[9rem_8rem_1fr] items-center">
+                  <label className="font-medium capitalize">{domain}</label>
+                  <select
+                    className="input py-2"
+                    value={assessment[domain].status}
+                    onChange={event => setAssessment(current => ({
+                      ...current,
+                      [domain]: { ...current[domain], status: event.target.value as "PASS" | "WARN" | "FAIL" },
+                    }))}
+                  >
+                    <option value="PASS">Pass</option>
+                    <option value="WARN">Warning</option>
+                    <option value="FAIL">Fail</option>
+                  </select>
+                  <input
+                    className="input py-2"
+                    value={assessment[domain].notes}
+                    onChange={event => setAssessment(current => ({
+                      ...current,
+                      [domain]: { ...current[domain], notes: event.target.value },
+                    }))}
+                    placeholder={`${domain} review notes`}
+                  />
+                </div>
+              ))}
+              <textarea
+                className="input min-h-20"
+                value={decisionNotes}
+                onChange={event => setDecisionNotes(event.target.value)}
+                placeholder="Overall decision notes"
+              />
+              <div className="flex gap-2">
+                <button disabled={busy} className="btn-primary btn-sm" onClick={() => transition("APPROVED", assessment)}>Approve</button>
+                <button disabled={busy} className="btn-outline btn-sm text-red-600" onClick={() => transition("REJECTED", assessment)}>Reject</button>
+              </div>
             </div>
           )}
           {reviewHistory.length > 0 && (

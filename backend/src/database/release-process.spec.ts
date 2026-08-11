@@ -26,6 +26,8 @@ describe('production release process', () => {
     expect(runner).toContain('pg_advisory_xact_lock');
     expect(runner).toContain('$executeRawUnsafe(`DO $$ BEGIN PERFORM pg_advisory_xact_lock(${RELEASE_LOCK_ID}); END $$`)');
     expect(runner).not.toContain('$queryRawUnsafe(`SELECT pg_advisory_xact_lock');
+    expect(runner).toContain(`to_regclass('"_prisma_migrations"')::text AS relation`);
+    expect(runner).toContain('if (!history[0]?.relation) return');
     expect(runner).toContain("'migrate', 'deploy'");
     expect(runner).toContain("'migrate', 'resolve', '--applied', LEGACY_BASELINE");
     expect(runner).toContain('synchronizeHistoricalBaselineChecksum');

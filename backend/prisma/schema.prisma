@@ -339,6 +339,7 @@ model ExtensionReview {
   extensionVersion   ExtensionVersion @relation(fields: [extensionVersionId], references: [id], onDelete: Cascade)
   action             String // SUBMITTED | APPROVED | REJECTED | APPEALED
   notes              String?
+  assessment         Json?
   actorId            String?
   actorRole          String?
   createdAt          DateTime         @default(now())

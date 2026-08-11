@@ -717,6 +717,7 @@ export class ExtensionsService {
     nextStatus: string,
     reviewNotes: string | undefined,
     actor: Actor,
+    assessment?: Record<string, { status?: string; notes?: string }>,
   ) {
     const existing = await this.prisma.extensionVersion.findUnique({
       where: { id: versionId },
@@ -748,6 +749,9 @@ export class ExtensionsService {
         "reviewNotes are required when approving or rejecting a version",
       );
     }
+    const structuredAssessment = ["APPROVED", "REJECTED"].includes(nextStatus)
+      ? this.validateReviewAssessment(assessment, nextStatus)
+      : undefined;
     if (
       (nextStatus === "APPROVED" || nextStatus === "REJECTED") &&
       this.reviewSeparationRequired()
@@ -839,6 +843,7 @@ export class ExtensionsService {
           extensionVersionId: versionId,
           action: nextStatus === "AWAITING_REVIEW" ? "SUBMITTED" : nextStatus,
           notes: reviewNotes?.trim() || undefined,
+          assessment: structuredAssessment as any,
           actorId: actor.userId,
           actorRole: actor.role,
         },
@@ -867,10 +872,35 @@ export class ExtensionsService {
     return process.env.NODE_ENV === 'production';
   }
 
+  private validateReviewAssessment(
+    assessment: Record<string, { status?: string; notes?: string }> | undefined,
+    decision: string,
+  ) {
+    const domains = ['technical', 'permissions', 'privacy', 'compatibility'];
+    const normalized: Record<string, { status: string; notes: string }> = {};
+    for (const domain of domains) {
+      const status = assessment?.[domain]?.status?.trim().toUpperCase();
+      const notes = assessment?.[domain]?.notes?.trim();
+      if (!['PASS', 'WARN', 'FAIL'].includes(status || '') || !notes) {
+        throw new BadRequestException(`Structured ${domain} review requires PASS, WARN, or FAIL plus notes`);
+      }
+      normalized[domain] = { status: status!, notes };
+    }
+    const statuses = Object.values(normalized).map((item) => item.status);
+    if (decision === 'APPROVED' && statuses.includes('FAIL')) {
+      throw new BadRequestException('An approved review cannot contain a failed domain');
+    }
+    if (decision === 'REJECTED' && !statuses.includes('FAIL')) {
+      throw new BadRequestException('A rejected review must identify at least one failed domain');
+    }
+    return normalized;
+  }
+
   async reviewSummary(versionId: string) {
     const version = await this.prisma.extensionVersion.findUnique({
       where: { id: versionId },
       include: {
+        validations: { orderBy: { startedAt: 'desc' }, take: 1 },
         extension: {
           include: {
             versions: {
@@ -896,6 +926,15 @@ export class ExtensionsService {
       platformVersion: this.platformVersion(),
       platformCompatible: this.isCompatible(version.compatibilityRange),
       previousVersion: previous?.version || null,
+      technical: {
+        validationStatus: version.validations?.[0]?.status || null,
+        errors: version.validations?.[0]?.errors || [],
+        warnings: version.validations?.[0]?.warnings || [],
+      },
+      privacy: {
+        policyUrl: version.extension.privacyPolicyUrl,
+        dataUse: version.extension.dataUse,
+      },
       permissions: {
         requested: permissions,
         added: permissions.filter(

@@ -94,6 +94,16 @@ describe("ExtensionsService", () => {
     antivirus as any,
   );
   const actor = { userId: "platform-admin", role: "PLATFORM_ADMIN" };
+  const passingAssessment = {
+    technical: { status: "PASS", notes: "Validation report reviewed" },
+    permissions: { status: "PASS", notes: "Capabilities are appropriate" },
+    privacy: { status: "PASS", notes: "Data use disclosure reviewed" },
+    compatibility: { status: "PASS", notes: "Platform range is supported" },
+  };
+  const rejectingAssessment = {
+    ...passingAssessment,
+    permissions: { status: "FAIL", notes: "Requested capability is excessive" },
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -289,6 +299,28 @@ describe("ExtensionsService", () => {
     ).rejects.toThrow("reviewNotes are required");
   });
 
+  it("requires all structured review domains and consistent decisions", async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: "version-1",
+      version: "1.0.0",
+      lifecycleStatus: "AWAITING_REVIEW",
+      uploadedBy: "uploader-1",
+      extension: { publisherId: "publisher-1" },
+    });
+
+    await expect(service.transition(
+      "version-1", "APPROVED", "Reviewed", actor,
+      { ...passingAssessment, privacy: { status: "FAIL", notes: "Policy is missing" } },
+    )).rejects.toThrow("approved review cannot contain a failed domain");
+    await expect(service.transition(
+      "version-1", "REJECTED", "Reviewed", actor, passingAssessment,
+    )).rejects.toThrow("rejected review must identify at least one failed domain");
+    await expect(service.transition(
+      "version-1", "APPROVED", "Reviewed", actor,
+      { ...passingAssessment, technical: { status: "PASS", notes: "" } },
+    )).rejects.toThrow("Structured technical review");
+  });
+
   it("enforces uploader and reviewer separation when policy requires it", async () => {
     const previous = process.env.EXTENSION_REVIEW_SEPARATION_REQUIRED;
     process.env.EXTENSION_REVIEW_SEPARATION_REQUIRED = "true";
@@ -302,7 +334,7 @@ describe("ExtensionsService", () => {
 
     try {
       await expect(
-        service.transition("version-1", "APPROVED", "Reviewed", actor),
+        service.transition("version-1", "APPROVED", "Reviewed", actor, passingAssessment),
       ).rejects.toThrow("uploader cannot approve or reject");
       expect(prisma.extensionVersion.update).not.toHaveBeenCalled();
     } finally {
@@ -821,12 +853,14 @@ describe("ExtensionsService", () => {
       "REJECTED",
       "Clarify permissions",
       actor,
+      rejectingAssessment,
     );
     expect(prisma.extensionReview.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         extensionVersionId: "version-1",
         action: "REJECTED",
         notes: "Clarify permissions",
+        assessment: rejectingAssessment,
       }),
     });
 
