@@ -17,6 +17,12 @@ interface Installation {
   installedAt?: string | null
   uninstalledAt?: string | null
   availableVersionId?: string | null
+  requestPricingModel?: 'FREE' | 'ONE_TIME' | 'SUBSCRIPTION' | 'PRIVATE_CONTRACT' | null
+  requestPriceMinor?: number | null
+  requestCurrency?: string | null
+  requestBillingInterval?: 'MONTHLY' | 'YEARLY' | null
+  requestContractReference?: string | null
+  requestPriceNote?: string | null
   extension: {
     key: string
     name: string
@@ -28,6 +34,20 @@ interface Installation {
   installedVersion: { version: string }
 }
 interface PilotCriterion { key: string; label: string }
+
+function requestPricingLabel(item: Installation) {
+  if (!item.requestPricingModel || item.requestPricingModel === 'FREE') return null
+  if (item.requestPricingModel === 'PRIVATE_CONTRACT') {
+    return `Private contract${item.requestContractReference ? ` · ${item.requestContractReference}` : ''}`
+  }
+  const amount = new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: item.requestCurrency || 'USD',
+  }).format((item.requestPriceMinor || 0) / 100)
+  return item.requestPricingModel === 'SUBSCRIPTION'
+    ? `${amount} / ${item.requestBillingInterval?.toLowerCase() || 'billing period'}`
+    : `${amount} one-time`
+}
 
 async function json(response: Response) {
   const data = await response.json().catch(() => ({}))
@@ -197,9 +217,9 @@ function ManageExtensionsContent() {
                         <option value="AUTO_APPROVED">Automatic</option>
                       </select>
                     </label>
-                    {item.extension.price != null && item.extension.price > 0 && (
+                    {requestPricingLabel(item) && (
                       <span className="text-xs text-amber-600">
-                        ${item.extension.price}{item.extension.priceNote ? ` ${item.extension.priceNote}` : ''} · Billing {item.billingStatus.toLowerCase()}
+                        {requestPricingLabel(item)}{item.requestPriceNote ? ` · ${item.requestPriceNote}` : ''} · Billing {item.billingStatus.toLowerCase()}
                       </span>
                     )}
                     {item.availableVersionId && (

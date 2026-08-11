@@ -77,6 +77,11 @@ interface ExtensionRecord {
   };
   price?: number | null;
   priceNote?: string | null;
+  pricingModel: "FREE" | "ONE_TIME" | "SUBSCRIPTION" | "PRIVATE_CONTRACT";
+  priceMinor?: number | null;
+  currency: string;
+  billingInterval?: "MONTHLY" | "YEARLY" | null;
+  contractReference?: string | null;
   status: "ACTIVE" | "SUSPENDED" | "RETIRED";
   visibility: "LISTED" | "UNLISTED" | "PRIVATE";
   versions: ExtensionVersion[];
@@ -94,6 +99,12 @@ interface InstallationRecord {
   invoiceFileName?: string | null;
   invoiceUploadedAt?: string | null;
   paymentSubmittedAt?: string | null;
+  requestPricingModel?: "FREE" | "ONE_TIME" | "SUBSCRIPTION" | "PRIVATE_CONTRACT" | null;
+  requestPriceMinor?: number | null;
+  requestCurrency?: string | null;
+  requestBillingInterval?: "MONTHLY" | "YEARLY" | null;
+  requestContractReference?: string | null;
+  requestPriceNote?: string | null;
   requestedAt?: string | null;
   approvedAt?: string | null;
   installedAt?: string | null;
@@ -778,7 +789,11 @@ function ExtensionCard({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [price, setPrice] = useState(extension.price?.toString() ?? "");
+  const [pricingModel, setPricingModel] = useState(extension.pricingModel || "FREE");
+  const [price, setPrice] = useState(extension.priceMinor != null ? (extension.priceMinor / 100).toFixed(2) : extension.price?.toString() ?? "");
+  const [currency, setCurrency] = useState(extension.currency || "USD");
+  const [billingInterval, setBillingInterval] = useState(extension.billingInterval || "MONTHLY");
+  const [contractReference, setContractReference] = useState(extension.contractReference || "");
   const [priceNote, setPriceNote] = useState(extension.priceNote ?? "");
   const [metadata, setMetadata] = useState({
     description: extension.description ?? "",
@@ -876,7 +891,11 @@ function ExtensionCard({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            price: price.trim() === "" ? null : Number(price),
+            pricingModel,
+            priceMinor: ["ONE_TIME", "SUBSCRIPTION"].includes(pricingModel) ? Math.round(Number(price) * 100) : null,
+            currency,
+            billingInterval: pricingModel === "SUBSCRIPTION" ? billingInterval : null,
+            contractReference: pricingModel === "PRIVATE_CONTRACT" ? contractReference : null,
             priceNote,
           }),
         }),
@@ -971,7 +990,7 @@ function ExtensionCard({
             {extension.runtimeType} · {extension.commercialType} ·{" "}
             {extension.visibility} · {extension.versions.length} release
             {extension.versions.length === 1 ? "" : "s"}
-            {extension.price != null ? ` · $${extension.price}${extension.priceNote ? ` ${extension.priceNote}` : ""}` : " · Free"}
+            {` · ${extension.pricingModel === "FREE" ? "Free" : extension.pricingModel === "PRIVATE_CONTRACT" ? `Private contract${extension.contractReference ? ` · ${extension.contractReference}` : ""}` : `${extension.currency} ${((extension.priceMinor || 0) / 100).toFixed(2)}${extension.pricingModel === "SUBSCRIPTION" ? ` / ${extension.billingInterval?.toLowerCase()}` : ""}`}`}
           </p>
           </div>
         </div>
@@ -1047,8 +1066,11 @@ function ExtensionCard({
             <button type="button" className="btn-primary btn-sm" disabled={busy} onClick={saveMetadata}>Save metadata</button>
           </section>
           <div className="flex gap-2 items-end flex-wrap rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+            <label className="text-xs text-slate-600 dark:text-slate-300">Pricing model<select className="input mt-1" value={pricingModel} onChange={(event) => setPricingModel(event.target.value as typeof pricingModel)}><option value="FREE">Free</option><option value="ONE_TIME">One-time</option><option value="SUBSCRIPTION">Subscription</option><option value="PRIVATE_CONTRACT">Private contract</option></select></label>
+            <label className="text-xs text-slate-600 dark:text-slate-300">Currency<input className="input mt-1 w-24" maxLength={3} value={currency} onChange={(event) => setCurrency(event.target.value.toUpperCase())} /></label>
+            {["ONE_TIME", "SUBSCRIPTION"].includes(pricingModel) && (
             <label className="text-xs text-slate-600 dark:text-slate-300">
-              Price (USD)
+              Price ({currency})
               <input
                 type="number"
                 min="0"
@@ -1058,7 +1080,9 @@ function ExtensionCard({
                 placeholder="Free"
                 className="input mt-1 w-32"
               />
-            </label>
+            </label>)}
+            {pricingModel === "SUBSCRIPTION" && <label className="text-xs text-slate-600 dark:text-slate-300">Interval<select className="input mt-1" value={billingInterval} onChange={(event) => setBillingInterval(event.target.value as "MONTHLY" | "YEARLY")}><option value="MONTHLY">Monthly</option><option value="YEARLY">Yearly</option></select></label>}
+            {pricingModel === "PRIVATE_CONTRACT" && <label className="text-xs text-slate-600 dark:text-slate-300">Contract reference<input className="input mt-1 w-48" value={contractReference} onChange={(event) => setContractReference(event.target.value)} placeholder="Contract or sales plan" /></label>}
             <label className="text-xs text-slate-600 dark:text-slate-300">
               Billing note
               <input
@@ -1129,6 +1153,20 @@ function ExtensionCard({
       </div>
     </article>
   );
+}
+
+function installationPricingLabel(installation: InstallationRecord) {
+  if (!installation.requestPricingModel || installation.requestPricingModel === "FREE") return null;
+  if (installation.requestPricingModel === "PRIVATE_CONTRACT") {
+    return `Private contract${installation.requestContractReference ? ` · ${installation.requestContractReference}` : ""}`;
+  }
+  const amount = new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: installation.requestCurrency || "USD",
+  }).format((installation.requestPriceMinor || 0) / 100);
+  return installation.requestPricingModel === "SUBSCRIPTION"
+    ? `${amount} / ${installation.requestBillingInterval?.toLowerCase() || "billing period"}`
+    : `${amount} one-time`;
 }
 
 function InstallationCard({
@@ -1348,13 +1386,19 @@ function InstallationCard({
             </div>
           </div>
         )}
+        {installationPricingLabel(installation) && (
+          <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">
+            Requested terms: {installationPricingLabel(installation)}
+            {installation.requestPriceNote ? ` · ${installation.requestPriceNote}` : ""}
+          </p>
+        )}
         {error && (
           <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
         )}
         </div>
       </div>
       <div className="flex gap-2 flex-wrap">
-        {installation.extension.price != null && installation.extension.price > 0 && (
+        {installation.requestPricingModel && installation.requestPricingModel !== "FREE" && (
           <label className="text-xs text-slate-500">
             Billing
             <select

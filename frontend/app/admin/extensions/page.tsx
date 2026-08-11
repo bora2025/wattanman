@@ -28,6 +28,11 @@ interface DirectoryExtension {
   }
   price?: number | null
   priceNote?: string | null
+  pricingModel: 'FREE' | 'ONE_TIME' | 'SUBSCRIPTION' | 'PRIVATE_CONTRACT'
+  priceMinor?: number | null
+  currency: string
+  billingInterval?: 'MONTHLY' | 'YEARLY' | null
+  contractReference?: string | null
   versions: Array<{ id: string; version: string }>
 }
 
@@ -48,6 +53,18 @@ interface Installation {
 }
 
 interface CatalogCollection { id: string; slug: string; title: string; description?: string | null; items: Array<{ id: string; extension: DirectoryExtension }> }
+
+function pricingLabel(extension: DirectoryExtension) {
+  if (extension.pricingModel === 'FREE') return 'Free'
+  if (extension.pricingModel === 'PRIVATE_CONTRACT') return 'Private contract'
+  const amount = new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: extension.currency,
+  }).format((extension.priceMinor || 0) / 100)
+  return extension.pricingModel === 'SUBSCRIPTION'
+    ? `${amount} / ${extension.billingInterval?.toLowerCase() || 'billing period'}`
+    : `${amount} one-time`
+}
 
 async function json(res: Response) {
   const data = await res.json().catch(() => ({}))
@@ -124,7 +141,7 @@ function AdminExtensionsContent() {
 
   async function request(extensionId: string) {
     const extension = directory.find(item => item.id === extensionId)
-    if (extension?.price != null && extension.price > 0) {
+    if (extension && ['ONE_TIME', 'SUBSCRIPTION'].includes(extension.pricingModel)) {
       setSelectedExtension(null)
       setPaymentExtension(extension)
       return
@@ -184,7 +201,7 @@ function AdminExtensionsContent() {
   function ExtensionRow({ extension }: { extension: DirectoryExtension }) {
     const installation = installations.find(item => item.extensionId === extension.id)
     const state = extensionState(installation)
-    const isPaid = extension.price != null && extension.price > 0
+    const isPaid = ['ONE_TIME', 'SUBSCRIPTION'].includes(extension.pricingModel)
     return (
       <>
       <article className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-blue-700">
@@ -199,7 +216,7 @@ function AdminExtensionsContent() {
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="truncate font-bold text-slate-800 dark:text-slate-100">{extension.name}</h3>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${isPaid ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'}`}>
-                  {isPaid ? `$${extension.price}${extension.priceNote ? ` ${extension.priceNote}` : ''}` : 'Free'}
+                  {pricingLabel(extension)}
                 </span>
               </div>
               <p className="mt-1 line-clamp-2 min-h-10 text-sm text-slate-500 dark:text-slate-400">{extension.description || 'A reviewed Wattaman extension for your school.'}</p>
@@ -209,12 +226,12 @@ function AdminExtensionsContent() {
           <div className="mt-3 flex items-center text-xs text-amber-500"><span>★★★★★</span><span className="ml-2 text-slate-400">Wattaman reviewed</span></div>
           <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
             <button type="button" className="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400" onClick={() => setSelectedExtension(extension)}>Details</button>
-            {installation ? <div className="flex items-center gap-2"><span className="text-xs font-semibold text-slate-500">{state}</span><span title="Managed by platform admin" className={`relative h-6 w-10 rounded-full ${installation.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}><span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow ${installation.enabled ? 'left-5' : 'left-1'}`} /></span></div> : <button disabled={busy === extension.id} className="btn-primary btn-sm" onClick={() => request(extension.id)}>{busy === extension.id ? 'Requesting…' : 'Get'}</button>}
+            {installation ? <div className="flex items-center gap-2"><span className="text-xs font-semibold text-slate-500">{state}</span><span title="Managed by platform admin" className={`relative h-6 w-10 rounded-full ${installation.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}><span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow ${installation.enabled ? 'left-5' : 'left-1'}`} /></span></div> : <button disabled={busy === extension.id} className="btn-primary btn-sm" onClick={() => request(extension.id)}>{busy === extension.id ? 'Requesting…' : isPaid ? 'Purchase' : extension.pricingModel === 'PRIVATE_CONTRACT' ? 'Request contract' : 'Get'}</button>}
           </div>
         </div>
       </article>
-      {paymentExtension?.id === extension.id && requestContext?.payment.hasQr && <aside className="fixed left-4 top-1/2 z-[60] hidden w-56 -translate-y-1/2 rounded-2xl bg-white p-4 text-center shadow-2xl dark:bg-slate-900 lg:block"><p className="text-sm font-bold text-slate-900 dark:text-white">Scan to pay</p><img src={`/api/extensions/payment-qr?v=${requestContext.payment.updatedAt || '1'}`} alt="Bank payment QR" className="mx-auto mt-3 h-44 w-44 rounded-xl object-contain" /><p className="mt-3 text-sm font-semibold text-indigo-700 dark:text-indigo-300">{requestContext.payment.currency || 'USD'} {extension.price}</p>{requestContext.payment.bankName && <p className="mt-1 text-xs text-slate-500">{requestContext.payment.bankName}</p>}{requestContext.payment.accountName && <p className="text-xs text-slate-500">{requestContext.payment.accountName}</p>}{requestContext.payment.accountNumber && <p className="text-xs text-slate-500">{requestContext.payment.accountNumber}</p>}{requestContext.payment.instructions && <p className="mt-2 text-xs text-slate-400">{requestContext.payment.instructions}</p>}</aside>}
-      {paymentExtension?.id === extension.id && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true"><form onSubmit={submitPaymentRequest} className="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900"><div className="bg-gradient-to-r from-indigo-700 to-blue-600 p-6 text-white"><div className="flex items-start justify-between"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-200">Paid extension request</p><h2 className="mt-1 text-2xl font-bold">{extension.name}</h2><p className="mt-1 text-blue-100">${extension.price}{extension.priceNote ? ` ${extension.priceNote}` : ''}</p></div><button type="button" className="text-2xl text-white/70 hover:text-white" onClick={() => setPaymentExtension(null)}>×</button></div></div><div className="space-y-4 p-6"><div className="grid gap-3 rounded-xl bg-slate-50 p-4 text-sm dark:bg-slate-800 sm:grid-cols-2"><div><span className="block text-xs text-slate-400">School</span><strong className="text-slate-800 dark:text-white">{requestContext?.school.name || 'Current school'}</strong><p className="text-xs text-slate-500">{requestContext?.school.subdomain}</p></div><div><span className="block text-xs text-slate-400">School administrator</span><strong className="text-slate-800 dark:text-white">{requestContext?.admin.name || 'Signed-in administrator'}</strong><p className="text-xs text-slate-500">{requestContext?.admin.email || requestContext?.admin.phone}</p></div></div><p className="text-xs text-slate-500">School and administrator information is securely filled from your account.</p><label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Payment reference<input className="input mt-1 w-full" value={paymentReference} onChange={event => setPaymentReference(event.target.value)} placeholder="Bank transfer or invoice reference" /></label><label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Payment invoice or receipt <span className="text-red-500">*</span><input type="file" required accept="application/pdf,image/jpeg,image/png" className="mt-1 block w-full rounded-lg border border-slate-300 p-2 text-sm dark:border-slate-700" onChange={event => setInvoice(event.target.files?.[0] || null)} /><span className="mt-1 block text-xs font-normal text-slate-400">PDF, JPG, or PNG, maximum 5 MB.</span></label><label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Notes<textarea className="input mt-1 min-h-20 w-full" value={paymentNotes} onChange={event => setPaymentNotes(event.target.value)} placeholder="Optional payment details" /></label><div className="flex justify-end gap-3"><button type="button" className="btn-outline" onClick={() => setPaymentExtension(null)}>Cancel</button><button className="btn-primary" disabled={busy === extension.id}>{busy === extension.id ? 'Submitting…' : 'Submit payment request'}</button></div></div></form></div>}
+      {paymentExtension?.id === extension.id && requestContext?.payment.hasQr && <aside className="fixed left-4 top-1/2 z-[60] hidden w-56 -translate-y-1/2 rounded-2xl bg-white p-4 text-center shadow-2xl dark:bg-slate-900 lg:block"><p className="text-sm font-bold text-slate-900 dark:text-white">Scan to pay</p><img src={`/api/extensions/payment-qr?v=${requestContext.payment.updatedAt || '1'}`} alt="Bank payment QR" className="mx-auto mt-3 h-44 w-44 rounded-xl object-contain" /><p className="mt-3 text-sm font-semibold text-indigo-700 dark:text-indigo-300">{pricingLabel(extension)}</p>{requestContext.payment.bankName && <p className="mt-1 text-xs text-slate-500">{requestContext.payment.bankName}</p>}{requestContext.payment.accountName && <p className="text-xs text-slate-500">{requestContext.payment.accountName}</p>}{requestContext.payment.accountNumber && <p className="text-xs text-slate-500">{requestContext.payment.accountNumber}</p>}{requestContext.payment.instructions && <p className="mt-2 text-xs text-slate-400">{requestContext.payment.instructions}</p>}</aside>}
+      {paymentExtension?.id === extension.id && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true"><form onSubmit={submitPaymentRequest} className="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900"><div className="bg-gradient-to-r from-indigo-700 to-blue-600 p-6 text-white"><div className="flex items-start justify-between"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-200">Paid extension request</p><h2 className="mt-1 text-2xl font-bold">{extension.name}</h2><p className="mt-1 text-blue-100">{pricingLabel(extension)}{extension.priceNote ? ` · ${extension.priceNote}` : ''}</p></div><button type="button" className="text-2xl text-white/70 hover:text-white" onClick={() => setPaymentExtension(null)}>×</button></div></div><div className="space-y-4 p-6"><div className="grid gap-3 rounded-xl bg-slate-50 p-4 text-sm dark:bg-slate-800 sm:grid-cols-2"><div><span className="block text-xs text-slate-400">School</span><strong className="text-slate-800 dark:text-white">{requestContext?.school.name || 'Current school'}</strong><p className="text-xs text-slate-500">{requestContext?.school.subdomain}</p></div><div><span className="block text-xs text-slate-400">School administrator</span><strong className="text-slate-800 dark:text-white">{requestContext?.admin.name || 'Signed-in administrator'}</strong><p className="text-xs text-slate-500">{requestContext?.admin.email || requestContext?.admin.phone}</p></div></div><p className="text-xs text-slate-500">School and administrator information is securely filled from your account.</p><label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Payment reference<input className="input mt-1 w-full" value={paymentReference} onChange={event => setPaymentReference(event.target.value)} placeholder="Bank transfer or invoice reference" /></label><label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Payment invoice or receipt <span className="text-red-500">*</span><input type="file" required accept="application/pdf,image/jpeg,image/png" className="mt-1 block w-full rounded-lg border border-slate-300 p-2 text-sm dark:border-slate-700" onChange={event => setInvoice(event.target.files?.[0] || null)} /><span className="mt-1 block text-xs font-normal text-slate-400">PDF, JPG, or PNG, maximum 5 MB.</span></label><label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Notes<textarea className="input mt-1 min-h-20 w-full" value={paymentNotes} onChange={event => setPaymentNotes(event.target.value)} placeholder="Optional payment details" /></label><div className="flex justify-end gap-3"><button type="button" className="btn-outline" onClick={() => setPaymentExtension(null)}>Cancel</button><button className="btn-primary" disabled={busy === extension.id}>{busy === extension.id ? 'Submitting…' : 'Submit payment request'}</button></div></div></form></div>}
       </>
     )
   }

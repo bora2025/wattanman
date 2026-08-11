@@ -32,6 +32,8 @@ const RUNTIME_TYPES = [
   "CODE_EXTENSION",
 ];
 const COMMERCIAL_TYPES = ["MODULE", "ADDON", "THEME"];
+const PRICING_MODELS = ["FREE", "ONE_TIME", "SUBSCRIPTION", "PRIVATE_CONTRACT"];
+const BILLING_INTERVALS = ["MONTHLY", "YEARLY"];
 const VALIDATION_PIPELINE_VERSION = "extension-validation-pipeline/2.0.0";
 const MUTABLE_VERSION_STATUSES = new Set([
   "UPLOADED",
@@ -154,11 +156,42 @@ export class ExtensionsService {
 
   async setPricing(
     extensionId: string,
-    data: { price?: number | null; priceNote?: string | null },
+    data: {
+      pricingModel?: string;
+      priceMinor?: number | null;
+      price?: number | null;
+      currency?: string;
+      billingInterval?: string | null;
+      contractReference?: string | null;
+      priceNote?: string | null;
+    },
     actor: Actor,
   ) {
-    if (data.price != null && (!Number.isFinite(data.price) || data.price < 0))
-      throw new BadRequestException("price must be a non-negative number");
+    const legacyMinor = data.price == null ? null : Math.round(data.price * 100);
+    const priceMinor = data.priceMinor === undefined ? legacyMinor : data.priceMinor;
+    const pricingModel = (data.pricingModel || (priceMinor && priceMinor > 0 ? "ONE_TIME" : "FREE")).trim().toUpperCase();
+    const currency = (data.currency || "USD").trim().toUpperCase();
+    const billingInterval = data.billingInterval?.trim().toUpperCase() || null;
+    const contractReference = data.contractReference?.trim() || null;
+    if (!PRICING_MODELS.includes(pricingModel)) {
+      throw new BadRequestException(`pricingModel must be one of ${PRICING_MODELS.join(", ")}`);
+    }
+    if (!/^[A-Z]{3}$/.test(currency)) throw new BadRequestException("currency must be a three-letter ISO code");
+    if (priceMinor != null && (!Number.isSafeInteger(priceMinor) || priceMinor <= 0)) {
+      throw new BadRequestException("priceMinor must be a positive integer");
+    }
+    if (pricingModel === "FREE" && (priceMinor != null || billingInterval)) {
+      throw new BadRequestException("Free extensions cannot have a price or billing interval");
+    }
+    if (pricingModel === "ONE_TIME" && (priceMinor == null || billingInterval)) {
+      throw new BadRequestException("One-time pricing requires a price and no billing interval");
+    }
+    if (pricingModel === "SUBSCRIPTION" && (priceMinor == null || !BILLING_INTERVALS.includes(billingInterval || ""))) {
+      throw new BadRequestException("Subscription pricing requires a price and MONTHLY or YEARLY interval");
+    }
+    if (pricingModel === "PRIVATE_CONTRACT" && (priceMinor != null || billingInterval || !contractReference)) {
+      throw new BadRequestException("Private-contract pricing requires a contract reference and no public price");
+    }
     const existing = await this.prisma.extension.findUnique({
       where: { id: extensionId },
     });
@@ -167,14 +200,33 @@ export class ExtensionsService {
     const updated = await this.prisma.extension.update({
       where: { id: extensionId },
       data: {
-        price: data.price == null ? null : data.price,
-        priceNote: data.price == null ? null : data.priceNote?.trim() || null,
+        pricingModel,
+        priceMinor: pricingModel === "FREE" || pricingModel === "PRIVATE_CONTRACT" ? null : priceMinor,
+        price: priceMinor == null ? null : priceMinor / 100,
+        currency,
+        billingInterval: pricingModel === "SUBSCRIPTION" ? billingInterval : null,
+        contractReference: pricingModel === "PRIVATE_CONTRACT" ? contractReference : null,
+        priceNote: data.priceNote?.trim() || null,
       },
     });
     await this.log(actor, "PRICING_CHANGE", "EXTENSION", extensionId, existing.name, {
       changes: {
-        before: { price: existing.price, priceNote: existing.priceNote },
-        after: { price: updated.price, priceNote: updated.priceNote },
+        before: {
+          pricingModel: existing.pricingModel,
+          priceMinor: existing.priceMinor,
+          currency: existing.currency,
+          billingInterval: existing.billingInterval,
+          contractReference: existing.contractReference,
+          priceNote: existing.priceNote,
+        },
+        after: {
+          pricingModel: updated.pricingModel,
+          priceMinor: updated.priceMinor,
+          currency: updated.currency,
+          billingInterval: updated.billingInterval,
+          contractReference: updated.contractReference,
+          priceNote: updated.priceNote,
+        },
       },
     });
     return updated;

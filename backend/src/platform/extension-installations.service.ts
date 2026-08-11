@@ -327,6 +327,7 @@ export class ExtensionInstallationsService {
       where: {
         id: extensionId,
         status: "ACTIVE",
+        pricingModel: { in: ["FREE", "PRIVATE_CONTRACT"] },
         OR: [
           { visibility: { in: ["LISTED", "UNLISTED"] } },
           { visibility: "PRIVATE", visibilityGrants: { some: { schoolId } } },
@@ -351,6 +352,7 @@ export class ExtensionInstallationsService {
       throw new ConflictException(
         "Extension is already active for this school",
       );
+    const pricingSnapshot = this.pricingSnapshot(extension);
     const installation = existing
       ? await this.prisma.extensionInstallation.update({
           where: { id: existing.id },
@@ -359,6 +361,8 @@ export class ExtensionInstallationsService {
             requestedBy: actor.userId,
             uninstalledAt: null,
             purgeAfter: null,
+            billingStatus: extension.pricingModel === "FREE" ? "ACTIVE" : "PENDING",
+            ...pricingSnapshot,
           },
         })
       : await this.prisma.extensionInstallation.create({
@@ -368,6 +372,8 @@ export class ExtensionInstallationsService {
             installedVersionId: extension.versions[0].id,
             requestedAt: new Date(),
             requestedBy: actor.userId,
+            billingStatus: extension.pricingModel === "FREE" ? "ACTIVE" : "PENDING",
+            ...pricingSnapshot,
           },
         });
     await this.log(actor, "REQUEST", installation.id, extension.name, {
@@ -391,7 +397,7 @@ export class ExtensionInstallationsService {
       where: {
         id: extensionId,
         status: "ACTIVE",
-        price: { gt: 0 },
+        pricingModel: { in: ["ONE_TIME", "SUBSCRIPTION"] },
         OR: [
           { visibility: { in: ["LISTED", "UNLISTED"] } },
           { visibility: "PRIVATE", visibilityGrants: { some: { schoolId } } },
@@ -439,6 +445,7 @@ export class ExtensionInstallationsService {
       paymentSubmittedAt: new Date(),
       uninstalledAt: null,
       purgeAfter: null,
+      ...this.pricingSnapshot(extension),
     };
     const installation = existing
       ? await this.prisma.extensionInstallation.update({
@@ -453,7 +460,10 @@ export class ExtensionInstallationsService {
     await this.log(actor, "PAID_REQUEST", installation.id, extension.name, {
       extensionId,
       schoolId,
-      price: extension.price,
+      pricingModel: extension.pricingModel,
+      priceMinor: extension.priceMinor,
+      currency: extension.currency,
+      billingInterval: extension.billingInterval,
       paymentReference: requestData.paymentReference,
     });
     return installation;
@@ -470,6 +480,24 @@ export class ExtensionInstallationsService {
       contents: await this.storage.getPrivate(installation.invoiceStorageKey),
       fileName: installation.invoiceFileName || "invoice",
       contentType: installation.invoiceContentType || "application/octet-stream",
+    };
+  }
+
+  private pricingSnapshot(extension: {
+    pricingModel: string;
+    priceMinor?: number | null;
+    currency: string;
+    billingInterval?: string | null;
+    contractReference?: string | null;
+    priceNote?: string | null;
+  }) {
+    return {
+      requestPricingModel: extension.pricingModel,
+      requestPriceMinor: extension.priceMinor ?? null,
+      requestCurrency: extension.currency,
+      requestBillingInterval: extension.billingInterval ?? null,
+      requestContractReference: extension.contractReference ?? null,
+      requestPriceNote: extension.priceNote ?? null,
     };
   }
 
@@ -935,8 +963,8 @@ export class ExtensionInstallationsService {
     }
     if (
       enabled &&
-      existing.extension.price != null &&
-      existing.extension.price > 0 &&
+      existing.extension.pricingModel &&
+      existing.extension.pricingModel !== "FREE" &&
       existing.billingStatus !== "ACTIVE"
     ) {
       throw new ConflictException(

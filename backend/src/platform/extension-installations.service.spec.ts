@@ -7,6 +7,8 @@ describe('ExtensionInstallationsService', () => {
     $transaction: jest.fn(),
     extension: { findMany: jest.fn(), findFirst: jest.fn() },
     extensionCatalogCollection: { findMany: jest.fn() },
+    school: { findUnique: jest.fn() },
+    user: { findUnique: jest.fn() },
     extensionVersion: { findFirst: jest.fn() },
     extensionInstallation: {
       findMany: jest.fn(),
@@ -22,7 +24,7 @@ describe('ExtensionInstallationsService', () => {
     siteSetting: { findUnique: jest.fn(), upsert: jest.fn(), update: jest.fn() },
   };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
-  const storage = { getPrivate: jest.fn() };
+  const storage = { getPrivate: jest.fn(), putPrivate: jest.fn(), deletePrivate: jest.fn() };
   const signing = { verifyPublished: jest.fn().mockResolvedValue(true) };
   const service = new ExtensionInstallationsService(prisma as any, audit as any, storage as any, signing as any);
   const actor = { userId: 'admin-1', role: 'ADMIN' };
@@ -34,7 +36,9 @@ describe('ExtensionInstallationsService', () => {
 
   it('creates a request using the authoritative tenant school', async () => {
     prisma.extension.findFirst.mockResolvedValue({
-      id: 'extension-1', name: 'Rewards', versions: [{ id: 'version-1' }],
+      id: 'extension-1', name: 'Rewards', pricingModel: 'FREE', priceMinor: null,
+      currency: 'USD', billingInterval: null, contractReference: null, priceNote: null,
+      versions: [{ id: 'version-1' }],
     });
     prisma.extensionInstallation.findFirst.mockResolvedValue(null);
     prisma.extensionInstallation.create.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
@@ -43,8 +47,53 @@ describe('ExtensionInstallationsService', () => {
 
     expect(result.schoolId).toBe('school-a');
     expect(prisma.extensionInstallation.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-1' }),
+      data: expect.objectContaining({
+        schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-1',
+        billingStatus: 'ACTIVE', requestPricingModel: 'FREE', requestCurrency: 'USD',
+      }),
     });
+  });
+
+  it('snapshots private-contract terms and leaves billing pending', async () => {
+    prisma.extension.findFirst.mockResolvedValue({
+      id: 'extension-1', name: 'Private Analytics', pricingModel: 'PRIVATE_CONTRACT',
+      priceMinor: null, currency: 'USD', billingInterval: null,
+      contractReference: 'CONTRACT-2026', priceNote: 'Contact Wattaman',
+      versions: [{ id: 'version-1' }],
+    });
+    prisma.extensionInstallation.findFirst.mockResolvedValue(null);
+    prisma.extensionInstallation.create.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
+
+    await tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () => service.request('extension-1', actor));
+
+    expect(prisma.extensionInstallation.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+      billingStatus: 'PENDING', requestPricingModel: 'PRIVATE_CONTRACT',
+      requestContractReference: 'CONTRACT-2026', requestPriceNote: 'Contact Wattaman',
+    }) });
+  });
+
+  it('snapshots paid subscription terms with the payment request', async () => {
+    prisma.extension.findFirst.mockResolvedValue({
+      id: 'extension-1', name: 'Analytics Plus', pricingModel: 'SUBSCRIPTION',
+      priceMinor: 2500, currency: 'USD', billingInterval: 'MONTHLY',
+      contractReference: null, priceNote: 'Per school', versions: [{ id: 'version-1' }],
+    });
+    prisma.school.findUnique.mockResolvedValue({ id: 'school-a', name: 'School A' });
+    prisma.user.findUnique.mockResolvedValue({ id: 'admin-1', name: 'Admin One', email: 'admin@school.test' });
+    prisma.extensionInstallation.findFirst.mockResolvedValue(null);
+    prisma.extensionInstallation.create.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
+    const invoice = { mimetype: 'application/pdf', originalname: 'invoice.pdf', buffer: Buffer.from('invoice') } as Express.Multer.File;
+
+    await tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () =>
+      service.requestPaid('extension-1', invoice, { paymentReference: 'BANK-1' }, actor),
+    );
+
+    expect(storage.putPrivate).toHaveBeenCalled();
+    expect(prisma.extensionInstallation.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+      schoolId: 'school-a', billingStatus: 'PENDING', requestPricingModel: 'SUBSCRIPTION',
+      requestPriceMinor: 2500, requestCurrency: 'USD', requestBillingInterval: 'MONTHLY',
+      requestSchoolName: 'School A', requestAdminName: 'Admin One',
+    }) });
   });
 
   it('filters and cursor-paginates the school catalog with stable featured ordering', async () => {

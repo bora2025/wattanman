@@ -162,6 +162,11 @@ model Extension {
   commercialType   String // MODULE | ADDON | THEME
   price            Float?
   priceNote        String?
+  pricingModel     String             @default("FREE") // FREE | ONE_TIME | SUBSCRIPTION | PRIVATE_CONTRACT
+  priceMinor       Int?
+  currency         String             @default("USD")
+  billingInterval  String? // MONTHLY | YEARLY
+  contractReference String?
   category         String             @default("OTHER")
   tags             String[]           @default([])
   locales          String[]           @default(["en"])
@@ -472,6 +477,12 @@ model ExtensionInstallation {
   invoiceContentType String?
   invoiceUploadedAt  DateTime?
   paymentSubmittedAt DateTime?
+  requestPricingModel String?
+  requestPriceMinor   Int?
+  requestCurrency     String?
+  requestBillingInterval String?
+  requestContractReference String?
+  requestPriceNote    String?
   dataBytes          Int                      @default(0)
   updatePolicy       String                   @default("MANUAL") // MANUAL | NOTIFY | AUTO_APPROVED
   availableVersionId String?

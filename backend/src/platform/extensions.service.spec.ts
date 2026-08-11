@@ -200,6 +200,35 @@ describe("ExtensionsService", () => {
     }));
   });
 
+  it.each([
+    [{ pricingModel: "FREE", currency: "USD" }, { pricingModel: "FREE", priceMinor: null, billingInterval: null }],
+    [{ pricingModel: "ONE_TIME", priceMinor: 1500, currency: "USD" }, { pricingModel: "ONE_TIME", priceMinor: 1500, billingInterval: null }],
+    [{ pricingModel: "SUBSCRIPTION", priceMinor: 2500, currency: "USD", billingInterval: "MONTHLY" }, { pricingModel: "SUBSCRIPTION", priceMinor: 2500, billingInterval: "MONTHLY" }],
+    [{ pricingModel: "PRIVATE_CONTRACT", currency: "USD", contractReference: "CONTRACT-2026" }, { pricingModel: "PRIVATE_CONTRACT", priceMinor: null, contractReference: "CONTRACT-2026" }],
+  ])("stores a valid commercial pricing model", async (input, expected) => {
+    prisma.extension.findUnique.mockResolvedValue({
+      id: "ext-1", name: "Rewards", publisherId: "publisher-1",
+      pricingModel: "FREE", priceMinor: null, currency: "USD",
+      billingInterval: null, contractReference: null, priceNote: null,
+    });
+    prisma.extension.update.mockImplementation(({ data }) => Promise.resolve({ id: "ext-1", ...data }));
+
+    const result = await service.setPricing("ext-1", input, actor);
+
+    expect(result).toEqual(expect.objectContaining(expected));
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: "PRICING_CHANGE" }));
+  });
+
+  it.each([
+    { pricingModel: "FREE", priceMinor: 100, currency: "USD" },
+    { pricingModel: "ONE_TIME", currency: "USD" },
+    { pricingModel: "SUBSCRIPTION", priceMinor: 100, currency: "USD" },
+    { pricingModel: "PRIVATE_CONTRACT", currency: "USD" },
+  ])("rejects an invalid commercial pricing shape", async (input) => {
+    await expect(service.setPricing("ext-1", input, actor)).rejects.toThrow(BadRequestException);
+    expect(prisma.extension.update).not.toHaveBeenCalled();
+  });
+
   it("onboards an external publisher suspended pending verification", async () => {
     prisma.extensionPublisher.findUnique.mockResolvedValue(null);
     prisma.extensionPublisher.create.mockResolvedValue({
