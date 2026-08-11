@@ -151,3 +151,29 @@ Production API deployment `e3646496-9536-4536-afbe-3223e6cbcb0e` and frontend
 deployment `ef0c16cd-4e96-4fa7-a0b7-34d31caa0769` completed successfully on
 2026-08-11. Validation passed with 228 backend tests, one intentional skip, and
 successful backend and frontend production builds.
+
+## Asynchronous package completion
+
+The upload endpoint performs only bounded request-path work: it validates the
+multipart envelope, computes SHA-256, writes the ZIP to quarantine, persists a
+deterministic `PENDING` validation, and returns HTTP `202` after enqueueing a
+checksum-bound BullMQ job. Repeating the request with the same version and bytes
+reuses both validation identity and queue idempotency key, including recovery
+after a transient enqueue failure.
+
+The dedicated extension worker downloads the private object, verifies its
+checksum before parsing, writes checksum-addressed validated assets with
+idempotent upserts, and atomically records the validation report and final
+version state. Completed jobs are safe to replay. Infrastructure failures remain
+retryable and flow to the existing extension dead-letter queue after exhaustion.
+The platform UI polls while a package is quarantined or validating.
+
+Rollback requires scaling the extension worker to zero before restoring the
+previous API image so old synchronous requests cannot race new queued work. No
+schema rollback is required.
+
+Production API deployment `99093b1a-7f6a-4041-90ae-2c88be5db0b7`, frontend
+deployment `05efe9ac-f515-4fb0-960a-a997742feb93`, and extension-worker
+deployment `9cb376f3-0312-4f2a-b327-3d616b0816d6` completed successfully on
+2026-08-11. Validation passed with 231 backend tests, one intentional skip, and
+successful backend and frontend production builds.
