@@ -182,7 +182,8 @@ An item is complete only when implementation, automated tests, documentation, de
 
 - [x] Make upload completion asynchronous and idempotent.
   - Upload requests return `202` after checksum-addressed quarantine persistence, create a deterministic pending validation, and enqueue one checksum-bound BullMQ job. Retries reuse the same validation and job identity; the dedicated production extension worker downloads and verifies the object before validation. The 231-test backend suite, both builds, and Railway deployments `99093b1a-7f6a-4041-90ae-2c88be5db0b7` (API), `05efe9ac-f515-4fb0-960a-a997742feb93` (frontend), and `9cb376f3-0312-4f2a-b327-3d616b0816d6` (extension worker) passed on 2026-08-11.
-- [ ] Enforce immutable checksum-addressed R2 keys.
+- [x] Enforce immutable checksum-addressed R2 keys.
+  - Quarantine ZIPs, validated assets, and published ZIPs use SHA-256-addressed keys plus signed `If-None-Match: *` create-only writes. A `412` retry succeeds only after the stored bytes match the expected checksum; mismatches fail closed. The 235-test backend suite, both builds, and Railway deployments `066ff4e0-86c8-4b28-ae6b-08dca4e472ca` (API) and `28b04468-a62f-4976-b973-0c26c7abe0ca` (extension worker) passed on 2026-08-11.
 - [ ] Add antivirus scanning.
 - [ ] Enforce expanded-size, file-count, path, symlink, MIME, and compression-ratio limits.
 - [ ] Validate manifest against versioned JSON Schema.

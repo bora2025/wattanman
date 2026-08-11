@@ -152,6 +152,27 @@ deployment `ef0c16cd-4e96-4fa7-a0b7-34d31caa0769` completed successfully on
 2026-08-11. Validation passed with 228 backend tests, one intentional skip, and
 successful backend and frontend production builds.
 
+## Immutable checksum-addressed package storage
+
+Quarantined ZIPs, extracted validated assets, and published ZIPs are keyed by
+their SHA-256 content identity. Every immutable write signs and sends
+`If-None-Match: *`, which Cloudflare R2 supports for conditional `PutObject`
+operations. A `412 PreconditionFailed` is treated as an idempotent retry only
+after downloading the existing private object and confirming exact length and
+SHA-256 identity. Any key/body mismatch or collision fails closed before package
+state advances. See the official [Cloudflare R2 S3 compatibility
+reference](https://developers.cloudflare.com/r2/api/s3/api/).
+
+Mutable platform assets continue using the separate mutable storage method, so
+the no-overwrite guarantee is explicit at each package call site. Rollback must
+retain existing checksum-addressed objects; restoring the previous application
+image does not require copying or renaming R2 data.
+
+Production API deployment `066ff4e0-86c8-4b28-ae6b-08dca4e472ca` and
+extension-worker deployment `28b04468-a62f-4976-b973-0c26c7abe0ca` completed
+successfully on 2026-08-11. Validation passed with 235 backend tests, one
+intentional skip, and successful backend and frontend production builds.
+
 ## Asynchronous package completion
 
 The upload endpoint performs only bounded request-path work: it validates the
