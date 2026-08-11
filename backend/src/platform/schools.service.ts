@@ -8,6 +8,7 @@ import { PLATFORM_SCHOOL_SUBDOMAIN } from '../tenancy/constants';
 import { RailwayDomainService } from './railway-domain.service';
 import { SchoolDomainService } from '../tenancy/school-domain.service';
 import { AuthDeliveryService } from '../auth/auth-delivery.service';
+import { dateIdPage, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
 
 const SUBDOMAIN_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const RESERVED_SUBDOMAINS = new Set([PLATFORM_SCHOOL_SUBDOMAIN, 'www', 'api', 'app']);
@@ -35,11 +36,24 @@ export class SchoolsService {
   ) {}
 
   /** Every real school — the platform sentinel row is never a management target. */
-  async list() {
-    return this.prisma.school.findMany({
-      where: { subdomain: { not: PLATFORM_SCHOOL_SUBDOMAIN } },
-      orderBy: { createdAt: 'desc' },
+  async list(input: { cursor?: string; limit?: string; search?: string; status?: string } = {}) {
+    const limit = parsePageLimit(input.limit);
+    const cursor = decodeDateIdCursor(input.cursor);
+    const search = input.search?.trim().slice(0, 100);
+    const status = input.status?.trim();
+    const rows = await this.prisma.school.findMany({
+      where: {
+        subdomain: { not: PLATFORM_SCHOOL_SUBDOMAIN },
+        ...(status && status !== 'all' ? { status } : {}),
+        AND: [
+          ...(search ? [{ OR: [{ name: { contains: search, mode: 'insensitive' as const } }, { subdomain: { contains: search, mode: 'insensitive' as const } }] }] : []),
+          ...(cursor ? [{ OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] }] : []),
+        ],
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
     });
+    return dateIdPage(rows, limit);
   }
 
   /** Cross-school aggregates for the Platform dashboard — the kind of genuine

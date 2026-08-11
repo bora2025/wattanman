@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
@@ -27,34 +27,36 @@ function SchoolsListContent() {
   const [schools, setSchools] = useState<School[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'PROVISIONING' | 'ACTIVE' | 'SUSPENDED' | 'DELETION_SCHEDULED'>('all')
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    const timer = setTimeout(() => void load(true), 250)
+    return () => clearTimeout(timer)
+  }, [search, statusFilter])
 
-  async function load() {
-    setLoading(true)
+  async function load(reset = true) {
+    if (reset) setLoading(true)
+    else setLoadingMore(true)
     try {
-      const res = await apiFetch('/api/platform/schools')
+      const params = new URLSearchParams({ limit: '50' })
+      if (search.trim()) params.set('search', search.trim())
+      if (statusFilter !== 'all') params.set('status', statusFilter)
+      if (!reset && nextCursor) params.set('cursor', nextCursor)
+      const res = await apiFetch(`/api/platform/schools?${params}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      setSchools(await res.json())
+      const page: { items: School[]; nextCursor: string | null } = await res.json()
+      setSchools(current => reset ? page.items : [...current, ...page.items])
+      setNextCursor(page.nextCursor)
     } catch {
       setError('Failed to load schools')
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
   }
-
-  const filtered = useMemo(() => {
-    return schools.filter(s => {
-      if (statusFilter !== 'all' && s.status !== statusFilter) return false
-      if (search) {
-        const q = search.toLowerCase()
-        if (!s.name.toLowerCase().includes(q) && !s.subdomain.toLowerCase().includes(q)) return false
-      }
-      return true
-    })
-  }, [schools, search, statusFilter])
 
   return (
     <div className="page-shell">
@@ -97,13 +99,13 @@ function SchoolsListContent() {
             <div className="flex items-center justify-center h-32">
               <div className="w-8 h-8 border-3 border-slate-300 dark:border-slate-600 border-t-slate-700 rounded-full animate-spin" />
             </div>
-          ) : filtered.length === 0 ? (
+          ) : schools.length === 0 ? (
             <div className="card p-10 text-center text-slate-400 dark:text-slate-500 text-sm">
-              {schools.length === 0 ? 'No schools yet — create the first one.' : 'No schools match your filters.'}
+              {search || statusFilter !== 'all' ? 'No schools match your filters.' : 'No schools yet — create the first one.'}
             </div>
           ) : (
             <div className="grid gap-3">
-              {filtered.map(s => (
+              {schools.map(s => (
                 <Link key={s.id} href={`/platform/schools/${s.id}`}
                   className="card p-4 sm:p-5 flex items-center justify-between gap-4 hover:shadow-md transition-all">
                   <div className="min-w-0">
@@ -122,6 +124,11 @@ function SchoolsListContent() {
                   </div>
                 </Link>
               ))}
+              {nextCursor && (
+                <button type="button" className="btn-outline mx-auto px-5 py-2" disabled={loadingMore} onClick={() => void load(false)}>
+                  {loadingMore ? 'Loading…' : 'Load more schools'}
+                </button>
+              )}
             </div>
           )}
         </div>

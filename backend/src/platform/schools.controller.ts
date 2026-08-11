@@ -12,8 +12,8 @@ export class SchoolsController {
   constructor(private schools: SchoolsService) {}
 
   @Get()
-  list() {
-    return this.schools.list();
+  list(@Query('cursor') cursor?: string, @Query('limit') limit?: string, @Query('search') search?: string, @Query('status') status?: string) {
+    return this.schools.list({ cursor, limit, search, status });
   }
 
   @Get('check-subdomain')
