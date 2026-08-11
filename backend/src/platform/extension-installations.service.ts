@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { AuditService } from "../audit/audit.service";
+import { createHash, randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../database/prisma.service";
 import { getCurrentSchoolId } from "../tenancy/tenant-context";
@@ -481,6 +482,142 @@ export class ExtensionInstallationsService {
       paymentReference: requestData.paymentReference,
     });
     return installation;
+  }
+
+  async initiatePaymentEvidence(
+    extensionId: string,
+    data: {
+      fileName?: string;
+      contentType?: string;
+      size?: number;
+      checksum?: string;
+      paymentReference?: string;
+      paymentNotes?: string;
+    },
+    actor: Actor,
+  ) {
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+    const contentType = data.contentType?.trim().toLowerCase() || "";
+    const size = data.size;
+    const checksum = data.checksum?.trim().toLowerCase() || "";
+    if (!allowedTypes.includes(contentType))
+      throw new BadRequestException("Invoice must be a PDF, JPG, or PNG file");
+    if (!Number.isSafeInteger(size) || !size || size > 5 * 1024 * 1024)
+      throw new BadRequestException("Invoice size must be between 1 byte and 5 MB");
+    if (!/^[a-f0-9]{64}$/.test(checksum))
+      throw new BadRequestException("Invoice SHA-256 checksum is required");
+    const schoolId = getCurrentSchoolId();
+    const extension = await this.prisma.extension.findFirst({
+      where: {
+        id: extensionId,
+        status: "ACTIVE",
+        pricingModel: { in: ["ONE_TIME", "SUBSCRIPTION"] },
+        OR: [
+          { visibility: { in: ["LISTED", "UNLISTED"] } },
+          { visibility: "PRIVATE", visibilityGrants: { some: { schoolId } } },
+        ],
+      },
+      include: {
+        versions: {
+          where: { lifecycleStatus: "PUBLISHED" },
+          orderBy: { publishedAt: "desc" },
+          take: 1,
+        },
+      },
+    });
+    if (!extension?.versions[0])
+      throw new NotFoundException("Paid extension is not available");
+    const [school, admin, existing] = await Promise.all([
+      this.prisma.school.findUnique({ where: { id: schoolId } }),
+      actor.userId ? this.prisma.user.findUnique({ where: { id: actor.userId } }) : null,
+      this.prisma.extensionInstallation.findFirst({ where: { extensionId } }),
+    ]);
+    if (!school || !admin) throw new NotFoundException("School administrator not found");
+    if (existing?.enabled) throw new ConflictException("Extension is already active for this school");
+    const safeName = (data.fileName || "invoice").replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+    const storageKey = `schools/${schoolId}/billing/extensions/${extensionId}/${randomUUID()}-${checksum}-${safeName}`;
+    const requestData = {
+      installedVersionId: extension.versions[0].id,
+      requestedAt: new Date(),
+      requestedBy: actor.userId,
+      approvedAt: null,
+      approvedBy: null,
+      billingStatus: "PENDING",
+      requestSchoolName: school.name,
+      requestAdminName: admin.name,
+      requestAdminEmail: admin.email,
+      paymentReference: data.paymentReference?.trim() || null,
+      paymentNotes: data.paymentNotes?.trim() || null,
+      invoiceStorageKey: storageKey,
+      invoiceFileName: safeName,
+      invoiceContentType: contentType,
+      invoiceSize: size,
+      invoiceChecksum: checksum,
+      invoiceUploadedAt: null,
+      paymentSubmittedAt: null,
+      uninstalledAt: null,
+      purgeAfter: null,
+      ...this.pricingSnapshot(extension),
+    };
+    const installation = existing
+      ? await this.prisma.extensionInstallation.update({ where: { id: existing.id }, data: requestData })
+      : await this.prisma.extensionInstallation.create({ data: { schoolId, extensionId, ...requestData } });
+    await this.log(actor, "PAYMENT_EVIDENCE_INITIATED", installation.id, extension.name, {
+      extensionId, schoolId, size, checksum,
+    });
+    return {
+      installationId: installation.id,
+      upload: this.storage.presignPrivateUpload(storageKey, contentType, checksum),
+    };
+  }
+
+  async finalizePaymentEvidence(installationId: string, actor: Actor) {
+    const installation = await this.prisma.extensionInstallation.findUnique({
+      where: { id: installationId },
+      include: { extension: true },
+    });
+    if (!installation?.invoiceStorageKey || !installation.invoiceChecksum || !installation.invoiceSize) {
+      throw new NotFoundException("Pending payment evidence was not found");
+    }
+    if (installation.paymentSubmittedAt) return installation;
+    const object = await this.storage.headPrivate(installation.invoiceStorageKey);
+    if (
+      object.contentLength !== installation.invoiceSize ||
+      object.contentType?.split(";")[0].trim().toLowerCase() !== installation.invoiceContentType ||
+      object.checksum?.trim().toLowerCase() !== installation.invoiceChecksum
+    ) {
+      throw new ConflictException("Uploaded payment evidence does not match its signed request");
+    }
+    const contents = await this.storage.getPrivate(installation.invoiceStorageKey);
+    if (
+      contents.length !== installation.invoiceSize ||
+      createHash("sha256").update(contents).digest("hex") !== installation.invoiceChecksum
+    ) {
+      throw new ConflictException("Uploaded payment evidence checksum verification failed");
+    }
+    const now = new Date();
+    const finalized = await this.prisma.extensionInstallation.update({
+      where: { id: installation.id },
+      data: { invoiceUploadedAt: now, paymentSubmittedAt: now },
+    });
+    await this.log(actor, "PAYMENT_EVIDENCE_SUBMITTED", installation.id, installation.extension.name, {
+      checksum: installation.invoiceChecksum,
+      size: installation.invoiceSize,
+    });
+    return finalized;
+  }
+
+  async paymentEvidenceDownloadUrl(installationId: string) {
+    const installation = await this.prisma.extensionInstallation.findUnique({
+      where: { id: installationId },
+      select: { invoiceStorageKey: true, invoiceFileName: true, paymentSubmittedAt: true },
+    });
+    if (!installation?.invoiceStorageKey || !installation.paymentSubmittedAt)
+      throw new NotFoundException("Payment evidence not found");
+    return {
+      fileName: installation.invoiceFileName || "payment-evidence",
+      download: this.storage.presignPrivateDownload(installation.invoiceStorageKey),
+    };
   }
 
   async paymentInvoice(installationId: string) {

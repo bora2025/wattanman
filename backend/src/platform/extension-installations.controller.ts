@@ -77,6 +77,11 @@ export class PlatformExtensionInstallationsController {
     return new StreamableFile(invoice.contents);
   }
 
+  @Get(":id/payment-evidence-url")
+  paymentEvidenceUrl(@Param("id") id: string) {
+    return this.installations.paymentEvidenceDownloadUrl(id);
+  }
+
   @Post(":id/approve")
   approve(@Param("id") id: string, @Request() req) {
     return this.installations.approve(id, req.user);
@@ -259,6 +264,27 @@ export class SchoolExtensionsController {
   ) {
     if (!invoice) throw new BadRequestException("Payment invoice is required");
     return this.installations.requestPaid(extensionId, invoice, body, req.user);
+  }
+
+  @Post(":extensionId/payment-evidence/initiate")
+  initiatePaymentEvidence(
+    @Param("extensionId") extensionId: string,
+    @Body() body: {
+      fileName?: string;
+      contentType?: string;
+      size?: number;
+      checksum?: string;
+      paymentReference?: string;
+      paymentNotes?: string;
+    },
+    @Request() req,
+  ) {
+    return this.installations.initiatePaymentEvidence(extensionId, body, req.user);
+  }
+
+  @Post("installations/:id/payment-evidence/finalize")
+  finalizePaymentEvidence(@Param("id") id: string, @Request() req) {
+    return this.installations.finalizePaymentEvidence(id, req.user);
   }
 
   @Patch("installations/:id/update-policy")

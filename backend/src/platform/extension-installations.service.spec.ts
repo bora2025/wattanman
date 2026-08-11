@@ -24,7 +24,11 @@ describe('ExtensionInstallationsService', () => {
     siteSetting: { findUnique: jest.fn(), upsert: jest.fn(), update: jest.fn() },
   };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
-  const storage = { getPrivate: jest.fn(), putPrivate: jest.fn(), deletePrivate: jest.fn() };
+  const storage = {
+    getPrivate: jest.fn(), putPrivate: jest.fn(), deletePrivate: jest.fn(), headPrivate: jest.fn(),
+    presignPrivateUpload: jest.fn().mockReturnValue({ url: 'https://r2.test/upload', method: 'PUT', headers: {}, expiresAt: new Date().toISOString() }),
+    presignPrivateDownload: jest.fn().mockReturnValue({ url: 'https://r2.test/download', method: 'GET', headers: {}, expiresAt: new Date().toISOString() }),
+  };
   const signing = { verifyPublished: jest.fn().mockResolvedValue(true) };
   const service = new ExtensionInstallationsService(prisma as any, audit as any, storage as any, signing as any);
   const actor = { userId: 'admin-1', role: 'ADMIN' };
@@ -99,6 +103,61 @@ describe('ExtensionInstallationsService', () => {
       requestPriceMinor: 2500, requestCurrency: 'USD', requestBillingInterval: 'MONTHLY',
       requestSchoolName: 'School A', requestAdminName: 'Admin One',
     }) });
+  });
+
+  it('initiates and finalizes checksum-bound direct payment evidence', async () => {
+    const checksum = 'a'.repeat(64);
+    prisma.extension.findFirst.mockResolvedValue({
+      id: 'extension-1', name: 'Analytics Plus', pricingModel: 'ONE_TIME',
+      priceMinor: 1500, currency: 'USD', billingInterval: null,
+      contractReference: null, priceNote: null, versions: [{ id: 'version-1' }],
+    });
+    prisma.school.findUnique.mockResolvedValue({ id: 'school-a', name: 'School A' });
+    prisma.user.findUnique.mockResolvedValue({ id: 'admin-1', name: 'Admin One', email: 'admin@school.test' });
+    prisma.extensionInstallation.findFirst.mockResolvedValue(null);
+    prisma.extensionInstallation.create.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
+
+    const initiated = await tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () =>
+      service.initiatePaymentEvidence('extension-1', {
+        fileName: 'receipt.pdf', contentType: 'application/pdf', size: 1200, checksum,
+      }, actor),
+    );
+    expect(initiated.installationId).toBe('installation-1');
+    expect(storage.presignPrivateUpload).toHaveBeenCalledWith(
+      expect.stringContaining(checksum), 'application/pdf', checksum,
+    );
+
+    const pending = {
+      id: 'installation-1', invoiceStorageKey: 'schools/school-a/evidence.pdf',
+      invoiceChecksum: checksum, invoiceSize: 1200, invoiceContentType: 'application/pdf',
+      paymentSubmittedAt: null, extension: { name: 'Analytics Plus' },
+    };
+    prisma.extensionInstallation.findUnique.mockResolvedValue(pending);
+    storage.headPrivate.mockResolvedValue({ contentLength: 1200, contentType: 'application/pdf', checksum });
+    storage.getPrivate.mockResolvedValue(Buffer.alloc(1200, 0));
+    const actualChecksum = require('crypto').createHash('sha256').update(Buffer.alloc(1200, 0)).digest('hex');
+    pending.invoiceChecksum = actualChecksum;
+    storage.headPrivate.mockResolvedValue({ contentLength: 1200, contentType: 'application/pdf', checksum: actualChecksum });
+    prisma.extensionInstallation.update.mockImplementation(({ data }) => Promise.resolve({ ...pending, ...data }));
+
+    const finalized = await tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () =>
+      service.finalizePaymentEvidence('installation-1', actor),
+    );
+    expect(finalized.paymentSubmittedAt).toBeInstanceOf(Date);
+  });
+
+  it('rejects payment evidence when stored integrity metadata differs', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', invoiceStorageKey: 'schools/school-a/evidence.pdf',
+      invoiceChecksum: 'a'.repeat(64), invoiceSize: 1200, invoiceContentType: 'application/pdf',
+      paymentSubmittedAt: null, extension: { name: 'Analytics Plus' },
+    });
+    storage.headPrivate.mockResolvedValue({ contentLength: 1199, contentType: 'application/pdf', checksum: 'a'.repeat(64) });
+
+    await expect(tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () =>
+      service.finalizePaymentEvidence('installation-1', actor),
+    )).rejects.toThrow('does not match');
+    expect(prisma.extensionInstallation.update).not.toHaveBeenCalled();
   });
 
   it('filters and cursor-paginates the school catalog with stable featured ordering', async () => {

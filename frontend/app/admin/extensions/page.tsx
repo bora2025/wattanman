@@ -72,6 +72,11 @@ async function json(res: Response) {
   return data
 }
 
+async function sha256Hex(file: File) {
+  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('')
+}
+
 function AdminExtensionsContent() {
   const [directory, setDirectory] = useState<DirectoryExtension[]>([])
   const [directoryNextCursor, setDirectoryNextCursor] = useState<string | null>(null)
@@ -162,11 +167,26 @@ function AdminExtensionsContent() {
     if (!paymentExtension || !invoice) return setError('Payment invoice is required.')
     setBusy(paymentExtension.id)
     try {
-      const formData = new FormData()
-      formData.append('invoice', invoice)
-      formData.append('paymentReference', paymentReference)
-      formData.append('paymentNotes', paymentNotes)
-      await json(await apiFetch(`/api/extensions/${paymentExtension.id}/request-payment`, { method: 'POST', body: formData }))
+      const checksum = await sha256Hex(invoice)
+      const initiated = await json(await apiFetch(`/api/extensions/${paymentExtension.id}/payment-evidence/initiate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: invoice.name,
+          contentType: invoice.type,
+          size: invoice.size,
+          checksum,
+          paymentReference,
+          paymentNotes,
+        }),
+      }))
+      const uploaded = await fetch(initiated.upload.url, {
+        method: initiated.upload.method,
+        headers: initiated.upload.headers,
+        body: invoice,
+      })
+      if (!uploaded.ok) throw new Error(`Payment evidence upload failed (HTTP ${uploaded.status})`)
+      await json(await apiFetch(`/api/extensions/installations/${initiated.installationId}/payment-evidence/finalize`, { method: 'POST' }))
       setPaymentExtension(null)
       setInvoice(null)
       setPaymentReference('')

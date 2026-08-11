@@ -1180,6 +1180,25 @@ function InstallationCard({
   const [error, setError] = useState("");
   const newestVersion = installation.extension.versions[0];
 
+  async function openPaymentEvidence() {
+    const downloadWindow = window.open("about:blank", "_blank");
+    if (downloadWindow) downloadWindow.opener = null;
+    setBusy(true);
+    setError("");
+    try {
+      const result = await responseJson(
+        await apiFetch(`/api/platform/extension-installations/${installation.id}/payment-evidence-url`),
+      );
+      if (downloadWindow) downloadWindow.location.replace(result.download.url);
+      else throw new Error("Allow pop-ups to open payment evidence");
+    } catch (downloadError: any) {
+      downloadWindow?.close();
+      setError(downloadError.message || "Could not open payment evidence");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function action(
     path: string,
     options: RequestInit = { method: "POST" },
@@ -1381,7 +1400,7 @@ function InstallationCard({
             {installation.paymentReference && <p>Reference: {installation.paymentReference}</p>}
             {installation.paymentNotes && <p>Notes: {installation.paymentNotes}</p>}
             <div className="mt-2 flex items-center gap-3">
-              <a className="font-semibold text-blue-700 underline dark:text-blue-300" href={`/api/platform/extension-installations/${installation.id}/payment-invoice`} target="_blank" rel="noreferrer">View payment invoice</a>
+              <button type="button" disabled={busy} className="font-semibold text-blue-700 underline disabled:opacity-50 dark:text-blue-300" onClick={openPaymentEvidence}>View payment evidence</button>
               <span>Submitted {new Date(installation.paymentSubmittedAt).toLocaleString()}</span>
             </div>
           </div>

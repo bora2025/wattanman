@@ -475,6 +475,8 @@ model ExtensionInstallation {
   invoiceStorageKey  String?
   invoiceFileName    String?
   invoiceContentType String?
+  invoiceSize        Int?
+  invoiceChecksum    String?
   invoiceUploadedAt  DateTime?
   paymentSubmittedAt DateTime?
   requestPricingModel String?

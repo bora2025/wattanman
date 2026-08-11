@@ -152,6 +152,24 @@ deployment `ef0c16cd-4e96-4fa7-a0b7-34d31caa0769` completed successfully on
 2026-08-11. Validation passed with 228 backend tests, one intentional skip, and
 successful backend and frontend production builds.
 
+## Direct payment-evidence storage
+
+Paid extension requests use a two-phase private R2 transfer. The API records an
+authoritative school, administrator, pricing, file-size, MIME, and SHA-256
+snapshot, then returns a five-minute SigV4 `PUT` URL constrained by content type
+and checksum metadata. The browser uploads directly to R2. Finalization performs
+an authenticated `HEAD` and accepts the request only when stored length, MIME,
+and checksum metadata exactly match the signed snapshot. Platform reviewers use
+a separate five-minute signed `GET` URL; R2 credentials and permanent object
+URLs never reach either browser.
+
+Cloudflare R2 requires bucket CORS for browser presigned URLs. Apply
+`docs/r2-browser-cors-policy.example.json`, replacing its origins with the exact
+production and staging frontend origins. Do not use a wildcard origin. The
+policy must allow `PUT` and the signed `Content-Type` and
+`x-amz-meta-sha256` headers; `GET` and `HEAD` support reviewer access and
+verification. Keep the bucket private.
+
 ## Lifecycle and purge controls
 
 Deprecation, emergency block, retirement, delisting, and purge are separate

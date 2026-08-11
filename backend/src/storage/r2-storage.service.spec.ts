@@ -122,4 +122,36 @@ describe('R2StorageService', () => {
     expect(result).toEqual(Buffer.from([1, 2, 3]));
     expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/validated/style.css'), expect.objectContaining({ method: 'GET' }));
   });
+
+  it('creates a short-lived upload URL constrained by content type and checksum metadata', () => {
+    const checksum = 'a'.repeat(64);
+
+    const signed = service().presignPrivateUpload('schools/school-1/evidence.pdf', 'application/pdf', checksum);
+
+    const url = new URL(signed.url);
+    expect(signed.method).toBe('PUT');
+    expect(signed.headers).toEqual({ 'content-type': 'application/pdf', 'x-amz-meta-sha256': checksum });
+    expect(url.searchParams.get('X-Amz-Expires')).toBe('300');
+    expect(url.searchParams.get('X-Amz-Content-Sha256')).toBe('UNSIGNED-PAYLOAD');
+    expect(url.searchParams.get('X-Amz-SignedHeaders')).toBe('content-type;host;x-amz-meta-sha256');
+    expect(url.searchParams.get('X-Amz-Signature')).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('reads integrity metadata using an authenticated HEAD request', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({
+        'content-length': '1234',
+        'content-type': 'application/pdf',
+        'x-amz-meta-sha256': 'b'.repeat(64),
+      }),
+    }) as any;
+
+    await expect(service().headPrivate('schools/school-1/evidence.pdf')).resolves.toEqual({
+      contentLength: 1234,
+      contentType: 'application/pdf',
+      checksum: 'b'.repeat(64),
+    });
+    expect(global.fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ method: 'HEAD' }));
+  });
 });

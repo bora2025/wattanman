@@ -1,0 +1,13 @@
+[
+  {
+    "AllowedOrigins": [
+      "https://wattanman-app.up.railway.app",
+      "https://resourceful-miracle-production.up.railway.app",
+      "http://localhost:3000"
+    ],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["Content-Type", "x-amz-meta-sha256"],
+    "ExposeHeaders": ["ETag", "Content-Length", "Content-Type", "x-amz-meta-sha256"],
+    "MaxAgeSeconds": 3600
+  }
+]

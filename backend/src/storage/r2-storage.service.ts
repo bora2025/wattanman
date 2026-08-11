@@ -21,6 +21,12 @@ function encodeStorageKey(key: string): string {
   return key.split('/').map(encodeURIComponent).join('/');
 }
 
+function encodeQueryValue(value: string): string {
+  return encodeURIComponent(value).replace(/[!'()*]/g, (character) =>
+    `%${character.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+}
+
 @Injectable()
 export class R2StorageService {
   constructor(private readonly circuits: CircuitBreakerService) {}
@@ -64,8 +70,75 @@ export class R2StorageService {
     return Buffer.from(await response.arrayBuffer());
   }
 
+  async headPrivate(storageKey: string): Promise<{ contentLength: number; contentType: string | null; checksum: string | null }> {
+    const response = await this.request('HEAD', storageKey, Buffer.alloc(0), 'application/octet-stream');
+    return {
+      contentLength: Number(response.headers.get('content-length') || -1),
+      contentType: response.headers.get('content-type'),
+      checksum: response.headers.get('x-amz-meta-sha256'),
+    };
+  }
+
+  presignPrivateUpload(storageKey: string, contentType: string, checksum: string, expiresSeconds = 300) {
+    return this.presign('PUT', storageKey, expiresSeconds, {
+      'content-type': contentType,
+      'x-amz-meta-sha256': checksum,
+    });
+  }
+
+  presignPrivateDownload(storageKey: string, expiresSeconds = 300) {
+    return this.presign('GET', storageKey, expiresSeconds, {});
+  }
+
+  private presign(
+    method: 'PUT' | 'GET',
+    storageKey: string,
+    expiresSeconds: number,
+    requiredHeaders: Record<string, string>,
+  ) {
+    if (!Number.isInteger(expiresSeconds) || expiresSeconds < 60 || expiresSeconds > 900) {
+      throw new ConflictException('Signed R2 URL expiry must be between 60 and 900 seconds');
+    }
+    const config = this.config();
+    const now = new Date();
+    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+    const dateStamp = amzDate.slice(0, 8);
+    const credentialScope = `${dateStamp}/auto/s3/aws4_request`;
+    const canonicalUri = `/${encodeURIComponent(config.bucket)}/${encodeStorageKey(storageKey)}`;
+    const host = new URL(config.endpoint).host;
+    const headers = { host, ...requiredHeaders };
+    const headerNames = Object.keys(headers).sort();
+    const signedHeaders = headerNames.join(';');
+    const canonicalHeaders = headerNames.map((name) => `${name}:${headers[name].trim()}\n`).join('');
+    const query = {
+      'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
+      'X-Amz-Credential': `${config.accessKeyId}/${credentialScope}`,
+      'X-Amz-Content-Sha256': 'UNSIGNED-PAYLOAD',
+      'X-Amz-Date': amzDate,
+      'X-Amz-Expires': String(expiresSeconds),
+      'X-Amz-SignedHeaders': signedHeaders,
+    };
+    const canonicalQuery = Object.entries(query)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, value]) => `${encodeQueryValue(key)}=${encodeQueryValue(value)}`)
+      .join('&');
+    const canonicalRequest = `${method}\n${canonicalUri}\n${canonicalQuery}\n${canonicalHeaders}\n${signedHeaders}\nUNSIGNED-PAYLOAD`;
+    const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${sha256(canonicalRequest)}`;
+    const dateKey = hmac(`AWS4${config.secretAccessKey}`, dateStamp);
+    const regionKey = hmac(dateKey, 'auto');
+    const serviceKey = hmac(regionKey, 's3');
+    const signingKey = hmac(serviceKey, 'aws4_request');
+    const signature = createHmac('sha256', signingKey).update(stringToSign).digest('hex');
+    return {
+      url: `${config.endpoint}${canonicalUri}?${canonicalQuery}&X-Amz-Signature=${signature}`,
+      method,
+      headers: requiredHeaders,
+      expiresAt: new Date(now.getTime() + expiresSeconds * 1000).toISOString(),
+    };
+  }
+
   private async request(
-    method: 'PUT' | 'GET' | 'DELETE',
+    method: 'PUT' | 'GET' | 'HEAD' | 'DELETE',
     storageKey: string,
     body: Buffer,
     contentType: string,
