@@ -153,7 +153,8 @@ An item is complete only when implementation, automated tests, documentation, de
 
 - [x] Run at least three API replicas safely.
   - Railway deployment `6787d681-d942-46fa-a11f-2e7d26de6641` reports three Southeast Asia replicas; 20/20 production readiness requests passed on 2026-08-11.
-- [ ] Prove only one migration job executes.
+- [x] Prove only one migration job executes.
+  - Two concurrent production runners serialized on advisory lock `864220261`; evidence is recorded in `docs/stage-2-validation.md`.
 - [ ] Prove scheduled jobs do not duplicate.
 - [ ] Complete a rolling deployment without incompatible-schema errors.
 - [ ] Recover and replay a dead-letter job successfully.
