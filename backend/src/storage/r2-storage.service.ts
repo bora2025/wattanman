@@ -1,5 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { createHash, createHmac } from 'crypto';
+import { CircuitBreakerService } from '../security/circuit-breaker.service';
 
 interface R2Config {
   endpoint: string;
@@ -22,6 +23,8 @@ function encodeStorageKey(key: string): string {
 
 @Injectable()
 export class R2StorageService {
+  constructor(private readonly circuits: CircuitBreakerService) {}
+
   private config(): R2Config {
     const accountId = process.env.R2_ACCOUNT_ID?.trim();
     const endpoint = (process.env.R2_ENDPOINT || (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : '')).replace(/\/+$/, '');
@@ -67,21 +70,23 @@ export class R2StorageService {
     const signature = createHmac('sha256', signingKey).update(stringToSign).digest('hex');
     const authorization = `AWS4-HMAC-SHA256 Credential=${config.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
-    const response = await fetch(`${config.endpoint}${canonicalUri}`, {
-      method,
-      headers: {
-        Authorization: authorization,
-        'Content-Type': contentType,
-        'X-Amz-Content-Sha256': payloadHash,
-        'X-Amz-Date': amzDate,
-      },
-      ...(method === 'PUT' ? { body: body as unknown as BodyInit } : {}),
+    return this.circuits.execute('r2', async () => {
+      const response = await fetch(`${config.endpoint}${canonicalUri}`, {
+        method,
+        headers: {
+          Authorization: authorization,
+          'Content-Type': contentType,
+          'X-Amz-Content-Sha256': payloadHash,
+          'X-Amz-Date': amzDate,
+        },
+        ...(method === 'PUT' ? { body: body as unknown as BodyInit } : {}),
+      });
+      if (!response.ok) {
+        const detail = await response.text().catch(() => '');
+        const operation = method === 'PUT' ? 'upload' : method === 'GET' ? 'download' : 'delete';
+        throw new ServiceUnavailableException(`R2 ${operation} failed (${response.status})${detail ? `: ${detail.slice(0, 200)}` : ''}`);
+      }
+      return response;
     });
-    if (!response.ok) {
-      const detail = await response.text().catch(() => '');
-      const operation = method === 'PUT' ? 'upload' : method === 'GET' ? 'download' : 'delete';
-      throw new ServiceUnavailableException(`R2 ${operation} failed (${response.status})${detail ? `: ${detail.slice(0, 200)}` : ''}`);
-    }
-    return response;
   }
 }

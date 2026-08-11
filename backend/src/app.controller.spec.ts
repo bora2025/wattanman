@@ -2,7 +2,8 @@ import { AppController } from './app.controller';
 
 describe('AppController health probes', () => {
   const prisma = { $queryRaw: jest.fn() };
-  const controller = new AppController({ getHello: () => 'Hello World!' } as any, prisma as any);
+  const circuits = { execute: jest.fn((_name, operation) => operation()) };
+  const controller = new AppController({ getHello: () => 'Hello World!' } as any, prisma as any, circuits as any);
 
   beforeEach(() => jest.clearAllMocks());
 

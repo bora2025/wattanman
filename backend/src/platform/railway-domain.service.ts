@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { CircuitBreakerService } from '../security/circuit-breaker.service';
 
 const RAILWAY_GRAPHQL_URL = 'https://backboard.railway.app/graphql/v2';
 
@@ -28,6 +29,8 @@ export class RailwayDomainService {
   private readonly serviceId = process.env.RAILWAY_FRONTEND_SERVICE_ID;
   private readonly targetPort = 8080;
 
+  constructor(private readonly circuits: CircuitBreakerService) {}
+
   private get configured(): boolean {
     return !!(this.token && this.environmentId && this.serviceId);
   }
@@ -38,16 +41,17 @@ export class RailwayDomainService {
     // Bearer` — that header is only for personal account tokens. Confirmed
     // live: using Bearer with a project token returns a generic "Not
     // Authorized" with no other indication of what's wrong.
-    const res = await fetch(RAILWAY_GRAPHQL_URL, {
-      method: 'POST',
-      headers: { 'Project-Access-Token': this.token as string, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables }),
+    return this.circuits.execute('railway-api', async () => {
+      const res = await fetch(RAILWAY_GRAPHQL_URL, {
+        method: 'POST',
+        headers: { 'Project-Access-Token': this.token as string, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables }),
+      });
+      if (!res.ok) throw new Error(`Railway API failed (${res.status})`);
+      const json: any = await res.json();
+      if (json.errors?.length) throw new Error(json.errors.map((e: any) => e.message).join('; '));
+      return json.data as T;
     });
-    const json: any = await res.json();
-    if (json.errors?.length) {
-      throw new Error(json.errors.map((e: any) => e.message).join('; '));
-    }
-    return json.data as T;
   }
 
   private async findExistingDomain(targetDomain: string): Promise<{ id: string; domain: string } | undefined> {

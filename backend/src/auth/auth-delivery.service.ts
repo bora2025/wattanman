@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import sgMail from '@sendgrid/mail';
 import twilio from 'twilio';
+import { CircuitBreakerService } from '../security/circuit-breaker.service';
 
 @Injectable()
 export class AuthDeliveryService {
   private readonly twilioClient: twilio.Twilio | null;
 
-  constructor() {
+  constructor(private readonly circuits: CircuitBreakerService) {
     const sendgridApiKey = process.env.SENDGRID_API_KEY;
     if (sendgridApiKey) sgMail.setApiKey(sendgridApiKey);
 
@@ -18,20 +19,20 @@ export class AuthDeliveryService {
 
   async sendEmail(to: string, subject: string, text: string) {
     if (!process.env.SENDGRID_API_KEY) return;
-    await sgMail.send({
+    await this.circuits.execute('email-sendgrid', () => sgMail.send({
       to,
       from: process.env.SENDGRID_FROM || 'noreply@attendancesystem.com',
       subject,
       text,
-    });
+    }).then(() => undefined));
   }
 
   async sendSms(to: string, body: string) {
     if (!this.twilioClient || !process.env.TWILIO_PHONE_NUMBER) return;
-    await this.twilioClient.messages.create({
+    await this.circuits.execute('sms-twilio', () => this.twilioClient!.messages.create({
       body,
       from: process.env.TWILIO_PHONE_NUMBER,
       to,
-    });
+    }).then(() => undefined));
   }
 }

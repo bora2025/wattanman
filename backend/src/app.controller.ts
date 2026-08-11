@@ -2,12 +2,14 @@ import { Controller, Get, Query, Res, BadRequestException } from '@nestjs/common
 import { AppService } from './app.service';
 import { Response } from 'express';
 import { PrismaService } from './database/prisma.service';
+import { CircuitBreakerService } from './security/circuit-breaker.service';
 
 @Controller()
 export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly prisma: PrismaService,
+    private readonly circuits: CircuitBreakerService,
   ) {}
 
   @Get()
@@ -83,9 +85,13 @@ export class AppController {
     }
 
     try {
-      const response = await fetch(url, {
-        headers: { 'User-Agent': 'SchoolSync-ImageProxy/1.0' },
-        signal: AbortSignal.timeout(10000),
+      const response = await this.circuits.execute('external-image', async () => {
+        const upstream = await fetch(url, {
+          headers: { 'User-Agent': 'SchoolSync-ImageProxy/1.0' },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (upstream.status === 429 || upstream.status >= 500) throw new Error(`Image upstream failed (${upstream.status})`);
+        return upstream;
       });
 
       if (!response.ok) {

@@ -6,10 +6,12 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { DatabaseModule } from '../database/database.module';
 import { AuthDeliveryService } from './auth-delivery.service';
+import { SecurityModule } from '../security/security.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    SecurityModule,
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'change-me-in-production-use-a-strong-random-key',

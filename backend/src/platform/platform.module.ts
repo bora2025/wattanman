@@ -28,6 +28,7 @@ import { ExtensionPlatformGuard } from './extension-platform.guard';
 import { ExtensionValidationRunnerService } from './extension-validation-runner.service';
 import { TenancyModule } from '../tenancy/tenancy.module';
 import { AuthModule } from '../auth/auth.module';
+import { SecurityModule } from '../security/security.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { AuthModule } from '../auth/auth.module';
     SchoolMetricsModule,
     TenancyModule,
     AuthModule,
+    SecurityModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'change-me-in-production-use-a-strong-random-key',
       signOptions: { expiresIn: '8h' },
