@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -12,8 +12,8 @@ export class PlatformAdminsController {
   constructor(private admins: PlatformAdminsService) {}
 
   @Get()
-  list() {
-    return this.admins.list();
+  list(@Query('cursor') cursor?: string, @Query('limit') limit?: string) {
+    return this.admins.list(cursor, limit);
   }
 
   @Post()

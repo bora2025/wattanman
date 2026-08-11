@@ -1,11 +1,12 @@
 import { PlatformAdminsService } from './platform-admins.service';
+import { decodeDateIdCursor } from '../common/cursor-pagination';
 
 jest.mock('bcryptjs', () => ({ hash: jest.fn().mockResolvedValue('hashed-password') }));
 
 describe('PlatformAdminsService publisher membership', () => {
   const prisma = {
     school: { findUnique: jest.fn() },
-    user: { findFirst: jest.fn(), create: jest.fn(), delete: jest.fn() },
+    user: { findMany: jest.fn(), findFirst: jest.fn(), create: jest.fn(), delete: jest.fn() },
     extensionPublisher: { findUnique: jest.fn() },
     extensionPublisherMember: { upsert: jest.fn() },
   };
@@ -31,5 +32,20 @@ describe('PlatformAdminsService publisher membership', () => {
         status: 'ACTIVE',
       },
     });
+  });
+
+  it('lists platform identities through bounded cursor pages', async () => {
+    const rows = [
+      { id: 'admin-2', createdAt: new Date('2026-02-02') },
+      { id: 'admin-1', createdAt: new Date('2026-02-01') },
+    ];
+    prisma.school.findUnique.mockResolvedValue({ id: 'platform-school' });
+    prisma.user.findMany.mockResolvedValue(rows);
+
+    const page = await service.list(undefined, '1');
+
+    expect(page.items).toEqual([rows[0]]);
+    expect(decodeDateIdCursor(page.nextCursor!)).toEqual({ id: 'admin-2', createdAt: rows[0].createdAt });
+    expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] }));
   });
 });

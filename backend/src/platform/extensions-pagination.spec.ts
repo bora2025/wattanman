@@ -13,6 +13,9 @@ describe('ExtensionsService secondary collection pagination', () => {
   const prisma = {
     extensionPublisher: { findMany: jest.fn().mockResolvedValue(publisherRows) },
     extensionSigningKey: { findMany: jest.fn().mockResolvedValue(keyRows) },
+    extensionVersion: { findUnique: jest.fn().mockResolvedValue({ id: 'version-1' }) },
+    extensionValidation: { findMany: jest.fn() },
+    extensionReview: { findMany: jest.fn() },
   };
   const service = new ExtensionsService(prisma as any, {} as any, {} as any, {} as any, {} as any);
 
@@ -35,5 +38,26 @@ describe('ExtensionsService secondary collection pagination', () => {
 
     expect(page.items).toEqual([keyRows[0]]);
     expect(prisma.extensionSigningKey.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2 }));
+  });
+
+  it('bounds validation and review histories independently', async () => {
+    const validations = [
+      { id: 'validation-2', startedAt: new Date('2026-02-02') },
+      { id: 'validation-1', startedAt: new Date('2026-02-01') },
+    ];
+    const reviews = [
+      { id: 'review-2', createdAt: new Date('2026-02-02') },
+      { id: 'review-1', createdAt: new Date('2026-02-01') },
+    ];
+    prisma.extensionValidation.findMany.mockResolvedValue(validations);
+    prisma.extensionReview.findMany.mockResolvedValue(reviews);
+
+    const validationPage = await service.validationReports('version-1', undefined, '1');
+    const reviewPage = await service.reviewHistory('version-1', undefined, '1');
+
+    expect(validationPage.items).toEqual([validations[0]]);
+    expect(reviewPage.items).toEqual([reviews[0]]);
+    expect(prisma.extensionValidation.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2 }));
+    expect(prisma.extensionReview.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2 }));
   });
 });

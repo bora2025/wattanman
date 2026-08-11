@@ -3,13 +3,12 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../database/prisma.service';
 import { generatePassword, isValidEmail } from '../common/identity';
 import { PLATFORM_SCHOOL_SUBDOMAIN } from '../tenancy/constants';
+import { dateIdPage, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
 
 /**
  * Manages PLATFORM_ADMIN accounts — Wattaman's own staff, not school users.
- * Deliberately a short, simple list: this is expected to stay small (a
- * handful of ops/support staff), unlike per-school user management, which is
- * why there's no pagination/search here the way auth.service.ts's getUsers
- * has for the (potentially large) per-school user list.
+ * Platform staff remain a bounded operational collection even when multiple
+ * support teams and automation identities are added.
  */
 @Injectable()
 export class PlatformAdminsService {
@@ -21,13 +20,21 @@ export class PlatformAdminsService {
     return sentinel.id;
   }
 
-  async list() {
+  async list(cursorValue?: string, limitValue?: string) {
     const schoolId = await this.sentinelSchoolId();
-    return this.prisma.user.findMany({
-      where: { schoolId, role: 'PLATFORM_ADMIN' },
+    const limit = parsePageLimit(limitValue);
+    const cursor = decodeDateIdCursor(cursorValue);
+    const rows = await this.prisma.user.findMany({
+      where: {
+        schoolId,
+        role: 'PLATFORM_ADMIN',
+        ...(cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}),
+      },
       select: { id: true, name: true, email: true, mfaEnabled: true, createdAt: true },
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
     });
+    return dateIdPage(rows, limit);
   }
 
   async invite(data: { name: string; email: string }) {

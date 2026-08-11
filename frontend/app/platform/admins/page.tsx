@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { platformNav } from '../../../lib/platform-nav'
-import { apiFetch, getCurrentUser } from '../../../lib/api'
+import { apiCursorItems, apiFetch, getCurrentUser } from '../../../lib/api'
 
 interface PlatformAdmin {
   id: string
@@ -36,9 +36,7 @@ function PlatformAdminsContent() {
   async function load() {
     setLoading(true)
     try {
-      const res = await apiFetch('/api/platform/admins')
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      setAdmins(await res.json())
+      setAdmins(await apiCursorItems<PlatformAdmin>('/api/platform/admins'))
     } catch {
       setError('Failed to load platform admins')
     } finally {

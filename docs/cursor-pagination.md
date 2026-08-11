@@ -50,6 +50,15 @@ by `createdAt, id`, and bounded by the same cursor contract. Dynamic extension
 pages follow pages through the guarded frontend loader rather than requesting
 an unbounded resource array.
 
+The platform administrator directory is also keyset-paged by `createdAt, id`.
+Control-plane identities are expected to remain few, but are not granted an
+unbounded-list exception.
+
+Release validation reports and review history are independently cursor-paged;
+extension cards and compatibility summaries cap nested release previews at 100
+versions. Review events are fetched newest-first and restored to chronological
+display order by the platform UI.
+
 Remaining retained collection endpoints must adopt this same contract before
 the platform-wide TODO can be marked complete. Rollback for an individual
 endpoint restores its former array response and matching frontend consumer in

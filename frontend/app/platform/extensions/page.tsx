@@ -161,16 +161,14 @@ function VersionPanel({
   const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
-    apiFetch(`/api/platform/extensions/versions/${version.id}/validations`)
-      .then(responseJson)
+    apiCursorItems<ValidationReport>(`/api/platform/extensions/versions/${version.id}/validations`)
       .then(setReports)
       .catch(() => setReports([]));
   }, [version.id, version.lifecycleStatus]);
 
   useEffect(() => {
-    apiFetch(`/api/platform/extensions/versions/${version.id}/reviews`)
-      .then(responseJson)
-      .then(setReviewHistory)
+    apiCursorItems<ReviewEvent>(`/api/platform/extensions/versions/${version.id}/reviews`)
+      .then(items => setReviewHistory(items.reverse()))
       .catch(() => setReviewHistory([]));
   }, [version.id, version.lifecycleStatus]);
 

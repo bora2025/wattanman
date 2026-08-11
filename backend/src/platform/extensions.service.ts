@@ -11,7 +11,7 @@ import { R2StorageService } from "../storage/r2-storage.service";
 import { createHash } from "crypto";
 import { ExtensionValidationRunnerService } from "./extension-validation-runner.service";
 import { ExtensionSigningService } from "./extension-signing.service";
-import { dateIdPage, decodeDateIdCursor, parsePageLimit } from "../common/cursor-pagination";
+import { dateIdPage, dateIdPageBy, decodeDateIdCursor, parsePageLimit } from "../common/cursor-pagination";
 
 const KEY_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
@@ -80,7 +80,7 @@ export class ExtensionsService {
       },
       include: {
         publisherEntity: true,
-        versions: { orderBy: { createdAt: "desc" } },
+        versions: { orderBy: { createdAt: "desc" }, take: 100 },
       },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: limit + 1,
@@ -495,15 +495,22 @@ export class ExtensionsService {
     return finalVersion;
   }
 
-  async validationReports(versionId: string) {
+  async validationReports(versionId: string, cursorValue?: string, limitValue?: string) {
     const version = await this.prisma.extensionVersion.findUnique({
       where: { id: versionId },
     });
     if (!version) throw new NotFoundException("Extension version not found");
-    return this.prisma.extensionValidation.findMany({
-      where: { extensionVersionId: versionId },
-      orderBy: { startedAt: "desc" },
+    const limit = parsePageLimit(limitValue);
+    const cursor = decodeDateIdCursor(cursorValue);
+    const rows = await this.prisma.extensionValidation.findMany({
+      where: {
+        extensionVersionId: versionId,
+        ...(cursor ? { OR: [{ startedAt: { lt: cursor.createdAt } }, { startedAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}),
+      },
+      orderBy: [{ startedAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
     });
+    return dateIdPageBy(rows, limit, (row) => row.startedAt);
   }
 
   async themePreview(versionId: string) {
@@ -736,7 +743,7 @@ export class ExtensionsService {
   async compatibilityMatrix(extensionId: string) {
     const extension = await this.prisma.extension.findUnique({
       where: { id: extensionId },
-      include: { versions: { orderBy: { createdAt: "desc" } } },
+      include: { versions: { orderBy: { createdAt: "desc" }, take: 100 } },
     });
     if (!extension) throw new NotFoundException("Extension not found");
     return {
@@ -753,15 +760,22 @@ export class ExtensionsService {
     };
   }
 
-  async reviewHistory(versionId: string) {
+  async reviewHistory(versionId: string, cursorValue?: string, limitValue?: string) {
     const version = await this.prisma.extensionVersion.findUnique({
       where: { id: versionId },
     });
     if (!version) throw new NotFoundException("Extension version not found");
-    return this.prisma.extensionReview.findMany({
-      where: { extensionVersionId: versionId },
-      orderBy: { createdAt: "asc" },
+    const limit = parsePageLimit(limitValue);
+    const cursor = decodeDateIdCursor(cursorValue);
+    const rows = await this.prisma.extensionReview.findMany({
+      where: {
+        extensionVersionId: versionId,
+        ...(cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}),
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
     });
+    return dateIdPage(rows, limit);
   }
 
   async appeal(versionId: string, notes: string | undefined, actor: Actor) {

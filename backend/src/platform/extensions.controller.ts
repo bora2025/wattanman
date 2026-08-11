@@ -244,8 +244,8 @@ export class ExtensionsController {
   }
 
   @Get("versions/:versionId/validations")
-  validations(@Param("versionId") versionId: string) {
-    return this.extensions.validationReports(versionId);
+  validations(@Param("versionId") versionId: string, @Query("cursor") cursor?: string, @Query("limit") limit?: string) {
+    return this.extensions.validationReports(versionId, cursor, limit);
   }
 
   @Get("versions/:versionId/review")
@@ -254,8 +254,8 @@ export class ExtensionsController {
   }
 
   @Get("versions/:versionId/reviews")
-  reviewHistory(@Param("versionId") versionId: string) {
-    return this.extensions.reviewHistory(versionId);
+  reviewHistory(@Param("versionId") versionId: string, @Query("cursor") cursor?: string, @Query("limit") limit?: string) {
+    return this.extensions.reviewHistory(versionId, cursor, limit);
   }
 
   @Post("versions/:versionId/appeal")
