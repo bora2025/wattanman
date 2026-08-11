@@ -152,6 +152,26 @@ deployment `ef0c16cd-4e96-4fa7-a0b7-34d31caa0769` completed successfully on
 2026-08-11. Validation passed with 228 backend tests, one intentional skip, and
 successful backend and frontend production builds.
 
+## Publication checklist
+
+Publication is guarded by one authoritative server checklist evaluated before
+signing or storage mutation. It requires approved lifecycle state, a passing
+validation report, a complete non-failing structured approval, configured
+uploader/reviewer separation, the exact checksum-addressed quarantine artifact
+with non-zero size, release notes, current-platform compatibility, an active
+publisher, an active configured signing key/private-key secret, and a valid
+dependency graph.
+
+The checklist endpoint returns each criterion, pass/fail state, and diagnostic.
+The platform UI renders those results and disables Publish until every item
+passes. The transition endpoint independently recomputes the checklist, so UI
+bypass or stale browser state cannot publish an incomplete release.
+
+Production API deployment `44ee13c3-d166-46cf-862f-fb7ea479639b` and frontend
+deployment `f495805b-5a07-4e5b-9d55-dc4559c63e78` completed successfully on
+2026-08-11. Validation passed with 258 backend tests, one intentional skip, and
+successful backend and frontend production builds.
+
 ## Validation report provenance
 
 Each package validation persists report schema v1 and the exact pipeline,

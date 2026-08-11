@@ -209,7 +209,8 @@ An item is complete only when implementation, automated tests, documentation, de
   - Approval and rejection require overall decision notes plus non-empty notes for every structured review domain; rejection appeals already require an explanation. Missing notes fail before lifecycle mutation, and append-only review events retain the actor, role, decision, assessment, and timestamp.
 - [x] Add appeal workflow and audit history.
   - Only an active publisher uploader can appeal a reviewer rejection with mandatory notes. A conditional transaction atomically claims the rejected state, clears the prior decision, requeues review, and appends an APPEALED event linked to the prior reviewer; concurrent retries fail without duplicate history. Cursor-paged history and the platform UI expose decision actors and structured domain outcomes, while audit logs retain appeal metadata. The 257-test backend suite and both builds passed, and Railway deployments `0eb6c06e-4cc7-4fd3-975a-a0a655476604` (API) and `c388440d-2ad9-49f6-a7c2-0dcb06d578af` (frontend) succeeded on 2026-08-11.
-- [ ] Add publication checklist.
+- [x] Add publication checklist.
+  - A server-generated checklist verifies approved state, passing validation, complete structured review, separation policy, immutable package identity/size, release notes, compatibility, active publisher, active signing configuration, and dependency graph before any signing or publication side effect. The platform UI displays every check and disables Publish until ready; dependency blockers retain specific diagnostics. The 258-test backend suite and both builds passed, and Railway deployments `44ee13c3-d166-46cf-862f-fb7ea479639b` (API) and `f495805b-5a07-4e5b-9d55-dc4559c63e78` (frontend) succeeded on 2026-08-11.
 - [ ] Add deprecate, delist, emergency block, retire, and purge controls.
 
 ### Commercial workflow
