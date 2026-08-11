@@ -140,8 +140,8 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Distributed protection
 
-- [ ] Replace process-local throttling with Redis-backed rate limits.
-- [ ] Rate limit by IP, user, school, extension, and sensitive action.
+- [x] Replace process-local throttling with Redis-backed rate limits.
+- [x] Rate limit by IP, user, school, extension, and sensitive action.
 - [ ] Add idempotency storage for mutating APIs.
 - [ ] Add request size and response size limits.
 - [ ] Add cursor pagination requirements.
