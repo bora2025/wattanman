@@ -47,7 +47,6 @@ interface Installation {
   pilotFeedback?: Array<{ source: string; outcome: string; rating: number }>
 }
 
-interface PilotCriterion { key: string; label: string }
 interface CatalogCollection { id: string; slug: string; title: string; description?: string | null; items: Array<{ id: string; extension: DirectoryExtension }> }
 
 async function json(res: Response) {
@@ -64,7 +63,6 @@ function AdminExtensionsContent() {
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState('')
-  const [criteria, setCriteria] = useState<PilotCriterion[]>([])
   const [activeTab, setActiveTab] = useState<'DISCOVER' | 'MODULE' | 'THEME'>('DISCOVER')
   const [category, setCategory] = useState('ALL')
   const [locale, setLocale] = useState('ALL')
@@ -99,40 +97,17 @@ function AdminExtensionsContent() {
 
   async function load() {
     try {
-      const [installed, pilotCriteria, context, catalogCollections] = await Promise.all([
+      const [installed, context, catalogCollections] = await Promise.all([
         apiCursorItems<Installation>('/api/extensions/installations'),
-        json(await apiFetch('/api/extensions/pilot-criteria')),
         json(await apiFetch('/api/extensions/request-context')),
         json(await apiFetch('/api/extensions/collections?locale=en')),
       ])
       setInstallations(installed)
-      setCriteria(pilotCriteria)
       setRequestContext(context)
       setCollections(catalogCollections)
       setError('')
     } catch (loadError: any) {
       setError(loadError.message || 'Failed to load extension directory')
-    }
-  }
-
-  async function submitFeedback(installation: Installation) {
-    const checklist = Object.fromEntries(criteria.map(criterion => [criterion.key, window.confirm(`Pilot acceptance:\n\n${criterion.label}\n\nDid this criterion pass?`)]))
-    const accepted = criteria.every(criterion => checklist[criterion.key])
-    const rating = Number(window.prompt('Rate this pilot from 1 to 5:', accepted ? '5' : '3'))
-    if (!Number.isInteger(rating) || rating < 1 || rating > 5) return setError('Pilot rating must be an integer from 1 to 5.')
-    const comments = window.prompt(accepted ? 'Optional pilot comments:' : 'Describe what needs work:') || ''
-    if (!accepted && !comments.trim()) return setError('Comments are required when criteria need work.')
-    setBusy(installation.id)
-    try {
-      await json(await apiFetch(`/api/extensions/installations/${installation.id}/pilot-feedback`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outcome: accepted ? 'ACCEPTED' : 'NEEDS_WORK', rating, checklist, comments }),
-      }))
-      await load()
-    } catch (feedbackError: any) {
-      setError(feedbackError.message || 'Could not submit pilot feedback')
-    } finally {
-      setBusy(null)
     }
   }
 
@@ -182,20 +157,6 @@ function AdminExtensionsContent() {
       await Promise.all([load(), loadDirectory(false)])
     } catch (paymentError: any) {
       setError(paymentError.message || 'Could not submit payment request')
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  async function updatePolicy(installationId: string, policy: string) {
-    setBusy(installationId)
-    try {
-      await json(await apiFetch(`/api/extensions/installations/${installationId}/update-policy`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ policy }),
-      }))
-      await load()
-    } catch (policyError: any) {
-      setError(policyError.message || 'Could not update policy')
     } finally {
       setBusy(null)
     }
@@ -288,7 +249,7 @@ function AdminExtensionsContent() {
             {directoryNextCursor && <div className="text-center"><button className="btn-outline" onClick={() => loadDirectory(true)}>Load more</button></div>}
           </>}
         </div>
-        {selectedExtension && (() => { const installation = installations.find(item => item.extensionId === selectedExtension.id); return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true"><div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl dark:bg-slate-900"><div className="bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-700 p-8 text-white"><div className="flex items-start justify-between"><div className="flex gap-5"><div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white text-2xl font-black text-indigo-700">{selectedExtension.name.slice(0, 2).toUpperCase()}</div><div><p className="text-xs font-semibold text-blue-200">{selectedExtension.runtimeType.replaceAll('_', ' ')}</p><h2 className="mt-1 text-2xl font-bold">{selectedExtension.name}</h2><p className="mt-1 text-sm text-blue-100">Version {selectedExtension.versions[0]?.version} · Wattaman reviewed</p></div></div><button type="button" onClick={() => setSelectedExtension(null)} className="text-2xl text-white/70 hover:text-white" aria-label="Close">×</button></div></div><div className="space-y-5 p-7"><p className="text-slate-600 dark:text-slate-300">{selectedExtension.description || 'A reviewed Wattaman extension designed to add capabilities to your school workspace.'}</p><div className="flex flex-wrap gap-2"><span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-200">{selectedExtension.category?.replaceAll('_', ' ')}</span>{selectedExtension.tags?.map(tag => <span key={tag} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">{tag}</span>)}</div><div className="grid grid-cols-3 gap-3 text-center"><div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800"><strong className="block text-slate-900 dark:text-white">★★★★★</strong><small className="text-slate-500">Reviewed</small></div><div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800"><strong className="block text-slate-900 dark:text-white">{selectedExtension.price ? `$${selectedExtension.price}` : 'Free'}</strong><small className="text-slate-500">Price</small></div><div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800"><strong className="block text-slate-900 dark:text-white">{extensionState(installation) || 'Available'}</strong><small className="text-slate-500">Status</small></div></div><section className="rounded-xl border border-slate-200 p-4 text-sm dark:border-slate-700"><h3 className="font-semibold text-slate-900 dark:text-white">Privacy and support</h3><dl className="mt-3 grid gap-2 text-slate-600 dark:text-slate-300"><div><dt className="inline font-medium">Languages: </dt><dd className="inline">{selectedExtension.locales?.join(', ') || 'en'}</dd></div><div><dt className="inline font-medium">Personal data: </dt><dd className="inline">{selectedExtension.dataUse?.collectsPersonalData ? `${selectedExtension.dataUse.dataCategories.join(', ')} for ${selectedExtension.dataUse.purposes.join(', ')}` : 'Not collected'}</dd></div>{selectedExtension.dataUse?.retentionDays && <div><dt className="inline font-medium">Retention: </dt><dd className="inline">{selectedExtension.dataUse.retentionDays} days</dd></div>}</dl><div className="mt-3 flex gap-4">{selectedExtension.supportUrl && <a href={selectedExtension.supportUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">Support</a>}{selectedExtension.privacyPolicyUrl && <a href={selectedExtension.privacyPolicyUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">Privacy policy</a>}</div></section>{installation?.installedAt && <div className="flex flex-wrap items-center gap-3"><label className="text-xs text-slate-500">Updates<select disabled={busy === installation.id} value={installation.updatePolicy} onChange={event => updatePolicy(installation.id, event.target.value)} className="input ml-2 py-1 text-xs"><option value="MANUAL">Manual</option><option value="NOTIFY">Notify admins</option><option value="AUTO_APPROVED">Automatic</option></select></label><button type="button" className="btn-outline btn-sm" onClick={() => submitFeedback(installation)}>Pilot feedback</button></div>}<div className="flex justify-end gap-3"><button type="button" className="btn-outline" onClick={() => setSelectedExtension(null)}>Close</button>{!installation && <button type="button" className="btn-primary" disabled={busy === selectedExtension.id} onClick={() => request(selectedExtension.id)}>{selectedExtension.price ? 'Request purchase' : 'Get extension'}</button>}</div></div></div></div> })()}
+        {selectedExtension && (() => { const installation = installations.find(item => item.extensionId === selectedExtension.id); return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true"><div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl dark:bg-slate-900"><div className="bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-700 p-8 text-white"><div className="flex items-start justify-between"><div className="flex gap-5"><div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white text-2xl font-black text-indigo-700">{selectedExtension.name.slice(0, 2).toUpperCase()}</div><div><p className="text-xs font-semibold text-blue-200">{selectedExtension.runtimeType.replaceAll('_', ' ')}</p><h2 className="mt-1 text-2xl font-bold">{selectedExtension.name}</h2><p className="mt-1 text-sm text-blue-100">Version {selectedExtension.versions[0]?.version} · Wattaman reviewed</p></div></div><button type="button" onClick={() => setSelectedExtension(null)} className="text-2xl text-white/70 hover:text-white" aria-label="Close">×</button></div></div><div className="space-y-5 p-7"><p className="text-slate-600 dark:text-slate-300">{selectedExtension.description || 'A reviewed Wattaman extension designed to add capabilities to your school workspace.'}</p><div className="flex flex-wrap gap-2"><span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-200">{selectedExtension.category?.replaceAll('_', ' ')}</span>{selectedExtension.tags?.map(tag => <span key={tag} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">{tag}</span>)}</div><div className="grid grid-cols-3 gap-3 text-center"><div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800"><strong className="block text-slate-900 dark:text-white">★★★★★</strong><small className="text-slate-500">Reviewed</small></div><div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800"><strong className="block text-slate-900 dark:text-white">{selectedExtension.price ? `$${selectedExtension.price}` : 'Free'}</strong><small className="text-slate-500">Price</small></div><div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800"><strong className="block text-slate-900 dark:text-white">{extensionState(installation) || 'Available'}</strong><small className="text-slate-500">Status</small></div></div><section className="rounded-xl border border-slate-200 p-4 text-sm dark:border-slate-700"><h3 className="font-semibold text-slate-900 dark:text-white">Privacy and support</h3><dl className="mt-3 grid gap-2 text-slate-600 dark:text-slate-300"><div><dt className="inline font-medium">Languages: </dt><dd className="inline">{selectedExtension.locales?.join(', ') || 'en'}</dd></div><div><dt className="inline font-medium">Personal data: </dt><dd className="inline">{selectedExtension.dataUse?.collectsPersonalData ? `${selectedExtension.dataUse.dataCategories.join(', ')} for ${selectedExtension.dataUse.purposes.join(', ')}` : 'Not collected'}</dd></div>{selectedExtension.dataUse?.retentionDays && <div><dt className="inline font-medium">Retention: </dt><dd className="inline">{selectedExtension.dataUse.retentionDays} days</dd></div>}</dl><div className="mt-3 flex gap-4">{selectedExtension.supportUrl && <a href={selectedExtension.supportUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">Support</a>}{selectedExtension.privacyPolicyUrl && <a href={selectedExtension.privacyPolicyUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">Privacy policy</a>}</div></section><div className="flex justify-end gap-3"><button type="button" className="btn-outline" onClick={() => setSelectedExtension(null)}>Close</button>{installation ? <Link href="/admin/extensions/manage" className="btn-primary">Manage installation</Link> : <button type="button" className="btn-primary" disabled={busy === selectedExtension.id} onClick={() => request(selectedExtension.id)}>{selectedExtension.price ? 'Request purchase' : 'Get extension'}</button>}</div></div></div></div> })()}
       </div>
     </div>
   )

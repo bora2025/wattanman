@@ -27,6 +27,7 @@ interface Installation {
   }
   installedVersion: { version: string }
 }
+interface PilotCriterion { key: string; label: string }
 
 async function json(response: Response) {
   const data = await response.json().catch(() => ({}))
@@ -39,10 +40,16 @@ function ManageExtensionsContent() {
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
+  const [criteria, setCriteria] = useState<PilotCriterion[]>([])
 
   async function load() {
     try {
-      setInstallations(await apiCursorItems<Installation>('/api/extensions/installations'))
+      const [items, pilotCriteria] = await Promise.all([
+        apiCursorItems<Installation>('/api/extensions/installations'),
+        json(await apiFetch('/api/extensions/pilot-criteria')),
+      ])
+      setInstallations(items)
+      setCriteria(pilotCriteria)
       setError('')
     } catch (loadError: any) {
       setError(loadError.message || 'Could not load extensions')
@@ -81,6 +88,27 @@ function ManageExtensionsContent() {
       await load()
     } catch (removeError: any) {
       setError(removeError.message || 'Could not remove extension')
+    } finally {
+      setBusy('')
+    }
+  }
+
+  async function submitFeedback(item: Installation) {
+    const checklist = Object.fromEntries(criteria.map(criterion => [criterion.key, window.confirm(`Pilot acceptance:\n\n${criterion.label}\n\nDid this criterion pass?`)]))
+    const accepted = criteria.every(criterion => checklist[criterion.key])
+    const rating = Number(window.prompt('Rate this pilot from 1 to 5:', accepted ? '5' : '3'))
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) return setError('Pilot rating must be an integer from 1 to 5.')
+    const comments = window.prompt(accepted ? 'Optional pilot comments:' : 'Describe what needs work:') || ''
+    if (!accepted && !comments.trim()) return setError('Comments are required when criteria need work.')
+    setBusy(item.id)
+    try {
+      await json(await apiFetch(`/api/extensions/installations/${item.id}/pilot-feedback`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outcome: accepted ? 'ACCEPTED' : 'NEEDS_WORK', rating, checklist, comments }),
+      }))
+      await load()
+    } catch (feedbackError: any) {
+      setError(feedbackError.message || 'Could not submit pilot feedback')
     } finally {
       setBusy('')
     }
@@ -177,6 +205,7 @@ function ManageExtensionsContent() {
                     {item.availableVersionId && (
                       <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700">Update available</span>
                     )}
+                    {item.installedAt && !item.uninstalledAt && <button type="button" className="btn-outline btn-sm" disabled={busy === item.id} onClick={() => submitFeedback(item)}>Pilot feedback</button>}
                     {item.uninstalledAt ? (
                       <button
                         type="button"

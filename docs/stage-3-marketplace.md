@@ -130,3 +130,19 @@ backup and after all deployed versions stop reading them.
 Production API deployment `96eb4102-52da-46a6-8ec3-c0ae13005e78` and frontend
 deployment `59216aae-772c-43ba-857f-da7b503c0ac1` completed successfully on
 2026-08-11.
+
+## School marketplace and management separation
+
+The school marketplace is limited to discovery, extension details, privacy and
+data-use disclosures, and initiating an installation request. Installed
+lifecycle controls are deliberately excluded; installed results link operators
+to the management page instead.
+
+The school management page owns request, installation, billing, and activation
+status, update-policy selection, pilot feedback, and permanent removal. This
+keeps browsing safe and predictable while placing destructive and operational
+actions in one auditable workflow. A source-level regression test prevents
+management controls from being reintroduced into the marketplace route.
+
+This change has no schema impact. Rollback requires only restoring the previous
+frontend and backend application images.

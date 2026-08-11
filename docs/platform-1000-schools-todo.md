@@ -176,7 +176,7 @@ An item is complete only when implementation, automated tests, documentation, de
   - Fingerprinted key registration rejects duplicates, rotation overlaps active keys, configured-key retirement fails closed, and emergency revocation blocks affected releases/installations. The 221-test backend suite, both builds, and Railway deployments `e11d5f09-03cf-40aa-ae82-bde057f49f57` (API) and `b6a06117-ca06-4184-9f5a-dc2276bc42e6` (frontend) passed on 2026-08-11.
 - [x] Add catalog search, filters, sort, pagination, and featured collections.
   - Server-side search and filters use sort-bound opaque cursors; school UX pages 24 results and platform-curated locale collections remain tenant-visible only. The 226-test backend suite, both builds, clean 33-migration rehearsal, and Railway deployments `96eb4102-52da-46a6-8ec3-c0ae13005e78` (API) and `59216aae-772c-43ba-857f-da7b503c0ac1` (frontend) passed on 2026-08-11.
-- [ ] Separate school marketplace and installed-extension management pages.
+- [x] Separate school marketplace and installed-extension management pages.
 
 ### Package pipeline
 
