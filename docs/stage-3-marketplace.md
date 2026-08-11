@@ -152,6 +152,27 @@ deployment `ef0c16cd-4e96-4fa7-a0b7-34d31caa0769` completed successfully on
 2026-08-11. Validation passed with 228 backend tests, one intentional skip, and
 successful backend and frontend production builds.
 
+## Lifecycle and purge controls
+
+Deprecation, emergency block, retirement, delisting, and purge are separate
+publisher-scoped operations with mandatory reasons. Blocking immediately
+disables every active installation of the affected version. When the final
+releasable version retires, the parent extension becomes `RETIRED`, unlisted,
+and unavailable for new release or marketplace activity.
+
+Permanent purge is intentionally last: non-core extensions must already be
+retired and unlisted, every release must be `RETIRED` or `REJECTED`, and no
+school may retain an installed instance. All package, asset, and invoice objects
+must delete successfully before the database transaction removes dependencies,
+fully uninstalled history, records, versions, and the extension. Core extension
+code is never physically deleted through this control; it is retired and
+disabled instead. Audit entries retain reason and before/after evidence.
+
+Production API deployment `a5696277-6eeb-45c1-abe1-4cd1d1290776` and frontend
+deployment `24e884d9-7d12-4232-967c-a57e1d1f72d2` completed successfully on
+2026-08-11. Validation passed with 261 backend tests, one intentional skip, and
+successful backend and frontend production builds.
+
 ## Publication checklist
 
 Publication is guarded by one authoritative server checklist evaluated before
