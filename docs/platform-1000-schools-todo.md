@@ -194,7 +194,8 @@ An item is complete only when implementation, automated tests, documentation, de
   - Every validation stores report schema v1, pipeline version, isolated runner, package validator, manifest schema, Ajv, JSZip, ClamAV engine, and ClamAV signature database versions alongside structured errors and warnings; platform administrators can inspect provenance in the release UI. The clean 34-migration rehearsal had zero drift, the 249-test backend suite and both builds passed, and Railway deployments `04cba07a-a472-4fa6-868d-ef8d6321489e` (API), `9ea185cc-cf32-4b4c-8b5f-6ccc5b5d79f6` (frontend), and `12d5eee6-efa7-4e10-aa61-416fddf0baec` (extension worker) succeeded on 2026-08-11.
 - [x] Sign only approved immutable packages.
   - Publication signing independently requires an `APPROVED`, previously unsigned release whose ZIP remains at its exact extension/version/checksum quarantine key; it then verifies the bytes, active publisher key, and private/public Ed25519 match before persisting a signature. The 250-test backend suite and both builds passed, and Railway API deployment `8b477c13-c261-4f74-93f4-762e1c64f816` succeeded on 2026-08-11.
-- [ ] Verify signatures before installation and runtime cache use.
+- [x] Verify signatures before installation and runtime cache use.
+  - Install, upgrade, rollback, activation, navigation, pages, and extension data operations fail closed unless non-core package bytes match their immutable published key, SHA-256, Ed25519 signature, lifecycle state, and non-revoked key. Runtime verification caches only the complete signed identity for five minutes and rechecks lifecycle/key status before every cache hit. The 252-test backend suite and both builds passed, and Railway API deployment `76905dd2-5fcb-4004-a6bc-c4a0c9c2c1e5` succeeded on 2026-08-11.
 - [ ] Add quarantine and rejected-package retention policies.
 
 ### Review and publication

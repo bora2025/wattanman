@@ -322,3 +322,23 @@ Revocation is evaluated separately when a package is installed or used.
 Production API deployment `8b477c13-c261-4f74-93f4-762e1c64f816` completed
 successfully on 2026-08-11. Validation passed with 250 backend tests, one
 intentional skip, and successful backend and frontend production builds.
+
+## Install and runtime signature verification
+
+Every non-core install, upgrade, rollback, and activation reads the immutable
+published ZIP and verifies its checksum and Ed25519 signature against the
+version's registered signing key. Declarative runtime navigation, page, and data
+operations apply the same fail-closed boundary before consuming a manifest.
+Verification additionally requires a `PUBLISHED` or rollback-eligible
+`DEPRECATED` lifecycle and the exact
+`published/extensions/{extensionId}/{versionId}/{sha256}.zip` object key.
+
+Successful runtime verification may be cached for five minutes using the full
+version, checksum, signature, key identity, and key-status tuple. Lifecycle and
+revocation are checked before each cache hit, so changing either immediately
+bypasses the cache and fails closed. The cache is process-local and bounded to
+1,000 identities; it contains no package bytes or private keys.
+
+Production API deployment `76905dd2-5fcb-4004-a6bc-c4a0c9c2c1e5` completed
+successfully on 2026-08-11. Validation passed with 252 backend tests, one
+intentional skip, and successful backend and frontend production builds.
