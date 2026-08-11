@@ -18,6 +18,7 @@
     "db:migrate:adopt": "node prisma/bootstrap-migrations.js --adopt-existing",
     "db:migrate:release": "node prisma/release-migrate.js",
     "db:schema:check": "node prisma/check-schema-compatibility.js",
+    "db:roles:provision": "node prisma/provision-database-roles.js",
     "db:seed": "ts-node prisma/seed.ts",
     "extension:validate": "ts-node src/cli/validate-extension-package.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
