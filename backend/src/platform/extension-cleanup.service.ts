@@ -15,7 +15,9 @@ export class ExtensionCleanupService {
     if (process.env.WORKER_ROLE && process.env.WORKER_ROLE !== 'extension') return;
     if (!(await this.schedules.acquire('extension-cleanup', 24 * 60 * 60_000))) return;
     const now = new Date();
-    const packageCutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const quarantineCutoff = new Date(now.getTime() - this.retentionDays('EXTENSION_QUARANTINE_RETENTION_DAYS', 7) * 24 * 60 * 60 * 1000);
+    const rejectedCutoff = new Date(now.getTime() - this.retentionDays('EXTENSION_REJECTED_RETENTION_DAYS', 30) * 24 * 60 * 60 * 1000);
+    const batchSize = this.batchSize();
     const expiredInstallations = await this.prisma.extensionInstallation.findMany({
       where: { enabled: false, purgeAfter: { lte: now } },
       select: { id: true, schoolId: true, extensionId: true },
@@ -33,29 +35,70 @@ export class ExtensionCleanupService {
       });
     }
 
-    const expiredPackages = await this.prisma.extensionVersion.findMany({
+    const abandonedPackages = await this.prisma.extensionVersion.findMany({
       where: {
-        lifecycleStatus: { in: ['REJECTED', 'RETIRED'] },
-        createdAt: { lte: packageCutoff },
+        lifecycleStatus: { in: ['QUARANTINED', 'VALIDATING'] },
+        updatedAt: { lte: quarantineCutoff },
         packageStorageKey: { not: null },
         installations: { none: {} },
       },
-      select: { id: true, packageStorageKey: true },
+      select: { id: true, packageStorageKey: true, assets: { select: { storageKey: true } } },
+      take: batchSize,
+    });
+    let expiredQuarantines = 0;
+    for (const version of abandonedPackages) {
+      await this.prisma.$transaction(async (transaction) => {
+        const claimed = await transaction.extensionVersion.updateMany({
+          where: { id: version.id, lifecycleStatus: { in: ['QUARANTINED', 'VALIDATING'] }, updatedAt: { lte: quarantineCutoff } },
+          data: { lifecycleStatus: 'REJECTED', reviewNotes: 'Package quarantine retention expired before validation completed.' },
+        });
+        if (claimed.count !== 1) return;
+        await transaction.extensionValidation.updateMany({
+          where: { extensionVersionId: version.id, status: { in: ['PENDING', 'RUNNING'] } },
+          data: { status: 'FAILED', errors: [{ code: 'QUARANTINE_RETENTION_EXPIRED', message: 'Package validation did not complete within the quarantine retention period.' }], completedAt: now },
+        });
+        expiredQuarantines += 1;
+      });
+    }
+
+    const expiredPackages = await this.prisma.extensionVersion.findMany({
+      where: {
+        lifecycleStatus: 'REJECTED',
+        updatedAt: { lte: rejectedCutoff },
+        packageStorageKey: { not: null },
+        installations: { none: {} },
+      },
+      select: { id: true, packageStorageKey: true, assets: { select: { storageKey: true } } },
+      take: batchSize,
     });
     let deletedPackages = 0;
     for (const version of expiredPackages) {
       try {
-        await this.storage.deletePrivate(version.packageStorageKey as string);
-        await this.prisma.extensionVersion.update({
-          where: { id: version.id },
-          data: { packageStorageKey: null },
+        const storageKeys = new Set([version.packageStorageKey as string, ...version.assets.map((asset) => asset.storageKey)]);
+        for (const storageKey of storageKeys) await this.storage.deletePrivate(storageKey);
+        await this.prisma.$transaction(async (transaction) => {
+          await transaction.extensionAsset.deleteMany({ where: { extensionVersionId: version.id } });
+          await transaction.extensionVersion.update({
+            where: { id: version.id },
+            data: { packageStorageKey: null },
+          });
         });
         deletedPackages += 1;
       } catch (error: any) {
         this.logger.warn(`Extension package cleanup failed for ${version.id}: ${error?.message || error}`);
       }
     }
-    this.logger.log(`Extension cleanup: purged ${expiredInstallations.length} installations and ${deletedPackages} package objects.`);
-    return { installations: expiredInstallations.length, packages: deletedPackages };
+    this.logger.log(`Extension cleanup: purged ${expiredInstallations.length} installations, expired ${expiredQuarantines} quarantines, and purged ${deletedPackages} rejected package objects.`);
+    return { installations: expiredInstallations.length, quarantines: expiredQuarantines, packages: deletedPackages };
+  }
+
+  private retentionDays(name: string, fallback: number) {
+    const parsed = Number.parseInt(process.env[name] || '', 10);
+    return Number.isInteger(parsed) && parsed >= 1 && parsed <= 3650 ? parsed : fallback;
+  }
+
+  private batchSize() {
+    const parsed = Number.parseInt(process.env.EXTENSION_RETENTION_BATCH_SIZE || '', 10);
+    return Number.isInteger(parsed) && parsed >= 1 && parsed <= 500 ? parsed : 100;
   }
 }
