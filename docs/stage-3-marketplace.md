@@ -152,6 +152,33 @@ deployment `ef0c16cd-4e96-4fa7-a0b7-34d31caa0769` completed successfully on
 2026-08-11. Validation passed with 228 backend tests, one intentional skip, and
 successful backend and frontend production builds.
 
+## Versioned manifest JSON Schema
+
+Theme and declarative-module manifest v1 contracts are executable JSON Schema
+draft 2020-12 documents bundled into every API and extension-worker image. Ajv
+compiles them in strict, all-errors mode at validator construction. The package
+pipeline reports each violation as `MANIFEST_JSON_SCHEMA` with its manifest path,
+schema keyword, and diagnostic before applying existing semantic checks such as
+extension identity, expected release version, references, dependencies,
+conflicts, and migration operations.
+
+Both schemas reject unknown properties except explicitly namespaced `x-`
+metadata. They constrain required fields, primitive types, patterns, enums,
+uniqueness, collection sizes, nested object shapes, and manifest schema version.
+Build tests verify that both `*-v1.schema.json` assets are copied into production
+output so isolated validation workers never depend on repository documentation
+or network access.
+
+Rollback restores the previous validator image while retaining v1 manifests and
+reports. Schema files are additive immutable contracts; changes to accepted v1
+behavior require a compatibility review, while incompatible changes require a
+new schema version.
+
+Production API deployment `b24c0a87-ea49-4537-91d8-417e8e9358c8` and
+extension-worker deployment `4c67e994-e33c-4175-9c3c-215a5a0deaa1` completed
+successfully on 2026-08-11. Validation passed with 248 backend tests, one
+intentional skip, and successful backend and frontend production builds.
+
 ## Malicious archive boundaries
 
 Archive metadata is evaluated before any entry is extracted. Validation permits

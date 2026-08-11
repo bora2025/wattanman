@@ -188,7 +188,8 @@ An item is complete only when implementation, automated tests, documentation, de
   - The extension worker streams every quarantined ZIP to private ClamAV 1.4 before archive parsing, rejects detected signatures as `MALWARE_DETECTED`, retries scanner outages, and refuses startup unless a real empty-stream scan succeeds. The 239-test backend suite, both builds, and Railway deployments `61857840-3eca-4ad5-9205-d25064311c8b` (API), `11aac888-8f98-45ab-a756-cd2f48a082f6` (extension worker), and `3ee08ffa-632d-4c7b-89c5-6ab10fed4cbd` (ClamAV) passed on 2026-08-11.
 - [x] Enforce expanded-size, file-count, path, symlink, MIME, and compression-ratio limits.
   - Validation rejects more than 200 files or 250 entries, files over 5MB, packages over 10MB expanded, ratios over 100:1, unsafe/control/overlong paths, normalized duplicates, symlinks, executables, unsupported extensions, and MIME/signature mismatches before dangerous extraction. Malicious ZIP fixtures, the 244-test backend suite, both builds, and Railway deployments `0c14f8a8-4b13-40ee-8bdb-1e93295ef0f0` (API) and `2de93e14-eba7-4f23-865b-87c54c7e6b27` (extension worker) passed on 2026-08-11.
-- [ ] Validate manifest against versioned JSON Schema.
+- [x] Validate manifest against versioned JSON Schema.
+  - Theme and declarative-module manifest v1 contracts compile under strict JSON Schema draft 2020-12 with Ajv, ship inside worker builds, permit only controlled fields plus `x-` metadata, and produce structured schema errors before semantic cross-reference validation. The 248-test backend suite, both builds, and Railway deployments `b24c0a87-ea49-4537-91d8-417e8e9358c8` (API) and `4c67e994-e33c-4175-9c3c-215a5a0deaa1` (extension worker) passed on 2026-08-11.
 - [ ] Record validation tool versions and reports.
 - [ ] Sign only approved immutable packages.
 - [ ] Verify signatures before installation and runtime cache use.
