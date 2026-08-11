@@ -16,6 +16,7 @@ import { TenantDatabaseInterceptor } from './database/tenant-database.intercepto
 import { distributedRateLimitOptions } from './security/rate-limit.config';
 import { SecurityModule } from './security/security.module';
 import { IdempotencyInterceptor } from './security/idempotency.interceptor';
+import { ResponseSizeInterceptor } from './security/response-size.interceptor';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { IdempotencyInterceptor } from './security/idempotency.interceptor';
     TenantHostMiddleware,
     { provide: APP_INTERCEPTOR, useExisting: TenantDatabaseInterceptor },
     { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: ResponseSizeInterceptor },
     // Apply rate limiting globally to all endpoints
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],

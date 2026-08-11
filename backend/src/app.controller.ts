@@ -98,7 +98,11 @@ export class AppController {
         throw new BadRequestException('URL does not point to an image');
       }
 
+      const maxBytes = Number(process.env.PROXY_IMAGE_MAX_BYTES || 5 * 1024 * 1024);
+      const contentLength = Number(response.headers.get('content-length') || 0);
+      if (contentLength > maxBytes) throw new BadRequestException('Image exceeds proxy size limit');
       const buffer = Buffer.from(await response.arrayBuffer());
+      if (buffer.byteLength > maxBytes) throw new BadRequestException('Image exceeds proxy size limit');
       res.set({
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=86400',

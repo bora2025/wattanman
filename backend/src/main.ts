@@ -33,6 +33,7 @@ async function refreshCustomDomainCache(prisma: PrismaService) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
+    bodyParser: false,
     logger: process.env.NODE_ENV === 'production'
       ? ['error', 'warn']
       : ['log', 'error', 'warn'],
@@ -60,9 +61,12 @@ async function bootstrap() {
   // Parse cookies (needed for HttpOnly token cookies)
   app.use(cookieParser());
 
-  // Body size limits to prevent DoS via large payloads
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  // Register the only body parsers after disabling Nest's implicit 100 KiB
+  // parser. This makes the configured byte boundary authoritative.
+  const requestMaxBytes = Number(process.env.API_REQUEST_MAX_BYTES || 1024 * 1024);
+  if (!Number.isInteger(requestMaxBytes) || requestMaxBytes < 1024) throw new Error('API_REQUEST_MAX_BYTES must be an integer of at least 1024');
+  app.use(express.json({ limit: requestMaxBytes }));
+  app.use(express.urlencoded({ extended: true, limit: requestMaxBytes }));
 
   // Compress all responses
   app.use(compression());
