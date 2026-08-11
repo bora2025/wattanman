@@ -30,6 +30,11 @@ page boundaries rather than being reordered or duplicated. Existing school UI
 consumers use the bounded cursor loader; the public homepage reads the first
 published page only.
 
+Tenant audit logs are ordered by `createdAt, id` and return a bounded cursor
+page plus the exact filtered `total` and derived `pages` used by the audit UI.
+Audit facets and statistics are computed per request; process-local aggregate
+caches are prohibited because a controller instance serves multiple schools.
+
 Remaining retained collection endpoints must adopt this same contract before
 the platform-wide TODO can be marked complete. Rollback for an individual
 endpoint restores its former array response and matching frontend consumer in

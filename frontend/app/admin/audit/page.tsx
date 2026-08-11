@@ -33,7 +33,7 @@ interface AuditLog {
   errorMessage: string | null
 }
 
-interface Page<T> { items: T[]; total: number; page: number; pageSize: number; pages: number }
+interface Page<T> { items: T[]; total: number; limit: number; pages: number; nextCursor: string | null }
 interface Facets {
   actions: string[]
   resources: string[]
@@ -77,7 +77,7 @@ function relativeTime(iso: string): string {
 export default function AuditLogsPage() {
   const { accentColor } = useAccentColor()
   const [activeTab, setActiveTab] = useState<'logs' | 'cleanup'>('logs')
-  const [page, setPage] = useState<Page<AuditLog>>({ items: [], total: 0, page: 1, pageSize: 50, pages: 0 })
+  const [page, setPage] = useState<Page<AuditLog>>({ items: [], total: 0, limit: 50, pages: 0, nextCursor: null })
   const [facets, setFacets] = useState<Facets>({ actions: [], resources: [], actors: [] })
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(false)
@@ -93,6 +93,7 @@ export default function AuditLogsPage() {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [cursorHistory, setCursorHistory] = useState<Array<string | null>>([null])
 
   const queryString = useMemo(() => {
     const p = new URLSearchParams()
@@ -103,16 +104,25 @@ export default function AuditLogsPage() {
     if (q) p.set('q', q)
     if (from) p.set('from', from)
     if (to) p.set('to', to)
-    p.set('page', String(currentPage))
-    p.set('pageSize', '50')
+    const cursor = cursorHistory[currentPage - 1]
+    if (cursor) p.set('cursor', cursor)
+    p.set('limit', '50')
     return p.toString()
-  }, [actor, action, resource, success, q, from, to, currentPage])
+  }, [actor, action, resource, success, q, from, to, currentPage, cursorHistory])
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)
     try {
       const res = await apiFetch(`/api/audit/logs?${queryString}`)
-      if (res.ok) setPage(await res.json())
+      if (res.ok) {
+        const nextPage = await res.json()
+        setPage(nextPage)
+        setCursorHistory(history => {
+          const copy = history.slice(0, currentPage)
+          if (nextPage.nextCursor) copy[currentPage] = nextPage.nextCursor
+          return copy
+        })
+      }
     } finally {
       setLoading(false)
     }
@@ -131,7 +141,7 @@ export default function AuditLogsPage() {
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
   const resetFilters = () => {
-    setActor(''); setAction(''); setResource(''); setSuccess(''); setQ(''); setFrom(''); setTo(''); setCurrentPage(1)
+    setActor(''); setAction(''); setResource(''); setSuccess(''); setQ(''); setFrom(''); setTo(''); setCurrentPage(1); setCursorHistory([null])
   }
 
   const toggleExpand = useCallback(async (id: string) => {
@@ -273,7 +283,7 @@ export default function AuditLogsPage() {
                   <div className="flex items-center gap-1">
                     <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="btn-outline btn-sm">←</button>
                     <span className="px-2 text-slate-500 dark:text-slate-400">Page {currentPage} / {page.pages}</span>
-                    <button onClick={() => setCurrentPage(p => Math.min(page.pages, p + 1))} disabled={currentPage >= page.pages} className="btn-outline btn-sm">→</button>
+                    <button onClick={() => setCurrentPage(p => p + 1)} disabled={!page.nextCursor} className="btn-outline btn-sm">→</button>
                   </div>
                 )}
               </div>
