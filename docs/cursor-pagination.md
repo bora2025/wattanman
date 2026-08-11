@@ -63,3 +63,11 @@ Remaining retained collection endpoints must adopt this same contract before
 the platform-wide TODO can be marked complete. Rollback for an individual
 endpoint restores its former array response and matching frontend consumer in
 the same deployment.
+
+## Enforcement
+
+`src/database/collection-pagination-registry.spec.ts` is the reviewed registry
+of growing HTTP collections. It requires every registered controller contract
+to expose both `cursor` and `limit`, prevents duplicate route entries, and
+locks the shared maximum page size at 100. Any new growing collection must be
+added to that registry and use the shared cursor helpers before merge.
