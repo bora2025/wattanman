@@ -1,4 +1,5 @@
-import { ServiceUnavailableException } from '@nestjs/common';
+import { ConflictException, ServiceUnavailableException } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { R2StorageService } from './r2-storage.service';
 
 describe('R2StorageService', () => {
@@ -35,11 +36,58 @@ describe('R2StorageService', () => {
         method: 'PUT',
         headers: expect.objectContaining({
           Authorization: expect.stringContaining('AWS4-HMAC-SHA256 Credential=access-key/'),
-          'X-Amz-Content-Sha256': expect.stringMatching(/^[a-f0-9]{64}$/),
-          'X-Amz-Date': expect.stringMatching(/^\d{8}T\d{6}Z$/),
+          'x-amz-content-sha256': expect.stringMatching(/^[a-f0-9]{64}$/),
+          'x-amz-date': expect.stringMatching(/^\d{8}T\d{6}Z$/),
         }),
       }),
     );
+  });
+
+  it('creates checksum-addressed objects with an atomic no-overwrite condition', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 }) as any;
+    const body = Buffer.from('immutable');
+    const checksum = createHash('sha256').update(body).digest('hex');
+
+    await service().putPrivateImmutable(`quarantine/${checksum}.zip`, body, 'application/zip', checksum);
+
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining(`/${checksum}.zip`), expect.objectContaining({
+      method: 'PUT',
+      headers: expect.objectContaining({
+        'if-none-match': '*',
+        Authorization: expect.stringContaining('if-none-match'),
+      }),
+    }));
+  });
+
+  it('accepts a conditional collision only when stored bytes match', async () => {
+    const body = Buffer.from('immutable');
+    const checksum = createHash('sha256').update(body).digest('hex');
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce({ ok: false, status: 412 })
+      .mockResolvedValueOnce({ ok: true, status: 200, arrayBuffer: async () => body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength) }) as any;
+
+    await expect(service().putPrivateImmutable(`validated/${checksum}/asset.json`, body, 'application/json', checksum)).resolves.toBeUndefined();
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('fails closed when an immutable key contains different stored bytes', async () => {
+    const body = Buffer.from('immutable');
+    const checksum = createHash('sha256').update(body).digest('hex');
+    const different = Buffer.from('different');
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce({ ok: false, status: 412 })
+      .mockResolvedValueOnce({ ok: true, status: 200, arrayBuffer: async () => different.buffer.slice(different.byteOffset, different.byteOffset + different.byteLength) }) as any;
+
+    await expect(service().putPrivateImmutable(`validated/${checksum}/asset.json`, body, 'application/json', checksum)).rejects.toThrow(ConflictException);
+  });
+
+  it('rejects an immutable write when key and body checksum differ', async () => {
+    global.fetch = jest.fn() as any;
+    const body = Buffer.from('immutable');
+    const wrongChecksum = createHash('sha256').update('different').digest('hex');
+
+    await expect(service().putPrivateImmutable(`validated/${wrongChecksum}/asset.json`, body, 'application/json', wrongChecksum)).rejects.toThrow(ConflictException);
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('fails closed when R2 credentials are missing', async () => {

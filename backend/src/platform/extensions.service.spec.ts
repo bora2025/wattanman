@@ -69,6 +69,7 @@ describe("ExtensionsService", () => {
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
   const storage = {
     putPrivate: jest.fn().mockResolvedValue(undefined),
+    putPrivateImmutable: jest.fn().mockResolvedValue(undefined),
     getPrivate: jest.fn(),
     deletePrivate: jest.fn().mockResolvedValue(undefined),
   };
@@ -309,29 +310,32 @@ describe("ExtensionsService", () => {
   });
 
   it("publishes only from approved and records publication time", async () => {
+    const packageContents = Buffer.from("package");
+    const packageChecksum = createHash("sha256").update(packageContents).digest("hex");
     prisma.extensionVersion.findUnique.mockResolvedValue({
       id: "version-1",
       extensionId: "ext-1",
       version: "1.0.0",
       lifecycleStatus: "APPROVED",
-      packageStorageKey: "quarantine/extensions/ext-1/version-1/checksum.zip",
-      packageChecksum: "checksum",
+      packageStorageKey: `quarantine/extensions/ext-1/version-1/${packageChecksum}.zip`,
+      packageChecksum,
       extension: { publisherEntity: { status: "ACTIVE" } },
     });
     prisma.extensionVersion.update.mockImplementation(({ data }) =>
       Promise.resolve({ id: "version-1", version: "1.0.0", ...data }),
     );
-    storage.getPrivate.mockResolvedValue(Buffer.from("package"));
+    storage.getPrivate.mockResolvedValue(packageContents);
 
     await service.transition("version-1", "PUBLISHED", undefined, actor);
 
     expect(storage.getPrivate).toHaveBeenCalledWith(
-      "quarantine/extensions/ext-1/version-1/checksum.zip",
+      `quarantine/extensions/ext-1/version-1/${packageChecksum}.zip`,
     );
-    expect(storage.putPrivate).toHaveBeenCalledWith(
-      "published/extensions/ext-1/version-1/checksum.zip",
-      Buffer.from("package"),
+    expect(storage.putPrivateImmutable).toHaveBeenCalledWith(
+      `published/extensions/ext-1/version-1/${packageChecksum}.zip`,
+      packageContents,
       "application/zip",
+      packageChecksum,
     );
     expect(prisma.extensionVersion.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -339,7 +343,7 @@ describe("ExtensionsService", () => {
           lifecycleStatus: "PUBLISHED",
           publishedAt: expect.any(Date),
           packageStorageKey:
-            "published/extensions/ext-1/version-1/checksum.zip",
+            `published/extensions/ext-1/version-1/${packageChecksum}.zip`,
           signingKeyId: "key-1",
           packageSignature: "signature",
           signedAt: expect.any(Date),
@@ -351,7 +355,7 @@ describe("ExtensionsService", () => {
       data: { isListed: true, visibility: "LISTED", status: "ACTIVE" },
     });
     expect(storage.deletePrivate).toHaveBeenCalledWith(
-      "quarantine/extensions/ext-1/version-1/checksum.zip",
+      `quarantine/extensions/ext-1/version-1/${packageChecksum}.zip`,
     );
   });
 
@@ -516,12 +520,13 @@ describe("ExtensionsService", () => {
 
     const result = await service.uploadPackage("version-1", file, actor);
 
-    expect(storage.putPrivate).toHaveBeenCalledWith(
+    expect(storage.putPrivateImmutable).toHaveBeenCalledWith(
       expect.stringMatching(
         /^quarantine\/extensions\/ext-1\/version-1\/[a-f0-9]{64}\.zip$/,
       ),
       buffer,
       "application/zip",
+      expect.stringMatching(/^[a-f0-9]{64}$/),
     );
     expect(result.lifecycleStatus).toBe("QUARANTINED");
     expect(prisma.extensionValidation.upsert).toHaveBeenCalledWith(
@@ -555,7 +560,7 @@ describe("ExtensionsService", () => {
 
     expect(result.lifecycleStatus).toBe("VALIDATED");
     expect(storage.getPrivate).toHaveBeenCalledWith(`quarantine/extensions/ext-1/version-1/${checksum}.zip`);
-    expect(storage.putPrivate).toHaveBeenCalledWith("validated/extensions/ext-1/version-1/asset-checksum/theme.json", Buffer.from("{}"), "application/json");
+    expect(storage.putPrivateImmutable).toHaveBeenCalledWith("validated/extensions/ext-1/version-1/asset-checksum/theme.json", Buffer.from("{}"), "application/json", "asset-checksum");
     expect(prisma.extensionValidation.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "PASSED" }) }));
   });
 
@@ -572,7 +577,7 @@ describe("ExtensionsService", () => {
         publisherEntity: { status: "ACTIVE" },
       },
     });
-    storage.putPrivate.mockRejectedValueOnce(new Error("R2 unavailable"));
+    storage.putPrivateImmutable.mockRejectedValueOnce(new Error("R2 unavailable"));
     const buffer = Buffer.from("zip-content");
 
     await expect(
@@ -667,7 +672,7 @@ describe("ExtensionsService", () => {
     );
 
     expect(result).toBe(existing);
-    expect(storage.putPrivate).not.toHaveBeenCalled();
+    expect(storage.putPrivateImmutable).not.toHaveBeenCalled();
     expect(prisma.extensionValidation.upsert).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: expect.stringMatching(/^[a-f0-9]{64}$/) },
       create: expect.objectContaining({ status: "PENDING" }),
@@ -690,7 +695,7 @@ describe("ExtensionsService", () => {
     await expect(service.uploadPackage("version-1", file, actor)).rejects.toThrow("Redis unavailable");
     await expect(service.uploadPackage("version-1", file, actor)).resolves.toBe(uploaded);
 
-    expect(storage.putPrivate).not.toHaveBeenCalled();
+    expect(storage.putPrivateImmutable).not.toHaveBeenCalled();
     expect(queues.enqueue).toHaveBeenCalledTimes(2);
     expect(queues.enqueue.mock.calls[0][1].idempotencyKey).toBe(queues.enqueue.mock.calls[1][1].idempotencyKey);
   });

@@ -477,7 +477,7 @@ export class ExtensionsService {
       );
     }
     const storageKey = `quarantine/extensions/${existing.extensionId}/${existing.id}/${checksum}.zip`;
-    await this.storage.putPrivate(storageKey, file.buffer, "application/zip");
+    await this.storage.putPrivateImmutable(storageKey, file.buffer, "application/zip", checksum);
     const updated = await this.prisma.$transaction(async (transaction) => {
       const version = await transaction.extensionVersion.update({
         where: { id: versionId },
@@ -556,10 +556,11 @@ export class ExtensionsService {
     if (validationResult.valid) {
       for (const asset of validationResult.files) {
         const assetStorageKey = `validated/extensions/${existing.extensionId}/${existing.id}/${asset.checksum}/${asset.path}`;
-        await this.storage.putPrivate(
+        await this.storage.putPrivateImmutable(
           assetStorageKey,
           asset.contents,
           asset.mimeType,
+          asset.checksum,
         );
         await this.prisma.extensionAsset.upsert({
           where: {
@@ -756,10 +757,11 @@ export class ExtensionsService {
       const packageContents = await this.storage.getPrivate(
         existing.packageStorageKey,
       );
-      await this.storage.putPrivate(
+      await this.storage.putPrivateImmutable(
         publishedStorageKey,
         packageContents,
         "application/zip",
+        existing.packageChecksum,
       );
     }
     const updated = await this.prisma.extensionVersion.update({
