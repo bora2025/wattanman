@@ -387,7 +387,7 @@ export class ExtensionInstallationsService {
     actor: Actor,
     source: "SCHOOL_ADMIN" | "OPERATOR",
   ) {
-    const installation = await this.requireInstallation(installationId);
+    const installation = await this.requireInstallationSummary(installationId);
     if (!installation.installedAt)
       throw new ConflictException(
         "Pilot feedback requires an installed extension",
@@ -963,6 +963,19 @@ export class ExtensionInstallationsService {
       include: {
         extension: true,
         installedVersion: { include: { assets: true, signingKey: true } },
+      },
+    });
+    if (!installation)
+      throw new NotFoundException("Extension installation not found");
+    return installation;
+  }
+
+  private async requireInstallationSummary(id: string) {
+    const installation = await this.prisma.extensionInstallation.findUnique({
+      where: { id },
+      include: {
+        extension: true,
+        installedVersion: true,
       },
     });
     if (!installation)

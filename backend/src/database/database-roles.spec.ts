@@ -18,6 +18,9 @@ describe('database role provisioning', () => {
     expect(script).toContain("{ name: 'wattaman_control_plane', bypassRls: true }");
     expect(script.match(/bypassRls: true/g)).toHaveLength(1);
     expect(script).toContain('ALTER DEFAULT PRIVILEGES');
+    expect(script).toContain('RUNTIME_TENANT_TABLES');
+    expect(script).toContain('RUNTIME_CATALOG_TABLES');
+    expect(script).toContain('REVOKE ALL PRIVILEGES ON ALL TABLES');
     expect(script).toContain('DATABASE_ADMIN_URL is required');
     expect(script).toContain('pg_advisory_xact_lock');
   });

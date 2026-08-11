@@ -39,6 +39,10 @@ describeWithDatabase('extension-first tenant isolation E2E', () => {
   let extensionId: string;
   let recordAId: string;
   let recordBId: string;
+  let installationAId: string;
+  let installationBId: string;
+  let postAId: string;
+  let postBId: string;
 
   beforeAll(async () => {
     process.env.PLATFORM_HOST = 'platform.test.local';
@@ -105,16 +109,26 @@ describeWithDatabase('extension-first tenant isolation E2E', () => {
     });
     extensionId = extension.id;
     const versionId = extension.versions[0].id;
-    await prisma.extensionInstallation.createMany({
-      data: [
-        { schoolId: schoolAId, extensionId, installedVersionId: versionId, enabled: true, billingStatus: 'ACTIVE', approvedAt: new Date(), installedAt: new Date() },
-        { schoolId: schoolBId, extensionId, installedVersionId: versionId, enabled: true, billingStatus: 'ACTIVE', approvedAt: new Date(), installedAt: new Date() },
-      ],
-    });
+    const installationA = await prisma.extensionInstallation.create({ data: { schoolId: schoolAId, extensionId, installedVersionId: versionId, enabled: true, billingStatus: 'ACTIVE', approvedAt: new Date(), installedAt: new Date() } });
+    const installationB = await prisma.extensionInstallation.create({ data: { schoolId: schoolBId, extensionId, installedVersionId: versionId, enabled: true, billingStatus: 'ACTIVE', approvedAt: new Date(), installedAt: new Date() } });
+    installationAId = installationA.id;
+    installationBId = installationB.id;
     const recordA = await prisma.extensionRecord.create({ data: { schoolId: schoolAId, extensionId, resource: 'rewards', data: { points: 10 }, byteSize: 13 } });
     const recordB = await prisma.extensionRecord.create({ data: { schoolId: schoolBId, extensionId, resource: 'rewards', data: { points: 20 }, byteSize: 13 } });
     recordAId = recordA.id;
     recordBId = recordB.id;
+    const postA = await prisma.post.create({ data: { schoolId: schoolAId, title: 'Only school A', published: true } });
+    const postB = await prisma.post.create({ data: { schoolId: schoolBId, title: 'Only school B', published: true } });
+    postAId = postA.id;
+    postBId = postB.id;
+    await prisma.siteSetting.createMany({ data: [
+      { schoolId: schoolAId, siteName: 'Site A' },
+      { schoolId: schoolBId, siteName: 'Site B' },
+    ] });
+    await prisma.auditLog.createMany({ data: [
+      { schoolId: schoolAId, action: 'READ', resource: 'ISOLATION', resourceId: 'audit-a', resourceLabel: 'Audit A', success: true },
+      { schoolId: schoolBId, action: 'READ', resource: 'ISOLATION', resourceId: 'audit-b', resourceLabel: 'Audit B', success: true },
+    ] });
   });
 
   afterAll(async () => {
@@ -152,6 +166,39 @@ describeWithDatabase('extension-first tenant isolation E2E', () => {
     expect(recordsA.body.map((record: any) => record.id)).not.toContain(recordBId);
     await api.delete(`/extensions/${extensionKey}/resources/rewards/${recordBId}`).set(tenant(hostA)).set(auth(tokenA)).expect(404);
     expect(await prisma.extensionRecord.findUnique({ where: { id: recordBId } })).not.toBeNull();
+  });
+
+  it('isolates audit, post, settings, and installation controller reads', async () => {
+    const logs = await api.get('/audit/logs?resource=ISOLATION').set(tenant(hostA)).set(auth(tokenA)).expect(200);
+    const serializedLogs = JSON.stringify(logs.body);
+    expect(serializedLogs).toContain('audit-a');
+    expect(serializedLogs).not.toContain('audit-b');
+
+    const adminPosts = await api.get('/posts').set(tenant(hostA)).set(auth(tokenA)).expect(200);
+    expect(adminPosts.body.map((post: any) => post.id)).toContain(postAId);
+    expect(adminPosts.body.map((post: any) => post.id)).not.toContain(postBId);
+    const publicPosts = await api.get('/posts/published').set(tenant(hostA)).expect(200);
+    expect(publicPosts.body.map((post: any) => post.id)).toContain(postAId);
+    expect(publicPosts.body.map((post: any) => post.id)).not.toContain(postBId);
+
+    const settings = await api.get('/site-settings').set(tenant(hostA)).expect(200);
+    expect(settings.body.siteName).toBe('Site A');
+
+    const installations = await api.get('/extensions/installations').set(tenant(hostA)).set(auth(tokenA)).expect(200);
+    expect(installations.body.map((installation: any) => installation.id)).toContain(installationAId);
+    expect(installations.body.map((installation: any) => installation.id)).not.toContain(installationBId);
+  });
+
+  it('denies school credentials on every platform controller surface', async () => {
+    for (const path of [
+      '/platform/extensions',
+      '/platform/extension-installations',
+      '/platform/admins',
+      '/platform/school-metrics',
+      '/platform/schools',
+    ]) {
+      await api.get(path).set(tenant(hostA)).set(auth(tokenA)).expect(403);
+    }
   });
 
   it('creates extension data only under the authenticated tenant', async () => {

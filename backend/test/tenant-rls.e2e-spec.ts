@@ -20,6 +20,14 @@ describe('PostgreSQL tenant row-level security E2E', () => {
       { schoolId: schoolA, title: 'School A post' },
       { schoolId: schoolB, title: 'School B post' },
     ] });
+    await admin.extensionApiMetric.createMany({ data: [
+      { schoolId: schoolA, bucket: new Date(), route: '/extensions/a', method: 'GET', statusClass: '2xx', requestCount: 1 },
+      { schoolId: schoolB, bucket: new Date(), route: '/extensions/b', method: 'GET', statusClass: '2xx', requestCount: 1 },
+    ] });
+    await admin.schoolProvisioningJob.createMany({ data: [
+      { schoolId: schoolA, requestKey: `${prefix}-a`, status: 'COMPLETED' },
+      { schoolId: schoolB, requestKey: `${prefix}-b`, status: 'COMPLETED' },
+    ] });
   });
 
   afterAll(async () => {
@@ -50,6 +58,21 @@ describe('PostgreSQL tenant row-level security E2E', () => {
       return transaction.$queryRaw<Array<{ title: string }>>`SELECT "title" FROM "Post" ORDER BY "title"`;
     });
     expect(titles).toEqual([{ title: 'School A post' }]);
+  });
+
+  it('isolates extension metrics and background jobs at the database layer', async () => {
+    const result = await runtime.$transaction(async (transaction) => {
+      await transaction.$queryRawUnsafe(`SELECT set_config('app.current_school_id', $1, true)`, schoolA);
+      const metrics = await transaction.$queryRaw<Array<{ schoolId: string }>>`SELECT "schoolId" FROM "ExtensionApiMetric"`;
+      const jobs = await transaction.$queryRaw<Array<{ schoolId: string }>>`SELECT "schoolId" FROM "SchoolProvisioningJob"`;
+      return { metrics, jobs };
+    });
+    expect(result.metrics).toEqual([{ schoolId: schoolA }]);
+    expect(result.jobs).toEqual([{ schoolId: schoolA }]);
+  });
+
+  it('denies school-runtime access to quarantined and published package assets', async () => {
+    await expect(runtime.$queryRaw`SELECT "storageKey" FROM "ExtensionAsset" LIMIT 1`).rejects.toThrow();
   });
 
   it('rejects a raw cross-school write even when application scoping is bypassed', async () => {
