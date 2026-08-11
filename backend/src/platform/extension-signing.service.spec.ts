@@ -31,7 +31,7 @@ describe('ExtensionSigningService', () => {
     const checksum = createHash('sha256').update(contents).digest('hex');
     prisma.extensionSigningKey.findFirst.mockResolvedValue({ id: 'key-row-1', publicKeyPem, status: 'ACTIVE' });
     storage.getPrivate.mockResolvedValue(contents);
-    const version = { id: 'version-1', extensionId: 'extension-1', packageStorageKey: 'quarantine/package.zip', packageChecksum: checksum };
+    const version = { id: 'version-1', extensionId: 'extension-1', lifecycleStatus: 'APPROVED', packageStorageKey: `quarantine/extensions/extension-1/version-1/${checksum}.zip`, packageChecksum: checksum };
 
     const signed = await service.signForPublication(version, 'publisher-1');
     await expect(service.verifyPublished({
@@ -58,7 +58,7 @@ describe('ExtensionSigningService', () => {
     const checksum = createHash('sha256').update(contents).digest('hex');
     prisma.extensionSigningKey.findFirst.mockResolvedValue({ id: 'key-row-1', publicKeyPem, status: 'ACTIVE' });
     storage.getPrivate.mockResolvedValue(contents);
-    const version = { id: 'version-1', extensionId: 'extension-1', packageStorageKey: 'package.zip', packageChecksum: checksum };
+    const version = { id: 'version-1', extensionId: 'extension-1', lifecycleStatus: 'APPROVED', packageStorageKey: `quarantine/extensions/extension-1/version-1/${checksum}.zip`, packageChecksum: checksum };
     const signed = await service.signForPublication(version, 'publisher-1');
 
     storage.getPrivate.mockResolvedValue(Buffer.from('tampered'));
@@ -67,5 +67,22 @@ describe('ExtensionSigningService', () => {
     storage.getPrivate.mockResolvedValue(contents);
     await expect(service.verifyPublished({ ...version, ...signed, signingKey: { status: 'REVOKED', publicKeyPem } }))
       .rejects.toThrow(ConflictException);
+  });
+
+  it('refuses to sign non-approved or non-immutable package records', async () => {
+    const contents = Buffer.from('package');
+    const checksum = createHash('sha256').update(contents).digest('hex');
+    prisma.extensionSigningKey.findFirst.mockResolvedValue({ id: 'key-row-1', publicKeyPem, status: 'ACTIVE' });
+    storage.getPrivate.mockResolvedValue(contents);
+
+    await expect(service.signForPublication({
+      id: 'version-1', extensionId: 'extension-1', lifecycleStatus: 'VALIDATED',
+      packageStorageKey: `quarantine/extensions/extension-1/version-1/${checksum}.zip`, packageChecksum: checksum,
+    }, 'publisher-1')).rejects.toThrow('Only approved');
+
+    await expect(service.signForPublication({
+      id: 'version-1', extensionId: 'extension-1', lifecycleStatus: 'APPROVED', packageStorageKey: 'quarantine/package.zip', packageChecksum: checksum,
+    }, 'publisher-1')).rejects.toThrow('immutable checksum-addressed key');
+    expect(storage.getPrivate).not.toHaveBeenCalled();
   });
 });

@@ -11,6 +11,7 @@ interface SignableVersion {
   packageSignature?: string | null;
   signingKeyId?: string | null;
   signingKey?: { status: string; publicKeyPem: string } | null;
+  lifecycleStatus?: string;
 }
 
 @Injectable()
@@ -19,6 +20,12 @@ export class ExtensionSigningService {
 
   async signForPublication(version: SignableVersion, publisherId: string) {
     if (!version.packageStorageKey || !version.packageChecksum) throw new ConflictException('Package artifact is required for signing');
+    if (version.lifecycleStatus !== 'APPROVED') throw new ConflictException('Only approved extension packages can be signed');
+    const expectedStorageKey = `quarantine/extensions/${version.extensionId}/${version.id}/${version.packageChecksum}.zip`;
+    if (version.packageStorageKey !== expectedStorageKey) {
+      throw new ConflictException('Approved package is not stored at its immutable checksum-addressed key');
+    }
+    if (version.packageSignature || version.signingKeyId) throw new ConflictException('Approved package has already been signed');
     const configuredKeyId = process.env.EXTENSION_SIGNING_KEY_ID?.trim();
     const privateKeyBase64 = process.env.EXTENSION_SIGNING_PRIVATE_KEY_BASE64?.trim();
     if (!configuredKeyId || !privateKeyBase64) throw new ServiceUnavailableException('Extension package signing is not configured');
