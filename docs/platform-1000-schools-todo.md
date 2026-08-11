@@ -151,7 +151,8 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Stage 2 gate
 
-- [ ] Run at least three API replicas safely.
+- [x] Run at least three API replicas safely.
+  - Railway deployment `6787d681-d942-46fa-a11f-2e7d26de6641` reports three Southeast Asia replicas; 20/20 production readiness requests passed on 2026-08-11.
 - [ ] Prove only one migration job executes.
 - [ ] Prove scheduled jobs do not duplicate.
 - [ ] Complete a rolling deployment without incompatible-schema errors.
