@@ -126,3 +126,7 @@ featured priority. Application rollback can retain the collection tables and
 featured rank. Roll back application images first; do not drop collection data.
 A later contract migration may remove these structures only after a verified
 backup and after all deployed versions stop reading them.
+
+Production API deployment `96eb4102-52da-46a6-8ec3-c0ae13005e78` and frontend
+deployment `59216aae-772c-43ba-857f-da7b503c0ac1` completed successfully on
+2026-08-11.
