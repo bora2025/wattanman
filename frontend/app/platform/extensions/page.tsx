@@ -109,6 +109,12 @@ interface PublisherRecord {
   key: string;
   name: string;
   status: string;
+  verificationStatus: "PENDING" | "VERIFIED" | "REJECTED";
+  verificationNotes?: string | null;
+  legalName?: string | null;
+  contactEmail?: string | null;
+  websiteUrl?: string | null;
+  countryCode?: string | null;
   internal: boolean;
   _count: { extensions: number };
   signingKeys: Array<{
@@ -1353,6 +1359,15 @@ function ExtensionsContent() {
   const [paymentSettings, setPaymentSettings] = useState<any>({ currency: "USD", hasQr: false });
   const [paymentQr, setPaymentQr] = useState<File | null>(null);
   const [savingPayment, setSavingPayment] = useState(false);
+  const [showPublisherOnboarding, setShowPublisherOnboarding] = useState(false);
+  const [publisherForm, setPublisherForm] = useState({
+    key: "",
+    name: "",
+    legalName: "",
+    contactEmail: "",
+    websiteUrl: "",
+    countryCode: "KH",
+  });
 
   const filteredExtensions = extensions.filter((extension) => {
     const matchesSearch =
@@ -1472,6 +1487,37 @@ function ExtensionsContent() {
       await load();
     } catch (publisherError: any) {
       setError(publisherError.message || "Could not update publisher");
+    }
+  }
+
+  async function onboardPublisher(event: FormEvent) {
+    event.preventDefault();
+    try {
+      await responseJson(await apiFetch("/api/platform/extensions/publishers/onboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(publisherForm),
+      }));
+      setPublisherForm({ key: "", name: "", legalName: "", contactEmail: "", websiteUrl: "", countryCode: "KH" });
+      setShowPublisherOnboarding(false);
+      await load();
+    } catch (publisherError: any) {
+      setError(publisherError.message || "Could not onboard publisher");
+    }
+  }
+
+  async function decidePublisherVerification(publisher: PublisherRecord, decision: "VERIFIED" | "REJECTED") {
+    const notes = window.prompt(`${decision === "VERIFIED" ? "Approval" : "Rejection"} notes for ${publisher.name}`);
+    if (!notes) return;
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/publishers/${publisher.id}/verification`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision, notes }),
+      }));
+      await load();
+    } catch (publisherError: any) {
+      setError(publisherError.message || "Could not verify publisher");
     }
   }
 
@@ -1803,14 +1849,26 @@ function ExtensionsContent() {
                 </div>
               )}
               <div className="card p-5 space-y-3">
-                <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
                   <h2 className="font-bold text-slate-800 dark:text-slate-100">
                     Publishers
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Initial release accepts Wattaman-internal packages only.
+                    Onboard legal entities, verify identity, and govern publication access.
                   </p>
+                  </div>
+                  <button className="btn-primary btn-sm" onClick={() => setShowPublisherOnboarding((value) => !value)}>{showPublisherOnboarding ? "Cancel" : "Onboard publisher"}</button>
                 </div>
+                {showPublisherOnboarding && <form onSubmit={onboardPublisher} className="grid gap-3 rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 dark:border-indigo-900 dark:bg-indigo-950/20 md:grid-cols-2">
+                  <label className="text-xs">Publisher key<input required className="input mt-1" value={publisherForm.key} onChange={(event) => setPublisherForm({ ...publisherForm, key: event.target.value.toUpperCase() })} placeholder="KHMER_EDTECH" /></label>
+                  <label className="text-xs">Display name<input required className="input mt-1" value={publisherForm.name} onChange={(event) => setPublisherForm({ ...publisherForm, name: event.target.value })} /></label>
+                  <label className="text-xs">Legal entity name<input required className="input mt-1" value={publisherForm.legalName} onChange={(event) => setPublisherForm({ ...publisherForm, legalName: event.target.value })} /></label>
+                  <label className="text-xs">Contact email<input required type="email" className="input mt-1" value={publisherForm.contactEmail} onChange={(event) => setPublisherForm({ ...publisherForm, contactEmail: event.target.value })} /></label>
+                  <label className="text-xs">HTTPS website<input required type="url" className="input mt-1" value={publisherForm.websiteUrl} onChange={(event) => setPublisherForm({ ...publisherForm, websiteUrl: event.target.value })} placeholder="https://…" /></label>
+                  <label className="text-xs">Country code<input required maxLength={2} className="input mt-1" value={publisherForm.countryCode} onChange={(event) => setPublisherForm({ ...publisherForm, countryCode: event.target.value.toUpperCase() })} /></label>
+                  <button className="btn-primary md:col-span-2">Submit for verification</button>
+                </form>}
                 {publishers.map((publisher) => (
                   <div
                     key={publisher.id}
@@ -1829,9 +1887,16 @@ function ExtensionsContent() {
                           extensions ·{" "}
                           {publisher.internal ? "Internal" : "External"}
                         </p>
+                        <p className={`mt-1 text-xs font-semibold ${publisher.verificationStatus === "VERIFIED" ? "text-emerald-600" : publisher.verificationStatus === "REJECTED" ? "text-red-600" : "text-amber-600"}`}>Verification: {publisher.verificationStatus}</p>
+                        {!publisher.internal && <p className="mt-1 text-xs text-slate-500">{publisher.legalName} · {publisher.countryCode} · {publisher.contactEmail}{publisher.websiteUrl && <> · <a className="text-indigo-600 hover:underline" href={publisher.websiteUrl} target="_blank" rel="noreferrer">Website</a></>}</p>}
+                        {publisher.verificationNotes && <p className="mt-1 text-xs italic text-slate-500">{publisher.verificationNotes}</p>}
                       </div>
                       <div className="flex gap-2">
-                        {publisher.status !== "ACTIVE" && (
+                        {!publisher.internal && publisher.verificationStatus !== "VERIFIED" && publisher.status !== "REVOKED" && <>
+                          <button className="btn-outline btn-sm text-emerald-600" onClick={() => decidePublisherVerification(publisher, "VERIFIED")}>Verify</button>
+                          <button className="btn-outline btn-sm text-red-600" onClick={() => decidePublisherVerification(publisher, "REJECTED")}>Reject</button>
+                        </>}
+                        {publisher.status !== "ACTIVE" && (publisher.internal || publisher.verificationStatus === "VERIFIED") && (
                           <button
                             className="btn-outline btn-sm"
                             onClick={() =>

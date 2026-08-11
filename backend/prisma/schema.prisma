@@ -205,20 +205,28 @@ model ExtensionVisibilityGrant {
 }
 
 model ExtensionPublisher {
-  id           String   @id @default(cuid())
-  key          String   @unique
-  name         String
-  status       String   @default("ACTIVE") // ACTIVE | SUSPENDED | REVOKED
-  internal     Boolean  @default(true)
-  contactEmail String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  key                String    @unique
+  name               String
+  legalName          String?
+  websiteUrl         String?
+  countryCode        String?
+  status             String    @default("ACTIVE") // ACTIVE | SUSPENDED | REVOKED
+  verificationStatus String    @default("PENDING") // PENDING | VERIFIED | REJECTED
+  verificationNotes  String?
+  verifiedAt         DateTime?
+  verifiedBy         String?
+  internal           Boolean   @default(true)
+  contactEmail       String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   extensions  Extension[]
   members     ExtensionPublisherMember[]
   signingKeys ExtensionSigningKey[]
 
   @@index([status, internal])
+  @@index([verificationStatus, createdAt])
 }
 
 model ExtensionSigningKey {

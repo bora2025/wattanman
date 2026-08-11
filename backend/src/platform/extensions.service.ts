@@ -1066,6 +1066,117 @@ export class ExtensionsService {
     return dateIdPage(rows, limit);
   }
 
+  async onboardPublisher(
+    data: {
+      key?: string;
+      name?: string;
+      legalName?: string;
+      contactEmail?: string;
+      websiteUrl?: string;
+      countryCode?: string;
+    },
+    actor: Actor,
+  ) {
+    if (!actor.userId)
+      throw new ForbiddenException("Publisher onboarding requires an authenticated platform user");
+    const key = data.key?.trim().toUpperCase();
+    const name = data.name?.trim();
+    const legalName = data.legalName?.trim();
+    const contactEmail = data.contactEmail?.trim().toLowerCase();
+    const countryCode = data.countryCode?.trim().toUpperCase();
+    if (!key || !KEY_PATTERN.test(key))
+      throw new BadRequestException("Publisher key must use 2-64 uppercase letters, numbers, or underscores");
+    if (!name || !legalName)
+      throw new BadRequestException("Publisher name and legal name are required");
+    if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
+      throw new BadRequestException("A valid publisher contact email is required");
+    if (!countryCode || !/^[A-Z]{2}$/.test(countryCode))
+      throw new BadRequestException("countryCode must be a two-letter ISO country code");
+    let websiteUrl: string;
+    try {
+      const parsed = new URL(data.websiteUrl?.trim() || "");
+      if (parsed.protocol !== "https:") throw new Error();
+      websiteUrl = parsed.toString();
+    } catch {
+      throw new BadRequestException("Publisher websiteUrl must be a valid HTTPS URL");
+    }
+    const duplicate = await this.prisma.extensionPublisher.findUnique({ where: { key } });
+    if (duplicate) throw new ConflictException(`Publisher key ${key} already exists`);
+
+    const publisher = await this.prisma.$transaction(async (transaction) => {
+      const created = await transaction.extensionPublisher.create({
+        data: {
+          key,
+          name,
+          legalName,
+          contactEmail,
+          websiteUrl,
+          countryCode,
+          internal: false,
+          status: "SUSPENDED",
+          verificationStatus: "PENDING",
+        },
+      });
+      await transaction.extensionPublisherMember.create({
+        data: {
+          publisherId: created.id,
+          userId: actor.userId!,
+          roles: ["UPLOAD", "PUBLISH", "MANAGE"],
+          status: "ACTIVE",
+        },
+      });
+      return created;
+    });
+    await this.log(actor, "ONBOARD", "EXTENSION_PUBLISHER", publisher.id, publisher.name, {
+      after: publisher,
+    });
+    return publisher;
+  }
+
+  async verifyPublisher(
+    publisherId: string,
+    data: { decision?: string; notes?: string },
+    actor: Actor,
+  ) {
+    const decision = data.decision?.trim().toUpperCase();
+    const notes = data.notes?.trim();
+    if (!actor.userId)
+      throw new ForbiddenException("Publisher verification requires an authenticated platform user");
+    if (!['VERIFIED', 'REJECTED'].includes(decision || ''))
+      throw new BadRequestException("decision must be VERIFIED or REJECTED");
+    if (!notes || notes.length < 3)
+      throw new BadRequestException("Verification notes are required");
+    const existing = await this.prisma.extensionPublisher.findUnique({ where: { id: publisherId } });
+    if (!existing) throw new NotFoundException("Extension publisher not found");
+    const verifierMembership = await this.prisma.extensionPublisherMember.findUnique({
+      where: { publisherId_userId: { publisherId, userId: actor.userId } },
+    });
+    if (verifierMembership?.status === "ACTIVE")
+      throw new ForbiddenException("Publisher members cannot verify their own organization");
+    if (existing.internal)
+      throw new ConflictException("Internal publisher verification is managed by the platform");
+    if (existing.status === "REVOKED")
+      throw new ConflictException("A revoked publisher cannot be verified");
+    const updated = await this.prisma.extensionPublisher.update({
+      where: { id: publisherId },
+      data: {
+        verificationStatus: decision,
+        verificationNotes: notes,
+        verifiedAt: decision === "VERIFIED" ? new Date() : null,
+        verifiedBy: actor.userId,
+        status: decision === "VERIFIED" ? "ACTIVE" : "SUSPENDED",
+      },
+    });
+    await this.log(actor, decision!, "EXTENSION_PUBLISHER_VERIFICATION", publisherId, existing.name, {
+      changes: {
+        before: { verificationStatus: existing.verificationStatus, status: existing.status },
+        after: { verificationStatus: decision, status: updated.status },
+      },
+      metadata: { notes },
+    });
+    return updated;
+  }
+
   async setPublisherMemberRoles(
     publisherId: string,
     userId: string,
@@ -1218,6 +1329,8 @@ export class ExtensionsService {
     });
     if (!existing) throw new NotFoundException("Extension publisher not found");
     await this.requirePublisherRole(publisherId, actor, "MANAGE");
+    if (status === "ACTIVE" && !existing.internal && existing.verificationStatus !== "VERIFIED")
+      throw new ConflictException("Publisher must be verified before activation");
     const updated = await this.prisma.extensionPublisher.update({
       where: { id: publisherId },
       data: { status },

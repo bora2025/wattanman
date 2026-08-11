@@ -16,9 +16,10 @@ describe("ExtensionsService", () => {
       upsert: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      create: jest.fn(),
       update: jest.fn(),
     },
-    extensionPublisherMember: { findUnique: jest.fn(), upsert: jest.fn() },
+    extensionPublisherMember: { findUnique: jest.fn(), upsert: jest.fn(), create: jest.fn() },
     extensionReview: { create: jest.fn(), findMany: jest.fn() },
     extensionSigningKey: {
       findMany: jest.fn(),
@@ -154,6 +155,55 @@ describe("ExtensionsService", () => {
     expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({
       action: "CATALOG_METADATA_UPDATE",
     }));
+  });
+
+  it("onboards an external publisher suspended pending verification", async () => {
+    prisma.extensionPublisher.findUnique.mockResolvedValue(null);
+    prisma.extensionPublisher.create.mockResolvedValue({
+      id: "publisher-external",
+      key: "KHMER_EDTECH",
+      name: "Khmer EdTech",
+      internal: false,
+      status: "SUSPENDED",
+      verificationStatus: "PENDING",
+    });
+
+    const result = await service.onboardPublisher({
+      key: "KHMER_EDTECH",
+      name: "Khmer EdTech",
+      legalName: "Khmer EdTech Co., Ltd.",
+      contactEmail: "publisher@example.com",
+      websiteUrl: "https://example.com",
+      countryCode: "KH",
+    }, actor);
+
+    expect(result.verificationStatus).toBe("PENDING");
+    expect(prisma.extensionPublisherMember.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        publisherId: "publisher-external",
+        roles: ["UPLOAD", "PUBLISH", "MANAGE"],
+      }),
+    });
+  });
+
+  it("verifies an external publisher with required notes", async () => {
+    prisma.extensionPublisherMember.findUnique.mockResolvedValueOnce(null);
+    prisma.extensionPublisher.findUnique.mockResolvedValue({
+      id: "publisher-external",
+      name: "Khmer EdTech",
+      internal: false,
+      status: "SUSPENDED",
+      verificationStatus: "PENDING",
+    });
+    prisma.extensionPublisher.update.mockImplementation(({ data }) => Promise.resolve({ id: "publisher-external", ...data }));
+
+    const result = await service.verifyPublisher("publisher-external", {
+      decision: "VERIFIED",
+      notes: "Legal identity and domain verified",
+    }, actor);
+
+    expect(result.status).toBe("ACTIVE");
+    expect(result.verificationStatus).toBe("VERIFIED");
   });
 
   it("rejects executable extensions during the declarative-only release", async () => {

@@ -43,6 +43,30 @@ export class ExtensionsController {
     return this.extensions.publishers(cursor, limit);
   }
 
+  @Post("publishers/onboard")
+  onboardPublisher(
+    @Body() body: {
+      key?: string;
+      name?: string;
+      legalName?: string;
+      contactEmail?: string;
+      websiteUrl?: string;
+      countryCode?: string;
+    },
+    @Request() req,
+  ) {
+    return this.extensions.onboardPublisher(body, req.user);
+  }
+
+  @Patch("publishers/:publisherId/verification")
+  verifyPublisher(
+    @Param("publisherId") publisherId: string,
+    @Body() body: { decision?: string; notes?: string },
+    @Request() req,
+  ) {
+    return this.extensions.verifyPublisher(publisherId, body, req.user);
+  }
+
   @Patch("publishers/:publisherId/status")
   publisherStatus(
     @Param("publisherId") publisherId: string,

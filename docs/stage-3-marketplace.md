@@ -37,3 +37,22 @@ incident rollback. Roll back application images first, retain the additive
 schema, and roll forward after correction. Column removal requires a later
 contract migration only after confirming no deployed version reads the fields
 and after taking a verified backup.
+
+## Publisher onboarding and verification
+
+External publishers are created through an authenticated platform workflow with
+a normalized key, display and legal names, contact email, HTTPS website, and ISO
+country code. New publishers start `SUSPENDED` with verification status
+`PENDING`; their initial publisher member receives upload, publish, and manage
+roles but cannot verify the organization.
+
+A different platform administrator must record an explicit `VERIFIED` or
+`REJECTED` decision with notes. Verification activates the publisher; rejection
+keeps it suspended. Publisher members cannot approve their own organization, a
+revoked publisher cannot be verified, and an unverified external publisher
+cannot be activated through the general status control. Every onboarding and
+verification decision is written to the audit log.
+
+The schema change is additive. During rollback, retain verification columns and
+roll back application images only. Existing internal publishers are backfilled
+as verified; external publishers remain fail-closed unless explicitly approved.
