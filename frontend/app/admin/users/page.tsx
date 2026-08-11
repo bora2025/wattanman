@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { adminNav } from '../../../lib/admin-nav'
-import { apiFetch } from '../../../lib/api'
+import { apiCursorItems, apiFetch } from '../../../lib/api'
 import { useLanguage } from '../../../lib/i18n'
 import { useAccentColor } from '../../../lib/appearance/accentColor'
 
@@ -141,8 +141,7 @@ export default function ManageUsers() {
 
   const fetchUsers = async () => {
     try {
-      const res = await apiFetch('/api/auth/users')
-      const data = await res.json()
+      const data = await apiCursorItems<User>('/api/auth/users')
       // Show only admin/system roles here; employees are managed in /admin/employees
       const adminRoles = [...ADMIN_ROLES, 'PARENT']
       setUsers(data.filter((u: User) => adminRoles.includes(u.role)))

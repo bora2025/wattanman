@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
+import { BadRequestException } from '@nestjs/common';
+import { decodeOpaqueCursor, encodeOpaqueCursor, parsePageLimit } from '../common/cursor-pagination';
 
 export interface CreatePostDto {
   title: string;
@@ -22,21 +24,33 @@ export class PostsService {
   constructor(private prisma: PrismaService) {}
 
   /** Admin: list all posts (any status). */
-  async listAll() {
-    const posts = await this.prisma.post.findMany({
-      orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
-    });
-    return posts.map((p) => this.deserialize(p));
+  async listAll(input: { cursor?: string; limit?: string } = {}) {
+    return this.listPage(false, input);
   }
 
-  /** Public: list published posts only. */
-  async listPublished(limit = 12) {
+  async listPublished(input: { cursor?: string; limit?: string } = {}) {
+    return this.listPage(true, input);
+  }
+
+  private async listPage(publishedOnly: boolean, input: { cursor?: string; limit?: string }) {
+    const limit = parsePageLimit(input.limit, publishedOnly ? 12 : 50);
+    const raw = decodeOpaqueCursor(input.cursor);
+    const cursor = raw ? { pinned: raw.pinned === true, createdAt: new Date(raw.createdAt), id: String(raw.id || '') } : null;
+    if (cursor && (!cursor.id || Number.isNaN(cursor.createdAt.getTime()))) throw new BadRequestException('Invalid pagination cursor');
+    const boundary = cursor
+      ? cursor.pinned
+        ? { OR: [{ pinned: true, createdAt: { lt: cursor.createdAt } }, { pinned: true, createdAt: cursor.createdAt, id: { lt: cursor.id } }, { pinned: false }] }
+        : { pinned: false, OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] }
+      : {};
     const posts = await this.prisma.post.findMany({
-      where: { published: true },
-      orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
-      take: limit,
+      where: { ...(publishedOnly ? { published: true } : {}), ...boundary },
+      orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
     });
-    return posts.map((p) => this.deserialize(p));
+    const hasMore = posts.length > limit;
+    const items = (hasMore ? posts.slice(0, limit) : posts).map((post) => this.deserialize(post));
+    const last = items[items.length - 1];
+    return { items, nextCursor: hasMore && last ? encodeOpaqueCursor({ pinned: last.pinned, createdAt: last.createdAt, id: last.id }) : null, limit };
   }
 
   /** Get single post by id. */

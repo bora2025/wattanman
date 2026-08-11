@@ -171,7 +171,8 @@ function LatestPosts({ primaryColor }: { primaryColor: string }) {
         return r.json()
       })
       .then((data: unknown) => {
-        setPosts(Array.isArray(data) ? data : [])
+        const page = data as { items?: PublicPost[] }
+        setPosts(Array.isArray(page?.items) ? page.items : [])
         setLoaded(true)
       })
       .catch(() => setLoaded(true))

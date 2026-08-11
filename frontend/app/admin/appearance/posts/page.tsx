@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Sidebar from '../../../../components/Sidebar'
 import AuthGuard from '../../../../components/AuthGuard'
 import { adminNav } from '../../../../lib/admin-nav'
-import { apiFetch } from '../../../../lib/api'
+import { apiCursorItems, apiFetch } from '../../../../lib/api'
 import { Post, TYPE_ICON } from './shared'
 import { useAccentColor } from '../../../../lib/appearance/accentColor'
 
@@ -25,8 +25,7 @@ function PostsListContent() {
 
   const load = useCallback(() => {
     setLoading(true)
-    apiFetch('/api/posts')
-      .then((r) => (r.ok ? r.json() : []))
+    apiCursorItems<Post>('/api/posts')
       .then(setPosts)
       .catch(() => {})
       .finally(() => setLoading(false))

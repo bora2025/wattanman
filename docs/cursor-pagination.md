@@ -24,6 +24,12 @@ at most 100 pages and fails rather than looping indefinitely on a malformed
 cursor response. Installation cursors use `updatedAt, id`; catalog cursors use
 `createdAt, id`.
 
+School users are ordered by `updatedAt, id`. Admin and public post feeds use a
+compound `pinned, createdAt, id` cursor so pinned content remains first across
+page boundaries rather than being reordered or duplicated. Existing school UI
+consumers use the bounded cursor loader; the public homepage reads the first
+published page only.
+
 Remaining retained collection endpoints must adopt this same contract before
 the platform-wide TODO can be marked complete. Rollback for an individual
 endpoint restores its former array response and matching frontend consumer in

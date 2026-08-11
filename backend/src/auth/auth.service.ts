@@ -7,6 +7,7 @@ import { PrismaService } from '../database/prisma.service';
 import { AuthDeliveryService } from './auth-delivery.service';
 import { isValidEmail, looksLikeEmail, normalizePhone } from '../common/identity';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
+import { dateIdPageBy, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
 
 const PLATFORM_ADMIN_ROLE = 'PLATFORM_ADMIN';
 
@@ -282,21 +283,26 @@ export class AuthService {
     });
   }
 
-  async getUsers(role?: string, roles?: string[]) {
+  async getUsers(role?: string, roles?: string[], page: { cursor?: string; limit?: string } = {}) {
+    const limit = parsePageLimit(page.limit);
+    const cursor = decodeDateIdCursor(page.cursor);
     let where: any = {};
     if (roles && roles.length > 0) {
       where.role = { in: roles };
     } else if (role) {
       where.role = role.toUpperCase();
     }
-    return this.prisma.user.findMany({
+    if (cursor) where.OR = [{ updatedAt: { lt: cursor.createdAt } }, { updatedAt: cursor.createdAt, id: { lt: cursor.id } }];
+    const rows = await this.prisma.user.findMany({
       where,
-      orderBy: { updatedAt: 'desc' },
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
       select: {
         id: true, email: true, name: true, phone: true, role: true, photo: true,
         createdAt: true, updatedAt: true,
       },
     });
+    return dateIdPageBy(rows, limit, (row) => row.updatedAt);
   }
 
   async bulkRegister(users: { email: string; password: string; name: string; role: string; photo?: string }[]) {

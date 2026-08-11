@@ -15,14 +15,14 @@ export class PostsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Get()
-  listAll() {
-    return this.svc.listAll();
+  listAll(@Query('cursor') cursor?: string, @Query('limit') limit?: string) {
+    return this.svc.listAll({ cursor, limit });
   }
 
   /** Public: published posts feed (homepage, etc.) */
   @Get('published')
-  listPublished(@Query('limit') limit?: string) {
-    return this.svc.listPublished(limit ? parseInt(limit, 10) : 12);
+  listPublished(@Query('cursor') cursor?: string, @Query('limit') limit?: string) {
+    return this.svc.listPublished({ cursor, limit });
   }
 
   /** Public: single post */

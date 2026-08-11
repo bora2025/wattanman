@@ -3,6 +3,17 @@ import { BadRequestException } from '@nestjs/common';
 export type CursorPage<T> = { items: T[]; nextCursor: string | null; limit: number };
 export type DateIdCursor = { createdAt: Date; id: string };
 
+export function encodeOpaqueCursor(value: object) {
+  return Buffer.from(JSON.stringify(value)).toString('base64url');
+}
+
+export function decodeOpaqueCursor(value?: string): any | null {
+  if (!value) return null;
+  if (value.length > 2000) throw new BadRequestException('Invalid pagination cursor');
+  try { return JSON.parse(Buffer.from(value, 'base64url').toString('utf8')); }
+  catch { throw new BadRequestException('Invalid pagination cursor'); }
+}
+
 export function parsePageLimit(value?: string, defaultLimit = 50, maxLimit = 100) {
   if (value === undefined || value === '') return defaultLimit;
   const limit = Number(value);
@@ -11,13 +22,13 @@ export function parsePageLimit(value?: string, defaultLimit = 50, maxLimit = 100
 }
 
 export function encodeDateIdCursor(value: DateIdCursor) {
-  return Buffer.from(JSON.stringify({ createdAt: value.createdAt.toISOString(), id: value.id })).toString('base64url');
+  return encodeOpaqueCursor({ createdAt: value.createdAt.toISOString(), id: value.id });
 }
 
 export function decodeDateIdCursor(value?: string): DateIdCursor | null {
   if (!value) return null;
   try {
-    const parsed = JSON.parse(Buffer.from(value, 'base64url').toString('utf8'));
+    const parsed = decodeOpaqueCursor(value);
     const createdAt = new Date(parsed.createdAt);
     if (!parsed.id || Number.isNaN(createdAt.getTime())) throw new Error('invalid');
     return { createdAt, id: String(parsed.id) };

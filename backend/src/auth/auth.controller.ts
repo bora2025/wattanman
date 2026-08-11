@@ -279,12 +279,12 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Get('users')
-  async getUsers(@Query('role') role?: string, @Query('roles') roles?: string) {
+  async getUsers(@Query('role') role?: string, @Query('roles') roles?: string, @Query('cursor') cursor?: string, @Query('limit') limit?: string) {
     if (roles) {
       const rolesArr = roles.split(',').map(r => r.trim().toUpperCase());
-      return this.authService.getUsers(undefined, rolesArr);
+      return this.authService.getUsers(undefined, rolesArr, { cursor, limit });
     }
-    return this.authService.getUsers(role);
+    return this.authService.getUsers(role, undefined, { cursor, limit });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
