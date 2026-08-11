@@ -6,6 +6,7 @@ import { PackageValidationResult } from './extension-package-validator.service';
 
 @Injectable()
 export class ExtensionValidationRunnerService {
+  readonly validatorVersion = 'isolated-validation-runner/1.0.0';
   async validate(file: Express.Multer.File, extension: { key: string; runtimeType: string }, expectedVersion: string): Promise<PackageValidationResult> {
     const timeoutMs = this.numberSetting('EXTENSION_VALIDATION_TIMEOUT_MS', 30_000, 100, 120_000);
     const maxOldGenerationSizeMb = this.numberSetting('EXTENSION_VALIDATION_MEMORY_MB', 64, 16, 256);
@@ -32,6 +33,7 @@ export class ExtensionValidationRunnerService {
         clearTimeout(timeout);
         resolveResult({
           ...result,
+          toolVersions: { validationRunner: this.validatorVersion, ...(result.toolVersions || {}) },
           files: (result.files || []).map((asset) => ({ ...asset, contents: Buffer.from(asset.contents) })),
         });
       };
@@ -48,7 +50,7 @@ export class ExtensionValidationRunnerService {
   }
 
   private failure(code: string, message: string): PackageValidationResult {
-    return { valid: false, errors: [{ code, message }], warnings: [], files: [] };
+    return { valid: false, errors: [{ code, message }], warnings: [], files: [], toolVersions: { validationRunner: this.validatorVersion } };
   }
 
   private numberSetting(name: string, fallback: number, minimum: number, maximum: number) {

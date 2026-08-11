@@ -439,6 +439,8 @@ model ExtensionValidation {
   errors             Json?
   warnings           Json?
   validatorVersion   String?
+  toolVersions       Json?
+  reportSchema       Int              @default(1)
   startedAt          DateTime         @default(now())
   completedAt        DateTime?
 

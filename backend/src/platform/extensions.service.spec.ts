@@ -80,7 +80,10 @@ describe("ExtensionsService", () => {
     normalizePublicKey: jest.fn((value) => value),
   };
   const queues = { enqueue: jest.fn().mockResolvedValue({ id: "job-1" }) };
-  const antivirus = { scan: jest.fn().mockResolvedValue({ clean: true, engine: "clamav" }) };
+  const antivirus = {
+    version: jest.fn().mockResolvedValue({ engineVersion: "1.4.3", signatureVersion: "27700" }),
+    scan: jest.fn().mockResolvedValue({ clean: true, engine: "clamav" }),
+  };
   const service = new ExtensionsService(
     prisma as any,
     audit as any,
@@ -563,7 +566,12 @@ describe("ExtensionsService", () => {
     expect(result.lifecycleStatus).toBe("VALIDATED");
     expect(storage.getPrivate).toHaveBeenCalledWith(`quarantine/extensions/ext-1/version-1/${checksum}.zip`);
     expect(storage.putPrivateImmutable).toHaveBeenCalledWith("validated/extensions/ext-1/version-1/asset-checksum/theme.json", Buffer.from("{}"), "application/json", "asset-checksum");
-    expect(prisma.extensionValidation.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "PASSED" }) }));
+    expect(prisma.extensionValidation.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({
+      status: "PASSED",
+      validatorVersion: "extension-validation-pipeline/2.0.0",
+      reportSchema: 1,
+      toolVersions: expect.objectContaining({ pipeline: "extension-validation-pipeline/2.0.0", clamav: "1.4.3", clamavSignatures: "27700" }),
+    }) }));
   });
 
   it("rejects an infected package before archive validation", async () => {

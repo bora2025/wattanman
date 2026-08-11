@@ -17,7 +17,9 @@ describe('AntivirusScannerService', () => {
       socket.on('data', (chunk) => {
         chunks.push(chunk);
         const request = Buffer.concat(chunks);
-        if (request.length >= 4 && request.subarray(-4).equals(Buffer.alloc(4))) socket.end(`${response}\0`);
+        const versionCommand = request.subarray(0, 9).toString('utf8') === 'zVERSION\0';
+        const completedStream = request.length >= 4 && request.subarray(-4).equals(Buffer.alloc(4));
+        if (versionCommand || completedStream) socket.end(`${response}\0`);
       });
     });
     await new Promise<void>((resolve) => server!.listen(0, '127.0.0.1', resolve));
@@ -39,6 +41,11 @@ describe('AntivirusScannerService', () => {
       engine: 'clamav',
       signature: 'Win.Test.EICAR_HDB-1',
     });
+  });
+
+  it('records ClamAV engine and signature database versions', async () => {
+    const scanner = await scannerResponse('ClamAV 1.4.3/27700/Tue Aug 11 05:00:00 2026');
+    await expect(scanner.version()).resolves.toEqual({ engineVersion: '1.4.3', signatureVersion: '27700' });
   });
 
   it('fails closed on malformed scanner responses', async () => {

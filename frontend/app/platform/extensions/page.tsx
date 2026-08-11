@@ -14,6 +14,9 @@ interface ValidationReport {
   warnings: Array<{ code: string; path?: string; message: string }> | null;
   startedAt: string;
   completedAt?: string | null;
+  validatorVersion?: string | null;
+  reportSchema?: number;
+  toolVersions?: Record<string, string> | null;
 }
 
 interface ExtensionVersion {
@@ -531,6 +534,14 @@ function VersionPanel({
               className={`rounded-lg p-3 text-xs border ${report.status === "PASSED" ? "bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-300" : "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300"}`}
             >
               <p className="font-semibold">Validation {report.status}</p>
+              <p className="text-[10px] opacity-75">
+                Report v{report.reportSchema || 1} · {report.validatorVersion || "validator version unavailable"}
+              </p>
+              {report.toolVersions && (
+                <p className="text-[10px] opacity-75 font-mono break-all">
+                  {Object.entries(report.toolVersions).map(([tool, toolVersion]) => `${tool}=${toolVersion}`).join(" · ")}
+                </p>
+              )}
               {(report.errors || []).map((validationError, index) => (
                 <p key={`${validationError.code}-${index}`}>
                   {validationError.code}

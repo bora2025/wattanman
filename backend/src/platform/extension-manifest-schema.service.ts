@@ -12,6 +12,7 @@ export interface ManifestSchemaError {
 @Injectable()
 export class ExtensionManifestSchemaService {
   readonly validatorVersion = 'json-schema-draft-2020-12/manifest-v1';
+  readonly ajvVersion = require('ajv/package.json').version as string;
   private readonly validators: Record<string, ValidateFunction>;
 
   constructor() {

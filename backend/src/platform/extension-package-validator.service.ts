@@ -34,6 +34,7 @@ export interface PackageValidationResult {
   errors: Array<{ code: string; path?: string; message: string }>;
   warnings: Array<{ code: string; path?: string; message: string }>;
   files: Array<{ path: string; size: number; checksum: string; mimeType: string; contents: Buffer }>;
+  toolVersions?: Record<string, string>;
 }
 
 function normalizedPath(entry: JSZip.JSZipObject): string | null {
@@ -106,9 +107,21 @@ function scopeThemeCss(css: string): { css?: string; error?: string } {
 @Injectable()
 export class ExtensionPackageValidatorService {
   private readonly manifestSchemas = new ExtensionManifestSchemaService();
+  readonly validatorVersion = 'package-validator/2.0.0';
 
   async validate(file: Express.Multer.File, extension: { key: string; runtimeType: string }, expectedVersion: string): Promise<PackageValidationResult> {
-    const result: PackageValidationResult = { valid: false, errors: [], warnings: [], files: [] };
+    const result: PackageValidationResult = {
+      valid: false,
+      errors: [],
+      warnings: [],
+      files: [],
+      toolVersions: {
+        packageValidator: this.validatorVersion,
+        manifestSchema: this.manifestSchemas.validatorVersion,
+        ajv: this.manifestSchemas.ajvVersion,
+        jszip: require('jszip/package.json').version as string,
+      },
+    };
     let zip: JSZip;
     try {
       zip = await JSZip.loadAsync(file.buffer, { createFolders: false });

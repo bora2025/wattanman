@@ -32,6 +32,7 @@ const RUNTIME_TYPES = [
   "CODE_EXTENSION",
 ];
 const COMMERCIAL_TYPES = ["MODULE", "ADDON", "THEME"];
+const VALIDATION_PIPELINE_VERSION = "extension-validation-pipeline/2.0.0";
 const MUTABLE_VERSION_STATUSES = new Set([
   "UPLOADED",
   "QUARANTINED",
@@ -466,7 +467,8 @@ export class ExtensionsService {
             id: validationId,
             extensionVersionId: versionId,
             status: "PENDING",
-            validatorVersion: "1",
+            validatorVersion: VALIDATION_PIPELINE_VERSION,
+            reportSchema: 1,
           },
         });
         await this.enqueueUploadCompletion(versionId, checksum, validationId, actor);
@@ -497,7 +499,8 @@ export class ExtensionsService {
           id: validationId,
           extensionVersionId: versionId,
           status: "PENDING",
-          validatorVersion: "1",
+          validatorVersion: VALIDATION_PIPELINE_VERSION,
+          reportSchema: 1,
         },
       });
       return version;
@@ -545,6 +548,7 @@ export class ExtensionsService {
     const downloadedChecksum = createHash("sha256").update(packageBuffer).digest("hex");
     if (downloadedChecksum !== payload.checksum)
       throw new ConflictException("Quarantined extension package checksum mismatch");
+    const antivirusVersion = await this.antivirus.version();
     const antivirusResult = await this.antivirus.scan(packageBuffer);
     const validationResult = antivirusResult.clean
       ? await this.packageValidator.validate(
@@ -600,6 +604,14 @@ export class ExtensionsService {
           errors: validationResult.errors as any,
           warnings: validationResult.warnings as any,
           completedAt: new Date(),
+          validatorVersion: VALIDATION_PIPELINE_VERSION,
+          reportSchema: 1,
+          toolVersions: {
+            pipeline: VALIDATION_PIPELINE_VERSION,
+            clamav: antivirusVersion.engineVersion,
+            clamavSignatures: antivirusVersion.signatureVersion,
+            ...(validationResult.toolVersions || {}),
+          } as any,
         },
       });
       return transaction.extensionVersion.update({
