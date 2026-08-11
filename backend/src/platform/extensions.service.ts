@@ -118,7 +118,7 @@ export class ExtensionsService {
     return dateIdPage(rows, limit);
   }
 
-  async setVisibility(extensionId: string, visibility: string, actor: Actor) {
+  async setVisibility(extensionId: string, visibility: string, actor: Actor, reason?: string) {
     if (!VISIBILITIES.includes(visibility))
       throw new BadRequestException(
         "visibility must be LISTED, UNLISTED, or PRIVATE",
@@ -128,6 +128,9 @@ export class ExtensionsService {
     });
     if (!existing) throw new NotFoundException("Extension not found");
     await this.requirePublisherRole(existing.publisherId, actor, "PUBLISH");
+    if (existing.visibility === 'LISTED' && visibility !== 'LISTED' && !reason?.trim()) {
+      throw new BadRequestException('A reason is required to delist an extension');
+    }
     const updated = await this.prisma.extension.update({
       where: { id: extensionId },
       data: { visibility, isListed: visibility === "LISTED" },
@@ -143,6 +146,7 @@ export class ExtensionsService {
           before: { visibility: existing.visibility },
           after: { visibility },
         },
+        metadata: { reason: reason?.trim() || null },
       },
     );
     return updated;
@@ -752,6 +756,9 @@ export class ExtensionsService {
     const structuredAssessment = ["APPROVED", "REJECTED"].includes(nextStatus)
       ? this.validateReviewAssessment(assessment, nextStatus)
       : undefined;
+    if (["DEPRECATED", "BLOCKED", "RETIRED"].includes(nextStatus) && !reviewNotes?.trim()) {
+      throw new BadRequestException(`A reason is required to mark a release ${nextStatus.toLowerCase()}`);
+    }
     if (
       (nextStatus === "APPROVED" || nextStatus === "REJECTED") &&
       this.reviewSeparationRequired()
@@ -843,6 +850,17 @@ export class ExtensionsService {
         data: { enabled: false },
       });
     }
+    if (nextStatus === "RETIRED") {
+      const remaining = await this.prisma.extensionVersion.count({
+        where: { extensionId: existing.extensionId, id: { not: versionId }, lifecycleStatus: { notIn: ["RETIRED", "REJECTED"] } },
+      });
+      if (remaining === 0) {
+        await this.prisma.extension.update({
+          where: { id: existing.extensionId },
+          data: { status: "RETIRED", visibility: "UNLISTED", isListed: false },
+        });
+      }
+    }
     if (["AWAITING_REVIEW", "APPROVED", "REJECTED"].includes(nextStatus)) {
       await this.prisma.extensionReview.create({
         data: {
@@ -866,6 +884,7 @@ export class ExtensionsService {
           before: { lifecycleStatus: existing.lifecycleStatus },
           after: { lifecycleStatus: nextStatus },
         },
+        metadata: { reason: reviewNotes?.trim() || null },
       },
     );
     return updated;
@@ -1171,7 +1190,7 @@ export class ExtensionsService {
     return { deleted: true, versionId, storageObjects: storageKeys.size };
   }
 
-  async deleteExtension(extensionId: string, actor: Actor) {
+  async deleteExtension(extensionId: string, actor: Actor, reason?: string) {
     const existing = await this.prisma.extension.findUnique({
       where: { id: extensionId },
       include: {
@@ -1199,6 +1218,7 @@ export class ExtensionsService {
     });
     if (!existing) throw new NotFoundException("Extension not found");
     await this.requirePublisherRole(existing.publisherId, actor, "MANAGE");
+    if (!reason?.trim()) throw new BadRequestException("A purge or retirement reason is required");
     if (existing.runtimeType === "CORE_MODULE") {
       await this.prisma.$transaction([
         this.prisma.extensionInstallation.updateMany({
@@ -1217,9 +1237,18 @@ export class ExtensionsService {
       await this.log(actor, "RETIRE", "EXTENSION", extensionId, existing.name, {
         before: { status: existing.status, visibility: existing.visibility },
         after: { status: "RETIRED", visibility: "UNLISTED" },
-        metadata: { reason: "Core modules are retired instead of physically deleted" },
+        metadata: { reason: reason.trim(), policy: "Core modules are retired instead of physically deleted" },
       });
       return { deleted: true, retired: true, extensionId };
+    }
+    if (existing.status !== "RETIRED" || existing.visibility !== "UNLISTED") {
+      throw new ConflictException("Delist and retire every release before permanently purging an extension");
+    }
+    const nonTerminalVersions = existing.versions.filter(
+      (version) => !["RETIRED", "REJECTED"].includes(version.lifecycleStatus),
+    );
+    if (nonTerminalVersions.length) {
+      throw new ConflictException("Every release must be retired or rejected before extension purge");
     }
     const stillInstalled = existing.installations.filter(
       (installation) =>
@@ -1243,12 +1272,8 @@ export class ExtensionsService {
     for (const storageKey of invoiceStorageKeys) storageKeys.add(storageKey);
     let deletedStorageObjects = 0;
     for (const storageKey of storageKeys) {
-      try {
-        await this.storage.deletePrivate(storageKey);
-        deletedStorageObjects += 1;
-      } catch {
-        // Database cleanup must not be blocked by an already-missing R2 object.
-      }
+      await this.storage.deletePrivate(storageKey);
+      deletedStorageObjects += 1;
     }
 
     const versionIds = existing.versions.map((version) => version.id);
@@ -1285,6 +1310,7 @@ export class ExtensionsService {
         deletedInstallations: existing.installations.length,
         deletedRecords: existing._count.records,
         deletedStorageObjects,
+        reason: reason.trim(),
       },
     });
     return {

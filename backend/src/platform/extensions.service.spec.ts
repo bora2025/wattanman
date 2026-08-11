@@ -47,6 +47,7 @@ describe("ExtensionsService", () => {
       create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      count: jest.fn(),
       delete: jest.fn(),
     },
     extensionValidation: {
@@ -118,6 +119,7 @@ describe("ExtensionsService", () => {
       signedAt: new Date(),
     });
     prisma.extensionVersion.updateMany.mockResolvedValue({ count: 1 });
+    prisma.extensionVersion.count.mockResolvedValue(1);
     prisma.extensionValidation.findFirst.mockResolvedValue({ status: "PASSED", reportSchema: 1 });
     prisma.extensionReview.findFirst.mockResolvedValue({ assessment: passingAssessment });
     prisma.extensionSigningKey.findFirst.mockResolvedValue({ id: "key-1", keyId: "wattaman-test-1", status: "ACTIVE" });
@@ -528,7 +530,7 @@ describe("ExtensionsService", () => {
       isListed: false,
     });
     await expect(
-      service.setVisibility("ext-1", "PRIVATE", actor),
+      service.setVisibility("ext-1", "PRIVATE", actor, "Move to private distribution"),
     ).resolves.toEqual(expect.objectContaining({ visibility: "PRIVATE" }));
     expect(prisma.extension.update).toHaveBeenCalledWith({
       where: { id: "ext-1" },
@@ -547,6 +549,16 @@ describe("ExtensionsService", () => {
         },
       }),
     );
+  });
+
+  it("requires an operator reason when delisting a listed extension", async () => {
+    prisma.extension.findUnique.mockResolvedValue({
+      id: "ext-1", name: "Rewards", publisherId: "publisher-1", visibility: "LISTED",
+    });
+
+    await expect(service.setVisibility("ext-1", "UNLISTED", actor))
+      .rejects.toThrow("reason is required to delist");
+    expect(prisma.extension.update).not.toHaveBeenCalled();
   });
 
   it("deactivates every installation of an emergency-blocked version", async () => {
@@ -571,6 +583,22 @@ describe("ExtensionsService", () => {
     expect(prisma.extensionInstallation.updateMany).toHaveBeenCalledWith({
       where: { installedVersionId: "version-1", enabled: true },
       data: { enabled: false },
+    });
+  });
+
+  it("retires and delists the extension when its final releasable version retires", async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: "version-1", extensionId: "ext-1", version: "1.0.0",
+      lifecycleStatus: "DEPRECATED", extension: { publisherId: "publisher-1" },
+    });
+    prisma.extensionVersion.update.mockResolvedValue({ id: "version-1", version: "1.0.0", lifecycleStatus: "RETIRED" });
+    prisma.extensionVersion.count.mockResolvedValue(0);
+
+    await service.transition("version-1", "RETIRED", "Support period ended", actor);
+
+    expect(prisma.extension.update).toHaveBeenCalledWith({
+      where: { id: "ext-1" },
+      data: { status: "RETIRED", visibility: "UNLISTED", isListed: false },
     });
   });
 
@@ -1026,12 +1054,14 @@ describe("ExtensionsService", () => {
       name: "Empty",
       runtimeType: "DECLARATIVE_MODULE",
       publisherId: "publisher-1",
+      status: "RETIRED",
+      visibility: "UNLISTED",
       versions: [],
       installations: [],
       _count: { records: 0 },
     });
     await expect(
-      service.deleteExtension("extension-empty", actor),
+      service.deleteExtension("extension-empty", actor, "Remove abandoned catalog entry"),
     ).resolves.toEqual({
       deleted: true,
       extensionId: "extension-empty",
@@ -1050,11 +1080,13 @@ describe("ExtensionsService", () => {
       name: "Installed",
       runtimeType: "DECLARATIVE_MODULE",
       publisherId: "publisher-1",
+      status: "RETIRED",
+      visibility: "UNLISTED",
       versions: [
         {
           id: "version-1",
           version: "1.0.0",
-          lifecycleStatus: "PUBLISHED",
+          lifecycleStatus: "RETIRED",
           packageStorageKey: null,
           assets: [],
         },
@@ -1071,7 +1103,7 @@ describe("ExtensionsService", () => {
       _count: { records: 0 },
     });
     await expect(
-      service.deleteExtension("extension-installed", actor),
+      service.deleteExtension("extension-installed", actor, "Final cleanup"),
     ).rejects.toThrow("Uninstall this extension from every school");
   });
 
@@ -1082,11 +1114,13 @@ describe("ExtensionsService", () => {
       name: "Purge",
       runtimeType: "THEME",
       publisherId: "publisher-1",
+      status: "RETIRED",
+      visibility: "UNLISTED",
       versions: [
         {
           id: "version-1",
           version: "1.0.0",
-          lifecycleStatus: "DEPRECATED",
+          lifecycleStatus: "RETIRED",
           packageStorageKey: "packages/one.zip",
           assets: [{ storageKey: "assets/one.css" }],
         },
@@ -1104,7 +1138,7 @@ describe("ExtensionsService", () => {
     });
 
     await expect(
-      service.deleteExtension("extension-purge", actor),
+      service.deleteExtension("extension-purge", actor, "Retention period completed"),
     ).resolves.toEqual({
       deleted: true,
       extensionId: "extension-purge",
@@ -1131,6 +1165,25 @@ describe("ExtensionsService", () => {
     expect(prisma.extension.delete).toHaveBeenCalledWith({
       where: { id: "extension-purge" },
     });
+  });
+
+  it("refuses active-extension purge and preserves database state when storage deletion fails", async () => {
+    const retired = {
+      id: "extension-purge", key: "PURGE", name: "Purge", runtimeType: "THEME", publisherId: "publisher-1",
+      status: "RETIRED", visibility: "UNLISTED", versions: [{
+        id: "version-1", version: "1.0.0", lifecycleStatus: "RETIRED",
+        packageStorageKey: "packages/one.zip", assets: [],
+      }], installations: [], _count: { records: 0 },
+    };
+    prisma.extension.findUnique.mockResolvedValueOnce({ ...retired, status: "ACTIVE" });
+    await expect(service.deleteExtension("extension-purge", actor, "Cleanup"))
+      .rejects.toThrow("Delist and retire every release");
+
+    prisma.extension.findUnique.mockResolvedValueOnce(retired);
+    storage.deletePrivate.mockRejectedValueOnce(new Error("R2 unavailable"));
+    await expect(service.deleteExtension("extension-purge", actor, "Cleanup"))
+      .rejects.toThrow("R2 unavailable");
+    expect(prisma.extension.delete).not.toHaveBeenCalled();
   });
 
   it("reports version adoption, validation failures, storage, and lifecycle activity", async () => {

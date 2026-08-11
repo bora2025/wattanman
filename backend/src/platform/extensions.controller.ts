@@ -193,13 +193,14 @@ export class ExtensionsController {
   @Patch(":extensionId/visibility")
   visibility(
     @Param("extensionId") extensionId: string,
-    @Body() body: { visibility: string },
+    @Body() body: { visibility: string; reason?: string },
     @Request() req,
   ) {
     return this.extensions.setVisibility(
       extensionId,
       body.visibility,
       req.user,
+      body.reason,
     );
   }
 
@@ -405,8 +406,12 @@ export class ExtensionsController {
   }
 
   @Delete(":extensionId")
-  deleteExtension(@Param("extensionId") extensionId: string, @Request() req) {
-    return this.extensions.deleteExtension(extensionId, req.user);
+  deleteExtension(
+    @Param("extensionId") extensionId: string,
+    @Body() body: { reason?: string },
+    @Request() req,
+  ) {
+    return this.extensions.deleteExtension(extensionId, req.user, body.reason);
   }
 
   @Get("versions/:versionId/preview")

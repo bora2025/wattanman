@@ -77,6 +77,7 @@ interface ExtensionRecord {
   };
   price?: number | null;
   priceNote?: string | null;
+  status: "ACTIVE" | "SUSPENDED" | "RETIRED";
   visibility: "LISTED" | "UNLISTED" | "PRIVATE";
   versions: ExtensionVersion[];
 }
@@ -287,7 +288,11 @@ function VersionPanel({
       setError("Complete the structured review below before deciding.");
       return;
     }
-    const reviewNotes = needsNotes ? decisionNotes.trim() : undefined;
+    const lifecycleReason = ["DEPRECATED", "BLOCKED", "RETIRED"].includes(status)
+      ? window.prompt(`Reason for ${status.toLowerCase()}`)?.trim()
+      : undefined;
+    if (["DEPRECATED", "BLOCKED", "RETIRED"].includes(status) && !lifecycleReason) return;
+    const reviewNotes = needsNotes ? decisionNotes.trim() : lifecycleReason;
     if (needsNotes && !reviewNotes) {
       setError("Decision notes are required.");
       return;
@@ -821,13 +826,17 @@ function ExtensionCard({
   }
 
   async function setVisibility(visibility: string) {
+    const reason = extension.visibility === "LISTED" && visibility !== "LISTED"
+      ? window.prompt("Reason for delisting this extension")?.trim()
+      : undefined;
+    if (extension.visibility === "LISTED" && visibility !== "LISTED" && !reason) return;
     setBusy(true);
     try {
       await responseJson(
         await apiFetch(`/api/platform/extensions/${extension.id}/visibility`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ visibility }),
+          body: JSON.stringify({ visibility, reason }),
         }),
       );
       await reload();
@@ -921,12 +930,18 @@ function ExtensionCard({
         : `Permanently delete ${extension.name}, every release, stored package, extension record, and fully uninstalled history?\n\nThis cannot be undone. Type ${extension.key} to confirm.`,
     );
     if (confirmation !== extension.key) return;
+    const reason = window.prompt(
+      extension.runtimeType === "CORE_MODULE" ? "Reason for retiring this core extension" : "Reason for permanent purge",
+    )?.trim();
+    if (!reason) return;
     setBusy(true);
     setError("");
     try {
       await responseJson(
         await apiFetch(`/api/platform/extensions/${extension.id}`, {
           method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason }),
         }),
       );
       await reload();
@@ -961,7 +976,7 @@ function ExtensionCard({
           </div>
         </div>
         <div className="flex gap-2">
-          <button
+          {(extension.runtimeType === "CORE_MODULE" || extension.status === "RETIRED") && <button
             type="button"
             disabled={busy}
             className="btn-outline btn-sm text-red-600"
@@ -969,7 +984,7 @@ function ExtensionCard({
             title={extension.runtimeType === "CORE_MODULE" ? "Retire and remove core module from the catalog" : "Permanently delete extension"}
           >
             {extension.runtimeType === "CORE_MODULE" ? "Remove" : "Delete"}
-          </button>
+          </button>}
           <button
             type="button"
             className="btn-outline btn-sm"
