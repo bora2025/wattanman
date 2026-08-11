@@ -3,9 +3,13 @@ import { createHash } from 'crypto';
 import JSZip from 'jszip';
 
 const MAX_FILES = 200;
+const MAX_ENTRIES = 250;
 const MAX_EXTRACTED_BYTES = 10 * 1024 * 1024;
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_COMPRESSION_RATIO = 100;
 const MAX_PATH_DEPTH = 8;
+const MAX_PATH_LENGTH = 240;
+const MAX_PATH_SEGMENT_LENGTH = 100;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
 const THEME_FONTS = ['inter', 'poppins', 'nunito', 'manrope', 'roboto'];
@@ -32,10 +36,15 @@ export interface PackageValidationResult {
 }
 
 function normalizedPath(entry: JSZip.JSZipObject): string | null {
-  const original = (entry.unsafeOriginalName || entry.name).replace(/\\/g, '/').replace(/^\.\//, '');
+  const original = (entry.unsafeOriginalName || entry.name).normalize('NFC').replace(/\\/g, '/').replace(/^\.\//, '');
   if (!original || original.startsWith('/') || /^[a-zA-Z]:\//.test(original)) return null;
   const parts = original.split('/');
-  if (parts.some((part) => !part || part === '.' || part === '..') || parts.length > MAX_PATH_DEPTH) return null;
+  if (
+    original.length > MAX_PATH_LENGTH ||
+    /[\0-\x1f\x7f]/.test(original) ||
+    parts.some((part) => !part || part === '.' || part === '..' || part.length > MAX_PATH_SEGMENT_LENGTH) ||
+    parts.length > MAX_PATH_DEPTH
+  ) return null;
   return parts.join('/');
 }
 
@@ -56,7 +65,10 @@ function detectMime(path: string, contents: Buffer): string | null {
   if (extension === 'ttf') return starts(0x00, 0x01, 0x00, 0x00) || contents.subarray(0, 4).toString('ascii') === 'true' ? 'font/ttf' : null;
   if (extension === 'otf') return contents.subarray(0, 4).toString('ascii') === 'OTTO' ? 'font/otf' : null;
   if (contents.includes(0)) return null;
-  if (extension === 'json') return 'application/json';
+  if (extension === 'json') {
+    try { JSON.parse(contents.toString('utf8')); } catch { return null; }
+    return 'application/json';
+  }
   if (extension === 'css') return 'text/css';
   if (extension === 'md') return 'text/markdown';
   if (extension === 'txt') return 'text/plain';
@@ -102,11 +114,14 @@ export class ExtensionPackageValidatorService {
       return result;
     }
 
-    const entries = Object.values(zip.files).filter((entry) => !entry.dir);
+    const allEntries = Object.values(zip.files);
+    const entries = allEntries.filter((entry) => !entry.dir);
+    if (allEntries.length > MAX_ENTRIES) result.errors.push({ code: 'TOO_MANY_ENTRIES', message: `Package contains more than ${MAX_ENTRIES} total entries` });
     if (!entries.length) result.errors.push({ code: 'EMPTY_PACKAGE', message: 'Package contains no files' });
     if (entries.length > MAX_FILES) result.errors.push({ code: 'TOO_MANY_FILES', message: `Package contains more than ${MAX_FILES} files` });
 
     const paths = new Map<string, JSZip.JSZipObject>();
+    let declaredExtractedBytes = 0;
     for (const entry of entries.slice(0, MAX_FILES + 1)) {
       const path = normalizedPath(entry);
       if (!path) {
@@ -134,10 +149,20 @@ export class ExtensionPackageValidatorService {
       const metadata = (entry as any)._data;
       const compressedSize = Number(metadata?.compressedSize || 0);
       const uncompressedSize = Number(metadata?.uncompressedSize || 0);
-      if (compressedSize > 0 && uncompressedSize / compressedSize > MAX_COMPRESSION_RATIO) {
+      if (!Number.isSafeInteger(compressedSize) || compressedSize < 0 || !Number.isSafeInteger(uncompressedSize) || uncompressedSize < 0) {
+        result.errors.push({ code: 'INVALID_ZIP_SIZE', path, message: 'ZIP entry size metadata is invalid' });
+        continue;
+      }
+      declaredExtractedBytes += uncompressedSize;
+      if (uncompressedSize > MAX_FILE_BYTES) result.errors.push({ code: 'FILE_SIZE', path, message: 'File exceeds the 5MB extracted-size limit' });
+      if (declaredExtractedBytes > MAX_EXTRACTED_BYTES) result.errors.push({ code: 'EXTRACTED_SIZE', message: 'Package exceeds the 10MB extracted-size limit' });
+      if (uncompressedSize > 0 && (compressedSize === 0 || uncompressedSize / compressedSize > MAX_COMPRESSION_RATIO)) {
         result.errors.push({ code: 'COMPRESSION_RATIO', path, message: `File exceeds the ${MAX_COMPRESSION_RATIO}:1 compression-ratio limit` });
       }
     }
+
+    const archiveSafetyCodes = new Set(['TOO_MANY_ENTRIES', 'TOO_MANY_FILES', 'UNSAFE_PATH', 'DUPLICATE_PATH', 'SYMLINK', 'EXECUTABLE_FILE', 'UNSUPPORTED_FILE', 'INVALID_ZIP_SIZE', 'FILE_SIZE', 'EXTRACTED_SIZE', 'COMPRESSION_RATIO']);
+    if (result.errors.some((error) => archiveSafetyCodes.has(error.code))) return result;
 
     let totalBytes = 0;
     for (const [path, entry] of paths) {

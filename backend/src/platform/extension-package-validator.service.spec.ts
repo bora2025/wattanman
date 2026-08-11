@@ -127,6 +127,76 @@ describe('ExtensionPackageValidatorService', () => {
     expect(result.errors).toContainEqual(expect.objectContaining({ code: 'MIME_SIGNATURE', path: 'screenshot.png' }));
   });
 
+  it('rejects highly compressed entries before extraction', async () => {
+    const zip = new JSZip();
+    zip.file('payload.txt', 'A'.repeat(1024 * 1024));
+    const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 9 } });
+
+    const result = await validator.validate(
+      { originalname: 'bomb.zip', buffer, size: buffer.length } as Express.Multer.File,
+      { key: 'AURORA', runtimeType: 'THEME' },
+      '1.0.0',
+    );
+
+    expect(result.errors).toContainEqual(expect.objectContaining({ code: 'COMPRESSION_RATIO', path: 'payload.txt' }));
+    expect(result.files).toHaveLength(0);
+  });
+
+  it('rejects oversized files and aggregate expanded size before extraction', async () => {
+    const zip = new JSZip();
+    zip.file('one.txt', 'A'.repeat(6 * 1024 * 1024));
+    zip.file('two.txt', 'B'.repeat(6 * 1024 * 1024));
+    const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+
+    const result = await validator.validate(
+      { originalname: 'oversized.zip', buffer, size: buffer.length } as Express.Multer.File,
+      { key: 'AURORA', runtimeType: 'THEME' },
+      '1.0.0',
+    );
+
+    expect(result.errors.map((error) => error.code)).toEqual(expect.arrayContaining(['FILE_SIZE', 'EXTRACTED_SIZE']));
+    expect(result.files).toHaveLength(0);
+  });
+
+  it('rejects excessive entry counts and unsafe traversal paths', async () => {
+    const zip = new JSZip();
+    zip.file('../escape.txt', 'x');
+    for (let index = 0; index < 251; index += 1) zip.file(`files/${index}.txt`, 'x');
+    const buffer = await zip.generateAsync({ type: 'nodebuffer' });
+
+    const result = await validator.validate(
+      { originalname: 'entries.zip', buffer, size: buffer.length } as Express.Multer.File,
+      { key: 'AURORA', runtimeType: 'THEME' },
+      '1.0.0',
+    );
+
+    expect(result.errors.map((error) => error.code)).toEqual(expect.arrayContaining(['TOO_MANY_ENTRIES', 'TOO_MANY_FILES', 'UNSAFE_PATH']));
+    expect(result.files).toHaveLength(0);
+  });
+
+  it('rejects symbolic links', async () => {
+    const zip = new JSZip();
+    zip.file('linked.txt', 'target', { unixPermissions: 0o120777 });
+    const buffer = await zip.generateAsync({ type: 'nodebuffer', platform: 'UNIX' });
+
+    const result = await validator.validate(
+      { originalname: 'symlink.zip', buffer, size: buffer.length } as Express.Multer.File,
+      { key: 'AURORA', runtimeType: 'THEME' },
+      '1.0.0',
+    );
+
+    expect(result.errors).toContainEqual(expect.objectContaining({ code: 'SYMLINK', path: 'linked.txt' }));
+    expect(result.files).toHaveLength(0);
+  });
+
+  it('rejects invalid JSON content with an approved extension', async () => {
+    const file = await packageFile({ 'theme.json': '{not-json}', 'style.css': '.card { color: red; }' });
+
+    const result = await validator.validate(file, { key: 'AURORA', runtimeType: 'THEME' }, '1.0.0');
+
+    expect(result.errors).toContainEqual(expect.objectContaining({ code: 'MIME_SIGNATURE', path: 'theme.json' }));
+  });
+
   it('rejects unapproved global theme selectors', async () => {
     const file = await packageFile({
       'theme.json': JSON.stringify({
