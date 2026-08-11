@@ -118,13 +118,13 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Redis and queues
 
-- [ ] Select managed Redis provider and deployment topology.
-- [ ] Select queue library and persistence model.
-- [ ] Define job envelope, version, tenant context, trace ID, and idempotency key.
-- [ ] Add retry policy with exponential backoff and jitter.
-- [ ] Add dead-letter queue and replay controls.
-- [ ] Add distributed locks for school and extension operations.
-- [ ] Add job heartbeat and ownership lease.
+- [x] Select managed Redis provider and deployment topology.
+- [x] Select queue library and persistence model.
+- [x] Define job envelope, version, tenant context, trace ID, and idempotency key.
+- [x] Add retry policy with exponential backoff and jitter.
+- [x] Add dead-letter queue and replay controls.
+- [x] Add distributed locks for school and extension operations.
+- [x] Add job heartbeat and ownership lease.
 - [ ] Add queue-depth and oldest-job alerts.
 
 ### Service separation
