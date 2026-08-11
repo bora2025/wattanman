@@ -21,8 +21,8 @@ export class SchoolMetricsController {
   /** Every school's activity for one day (defaults to yesterday) — the
    * cross-school comparison table. */
   @Get()
-  list(@Query('date') date?: string) {
-    return this.metrics.listForDate(parseDate(date));
+  list(@Query('date') date?: string, @Query('cursor') cursor?: string, @Query('limit') limit?: string) {
+    return this.metrics.listForDate(parseDate(date), cursor, limit);
   }
 
   /** One school's daily trend over the last N days (default 30). */

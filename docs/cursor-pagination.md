@@ -35,6 +35,11 @@ page plus the exact filtered `total` and derived `pages` used by the audit UI.
 Audit facets and statistics are computed per request; process-local aggregate
 caches are prohibited because a controller instance serves multiple schools.
 
+The platform daily-usage comparison pages schools by `createdAt, id` before
+loading metrics for only those school IDs. The frontend follows those bounded
+pages, so a 1,000-school deployment never returns the entire tenant directory
+or its usage rows in one database query or HTTP response.
+
 Remaining retained collection endpoints must adopt this same contract before
 the platform-wide TODO can be marked complete. Rollback for an individual
 endpoint restores its former array response and matching frontend consumer in

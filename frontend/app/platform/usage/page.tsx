@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Sidebar from '../../../components/Sidebar'
 import AuthGuard from '../../../components/AuthGuard'
 import { platformNav } from '../../../lib/platform-nav'
-import { apiFetch } from '../../../lib/api'
+import { apiCursorItems, apiFetch } from '../../../lib/api'
 
 interface SchoolMetricRow {
   schoolId: string
@@ -63,10 +63,7 @@ function UsageContent() {
     setLoading(true)
     setError('')
     try {
-      const res = await apiFetch(`/api/platform/school-metrics?date=${date}`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
-      setRows(data.schools ?? [])
+      setRows(await apiCursorItems<SchoolMetricRow>(`/api/platform/school-metrics?date=${encodeURIComponent(date)}`))
     } catch {
       setError('Failed to load usage metrics')
     } finally {

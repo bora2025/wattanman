@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { PLATFORM_SCHOOL_SUBDOMAIN } from '../tenancy/constants';
+import { dateIdPage, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
 
 function utcMidnight(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
@@ -133,35 +134,20 @@ export class SchoolMetricsService {
   }
 
   /**
-   * Sums octet_length() across every base64 image/logo/design column in the
-   * schema for one school. There's no object storage in this app (Railway's
-   * filesystem is ephemeral) — every "photo"/"screenshot"/"design" field is
-   * either a base64 data URL or a pasted external URL stored directly in a
-   * Postgres column, so this list *is* "school storage." Keep in sync with
-   * schema.prisma if a new image/logo/design column is added.
+   * Sums retained school-owned database payloads. Package and payment objects
+   * live in R2 and are accounted independently; this snapshot covers inline
+   * images/settings plus declarative extension records.
    */
   private async computeStorageBytes(schoolId: string): Promise<bigint> {
     const rows = await this.prisma.$queryRaw<{ bytes: bigint | null }[]>`
       WITH per_row AS (
         SELECT octet_length(photo) AS bytes FROM "User" WHERE "schoolId" = ${schoolId} AND photo IS NOT NULL
         UNION ALL
-        SELECT octet_length(photo) FROM "Student" WHERE "schoolId" = ${schoolId} AND photo IS NOT NULL
-        UNION ALL
-        SELECT octet_length(thumbnail) FROM "Class" WHERE "schoolId" = ${schoolId} AND thumbnail IS NOT NULL
-        UNION ALL
-        SELECT octet_length(photo) FROM "ClassRegistration" WHERE "schoolId" = ${schoolId} AND photo IS NOT NULL
-        UNION ALL
-        SELECT octet_length(photo) FROM "TimetableTeacher" WHERE "schoolId" = ${schoolId} AND photo IS NOT NULL
-        UNION ALL
-        SELECT octet_length("logoUrl") FROM "ScoreSheet" WHERE "schoolId" = ${schoolId} AND "logoUrl" IS NOT NULL
-        UNION ALL
-        SELECT octet_length("coverImageUrl") FROM "Course" WHERE "schoolId" = ${schoolId} AND "coverImageUrl" IS NOT NULL
-        UNION ALL
         SELECT octet_length("imageUrl") FROM "Post" WHERE "schoolId" = ${schoolId} AND "imageUrl" IS NOT NULL AND "imageUrl" != ''
         UNION ALL
         SELECT octet_length("logoUrl") + octet_length("heroSlides") + octet_length("aboutImageUrl") FROM "SiteSetting" WHERE "schoolId" = ${schoolId}
         UNION ALL
-        SELECT octet_length(design::text) FROM "CardTemplate" WHERE "schoolId" = ${schoolId}
+        SELECT "byteSize" FROM "ExtensionRecord" WHERE "schoolId" = ${schoolId}
       )
       SELECT COALESCE(SUM(bytes), 0) AS bytes FROM per_row;
     `;
@@ -175,19 +161,28 @@ export class SchoolMetricsService {
 
   /** One row per school for the given day (defaults to yesterday, since
    * today isn't finalized until the next rollup run). */
-  async listForDate(date?: Date) {
+  async listForDate(date?: Date, cursorValue?: string, limitValue?: string) {
     const dayStart = utcMidnight(date ?? new Date(Date.now() - 24 * 60 * 60 * 1000));
-    const [metrics, schools] = await Promise.all([
-      this.prisma.schoolDailyMetric.findMany({ where: { date: dayStart } }),
-      this.prisma.school.findMany({
-        where: { subdomain: { not: PLATFORM_SCHOOL_SUBDOMAIN } },
-        select: { id: true, name: true, subdomain: true },
-      }),
-    ]);
+    const limit = parsePageLimit(limitValue);
+    const cursor = decodeDateIdCursor(cursorValue);
+    const schools = await this.prisma.school.findMany({
+      where: {
+        subdomain: { not: PLATFORM_SCHOOL_SUBDOMAIN },
+        ...(cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}),
+      },
+      select: { id: true, name: true, subdomain: true, createdAt: true },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+    });
+    const page = dateIdPage(schools, limit);
+    const metrics = page.items.length
+      ? await this.prisma.schoolDailyMetric.findMany({ where: { date: dayStart, schoolId: { in: page.items.map((school) => school.id) } } })
+      : [];
     const byId = new Map(metrics.map((m) => [m.schoolId, m]));
     return {
       date: dayStart.toISOString().split('T')[0],
-      schools: schools.map((s) => {
+      ...page,
+      items: page.items.map((s) => {
         const m = byId.get(s.id);
         return {
           schoolId: s.id,
