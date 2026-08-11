@@ -172,7 +172,8 @@ An item is complete only when implementation, automated tests, documentation, de
   - External publishers are suspended pending independent verification; self-verification and unverified activation fail closed. The 217-test backend suite, both builds, clean 32-migration rehearsal, and Railway deployments `42c88ae7-5dd7-4a2b-9933-8e552627677c` (API) and `26b4ed61-df9b-4c5f-bdb9-9052e0a06d51` (frontend) passed on 2026-08-11.
 - [x] Add publisher member role management.
   - Managers can add members by email, edit `UPLOAD`/`REVIEW`/`PUBLISH`/`MANAGE` roles, and suspend/reactivate access; last-manager removal is rejected. The 219-test backend suite, both builds, and Railway deployments `e51cdb36-a165-4aba-962a-d6e00530196d` (API) and `67ae9a6c-c3f0-455d-9db5-51947bb91dd2` (frontend) passed on 2026-08-11.
-- [ ] Add key registration, rotation, retirement, and revocation UX.
+- [x] Add key registration, rotation, retirement, and revocation UX.
+  - Fingerprinted key registration rejects duplicates, rotation overlaps active keys, configured-key retirement fails closed, and emergency revocation blocks affected releases/installations. The 221-test backend suite, both builds, and Railway deployments `e11d5f09-03cf-40aa-ae82-bde057f49f57` (API) and `b6a06117-ca06-4184-9f5a-dc2276bc42e6` (frontend) passed on 2026-08-11.
 - [ ] Add catalog search, filters, sort, pagination, and featured collections.
 - [ ] Separate school marketplace and installed-extension management pages.
 

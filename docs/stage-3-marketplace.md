@@ -100,3 +100,7 @@ Safe rotation sequence:
 No schema change is required. Rollback retains both active keys and restores the
 previous environment pair. Never delete or revoke the previous key as part of a
 normal application rollback.
+
+Production API deployment `e11d5f09-03cf-40aa-ae82-bde057f49f57` and frontend
+deployment `b6a06117-ca06-4184-9f5a-dc2276bc42e6` completed successfully on
+2026-08-11.
