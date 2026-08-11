@@ -131,11 +131,11 @@ An item is complete only when implementation, automated tests, documentation, de
 
 - [ ] Keep frontend and API stateless.
 - [ ] Create extension worker process.
-- [ ] Create operations worker process.
+- [x] Create operations worker process.
 - [ ] Create notification worker process.
-- [ ] Move scheduled jobs out of the API process.
+- [x] Move scheduled jobs out of the API process.
 - [ ] Ensure workers use explicit tenant context.
-- [ ] Add graceful shutdown for API and workers.
+- [x] Add graceful shutdown for API and workers.
 - [ ] Add separate liveness and readiness endpoints.
 
 ### Distributed protection

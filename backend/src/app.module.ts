@@ -3,7 +3,6 @@ import { APP_GUARD } from '@nestjs/core';
 import { TenantHostMiddleware } from './tenancy/tenant-host.middleware';
 import { DatabaseModule } from './database/database.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -18,7 +17,6 @@ import { TenancyModule } from './tenancy/tenancy.module';
   imports: [
     // Rate limiting: max 300 requests per 60 seconds per IP
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 300 }]),
-    ScheduleModule.forRoot(),
     // Needed directly here (not just transitively via feature modules) so
     // TenantHostMiddleware — registered as a provider below — can inject
     // PrismaService; Nest's DI doesn't resolve middleware dependencies through
