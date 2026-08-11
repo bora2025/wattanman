@@ -216,7 +216,8 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Commercial workflow
 
-- [ ] Finalize free, one-time, subscription, and private-contract models.
+- [x] Finalize free, one-time, subscription, and private-contract models.
+  - Extensions now use database-constrained `FREE`, `ONE_TIME`, `SUBSCRIPTION`, and `PRIVATE_CONTRACT` pricing with integer minor units, ISO currency, monthly/yearly intervals, and mandatory private-contract references. School requests are routed by model and preserve immutable request-time commercial terms; activation requires active billing for every explicit non-free model. Platform and school interfaces edit and display exact terms without relying on floating-point legacy prices. A clean 36-migration rehearsal had zero drift, the 271-test backend suite and both builds passed, and Railway deployments `ae296b94-932f-4429-a385-84fc64d1a9b9` (API) and `af4f7632-d44d-44f8-91f9-356b202a42ee` (frontend) succeeded on 2026-08-11.
 - [ ] Auto-fill school and administrator information in extension requests.
 - [ ] Add payment evidence upload through signed URLs.
 - [ ] Add platform QR/bank payment settings and rotation history.
