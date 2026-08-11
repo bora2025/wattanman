@@ -2,16 +2,18 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { R2StorageService } from '../storage/r2-storage.service';
+import { ScheduledTaskGuardService } from '../security/scheduled-task-guard.service';
 
 @Injectable()
 export class ExtensionCleanupService {
   private readonly logger = new Logger(ExtensionCleanupService.name);
 
-  constructor(private prisma: PrismaService, private storage: R2StorageService) {}
+  constructor(private prisma: PrismaService, private storage: R2StorageService, private schedules: ScheduledTaskGuardService) {}
 
   @Cron('15 3 * * *')
   async run() {
     if (process.env.WORKER_ROLE && process.env.WORKER_ROLE !== 'extension') return;
+    if (!(await this.schedules.acquire('extension-cleanup', 24 * 60 * 60_000))) return;
     const now = new Date();
     const packageCutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const expiredInstallations = await this.prisma.extensionInstallation.findMany({

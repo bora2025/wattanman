@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
+import { ScheduledTaskGuardService } from '../security/scheduled-task-guard.service';
 
 export type AuditAction =
   | 'CREATE'
@@ -52,7 +53,7 @@ export interface AuditEntry {
 export class AuditService {
   private readonly logger = new Logger(AuditService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private schedules: ScheduledTaskGuardService) {}
 
   /** Fire-and-forget audit write. Returns a promise but never rejects. */
   async log(entry: AuditEntry): Promise<void> {
@@ -140,6 +141,7 @@ export class AuditService {
   @Cron('0 * * * *') // top of every hour
   async runScheduledCleanup(): Promise<void> {
     if (process.env.WORKER_ROLE && process.env.WORKER_ROLE !== 'operations') return;
+    if (!(await this.schedules.acquire('audit-cleanup', 60 * 60_000))) return;
     // A cron job runs outside any HTTP request, so there's no tenant context
     // (AsyncLocalStorage store) open here — PrismaService's middleware passes
     // this findMany through unscoped, which is what we actually want: a

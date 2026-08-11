@@ -2,6 +2,7 @@ import { decodeDateIdCursor } from '../common/cursor-pagination';
 import { SchoolMetricsService } from './school-metrics.service';
 
 describe('SchoolMetricsService pagination', () => {
+  const schedules = { acquire: jest.fn().mockResolvedValue(true) };
   it('pages schools before loading their daily metrics', async () => {
     const schools = [
       { id: 'school-2', name: 'Two', subdomain: 'two', createdAt: new Date('2026-02-02') },
@@ -12,7 +13,7 @@ describe('SchoolMetricsService pagination', () => {
       schoolDailyMetric: { findMany: jest.fn().mockResolvedValue([{ schoolId: 'school-2', requestCount: 4, errorCount: 0, avgDurationMs: 5, p95DurationMs: 8, activeUserCount: 2, storageBytes: 10n }]) },
     };
 
-    const page = await new SchoolMetricsService(prisma as any).listForDate(new Date('2026-02-03'), undefined, '1');
+    const page = await new SchoolMetricsService(prisma as any, schedules as any).listForDate(new Date('2026-02-03'), undefined, '1');
 
     expect(page.items).toHaveLength(1);
     expect(page.items[0]).toEqual(expect.objectContaining({ schoolId: 'school-2', requestCount: 4, storageBytes: 10 }));
@@ -30,7 +31,7 @@ describe('SchoolMetricsService pagination', () => {
       }),
     };
 
-    const bytes = await (new SchoolMetricsService(prisma as any) as any).computeStorageBytes('school-1');
+    const bytes = await (new SchoolMetricsService(prisma as any, schedules as any) as any).computeStorageBytes('school-1');
 
     expect(bytes).toBe(42n);
     expect(query).toContain('"ExtensionRecord"');

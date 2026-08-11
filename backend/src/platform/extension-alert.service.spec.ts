@@ -10,13 +10,15 @@ describe('ExtensionAlertService', () => {
     extension: { findUnique: jest.fn() },
     extensionAlert: { upsert: jest.fn(), findMany: jest.fn(), update: jest.fn() },
   };
-  const service = new ExtensionAlertService(prisma as any);
+  const schedules = { acquire: jest.fn().mockResolvedValue(true) };
+  const service = new ExtensionAlertService(prisma as any, schedules as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
     prisma.extensionValidation.groupBy.mockResolvedValue([]);
     prisma.auditLog.groupBy.mockResolvedValue([]);
     prisma.extensionAlert.upsert.mockResolvedValue({});
+    schedules.acquire.mockResolvedValue(true);
   });
 
   it('raises an alert after repeated validation failures', async () => {
@@ -60,5 +62,12 @@ describe('ExtensionAlertService', () => {
     expect(page.items).toEqual([rows[0]]);
     expect(decodeDateIdCursor(page.nextCursor!)).toEqual({ id: 'alert-2', createdAt: rows[0].lastSeenAt });
     expect(prisma.extensionAlert.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ lastSeenAt: 'desc' }, { id: 'desc' }] }));
+  });
+
+  it('skips the scheduled scan when another replica owns the bucket', async () => {
+    schedules.acquire.mockResolvedValue(false);
+
+    await expect(service.scan()).resolves.toEqual({ raised: 0, skipped: true });
+    expect(prisma.extensionValidation.groupBy).not.toHaveBeenCalled();
   });
 });

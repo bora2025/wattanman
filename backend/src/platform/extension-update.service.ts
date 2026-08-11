@@ -2,16 +2,18 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { ExtensionInstallationsService } from './extension-installations.service';
+import { ScheduledTaskGuardService } from '../security/scheduled-task-guard.service';
 
 @Injectable()
 export class ExtensionUpdateService {
   private readonly logger = new Logger(ExtensionUpdateService.name);
 
-  constructor(private prisma: PrismaService, private installations: ExtensionInstallationsService) {}
+  constructor(private prisma: PrismaService, private installations: ExtensionInstallationsService, private schedules: ScheduledTaskGuardService) {}
 
   @Cron('0 */6 * * *')
   async run() {
     if (process.env.WORKER_ROLE && process.env.WORKER_ROLE !== 'extension') return;
+    if (!(await this.schedules.acquire('extension-updates', 6 * 60 * 60_000))) return;
     const candidates = await this.prisma.extensionInstallation.findMany({
       where: { installedAt: { not: null }, uninstalledAt: null, extension: { status: 'ACTIVE' } },
       include: {

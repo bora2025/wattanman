@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { dateIdPageBy, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
+import { ScheduledTaskGuardService } from '../security/scheduled-task-guard.service';
 
 const WINDOW_HOURS = 24;
 const VALIDATION_FAILURE_THRESHOLD = 3;
@@ -10,11 +11,12 @@ const CAPABILITY_DENIED_THRESHOLD = 5;
 
 @Injectable()
 export class ExtensionAlertService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private schedules: ScheduledTaskGuardService) {}
 
   @Cron('15 * * * *')
   async scan() {
     if (process.env.WORKER_ROLE && process.env.WORKER_ROLE !== 'extension') return;
+    if (!(await this.schedules.acquire('extension-alert-scan', 60 * 60_000))) return { raised: 0, skipped: true };
     const since = new Date(Date.now() - WINDOW_HOURS * 60 * 60 * 1000);
     const [validationGroups, capabilityGroups] = await Promise.all([
       this.prisma.extensionValidation.groupBy({

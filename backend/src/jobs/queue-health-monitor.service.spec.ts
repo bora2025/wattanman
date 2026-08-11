@@ -1,6 +1,7 @@
 import { QueueHealthMonitorService } from './queue-health-monitor.service';
 
 describe('QueueHealthMonitorService', () => {
+  const schedules = { acquire: jest.fn().mockResolvedValue(true) };
   const original = process.env;
 
   beforeEach(() => {
@@ -10,7 +11,7 @@ describe('QueueHealthMonitorService', () => {
 
   it('raises warning and critical alerts from queue snapshots', async () => {
     const queues = { health: jest.fn().mockResolvedValue({ queue: 'operations', depth: 12, oldestJobAgeMs: 6000 }) };
-    const service = new QueueHealthMonitorService(queues as any);
+    const service = new QueueHealthMonitorService(queues as any, schedules as any);
     const result = await service.scan();
     expect(result.alerts).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: 'QUEUE_DEPTH_HIGH', severity: 'warning' }),
@@ -19,7 +20,7 @@ describe('QueueHealthMonitorService', () => {
   });
 
   it('fails observably when Redis cannot be scanned', async () => {
-    const service = new QueueHealthMonitorService({ health: jest.fn().mockRejectedValue(new Error('Redis unavailable')) } as any);
+    const service = new QueueHealthMonitorService({ health: jest.fn().mockRejectedValue(new Error('Redis unavailable')) } as any, schedules as any);
     const result = await service.scan();
     expect(result.alerts).toEqual([expect.objectContaining({ code: 'QUEUE_SCAN_FAILED', severity: 'critical' })]);
   });

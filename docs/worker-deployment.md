@@ -27,5 +27,5 @@ refreshed from PostgreSQL and safe to lose between replicas.
 
 Rollback can scale either dedicated worker to zero and redeploy the preceding
 worker image. Do not run the old combined scheduler concurrently: role guards
-prevent cross-role schedules, but duplicate replicas still require BullMQ jobs
-or distributed leases for exactly-once side effects.
+prevent cross-role schedules, and Redis time-bucket claims prevent duplicate
+cron execution when a worker role has multiple replicas.

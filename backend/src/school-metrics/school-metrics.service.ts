@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { PLATFORM_SCHOOL_SUBDOMAIN } from '../tenancy/constants';
 import { dateIdPage, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
+import { ScheduledTaskGuardService } from '../security/scheduled-task-guard.service';
 
 function utcMidnight(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
@@ -25,7 +26,7 @@ function utcMidnight(d: Date): Date {
 export class SchoolMetricsService {
   private readonly logger = new Logger(SchoolMetricsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private schedules: ScheduledTaskGuardService) {}
 
   /**
    * Runs once daily, 5 minutes past UTC midnight, finalizing YESTERDAY's
@@ -40,6 +41,7 @@ export class SchoolMetricsService {
   @Cron('5 0 * * *')
   async runDailyRollup(): Promise<void> {
     if (process.env.WORKER_ROLE && process.env.WORKER_ROLE !== 'operations') return;
+    if (!(await this.schedules.acquire('school-metrics-rollup', 24 * 60 * 60_000))) return;
     const yesterday = utcMidnight(new Date(Date.now() - 24 * 60 * 60 * 1000));
     const result = await this.computeForDate(yesterday);
     this.logger.log(`Daily rollup for ${result.date}: ${result.schools} schools`);

@@ -3,8 +3,9 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AuditModule } from './audit/audit.module';
 import { SchoolMetricsModule } from './school-metrics/school-metrics.module';
 import { QueueMonitoringModule } from './jobs/queue-monitoring.module';
+import { SecurityModule } from './security/security.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), AuditModule, SchoolMetricsModule, QueueMonitoringModule],
+  imports: [ScheduleModule.forRoot(), SecurityModule, AuditModule, SchoolMetricsModule, QueueMonitoringModule],
 })
 export class WorkerModule {}

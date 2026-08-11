@@ -15,7 +15,9 @@ Wattaman uses one versioned image with independently executed process roles.
 - Registers scheduled cleanup, metrics rollup, extension update, and alert discovery.
 - Exposes `/live` and `/ready` on `WORKER_HEALTH_PORT` (default `3002`); `/health` remains a liveness compatibility alias.
 - Handles `SIGTERM`/`SIGINT`, stops accepting health traffic, and closes Nest providers before exit.
-- Run exactly one scheduler worker until every schedule enqueues idempotent BullMQ work.
+- Scheduler workers may scale horizontally: every cron path first claims a
+  Redis time bucket through `ScheduledTaskGuardService`, so only one replica
+  executes that scheduled occurrence.
 
 ## Migration Runner
 

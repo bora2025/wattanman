@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { QueueInfrastructureService } from './queue-infrastructure.service';
+import { ScheduledTaskGuardService } from '../security/scheduled-task-guard.service';
 
 export type QueueHealthAlert = {
   queue: string;
@@ -22,13 +23,14 @@ export class QueueHealthMonitorService {
   private readonly ageCriticalMs = Number(process.env.QUEUE_OLDEST_JOB_CRITICAL_MS || 30 * 60_000);
   private latest: { checkedAt: string; queues: unknown[]; alerts: QueueHealthAlert[] } | null = null;
 
-  constructor(private readonly queues: QueueInfrastructureService) {
+  constructor(private readonly queues: QueueInfrastructureService, private readonly schedules: ScheduledTaskGuardService) {
     if (this.depthWarning < 1 || this.depthCritical < this.depthWarning) throw new Error('Invalid queue depth alert thresholds');
     if (this.ageWarningMs < 1 || this.ageCriticalMs < this.ageWarningMs) throw new Error('Invalid queue age alert thresholds');
   }
 
   @Cron('* * * * *')
   async scan() {
+    if (!(await this.schedules.acquire('queue-health-scan', 60_000))) return this.latest;
     const snapshots: unknown[] = [];
     const alerts: QueueHealthAlert[] = [];
     for (const queue of this.queueNames) {

@@ -8,10 +8,12 @@ describe('ExtensionCleanupService', () => {
     extensionVersion: { findMany: jest.fn(), update: jest.fn() },
   };
   const storage = { deletePrivate: jest.fn() };
-  const service = new ExtensionCleanupService(prisma as any, storage as any);
+  const schedules = { acquire: jest.fn().mockResolvedValue(true) };
+  const service = new ExtensionCleanupService(prisma as any, storage as any, schedules as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
+    schedules.acquire.mockResolvedValue(true);
     prisma.$transaction.mockImplementation((callback) => callback(prisma));
   });
 

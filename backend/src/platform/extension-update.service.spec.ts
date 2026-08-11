@@ -5,7 +5,8 @@ describe('ExtensionUpdateService', () => {
     extensionInstallation: { findMany: jest.fn(), update: jest.fn() },
   };
   const installations = { upgrade: jest.fn() };
-  const service = new ExtensionUpdateService(prisma as any, installations as any);
+  const schedules = { acquire: jest.fn().mockResolvedValue(true) };
+  const service = new ExtensionUpdateService(prisma as any, installations as any, schedules as any);
   const candidate = {
     id: 'installation-1', schoolId: 'school-a', installedVersionId: 'version-1', updatePolicy: 'NOTIFY', availableVersionId: null, updateNotifiedAt: null,
     installedVersion: { manifest: { permissions: ['rewards:read'] } },
@@ -14,6 +15,7 @@ describe('ExtensionUpdateService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    schedules.acquire.mockResolvedValue(true);
     prisma.extensionInstallation.update.mockResolvedValue({});
     installations.upgrade.mockResolvedValue({});
   });

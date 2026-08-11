@@ -19,3 +19,11 @@ held the transaction lock instead of migrating concurrently.
 No database credentials were written to logs or files. A temporary Railway SSH
 key attempted for private-network execution was removed from Railway and the
 local machine after SSH proved unavailable.
+
+## Scheduled task deduplication
+
+Every retained `@Cron` method is covered by a source registry and claims a
+Redis time-bucket key before performing work. A two-replica concurrency test
+uses independent guard instances sharing one Redis-compatible state and proves
+exactly one winner; service tests prove losing replicas perform no database
+scan or side effect.
