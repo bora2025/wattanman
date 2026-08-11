@@ -42,7 +42,7 @@ describe('ExtensionPackageValidatorService', () => {
     const result = await validator.validate(
       { originalname: 'aurora-khmer-versioned.zip', buffer, size: buffer.length } as Express.Multer.File,
       { key: 'AURORA_KHMER', runtimeType: 'THEME' },
-      '1.0.0',
+      '1.0.2',
     );
 
     expect(result.valid).toBe(true);

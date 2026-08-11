@@ -19,6 +19,12 @@ class HeaderAuthGuard implements CanActivate {
   }
 }
 
+class HeaderPlatformScopeGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    return context.switchToHttp().getRequest().headers['x-test-role'] === 'PLATFORM_ADMIN';
+  }
+}
+
 describe('ExtensionsController authorization and upload', () => {
   let app: INestApplication;
   const extensions = {
@@ -40,6 +46,8 @@ describe('ExtensionsController authorization and upload', () => {
     })
       .overrideGuard(JwtAuthGuard)
       .useClass(HeaderAuthGuard)
+      .overrideGuard(PlatformScopeGuard)
+      .useClass(HeaderPlatformScopeGuard)
       .compile();
     app = moduleRef.createNestApplication();
     await app.init();

@@ -37,10 +37,10 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Stage 0 gate
 
-- [ ] Backend production build passes.
-- [ ] Frontend production build passes.
+- [x] Backend production build passes.
+- [x] Frontend production build passes.
 - [ ] Extension lifecycle tests pass.
-- [ ] No unexplained legacy runtime file or database model remains.
+- [x] No unexplained legacy runtime file or database model remains.
 - [ ] Architecture and security review is approved.
 
 ## Stage 1 — Tenant Safety and Provisioning

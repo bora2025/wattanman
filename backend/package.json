@@ -26,7 +26,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "test:isolation": "jest --config ./test/jest-e2e.json --runInBand test/tenant-isolation.e2e-spec.ts"
+    "test:isolation": "jest --config ./test/jest-e2e.json --runInBand test/tenant-isolation.e2e-spec.ts",
+    "test:lifecycle": "jest --config ./test/jest-e2e.json --runInBand test/extension-lifecycle.e2e-spec.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

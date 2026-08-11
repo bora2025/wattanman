@@ -29,3 +29,5 @@ Legacy classes, students, attendance, fees, timetables, scores, staffing, transp
 ## Ownership Rule
 
 Any future school business feature must be delivered through the extension architecture. Adding a feature-specific Prisma model to the core requires an accepted ADR and platform architecture review.
+
+`backend/src/database/architecture-baseline.spec.ts` enforces this exact model set and prevents removed feature runtime directories from returning unnoticed.

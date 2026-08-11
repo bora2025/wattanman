@@ -47,7 +47,7 @@ These are engineering sizing assumptions, not sales limits. Stage 1 must add tel
 
 ### Gaps before 1,000 schools
 
-- The Prisma schema still contains removed legacy feature tables and relations.
+- Legacy feature tables, relations, and runtime directories were removed; an executable architecture inventory prevents accidental restoration.
 - Tenant enforcement depends heavily on application conventions rather than database row-level security.
 - Host resolution contains a single-school fallback that must not exist in a multi-school production environment.
 - Database migrations and production seed synchronization run during every API container start.
@@ -580,4 +580,3 @@ The reform is complete when:
 - Platform operators can identify and stop a bad extension without stopping the platform.
 - Backup and restore objectives are proven by rehearsal.
 - The certified load profile supports 1,000 schools within approved SLOs and cost targets.
-
