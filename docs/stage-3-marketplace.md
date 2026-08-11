@@ -77,3 +77,26 @@ the audit history to restore the last known role set after rolling forward.
 Production API deployment `e51cdb36-a165-4aba-962a-d6e00530196d` and frontend
 deployment `67ae9a6c-c3f0-455d-9db5-51947bb91dd2` completed successfully on
 2026-08-11.
+
+## Signing-key lifecycle
+
+The platform displays non-secret SHA-256 public-key fingerprints and marks the
+key currently selected by `EXTENSION_SIGNING_KEY_ID`. Registration rejects both
+duplicate IDs and duplicate public keys. Rotation creates a second active key so
+the old key remains valid while operators update the private-key environment and
+publish a signed test release. The configured key cannot be retired until the
+environment points to its replacement. Retired keys remain valid for historical
+package verification and can be reactivated; revoked keys cannot be restored and
+immediately block affected releases and installations.
+
+Safe rotation sequence:
+
+1. Select **Rotate** on the active key and register the replacement public key.
+2. Update `EXTENSION_SIGNING_KEY_ID` and
+   `EXTENSION_SIGNING_PRIVATE_KEY_BASE64` in the deployment secret store.
+3. Deploy and publish a test package; verify its checksum and signature.
+4. Retire the previous key. Revoke only for compromise or emergency response.
+
+No schema change is required. Rollback retains both active keys and restores the
+previous environment pair. Never delete or revoke the previous key as part of a
+normal application rollback.

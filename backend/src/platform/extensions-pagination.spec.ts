@@ -24,7 +24,10 @@ describe('ExtensionsService secondary collection pagination', () => {
   it('bounds publisher pages and nested management collections', async () => {
     const page = await service.publishers(undefined, '1');
 
-    expect(page.items).toEqual([publisherRows[0]]);
+    expect(page.items).toEqual([expect.objectContaining({
+      ...publisherRows[0],
+      signingKeys: [],
+    })]);
     expect(decodeDateIdCursor(page.nextCursor!)).toEqual({ id: 'publisher-2', createdAt: publisherRows[0].createdAt });
     expect(prisma.extensionPublisher.findMany).toHaveBeenCalledWith(expect.objectContaining({
       take: 2,

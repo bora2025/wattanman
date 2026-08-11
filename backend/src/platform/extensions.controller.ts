@@ -138,6 +138,16 @@ export class ExtensionsController {
     return this.extensions.registerSigningKey(publisherId, body, req.user);
   }
 
+  @Post("publishers/:publisherId/signing-keys/:keyId/rotate")
+  rotateSigningKey(
+    @Param("publisherId") publisherId: string,
+    @Param("keyId") keyId: string,
+    @Body() body: { newKeyId?: string; publicKeyPem?: string },
+    @Request() req,
+  ) {
+    return this.extensions.rotateSigningKey(publisherId, keyId, body, req.user);
+  }
+
   @Patch("signing-keys/:keyId/status")
   signingKeyStatus(
     @Param("keyId") keyId: string,

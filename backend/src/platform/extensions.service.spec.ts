@@ -1036,6 +1036,40 @@ describe("ExtensionsService", () => {
     });
   });
 
+  it("starts signing-key rotation with an overlapping active key", async () => {
+    prisma.extensionSigningKey.findUnique
+      .mockResolvedValueOnce({ id: "old-key", keyId: "wattaman-old", publisherId: "publisher-1", status: "ACTIVE" })
+      .mockResolvedValueOnce(null);
+    prisma.extensionSigningKey.findFirst.mockResolvedValue(null);
+    prisma.extensionSigningKey.create.mockResolvedValue({ id: "new-key", keyId: "wattaman-new", publisherId: "publisher-1", status: "ACTIVE" });
+    signing.normalizePublicKey.mockReturnValue("-----BEGIN PUBLIC KEY-----\nvalid\n-----END PUBLIC KEY-----");
+
+    const result = await service.rotateSigningKey("publisher-1", "old-key", {
+      newKeyId: "wattaman-new",
+      publicKeyPem: "public key",
+    }, actor);
+
+    expect(result.currentKey.status).toBe("ACTIVE");
+    expect(result.newKey.status).toBe("ACTIVE");
+    expect(result.nextStep).toContain("EXTENSION_SIGNING_KEY_ID");
+  });
+
+  it("refuses to retire the signing key still configured for publication", async () => {
+    process.env.EXTENSION_SIGNING_KEY_ID = "wattaman-current";
+    prisma.extensionSigningKey.findUnique.mockResolvedValue({
+      id: "key-current",
+      keyId: "wattaman-current",
+      publisherId: "publisher-1",
+      status: "ACTIVE",
+    });
+    try {
+      await expect(service.setSigningKeyStatus("key-current", "RETIRED", actor))
+        .rejects.toThrow("switch the signing environment");
+    } finally {
+      delete process.env.EXTENSION_SIGNING_KEY_ID;
+    }
+  });
+
   it("rejects publication when required dependencies are unavailable", async () => {
     prisma.extensionVersion.findUnique.mockResolvedValue({
       id: "version-1",

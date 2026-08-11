@@ -1063,7 +1063,15 @@ export class ExtensionsService {
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: limit + 1,
     });
-    return dateIdPage(rows, limit);
+    const configuredKeyId = process.env.EXTENSION_SIGNING_KEY_ID?.trim();
+    return dateIdPage(rows.map((publisher) => ({
+      ...publisher,
+      signingKeys: (publisher.signingKeys || []).map(({ publicKeyPem, ...key }) => ({
+        ...key,
+        fingerprint: createHash("sha256").update(publicKeyPem).digest("hex"),
+        isConfigured: key.keyId === configuredKeyId,
+      })),
+    })), limit);
   }
 
   async onboardPublisher(
@@ -1319,6 +1327,11 @@ export class ExtensionsService {
       where: { keyId },
     });
     if (duplicate) throw new ConflictException("Signing key ID already exists");
+    const duplicatePublicKey = await this.prisma.extensionSigningKey.findFirst({
+      where: { publisherId, publicKeyPem },
+    });
+    if (duplicatePublicKey)
+      throw new ConflictException("This public signing key is already registered");
     const created = await this.prisma.extensionSigningKey.create({
       data: {
         publisherId,
@@ -1339,6 +1352,40 @@ export class ExtensionsService {
     return created;
   }
 
+  async rotateSigningKey(
+    publisherId: string,
+    currentKeyId: string,
+    data: { newKeyId?: string; publicKeyPem?: string },
+    actor: Actor,
+  ) {
+    await this.requirePublisherRole(publisherId, actor, "MANAGE");
+    const current = await this.prisma.extensionSigningKey.findUnique({
+      where: { id: currentKeyId },
+    });
+    if (!current || current.publisherId !== publisherId)
+      throw new NotFoundException("Current signing key not found");
+    if (current.status !== "ACTIVE")
+      throw new ConflictException("Only an active signing key can begin rotation");
+    const created = await this.registerSigningKey(
+      publisherId,
+      { keyId: data.newKeyId, publicKeyPem: data.publicKeyPem },
+      actor,
+    );
+    await this.log(actor, "ROTATION_STARTED", "EXTENSION_SIGNING_KEY", created.id, created.keyId, {
+      metadata: {
+        publisherId,
+        replacesSigningKeyId: current.id,
+        replacesKeyId: current.keyId,
+        nextStep: "Configure the new private key, publish a signed test release, then retire the previous key",
+      },
+    });
+    return {
+      currentKey: { id: current.id, keyId: current.keyId, status: current.status },
+      newKey: created,
+      nextStep: "Update EXTENSION_SIGNING_KEY_ID and EXTENSION_SIGNING_PRIVATE_KEY_BASE64, verify publication, then retire the old key",
+    };
+  }
+
   async setSigningKeyStatus(keyId: string, status: string, actor: Actor) {
     if (!["ACTIVE", "RETIRED", "REVOKED"].includes(status))
       throw new BadRequestException(
@@ -1353,6 +1400,13 @@ export class ExtensionsService {
     if (existing.status === "REVOKED" && status !== "REVOKED")
       throw new ConflictException(
         "A revoked signing key cannot be reactivated",
+      );
+    if (
+      status === "RETIRED" &&
+      existing.keyId === process.env.EXTENSION_SIGNING_KEY_ID?.trim()
+    )
+      throw new ConflictException(
+        "Configured signing key cannot be retired; switch the signing environment to the replacement key first",
       );
     const now = new Date();
     const updated = await this.prisma.extensionSigningKey.update({

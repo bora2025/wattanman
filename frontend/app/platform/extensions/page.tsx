@@ -130,6 +130,8 @@ interface PublisherRecord {
     algorithm: string;
     status: string;
     createdAt: string;
+    fingerprint: string;
+    isConfigured: boolean;
   }>;
 }
 
@@ -1626,6 +1628,24 @@ function ExtensionsContent() {
     }
   }
 
+  async function rotateSigningKey(publisherId: string, key: PublisherRecord["signingKeys"][number]) {
+    const newKeyId = window.prompt("Replacement signing key ID", `${key.keyId}-next`);
+    if (!newKeyId) return;
+    const publicKeyPem = window.prompt("Paste the replacement Ed25519 public key PEM. Keep the private key secret.");
+    if (!publicKeyPem) return;
+    try {
+      const result = await responseJson(await apiFetch(`/api/platform/extensions/publishers/${publisherId}/signing-keys/${key.id}/rotate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newKeyId, publicKeyPem }),
+      }));
+      window.alert(result.nextStep);
+      await load();
+    } catch (keyError: any) {
+      setError(keyError.message || "Could not begin signing key rotation");
+    }
+  }
+
   async function createExtension(event: FormEvent) {
     event.preventDefault();
     try {
@@ -2008,19 +2028,17 @@ function ExtensionsContent() {
                           className="flex justify-between gap-3"
                         >
                           <span>
-                            <code>{key.keyId}</code> · {key.status}
+                            <code>{key.keyId}</code> · {key.status}{key.isConfigured ? " · CONFIGURED" : ""}
+                            <span className="ml-2 text-slate-400" title={key.fingerprint}>SHA-256 {key.fingerprint.slice(0, 12)}…</span>
                           </span>
                           <span className="flex gap-2">
                             {key.status === "ACTIVE" && (
-                              <button
-                                onClick={() =>
-                                  setSigningKeyStatus(key.id, "RETIRED")
-                                }
-                                className="text-amber-600"
-                              >
-                                Retire
-                              </button>
+                              <>
+                                <button onClick={() => rotateSigningKey(publisher.id, key)} className="text-indigo-600">Rotate</button>
+                                <button onClick={() => setSigningKeyStatus(key.id, "RETIRED")} className="text-amber-600">Retire</button>
+                              </>
                             )}
+                            {key.status === "RETIRED" && <button onClick={() => setSigningKeyStatus(key.id, "ACTIVE")} className="text-emerald-600">Reactivate</button>}
                             {key.status !== "REVOKED" && (
                               <button
                                 onClick={() =>
