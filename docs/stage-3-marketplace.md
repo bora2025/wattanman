@@ -152,6 +152,31 @@ deployment `ef0c16cd-4e96-4fa7-a0b7-34d31caa0769` completed successfully on
 2026-08-11. Validation passed with 228 backend tests, one intentional skip, and
 successful backend and frontend production builds.
 
+## Malicious archive boundaries
+
+Archive metadata is evaluated before any entry is extracted. Validation permits
+at most 200 files and 250 total entries, 5MB per expanded file, 10MB aggregate
+expanded data, eight path segments, 240 path characters, 100 characters per
+segment, and a 100:1 compression ratio. Invalid or negative ZIP size metadata,
+zero-byte compressed representations of non-empty files, and any exceeded bound
+stop extraction entirely.
+
+Paths are Unicode-normalized and reject absolute, drive-qualified, traversal,
+empty, control-character, overlong, and case-insensitive duplicate names.
+Symbolic links, executable/source extensions, unsupported extensions, and MIME
+signature mismatches are rejected. Approved JSON files must also parse as JSON.
+The malicious-package suite covers compression bombs, oversized aggregate data,
+entry floods, traversal, symlinks, and disguised content.
+
+Rollback restores the prior validator image but retains all rejected validation
+reports and quarantined objects. Operators must not retry packages rejected by a
+new safety boundary against an older validator.
+
+Production API deployment `0c14f8a8-4b13-40ee-8bdb-1e93295ef0f0` and
+extension-worker deployment `2de93e14-eba7-4f23-865b-87c54c7e6b27` completed
+successfully on 2026-08-11. Validation passed with 244 backend tests, one
+intentional skip, and successful backend and frontend production builds.
+
 ## Immutable checksum-addressed package storage
 
 Quarantined ZIPs, extracted validated assets, and published ZIPs are keyed by
