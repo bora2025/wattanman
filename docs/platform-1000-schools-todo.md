@@ -144,7 +144,8 @@ An item is complete only when implementation, automated tests, documentation, de
 - [x] Rate limit by IP, user, school, extension, and sensitive action.
 - [x] Add idempotency storage for mutating APIs.
 - [x] Add request size and response size limits.
-- [ ] Add cursor pagination requirements.
+- [x] Add cursor pagination requirements.
+  - Verified by the 17-route collection registry, 195 backend tests, both production builds, and Railway deployment `bf11d7b0-5abe-4e0c-b299-2cd08e70a675` readiness on 2026-08-11.
 - [ ] Add circuit breakers for R2, email, SMS, and external integrations.
 
 ### Stage 2 gate
