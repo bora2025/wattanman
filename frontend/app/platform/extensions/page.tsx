@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import AuthGuard from "../../../components/AuthGuard";
 import Sidebar from "../../../components/Sidebar";
-import { apiFetch } from "../../../lib/api";
+import { apiCursorItems, apiFetch } from "../../../lib/api";
 import { buildThemePreviewDocument } from "../../../lib/themePreviewDocument";
 import { platformNav } from "../../../lib/platform-nav";
 
@@ -1317,8 +1317,8 @@ function ExtensionsContent() {
         metricData,
         paymentData,
       ] = await Promise.all([
-        responseJson(await apiFetch("/api/platform/extensions")),
-        responseJson(await apiFetch("/api/platform/extension-installations")),
+        apiCursorItems<ExtensionRecord>("/api/platform/extensions"),
+        apiCursorItems<InstallationRecord>("/api/platform/extension-installations"),
         responseJson(await apiFetch("/api/platform/extensions/health")),
         responseJson(await apiFetch("/api/platform/extensions/publishers")),
         responseJson(await apiFetch("/api/platform/extensions/alerts")),

@@ -31,8 +31,8 @@ export class PlatformExtensionInstallationsController {
   constructor(private installations: ExtensionInstallationsService) {}
 
   @Get()
-  list(@Query("schoolId") schoolId?: string) {
-    return this.installations.platformInstallations(schoolId);
+  list(@Query("schoolId") schoolId?: string, @Query("cursor") cursor?: string, @Query("limit") limit?: string) {
+    return this.installations.platformInstallations({ schoolId, cursor, limit });
   }
 
   @Get("pilot-criteria")
@@ -186,8 +186,8 @@ export class SchoolExtensionsController {
   constructor(private installations: ExtensionInstallationsService) {}
 
   @Get("directory")
-  directory() {
-    return this.installations.schoolDirectory();
+  directory(@Query("cursor") cursor?: string, @Query("limit") limit?: string) {
+    return this.installations.schoolDirectory({ cursor, limit });
   }
 
   @Roles(
@@ -208,8 +208,8 @@ export class SchoolExtensionsController {
   }
 
   @Get("installations")
-  list() {
-    return this.installations.schoolInstallations();
+  list(@Query("cursor") cursor?: string, @Query("limit") limit?: string) {
+    return this.installations.schoolInstallations({ cursor, limit });
   }
 
   @Get("pilot-criteria")

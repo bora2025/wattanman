@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import AuthGuard from '../../../../components/AuthGuard'
 import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
-import { apiFetch } from '../../../../lib/api'
+import { apiCursorItems, apiFetch } from '../../../../lib/api'
 
 interface Installation {
   id: string
@@ -42,7 +42,7 @@ function ManageExtensionsContent() {
 
   async function load() {
     try {
-      setInstallations(await json(await apiFetch('/api/extensions/installations')))
+      setInstallations(await apiCursorItems<Installation>('/api/extensions/installations'))
       setError('')
     } catch (loadError: any) {
       setError(loadError.message || 'Could not load extensions')

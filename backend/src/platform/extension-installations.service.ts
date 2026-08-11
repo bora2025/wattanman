@@ -10,6 +10,7 @@ import { PrismaService } from "../database/prisma.service";
 import { getCurrentSchoolId } from "../tenancy/tenant-context";
 import { R2StorageService } from "../storage/r2-storage.service";
 import { ExtensionSigningService } from "./extension-signing.service";
+import { dateIdPage, dateIdPageBy, decodeDateIdCursor, parsePageLimit } from "../common/cursor-pagination";
 
 interface Actor {
   userId?: string;
@@ -51,9 +52,11 @@ export class ExtensionInstallationsService {
     private signing: ExtensionSigningService,
   ) {}
 
-  async schoolDirectory() {
+  async schoolDirectory(input: { cursor?: string; limit?: string } = {}) {
     const schoolId = getCurrentSchoolId();
-    return this.prisma.extension.findMany({
+    const limit = parsePageLimit(input.limit);
+    const cursor = decodeDateIdCursor(input.cursor);
+    const rows = await this.prisma.extension.findMany({
       where: {
         status: "ACTIVE",
         versions: { some: { lifecycleStatus: "PUBLISHED" } },
@@ -61,6 +64,7 @@ export class ExtensionInstallationsService {
           { visibility: "LISTED" },
           { visibility: "PRIVATE", visibilityGrants: { some: { schoolId } } },
         ],
+        ...(cursor ? { AND: [{ OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] }] } : {}),
       },
       include: {
         versions: {
@@ -69,15 +73,22 @@ export class ExtensionInstallationsService {
           take: 1,
         },
       },
-      orderBy: { name: "asc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
     });
+    return dateIdPage(rows, limit);
   }
 
-  schoolInstallations() {
-    return this.prisma.extensionInstallation.findMany({
+  async schoolInstallations(input: { cursor?: string; limit?: string } = {}) {
+    const limit = parsePageLimit(input.limit);
+    const cursor = decodeDateIdCursor(input.cursor);
+    const rows = await this.prisma.extensionInstallation.findMany({
+      where: cursor ? { OR: [{ updatedAt: { lt: cursor.createdAt } }, { updatedAt: cursor.createdAt, id: { lt: cursor.id } }] } : undefined,
       include: { extension: true, installedVersion: true, pilotFeedback: true },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
     });
+    return dateIdPageBy(rows, limit, (row) => row.updatedAt);
   }
 
   async schoolRequestContext(actor: Actor) {
@@ -352,9 +363,14 @@ export class ExtensionInstallationsService {
     };
   }
 
-  platformInstallations(schoolId?: string) {
-    return this.prisma.extensionInstallation.findMany({
-      where: schoolId ? { schoolId } : undefined,
+  async platformInstallations(input: { schoolId?: string; cursor?: string; limit?: string } = {}) {
+    const limit = parsePageLimit(input.limit);
+    const cursor = decodeDateIdCursor(input.cursor);
+    const rows = await this.prisma.extensionInstallation.findMany({
+      where: {
+        ...(input.schoolId ? { schoolId: input.schoolId } : {}),
+        ...(cursor ? { OR: [{ updatedAt: { lt: cursor.createdAt } }, { updatedAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}),
+      },
       include: {
         school: true,
         extension: {
@@ -368,8 +384,10 @@ export class ExtensionInstallationsService {
         installedVersion: true,
         pilotFeedback: { orderBy: { updatedAt: "desc" } },
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
     });
+    return dateIdPageBy(rows, limit, (row) => row.updatedAt);
   }
 
   pilotAcceptanceCriteria() {

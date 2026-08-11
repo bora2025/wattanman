@@ -11,6 +11,7 @@ import { R2StorageService } from "../storage/r2-storage.service";
 import { createHash } from "crypto";
 import { ExtensionValidationRunnerService } from "./extension-validation-runner.service";
 import { ExtensionSigningService } from "./extension-signing.service";
+import { dateIdPage, decodeDateIdCursor, parsePageLimit } from "../common/cursor-pagination";
 
 const KEY_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
@@ -64,15 +65,27 @@ export class ExtensionsService {
     private signing: ExtensionSigningService,
   ) {}
 
-  list() {
-    return this.prisma.extension.findMany({
-      where: { status: { not: "RETIRED" } },
+  async list(input: { cursor?: string; limit?: string; search?: string; lifecycleStatus?: string } = {}) {
+    const limit = parsePageLimit(input.limit);
+    const cursor = decodeDateIdCursor(input.cursor);
+    const search = input.search?.trim().slice(0, 100);
+    const rows = await this.prisma.extension.findMany({
+      where: {
+        status: { not: "RETIRED" },
+        AND: [
+          ...(search ? [{ OR: [{ name: { contains: search, mode: "insensitive" as const } }, { key: { contains: search, mode: "insensitive" as const } }] }] : []),
+          ...(input.lifecycleStatus && input.lifecycleStatus !== "ALL" ? [{ versions: { some: { lifecycleStatus: input.lifecycleStatus } } }] : []),
+          ...(cursor ? [{ OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] }] : []),
+        ],
+      },
       include: {
         publisherEntity: true,
         versions: { orderBy: { createdAt: "desc" } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
     });
+    return dateIdPage(rows, limit);
   }
 
   async setVisibility(extensionId: string, visibility: string, actor: Actor) {

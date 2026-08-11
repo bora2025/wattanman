@@ -64,6 +64,22 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
   return res;
 }
 
+export async function apiCursorItems<T>(path: string, maxPages = 100): Promise<T[]> {
+  const items: T[] = [];
+  let cursor: string | null = null;
+  for (let page = 0; page < maxPages; page += 1) {
+    const separator = path.includes('?') ? '&' : '?';
+    const response = await apiFetch(`${path}${separator}limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`);
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.message || `HTTP ${response.status}`);
+    if (!Array.isArray(body.items)) throw new Error('Invalid cursor page response');
+    items.push(...body.items);
+    cursor = body.nextCursor || null;
+    if (!cursor) return items;
+  }
+  throw new Error(`Cursor page safety limit exceeded for ${path}`);
+}
+
 /** Helper to get the current user info from the access token cookie via /auth/me */
 export async function getCurrentUser(): Promise<{
   userId: string;

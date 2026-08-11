@@ -5,7 +5,7 @@ import Link from 'next/link'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
-import { apiFetch } from '../../../lib/api'
+import { apiCursorItems, apiFetch } from '../../../lib/api'
 
 interface DirectoryExtension {
   id: string
@@ -61,8 +61,8 @@ function AdminExtensionsContent() {
   async function load() {
     try {
       const [available, installed, pilotCriteria, context] = await Promise.all([
-        json(await apiFetch('/api/extensions/directory')),
-        json(await apiFetch('/api/extensions/installations')),
+        apiCursorItems<DirectoryExtension>('/api/extensions/directory'),
+        apiCursorItems<Installation>('/api/extensions/installations'),
         json(await apiFetch('/api/extensions/pilot-criteria')),
         json(await apiFetch('/api/extensions/request-context')),
       ])

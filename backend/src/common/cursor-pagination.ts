@@ -27,8 +27,12 @@ export function decodeDateIdCursor(value?: string): DateIdCursor | null {
 }
 
 export function dateIdPage<T extends { id: string; createdAt: Date }>(rows: T[], limit: number): CursorPage<T> {
+  return dateIdPageBy(rows, limit, (row) => row.createdAt);
+}
+
+export function dateIdPageBy<T extends { id: string }>(rows: T[], limit: number, date: (row: T) => Date): CursorPage<T> {
   const hasMore = rows.length > limit;
   const items = hasMore ? rows.slice(0, limit) : rows;
   const last = items[items.length - 1];
-  return { items, nextCursor: hasMore && last ? encodeDateIdCursor(last) : null, limit };
+  return { items, nextCursor: hasMore && last ? encodeDateIdCursor({ id: last.id, createdAt: date(last) }) : null, limit };
 }

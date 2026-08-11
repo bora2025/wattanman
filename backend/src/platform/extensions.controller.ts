@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Request,
   UploadedFile,
   UseGuards,
@@ -33,8 +34,8 @@ export class ExtensionsController {
   ) {}
 
   @Get()
-  list() {
-    return this.extensions.list();
+  list(@Query("cursor") cursor?: string, @Query("limit") limit?: string, @Query("search") search?: string, @Query("lifecycleStatus") lifecycleStatus?: string) {
+    return this.extensions.list({ cursor, limit, search, lifecycleStatus });
   }
 
   @Get("publishers")
