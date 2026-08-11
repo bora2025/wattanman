@@ -1,10 +1,14 @@
 import { Controller, Get, Query, Res, BadRequestException } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Response } from 'express';
+import { PrismaService } from './database/prisma.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Get()
   getHello(): string {
@@ -13,6 +17,11 @@ export class AppController {
 
   @Get('health')
   getHealth(): object {
+    return this.getLiveness();
+  }
+
+  @Get('live')
+  getLiveness(): object {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -24,6 +33,19 @@ export class AppController {
         : (process.env.RAILWAY_SNAPSHOT_ID || process.env.RAILWAY_DEPLOYMENT_ID || 'local'),
       railwayProjectName: process.env.RAILWAY_PROJECT_NAME || null,
       railwayServiceName: process.env.RAILWAY_SERVICE_NAME || null,
+    };
+  }
+
+  @Get('ready')
+  async getReadiness(): Promise<object> {
+    const startedAt = Date.now();
+    await this.prisma.$queryRaw`SELECT 1`;
+    return {
+      status: 'ready',
+      service: 'SchoolSync API',
+      dependencies: { database: 'ready' },
+      latencyMs: Date.now() - startedAt,
+      timestamp: new Date().toISOString(),
     };
   }
 

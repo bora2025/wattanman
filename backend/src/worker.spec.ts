@@ -15,7 +15,9 @@ describe('worker process separation', () => {
 
   it('provides worker health and graceful shutdown', () => {
     const worker = readFileSync(join(process.cwd(), 'src', 'worker.ts'), 'utf8');
-    expect(worker).toContain("request.url !== '/health'");
+    expect(worker).toContain("['/health', '/live', '/ready']");
+    expect(worker).toContain("request.url === '/ready'");
+    expect(worker).toContain('ready = false');
     expect(worker).toContain("process.once('SIGTERM'");
     expect(worker).toContain('await app.close()');
   });

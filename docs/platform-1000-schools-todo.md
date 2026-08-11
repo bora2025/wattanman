@@ -136,7 +136,7 @@ An item is complete only when implementation, automated tests, documentation, de
 - [x] Move scheduled jobs out of the API process.
 - [ ] Ensure workers use explicit tenant context.
 - [x] Add graceful shutdown for API and workers.
-- [ ] Add separate liveness and readiness endpoints.
+- [x] Add separate liveness and readiness endpoints.
 
 ### Distributed protection
 
