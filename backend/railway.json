@@ -5,7 +5,8 @@
     "watchPatterns": ["backend/**"]
   },
   "deploy": {
-    "startCommand": "sh -c 'node prisma/bootstrap-migrations.js --adopt-existing && node prisma/seed-prod.js && node dist/main'",
+    "preDeployCommand": "node prisma/release-migrate.js",
+    "startCommand": "sh -c 'node prisma/check-schema-compatibility.js && node dist/main'",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

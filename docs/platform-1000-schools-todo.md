@@ -108,13 +108,13 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Release process
 
-- [ ] Remove migration execution from API startup.
-- [ ] Remove production seed execution from API startup.
-- [ ] Create a dedicated migration release command or service.
-- [ ] Protect migrations with a PostgreSQL advisory lock.
-- [ ] Add schema compatibility check before application rollout.
-- [ ] Adopt expand-and-contract migration rules.
-- [ ] Document rollback and roll-forward procedures.
+- [x] Remove migration execution from API startup.
+- [x] Remove production seed execution from API startup.
+- [x] Create a dedicated migration release command or service.
+- [x] Protect migrations with a PostgreSQL advisory lock.
+- [x] Add schema compatibility check before application rollout.
+- [x] Adopt expand-and-contract migration rules.
+- [x] Document rollback and roll-forward procedures.
 
 ### Redis and queues
 

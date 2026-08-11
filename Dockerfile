@@ -38,4 +38,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "./node_modules/.bin/prisma db push --schema=prisma/schema.prisma --skip-generate --accept-data-loss || true; node dist/main"]
+CMD ["sh", "-c", "node prisma/check-schema-compatibility.js && node dist/main"]
