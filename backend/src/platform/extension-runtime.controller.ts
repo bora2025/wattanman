@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Throttle } from '@nestjs/throttler';
@@ -20,8 +20,8 @@ export class ExtensionRuntimeController {
   }
 
   @Get(':extensionKey/resources/:resource')
-  records(@Param('extensionKey') extensionKey: string, @Param('resource') resource: string, @Request() req) {
-    return this.runtime.records(extensionKey, resource, req.user);
+  records(@Param('extensionKey') extensionKey: string, @Param('resource') resource: string, @Request() req, @Query('cursor') cursor?: string, @Query('limit') limit?: string) {
+    return this.runtime.records(extensionKey, resource, req.user, cursor, limit);
   }
 
   @Post(':extensionKey/resources/:resource')

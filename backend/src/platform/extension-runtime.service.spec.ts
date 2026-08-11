@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { tenantContext } from '../tenancy/tenant-context';
 import { ExtensionRuntimeService } from './extension-runtime.service';
+import { decodeDateIdCursor } from '../common/cursor-pagination';
 
 describe('ExtensionRuntimeService', () => {
   const manifest = {
@@ -106,6 +107,21 @@ describe('ExtensionRuntimeService', () => {
     prisma.extensionInstallation.findFirst.mockResolvedValue(null);
 
     await expect(service.records('STUDENT_REWARDS', 'rewards', { role: 'TEACHER' })).rejects.toThrow(NotFoundException);
+  });
+
+  it('returns extension records through bounded keyset pages', async () => {
+    const rows = [
+      { id: 'record-2', createdAt: new Date('2026-02-02') },
+      { id: 'record-1', createdAt: new Date('2026-02-01') },
+    ];
+    prisma.extensionInstallation.findFirst.mockResolvedValue(installation);
+    prisma.extensionRecord.findMany.mockResolvedValue(rows);
+
+    const page = await service.records('STUDENT_REWARDS', 'rewards', { role: 'TEACHER' }, undefined, '1');
+
+    expect(page.items).toEqual([rows[0]]);
+    expect(decodeDateIdCursor(page.nextCursor!)).toEqual({ id: 'record-2', createdAt: rows[0].createdAt });
+    expect(prisma.extensionRecord.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] }));
   });
 
   it('rejects unknown fields and invalid field types', async () => {

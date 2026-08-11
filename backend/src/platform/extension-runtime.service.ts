@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
+import { dateIdPage, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
 
 interface RuntimeUser { userId?: string; role?: string }
 const EXTENSION_DATA_QUOTA_BYTES = 100 * 1024 * 1024;
@@ -43,12 +44,20 @@ export class ExtensionRuntimeService {
     };
   }
 
-  async records(extensionKey: string, resource: string, user: RuntimeUser) {
+  async records(extensionKey: string, resource: string, user: RuntimeUser, cursorValue?: string, limitValue?: string) {
     const installation = await this.authorize(extensionKey, resource, 'read', user);
-    return this.prisma.extensionRecord.findMany({
-      where: { extensionId: installation.extensionId, resource },
-      orderBy: { createdAt: 'desc' },
+    const limit = parsePageLimit(limitValue);
+    const cursor = decodeDateIdCursor(cursorValue);
+    const rows = await this.prisma.extensionRecord.findMany({
+      where: {
+        extensionId: installation.extensionId,
+        resource,
+        ...(cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}),
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
     });
+    return dateIdPage(rows, limit);
   }
 
   async createRecord(extensionKey: string, resource: string, data: Record<string, unknown>, user: RuntimeUser) {

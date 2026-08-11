@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import AuthGuard from '../../../../components/AuthGuard'
 import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
-import { apiFetch } from '../../../../lib/api'
+import { apiCursorItems, apiFetch } from '../../../../lib/api'
 import { useLanguage } from '../../../../lib/i18n'
 
 interface FieldDefinition { key: string; label: string; labelKey?: string; type: 'text' | 'number' | 'date' | 'boolean'; required?: boolean }
@@ -47,7 +47,7 @@ function DynamicExtensionPage({ extensionKey, pageKey }: { extensionKey: string;
     try {
       const page = await json(await apiFetch(`/api/extensions/${extensionKey}/pages/${pageKey}`))
       setDefinition(page)
-      setRecords(await json(await apiFetch(`/api/extensions/${extensionKey}/resources/${page.page.resource}`)))
+      setRecords(await apiCursorItems<RuntimeRecord>(`/api/extensions/${extensionKey}/resources/${page.page.resource}`))
       setError('')
     } catch (loadError: any) {
       setError(loadError.message || 'Extension page unavailable')

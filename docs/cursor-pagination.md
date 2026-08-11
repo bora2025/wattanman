@@ -45,6 +45,11 @@ use `createdAt, id` or `lastSeenAt, id` cursor boundaries. Publisher cards cap
 their nested member and key previews at 100 rows; complete key history remains
 available through its independently paginated endpoint.
 
+Declarative runtime record resources are tenant- and extension-scoped, ordered
+by `createdAt, id`, and bounded by the same cursor contract. Dynamic extension
+pages follow pages through the guarded frontend loader rather than requesting
+an unbounded resource array.
+
 Remaining retained collection endpoints must adopt this same contract before
 the platform-wide TODO can be marked complete. Rollback for an individual
 endpoint restores its former array response and matching frontend consumer in
