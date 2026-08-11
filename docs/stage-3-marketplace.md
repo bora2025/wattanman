@@ -73,3 +73,7 @@ cannot be locked out accidentally.
 Role and status changes are application-only and require no schema rollback. If
 an application rollback is needed, existing member rows remain compatible; use
 the audit history to restore the last known role set after rolling forward.
+
+Production API deployment `e51cdb36-a165-4aba-962a-d6e00530196d` and frontend
+deployment `67ae9a6c-c3f0-455d-9db5-51947bb91dd2` completed successfully on
+2026-08-11.

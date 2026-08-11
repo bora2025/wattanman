@@ -170,7 +170,8 @@ An item is complete only when implementation, automated tests, documentation, de
   - Controlled metadata, audited editing, school-facing disclosures, clean PostgreSQL migration rehearsal, 215 backend tests, both production builds, and Railway deployments `2b2627b2-d9b1-45ed-b2d2-8668d8afc8eb` (API) and `530d4350-8813-4a25-87c3-24212b62e47e` (frontend) passed on 2026-08-11.
 - [x] Add publisher onboarding and verification.
   - External publishers are suspended pending independent verification; self-verification and unverified activation fail closed. The 217-test backend suite, both builds, clean 32-migration rehearsal, and Railway deployments `42c88ae7-5dd7-4a2b-9933-8e552627677c` (API) and `26b4ed61-df9b-4c5f-bdb9-9052e0a06d51` (frontend) passed on 2026-08-11.
-- [ ] Add publisher member role management.
+- [x] Add publisher member role management.
+  - Managers can add members by email, edit `UPLOAD`/`REVIEW`/`PUBLISH`/`MANAGE` roles, and suspend/reactivate access; last-manager removal is rejected. The 219-test backend suite, both builds, and Railway deployments `e51cdb36-a165-4aba-962a-d6e00530196d` (API) and `67ae9a6c-c3f0-455d-9db5-51947bb91dd2` (frontend) passed on 2026-08-11.
 - [ ] Add key registration, rotation, retirement, and revocation UX.
 - [ ] Add catalog search, filters, sort, pagination, and featured collections.
 - [ ] Separate school marketplace and installed-extension management pages.
