@@ -11,6 +11,7 @@ export class ExtensionUpdateService {
 
   @Cron('0 */6 * * *')
   async run() {
+    if (process.env.WORKER_ROLE && process.env.WORKER_ROLE !== 'extension') return;
     const candidates = await this.prisma.extensionInstallation.findMany({
       where: { installedAt: { not: null }, uninstalledAt: null, extension: { status: 'ACTIVE' } },
       include: {

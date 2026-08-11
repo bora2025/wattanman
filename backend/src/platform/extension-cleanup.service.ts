@@ -11,6 +11,7 @@ export class ExtensionCleanupService {
 
   @Cron('15 3 * * *')
   async run() {
+    if (process.env.WORKER_ROLE && process.env.WORKER_ROLE !== 'extension') return;
     const now = new Date();
     const packageCutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const expiredInstallations = await this.prisma.extensionInstallation.findMany({

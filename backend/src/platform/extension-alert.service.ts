@@ -13,6 +13,7 @@ export class ExtensionAlertService {
 
   @Cron('15 * * * *')
   async scan() {
+    if (process.env.WORKER_ROLE && process.env.WORKER_ROLE !== 'extension') return;
     const since = new Date(Date.now() - WINDOW_HOURS * 60 * 60 * 1000);
     const [validationGroups, capabilityGroups] = await Promise.all([
       this.prisma.extensionValidation.groupBy({

@@ -38,6 +38,7 @@ export class SchoolMetricsService {
    */
   @Cron('5 0 * * *')
   async runDailyRollup(): Promise<void> {
+    if (process.env.WORKER_ROLE && process.env.WORKER_ROLE !== 'operations') return;
     const yesterday = utcMidnight(new Date(Date.now() - 24 * 60 * 60 * 1000));
     const result = await this.computeForDate(yesterday);
     this.logger.log(`Daily rollup for ${result.date}: ${result.schools} schools`);

@@ -139,6 +139,7 @@ export class AuditService {
    */
   @Cron('0 * * * *') // top of every hour
   async runScheduledCleanup(): Promise<void> {
+    if (process.env.WORKER_ROLE && process.env.WORKER_ROLE !== 'operations') return;
     // A cron job runs outside any HTTP request, so there's no tenant context
     // (AsyncLocalStorage store) open here — PrismaService's middleware passes
     // this findMany through unscoped, which is what we actually want: a

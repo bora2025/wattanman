@@ -7,14 +7,19 @@ describe('worker process separation', () => {
     expect(appModule).not.toContain('ScheduleModule.forRoot()');
   });
 
-  it('registers schedulers only in the worker module', () => {
+  it('registers role-specific scheduler modules outside the API', () => {
     const workerModule = readFileSync(join(process.cwd(), 'src', 'worker.module.ts'), 'utf8');
+    const extensionModule = readFileSync(join(process.cwd(), 'src', 'extension-worker.module.ts'), 'utf8');
     expect(workerModule).toContain('ScheduleModule.forRoot()');
-    expect(workerModule).toContain('PlatformModule');
+    expect(workerModule).toContain('AuditModule');
+    expect(workerModule).toContain('SchoolMetricsModule');
+    expect(workerModule).not.toContain('PlatformModule');
+    expect(extensionModule).toContain('ScheduleModule.forRoot()');
+    expect(extensionModule).toContain('PlatformModule');
   });
 
   it('provides worker health and graceful shutdown', () => {
-    const worker = readFileSync(join(process.cwd(), 'src', 'worker.ts'), 'utf8');
+    const worker = readFileSync(join(process.cwd(), 'src', 'worker-bootstrap.ts'), 'utf8');
     expect(worker).toContain("['/health', '/live', '/ready']");
     expect(worker).toContain("request.url === '/ready'");
     expect(worker).toContain('ready = false');
@@ -23,14 +28,29 @@ describe('worker process separation', () => {
   });
 
   it('establishes an explicit audited control-plane context before scheduling work', () => {
-    const worker = readFileSync(join(process.cwd(), 'src', 'worker.ts'), 'utf8');
+    const worker = readFileSync(join(process.cwd(), 'src', 'worker-bootstrap.ts'), 'utf8');
     expect(worker).toContain("tenantContext.enterWith({ schoolId: 'PLATFORM', mode: 'unscoped' })");
     expect(worker.indexOf('tenantContext.enterWith')).toBeLessThan(worker.indexOf('NestFactory.createApplicationContext'));
+  });
+
+  it('ships dedicated extension, operations, and notification entrypoints', () => {
+    const operations = readFileSync(join(process.cwd(), 'src', 'worker.ts'), 'utf8');
+    const extensions = readFileSync(join(process.cwd(), 'src', 'extension-worker.ts'), 'utf8');
+    const notifications = readFileSync(join(process.cwd(), 'src', 'notification-worker.ts'), 'utf8');
+    expect(operations).toContain("role: 'operations'");
+    expect(extensions).toContain("role: 'extension'");
+    expect(notifications).toContain("role: 'notification'");
   });
 
   it('establishes tenant context from every durable queue envelope', () => {
     const queue = readFileSync(join(process.cwd(), 'src', 'jobs', 'queue-infrastructure.service.ts'), 'utf8');
     expect(queue).toContain('assertJobEnvelope(job.data)');
     expect(queue).toContain('tenantContext.run(scope');
+  });
+
+  it('keeps durable server state out of API and frontend filesystems', () => {
+    const appModule = readFileSync(join(process.cwd(), 'src', 'app.module.ts'), 'utf8');
+    const main = readFileSync(join(process.cwd(), 'src', 'main.ts'), 'utf8');
+    expect(`${appModule}\n${main}`).not.toMatch(/writeFile|createWriteStream|diskStorage|mkdirSync/);
   });
 });

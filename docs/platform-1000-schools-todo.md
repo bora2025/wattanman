@@ -129,12 +129,12 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Service separation
 
-- [ ] Keep frontend and API stateless.
-- [ ] Create extension worker process.
+- [x] Keep frontend and API stateless.
+- [x] Create extension worker process.
 - [x] Create operations worker process.
-- [ ] Create notification worker process.
+- [x] Create notification worker process.
 - [x] Move scheduled jobs out of the API process.
-- [ ] Ensure workers use explicit tenant context.
+- [x] Ensure workers use explicit tenant context.
 - [x] Add graceful shutdown for API and workers.
 - [x] Add separate liveness and readiness endpoints.
 

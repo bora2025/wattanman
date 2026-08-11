@@ -12,6 +12,8 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "start:worker": "node dist/worker",
+    "start:extension-worker": "node dist/extension-worker",
+    "start:notification-worker": "node dist/notification-worker",
     "postinstall": "prisma generate --schema=prisma/schema.prisma",
     "db:push": "prisma db push --schema=prisma/schema.prisma",
     "db:migrate:bootstrap": "node prisma/bootstrap-migrations.js",
