@@ -4,6 +4,7 @@ import { Job, Queue, Worker } from 'bullmq';
 import IORedis from 'ioredis';
 import { tenantContext } from '../tenancy/tenant-context';
 import { assertJobEnvelope, createJobEnvelope, JobEnvelope, JobTenantScope, JobActor } from './job-envelope';
+import { assertProductionRedisUrl } from '../security/redis-url';
 
 const DEFAULT_ATTEMPTS = 8;
 const DEFAULT_BACKOFF_MS = 1_000;
@@ -18,9 +19,7 @@ export class QueueInfrastructureService implements OnModuleDestroy {
   constructor() {
     const url = process.env.REDIS_URL?.trim();
     if (!url) throw new Error('REDIS_URL is required for queue infrastructure');
-    if (process.env.NODE_ENV === 'production' && !url.startsWith('rediss://')) {
-      throw new Error('Production REDIS_URL must use TLS (rediss://)');
-    }
+    assertProductionRedisUrl(url);
     this.redis = new IORedis(url, { maxRetriesPerRequest: null, enableReadyCheck: true, lazyConnect: true });
   }
 

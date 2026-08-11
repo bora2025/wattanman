@@ -24,6 +24,12 @@ describe('distributed rate limiting', () => {
   it('refuses production without TLS Redis', () => {
     process.env.NODE_ENV = 'production';
     process.env.REDIS_URL = 'redis://insecure';
-    expect(() => new RedisThrottlerStorage()).toThrow('must use TLS');
+    expect(() => new RedisThrottlerStorage()).toThrow('must use TLS or Railway private networking');
+  });
+
+  it('accepts Railway private networking in production', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.REDIS_URL = 'redis://default:secret@redis.railway.internal:6379';
+    expect(() => new RedisThrottlerStorage()).not.toThrow();
   });
 });

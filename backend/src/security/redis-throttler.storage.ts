@@ -1,6 +1,7 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import IORedis from 'ioredis';
+import { assertProductionRedisUrl } from './redis-url';
 
 const INCREMENT_SCRIPT = `
 local count = redis.call('INCR', KEYS[1])
@@ -27,8 +28,7 @@ export class RedisThrottlerStorage implements ThrottlerStorage, OnModuleDestroy 
 
   constructor() {
     const url = process.env.REDIS_URL?.trim();
-    if (process.env.NODE_ENV === 'production' && !url) throw new Error('Production REDIS_URL is required for distributed rate limiting');
-    if (process.env.NODE_ENV === 'production' && !url!.startsWith('rediss://')) throw new Error('Production REDIS_URL must use TLS (rediss://)');
+    assertProductionRedisUrl(url);
     this.redis = url ? new IORedis(url, { lazyConnect: true, enableReadyCheck: true, maxRetriesPerRequest: 1 }) : null;
   }
 
