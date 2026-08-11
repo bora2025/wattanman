@@ -29,6 +29,8 @@ import { ExtensionValidationRunnerService } from './extension-validation-runner.
 import { TenancyModule } from '../tenancy/tenancy.module';
 import { AuthModule } from '../auth/auth.module';
 import { SecurityModule } from '../security/security.module';
+import { JobsModule } from '../jobs/jobs.module';
+import { QueueOperationsController } from './queue-operations.controller';
 
 @Module({
   imports: [
@@ -38,12 +40,13 @@ import { SecurityModule } from '../security/security.module';
     TenancyModule,
     AuthModule,
     SecurityModule,
+    JobsModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'change-me-in-production-use-a-strong-random-key',
       signOptions: { expiresIn: '8h' },
     }),
   ],
-  controllers: [SchoolsController, PlatformAdminsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController],
+  controllers: [SchoolsController, PlatformAdminsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController, QueueOperationsController],
   providers: [SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, ExtensionInstallationsService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionPlatformGuard, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
   exports: [ExtensionCleanupService, ExtensionUpdateService, ExtensionAlertService],
 })

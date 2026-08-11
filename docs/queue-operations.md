@@ -14,8 +14,15 @@ Wattaman uses managed Redis with TLS and high availability plus BullMQ. Redis co
 - Jobs use a versioned envelope with tenant scope, actor, trace, and idempotency identity.
 - Idempotency keys become deterministic BullMQ job IDs.
 - Jobs receive eight attempts with exponential backoff beginning at one second.
+- `QUEUE_JOB_ATTEMPTS` and `QUEUE_JOB_BACKOFF_MS` retain those defaults and are
+  configurable for controlled rehearsals; invalid or excessive values fail.
 - Terminal failures are copied to `<queue>.dead-letter` with source identity, attempts, timestamp, and error details.
-- Operators replay only after correcting the cause and preserving the original idempotency key.
+- Platform operators inspect one known dead letter with
+  `GET /platform/queues/:queue/dead-letters/:jobId` and replay it with
+  `POST /platform/queues/:queue/dead-letters/:jobId/replay` only after fixing
+  the cause. Replay validates the original envelope, preserves its job and
+  idempotency identities, removes only a terminal failed source, uses a
+  distributed replay lease, and deletes the dead letter only after requeue.
 
 ## Distributed Leases
 

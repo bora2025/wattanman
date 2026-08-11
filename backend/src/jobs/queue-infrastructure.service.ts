@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
 import { createHash, randomUUID } from 'crypto';
 import { Job, Queue, Worker } from 'bullmq';
 import IORedis from 'ioredis';
@@ -10,11 +10,24 @@ const DEFAULT_ATTEMPTS = 8;
 const DEFAULT_BACKOFF_MS = 1_000;
 const DEFAULT_LOCK_MS = 30_000;
 
+function jobAttempts() {
+  const value = Number(process.env.QUEUE_JOB_ATTEMPTS || DEFAULT_ATTEMPTS);
+  if (!Number.isInteger(value) || value < 1 || value > 100) throw new Error('QUEUE_JOB_ATTEMPTS must be an integer from 1 to 100');
+  return value;
+}
+
+function jobBackoffMs() {
+  const value = Number(process.env.QUEUE_JOB_BACKOFF_MS || DEFAULT_BACKOFF_MS);
+  if (!Number.isInteger(value) || value < 1 || value > 60 * 60_000) throw new Error('QUEUE_JOB_BACKOFF_MS must be an integer from 1 to 3600000');
+  return value;
+}
+
 @Injectable()
 export class QueueInfrastructureService implements OnModuleDestroy {
   private readonly redis: IORedis;
   private readonly queues = new Map<string, Queue>();
   private readonly workers = new Set<Worker>();
+  private readonly workerConnections = new Set<IORedis>();
 
   constructor() {
     const url = process.env.REDIS_URL?.trim();
@@ -35,28 +48,29 @@ export class QueueInfrastructureService implements OnModuleDestroy {
     const jobId = createHash('sha256').update(`${queueName}:${input.idempotencyKey}`).digest('hex');
     return this.queue(queueName).add(envelope.type, envelope, {
       jobId,
-      attempts: DEFAULT_ATTEMPTS,
-      backoff: { type: 'exponential', delay: DEFAULT_BACKOFF_MS, jitter: 0.5 },
+      attempts: jobAttempts(),
+      backoff: { type: 'exponential', delay: jobBackoffMs(), jitter: 0.5 },
       removeOnComplete: { age: 24 * 60 * 60, count: 10_000 },
       removeOnFail: false,
     });
   }
 
   createWorker(queueName: string, handler: (envelope: JobEnvelope) => Promise<unknown>) {
+    const connection = this.redis.duplicate({ lazyConnect: true });
     const worker = new Worker(queueName, async (job: Job) => {
       assertJobEnvelope(job.data);
       const envelope = { ...job.data, attempt: job.attemptsMade + 1 } as JobEnvelope;
       const scope = { schoolId: envelope.tenant.schoolId, mode: envelope.tenant.mode === 'PLATFORM' ? 'unscoped' as const : 'scoped' as const };
       return tenantContext.run(scope, () => handler(envelope));
     }, {
-      connection: this.redis.duplicate({ lazyConnect: true }),
+      connection,
       concurrency: Number(process.env.QUEUE_WORKER_CONCURRENCY || 5),
       lockDuration: Number(process.env.QUEUE_JOB_LOCK_MS || DEFAULT_LOCK_MS),
       stalledInterval: Number(process.env.QUEUE_STALLED_INTERVAL_MS || 15_000),
       maxStalledCount: 2,
     });
     worker.on('failed', async (job, error) => {
-      if (!job || job.attemptsMade < (job.opts.attempts || DEFAULT_ATTEMPTS)) return;
+      if (!job || job.attemptsMade < (job.opts.attempts || jobAttempts())) return;
       const deadLetter = this.queue(`${queueName}.dead-letter`);
       await deadLetter.add(job.name, {
         envelope: job.data,
@@ -68,6 +82,7 @@ export class QueueInfrastructureService implements OnModuleDestroy {
       }, { jobId: `${job.id || randomUUID()}-dead`, removeOnComplete: false, removeOnFail: false });
     });
     this.workers.add(worker);
+    this.workerConnections.add(connection);
     return worker;
   }
 
@@ -105,9 +120,57 @@ export class QueueInfrastructureService implements OnModuleDestroy {
     };
   }
 
+  async deadLetter(queueName: string, deadLetterJobId: string) {
+    this.assertReplayQueue(queueName);
+    if (!deadLetterJobId || deadLetterJobId.length > 200) throw new BadRequestException('Invalid dead-letter job ID');
+    const job = await this.queue(`${queueName}.dead-letter`).getJob(deadLetterJobId);
+    if (!job) throw new NotFoundException('Dead-letter job not found');
+    return {
+      id: job.id,
+      name: job.name,
+      timestamp: job.timestamp,
+      data: job.data,
+    };
+  }
+
+  async replayDeadLetter(queueName: string, deadLetterJobId: string) {
+    this.assertReplayQueue(queueName);
+    if (!deadLetterJobId || deadLetterJobId.length > 200) throw new BadRequestException('Invalid dead-letter job ID');
+    const owner = randomUUID();
+    const leaseKey = `dead-letter-replay:${queueName}:${deadLetterJobId}`;
+    if (!(await this.acquireLease(leaseKey, owner, 30_000))) throw new ConflictException('Dead-letter replay is already in progress');
+    try {
+      const deadQueue = this.queue(`${queueName}.dead-letter`);
+      const deadJob = await deadQueue.getJob(deadLetterJobId);
+      if (!deadJob) throw new NotFoundException('Dead-letter job not found');
+      const data = deadJob.data as { envelope?: JobEnvelope; sourceQueue?: string; sourceJobId?: string };
+      if (data.sourceQueue !== queueName || !data.sourceJobId || !data.envelope) throw new BadRequestException('Dead-letter payload is invalid');
+      assertJobEnvelope(data.envelope);
+      const target = this.queue(queueName);
+      const sourceJob = await target.getJob(data.sourceJobId);
+      if (sourceJob) {
+        const state = await sourceJob.getState();
+        if (state !== 'failed') throw new ConflictException(`Source job cannot be replayed from state ${state}`);
+        await sourceJob.remove();
+      }
+      const replayed = await target.add(data.envelope.type, data.envelope, {
+        jobId: data.sourceJobId,
+        attempts: jobAttempts(),
+        backoff: { type: 'exponential', delay: jobBackoffMs(), jitter: 0.5 },
+        removeOnComplete: { age: 24 * 60 * 60, count: 10_000 },
+        removeOnFail: false,
+      });
+      await deadJob.remove();
+      return { replayed: true, queue: queueName, jobId: replayed.id, deadLetterJobId };
+    } finally {
+      await this.releaseLease(leaseKey, owner).catch(() => false);
+    }
+  }
+
   async onModuleDestroy() {
     await Promise.all([...this.workers].map((worker) => worker.close()));
     await Promise.all([...this.queues.values()].map((queue) => queue.close()));
+    await Promise.all([...this.workerConnections].map((connection) => connection.quit().catch(() => undefined)));
     await this.redis.quit().catch(() => undefined);
   }
 
@@ -119,5 +182,10 @@ export class QueueInfrastructureService implements OnModuleDestroy {
       this.queues.set(name, queue);
     }
     return queue;
+  }
+
+  private assertReplayQueue(name: string) {
+    const allowed = new Set((process.env.QUEUE_REPLAY_NAMES || 'extensions,operations,notifications').split(',').map((item) => item.trim()).filter(Boolean));
+    if (!allowed.has(name)) throw new BadRequestException('Queue is not approved for operator replay');
   }
 }
