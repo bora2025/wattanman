@@ -16,6 +16,9 @@ interface SignableVersion {
 
 @Injectable()
 export class ExtensionSigningService {
+  private readonly runtimeVerificationCache = new Map<string, number>();
+  private readonly runtimeVerificationTtlMs = 5 * 60 * 1000;
+
   constructor(private prisma: PrismaService, private storage: R2StorageService) {}
 
   async signForPublication(version: SignableVersion, publisherId: string) {
@@ -53,6 +56,13 @@ export class ExtensionSigningService {
       throw new ConflictException('Published package is unsigned');
     }
     if (version.signingKey.status === 'REVOKED') throw new ConflictException('Package signing key has been revoked');
+    if (!['PUBLISHED', 'DEPRECATED'].includes(version.lifecycleStatus || '')) {
+      throw new ConflictException('Package is not in a runtime-approved lifecycle state');
+    }
+    const expectedStorageKey = `published/extensions/${version.extensionId}/${version.id}/${version.packageChecksum}.zip`;
+    if (version.packageStorageKey !== expectedStorageKey) {
+      throw new ConflictException('Published package is not stored at its immutable checksum-addressed key');
+    }
     const packageContents = await this.storage.getPrivate(version.packageStorageKey);
     this.assertChecksum(packageContents, version.packageChecksum);
     let valid = false;
@@ -67,6 +77,27 @@ export class ExtensionSigningService {
       valid = false;
     }
     if (!valid) throw new ConflictException('Package signature verification failed');
+    return true;
+  }
+
+  async verifyForRuntime(version: SignableVersion) {
+    if (!version.packageChecksum || !version.packageSignature || !version.signingKeyId || !version.signingKey) {
+      return this.verifyPublished(version);
+    }
+    if (version.signingKey.status === 'REVOKED' || !['PUBLISHED', 'DEPRECATED'].includes(version.lifecycleStatus || '')) {
+      return this.verifyPublished(version);
+    }
+    const cacheKey = [version.id, version.packageChecksum, version.packageSignature, version.signingKeyId, version.signingKey.status].join(':');
+    const now = Date.now();
+    if ((this.runtimeVerificationCache.get(cacheKey) || 0) > now) return true;
+    await this.verifyPublished(version);
+    if (this.runtimeVerificationCache.size >= 1000) {
+      for (const [key, expiresAt] of this.runtimeVerificationCache) {
+        if (expiresAt <= now || this.runtimeVerificationCache.size >= 1000) this.runtimeVerificationCache.delete(key);
+        if (this.runtimeVerificationCache.size < 1000) break;
+      }
+    }
+    this.runtimeVerificationCache.set(cacheKey, now + this.runtimeVerificationTtlMs);
     return true;
   }
 

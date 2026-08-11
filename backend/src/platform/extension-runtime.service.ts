@@ -4,19 +4,21 @@ import { PrismaService } from '../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
 import { dateIdPage, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
+import { ExtensionSigningService } from './extension-signing.service';
 
 interface RuntimeUser { userId?: string; role?: string }
 const EXTENSION_DATA_QUOTA_BYTES = 100 * 1024 * 1024;
 
 @Injectable()
 export class ExtensionRuntimeService {
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService, private signing: ExtensionSigningService) {}
 
   async navigation(user: RuntimeUser) {
     const installations = await this.prisma.extensionInstallation.findMany({
       where: { enabled: true, extension: { runtimeType: 'DECLARATIVE_MODULE', status: 'ACTIVE' } },
-      include: { extension: true, installedVersion: true },
+      include: { extension: true, installedVersion: { include: { signingKey: true } } },
     });
+    await Promise.all(installations.map((installation) => this.verifyInstallation(installation)));
     return installations.flatMap((installation) => {
       const manifest = installation.installedVersion.manifest as Record<string, any>;
       return (manifest.navigation || [])
@@ -152,14 +154,20 @@ export class ExtensionRuntimeService {
     return installation;
   }
 
-  private installation(extensionKey: string) {
-    return this.prisma.extensionInstallation.findFirst({
+  private async installation(extensionKey: string) {
+    const installation = await this.prisma.extensionInstallation.findFirst({
       where: { enabled: true, extension: { key: extensionKey, runtimeType: 'DECLARATIVE_MODULE', status: 'ACTIVE' } },
-      include: { extension: true, installedVersion: true },
-    }).then((installation) => {
-      if (!installation || installation.installedVersion.lifecycleStatus !== 'PUBLISHED') throw new NotFoundException('Extension is not active for this school');
-      return installation;
+      include: { extension: true, installedVersion: { include: { signingKey: true } } },
     });
+    if (!installation || installation.installedVersion.lifecycleStatus !== 'PUBLISHED') throw new NotFoundException('Extension is not active for this school');
+    await this.verifyInstallation(installation);
+    return installation;
+  }
+
+  private async verifyInstallation(installation: any) {
+    if (installation.extension.runtimeType !== 'CORE_MODULE') {
+      await this.signing.verifyForRuntime(installation.installedVersion);
+    }
   }
 
   private validateData(schema: any, data: Record<string, unknown>) {

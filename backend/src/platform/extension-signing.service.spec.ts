@@ -1,5 +1,5 @@
 import { ConflictException } from '@nestjs/common';
-import { createHash, generateKeyPairSync } from 'crypto';
+import { createHash, generateKeyPairSync, sign } from 'crypto';
 import { ExtensionSigningService } from './extension-signing.service';
 
 describe('ExtensionSigningService', () => {
@@ -36,13 +36,15 @@ describe('ExtensionSigningService', () => {
     const signed = await service.signForPublication(version, 'publisher-1');
     await expect(service.verifyPublished({
       ...version,
-      packageStorageKey: 'published/package.zip',
+      lifecycleStatus: 'PUBLISHED',
+      packageStorageKey: `published/extensions/extension-1/version-1/${checksum}.zip`,
       ...signed,
       signingKey: { status: 'ACTIVE', publicKeyPem },
     })).resolves.toBe(true);
     await expect(service.verifyPublished({
       ...version,
-      packageStorageKey: 'published/package.zip',
+      lifecycleStatus: 'DEPRECATED',
+      packageStorageKey: `published/extensions/extension-1/version-1/${checksum}.zip`,
       ...signed,
       signingKey: { status: 'RETIRED', publicKeyPem },
     })).resolves.toBe(true);
@@ -60,13 +62,36 @@ describe('ExtensionSigningService', () => {
     storage.getPrivate.mockResolvedValue(contents);
     const version = { id: 'version-1', extensionId: 'extension-1', lifecycleStatus: 'APPROVED', packageStorageKey: `quarantine/extensions/extension-1/version-1/${checksum}.zip`, packageChecksum: checksum };
     const signed = await service.signForPublication(version, 'publisher-1');
+    const published = { ...version, lifecycleStatus: 'PUBLISHED', packageStorageKey: `published/extensions/extension-1/version-1/${checksum}.zip` };
 
     storage.getPrivate.mockResolvedValue(Buffer.from('tampered'));
-    await expect(service.verifyPublished({ ...version, ...signed, signingKey: { status: 'ACTIVE', publicKeyPem } }))
+    await expect(service.verifyPublished({ ...published, ...signed, signingKey: { status: 'ACTIVE', publicKeyPem } }))
       .rejects.toThrow('checksum verification failed');
     storage.getPrivate.mockResolvedValue(contents);
-    await expect(service.verifyPublished({ ...version, ...signed, signingKey: { status: 'REVOKED', publicKeyPem } }))
+    await expect(service.verifyPublished({ ...published, ...signed, signingKey: { status: 'REVOKED', publicKeyPem } }))
       .rejects.toThrow(ConflictException);
+  });
+
+  it('caches only a successfully verified runtime signature identity', async () => {
+    const contents = Buffer.from('runtime package');
+    const checksum = createHash('sha256').update(contents).digest('hex');
+    const version = {
+      id: 'version-1', extensionId: 'extension-1', lifecycleStatus: 'PUBLISHED',
+      packageStorageKey: `published/extensions/extension-1/version-1/${checksum}.zip`, packageChecksum: checksum,
+      packageSignature: Buffer.from('signature').toString('base64'), signingKeyId: 'key-row-1',
+      signingKey: { status: 'ACTIVE', publicKeyPem },
+    };
+    const signedVersion = { ...version, packageSignature: sign(null, contents, keys.privateKey).toString('base64') };
+    storage.getPrivate.mockResolvedValue(contents);
+
+    await service.verifyForRuntime(signedVersion);
+    await service.verifyForRuntime(signedVersion);
+    await expect(service.verifyForRuntime({
+      ...signedVersion,
+      signingKey: { ...signedVersion.signingKey, status: 'REVOKED' },
+    })).rejects.toThrow('revoked');
+
+    expect(storage.getPrivate).toHaveBeenCalledTimes(1);
   });
 
   it('refuses to sign non-approved or non-immutable package records', async () => {

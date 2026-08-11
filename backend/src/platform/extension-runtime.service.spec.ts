@@ -26,8 +26,8 @@ describe('ExtensionRuntimeService', () => {
     id: 'installation-1',
     schoolId: 'school-a',
     extensionId: 'extension-1',
-    extension: { key: 'STUDENT_REWARDS', name: 'Student Rewards' },
-    installedVersion: { lifecycleStatus: 'PUBLISHED', manifest },
+    extension: { key: 'STUDENT_REWARDS', name: 'Student Rewards', runtimeType: 'DECLARATIVE_MODULE' },
+    installedVersion: { lifecycleStatus: 'PUBLISHED', manifest, signingKey: { status: 'ACTIVE' } },
   };
   const prisma = {
     $transaction: jest.fn(),
@@ -41,13 +41,15 @@ describe('ExtensionRuntimeService', () => {
     },
   };
   const audit = { log: jest.fn() };
-  const service = new ExtensionRuntimeService(prisma as any, audit as any);
+  const signing = { verifyForRuntime: jest.fn() };
+  const service = new ExtensionRuntimeService(prisma as any, audit as any, signing as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
     prisma.$transaction.mockImplementation((callback) => callback(prisma));
     prisma.extensionInstallation.updateMany.mockResolvedValue({ count: 1 });
     audit.log.mockResolvedValue(undefined);
+    signing.verifyForRuntime.mockResolvedValue(true);
   });
 
   it('returns only navigation allowed for the current role', async () => {
@@ -56,6 +58,15 @@ describe('ExtensionRuntimeService', () => {
     const result = await service.navigation({ role: 'TEACHER' });
 
     expect(result).toEqual([{ label: 'Rewards', href: '/extensions/STUDENT_REWARDS/rewards', icon: 'design', section: 'Extensions' }]);
+    expect(signing.verifyForRuntime).toHaveBeenCalledWith(installation.installedVersion);
+  });
+
+  it('fails closed when the installed package signature cannot be verified', async () => {
+    prisma.extensionInstallation.findFirst.mockResolvedValue(installation);
+    signing.verifyForRuntime.mockRejectedValue(new Error('Package signature verification failed'));
+
+    await expect(service.page('STUDENT_REWARDS', 'rewards', { role: 'ADMIN' }))
+      .rejects.toThrow('Package signature verification failed');
   });
 
   it('returns translation dictionaries and default locale with a page', async () => {
