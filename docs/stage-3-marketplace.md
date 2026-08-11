@@ -303,3 +303,22 @@ deployment `05efe9ac-f515-4fb0-960a-a997742feb93`, and extension-worker
 deployment `9cb376f3-0312-4f2a-b327-3d616b0816d6` completed successfully on
 2026-08-11. Validation passed with 231 backend tests, one intentional skip, and
 successful backend and frontend production builds.
+
+## Approved immutable package signing
+
+Publication signing is a separate cryptographic boundary, not an assumption
+derived from the caller. It accepts only an `APPROVED` release that has no prior
+signature and whose package key exactly matches
+`quarantine/extensions/{extensionId}/{versionId}/{sha256}.zip`. The signer reads
+that immutable object, recomputes SHA-256, requires the configured publisher key
+to remain active, signs the bytes with Ed25519, and verifies the new signature
+against the registered public key before returning values for persistence.
+
+Retries cannot replace or re-sign an approved artifact. Rollback retains the
+checksum-addressed object, signature, signing-key reference, and registered
+public key so previously published releases remain independently verifiable.
+Revocation is evaluated separately when a package is installed or used.
+
+Production API deployment `8b477c13-c261-4f74-93f4-762e1c64f816` completed
+successfully on 2026-08-11. Validation passed with 250 backend tests, one
+intentional skip, and successful backend and frontend production builds.

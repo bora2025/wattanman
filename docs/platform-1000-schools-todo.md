@@ -192,7 +192,8 @@ An item is complete only when implementation, automated tests, documentation, de
   - Theme and declarative-module manifest v1 contracts compile under strict JSON Schema draft 2020-12 with Ajv, ship inside worker builds, permit only controlled fields plus `x-` metadata, and produce structured schema errors before semantic cross-reference validation. The 248-test backend suite, both builds, and Railway deployments `b24c0a87-ea49-4537-91d8-417e8e9358c8` (API) and `4c67e994-e33c-4175-9c3c-215a5a0deaa1` (extension worker) passed on 2026-08-11.
 - [x] Record validation tool versions and reports.
   - Every validation stores report schema v1, pipeline version, isolated runner, package validator, manifest schema, Ajv, JSZip, ClamAV engine, and ClamAV signature database versions alongside structured errors and warnings; platform administrators can inspect provenance in the release UI. The clean 34-migration rehearsal had zero drift, the 249-test backend suite and both builds passed, and Railway deployments `04cba07a-a472-4fa6-868d-ef8d6321489e` (API), `9ea185cc-cf32-4b4c-8b5f-6ccc5b5d79f6` (frontend), and `12d5eee6-efa7-4e10-aa61-416fddf0baec` (extension worker) succeeded on 2026-08-11.
-- [ ] Sign only approved immutable packages.
+- [x] Sign only approved immutable packages.
+  - Publication signing independently requires an `APPROVED`, previously unsigned release whose ZIP remains at its exact extension/version/checksum quarantine key; it then verifies the bytes, active publisher key, and private/public Ed25519 match before persisting a signature. The 250-test backend suite and both builds passed, and Railway API deployment `8b477c13-c261-4f74-93f4-762e1c64f816` succeeded on 2026-08-11.
 - [ ] Verify signatures before installation and runtime cache use.
 - [ ] Add quarantine and rejected-package retention policies.
 
