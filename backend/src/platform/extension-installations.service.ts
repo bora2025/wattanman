@@ -227,6 +227,7 @@ export class ExtensionInstallationsService {
           currency: setting.currency,
           instructions: setting.instructions,
           hasQr: !!setting.qrStorageKey,
+          version: setting.version,
           updatedAt: setting.updatedAt,
         }
       : { currency: "USD", hasQr: false };
@@ -245,6 +246,9 @@ export class ExtensionInstallationsService {
   ) {
     if (qrFile && !["image/png", "image/jpeg", "image/webp"].includes(qrFile.mimetype))
       throw new BadRequestException("Bank QR must be a PNG, JPG, or WebP image");
+    const currency = data.currency?.trim().toUpperCase() || "USD";
+    if (!/^[A-Z]{3}$/.test(currency))
+      throw new BadRequestException("Payment currency must be a three-letter ISO code");
     const existing = await this.prisma.extensionPaymentSetting.findUnique({
       where: { id: "default" },
     });
@@ -253,50 +257,88 @@ export class ExtensionInstallationsService {
       qrStorageKey = `billing/payment-qr/${Date.now()}-${qrFile.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
       await this.storage.putPrivate(qrStorageKey, qrFile.buffer, qrFile.mimetype);
     }
-    const setting = await this.prisma.extensionPaymentSetting.upsert({
-      where: { id: "default" },
-      update: {
-        bankName: data.bankName?.trim() || null,
-        accountName: data.accountName?.trim() || null,
-        accountNumber: data.accountNumber?.trim() || null,
-        currency: data.currency?.trim().toUpperCase() || "USD",
-        instructions: data.instructions?.trim() || null,
-        ...(qrFile
-          ? {
-              qrStorageKey,
-              qrContentType: qrFile.mimetype,
-              qrFileName: qrFile.originalname,
-            }
-          : {}),
-        updatedBy: actor.userId,
-      },
-      create: {
-        id: "default",
-        bankName: data.bankName?.trim() || null,
-        accountName: data.accountName?.trim() || null,
-        accountNumber: data.accountNumber?.trim() || null,
-        currency: data.currency?.trim().toUpperCase() || "USD",
-        instructions: data.instructions?.trim() || null,
-        qrStorageKey,
-        qrContentType: qrFile?.mimetype,
-        qrFileName: qrFile?.originalname,
-        updatedBy: actor.userId,
-      },
+    const setting = await this.prisma.$transaction(async (transaction) => {
+      const updated = await transaction.extensionPaymentSetting.upsert({
+        where: { id: "default" },
+        update: {
+          bankName: data.bankName?.trim() || null,
+          accountName: data.accountName?.trim() || null,
+          accountNumber: data.accountNumber?.trim() || null,
+          currency,
+          instructions: data.instructions?.trim() || null,
+          ...(qrFile
+            ? { qrStorageKey, qrContentType: qrFile.mimetype, qrFileName: qrFile.originalname }
+            : {}),
+          version: { increment: 1 },
+          updatedBy: actor.userId,
+        },
+        create: {
+          id: "default",
+          bankName: data.bankName?.trim() || null,
+          accountName: data.accountName?.trim() || null,
+          accountNumber: data.accountNumber?.trim() || null,
+          currency,
+          instructions: data.instructions?.trim() || null,
+          qrStorageKey,
+          qrContentType: qrFile?.mimetype,
+          qrFileName: qrFile?.originalname,
+          version: 1,
+          updatedBy: actor.userId,
+        },
+      });
+      await transaction.extensionPaymentSettingHistory.create({
+        data: {
+          settingId: updated.id,
+          version: updated.version,
+          bankName: updated.bankName,
+          accountName: updated.accountName,
+          accountNumber: updated.accountNumber,
+          currency: updated.currency,
+          instructions: updated.instructions,
+          qrStorageKey: updated.qrStorageKey,
+          qrContentType: updated.qrContentType,
+          qrFileName: updated.qrFileName,
+          actorId: actor.userId,
+        },
+      });
+      return updated;
     });
-    if (qrFile && existing?.qrStorageKey && existing.qrStorageKey !== qrStorageKey)
-      await this.storage.deletePrivate(existing.qrStorageKey).catch(() => undefined);
     await this.log(actor, "PAYMENT_QR_UPDATE", setting.id, "Extension payment settings", {
       bankName: setting.bankName,
       accountName: setting.accountName,
       currency: setting.currency,
+      version: setting.version,
     });
     return this.paymentSettings();
   }
 
-  async paymentQr() {
-    const setting = await this.prisma.extensionPaymentSetting.findUnique({
-      where: { id: "default" },
+  async paymentSettingsHistory(input: { cursor?: string; limit?: string } = {}) {
+    const limit = parsePageLimit(input.limit);
+    const cursor = decodeDateIdCursor(input.cursor);
+    const rows = await this.prisma.extensionPaymentSettingHistory.findMany({
+      where: {
+        settingId: "default",
+        ...(cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}),
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
     });
+    return dateIdPage(rows.map((row) => ({
+      ...row,
+      qrStorageKey: undefined,
+      hasQr: !!row.qrStorageKey,
+    })), limit);
+  }
+
+  async paymentQr(version?: string) {
+    const versionNumber = version == null ? null : Number(version);
+    if (version != null && (!Number.isSafeInteger(versionNumber) || !versionNumber || versionNumber < 1))
+      throw new BadRequestException("Payment setting version is invalid");
+    const setting = versionNumber
+      ? await this.prisma.extensionPaymentSettingHistory.findUnique({
+          where: { settingId_version: { settingId: "default", version: versionNumber } },
+        })
+      : await this.prisma.extensionPaymentSetting.findUnique({ where: { id: "default" } });
     if (!setting?.qrStorageKey) throw new NotFoundException("Bank QR is not configured");
     return {
       contents: await this.storage.getPrivate(setting.qrStorageKey),

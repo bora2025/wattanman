@@ -1571,6 +1571,7 @@ function ExtensionsContent() {
   const [installationFilter, setInstallationFilter] = useState("REQUESTED");
   const [showCreate, setShowCreate] = useState(false);
   const [paymentSettings, setPaymentSettings] = useState<any>({ currency: "USD", hasQr: false });
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
   const [paymentQr, setPaymentQr] = useState<File | null>(null);
   const [savingPayment, setSavingPayment] = useState(false);
   const [showPublisherOnboarding, setShowPublisherOnboarding] = useState(false);
@@ -1630,6 +1631,7 @@ function ExtensionsContent() {
         alertData,
         metricData,
         paymentData,
+        paymentHistoryData,
         collectionData,
       ] = await Promise.all([
         apiCursorItems<ExtensionRecord>("/api/platform/extensions"),
@@ -1639,6 +1641,7 @@ function ExtensionsContent() {
         apiCursorItems<ExtensionAlert>("/api/platform/extensions/alerts"),
         responseJson(await apiFetch("/api/platform/extensions/api-metrics")),
         responseJson(await apiFetch("/api/platform/extension-installations/payment-settings")),
+        apiCursorItems<any>("/api/platform/extension-installations/payment-settings/history?limit=20"),
         apiCursorItems<CatalogCollectionRecord>("/api/platform/extensions/catalog-collections"),
       ]);
       setExtensions(extensionData);
@@ -1648,6 +1651,7 @@ function ExtensionsContent() {
       setAlerts(alertData);
       setApiMetrics(metricData);
       setPaymentSettings(paymentData);
+      setPaymentHistory(paymentHistoryData);
       setCatalogCollections(collectionData);
       setError("");
     } catch (loadError: any) {
@@ -1674,6 +1678,7 @@ function ExtensionsContent() {
       );
       setPaymentSettings(updated);
       setPaymentQr(null);
+      setPaymentHistory(await apiCursorItems<any>("/api/platform/extension-installations/payment-settings/history?limit=20"));
     } catch (paymentError: any) {
       setError(paymentError.message || "Could not update payment QR");
     } finally {
@@ -2459,6 +2464,21 @@ function ExtensionsContent() {
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"><label className="text-xs text-slate-600 dark:text-slate-300">Bank name<input className="input mt-1 w-full" value={paymentSettings.bankName || ""} onChange={event => setPaymentSettings({ ...paymentSettings, bankName: event.target.value })} /></label><label className="text-xs text-slate-600 dark:text-slate-300">Account name<input className="input mt-1 w-full" value={paymentSettings.accountName || ""} onChange={event => setPaymentSettings({ ...paymentSettings, accountName: event.target.value })} /></label><label className="text-xs text-slate-600 dark:text-slate-300">Account number<input className="input mt-1 w-full" value={paymentSettings.accountNumber || ""} onChange={event => setPaymentSettings({ ...paymentSettings, accountNumber: event.target.value })} /></label><label className="text-xs text-slate-600 dark:text-slate-300">Currency<input className="input mt-1 w-full" value={paymentSettings.currency || "USD"} onChange={event => setPaymentSettings({ ...paymentSettings, currency: event.target.value.toUpperCase() })} /></label><label className="text-xs text-slate-600 dark:text-slate-300 sm:col-span-2">Payment instructions<input className="input mt-1 w-full" value={paymentSettings.instructions || ""} onChange={event => setPaymentSettings({ ...paymentSettings, instructions: event.target.value })} placeholder="Scan QR, enter the extension price, then upload receipt" /></label><label className="text-xs text-slate-600 dark:text-slate-300 sm:col-span-2">Change QR image<input type="file" accept="image/png,image/jpeg,image/webp" className="mt-1 block w-full rounded-lg border border-slate-300 bg-white p-2 text-sm dark:border-slate-700 dark:bg-slate-900" onChange={event => setPaymentQr(event.target.files?.[0] || null)} /></label><div className="flex items-end"><button className="btn-primary w-full" disabled={savingPayment}>{savingPayment ? "Saving…" : paymentSettings.hasQr ? "Update payment settings" : "Save payment QR"}</button></div></div>
                 </div>
               </form>
+              {paymentHistory.length > 0 && (
+                <section className="card p-5">
+                  <div className="mb-3"><h2 className="font-bold text-slate-900 dark:text-white">Payment setting rotation history</h2><p className="text-xs text-slate-500">Prior QR objects remain private and immutable for audit review.</p></div>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {paymentHistory.map((entry) => (
+                      <article key={entry.id} className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                        <div className="flex gap-3">
+                          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-white dark:border-slate-700">{entry.hasQr ? <img src={`/api/platform/extension-installations/payment-qr?version=${entry.version}`} alt={`Payment QR version ${entry.version}`} className="h-full w-full object-contain p-1" /> : <span className="text-[10px] text-slate-400">No QR</span>}</div>
+                          <div className="min-w-0 text-xs text-slate-500"><p className="font-bold text-slate-900 dark:text-white">Version {entry.version}</p><p>{new Date(entry.createdAt).toLocaleString()}</p><p className="mt-1 truncate">{entry.bankName || "No bank"} · {entry.currency}</p><p className="truncate">{entry.accountName || "No account name"}{entry.accountNumber ? ` · ${entry.accountNumber}` : ""}</p></div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
               <div>
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                   School installation requests

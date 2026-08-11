@@ -45,6 +45,11 @@ export class PlatformExtensionInstallationsController {
     return this.installations.paymentSettings();
   }
 
+  @Get("payment-settings/history")
+  paymentSettingsHistory(@Query("cursor") cursor?: string, @Query("limit") limit?: string) {
+    return this.installations.paymentSettingsHistory({ cursor, limit });
+  }
+
   @Post("payment-settings")
   @UseInterceptors(FileInterceptor("qr", { limits: { fileSize: 5 * 1024 * 1024, files: 1 } }))
   updatePaymentSettings(
@@ -56,8 +61,11 @@ export class PlatformExtensionInstallationsController {
   }
 
   @Get("payment-qr")
-  async platformPaymentQr(@Res({ passthrough: true }) response: Response) {
-    const qr = await this.installations.paymentQr();
+  async platformPaymentQr(
+    @Query("version") version: string | undefined,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const qr = await this.installations.paymentQr(version);
     response.setHeader("Content-Type", qr.contentType);
     response.setHeader("Cache-Control", "private, max-age=300");
     return new StreamableFile(qr.contents);

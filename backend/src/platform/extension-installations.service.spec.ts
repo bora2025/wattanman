@@ -7,6 +7,8 @@ describe('ExtensionInstallationsService', () => {
     $transaction: jest.fn(),
     extension: { findMany: jest.fn(), findFirst: jest.fn() },
     extensionCatalogCollection: { findMany: jest.fn() },
+    extensionPaymentSetting: { findUnique: jest.fn(), upsert: jest.fn() },
+    extensionPaymentSettingHistory: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn() },
     school: { findUnique: jest.fn() },
     user: { findUnique: jest.fn() },
     extensionVersion: { findFirst: jest.fn() },
@@ -200,6 +202,32 @@ describe('ExtensionInstallationsService', () => {
       take: 20,
       include: expect.objectContaining({ items: expect.objectContaining({ take: 20 }) }),
     }));
+  });
+
+  it('rotates payment settings while preserving an immutable history row and prior QR object', async () => {
+    prisma.extensionPaymentSetting.findUnique
+      .mockResolvedValueOnce({ id: 'default', version: 1, qrStorageKey: 'billing/payment-qr/old.png' })
+      .mockResolvedValueOnce({
+        id: 'default', version: 2, bankName: 'Bank A', accountName: 'Wattaman', accountNumber: '123',
+        currency: 'USD', instructions: null, qrStorageKey: 'billing/payment-qr/new.png', updatedAt: new Date(),
+      });
+    prisma.extensionPaymentSetting.upsert.mockResolvedValue({
+      id: 'default', version: 2, bankName: 'Bank A', accountName: 'Wattaman', accountNumber: '123',
+      currency: 'USD', instructions: null, qrStorageKey: 'billing/payment-qr/new.png',
+      qrContentType: 'image/png', qrFileName: 'new.png',
+    });
+    prisma.extensionPaymentSettingHistory.create.mockResolvedValue({ id: 'history-2' });
+    const qr = { mimetype: 'image/png', originalname: 'new.png', buffer: Buffer.from('qr') } as Express.Multer.File;
+
+    const result = await service.updatePaymentSettings({
+      bankName: 'Bank A', accountName: 'Wattaman', accountNumber: '123', currency: 'usd',
+    }, qr, { userId: 'platform-1', role: 'PLATFORM_ADMIN' });
+
+    expect(result.version).toBe(2);
+    expect(prisma.extensionPaymentSettingHistory.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+      settingId: 'default', version: 2, actorId: 'platform-1', qrStorageKey: 'billing/payment-qr/new.png',
+    }) });
+    expect(storage.deletePrivate).not.toHaveBeenCalledWith('billing/payment-qr/old.png');
   });
 
   it('publishes a complete pilot acceptance checklist', () => {

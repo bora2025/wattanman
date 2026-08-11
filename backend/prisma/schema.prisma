@@ -519,9 +519,31 @@ model ExtensionPaymentSetting {
   qrStorageKey  String?
   qrContentType String?
   qrFileName    String?
+  version       Int      @default(0)
   updatedBy     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  history       ExtensionPaymentSettingHistory[]
+}
+
+model ExtensionPaymentSettingHistory {
+  id            String                  @id @default(cuid())
+  settingId     String                  @default("default")
+  setting       ExtensionPaymentSetting @relation(fields: [settingId], references: [id], onDelete: Cascade)
+  version       Int
+  bankName      String?
+  accountName   String?
+  accountNumber String?
+  currency      String
+  instructions  String?
+  qrStorageKey  String?
+  qrContentType String?
+  qrFileName    String?
+  actorId       String?
+  createdAt     DateTime                @default(now())
+
+  @@unique([settingId, version])
+  @@index([settingId, createdAt])
 }
 
 model ExtensionPilotFeedback {
