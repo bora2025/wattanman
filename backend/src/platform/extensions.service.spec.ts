@@ -116,6 +116,7 @@ describe("ExtensionsService", () => {
       packageSignature: "signature",
       signedAt: new Date(),
     });
+    prisma.extensionVersion.updateMany.mockResolvedValue({ count: 1 });
   });
 
   it("creates an internal declarative extension", async () => {
@@ -880,8 +881,33 @@ describe("ExtensionsService", () => {
         extensionVersionId: "version-1",
         action: "APPEALED",
         notes: "Permission description updated",
+        assessment: { appealedReviewerId: "reviewer-1" },
       }),
     });
+    expect(prisma.extensionVersion.updateMany).toHaveBeenCalledWith({
+      where: { id: "version-1", lifecycleStatus: "REJECTED", reviewedBy: "reviewer-1" },
+      data: { lifecycleStatus: "AWAITING_REVIEW", reviewNotes: "Permission description updated", reviewedBy: null },
+    });
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({
+      action: "APPEAL",
+      resource: "EXTENSION_VERSION",
+      resourceId: "version-1",
+    }));
+  });
+
+  it("rejects a concurrent duplicate appeal without appending history", async () => {
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: "version-1",
+      version: "1.0.0",
+      lifecycleStatus: "REJECTED",
+      reviewedBy: "reviewer-1",
+      extension: { publisherId: "publisher-1", publisherEntity: { status: "ACTIVE" } },
+    });
+    prisma.extensionVersion.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(service.appeal("version-1", "Please reconsider", actor))
+      .rejects.toThrow("already been appealed or changed");
+    expect(prisma.extensionReview.create).not.toHaveBeenCalled();
   });
 
   it("deletes an uninstalled rejected version and its private storage objects", async () => {

@@ -1008,18 +1008,39 @@ export class ExtensionsService {
       actor,
       "UPLOAD",
     );
-    const updated = await this.prisma.extensionVersion.update({
-      where: { id: versionId },
-      data: { lifecycleStatus: "AWAITING_REVIEW", reviewNotes: notes.trim() },
-    });
-    await this.prisma.extensionReview.create({
-      data: {
-        extensionVersionId: versionId,
-        action: "APPEALED",
-        notes: notes.trim(),
-        actorId: actor.userId,
-        actorRole: actor.role,
-      },
+    const appealNotes = notes.trim();
+    const updated = await this.prisma.$transaction(async (transaction) => {
+      const claimed = await transaction.extensionVersion.updateMany({
+        where: {
+          id: versionId,
+          lifecycleStatus: "REJECTED",
+          reviewedBy: existing.reviewedBy,
+        },
+        data: {
+          lifecycleStatus: "AWAITING_REVIEW",
+          reviewNotes: appealNotes,
+          reviewedBy: null,
+        },
+      });
+      if (claimed.count !== 1) {
+        throw new ConflictException("This rejection has already been appealed or changed");
+      }
+      await transaction.extensionReview.create({
+        data: {
+          extensionVersionId: versionId,
+          action: "APPEALED",
+          notes: appealNotes,
+          assessment: { appealedReviewerId: existing.reviewedBy } as any,
+          actorId: actor.userId,
+          actorRole: actor.role,
+        },
+      });
+      return {
+        ...existing,
+        lifecycleStatus: "AWAITING_REVIEW",
+        reviewNotes: appealNotes,
+        reviewedBy: null,
+      };
     });
     await this.log(
       actor,
@@ -1027,7 +1048,7 @@ export class ExtensionsService {
       "EXTENSION_VERSION",
       versionId,
       existing.version,
-      { metadata: { notes: notes.trim() } },
+      { metadata: { notes: appealNotes, appealedReviewerId: existing.reviewedBy } },
     );
     return updated;
   }

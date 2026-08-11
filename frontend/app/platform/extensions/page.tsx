@@ -48,6 +48,7 @@ interface ReviewEvent {
   action: string;
   notes?: string | null;
   actorRole?: string | null;
+  assessment?: Record<string, { status?: string; notes?: string } | string | null> | null;
   createdAt: string;
 }
 
@@ -585,6 +586,11 @@ function VersionPanel({
                   <span>
                     {event.action}
                     {event.notes ? ` · ${event.notes}` : ""}
+                    {event.actorRole ? ` · ${event.actorRole}` : ""}
+                    {event.assessment && Object.entries(event.assessment)
+                      .filter(([, value]) => typeof value === "object" && value !== null && "status" in value)
+                      .map(([domain, value]) => ` · ${domain}: ${(value as { status?: string }).status || "reviewed"}`)
+                      .join("")}
                   </span>
                   <span className="text-slate-400 whitespace-nowrap">
                     {new Date(event.createdAt).toLocaleString()}
