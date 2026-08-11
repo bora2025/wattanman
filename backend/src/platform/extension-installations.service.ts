@@ -345,9 +345,15 @@ export class ExtensionInstallationsService {
       throw new NotFoundException(
         "No published extension version is available",
       );
-    const existing = await this.prisma.extensionInstallation.findFirst({
-      where: { extensionId },
-    });
+    const [school, admin, existing] = await Promise.all([
+      this.prisma.school.findUnique({ where: { id: schoolId } }),
+      actor.userId
+        ? this.prisma.user.findUnique({ where: { id: actor.userId } })
+        : null,
+      this.prisma.extensionInstallation.findFirst({ where: { extensionId } }),
+    ]);
+    if (!school || !admin)
+      throw new NotFoundException("School administrator not found");
     if (existing?.enabled)
       throw new ConflictException(
         "Extension is already active for this school",
@@ -362,6 +368,9 @@ export class ExtensionInstallationsService {
             uninstalledAt: null,
             purgeAfter: null,
             billingStatus: extension.pricingModel === "FREE" ? "ACTIVE" : "PENDING",
+            requestSchoolName: school.name,
+            requestAdminName: admin.name,
+            requestAdminEmail: admin.email,
             ...pricingSnapshot,
           },
         })
@@ -373,12 +382,17 @@ export class ExtensionInstallationsService {
             requestedAt: new Date(),
             requestedBy: actor.userId,
             billingStatus: extension.pricingModel === "FREE" ? "ACTIVE" : "PENDING",
+            requestSchoolName: school.name,
+            requestAdminName: admin.name,
+            requestAdminEmail: admin.email,
             ...pricingSnapshot,
           },
         });
     await this.log(actor, "REQUEST", installation.id, extension.name, {
       extensionId,
       schoolId,
+      requestSchoolName: school.name,
+      requestAdminName: admin.name,
     });
     return installation;
   }

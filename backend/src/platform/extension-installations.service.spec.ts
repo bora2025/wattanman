@@ -41,6 +41,8 @@ describe('ExtensionInstallationsService', () => {
       versions: [{ id: 'version-1' }],
     });
     prisma.extensionInstallation.findFirst.mockResolvedValue(null);
+    prisma.school.findUnique.mockResolvedValue({ id: 'school-a', name: 'School A' });
+    prisma.user.findUnique.mockResolvedValue({ id: 'admin-1', name: 'Admin One', email: 'admin@school.test' });
     prisma.extensionInstallation.create.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
 
     const result = await tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () => service.request('extension-1', actor));
@@ -50,6 +52,7 @@ describe('ExtensionInstallationsService', () => {
       data: expect.objectContaining({
         schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-1',
         billingStatus: 'ACTIVE', requestPricingModel: 'FREE', requestCurrency: 'USD',
+        requestSchoolName: 'School A', requestAdminName: 'Admin One', requestAdminEmail: 'admin@school.test',
       }),
     });
   });
@@ -62,6 +65,8 @@ describe('ExtensionInstallationsService', () => {
       versions: [{ id: 'version-1' }],
     });
     prisma.extensionInstallation.findFirst.mockResolvedValue(null);
+    prisma.school.findUnique.mockResolvedValue({ id: 'school-a', name: 'School A' });
+    prisma.user.findUnique.mockResolvedValue({ id: 'admin-1', name: 'Admin One', email: 'admin@school.test' });
     prisma.extensionInstallation.create.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
 
     await tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () => service.request('extension-1', actor));
