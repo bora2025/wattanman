@@ -5,7 +5,9 @@ import * as bcrypt from 'bcryptjs';
 import * as supertest from 'supertest';
 import { AppModule } from '../src/app.module';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: { db: { url: process.env.DATABASE_ADMIN_URL || process.env.DATABASE_URL } },
+});
 const prefix = `e2eiso${Date.now()}`;
 const hostA = `${prefix}a.test.local`;
 const hostB = `${prefix}b.test.local`;

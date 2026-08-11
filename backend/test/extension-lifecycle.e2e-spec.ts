@@ -17,7 +17,9 @@ MCowBQYDK2VwAyEAd/FUPcVitiuVRfl1ExNxFlxdAyENLeS5LViH8Le3AaY=
 const TEST_PREFIX = `e2elifecycle${Date.now()}`;
 const SCHOOL_HOST = `${TEST_PREFIX}.test.local`;
 const PASSWORD = 'TestPass123!';
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: { db: { url: process.env.DATABASE_ADMIN_URL || process.env.DATABASE_URL } },
+});
 
 jest.setTimeout(120_000);
 

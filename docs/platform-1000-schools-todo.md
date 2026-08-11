@@ -68,8 +68,8 @@ An item is complete only when implementation, automated tests, documentation, de
 
 - [x] Create separate migration, control-plane, school-runtime, and analytics database roles.
 - [x] Add a transaction-local tenant identifier.
-- [ ] Enable row-level security on every tenant-owned core table.
-- [ ] Add deny-by-default RLS policies.
+- [x] Enable row-level security on every tenant-owned core table.
+- [x] Add deny-by-default RLS policies.
 - [x] Restrict unscoped operations to audited platform paths.
 - [x] Verify background jobs explicitly establish tenant scope.
 - [x] Add school ID to every tenant-owned unique key and index where required.

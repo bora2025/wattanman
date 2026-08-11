@@ -34,6 +34,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://wattaman:wattaman@localhost:5432/wattaman_test?schema=public
       DATABASE_ADMIN_URL: postgresql://wattaman:wattaman@localhost:5432/wattaman_test?schema=public
+      RLS_RUNTIME_DATABASE_URL: postgresql://wattaman_runtime_e2e:IdentityTest123!@localhost:5432/wattaman_test?schema=public&options=-c%20role%3Dwattaman_school_runtime
+      RLS_CONTROL_PLANE_DATABASE_URL: postgresql://wattaman_control_e2e:IdentityTest123!@localhost:5432/wattaman_test?schema=public&options=-c%20role%3Dwattaman_control_plane
       JWT_SECRET: isolation-ci-secret
       NODE_ENV: test
     steps:
@@ -48,6 +50,14 @@ jobs:
       - run: npm run db:roles:provision
       - run: npm run build
       - run: npm run test:isolation
+        env:
+          DATABASE_URL: ${{ env.RLS_RUNTIME_DATABASE_URL }}
+          CONTROL_PLANE_DATABASE_URL: ${{ env.RLS_CONTROL_PLANE_DATABASE_URL }}
       - run: npm run test:database-scope
       - run: npm run test:database-identities
+      - run: npm run db:rls:activate
+      - run: npm run test:rls
       - run: npm run test:lifecycle
+        env:
+          DATABASE_URL: ${{ env.RLS_RUNTIME_DATABASE_URL }}
+          CONTROL_PLANE_DATABASE_URL: ${{ env.RLS_CONTROL_PLANE_DATABASE_URL }}

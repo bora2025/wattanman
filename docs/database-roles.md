@@ -15,7 +15,7 @@ The command is idempotent, serialized by a PostgreSQL advisory lock, and verifie
 - `wattaman_school_runtime`: CRUD without RLS bypass; used by school API and tenant workers.
 - `wattaman_analytics`: read-only without RLS bypass.
 
-Create provider-managed LOGIN identities separately, grant each identity exactly one group role, and store its URL only in the corresponding Railway service. Do not place `DATABASE_ADMIN_URL` in an application service.
+Create provider-managed LOGIN identities separately, grant each identity exactly one group role, and store its URL only in the corresponding Railway service. Each URL must assume its group with the PostgreSQL connection option `options=-c role=<group-role>`; role attributes such as `BYPASSRLS` are not inherited without `SET ROLE`. Do not place `DATABASE_ADMIN_URL` in an application service.
 
 Configure `DATABASE_URL` with a LOGIN inheriting `wattaman_school_runtime`. Configure `CONTROL_PLANE_DATABASE_URL` with a different LOGIN inheriting `wattaman_control_plane`. Domain resolution and audited platform operations use the control-plane pool; school HTTP transactions use the runtime pool. Production RLS activation must not proceed while both variables point to the same identity.
 

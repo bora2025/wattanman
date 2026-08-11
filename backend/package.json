@@ -19,6 +19,7 @@
     "db:migrate:release": "node prisma/release-migrate.js",
     "db:schema:check": "node prisma/check-schema-compatibility.js",
     "db:roles:provision": "node prisma/provision-database-roles.js",
+    "db:rls:activate": "node prisma/activate-tenant-rls.js",
     "db:seed": "ts-node prisma/seed.ts",
     "extension:validate": "ts-node src/cli/validate-extension-package.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -30,7 +31,8 @@
     "test:isolation": "jest --config ./test/jest-e2e.json --runInBand test/tenant-isolation.e2e-spec.ts",
     "test:lifecycle": "jest --config ./test/jest-e2e.json --runInBand test/extension-lifecycle.e2e-spec.ts",
     "test:database-scope": "jest --config ./test/jest-e2e.json --runInBand test/tenant-database-scope.e2e-spec.ts",
-    "test:database-identities": "jest --config ./test/jest-e2e.json --runInBand test/database-identities.e2e-spec.ts"
+    "test:database-identities": "jest --config ./test/jest-e2e.json --runInBand test/database-identities.e2e-spec.ts",
+    "test:rls": "jest --config ./test/jest-e2e.json --runInBand test/tenant-rls.e2e-spec.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
