@@ -125,7 +125,7 @@ An item is complete only when implementation, automated tests, documentation, de
 - [x] Add dead-letter queue and replay controls.
 - [x] Add distributed locks for school and extension operations.
 - [x] Add job heartbeat and ownership lease.
-- [ ] Add queue-depth and oldest-job alerts.
+- [x] Add queue-depth and oldest-job alerts.
 
 ### Service separation
 

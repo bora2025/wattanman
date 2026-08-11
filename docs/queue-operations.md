@@ -21,6 +21,22 @@ Wattaman uses managed Redis with TLS and high availability plus BullMQ. Redis co
 
 Lease acquire uses Redis `SET NX PX`. Renew and release use compare-owner Lua scripts, preventing one worker from releasing another worker's lock. School and extension operations use stable keys such as `school:<id>:backup` or `installation:<id>:migration`.
 
+## Queue health alerts
+
+The operations worker scans `extensions`, `operations`, and `notifications`
+every minute. Configure another comma-separated set with
+`QUEUE_MONITORED_NAMES`. Structured `queue_health_alert` events are emitted for
+queue depth, oldest waiting/delayed/prioritized job age, and Redis scan failure.
+
+- `QUEUE_DEPTH_WARNING` defaults to `500`; `QUEUE_DEPTH_CRITICAL` to `2000`.
+- `QUEUE_OLDEST_JOB_WARNING_MS` defaults to five minutes.
+- `QUEUE_OLDEST_JOB_CRITICAL_MS` defaults to thirty minutes.
+
+Threshold configuration fails closed when critical is below warning. Route the
+worker's structured error logs to the managed observability provider and page on
+critical events. Rollback removes `JobsModule` from `WorkerModule`; this disables
+monitoring only and does not mutate or drain queue contents.
+
 ## Required Alerts
 
 Monitor queue depth, oldest waiting-job age, failure rate, dead-letter count, stalled jobs, and lease loss. Alert thresholds are defined per queue based on its service objective.
