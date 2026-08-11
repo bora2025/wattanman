@@ -166,7 +166,8 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Catalog and publisher UX
 
-- [ ] Finalize extension categories, tags, locales, support links, privacy policy, and data-use fields.
+- [x] Finalize extension categories, tags, locales, support links, privacy policy, and data-use fields.
+  - Controlled metadata, audited editing, school-facing disclosures, clean PostgreSQL migration rehearsal, 215 backend tests, both production builds, and Railway deployments `2b2627b2-d9b1-45ed-b2d2-8668d8afc8eb` (API) and `530d4350-8813-4a25-87c3-24212b62e47e` (frontend) passed on 2026-08-11.
 - [ ] Add publisher onboarding and verification.
 - [ ] Add publisher member role management.
 - [ ] Add key registration, rotation, retirement, and revocation UX.

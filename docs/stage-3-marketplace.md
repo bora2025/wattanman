@@ -25,6 +25,9 @@ data-use disclosure before a request is submitted.
 - The complete backend test suite and backend/frontend production builds pass.
 - All 31 migrations apply to empty PostgreSQL 16 and Prisma reports no schema
   difference after application.
+- Production API deployment `2b2627b2-d9b1-45ed-b2d2-8668d8afc8eb` and
+  frontend deployment `530d4350-8813-4a25-87c3-24212b62e47e` completed
+  successfully on 2026-08-11.
 
 ## Rollback guidance
 
