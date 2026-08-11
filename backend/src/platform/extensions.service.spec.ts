@@ -289,6 +289,28 @@ describe("ExtensionsService", () => {
     ).rejects.toThrow("reviewNotes are required");
   });
 
+  it("enforces uploader and reviewer separation when policy requires it", async () => {
+    const previous = process.env.EXTENSION_REVIEW_SEPARATION_REQUIRED;
+    process.env.EXTENSION_REVIEW_SEPARATION_REQUIRED = "true";
+    prisma.extensionVersion.findUnique.mockResolvedValue({
+      id: "version-1",
+      version: "1.0.0",
+      lifecycleStatus: "AWAITING_REVIEW",
+      uploadedBy: actor.userId,
+      extension: { publisherId: "publisher-1" },
+    });
+
+    try {
+      await expect(
+        service.transition("version-1", "APPROVED", "Reviewed", actor),
+      ).rejects.toThrow("uploader cannot approve or reject");
+      expect(prisma.extensionVersion.update).not.toHaveBeenCalled();
+    } finally {
+      if (previous === undefined) delete process.env.EXTENSION_REVIEW_SEPARATION_REQUIRED;
+      else process.env.EXTENSION_REVIEW_SEPARATION_REQUIRED = previous;
+    }
+  });
+
   it("rejects lifecycle transitions that skip validation and review", async () => {
     prisma.extensionVersion.findUnique.mockResolvedValue({
       id: "version-1",

@@ -749,6 +749,21 @@ export class ExtensionsService {
       );
     }
     if (
+      (nextStatus === "APPROVED" || nextStatus === "REJECTED") &&
+      this.reviewSeparationRequired()
+    ) {
+      if (!existing.uploadedBy || !actor.userId) {
+        throw new ConflictException(
+          "Uploader/reviewer separation cannot be verified for this release",
+        );
+      }
+      if (existing.uploadedBy === actor.userId) {
+        throw new ConflictException(
+          "The package uploader cannot approve or reject the same release",
+        );
+      }
+    }
+    if (
       nextStatus === "AWAITING_REVIEW" &&
       (!existing.releaseNotes?.trim() || !existing.compatibilityRange?.trim())
     ) {
@@ -843,6 +858,13 @@ export class ExtensionsService {
       },
     );
     return updated;
+  }
+
+  private reviewSeparationRequired() {
+    const configured = process.env.EXTENSION_REVIEW_SEPARATION_REQUIRED?.trim().toLowerCase();
+    if (configured === 'true') return true;
+    if (configured === 'false') return false;
+    return process.env.NODE_ENV === 'production';
   }
 
   async reviewSummary(versionId: string) {
