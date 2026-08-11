@@ -43,42 +43,43 @@ export class SchoolDomainService {
     if (cached && cached.expiresAt > Date.now()) return cached.school;
     if (cached) this.cache.delete(hostname);
 
-    const platformHost = normalizeHostname(process.env.PLATFORM_HOST || '');
-    if (platformHost && hostname === platformHost) {
-      return this.prisma.school.findUnique({
-        where: { subdomain: PLATFORM_SCHOOL_SUBDOMAIN },
-      });
-    }
-
-    const domain = await this.prisma.schoolDomain.findFirst({
-      where: { hostname, status: 'VERIFIED' },
-      include: { school: true },
-    });
-    if (domain) {
-      this.setCached(hostname, domain.school);
-      return domain.school;
-    }
-
-    const rootDomain = normalizeHostname(process.env.SCHOOL_ROOT_DOMAIN || '');
-    if (rootDomain && hostname.endsWith(`.${rootDomain}`)) {
-      const subdomain = hostname.slice(0, -(rootDomain.length + 1));
-      if (subdomain && !subdomain.includes('.')) {
-        const legacyAlias = await this.prisma.schoolDomain.findFirst({
-          where: {
-            hostname: subdomain,
-            type: 'LEGACY_ALIAS',
-            status: 'VERIFIED',
-          },
-          include: { school: true },
+    return this.prisma.runInControlPlane(async (client) => {
+      const platformHost = normalizeHostname(process.env.PLATFORM_HOST || '');
+      if (platformHost && hostname === platformHost) {
+        return client.school.findUnique({
+          where: { subdomain: PLATFORM_SCHOOL_SUBDOMAIN },
         });
-        if (legacyAlias) {
-          this.setCached(hostname, legacyAlias.school);
-          return legacyAlias.school;
+      }
+
+      const domain = await client.schoolDomain.findFirst({
+        where: { hostname, status: 'VERIFIED' },
+        include: { school: true },
+      });
+      if (domain) {
+        this.setCached(hostname, domain.school);
+        return domain.school;
+      }
+
+      const rootDomain = normalizeHostname(process.env.SCHOOL_ROOT_DOMAIN || '');
+      if (rootDomain && hostname.endsWith(`.${rootDomain}`)) {
+        const subdomain = hostname.slice(0, -(rootDomain.length + 1));
+        if (subdomain && !subdomain.includes('.')) {
+          const legacyAlias = await client.schoolDomain.findFirst({
+            where: {
+              hostname: subdomain,
+              type: 'LEGACY_ALIAS',
+              status: 'VERIFIED',
+            },
+            include: { school: true },
+          });
+          if (legacyAlias) {
+            this.setCached(hostname, legacyAlias.school);
+            return legacyAlias.school;
+          }
         }
       }
-    }
-
-    return null;
+      return null;
+    });
   }
 
   async registerManagedDomain(schoolId: string, subdomain: string) {

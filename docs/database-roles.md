@@ -17,4 +17,6 @@ The command is idempotent, serialized by a PostgreSQL advisory lock, and verifie
 
 Create provider-managed LOGIN identities separately, grant each identity exactly one group role, and store its URL only in the corresponding Railway service. Do not place `DATABASE_ADMIN_URL` in an application service.
 
+Configure `DATABASE_URL` with a LOGIN inheriting `wattaman_school_runtime`. Configure `CONTROL_PLANE_DATABASE_URL` with a different LOGIN inheriting `wattaman_control_plane`. Domain resolution and audited platform operations use the control-plane pool; school HTTP transactions use the runtime pool. Production RLS activation must not proceed while both variables point to the same identity.
+
 Rollback is `REVOKE`-first: revoke a login identity's group membership and rotate its password. Do not drop group roles while grants, policies, or active sessions depend on them. RLS activation is a separate migration and is not rolled back by removing a role.

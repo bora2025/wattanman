@@ -20,10 +20,10 @@ let customDomainCache = new Set<string>();
 
 async function refreshCustomDomainCache(prisma: PrismaService) {
   try {
-    const domains = await prisma.schoolDomain.findMany({
+    const domains = await prisma.runInControlPlane((client) => client.schoolDomain.findMany({
       where: { type: 'CUSTOM', status: 'VERIFIED', routingStatus: 'READY' },
       select: { hostname: true },
-    });
+    }));
     customDomainCache = new Set(domains.map((domain) => domain.hostname.toLowerCase()));
   } catch {
     // Transient DB error — keep serving the last known-good cache rather than

@@ -2,8 +2,10 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { createServer } from 'http';
 import { WorkerModule } from './worker.module';
+import { tenantContext } from './tenancy/tenant-context';
 
 async function bootstrap() {
+  tenantContext.enterWith({ schoolId: 'PLATFORM', mode: 'unscoped' });
   const logger = new Logger('WorkerBootstrap');
   const app = await NestFactory.createApplicationContext(WorkerModule, { logger: ['error', 'warn', 'log'] });
   const startedAt = new Date().toISOString();

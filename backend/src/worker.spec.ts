@@ -21,4 +21,16 @@ describe('worker process separation', () => {
     expect(worker).toContain("process.once('SIGTERM'");
     expect(worker).toContain('await app.close()');
   });
+
+  it('establishes an explicit audited control-plane context before scheduling work', () => {
+    const worker = readFileSync(join(process.cwd(), 'src', 'worker.ts'), 'utf8');
+    expect(worker).toContain("tenantContext.enterWith({ schoolId: 'PLATFORM', mode: 'unscoped' })");
+    expect(worker.indexOf('tenantContext.enterWith')).toBeLessThan(worker.indexOf('NestFactory.createApplicationContext'));
+  });
+
+  it('establishes tenant context from every durable queue envelope', () => {
+    const queue = readFileSync(join(process.cwd(), 'src', 'jobs', 'queue-infrastructure.service.ts'), 'utf8');
+    expect(queue).toContain('assertJobEnvelope(job.data)');
+    expect(queue).toContain('tenantContext.run(scope');
+  });
 });

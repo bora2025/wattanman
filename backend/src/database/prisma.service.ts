@@ -22,6 +22,8 @@ function toDelegateName(modelName: string): string {
  */
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  private readonly controlPlane: PrismaClient;
+
   constructor() {
     super({
       // Only log errors and slow queries (saves CPU on verbose logging)
@@ -31,6 +33,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             { level: 'error', emit: 'stdout' },
             { level: 'warn', emit: 'stdout' },
           ],
+    });
+
+    this.controlPlane = new PrismaClient({
+      datasources: { db: { url: process.env.CONTROL_PLANE_DATABASE_URL?.trim() || process.env.DATABASE_URL } },
+      log: process.env.NODE_ENV === 'production'
+        ? [{ level: 'error', emit: 'stdout' }]
+        : [{ level: 'error', emit: 'stdout' }, { level: 'warn', emit: 'stdout' }],
     });
 
     this.registerTenantScopingMiddleware();
@@ -46,7 +55,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             throw new TypeError('$transaction expects a callback or an array of Prisma promises');
           };
         }
-        const source = transaction && property in transaction ? transaction : target;
+        const unscoped = tenantContext.getStore()?.mode === 'unscoped';
+        const source = transaction && property in transaction
+          ? transaction
+          : unscoped && property in target.controlPlane
+            ? target.controlPlane
+            : target;
         const value = Reflect.get(source, property, source);
         return typeof value === 'function' ? value.bind(source) : value;
       },
@@ -79,12 +93,16 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     });
   }
 
+  async runInControlPlane<T>(callback: (client: PrismaClient) => Promise<T>): Promise<T> {
+    return callback(this.controlPlane);
+  }
+
   async onModuleInit() {
-    await this.$connect();
+    await Promise.all([this.$connect(), this.controlPlane.$connect()]);
   }
 
   async onModuleDestroy() {
-    await this.$disconnect();
+    await Promise.all([this.$disconnect(), this.controlPlane.$disconnect()]);
   }
 
   /**

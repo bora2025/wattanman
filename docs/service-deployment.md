@@ -23,6 +23,8 @@ Wattaman uses one versioned image with independently executed process roles.
 - Runs as a pre-deploy release process with the migration database role.
 - Never serves HTTP and never runs in API or worker startup.
 
-API, worker, and migration processes receive separate least-privilege database URLs and credentials. Queue-enabled processes additionally receive `REDIS_URL`.
+API and worker processes receive `DATABASE_URL` for the RLS-enforced school-runtime identity and `CONTROL_PLANE_DATABASE_URL` for audited cross-school operations. The migration process receives only its migration identity. Queue-enabled processes additionally receive `REDIS_URL`.
+
+The operations worker establishes an explicit unscoped control-plane context before Nest registers any schedules. Durable queue workers derive scoped or control-plane context from their validated job envelope before invoking handlers.
 
 The API exposes `/live` without dependency access and `/ready` only after a successful database query. Deployment health checks use readiness; process supervisors may use liveness.

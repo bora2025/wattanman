@@ -5,6 +5,11 @@ jest.mock('dns/promises', () => ({ resolveTxt: jest.fn() }));
 
 const mockedResolveTxt = resolveTxt as jest.MockedFunction<typeof resolveTxt>;
 
+function serviceFor(prisma: any) {
+  prisma.runInControlPlane = (callback: (client: any) => unknown) => callback(prisma);
+  return new SchoolDomainService(prisma);
+}
+
 describe('SchoolDomainService', () => {
   const originalEnvironment = process.env;
 
@@ -32,7 +37,7 @@ describe('SchoolDomainService', () => {
         findFirst: jest.fn().mockResolvedValue({ school }),
       },
     } as any;
-    const service = new SchoolDomainService(prisma);
+    const service = serviceFor(prisma);
 
     await expect(service.resolve('alpha.example.com')).resolves.toBe(school);
     expect(prisma.schoolDomain.findFirst).toHaveBeenCalledWith({
@@ -49,7 +54,7 @@ describe('SchoolDomainService', () => {
         findFirst: jest.fn().mockResolvedValue({ school }),
       },
     } as any;
-    const service = new SchoolDomainService(prisma);
+    const service = serviceFor(prisma);
 
     await service.resolve('alpha.example.com');
     await service.resolve('alpha.example.com');
@@ -64,7 +69,7 @@ describe('SchoolDomainService', () => {
       school: { findUnique: jest.fn().mockResolvedValue(platformSchool) },
       schoolDomain: { findFirst: jest.fn() },
     } as any;
-    const service = new SchoolDomainService(prisma);
+    const service = serviceFor(prisma);
 
     await expect(service.resolve('platform.example.com')).resolves.toBe(
       platformSchool,
@@ -84,7 +89,7 @@ describe('SchoolDomainService', () => {
           .mockResolvedValueOnce({ school }),
       },
     } as any;
-    const service = new SchoolDomainService(prisma);
+    const service = serviceFor(prisma);
 
     await expect(service.resolve('alpha.schools.example.com')).resolves.toBe(
       school,
@@ -105,7 +110,7 @@ describe('SchoolDomainService', () => {
       school: { findUnique: jest.fn() },
       schoolDomain: { findFirst: jest.fn().mockResolvedValue(null) },
     } as any;
-    const service = new SchoolDomainService(prisma);
+    const service = serviceFor(prisma);
 
     await expect(service.resolve('unknown.example.net')).resolves.toBeNull();
   });
@@ -115,7 +120,7 @@ describe('SchoolDomainService', () => {
     const prisma = {
       schoolDomain: { upsert: jest.fn().mockResolvedValue({ id: 'domain-a' }) },
     } as any;
-    const service = new SchoolDomainService(prisma);
+    const service = serviceFor(prisma);
 
     await service.registerManagedDomain('school-a', 'alpha');
     expect(prisma.schoolDomain.upsert).toHaveBeenCalledWith({
@@ -136,7 +141,7 @@ describe('SchoolDomainService', () => {
         findUnique: jest.fn().mockResolvedValue({ schoolId: 'school-b' }),
       },
     } as any;
-    const service = new SchoolDomainService(prisma);
+    const service = serviceFor(prisma);
 
     await expect(
       service.registerVerifiedDomain('school-a', 'alpha.example.com'),
@@ -153,7 +158,7 @@ describe('SchoolDomainService', () => {
         })),
       },
     } as any;
-    const service = new SchoolDomainService(prisma);
+    const service = serviceFor(prisma);
 
     const result = await service.requestCustomDomain(
       'school-a',
@@ -187,7 +192,7 @@ describe('SchoolDomainService', () => {
     mockedResolveTxt.mockResolvedValue([
       ['wattaman-verification=', 'token-a'],
     ]);
-    const service = new SchoolDomainService(prisma);
+    const service = serviceFor(prisma);
 
     const result = await service.verifyCustomDomain('school-a', 'domain-a');
 
@@ -216,7 +221,7 @@ describe('SchoolDomainService', () => {
       },
     } as any;
     mockedResolveTxt.mockResolvedValue([['wrong-value']]);
-    const service = new SchoolDomainService(prisma);
+    const service = serviceFor(prisma);
 
     await expect(
       service.verifyCustomDomain('school-a', 'domain-a'),
@@ -241,7 +246,7 @@ describe('SchoolDomainService', () => {
       },
     } as any;
     mockedResolveTxt.mockRejectedValue({ code: 'ENODATA' });
-    const service = new SchoolDomainService(prisma);
+    const service = serviceFor(prisma);
 
     await expect(
       service.verifyCustomDomain('school-a', 'domain-a'),

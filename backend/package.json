@@ -29,7 +29,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:isolation": "jest --config ./test/jest-e2e.json --runInBand test/tenant-isolation.e2e-spec.ts",
     "test:lifecycle": "jest --config ./test/jest-e2e.json --runInBand test/extension-lifecycle.e2e-spec.ts",
-    "test:database-scope": "jest --config ./test/jest-e2e.json --runInBand test/tenant-database-scope.e2e-spec.ts"
+    "test:database-scope": "jest --config ./test/jest-e2e.json --runInBand test/tenant-database-scope.e2e-spec.ts",
+    "test:database-identities": "jest --config ./test/jest-e2e.json --runInBand test/database-identities.e2e-spec.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

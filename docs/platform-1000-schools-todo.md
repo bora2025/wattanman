@@ -71,7 +71,7 @@ An item is complete only when implementation, automated tests, documentation, de
 - [ ] Enable row-level security on every tenant-owned core table.
 - [ ] Add deny-by-default RLS policies.
 - [x] Restrict unscoped operations to audited platform paths.
-- [ ] Verify background jobs explicitly establish tenant scope.
+- [x] Verify background jobs explicitly establish tenant scope.
 - [x] Add school ID to every tenant-owned unique key and index where required.
   - An automated schema-registry test now fails when any model carrying `schoolId` is missing from tenant query enforcement.
 

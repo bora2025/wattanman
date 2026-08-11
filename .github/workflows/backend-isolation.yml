@@ -33,6 +33,7 @@ jobs:
         working-directory: backend
     env:
       DATABASE_URL: postgresql://wattaman:wattaman@localhost:5432/wattaman_test?schema=public
+      DATABASE_ADMIN_URL: postgresql://wattaman:wattaman@localhost:5432/wattaman_test?schema=public
       JWT_SECRET: isolation-ci-secret
       NODE_ENV: test
     steps:
@@ -44,7 +45,9 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci --legacy-peer-deps
       - run: npx prisma migrate deploy --schema=prisma/schema.prisma
+      - run: npm run db:roles:provision
       - run: npm run build
       - run: npm run test:isolation
       - run: npm run test:database-scope
+      - run: npm run test:database-identities
       - run: npm run test:lifecycle
