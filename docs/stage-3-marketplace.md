@@ -56,3 +56,7 @@ verification decision is written to the audit log.
 The schema change is additive. During rollback, retain verification columns and
 roll back application images only. Existing internal publishers are backfilled
 as verified; external publishers remain fail-closed unless explicitly approved.
+
+Production API deployment `42c88ae7-5dd7-4a2b-9933-8e552627677c` and frontend
+deployment `26b4ed61-df9b-4c5f-bdb9-9052e0a06d51` completed successfully on
+2026-08-11.
