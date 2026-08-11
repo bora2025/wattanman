@@ -203,8 +203,10 @@ An item is complete only when implementation, automated tests, documentation, de
 
 - [x] Enforce uploader/reviewer separation when required.
   - Approval and rejection require a verifiable reviewer identity different from the recorded uploader whenever policy is enabled; production defaults to separation, with an explicit environment override only for an accepted single-operator workflow. Existing scoped publisher roles and review-note requirements remain independent gates. The 255-test backend suite and both builds passed, and Railway API deployment `4b2255b2-ff7c-4e09-b5d8-9259023014a2` succeeded on 2026-08-11.
-- [ ] Add structured technical, permission, privacy, and compatibility review.
-- [ ] Require review notes for every decision.
+- [x] Add structured technical, permission, privacy, and compatibility review.
+  - Review summaries expose validator evidence, capability deltas, privacy/data-use declarations, and platform compatibility. Reviewers must record PASS/WARN/FAIL plus notes for all four domains; approvals cannot contain failures and rejections must identify one. Assessments are append-only review-event JSON and the platform UI provides an in-page decision form. A clean 35-migration rehearsal had zero drift, the 256-test backend suite and both builds passed, and Railway deployments `9307aa79-d30f-4534-b0fc-58801df643b4` (API) and `2a75a813-90ca-473e-84dd-e1c67df6540b` (frontend) succeeded on 2026-08-11.
+- [x] Require review notes for every decision.
+  - Approval and rejection require overall decision notes plus non-empty notes for every structured review domain; rejection appeals already require an explanation. Missing notes fail before lifecycle mutation, and append-only review events retain the actor, role, decision, assessment, and timestamp.
 - [ ] Add appeal workflow and audit history.
 - [ ] Add publication checklist.
 - [ ] Add deprecate, delist, emergency block, retire, and purge controls.

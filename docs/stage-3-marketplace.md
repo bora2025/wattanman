@@ -381,3 +381,23 @@ notes, append-only review events, and audit logs still apply.
 Production API deployment `4b2255b2-ff7c-4e09-b5d8-9259023014a2` completed
 successfully on 2026-08-11. Validation passed with 255 backend tests, one
 intentional skip, and successful backend and frontend production builds.
+
+## Structured release review
+
+The release review summary combines four evidence domains: the latest technical
+validation report, requested and changed capabilities, catalog privacy/data-use
+declarations, and current-platform compatibility. Before approval or rejection,
+the reviewer records `PASS`, `WARN`, or `FAIL` and non-empty notes for each
+domain, plus overall decision notes. Approval rejects any failed domain;
+rejection requires at least one failed domain.
+
+The assessment is stored as JSON on the append-only `ExtensionReview` event,
+alongside actor, role, decision, notes, and timestamp. The platform UI renders
+the evidence and an in-page assessment form rather than relying on browser
+prompts. Appeals retain their own mandatory explanation and audit event.
+
+The clean 35-migration rehearsal completed with zero schema drift. Production
+API deployment `9307aa79-d30f-4534-b0fc-58801df643b4` and frontend deployment
+`2a75a813-90ca-473e-84dd-e1c67df6540b` completed successfully on 2026-08-11.
+Validation passed with 256 backend tests, one intentional skip, and successful
+backend and frontend production builds.
