@@ -155,8 +155,10 @@ An item is complete only when implementation, automated tests, documentation, de
   - Railway deployment `6787d681-d942-46fa-a11f-2e7d26de6641` reports three Southeast Asia replicas; 20/20 production readiness requests passed on 2026-08-11.
 - [x] Prove only one migration job executes.
   - Two concurrent production runners serialized on advisory lock `864220261`; evidence is recorded in `docs/stage-2-validation.md`.
-- [ ] Prove scheduled jobs do not duplicate.
-- [ ] Complete a rolling deployment without incompatible-schema errors.
+- [x] Prove scheduled jobs do not duplicate.
+  - Every cron path has a Redis time-bucket claim; independent-replica contention and loser no-side-effect tests pass, and three-replica deployment `ee0859e9-1882-4f38-9acb-176bff0f39e5` is ready.
+- [x] Complete a rolling deployment without incompatible-schema errors.
+  - Three-replica redeploy `15c77d65-c3a3-4f05-b468-ffab9f9373c1` completed with 26/26 continuous readiness probes and no compatibility error.
 - [ ] Recover and replay a dead-letter job successfully.
 
 ## Stage 3 — Marketplace Production Hardening

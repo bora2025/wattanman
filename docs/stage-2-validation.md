@@ -27,3 +27,10 @@ Redis time-bucket key before performing work. A two-replica concurrency test
 uses independent guard instances sharing one Redis-compatible state and proves
 exactly one winner; service tests prove losing replicas perform no database
 scan or side effect.
+
+## Rolling deployment
+
+Railway redeploy `15c77d65-c3a3-4f05-b468-ffab9f9373c1` rolled the schema-
+compatibility-checked API across three replicas. Continuous public readiness
+probing recorded 26 successful responses and zero failures from trigger through
+deployment success.
