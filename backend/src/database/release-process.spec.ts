@@ -24,8 +24,8 @@ describe('production release process', () => {
   it('holds a PostgreSQL advisory lock around migrate deploy', () => {
     const runner = readFileSync(join(process.cwd(), 'prisma', 'release-migrate.js'), 'utf8');
     expect(runner).toContain('pg_advisory_xact_lock');
-    expect(runner).toContain('pg_advisory_xact_lock(${RELEASE_LOCK_ID})::text AS locked');
-    expect(runner).not.toContain('`SELECT pg_advisory_xact_lock(${RELEASE_LOCK_ID})`');
+    expect(runner).toContain('$executeRawUnsafe(`DO $$ BEGIN PERFORM pg_advisory_xact_lock(${RELEASE_LOCK_ID}); END $$`)');
+    expect(runner).not.toContain('$queryRawUnsafe(`SELECT pg_advisory_xact_lock');
     expect(runner).toContain("'migrate', 'deploy'");
     expect(runner).toContain("'migrate', 'resolve', '--applied', LEGACY_BASELINE");
     expect(runner).toContain('synchronizeHistoricalBaselineChecksum');
