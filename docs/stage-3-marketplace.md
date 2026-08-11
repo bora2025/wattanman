@@ -152,6 +152,32 @@ deployment `ef0c16cd-4e96-4fa7-a0b7-34d31caa0769` completed successfully on
 2026-08-11. Validation passed with 228 backend tests, one intentional skip, and
 successful backend and frontend production builds.
 
+## Validation report provenance
+
+Each package validation persists report schema v1 and the exact pipeline,
+isolated worker runner, package validator, manifest schema, Ajv, JSZip, ClamAV
+engine, and ClamAV signature database versions used for the decision. Structured
+errors and warnings remain immutable report evidence, while platform release
+details display both the report and tool provenance for operator review.
+
+ClamAV version data comes from the daemon's framed `VERSION` command and is
+cached for five minutes; extension-worker startup validates both version and
+scan commands. The pipeline records provenance atomically with final validation
+status and release lifecycle state, preventing a passed or rejected decision
+from being detached from its evidence.
+
+The migration is additive: existing reports retain null tool provenance and are
+displayed as unavailable, while all new reports use schema v1. Rollback restores
+the previous application images and leaves the added JSON provenance and schema
+version columns intact.
+
+The complete 34-migration chain replayed from empty PostgreSQL with no Prisma
+schema drift. Production API deployment `04cba07a-a472-4fa6-868d-ef8d6321489e`,
+frontend deployment `9ea185cc-cf32-4b4c-8b5f-6ccc5b5d79f6`, and extension-worker
+deployment `12d5eee6-efa7-4e10-aa61-416fddf0baec` completed successfully on
+2026-08-11. Validation passed with 249 backend tests, one intentional skip, and
+successful backend and frontend production builds.
+
 ## Versioned manifest JSON Schema
 
 Theme and declarative-module manifest v1 contracts are executable JSON Schema
