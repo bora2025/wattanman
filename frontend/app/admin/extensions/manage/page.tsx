@@ -11,6 +11,7 @@ interface Installation {
   id: string
   enabled: boolean
   billingStatus: string
+  lifecycleState?: 'REQUESTED' | 'PAYMENT_REVIEW' | 'APPROVED' | 'INSTALLED' | 'ACTIVE' | 'UNINSTALLED'
   updatePolicy: string
   requestedAt?: string | null
   approvedAt?: string | null
@@ -138,15 +139,14 @@ function ManageExtensionsContent() {
   const visible = installations.filter(item =>
     !query || `${item.extension.name} ${item.extension.key} ${item.extension.runtimeType}`.toLowerCase().includes(query),
   )
-  const state = (item: Installation) => item.enabled
-    ? 'Active'
-    : item.uninstalledAt
+  const state = (item: Installation) => {
+    const lifecycleState = item.lifecycleState || (item.uninstalledAt ? 'UNINSTALLED' : item.enabled ? 'ACTIVE' : item.installedAt ? 'INSTALLED' : item.approvedAt ? 'APPROVED' : 'REQUESTED')
+    return lifecycleState === 'PAYMENT_REVIEW'
+    ? 'Payment review'
+    : lifecycleState === 'UNINSTALLED'
       ? 'Removed'
-      : item.installedAt
-        ? 'Installed'
-        : item.approvedAt
-          ? 'Approved'
-          : 'Requested'
+      : lifecycleState.charAt(0) + lifecycleState.slice(1).toLowerCase()
+  }
 
   return (
     <div className="page-shell">

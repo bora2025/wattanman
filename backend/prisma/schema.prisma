@@ -465,6 +465,7 @@ model ExtensionInstallation {
   installedVersionId String
   installedVersion   ExtensionVersion         @relation(fields: [installedVersionId], references: [id], onDelete: Restrict)
   enabled            Boolean                  @default(false)
+  lifecycleState     String                   @default("REQUESTED") // REQUESTED | PAYMENT_REVIEW | APPROVED | INSTALLED | ACTIVE | UNINSTALLED
   configuration      Json?
   billingStatus      String                   @default("PENDING")
   requestSchoolName  String?
@@ -504,6 +505,7 @@ model ExtensionInstallation {
 
   @@unique([schoolId, extensionId])
   @@index([schoolId, enabled])
+  @@index([schoolId, lifecycleState, updatedAt])
   @@index([extensionId, installedVersionId])
   @@index([purgeAfter])
   @@index([updatePolicy, availableVersionId])

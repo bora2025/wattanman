@@ -91,6 +91,7 @@ interface InstallationRecord {
   id: string;
   enabled: boolean;
   billingStatus: string;
+  lifecycleState?: "REQUESTED" | "PAYMENT_REVIEW" | "APPROVED" | "INSTALLED" | "ACTIVE" | "UNINSTALLED";
   requestSchoolName?: string | null;
   requestAdminName?: string | null;
   requestAdminEmail?: string | null;
@@ -1169,6 +1170,20 @@ function installationPricingLabel(installation: InstallationRecord) {
     : `${amount} one-time`;
 }
 
+function installationLifecycleState(installation: InstallationRecord) {
+  return installation.lifecycleState || (installation.uninstalledAt
+    ? "UNINSTALLED"
+    : installation.enabled
+      ? "ACTIVE"
+      : installation.installedAt
+        ? "INSTALLED"
+        : installation.approvedAt
+          ? "APPROVED"
+          : installation.paymentSubmittedAt
+            ? "PAYMENT_REVIEW"
+            : "REQUESTED");
+}
+
 function InstallationCard({
   installation,
   reload,
@@ -1179,6 +1194,7 @@ function InstallationCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const newestVersion = installation.extension.versions[0];
+  const lifecycleState = installationLifecycleState(installation);
 
   async function openPaymentEvidence() {
     const downloadWindow = window.open("about:blank", "_blank");
@@ -1377,15 +1393,7 @@ function InstallationCard({
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {installation.school.subdomain} · v
           {installation.installedVersion.version} ·{" "}
-          {installation.enabled
-            ? "ACTIVE"
-            : installation.uninstalledAt
-              ? "UNINSTALLED"
-              : installation.installedAt
-                ? "INSTALLED"
-                : installation.approvedAt
-                  ? "APPROVED"
-                  : "REQUESTED"}
+          {lifecycleState.replaceAll("_", " ")}
         </p>
         {installation.purgeAfter && (
           <p className="text-[11px] text-amber-600 dark:text-amber-400">
@@ -1423,7 +1431,7 @@ function InstallationCard({
             <select
               className="input ml-2 py-1 text-xs"
               value={installation.billingStatus}
-              disabled={busy}
+              disabled={busy || lifecycleState === "ACTIVE"}
               onChange={(event) =>
                 action("billing", {
                   method: "PATCH",
@@ -1439,16 +1447,16 @@ function InstallationCard({
             </select>
           </label>
         )}
-        {!installation.approvedAt && (
+        {["REQUESTED", "PAYMENT_REVIEW"].includes(lifecycleState) && (
           <button
-            disabled={busy}
+            disabled={busy || (installation.requestPricingModel !== "FREE" && installation.billingStatus !== "ACTIVE")}
             className="btn-outline btn-sm"
             onClick={() => action("approve")}
           >
             Approve
           </button>
         )}
-        {installation.approvedAt && !installation.installedAt && (
+        {lifecycleState === "APPROVED" && (
           <button
             disabled={busy}
             className="btn-outline btn-sm"
@@ -1457,9 +1465,7 @@ function InstallationCard({
             Install
           </button>
         )}
-        {installation.installedAt &&
-          !installation.enabled &&
-          !installation.uninstalledAt && (
+        {lifecycleState === "INSTALLED" && (
             <button
               disabled={busy}
               className="btn-primary btn-sm"
@@ -1474,7 +1480,7 @@ function InstallationCard({
               Activate
             </button>
           )}
-        {installation.enabled && (
+        {lifecycleState === "ACTIVE" && (
           <button
             disabled={busy}
             className="btn-outline btn-sm"
@@ -1522,7 +1528,7 @@ function InstallationCard({
               : "Operator feedback"}
           </button>
         )}
-        {!installation.uninstalledAt && (
+        {["INSTALLED", "ACTIVE"].includes(lifecycleState) && (
           <button
             disabled={busy}
             className="btn-outline btn-sm"
@@ -1602,21 +1608,17 @@ function ExtensionsContent() {
   });
   const filteredInstallations = installations.filter((installation) => {
     if (installationFilter === "ALL") return true;
-    if (installationFilter === "ACTIVE") return installation.enabled;
+    if (installationFilter === "ACTIVE") return installationLifecycleState(installation) === "ACTIVE";
     if (installationFilter === "REQUESTED")
-      return !!installation.requestedAt && !installation.approvedAt;
+      return installationLifecycleState(installation) === "REQUESTED";
     if (installationFilter === "PAYMENT")
-      return !!installation.paymentSubmittedAt && installation.billingStatus === "PENDING";
+      return installationLifecycleState(installation) === "PAYMENT_REVIEW";
     if (installationFilter === "READY")
-      return !!installation.approvedAt && !installation.installedAt;
+      return installationLifecycleState(installation) === "APPROVED";
     if (installationFilter === "INACTIVE")
-      return (
-        !!installation.installedAt &&
-        !installation.enabled &&
-        !installation.uninstalledAt
-      );
+      return installationLifecycleState(installation) === "INSTALLED";
     if (installationFilter === "UNINSTALLED")
-      return !!installation.uninstalledAt;
+      return installationLifecycleState(installation) === "UNINSTALLED";
     return true;
   });
 
@@ -1971,7 +1973,7 @@ function ExtensionsContent() {
                   [
                     "installations",
                     "Requests & installs",
-                    installations.filter((item) => item.requestedAt && !item.approvedAt).length,
+                    installations.filter((item) => installationLifecycleState(item) === "REQUESTED").length,
                   ],
                   [
                     "operations",
@@ -2489,12 +2491,12 @@ function ExtensionsContent() {
                 </p>
                 <div className="mb-3 flex flex-wrap gap-2">
                   {[
-                    ["REQUESTED", installations.filter(item => item.requestedAt && !item.approvedAt).length],
-                    ["PAYMENT", installations.filter(item => item.paymentSubmittedAt && item.billingStatus === "PENDING").length],
-                    ["READY", installations.filter(item => item.approvedAt && !item.installedAt).length],
-                    ["ACTIVE", installations.filter(item => item.enabled).length],
-                    ["INACTIVE", installations.filter(item => item.installedAt && !item.enabled && !item.uninstalledAt).length],
-                    ["UNINSTALLED", installations.filter(item => item.uninstalledAt).length],
+                    ["REQUESTED", installations.filter(item => installationLifecycleState(item) === "REQUESTED").length],
+                    ["PAYMENT", installations.filter(item => installationLifecycleState(item) === "PAYMENT_REVIEW").length],
+                    ["READY", installations.filter(item => installationLifecycleState(item) === "APPROVED").length],
+                    ["ACTIVE", installations.filter(item => installationLifecycleState(item) === "ACTIVE").length],
+                    ["INACTIVE", installations.filter(item => installationLifecycleState(item) === "INSTALLED").length],
+                    ["UNINSTALLED", installations.filter(item => installationLifecycleState(item) === "UNINSTALLED").length],
                     ["ALL", installations.length],
                   ].map(([status, count]) => (
                     <button

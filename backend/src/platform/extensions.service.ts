@@ -899,7 +899,7 @@ export class ExtensionsService {
     if (nextStatus === "BLOCKED") {
       await this.prisma.extensionInstallation.updateMany({
         where: { installedVersionId: versionId, enabled: true },
-        data: { enabled: false },
+        data: { enabled: false, lifecycleState: "INSTALLED" },
       });
     }
     if (nextStatus === "RETIRED") {
@@ -1860,7 +1860,7 @@ export class ExtensionsService {
       });
       await this.prisma.extensionInstallation.updateMany({
         where: { installedVersion: { signingKeyId: keyId }, enabled: true },
-        data: { enabled: false },
+        data: { enabled: false, lifecycleState: "INSTALLED" },
       });
     }
     await this.log(
@@ -1900,7 +1900,7 @@ export class ExtensionsService {
       });
       await this.prisma.extensionInstallation.updateMany({
         where: { extension: { publisherId }, enabled: true },
-        data: { enabled: false },
+        data: { enabled: false, lifecycleState: "INSTALLED" },
       });
     } else {
       await this.prisma.extension.updateMany({

@@ -41,6 +41,7 @@ interface Installation {
   extensionId: string
   enabled: boolean
   billingStatus: string
+  lifecycleState?: 'REQUESTED' | 'PAYMENT_REVIEW' | 'APPROVED' | 'INSTALLED' | 'ACTIVE' | 'UNINSTALLED'
   requestedAt?: string | null
   approvedAt?: string | null
   installedAt?: string | null
@@ -211,11 +212,12 @@ function AdminExtensionsContent() {
 
   function extensionState(installation?: Installation) {
     if (!installation) return null
-    if (installation.enabled) return 'Active'
-    if (installation.uninstalledAt) return 'Removed'
-    if (installation.installedAt) return 'Installed'
-    if (installation.approvedAt) return 'Approved'
-    return 'Requested'
+    const lifecycleState = installation.lifecycleState || (installation.uninstalledAt ? 'UNINSTALLED' : installation.enabled ? 'ACTIVE' : installation.installedAt ? 'INSTALLED' : installation.approvedAt ? 'APPROVED' : 'REQUESTED')
+    return lifecycleState === 'PAYMENT_REVIEW'
+      ? 'Payment review'
+      : lifecycleState === 'UNINSTALLED'
+        ? 'Removed'
+        : lifecycleState.charAt(0) + lifecycleState.slice(1).toLowerCase()
   }
 
   function ExtensionRow({ extension }: { extension: DirectoryExtension }) {

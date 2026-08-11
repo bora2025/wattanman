@@ -408,6 +408,12 @@ export class ExtensionInstallationsService {
           data: {
             requestedAt: new Date(),
             requestedBy: actor.userId,
+            lifecycleState: "REQUESTED",
+            enabled: false,
+            approvedAt: null,
+            approvedBy: null,
+            installedAt: null,
+            installedBy: null,
             uninstalledAt: null,
             purgeAfter: null,
             billingStatus: extension.pricingModel === "FREE" ? "ACTIVE" : "PENDING",
@@ -424,6 +430,7 @@ export class ExtensionInstallationsService {
             installedVersionId: extension.versions[0].id,
             requestedAt: new Date(),
             requestedBy: actor.userId,
+            lifecycleState: "REQUESTED",
             billingStatus: extension.pricingModel === "FREE" ? "ACTIVE" : "PENDING",
             requestSchoolName: school.name,
             requestAdminName: admin.name,
@@ -436,6 +443,7 @@ export class ExtensionInstallationsService {
       schoolId,
       requestSchoolName: school.name,
       requestAdminName: admin.name,
+      toState: "REQUESTED",
     });
     return installation;
   }
@@ -489,6 +497,10 @@ export class ExtensionInstallationsService {
       requestedBy: actor.userId,
       approvedAt: null,
       approvedBy: null,
+      installedAt: null,
+      installedBy: null,
+      enabled: false,
+      lifecycleState: "PAYMENT_REVIEW",
       billingStatus: "PENDING",
       requestSchoolName: school.name,
       requestAdminName: admin.name,
@@ -522,6 +534,7 @@ export class ExtensionInstallationsService {
       currency: extension.currency,
       billingInterval: extension.billingInterval,
       paymentReference: requestData.paymentReference,
+      toState: "PAYMENT_REVIEW",
     });
     return installation;
   }
@@ -584,6 +597,10 @@ export class ExtensionInstallationsService {
       requestedBy: actor.userId,
       approvedAt: null,
       approvedBy: null,
+      installedAt: null,
+      installedBy: null,
+      enabled: false,
+      lifecycleState: "REQUESTED",
       billingStatus: "PENDING",
       requestSchoolName: school.name,
       requestAdminName: admin.name,
@@ -606,6 +623,7 @@ export class ExtensionInstallationsService {
       : await this.prisma.extensionInstallation.create({ data: { schoolId, extensionId, ...requestData } });
     await this.log(actor, "PAYMENT_EVIDENCE_INITIATED", installation.id, extension.name, {
       extensionId, schoolId, size, checksum,
+      toState: "REQUESTED",
     });
     return {
       installationId: installation.id,
@@ -640,11 +658,13 @@ export class ExtensionInstallationsService {
     const now = new Date();
     const finalized = await this.prisma.extensionInstallation.update({
       where: { id: installation.id },
-      data: { invoiceUploadedAt: now, paymentSubmittedAt: now },
+      data: { invoiceUploadedAt: now, paymentSubmittedAt: now, lifecycleState: "PAYMENT_REVIEW" },
     });
     await this.log(actor, "PAYMENT_EVIDENCE_SUBMITTED", installation.id, installation.extension.name, {
       checksum: installation.invoiceChecksum,
       size: installation.invoiceSize,
+      fromState: this.installationLifecycleState(installation),
+      toState: "PAYMENT_REVIEW",
     });
     return finalized;
   }
@@ -820,13 +840,29 @@ export class ExtensionInstallationsService {
     const existing = await this.requireInstallation(installationId);
     if (!existing.requestedAt)
       throw new ConflictException("School has not requested this extension");
+    const state = this.installationLifecycleState(existing);
+    if (state === "APPROVED") return existing;
+    if (!["REQUESTED", "PAYMENT_REVIEW"].includes(state))
+      throw new ConflictException(`Extension cannot be approved from ${state}`);
+    if (
+      existing.extension.pricingModel &&
+      existing.extension.pricingModel !== "FREE" &&
+      existing.billingStatus !== "ACTIVE"
+    )
+      throw new ConflictException("Non-free extension billing must be approved first");
+    if (
+      ["ONE_TIME", "SUBSCRIPTION"].includes(existing.extension.pricingModel) &&
+      !existing.paymentSubmittedAt
+    ) throw new ConflictException("Payment evidence must be reviewed before approval");
     const updated = await this.prisma.extensionInstallation.update({
       where: { id: installationId },
-      data: { approvedAt: new Date(), approvedBy: actor.userId },
+      data: { approvedAt: new Date(), approvedBy: actor.userId, lifecycleState: "APPROVED" },
     });
     await this.log(actor, "APPROVE", updated.id, existing.extension.name, {
       schoolId: existing.schoolId,
       extensionId: existing.extensionId,
+      fromState: state,
+      toState: "APPROVED",
     });
     return updated;
   }
@@ -836,21 +872,26 @@ export class ExtensionInstallationsService {
     if (!allowed.includes(status))
       throw new BadRequestException(`billingStatus must be one of ${allowed.join(", ")}`);
     const existing = await this.requireInstallation(installationId);
+    if (existing.extension.pricingModel === "FREE")
+      throw new ConflictException("Free extensions do not have a billing review");
+    if (this.installationLifecycleState(existing) === "ACTIVE" && status !== "ACTIVE")
+      throw new ConflictException("Deactivate the extension before changing active billing");
     const updated = await this.prisma.extensionInstallation.update({
       where: { id: installationId },
-      data: { billingStatus: status, enabled: status === "ACTIVE" ? undefined : false },
+      data: { billingStatus: status },
     });
     await this.log(actor, "BILLING_STATUS", updated.id, existing.extension.name, {
       schoolId: existing.schoolId,
       extensionId: existing.extensionId,
       billingStatus: status,
+      lifecycleState: this.installationLifecycleState(existing),
     });
     return updated;
   }
 
   async install(installationId: string, versionId: string, actor: Actor) {
     const existing = await this.requireInstallation(installationId);
-    if (!existing.approvedAt)
+    if (this.installationLifecycleState(existing) !== "APPROVED")
       throw new ConflictException(
         "Extension request must be approved before installation",
       );
@@ -880,6 +921,7 @@ export class ExtensionInstallationsService {
         installedVersionId: versionId,
         installedAt: new Date(),
         installedBy: actor.userId,
+        lifecycleState: "INSTALLED",
         uninstalledAt: null,
         purgeAfter: null,
       },
@@ -888,6 +930,8 @@ export class ExtensionInstallationsService {
       schoolId: existing.schoolId,
       extensionId: existing.extensionId,
       versionId,
+      fromState: "APPROVED",
+      toState: "INSTALLED",
     });
     return updated;
   }
@@ -1144,11 +1188,16 @@ export class ExtensionInstallationsService {
 
   async activate(installationId: string, enabled: boolean, actor: Actor) {
     const existing = await this.requireInstallation(installationId);
-    if (enabled && (!existing.approvedAt || !existing.installedAt)) {
+    const state = this.installationLifecycleState(existing);
+    if (enabled && state === "ACTIVE") return existing;
+    if (!enabled && state === "INSTALLED") return existing;
+    if (enabled && state !== "INSTALLED") {
       throw new ConflictException(
         "Extension must be approved and installed before activation",
       );
     }
+    if (!enabled && state !== "ACTIVE")
+      throw new ConflictException(`Extension cannot be deactivated from ${state}`);
     if (enabled && existing.installedVersion.lifecycleStatus !== "PUBLISHED") {
       throw new ConflictException(
         "Only a published extension version can be activated",
@@ -1243,20 +1292,29 @@ export class ExtensionInstallationsService {
     }
     const updated = await this.prisma.extensionInstallation.update({
       where: { id: installationId },
-      data: { enabled, configuration },
+      data: { enabled, configuration, lifecycleState: enabled ? "ACTIVE" : "INSTALLED" },
     });
     await this.log(
       actor,
       enabled ? "ACTIVATE" : "DEACTIVATE",
       updated.id,
       existing.extension.name,
-      { schoolId: existing.schoolId, extensionId: existing.extensionId },
+      {
+        schoolId: existing.schoolId,
+        extensionId: existing.extensionId,
+        fromState: state,
+        toState: enabled ? "ACTIVE" : "INSTALLED",
+      },
     );
     return updated;
   }
 
   async uninstall(installationId: string, actor: Actor) {
     const existing = await this.requireInstallation(installationId);
+    const state = this.installationLifecycleState(existing);
+    if (state === "UNINSTALLED") return existing;
+    if (!["INSTALLED", "ACTIVE"].includes(state))
+      throw new ConflictException(`Extension cannot be uninstalled from ${state}`);
     const installations =
       (await this.prisma.extensionInstallation.findMany({
         where: {
@@ -1296,12 +1354,14 @@ export class ExtensionInstallationsService {
     );
     const updated = await this.prisma.extensionInstallation.update({
       where: { id: installationId },
-      data: { enabled: false, uninstalledAt, purgeAfter },
+      data: { enabled: false, uninstalledAt, purgeAfter, lifecycleState: "UNINSTALLED" },
     });
     await this.log(actor, "UNINSTALL", updated.id, existing.extension.name, {
       schoolId: existing.schoolId,
       extensionId: existing.extensionId,
       purgeAfter: purgeAfter.toISOString(),
+      fromState: state,
+      toState: "UNINSTALLED",
     });
     return updated;
   }
@@ -1317,6 +1377,23 @@ export class ExtensionInstallationsService {
     if (!installation)
       throw new NotFoundException("Extension installation not found");
     return installation;
+  }
+
+  private installationLifecycleState(installation: {
+    lifecycleState?: string | null;
+    enabled?: boolean;
+    paymentSubmittedAt?: Date | null;
+    approvedAt?: Date | null;
+    installedAt?: Date | null;
+    uninstalledAt?: Date | null;
+  }) {
+    if (installation.lifecycleState) return installation.lifecycleState;
+    if (installation.uninstalledAt) return "UNINSTALLED";
+    if (installation.enabled) return "ACTIVE";
+    if (installation.installedAt) return "INSTALLED";
+    if (installation.approvedAt) return "APPROVED";
+    if (installation.paymentSubmittedAt) return "PAYMENT_REVIEW";
+    return "REQUESTED";
   }
 
   private async requireInstallationSummary(id: string) {

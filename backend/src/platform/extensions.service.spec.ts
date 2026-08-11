@@ -611,7 +611,7 @@ describe("ExtensionsService", () => {
 
     expect(prisma.extensionInstallation.updateMany).toHaveBeenCalledWith({
       where: { installedVersionId: "version-1", enabled: true },
-      data: { enabled: false },
+      data: { enabled: false, lifecycleState: "INSTALLED" },
     });
   });
 
@@ -906,7 +906,7 @@ describe("ExtensionsService", () => {
     });
     expect(prisma.extensionInstallation.updateMany).toHaveBeenCalledWith({
       where: { extension: { publisherId: "publisher-1" }, enabled: true },
-      data: { enabled: false },
+      data: { enabled: false, lifecycleState: "INSTALLED" },
     });
     expect(audit.log).toHaveBeenCalledWith(
       expect.objectContaining({ resource: "EXTENSION_PUBLISHER" }),
@@ -1302,7 +1302,7 @@ describe("ExtensionsService", () => {
     });
     expect(prisma.extensionInstallation.updateMany).toHaveBeenCalledWith({
       where: { installedVersion: { signingKeyId: "key-1" }, enabled: true },
-      data: { enabled: false },
+      data: { enabled: false, lifecycleState: "INSTALLED" },
     });
   });
 

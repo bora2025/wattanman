@@ -277,6 +277,33 @@ describe('ExtensionInstallationsService', () => {
     await expect(service.install('installation-1', 'version-1', actor)).rejects.toThrow(ConflictException);
   });
 
+  it('requires successful payment review before approving a paid request', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1',
+      lifecycleState: 'PAYMENT_REVIEW', requestedAt: new Date(), paymentSubmittedAt: new Date(),
+      billingStatus: 'PENDING', extension: { name: 'Analytics', pricingModel: 'ONE_TIME' },
+      installedVersion: { lifecycleStatus: 'PUBLISHED', assets: [] },
+    });
+
+    await expect(service.approve('installation-1', actor)).rejects.toThrow('billing must be approved');
+    expect(prisma.extensionInstallation.update).not.toHaveBeenCalled();
+  });
+
+  it('records an explicit approved lifecycle state', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1',
+      lifecycleState: 'REQUESTED', requestedAt: new Date(), billingStatus: 'ACTIVE',
+      extension: { key: 'CORE', name: 'Core', pricingModel: 'FREE', runtimeType: 'CORE_MODULE' },
+      installedVersion: { lifecycleStatus: 'PUBLISHED', assets: [] },
+    });
+    prisma.extensionInstallation.update.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
+
+    await expect(service.approve('installation-1', actor)).resolves.toEqual(expect.objectContaining({ lifecycleState: 'APPROVED' }));
+    expect(prisma.extensionInstallation.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ lifecycleState: 'APPROVED' }),
+    }));
+  });
+
   it('rejects a version from another extension', async () => {
     prisma.extensionInstallation.findUnique.mockResolvedValue({
       id: 'installation-1', extensionId: 'extension-1', approvedAt: new Date(), extension: { name: 'Rewards' }, installedVersion: { lifecycleStatus: 'PUBLISHED' },
@@ -343,6 +370,7 @@ describe('ExtensionInstallationsService', () => {
     }));
     expect((result.configuration as any).previousTheme).toEqual(previousTheme);
     expect((result.configuration as any).appliedTheme).toEqual(expect.objectContaining({ mode: 'dark', primaryColor: '#14B8A6' }));
+    expect(result.lifecycleState).toBe('ACTIVE');
   });
 
   it('preserves school appearance overrides during theme upgrade', async () => {
@@ -372,13 +400,15 @@ describe('ExtensionInstallationsService', () => {
 
   it('uninstalls immediately and schedules purge after 30 days', async () => {
     prisma.extensionInstallation.findUnique.mockResolvedValue({
-      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', extension: { name: 'Rewards' }, installedVersion: { lifecycleStatus: 'PUBLISHED' },
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedAt: new Date(),
+      extension: { name: 'Rewards' }, installedVersion: { lifecycleStatus: 'PUBLISHED' },
     });
     prisma.extensionInstallation.update.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
 
     const result = await service.uninstall('installation-1', actor);
 
     expect(result.enabled).toBe(false);
+    expect(result.lifecycleState).toBe('UNINSTALLED');
     expect(result.purgeAfter.getTime() - result.uninstalledAt.getTime()).toBe(30 * 24 * 60 * 60 * 1000);
     expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'UNINSTALL', resource: 'EXTENSION_INSTALLATION' }));
   });
@@ -473,7 +503,7 @@ describe('ExtensionInstallationsService', () => {
 
   it('reports satisfied optional and required dependencies and conflicts', async () => {
     prisma.extensionInstallation.findUnique.mockResolvedValue({
-      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1',
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedAt: new Date(),
       extension: { key: 'REPORTS_PLUS', name: 'Reports Plus' }, installedVersion: { assets: [] },
     });
     prisma.extensionVersion.findFirst.mockResolvedValue({
@@ -495,7 +525,7 @@ describe('ExtensionInstallationsService', () => {
 
   it('prevents uninstall while an active extension requires it', async () => {
     prisma.extensionInstallation.findUnique.mockResolvedValue({
-      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1',
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedAt: new Date(),
       extension: { key: 'STUDENT_REWARDS', name: 'Student Rewards' }, installedVersion: { lifecycleStatus: 'PUBLISHED' },
     });
     prisma.extensionInstallation.findMany.mockResolvedValue([{
