@@ -1,0 +1,39 @@
+import { decodeDateIdCursor } from '../common/cursor-pagination';
+import { ExtensionsService } from './extensions.service';
+
+describe('ExtensionsService secondary collection pagination', () => {
+  const publisherRows = [
+    { id: 'publisher-2', createdAt: new Date('2026-02-02') },
+    { id: 'publisher-1', createdAt: new Date('2026-02-01') },
+  ];
+  const keyRows = [
+    { id: 'key-2', createdAt: new Date('2026-02-02') },
+    { id: 'key-1', createdAt: new Date('2026-02-01') },
+  ];
+  const prisma = {
+    extensionPublisher: { findMany: jest.fn().mockResolvedValue(publisherRows) },
+    extensionSigningKey: { findMany: jest.fn().mockResolvedValue(keyRows) },
+  };
+  const service = new ExtensionsService(prisma as any, {} as any, {} as any, {} as any, {} as any);
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('bounds publisher pages and nested management collections', async () => {
+    const page = await service.publishers(undefined, '1');
+
+    expect(page.items).toEqual([publisherRows[0]]);
+    expect(decodeDateIdCursor(page.nextCursor!)).toEqual({ id: 'publisher-2', createdAt: publisherRows[0].createdAt });
+    expect(prisma.extensionPublisher.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      take: 2,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      include: expect.objectContaining({ members: expect.objectContaining({ take: 100 }), signingKeys: expect.objectContaining({ take: 100 }) }),
+    }));
+  });
+
+  it('bounds signing-key history independently', async () => {
+    const page = await service.signingKeys('publisher-1', undefined, '1');
+
+    expect(page.items).toEqual([keyRows[0]]);
+    expect(prisma.extensionSigningKey.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2 }));
+  });
+});

@@ -39,8 +39,8 @@ export class ExtensionsController {
   }
 
   @Get("publishers")
-  publishers() {
-    return this.extensions.publishers();
+  publishers(@Query("cursor") cursor?: string, @Query("limit") limit?: string) {
+    return this.extensions.publishers(cursor, limit);
   }
 
   @Patch("publishers/:publisherId/status")
@@ -72,8 +72,8 @@ export class ExtensionsController {
   }
 
   @Get("publishers/:publisherId/signing-keys")
-  signingKeys(@Param("publisherId") publisherId: string) {
-    return this.extensions.signingKeys(publisherId);
+  signingKeys(@Param("publisherId") publisherId: string, @Query("cursor") cursor?: string, @Query("limit") limit?: string) {
+    return this.extensions.signingKeys(publisherId, cursor, limit);
   }
 
   @Post("publishers/:publisherId/signing-keys")
@@ -147,8 +147,8 @@ export class ExtensionsController {
   }
 
   @Get("alerts")
-  alertsList() {
-    return this.alerts.list();
+  alertsList(@Query("cursor") cursor?: string, @Query("limit") limit?: string) {
+    return this.alerts.list(cursor, limit);
   }
 
   @Post("alerts/scan")

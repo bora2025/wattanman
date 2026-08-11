@@ -1320,8 +1320,8 @@ function ExtensionsContent() {
         apiCursorItems<ExtensionRecord>("/api/platform/extensions"),
         apiCursorItems<InstallationRecord>("/api/platform/extension-installations"),
         responseJson(await apiFetch("/api/platform/extensions/health")),
-        responseJson(await apiFetch("/api/platform/extensions/publishers")),
-        responseJson(await apiFetch("/api/platform/extensions/alerts")),
+        apiCursorItems<PublisherRecord>("/api/platform/extensions/publishers"),
+        apiCursorItems<ExtensionAlert>("/api/platform/extensions/alerts"),
         responseJson(await apiFetch("/api/platform/extensions/api-metrics")),
         responseJson(await apiFetch("/api/platform/extension-installations/payment-settings")),
       ]);

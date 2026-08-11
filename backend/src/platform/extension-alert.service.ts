@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
+import { dateIdPageBy, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
 
 const WINDOW_HOURS = 24;
 const VALIDATION_FAILURE_THRESHOLD = 3;
@@ -67,8 +68,15 @@ export class ExtensionAlertService {
     return { raised };
   }
 
-  list() {
-    return this.prisma.extensionAlert.findMany({ orderBy: [{ status: 'asc' }, { severity: 'asc' }, { lastSeenAt: 'desc' }] });
+  async list(cursorValue?: string, limitValue?: string) {
+    const limit = parsePageLimit(limitValue);
+    const cursor = decodeDateIdCursor(cursorValue);
+    const rows = await this.prisma.extensionAlert.findMany({
+      where: cursor ? { OR: [{ lastSeenAt: { lt: cursor.createdAt } }, { lastSeenAt: cursor.createdAt, id: { lt: cursor.id } }] } : undefined,
+      orderBy: [{ lastSeenAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+    });
+    return dateIdPageBy(rows, limit, (row) => row.lastSeenAt);
   }
 
   async setStatus(id: string, status: string, actorId?: string) {

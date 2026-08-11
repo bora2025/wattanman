@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { ExtensionAlertService } from './extension-alert.service';
+import { decodeDateIdCursor } from '../common/cursor-pagination';
 
 describe('ExtensionAlertService', () => {
   const prisma = {
@@ -45,5 +46,19 @@ describe('ExtensionAlertService', () => {
     prisma.extensionAlert.update.mockResolvedValue({ id: 'alert-1', status: 'RESOLVED' });
     await service.setStatus('alert-1', 'RESOLVED', 'admin-1');
     expect(prisma.extensionAlert.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ resolvedBy: 'admin-1' }) }));
+  });
+
+  it('returns bounded alert pages ordered by recency', async () => {
+    const rows = [
+      { id: 'alert-2', lastSeenAt: new Date('2026-02-02') },
+      { id: 'alert-1', lastSeenAt: new Date('2026-02-01') },
+    ];
+    prisma.extensionAlert.findMany.mockResolvedValue(rows);
+
+    const page = await service.list(undefined, '1');
+
+    expect(page.items).toEqual([rows[0]]);
+    expect(decodeDateIdCursor(page.nextCursor!)).toEqual({ id: 'alert-2', createdAt: rows[0].lastSeenAt });
+    expect(prisma.extensionAlert.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ lastSeenAt: 'desc' }, { id: 'desc' }] }));
   });
 });

@@ -990,18 +990,24 @@ export class ExtensionsService {
     };
   }
 
-  publishers() {
-    return this.prisma.extensionPublisher.findMany({
+  async publishers(cursorValue?: string, limitValue?: string) {
+    const limit = parsePageLimit(limitValue);
+    const cursor = decodeDateIdCursor(cursorValue);
+    const rows = await this.prisma.extensionPublisher.findMany({
+      where: cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : undefined,
       include: {
         _count: { select: { extensions: true } },
         members: {
           include: { user: { select: { id: true, name: true, email: true } } },
           orderBy: { createdAt: "asc" },
+          take: 100,
         },
-        signingKeys: { orderBy: { createdAt: "desc" } },
+        signingKeys: { orderBy: { createdAt: "desc" }, take: 100 },
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
     });
+    return dateIdPage(rows, limit);
   }
 
   async setPublisherMemberRoles(
@@ -1043,11 +1049,18 @@ export class ExtensionsService {
     return membership;
   }
 
-  signingKeys(publisherId: string) {
-    return this.prisma.extensionSigningKey.findMany({
-      where: { publisherId },
-      orderBy: { createdAt: "desc" },
+  async signingKeys(publisherId: string, cursorValue?: string, limitValue?: string) {
+    const limit = parsePageLimit(limitValue);
+    const cursor = decodeDateIdCursor(cursorValue);
+    const rows = await this.prisma.extensionSigningKey.findMany({
+      where: {
+        publisherId,
+        ...(cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}),
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
     });
+    return dateIdPage(rows, limit);
   }
 
   async registerSigningKey(
