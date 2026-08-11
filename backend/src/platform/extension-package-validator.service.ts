@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
+import { ExtensionManifestSchemaService } from './extension-manifest-schema.service';
 
 const MAX_FILES = 200;
 const MAX_ENTRIES = 250;
@@ -104,6 +105,8 @@ function scopeThemeCss(css: string): { css?: string; error?: string } {
 
 @Injectable()
 export class ExtensionPackageValidatorService {
+  private readonly manifestSchemas = new ExtensionManifestSchemaService();
+
   async validate(file: Express.Multer.File, extension: { key: string; runtimeType: string }, expectedVersion: string): Promise<PackageValidationResult> {
     const result: PackageValidationResult = { valid: false, errors: [], warnings: [], files: [] };
     let zip: JSZip;
@@ -208,6 +211,13 @@ export class ExtensionPackageValidatorService {
       try {
         const manifest = JSON.parse(await manifestEntry.async('text'));
         result.manifest = manifest;
+        for (const schemaError of this.manifestSchemas.validate(extension.runtimeType, manifest)) {
+          result.errors.push({
+            code: 'MANIFEST_JSON_SCHEMA',
+            path: `${manifestPath}${schemaError.instancePath}`,
+            message: `${schemaError.keyword}: ${schemaError.message}`,
+          });
+        }
         this.validateManifest(manifest, manifestPath, extension, expectedVersion, result);
         if (Array.isArray(manifest.assets)) {
           for (const declaredPath of manifest.assets) {

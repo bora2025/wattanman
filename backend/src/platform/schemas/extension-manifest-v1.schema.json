@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wattaman.app/schemas/extension-manifest-v1.schema.json",
+  "title": "Wattaman Declarative Extension Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "key", "name", "version", "runtimeType", "permissions", "navigation", "pages", "resources"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "key": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,63}$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$" },
+    "runtimeType": { "const": "DECLARATIVE_MODULE" },
+    "permissions": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*:(read|write)$" } },
+    "navigation": { "type": "array", "items": { "$ref": "#/$defs/navigation" } },
+    "pages": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/page" } },
+    "resources": { "type": "object", "minProperties": 1 },
+    "assets": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 240 } },
+    "dependencies": { "type": "array", "items": { "$ref": "#/$defs/dependency" } },
+    "conflicts": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,63}$" } },
+    "migrations": { "type": "array", "items": { "$ref": "#/$defs/migration" } },
+    "defaultLocale": { "type": "string", "pattern": "^[a-z]{2}(?:-[A-Z]{2})?$" },
+    "translations": { "type": "object", "additionalProperties": { "type": "object", "additionalProperties": { "type": "string", "maxLength": 2000 } } }
+  },
+  "patternProperties": { "^x-": true },
+  "$defs": {
+    "role": { "enum": ["SUPER_ADMIN", "ADMIN", "TEACHER", "ACCOUNTANT", "REPORTER", "EMPLOYEE", "PARENT", "STUDENT"] },
+    "navigation": {
+      "type": "object", "additionalProperties": false, "required": ["label", "pageKey", "roles"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 }, "labelKey": { "type": "string", "maxLength": 120 },
+        "pageKey": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" }, "icon": { "type": "string", "maxLength": 80 },
+        "section": { "type": "string", "maxLength": 80 }, "roles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/role" } }
+      }
+    },
+    "field": {
+      "type": "object", "additionalProperties": false, "required": ["key", "label", "type"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9_]*$" }, "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "labelKey": { "type": "string", "maxLength": 120 }, "type": { "enum": ["text", "number", "date", "boolean"] }, "required": { "type": "boolean" }
+      }
+    },
+    "component": {
+      "type": "object", "additionalProperties": false, "required": ["type"],
+      "properties": {
+        "type": { "enum": ["stats", "form", "table", "details", "chart"] }, "title": { "type": "string", "maxLength": 120 },
+        "titleKey": { "type": "string", "maxLength": 120 }, "metrics": { "type": "array", "maxItems": 50 },
+        "actions": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "columns": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "fields": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }, "searchable": { "type": "boolean" },
+        "categoryField": { "type": "string" }, "valueField": { "type": "string" }, "aggregate": { "enum": ["sum", "average"] }
+      }
+    },
+    "page": {
+      "type": "object", "additionalProperties": false, "required": ["key", "title", "resource", "roles", "fields"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" }, "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "titleKey": { "type": "string", "maxLength": 120 }, "ariaLabel": { "type": "string", "maxLength": 200 },
+        "resource": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+        "roles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/role" } },
+        "fields": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/field" } },
+        "components": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/component" } }
+      }
+    },
+    "dependency": {
+      "type": "object", "additionalProperties": false, "required": ["key", "optional"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,63}$" },
+        "versionRange": { "type": "string", "pattern": "^(?:>=|>)\\d+\\.\\d+\\.\\d+(?:\\s+(?:<=|<)\\d+\\.\\d+\\.\\d+)?$" }, "optional": { "type": "boolean" }
+      }
+    },
+    "migration": {
+      "type": "object", "additionalProperties": false, "required": ["fromVersion", "toVersion", "operations"],
+      "properties": {
+        "fromVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" }, "toVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "operations": { "type": "array", "minItems": 1, "maxItems": 100, "items": { "type": "object" } }
+      }
+    }
+  }
+}

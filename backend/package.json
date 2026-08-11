@@ -48,6 +48,7 @@
     "@nestjs/websockets": "^10.0.0",
     "@prisma/client": "^5.22.0",
     "@sendgrid/mail": "^8.0.0",
+    "ajv": "^8.17.1",
     "bcryptjs": "^2.4.3",
     "bullmq": "^6.0.11",
     "class-transformer": "^0.5.1",

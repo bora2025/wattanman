@@ -50,6 +50,16 @@ describe('worker process separation', () => {
     expect(manifest.deploy.startCommand).not.toContain('dist/main');
   });
 
+  it('copies versioned manifest schemas into production builds', () => {
+    const nestConfig = JSON.parse(readFileSync(join(process.cwd(), 'nest-cli.json'), 'utf8'));
+    expect(nestConfig.compilerOptions.assets).toContain('platform/schemas/*.json');
+    for (const schema of ['theme-manifest-v1.schema.json', 'extension-manifest-v1.schema.json']) {
+      const contract = JSON.parse(readFileSync(join(process.cwd(), 'src', 'platform', 'schemas', schema), 'utf8'));
+      expect(contract.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
+      expect(contract.$id).toContain('-v1.schema.json');
+    }
+  });
+
   it('establishes tenant context from every durable queue envelope', () => {
     const queue = readFileSync(join(process.cwd(), 'src', 'jobs', 'queue-infrastructure.service.ts'), 'utf8');
     expect(queue).toContain('assertJobEnvelope(job.data)');
