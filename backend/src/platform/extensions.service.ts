@@ -1200,6 +1200,16 @@ export class ExtensionsService {
       where: { id: userId, role: "PLATFORM_ADMIN" },
     });
     if (!user) throw new NotFoundException("Platform admin not found");
+    const current = await this.prisma.extensionPublisherMember.findUnique({
+      where: { publisherId_userId: { publisherId, userId } },
+    });
+    if (
+      current?.status === "ACTIVE" &&
+      (current.roles as string[]).includes("MANAGE") &&
+      !normalized.includes("MANAGE")
+    ) {
+      await this.assertAnotherActivePublisherManager(publisherId, userId);
+    }
     const membership = await this.prisma.extensionPublisherMember.upsert({
       where: { publisherId_userId: { publisherId, userId } },
       update: { roles: normalized, status: "ACTIVE" },
@@ -1214,6 +1224,67 @@ export class ExtensionsService {
       { metadata: { publisherId, roles: normalized } },
     );
     return membership;
+  }
+
+  async addPublisherMemberByEmail(
+    publisherId: string,
+    emailValue: string | undefined,
+    roles: string[],
+    actor: Actor,
+  ) {
+    await this.requirePublisherRole(publisherId, actor, "MANAGE");
+    const email = emailValue?.trim().toLowerCase();
+    if (!email) throw new BadRequestException("Member email is required");
+    const user = await this.prisma.user.findFirst({
+      where: { email, role: "PLATFORM_ADMIN" },
+    });
+    if (!user) throw new NotFoundException("Platform admin with this email was not found");
+    return this.setPublisherMemberRoles(publisherId, user.id, roles, actor);
+  }
+
+  async setPublisherMemberStatus(
+    publisherId: string,
+    userId: string,
+    statusValue: string | undefined,
+    actor: Actor,
+  ) {
+    await this.requirePublisherRole(publisherId, actor, "MANAGE");
+    const status = statusValue?.trim().toUpperCase();
+    if (!['ACTIVE', 'SUSPENDED'].includes(status || ''))
+      throw new BadRequestException("Publisher member status must be ACTIVE or SUSPENDED");
+    const membership = await this.prisma.extensionPublisherMember.findUnique({
+      where: { publisherId_userId: { publisherId, userId } },
+    });
+    if (!membership) throw new NotFoundException("Publisher member not found");
+    if (
+      status === "SUSPENDED" &&
+      membership.status === "ACTIVE" &&
+      (membership.roles as string[]).includes("MANAGE")
+    ) {
+      await this.assertAnotherActivePublisherManager(publisherId, userId);
+    }
+    const updated = await this.prisma.extensionPublisherMember.update({
+      where: { id: membership.id },
+      data: { status },
+    });
+    await this.log(actor, "STATUS_CHANGE", "EXTENSION_PUBLISHER_MEMBER", membership.id, userId, {
+      changes: { before: { status: membership.status }, after: { status } },
+      metadata: { publisherId },
+    });
+    return updated;
+  }
+
+  private async assertAnotherActivePublisherManager(publisherId: string, excludedUserId: string) {
+    const managers = await this.prisma.extensionPublisherMember.findMany({
+      where: {
+        publisherId,
+        status: "ACTIVE",
+        userId: { not: excludedUserId },
+      },
+      select: { roles: true },
+    });
+    if (!managers.some((member) => (member.roles as string[]).includes("MANAGE")))
+      throw new ConflictException("A publisher must retain at least one active manager");
   }
 
   async signingKeys(publisherId: string, cursorValue?: string, limitValue?: string) {

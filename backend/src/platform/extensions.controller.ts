@@ -95,6 +95,35 @@ export class ExtensionsController {
     );
   }
 
+  @Post("publishers/:publisherId/members")
+  addPublisherMember(
+    @Param("publisherId") publisherId: string,
+    @Body() body: { email?: string; roles?: string[] },
+    @Request() req,
+  ) {
+    return this.extensions.addPublisherMemberByEmail(
+      publisherId,
+      body.email,
+      body.roles || [],
+      req.user,
+    );
+  }
+
+  @Patch("publishers/:publisherId/members/:userId/status")
+  publisherMemberStatus(
+    @Param("publisherId") publisherId: string,
+    @Param("userId") userId: string,
+    @Body() body: { status?: string },
+    @Request() req,
+  ) {
+    return this.extensions.setPublisherMemberStatus(
+      publisherId,
+      userId,
+      body.status,
+      req.user,
+    );
+  }
+
   @Get("publishers/:publisherId/signing-keys")
   signingKeys(@Param("publisherId") publisherId: string, @Query("cursor") cursor?: string, @Query("limit") limit?: string) {
     return this.extensions.signingKeys(publisherId, cursor, limit);

@@ -116,6 +116,13 @@ interface PublisherRecord {
   websiteUrl?: string | null;
   countryCode?: string | null;
   internal: boolean;
+  members: Array<{
+    id: string;
+    userId: string;
+    roles: string[];
+    status: "ACTIVE" | "SUSPENDED";
+    user: { id: string; name: string; email?: string | null };
+  }>;
   _count: { extensions: number };
   signingKeys: Array<{
     id: string;
@@ -1547,6 +1554,53 @@ function ExtensionsContent() {
     }
   }
 
+  async function addPublisherMember(publisher: PublisherRecord) {
+    const email = window.prompt(`Platform administrator email to add to ${publisher.name}`);
+    if (!email) return;
+    const rolesValue = window.prompt("Roles (comma separated): UPLOAD, REVIEW, PUBLISH, MANAGE", "UPLOAD");
+    if (!rolesValue) return;
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/publishers/${publisher.id}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, roles: rolesValue.split(",").map((role) => role.trim().toUpperCase()).filter(Boolean) }),
+      }));
+      await load();
+    } catch (memberError: any) {
+      setError(memberError.message || "Could not add publisher member");
+    }
+  }
+
+  async function editPublisherMember(publisher: PublisherRecord, member: PublisherRecord["members"][number]) {
+    const rolesValue = window.prompt("Roles (comma separated): UPLOAD, REVIEW, PUBLISH, MANAGE", member.roles.join(", "));
+    if (!rolesValue) return;
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/publishers/${publisher.id}/members/${member.userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roles: rolesValue.split(",").map((role) => role.trim().toUpperCase()).filter(Boolean) }),
+      }));
+      await load();
+    } catch (memberError: any) {
+      setError(memberError.message || "Could not update publisher member roles");
+    }
+  }
+
+  async function setPublisherMemberStatus(publisher: PublisherRecord, member: PublisherRecord["members"][number]) {
+    const status = member.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+    if (status === "SUSPENDED" && !window.confirm(`Suspend ${member.user.name} from ${publisher.name}?`)) return;
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/publishers/${publisher.id}/members/${member.userId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      }));
+      await load();
+    } catch (memberError: any) {
+      setError(memberError.message || "Could not update publisher member status");
+    }
+  }
+
   async function setSigningKeyStatus(keyId: string, status: string) {
     if (
       status === "REVOKED" &&
@@ -1927,6 +1981,16 @@ function ExtensionsContent() {
                           </button>
                         )}
                       </div>
+                    </div>
+                    <div className="space-y-2 rounded-lg bg-slate-50 p-3 text-xs dark:bg-slate-800/50">
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold">Publisher members</p>
+                        <button className="btn-outline btn-sm" onClick={() => addPublisherMember(publisher)}>Add member</button>
+                      </div>
+                      {publisher.members?.map((member) => <div key={member.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-2 first:border-0 first:pt-0 dark:border-slate-700">
+                        <div><span className="font-medium">{member.user.name}</span> <span className="text-slate-400">{member.user.email}</span><p className="text-slate-500">{member.roles.join(" · ")} · {member.status}</p></div>
+                        <div className="flex gap-2"><button className="text-indigo-600" onClick={() => editPublisherMember(publisher, member)}>Edit roles</button><button className={member.status === "ACTIVE" ? "text-amber-600" : "text-emerald-600"} onClick={() => setPublisherMemberStatus(publisher, member)}>{member.status === "ACTIVE" ? "Suspend" : "Activate"}</button></div>
+                      </div>)}
                     </div>
                     <div className="text-xs space-y-2">
                       <div className="flex items-center justify-between">

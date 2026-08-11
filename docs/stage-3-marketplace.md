@@ -60,3 +60,16 @@ as verified; external publishers remain fail-closed unless explicitly approved.
 Production API deployment `42c88ae7-5dd7-4a2b-9933-8e552627677c` and frontend
 deployment `26b4ed61-df9b-4c5f-bdb9-9052e0a06d51` completed successfully on
 2026-08-11.
+
+## Publisher member roles
+
+Publisher managers can add an existing platform administrator by verified email,
+assign any combination of `UPLOAD`, `REVIEW`, `PUBLISH`, and `MANAGE`, edit those
+roles, and suspend or reactivate membership. Every change requires an active
+publisher `MANAGE` role and is audited. The service refuses to remove the manage
+role from, or suspend, the final active publisher manager so an organization
+cannot be locked out accidentally.
+
+Role and status changes are application-only and require no schema rollback. If
+an application rollback is needed, existing member rows remain compatible; use
+the audit history to restore the last known role set after rolling forward.

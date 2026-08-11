@@ -19,7 +19,13 @@ describe("ExtensionsService", () => {
       create: jest.fn(),
       update: jest.fn(),
     },
-    extensionPublisherMember: { findUnique: jest.fn(), upsert: jest.fn(), create: jest.fn() },
+    extensionPublisherMember: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      upsert: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
     extensionReview: { create: jest.fn(), findMany: jest.fn() },
     extensionSigningKey: {
       findMany: jest.fn(),
@@ -204,6 +210,38 @@ describe("ExtensionsService", () => {
 
     expect(result.status).toBe("ACTIVE");
     expect(result.verificationStatus).toBe("VERIFIED");
+  });
+
+  it("adds a publisher member by platform-admin email", async () => {
+    prisma.user.findFirst.mockResolvedValue({ id: "admin-2", name: "Second Admin", role: "PLATFORM_ADMIN" });
+    prisma.extensionPublisherMember.findUnique
+      .mockResolvedValueOnce({ status: "ACTIVE", roles: ["MANAGE"] })
+      .mockResolvedValueOnce({ status: "ACTIVE", roles: ["MANAGE"] })
+      .mockResolvedValueOnce(null);
+    prisma.extensionPublisherMember.upsert.mockResolvedValue({ id: "member-2", userId: "admin-2", roles: ["UPLOAD"] });
+
+    const result = await service.addPublisherMemberByEmail(
+      "publisher-1",
+      "second@example.com",
+      ["UPLOAD"],
+      actor,
+    );
+
+    expect(result.userId).toBe("admin-2");
+  });
+
+  it("prevents suspending the publisher's last active manager", async () => {
+    prisma.extensionPublisherMember.findUnique
+      .mockResolvedValueOnce({ status: "ACTIVE", roles: ["MANAGE"] })
+      .mockResolvedValueOnce({ id: "member-1", userId: "platform-admin", status: "ACTIVE", roles: ["MANAGE"] });
+    prisma.extensionPublisherMember.findMany.mockResolvedValue([{ roles: ["UPLOAD"] }]);
+
+    await expect(service.setPublisherMemberStatus(
+      "publisher-1",
+      "platform-admin",
+      "SUSPENDED",
+      actor,
+    )).rejects.toThrow("at least one active manager");
   });
 
   it("rejects executable extensions during the declarative-only release", async () => {
