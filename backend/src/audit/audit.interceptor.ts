@@ -5,7 +5,7 @@ import {
   CallHandler,
   Logger,
 } from '@nestjs/common';
-import { Observable, tap, catchError, throwError } from 'rxjs';
+import { Observable, catchError, concatMap, from, map, mergeMap, throwError } from 'rxjs';
 import { AuditService } from './audit.service';
 
 /**
@@ -59,11 +59,11 @@ export class AuditInterceptor implements NestInterceptor {
     };
 
     return next.handle().pipe(
-      tap((response) => {
+      concatMap((response) => {
         meta.durationMs = Date.now() - startedAt;
         const inferredId =
           resourceId ?? (response && typeof response === 'object' ? (response.id ?? response?.user?.id ?? null) : null);
-        this.audit.log({
+        return from(this.audit.log({
           actorId: user.userId,
           actorRole: user.role,
           actorName: user.name,
@@ -78,11 +78,11 @@ export class AuditInterceptor implements NestInterceptor {
           userAgent: req.headers?.['user-agent'] ?? null,
           metadata: meta,
           success: true,
-        });
+        })).pipe(map(() => response));
       }),
       catchError((err) => {
         meta.durationMs = Date.now() - startedAt;
-        this.audit.log({
+        return from(this.audit.log({
           actorId: user.userId,
           actorRole: user.role,
           actorName: user.name,
@@ -98,8 +98,7 @@ export class AuditInterceptor implements NestInterceptor {
           metadata: meta,
           success: false,
           errorMessage: err?.message ?? String(err),
-        });
-        return throwError(() => err);
+        })).pipe(mergeMap(() => throwError(() => err)));
       }),
     );
   }

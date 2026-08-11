@@ -67,7 +67,7 @@ An item is complete only when implementation, automated tests, documentation, de
 ### Database isolation
 
 - [x] Create separate migration, control-plane, school-runtime, and analytics database roles.
-- [ ] Add a transaction-local tenant identifier.
+- [x] Add a transaction-local tenant identifier.
 - [ ] Enable row-level security on every tenant-owned core table.
 - [ ] Add deny-by-default RLS policies.
 - [x] Restrict unscoped operations to audited platform paths.

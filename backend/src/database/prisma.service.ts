@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { tenantContext } from '../tenancy/tenant-context';
 import { TENANT_SCOPED_MODELS } from '../tenancy/scoped-models';
 import { applyTenantQueryPolicy } from './tenant-query-policy';
+import { databaseTransactionContext } from './database-transaction-context';
 
 function toDelegateName(modelName: string): string {
   return modelName.charAt(0).toLowerCase() + modelName.slice(1);
@@ -33,6 +34,49 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     });
 
     this.registerTenantScopingMiddleware();
+
+    return new Proxy(this, {
+      get: (target, property) => {
+        const transactionStore = databaseTransactionContext.getStore();
+        const transaction = transactionStore?.active ? transactionStore.client as any : undefined;
+        if (transaction && property === '$transaction') {
+          return async (input: unknown) => {
+            if (typeof input === 'function') return (input as (client: unknown) => unknown)(transaction);
+            if (Array.isArray(input)) return Promise.all(input);
+            throw new TypeError('$transaction expects a callback or an array of Prisma promises');
+          };
+        }
+        const source = transaction && property in transaction ? transaction : target;
+        const value = Reflect.get(source, property, source);
+        return typeof value === 'function' ? value.bind(source) : value;
+      },
+    });
+  }
+
+  async runInTenantTransaction<T>(schoolId: string, callback: () => Promise<T>): Promise<T> {
+    if (!schoolId?.trim()) throw new Error('A school ID is required for a tenant database transaction');
+    const existing = databaseTransactionContext.getStore();
+    if (existing?.active) {
+      if (existing.schoolId !== schoolId) throw new Error('Cannot switch schools inside an active database transaction');
+      return callback();
+    }
+    return this.$transaction(async (transaction) => {
+      await transaction.$queryRawUnsafe(
+        `SELECT set_config('app.current_school_id', $1, true) AS current_school_id`,
+        schoolId,
+      );
+      const store = { client: transaction, schoolId, active: true };
+      return databaseTransactionContext.run(store, async () => {
+        try {
+          return await callback();
+        } finally {
+          store.active = false;
+        }
+      });
+    }, {
+      maxWait: Number(process.env.TENANT_TRANSACTION_MAX_WAIT_MS || 5_000),
+      timeout: Number(process.env.TENANT_TRANSACTION_TIMEOUT_MS || 30_000),
+    });
   }
 
   async onModuleInit() {
@@ -109,7 +153,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       }
 
       await applyTenantQueryPolicy(params, store.schoolId, async (ownedModel, where, schoolId) => {
-        const delegate = (this as any)[toDelegateName(ownedModel)];
+        const transactionStore = databaseTransactionContext.getStore();
+        const client = transactionStore?.active ? transactionStore.client : this;
+        const delegate = (client as any)[toDelegateName(ownedModel)];
         const found = await delegate.findFirst({
           where: { ...where, schoolId },
           select: { id: true },

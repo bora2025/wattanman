@@ -63,7 +63,7 @@ export class AuthController {
   async login(@Body() body: LoginDto, @Request() req: any, @Res({ passthrough: true }) res: Response) {
     const user = await this.authService.validateUser(body.email, body.password);
     if (!user) {
-      this.audit.log({
+      await this.audit.log({
         action: 'LOGIN_FAILED',
         resource: 'AUTH',
         actorEmail: body?.email ?? null,
@@ -86,7 +86,7 @@ export class AuthController {
     // lets the frontend force that flow before anything else.
     if (user.role === 'PLATFORM_ADMIN' && user.mfaEnabled) {
       if (!this.authService.verifyMfaCode(user.mfaSecret, body.mfaCode || '')) {
-        this.audit.log({
+        await this.audit.log({
           action: 'LOGIN_FAILED',
           resource: 'AUTH',
           actorId: user.id,
@@ -108,7 +108,7 @@ export class AuthController {
 
     const { access_token, refresh_token } = await this.authService.login(user);
     this.setTokenCookies(res, access_token, refresh_token);
-    this.audit.log({
+    await this.audit.log({
       action: 'LOGIN',
       resource: 'AUTH',
       actorId: user.id,
@@ -153,7 +153,7 @@ export class AuthController {
     }
     const maxAgeMs = Math.max(0, payload.exp * 1000 - Date.now());
     res.cookie('access_token', body.token, { ...COOKIE_OPTIONS, maxAge: maxAgeMs });
-    this.audit.log({
+    await this.audit.log({
       action: 'IMPERSONATION_SESSION_CONSUMED',
       resource: 'AUTH',
       actorId: payload.sub,
@@ -236,7 +236,7 @@ export class AuthController {
     } catch { /* token expired or invalid – still allow logout */ }
     res.clearCookie('access_token', { ...COOKIE_OPTIONS });
     res.clearCookie('refresh_token', { ...COOKIE_OPTIONS, path: '/api/auth/refresh' });
-    this.audit.log({
+    await this.audit.log({
       action: 'LOGOUT',
       resource: 'AUTH',
       actorId: logoutActorId,

@@ -1,5 +1,5 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
-import { Observable, catchError, tap, throwError } from 'rxjs';
+import { Observable, catchError, concatMap, from, map, mergeMap, throwError } from 'rxjs';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
 import { ExtensionApiMetricsService } from './extension-api-metrics.service';
 
@@ -14,18 +14,18 @@ export class ExtensionApiMetricsInterceptor implements NestInterceptor {
     if (!route) return next.handle();
     const startedAt = Date.now();
     return next.handle().pipe(
-      tap(() => this.capture(route, request.method, response.statusCode || 200, startedAt)),
+      concatMap((value) => from(this.capture(route, request.method, response.statusCode || 200, startedAt)).pipe(map(() => value))),
       catchError((error) => {
-        this.capture(route, request.method, error?.status || 500, startedAt);
-        return throwError(() => error);
+        return from(this.capture(route, request.method, error?.status || 500, startedAt))
+          .pipe(mergeMap(() => throwError(() => error)));
       }),
     );
   }
 
-  private capture(route: string, method: string, statusCode: number, startedAt: number) {
+  private async capture(route: string, method: string, statusCode: number, startedAt: number) {
     let schoolId = 'PLATFORM';
     try { schoolId = getCurrentSchoolId(); } catch { /* platform bootstrap or unresolved tenant */ }
-    void this.metrics.record(route, method, statusCode, Date.now() - startedAt, schoolId).catch(() => undefined);
+    await this.metrics.record(route, method, statusCode, Date.now() - startedAt, schoolId).catch(() => undefined);
   }
 
   private route(request: any) {

@@ -1,5 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TenantHostMiddleware } from './tenancy/tenant-host.middleware';
 import { DatabaseModule } from './database/database.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -12,6 +12,7 @@ import { SiteSettingsModule } from './site-settings/site-settings.module';
 import { PostsModule } from './posts/posts.module';
 import { PlatformModule } from './platform/platform.module';
 import { TenancyModule } from './tenancy/tenancy.module';
+import { TenantDatabaseInterceptor } from './database/tenant-database.interceptor';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { TenancyModule } from './tenancy/tenancy.module';
   providers: [
     AppService,
     TenantHostMiddleware,
+    { provide: APP_INTERCEPTOR, useExisting: TenantDatabaseInterceptor },
     // Apply rate limiting globally to all endpoints
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
