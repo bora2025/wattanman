@@ -88,6 +88,17 @@ describe('Extension marketplace lifecycle E2E', () => {
     });
     const school = await prisma.school.create({ data: { subdomain: TEST_PREFIX, name: 'Lifecycle School', storagePrefix: `schools/${TEST_PREFIX}` } });
     schoolId = school.id;
+    await prisma.schoolDomain.create({
+      data: {
+        schoolId: school.id,
+        hostname: SCHOOL_HOST,
+        type: 'MANAGED',
+        status: 'VERIFIED',
+        verifiedAt: new Date(),
+        routingStatus: 'READY',
+        routingCheckedAt: new Date(),
+      },
+    });
     await prisma.user.create({ data: { schoolId: school.id, email: `${TEST_PREFIX}@school.test`, password, name: 'School Admin', role: 'ADMIN' } });
     const publisher = await prisma.extensionPublisher.upsert({
       where: { key: 'WATTAMAN' }, update: { status: 'ACTIVE' }, create: { key: 'WATTAMAN', name: 'Wattaman', status: 'ACTIVE', internal: true },
@@ -135,7 +146,7 @@ describe('Extension marketplace lifecycle E2E', () => {
     process.env.EXTENSION_PLATFORM_ENABLED = 'false';
     try {
       await api.get('/platform/extensions').set(tenant('platform.test.local')).set(auth(platformToken)).expect(404);
-      await api.get('/platform/addon-directory').set(tenant('platform.test.local')).set(auth(platformToken)).expect(200);
+      await api.get('/platform/addon-directory').set(tenant('platform.test.local')).set(auth(platformToken)).expect(404);
     } finally {
       process.env.EXTENSION_PLATFORM_ENABLED = 'true';
     }

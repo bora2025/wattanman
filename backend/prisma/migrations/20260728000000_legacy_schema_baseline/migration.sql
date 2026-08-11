@@ -691,7 +691,611 @@ CREATE TABLE "BusStop" (
     "routeId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "…4962 tokens truncated…Id");
+    CONSTRAINT "BusStop_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BusLocation" (
+    "id" TEXT NOT NULL,
+    "busId" TEXT NOT NULL,
+    "latitude" DOUBLE PRECISION NOT NULL,
+    "longitude" DOUBLE PRECISION NOT NULL,
+    "speed" DOUBLE PRECISION,
+    "heading" DOUBLE PRECISION,
+    "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "BusLocation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Exam" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "classId" TEXT,
+    "createdById" TEXT NOT NULL,
+    "startTime" TIMESTAMP(3),
+    "endTime" TIMESTAMP(3),
+    "duration" INTEGER NOT NULL DEFAULT 60,
+    "totalMarks" DOUBLE PRECISION NOT NULL DEFAULT 100,
+    "passMark" DOUBLE PRECISION NOT NULL DEFAULT 50,
+    "maxAttempts" INTEGER NOT NULL DEFAULT 1,
+    "status" TEXT NOT NULL DEFAULT 'DRAFT',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Exam_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ExamQuestion" (
+    "id" TEXT NOT NULL,
+    "examId" TEXT NOT NULL,
+    "text" TEXT NOT NULL,
+    "type" TEXT NOT NULL DEFAULT 'MCQ',
+    "data" JSONB,
+    "marks" DOUBLE PRECISION NOT NULL DEFAULT 1,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "section" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ExamQuestion_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ExamAttempt" (
+    "id" TEXT NOT NULL,
+    "examId" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "answers" JSONB,
+    "manualMarks" JSONB,
+    "feedback" TEXT,
+    "score" DOUBLE PRECISION,
+    "grade" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'IN_PROGRESS',
+    "attemptNumber" INTEGER NOT NULL DEFAULT 0,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "submittedAt" TIMESTAMP(3),
+    "gradedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ExamAttempt_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Assignment" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "instructions" TEXT,
+    "classId" TEXT NOT NULL,
+    "createdById" TEXT NOT NULL,
+    "type" TEXT NOT NULL DEFAULT 'HOMEWORK',
+    "weight" DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+    "availableFrom" TIMESTAMP(3),
+    "dueDate" TIMESTAMP(3),
+    "totalMarks" DOUBLE PRECISION NOT NULL DEFAULT 100,
+    "allowLate" BOOLEAN NOT NULL DEFAULT true,
+    "latePenaltyPct" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "maxAttempts" INTEGER NOT NULL DEFAULT 1,
+    "status" TEXT NOT NULL DEFAULT 'PUBLISHED',
+    "attachmentUrl" TEXT,
+    "publishedAt" TIMESTAMP(3),
+    "randomizeQuestions" BOOLEAN NOT NULL DEFAULT false,
+    "randomizeChoices" BOOLEAN NOT NULL DEFAULT false,
+    "timeLimitMinutes" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Assignment_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AssignmentSubmission" (
+    "id" TEXT NOT NULL,
+    "assignmentId" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "content" TEXT,
+    "attachmentUrl" TEXT,
+    "marks" DOUBLE PRECISION,
+    "feedback" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'SUBMITTED',
+    "attemptNumber" INTEGER NOT NULL DEFAULT 1,
+    "latePenaltyApplied" DOUBLE PRECISION,
+    "quizStartedAt" TIMESTAMP(3),
+    "submittedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "gradedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "AssignmentSubmission_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "QuizQuestion" (
+    "id" TEXT NOT NULL,
+    "assignmentId" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "type" TEXT NOT NULL,
+    "prompt" TEXT NOT NULL,
+    "points" DOUBLE PRECISION NOT NULL DEFAULT 1,
+    "data" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "QuizQuestion_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "QuizAnswer" (
+    "id" TEXT NOT NULL,
+    "submissionId" TEXT NOT NULL,
+    "questionId" TEXT NOT NULL,
+    "response" JSONB NOT NULL,
+    "pointsAwarded" DOUBLE PRECISION,
+    "autoGraded" BOOLEAN NOT NULL DEFAULT false,
+    "feedback" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "QuizAnswer_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Message" (
+    "id" TEXT NOT NULL,
+    "senderId" TEXT NOT NULL,
+    "receiverId" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "readAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Announcement" (
+    "id" TEXT NOT NULL,
+    "authorId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "body" TEXT NOT NULL,
+    "audience" TEXT NOT NULL,
+    "targetRole" TEXT,
+    "classId" TEXT,
+    "channels" TEXT NOT NULL DEFAULT 'IN_APP',
+    "pinned" BOOLEAN NOT NULL DEFAULT false,
+    "scheduledAt" TIMESTAMP(3),
+    "sentAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Announcement_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AnnouncementRead" (
+    "id" TEXT NOT NULL,
+    "announcementId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "readAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AnnouncementRead_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "NotificationPreference" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "emailEnabled" BOOLEAN NOT NULL DEFAULT true,
+    "smsEnabled" BOOLEAN NOT NULL DEFAULT true,
+    "inAppEnabled" BOOLEAN NOT NULL DEFAULT true,
+    "announcementsEnabled" BOOLEAN NOT NULL DEFAULT true,
+    "messagesEnabled" BOOLEAN NOT NULL DEFAULT true,
+    "digestFrequency" TEXT NOT NULL DEFAULT 'NONE',
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "NotificationPreference_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Course" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "category" TEXT,
+    "classId" TEXT NOT NULL,
+    "createdById" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'DRAFT',
+    "enrollmentOpen" BOOLEAN NOT NULL DEFAULT false,
+    "startDate" TIMESTAMP(3),
+    "endDate" TIMESTAMP(3),
+    "publishedAt" TIMESTAMP(3),
+    "archivedAt" TIMESTAMP(3),
+    "completedAt" TIMESTAMP(3),
+    "coverImageUrl" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Course_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CourseLesson" (
+    "id" TEXT NOT NULL,
+    "courseId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "status" TEXT NOT NULL DEFAULT 'DRAFT',
+    "gradingMode" TEXT NOT NULL DEFAULT 'GRADED',
+    "availableFrom" TIMESTAMP(3),
+    "availableUntil" TIMESTAMP(3),
+    "showProgressBar" BOOLEAN NOT NULL DEFAULT true,
+    "branchingEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "totalPoints" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "passingScore" DOUBLE PRECISION,
+    "requireVideoWatch" BOOLEAN NOT NULL DEFAULT false,
+    "videoWatchPct" INTEGER NOT NULL DEFAULT 90,
+    "maxAttempts" INTEGER NOT NULL DEFAULT 0,
+    "publishedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CourseLesson_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "LessonPage" (
+    "id" TEXT NOT NULL,
+    "lessonId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "pageType" TEXT NOT NULL DEFAULT 'CONTENT',
+    "content" JSONB NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "nextPageId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "LessonPage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CourseEnrollment" (
+    "id" TEXT NOT NULL,
+    "courseId" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ENROLLED',
+    "progressPct" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "enrolledAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+    "certificateUrl" TEXT,
+
+    CONSTRAINT "CourseEnrollment_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "LessonAttempt" (
+    "id" TEXT NOT NULL,
+    "lessonId" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'IN_PROGRESS',
+    "currentPageId" TEXT,
+    "score" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "maxScore" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "passed" BOOLEAN,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+
+    CONSTRAINT "LessonAttempt_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PageResponse" (
+    "id" TEXT NOT NULL,
+    "attemptId" TEXT NOT NULL,
+    "pageId" TEXT NOT NULL,
+    "answer" JSONB NOT NULL,
+    "correct" BOOLEAN,
+    "pointsAwarded" DOUBLE PRECISION,
+    "nextPageId" TEXT,
+    "answeredAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PageResponse_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CourseSession" (
+    "id" TEXT NOT NULL,
+    "courseId" TEXT NOT NULL,
+    "lessonId" TEXT,
+    "title" TEXT NOT NULL,
+    "scheduledAt" TIMESTAMP(3) NOT NULL,
+    "durationMinutes" INTEGER NOT NULL DEFAULT 60,
+    "location" TEXT,
+    "checkInCode" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CourseSession_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CourseAttendance" (
+    "id" TEXT NOT NULL,
+    "sessionId" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PRESENT',
+    "source" TEXT NOT NULL DEFAULT 'MANUAL',
+    "checkInTime" TIMESTAMP(3),
+    "notes" TEXT,
+    "markedById" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CourseAttendance_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "LessonView" (
+    "id" TEXT NOT NULL,
+    "lessonId" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "firstOpenedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastOpenedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "openCount" INTEGER NOT NULL DEFAULT 1,
+    "watchedSeconds" INTEGER NOT NULL DEFAULT 0,
+    "videoDurationSec" INTEGER,
+    "videoCompleted" BOOLEAN NOT NULL DEFAULT false,
+    "completedAt" TIMESTAMP(3),
+
+    CONSTRAINT "LessonView_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "FeeSettings" (
+    "id" TEXT NOT NULL DEFAULT 'singleton',
+    "schoolName" TEXT NOT NULL DEFAULT 'Wattaman School',
+    "schoolAddress" TEXT NOT NULL DEFAULT '',
+    "schoolPhone" TEXT NOT NULL DEFAULT '',
+    "schoolEmail" TEXT NOT NULL DEFAULT '',
+    "invoiceTitle" TEXT NOT NULL DEFAULT 'INVOICE',
+    "invoiceSubtitle" TEXT NOT NULL DEFAULT 'Student Fee Receipt',
+    "invoiceFooter" TEXT NOT NULL DEFAULT 'This is a computer-generated invoice. No signature required.',
+    "discountPresets" TEXT NOT NULL DEFAULT '[]',
+    "promotions" TEXT NOT NULL DEFAULT '[]',
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "FeeSettings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SiteSetting" (
+    "id" TEXT NOT NULL DEFAULT 'singleton',
+    "siteName" TEXT NOT NULL DEFAULT 'Wattaman',
+    "siteTagline" TEXT NOT NULL DEFAULT 'Smart School Management',
+    "logoUrl" TEXT NOT NULL DEFAULT '',
+    "heroSlides" TEXT NOT NULL DEFAULT '[]',
+    "footerAddress" TEXT NOT NULL DEFAULT '',
+    "footerPhone" TEXT NOT NULL DEFAULT '',
+    "footerEmail" TEXT NOT NULL DEFAULT '',
+    "footerFacebook" TEXT NOT NULL DEFAULT '',
+    "footerInstagram" TEXT NOT NULL DEFAULT '',
+    "footerTwitter" TEXT NOT NULL DEFAULT '',
+    "footerYoutube" TEXT NOT NULL DEFAULT '',
+    "footerCopyright" TEXT NOT NULL DEFAULT '',
+    "primaryColor" TEXT NOT NULL DEFAULT '#4f46e5',
+    "customCss" TEXT NOT NULL DEFAULT '',
+    "aboutBadge" TEXT NOT NULL DEFAULT 'About Us',
+    "aboutTitle" TEXT NOT NULL DEFAULT 'A Smarter Way to Manage Your School',
+    "aboutDescription" TEXT NOT NULL DEFAULT '',
+    "aboutImageUrl" TEXT NOT NULL DEFAULT '',
+    "aboutFeatures" TEXT NOT NULL DEFAULT '[]',
+    "aboutCtaLabel" TEXT NOT NULL DEFAULT 'Get Started Today',
+    "aboutCtaHref" TEXT NOT NULL DEFAULT '/login',
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "SiteSetting_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Post" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "excerpt" TEXT NOT NULL DEFAULT '',
+    "body" TEXT NOT NULL DEFAULT '',
+    "type" TEXT NOT NULL DEFAULT 'text',
+    "imageUrl" TEXT NOT NULL DEFAULT '',
+    "videoUrl" TEXT NOT NULL DEFAULT '',
+    "published" BOOLEAN NOT NULL DEFAULT false,
+    "pinned" BOOLEAN NOT NULL DEFAULT false,
+    "tags" TEXT NOT NULL DEFAULT '[]',
+    "authorId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Post_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_phoneNormalized_key" ON "User"("phoneNormalized");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Student_userId_key" ON "Student"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Student_qrCode_key" ON "Student"("qrCode");
+
+-- CreateIndex
+CREATE INDEX "Student_studentNumber_idx" ON "Student"("studentNumber");
+
+-- CreateIndex
+CREATE INDEX "Student_classId_idx" ON "Student"("classId");
+
+-- CreateIndex
+CREATE INDEX "Student_parentId_idx" ON "Student"("parentId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "CardAlias_qrValue_key" ON "CardAlias"("qrValue");
+
+-- CreateIndex
+CREATE INDEX "CardAlias_studentId_idx" ON "CardAlias"("studentId");
+
+-- CreateIndex
+CREATE INDEX "Attendance_date_idx" ON "Attendance"("date");
+
+-- CreateIndex
+CREATE INDEX "Attendance_classId_date_idx" ON "Attendance"("classId", "date");
+
+-- CreateIndex
+CREATE INDEX "Attendance_studentId_date_idx" ON "Attendance"("studentId", "date");
+
+-- CreateIndex
+CREATE INDEX "Attendance_status_idx" ON "Attendance"("status");
+
+-- CreateIndex
+CREATE INDEX "Attendance_markedById_idx" ON "Attendance"("markedById");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Attendance_studentId_classId_date_session_key" ON "Attendance"("studentId", "classId", "date", "session");
+
+-- CreateIndex
+CREATE INDEX "Notification_userId_sentAt_idx" ON "Notification"("userId", "sentAt");
+
+-- CreateIndex
+CREATE INDEX "Notification_sentAt_idx" ON "Notification"("sentAt");
+
+-- CreateIndex
+CREATE INDEX "Notification_readAt_idx" ON "Notification"("readAt");
+
+-- CreateIndex
+CREATE INDEX "ParentLinkRequest_status_idx" ON "ParentLinkRequest"("status");
+
+-- CreateIndex
+CREATE INDEX "ParentLinkRequest_studentId_idx" ON "ParentLinkRequest"("studentId");
+
+-- CreateIndex
+CREATE INDEX "ClassRegistration_status_idx" ON "ClassRegistration"("status");
+
+-- CreateIndex
+CREATE INDEX "ClassRegistration_classId_idx" ON "ClassRegistration"("classId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ClassRegistrationField_key_key" ON "ClassRegistrationField"("key");
+
+-- CreateIndex
+CREATE INDEX "StaffAttendance_date_idx" ON "StaffAttendance"("date");
+
+-- CreateIndex
+CREATE INDEX "StaffAttendance_userId_date_idx" ON "StaffAttendance"("userId", "date");
+
+-- CreateIndex
+CREATE INDEX "StaffAttendance_status_idx" ON "StaffAttendance"("status");
+
+-- CreateIndex
+CREATE INDEX "StaffAttendance_markedById_idx" ON "StaffAttendance"("markedById");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StaffAttendance_userId_date_session_key" ON "StaffAttendance"("userId", "date", "session");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SessionConfig_classId_session_scope_key" ON "SessionConfig"("classId", "session", "scope");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StudyYear_year_key" ON "StudyYear"("year");
+
+-- CreateIndex
+CREATE INDEX "Holiday_date_idx" ON "Holiday"("date");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Holiday_date_name_key" ON "Holiday"("date", "name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Department_name_key" ON "Department"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "RefreshToken_token_key" ON "RefreshToken"("token");
+
+-- CreateIndex
+CREATE INDEX "RefreshToken_userId_idx" ON "RefreshToken"("userId");
+
+-- CreateIndex
+CREATE INDEX "RefreshToken_expiresAt_idx" ON "RefreshToken"("expiresAt");
+
+-- CreateIndex
+CREATE INDEX "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "AuditLog_actorId_createdAt_idx" ON "AuditLog"("actorId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "AuditLog_resource_resourceId_createdAt_idx" ON "AuditLog"("resource", "resourceId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "AuditLog_action_createdAt_idx" ON "AuditLog"("action", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "AuditCleanupSchedule_enabled_idx" ON "AuditCleanupSchedule"("enabled");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AttendanceFormatRule_scope_organizationId_key" ON "AttendanceFormatRule"("scope", "organizationId");
+
+-- CreateIndex
+CREATE INDEX "FeeRecord_studentId_idx" ON "FeeRecord"("studentId");
+
+-- CreateIndex
+CREATE INDEX "FeePayment_feeRecordId_idx" ON "FeePayment"("feeRecordId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "TimetableTeacher_qrCode_key" ON "TimetableTeacher"("qrCode");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "TimetableEntry_timetableId_classId_day_period_key" ON "TimetableEntry"("timetableId", "classId", "day", "period");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "TimetableTeacherAttendance_teacherId_date_period_key" ON "TimetableTeacherAttendance"("teacherId", "date", "period");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ScoreSheetClass_scoreSheetId_classId_key" ON "ScoreSheetClass"("scoreSheetId", "classId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ScoreEntry_examTabId_subjectId_studentId_key" ON "ScoreEntry"("examTabId", "subjectId", "studentId");
+
+-- CreateIndex
+CREATE INDEX "Salary_year_month_idx" ON "Salary"("year", "month");
+
+-- CreateIndex
+CREATE INDEX "Salary_isPaid_idx" ON "Salary"("isPaid");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Salary_userId_month_year_key" ON "Salary"("userId", "month", "year");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StaffProfile_userId_key" ON "StaffProfile"("userId");
+
+-- CreateIndex
+CREATE INDEX "StaffEducation_userId_idx" ON "StaffEducation"("userId");
+
+-- CreateIndex
+CREATE INDEX "StaffWorkExperience_userId_idx" ON "StaffWorkExperience"("userId");
+
+-- CreateIndex
+CREATE INDEX "StaffCertification_userId_idx" ON "StaffCertification"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Bus_plateNumber_key" ON "Bus"("plateNumber");
+
+-- CreateIndex
+CREATE INDEX "BusLocation_busId_timestamp_idx" ON "BusLocation"("busId", "timestamp");
+
+-- CreateIndex
+CREATE INDEX "ExamAttempt_studentId_idx" ON "ExamAttempt"("studentId");
+
+-- CreateIndex
+CREATE INDEX "ExamAttempt_examId_idx" ON "ExamAttempt"("examId");
 
 -- CreateIndex
 CREATE INDEX "ExamAttempt_status_idx" ON "ExamAttempt"("status");

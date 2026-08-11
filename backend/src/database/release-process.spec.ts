@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readdirSync, readFileSync, statSync } from 'fs';
 import { join, resolve } from 'path';
 
 describe('production release process', () => {
@@ -26,6 +26,19 @@ describe('production release process', () => {
     expect(runner).toContain('pg_advisory_xact_lock');
     expect(runner).toContain("'migrate', 'deploy'");
     expect(runner).toContain("'migrate', 'resolve', '--applied', LEGACY_BASELINE");
+    expect(runner).toContain('synchronizeHistoricalBaselineChecksum');
+    expect(runner).toContain("createHash('sha256')");
     expect(runner).toContain('$transaction');
+  });
+
+  it('contains complete migration SQL without captured output truncation', () => {
+    const migrationsRoot = join(process.cwd(), 'prisma', 'migrations');
+    for (const directory of readdirSync(migrationsRoot).filter((entry) => statSync(join(migrationsRoot, entry)).isDirectory())) {
+      const sql = readFileSync(join(migrationsRoot, directory, 'migration.sql'), 'utf8');
+      expect(sql).not.toMatch(/tokens truncated|…\d+ tokens truncated…/);
+      expect(sql.trim().length).toBeGreaterThan(0);
+    }
+    const baseline = readFileSync(join(migrationsRoot, '20260728000000_legacy_schema_baseline', 'migration.sql'), 'utf8');
+    expect(baseline.length).toBeGreaterThan(50_000);
   });
 });

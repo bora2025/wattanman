@@ -15,7 +15,7 @@ npm ci --legacy-peer-deps
 npm run build
 ```
 
-The PostgreSQL-backed CI workflow additionally runs tenant isolation and the complete extension lifecycle E2E after applying the migration chain to an empty PostgreSQL 16 database.
+The PostgreSQL-backed CI workflow additionally runs tenant isolation and the complete extension lifecycle E2E after applying the migration chain to an empty PostgreSQL 16 database. The migration chain was locally replayed from empty with all 29 migrations and verified with `prisma migrate diff --exit-code` showing no schema drift.
 
 ## Rollback
 

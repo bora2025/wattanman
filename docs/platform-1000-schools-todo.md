@@ -39,7 +39,7 @@ An item is complete only when implementation, automated tests, documentation, de
 
 - [x] Backend production build passes.
 - [x] Frontend production build passes.
-- [ ] Extension lifecycle tests pass.
+- [x] Extension lifecycle tests pass.
 - [x] No unexplained legacy runtime file or database model remains.
 - [ ] Architecture and security review is approved.
 
