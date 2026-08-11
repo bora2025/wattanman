@@ -196,7 +196,8 @@ An item is complete only when implementation, automated tests, documentation, de
   - Publication signing independently requires an `APPROVED`, previously unsigned release whose ZIP remains at its exact extension/version/checksum quarantine key; it then verifies the bytes, active publisher key, and private/public Ed25519 match before persisting a signature. The 250-test backend suite and both builds passed, and Railway API deployment `8b477c13-c261-4f74-93f4-762e1c64f816` succeeded on 2026-08-11.
 - [x] Verify signatures before installation and runtime cache use.
   - Install, upgrade, rollback, activation, navigation, pages, and extension data operations fail closed unless non-core package bytes match their immutable published key, SHA-256, Ed25519 signature, lifecycle state, and non-revoked key. Runtime verification caches only the complete signed identity for five minutes and rechecks lifecycle/key status before every cache hit. The 252-test backend suite and both builds passed, and Railway API deployment `76905dd2-5fcb-4004-a6bc-c4a0c9c2c1e5` succeeded on 2026-08-11.
-- [ ] Add quarantine and rejected-package retention policies.
+- [x] Add quarantine and rejected-package retention policies.
+  - A distributed daily cleanup expires abandoned quarantine/validation work after seven days, preserves a structured failed validation trail, retains rejected bytes for 30 additional days, then deletes package/assets in bounded retry-safe batches while preserving checksums and reports. Retired releases are excluded. The 254-test backend suite and both builds passed, and Railway deployments `f92c1323-cf28-418a-bd53-5aacb7469756` (API) and `abc447d6-2542-4ee7-98a9-131e189bef99` (extension worker) succeeded on 2026-08-11.
 
 ### Review and publication
 

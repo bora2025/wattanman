@@ -342,3 +342,25 @@ bypasses the cache and fails closed. The cache is process-local and bounded to
 Production API deployment `76905dd2-5fcb-4004-a6bc-c4a0c9c2c1e5` completed
 successfully on 2026-08-11. Validation passed with 252 backend tests, one
 intentional skip, and successful backend and frontend production builds.
+
+## Quarantine and rejected-package retention
+
+The distributed daily extension cleanup expires `QUARANTINED` or `VALIDATING`
+work that has made no state progress for seven days. It atomically transitions
+the release to `REJECTED` and closes pending/running validation records with a
+structured `QUARANTINE_RETENTION_EXPIRED` error. Package bytes remain available
+for a further 30-day rejected-package evidence period.
+
+After that period, cleanup removes the package and extracted R2 assets in
+bounded batches of 100, then atomically deletes asset rows and clears only the
+package storage pointer. Checksums, validation reports, review history, and
+release metadata remain for audit. Storage failures retain database pointers so
+the next run retries safely. Retired releases and any installed version are
+excluded. Defaults can be changed with
+`EXTENSION_QUARANTINE_RETENTION_DAYS`, `EXTENSION_REJECTED_RETENTION_DAYS`, and
+`EXTENSION_RETENTION_BATCH_SIZE` within enforced bounds.
+
+Production API deployment `f92c1323-cf28-418a-bd53-5aacb7469756` and extension
+worker deployment `abc447d6-2542-4ee7-98a9-131e189bef99` completed successfully
+on 2026-08-11. Validation passed with 254 backend tests, one intentional skip,
+and successful backend and frontend production builds.
