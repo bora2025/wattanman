@@ -24,3 +24,26 @@ The E2E commands require an empty migrated PostgreSQL 16 database. CI is the req
 ## Rollback
 
 Tenant fail-closed behavior must not be rolled back. If provisioning code is reverted, retain the `requestKey`, hostname uniqueness constraints, and transactional create boundary. Recover a failed provisioning operation by replaying or retrying its existing job, never by inserting a second school manually.
+
+## 1,000-school scale rehearsal
+
+Run the deterministic, bounded rehearsal against an isolated database:
+
+```powershell
+$env:DATABASE_ADMIN_URL = '<isolated-admin-url>'
+Set-Location backend
+npm run db:provisioning:rehearse
+```
+
+The command creates schools in batches of 100 with exactly one administrator,
+site setting, completed provisioning job, and verified managed domain per school.
+It verifies all 1,000 record sets, verifies zero extension installations, and
+deletes its fixtures after success. The August 11, 2026 rehearsal completed in
+3,120 ms and observed exactly 1,000 rows in every required category.
+
+Use a unique `SYNTHETIC_SCHOOL_PREFIX` for concurrent rehearsals. Counts are
+bounded at 10,000 and batch size at 500. Production execution additionally
+requires `CONFIRM_SYNTHETIC_PROVISIONING` to exactly match the prefix. Fixtures
+are retained only when `SYNTHETIC_SCHOOL_KEEP=true`; rollback is rerunning the
+command with the same prefix and retention disabled, which cascade-deletes only
+schools whose subdomains begin with that guarded prefix.
