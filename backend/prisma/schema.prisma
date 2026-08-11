@@ -24,32 +24,32 @@ datasource db {
 // per-model null-handling) at the cost of one fake row that Platform-tier School
 // listings must filter out.
 model School {
-  id           String   @id @default(cuid())
-  subdomain    String   @unique // matches <subdomain>.wattaman.app; "platform" is the reserved sentinel
-  customDomain String?  @unique // optional, e.g. "portal.someschool.com" — layered on top of subdomain, never a
+  id            String   @id @default(cuid())
+  subdomain     String   @unique // matches <subdomain>.wattaman.app; "platform" is the reserved sentinel
+  customDomain  String?  @unique // optional, e.g. "portal.someschool.com" — layered on top of subdomain, never a
   // replacement for it (see the conversion plan's custom-domain discussion). Globally unique is correct
   // here, unlike almost everything else in this schema — domain ownership is inherently public, not a
   // cross-tenant leak vector.
-  name         String
-  status       String   @default("PROVISIONING") // PROVISIONING | ACTIVE | SUSPENDED | DELETION_SCHEDULED | DELETED
-  storagePrefix String  @unique
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  name          String
+  status        String   @default("PROVISIONING") // PROVISIONING | ACTIVE | SUSPENDED | DELETION_SCHEDULED | DELETED
+  storagePrefix String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  users                       User[]
-  refreshTokens               RefreshToken[]
-  passwordResetTokens         PasswordResetToken[]
-  auditLogs                   AuditLog[]
-  auditCleanupSchedules       AuditCleanupSchedule[]
-  schoolDailyMetrics          SchoolDailyMetric[]
-  siteSetting                 SiteSetting?
-  posts                       Post[]
-  extensionInstallations      ExtensionInstallation[]
-  extensionRecords            ExtensionRecord[]
-  extensionVisibilityGrants   ExtensionVisibilityGrant[]
-  extensionPilotFeedback      ExtensionPilotFeedback[]
-  domains                     SchoolDomain[]
-  provisioningJobs            SchoolProvisioningJob[]
+  users                     User[]
+  refreshTokens             RefreshToken[]
+  passwordResetTokens       PasswordResetToken[]
+  auditLogs                 AuditLog[]
+  auditCleanupSchedules     AuditCleanupSchedule[]
+  schoolDailyMetrics        SchoolDailyMetric[]
+  siteSetting               SiteSetting?
+  posts                     Post[]
+  extensionInstallations    ExtensionInstallation[]
+  extensionRecords          ExtensionRecord[]
+  extensionVisibilityGrants ExtensionVisibilityGrant[]
+  extensionPilotFeedback    ExtensionPilotFeedback[]
+  domains                   SchoolDomain[]
+  provisioningJobs          SchoolProvisioningJob[]
 }
 
 model SchoolProvisioningJob {
@@ -69,29 +69,29 @@ model SchoolProvisioningJob {
 }
 
 model SchoolDomain {
-  id           String   @id @default(cuid())
-  schoolId     String
-  school       School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  hostname     String   @unique
-  type         String   @default("MANAGED") // MANAGED | CUSTOM | PLATFORM | LEGACY_ALIAS
-  status       String   @default("VERIFIED") // PENDING | VERIFIED | FAILED | DISABLED
-  verificationToken String? @unique
-  verifiedAt   DateTime?
-  lastCheckedAt DateTime?
+  id                String    @id @default(cuid())
+  schoolId          String
+  school            School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  hostname          String    @unique
+  type              String    @default("MANAGED") // MANAGED | CUSTOM | PLATFORM | LEGACY_ALIAS
+  status            String    @default("VERIFIED") // PENDING | VERIFIED | FAILED | DISABLED
+  verificationToken String?   @unique
+  verifiedAt        DateTime?
+  lastCheckedAt     DateTime?
   verificationError String?
-  routingStatus String @default("PENDING") // PENDING | READY | FAILED
-  routingCheckedAt DateTime?
-  routingError String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  routingStatus     String    @default("PENDING") // PENDING | READY | FAILED
+  routingCheckedAt  DateTime?
+  routingError      String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@index([schoolId, status])
 }
 
 model User {
-  id              String      @id @default(cuid())
+  id              String   @id @default(cuid())
   schoolId        String
-  school          School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school          School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   email           String? // nullable — a user may register with phone instead. Unique per-school, not globally (see @@unique below).
   password        String
   name            String
@@ -100,9 +100,9 @@ model User {
   photo           String?
   role            String
   mfaSecret       String? // TOTP secret, base32 — set on /auth/mfa/setup, not yet trusted until mfaEnabled
-  mfaEnabled      Boolean     @default(false) // PLATFORM_ADMIN login requires this to be true once set up (Phase 2a)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  mfaEnabled      Boolean  @default(false) // PLATFORM_ADMIN login requires this to be true once set up (Phase 2a)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   refreshTokens                 RefreshToken[]
   passwordResetTokens           PasswordResetToken[]
@@ -154,23 +154,28 @@ model PasswordResetToken {
 
 /// Stable platform-global identity for an installable extension.
 model Extension {
-  id              String             @id @default(cuid())
-  key             String             @unique
-  name            String
-  description     String?
-  runtimeType     String // CORE_MODULE | DECLARATIVE_MODULE | THEME | INTEGRATION | CODE_EXTENSION
-  commercialType  String // MODULE | ADDON | THEME
-  price           Float?
-  priceNote       String?
-  category        String?
-  publisher       String             @default("WATTAMAN")
-  publisherId     String
-  publisherEntity ExtensionPublisher @relation(fields: [publisherId], references: [id], onDelete: Restrict)
-  status          String             @default("ACTIVE") // ACTIVE | SUSPENDED | RETIRED
-  isListed        Boolean            @default(false)
-  visibility      String             @default("UNLISTED") // LISTED | UNLISTED | PRIVATE
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id               String             @id @default(cuid())
+  key              String             @unique
+  name             String
+  description      String?
+  runtimeType      String // CORE_MODULE | DECLARATIVE_MODULE | THEME | INTEGRATION | CODE_EXTENSION
+  commercialType   String // MODULE | ADDON | THEME
+  price            Float?
+  priceNote        String?
+  category         String             @default("OTHER")
+  tags             String[]           @default([])
+  locales          String[]           @default(["en"])
+  supportUrl       String?
+  privacyPolicyUrl String?
+  dataUse          Json               @default("{\"collectsPersonalData\":false,\"dataCategories\":[],\"purposes\":[],\"sharesWithThirdParties\":false,\"retentionDays\":null}")
+  publisher        String             @default("WATTAMAN")
+  publisherId      String
+  publisherEntity  ExtensionPublisher @relation(fields: [publisherId], references: [id], onDelete: Restrict)
+  status           String             @default("ACTIVE") // ACTIVE | SUSPENDED | RETIRED
+  isListed         Boolean            @default(false)
+  visibility       String             @default("UNLISTED") // LISTED | UNLISTED | PRIVATE
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   versions         ExtensionVersion[]
   installations    ExtensionInstallation[]
@@ -181,6 +186,7 @@ model Extension {
 
   @@index([runtimeType, status])
   @@index([commercialType, isListed])
+  @@index([category, status])
   @@index([visibility, status])
   @@index([publisherId, status])
 }
@@ -452,7 +458,7 @@ model ExtensionPaymentSetting {
   accountName   String?
   accountNumber String?
   currency      String   @default("USD")
-  instructions String?
+  instructions  String?
   qrStorageKey  String?
   qrContentType String?
   qrFileName    String?

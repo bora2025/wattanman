@@ -175,10 +175,45 @@ export class ExtensionsController {
       runtimeType: string;
       commercialType: string;
       category?: string;
+      tags?: string[];
+      locales?: string[];
+      supportUrl?: string | null;
+      privacyPolicyUrl?: string | null;
+      dataUse?: {
+        collectsPersonalData?: boolean;
+        dataCategories?: string[];
+        purposes?: string[];
+        sharesWithThirdParties?: boolean;
+        retentionDays?: number | null;
+      };
     },
     @Request() req,
   ) {
     return this.extensions.createExtension(body, req.user);
+  }
+
+  @Patch(":extensionId/metadata")
+  updateMetadata(
+    @Param("extensionId") extensionId: string,
+    @Body()
+    body: {
+      description?: string | null;
+      category?: string;
+      tags?: string[];
+      locales?: string[];
+      supportUrl?: string | null;
+      privacyPolicyUrl?: string | null;
+      dataUse?: {
+        collectsPersonalData?: boolean;
+        dataCategories?: string[];
+        purposes?: string[];
+        sharesWithThirdParties?: boolean;
+        retentionDays?: number | null;
+      };
+    },
+    @Request() req,
+  ) {
+    return this.extensions.updateCatalogMetadata(extensionId, body, req.user);
   }
 
   @Post(":extensionId/versions")

@@ -105,11 +105,55 @@ describe("ExtensionsService", () => {
 
     expect(result.publisher).toBe("WATTAMAN");
     expect(prisma.extension.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ publisherId: "publisher-1" }),
+      data: expect.objectContaining({
+        publisherId: "publisher-1",
+        category: "OTHER",
+        tags: [],
+        locales: ["en"],
+      }),
     });
     expect(audit.log).toHaveBeenCalledWith(
       expect.objectContaining({ resource: "EXTENSION", action: "CREATE" }),
     );
+  });
+
+  it("updates audited catalog metadata", async () => {
+    prisma.extension.findUnique.mockResolvedValue({
+      id: "ext-1",
+      name: "Student Rewards",
+      publisherId: "publisher-1",
+      description: null,
+      category: "OTHER",
+      tags: [],
+      locales: ["en"],
+      supportUrl: null,
+      privacyPolicyUrl: null,
+      dataUse: {},
+    });
+    prisma.extension.update.mockImplementation(({ data }) =>
+      Promise.resolve({ id: "ext-1", ...data }),
+    );
+
+    const result = await service.updateCatalogMetadata("ext-1", {
+      description: "Reward classroom progress.",
+      category: "ACADEMICS",
+      tags: ["rewards"],
+      locales: ["en", "km-KH"],
+      supportUrl: "https://support.example.com/rewards",
+      privacyPolicyUrl: "https://example.com/privacy",
+      dataUse: {
+        collectsPersonalData: true,
+        dataCategories: ["ACADEMIC"],
+        purposes: ["CORE_FUNCTIONALITY"],
+        sharesWithThirdParties: false,
+        retentionDays: 365,
+      },
+    }, actor);
+
+    expect(result.category).toBe("ACADEMICS");
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({
+      action: "CATALOG_METADATA_UPDATE",
+    }));
   });
 
   it("rejects executable extensions during the declarative-only release", async () => {

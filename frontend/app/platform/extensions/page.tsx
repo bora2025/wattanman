@@ -49,6 +49,19 @@ interface ExtensionRecord {
   name: string;
   runtimeType: string;
   commercialType: string;
+  description?: string | null;
+  category: string;
+  tags: string[];
+  locales: string[];
+  supportUrl?: string | null;
+  privacyPolicyUrl?: string | null;
+  dataUse: {
+    collectsPersonalData: boolean;
+    dataCategories: string[];
+    purposes: string[];
+    sharesWithThirdParties: boolean;
+    retentionDays: number | null;
+  };
   price?: number | null;
   priceNote?: string | null;
   visibility: "LISTED" | "UNLISTED" | "PRIVATE";
@@ -620,6 +633,19 @@ function ExtensionCard({
   const [expanded, setExpanded] = useState(false);
   const [price, setPrice] = useState(extension.price?.toString() ?? "");
   const [priceNote, setPriceNote] = useState(extension.priceNote ?? "");
+  const [metadata, setMetadata] = useState({
+    description: extension.description ?? "",
+    category: extension.category || "OTHER",
+    tags: (extension.tags || []).join(", "),
+    locales: (extension.locales || ["en"]).join(", "),
+    supportUrl: extension.supportUrl ?? "",
+    privacyPolicyUrl: extension.privacyPolicyUrl ?? "",
+    collectsPersonalData: extension.dataUse?.collectsPersonalData || false,
+    dataCategories: (extension.dataUse?.dataCategories || []).join(", "),
+    purposes: (extension.dataUse?.purposes || []).join(", "),
+    sharesWithThirdParties: extension.dataUse?.sharesWithThirdParties || false,
+    retentionDays: extension.dataUse?.retentionDays?.toString() || "",
+  });
 
   async function addVersion(event: FormEvent) {
     event.preventDefault();
@@ -707,6 +733,40 @@ function ExtensionCard({
       await reload();
     } catch (pricingError: any) {
       setError(pricingError.message || "Could not update pricing");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveMetadata() {
+    setBusy(true);
+    setError("");
+    const list = (value: string) => value.split(",").map((item) => item.trim()).filter(Boolean);
+    try {
+      await responseJson(
+        await apiFetch(`/api/platform/extensions/${extension.id}/metadata`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            description: metadata.description,
+            category: metadata.category,
+            tags: list(metadata.tags),
+            locales: list(metadata.locales),
+            supportUrl: metadata.supportUrl,
+            privacyPolicyUrl: metadata.privacyPolicyUrl,
+            dataUse: {
+              collectsPersonalData: metadata.collectsPersonalData,
+              dataCategories: list(metadata.dataCategories),
+              purposes: list(metadata.purposes),
+              sharesWithThirdParties: metadata.sharesWithThirdParties,
+              retentionDays: metadata.retentionDays ? Number(metadata.retentionDays) : null,
+            },
+          }),
+        }),
+      );
+      await reload();
+    } catch (metadataError: any) {
+      setError(metadataError.message || "Could not update catalog metadata");
     } finally {
       setBusy(false);
     }
@@ -805,6 +865,30 @@ function ExtensionCard({
               </button>
             )}
           </div>
+          <section className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Marketplace metadata</h3>
+              <p className="text-xs text-slate-500">Use comma-separated tags, locales, data categories, and purposes.</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="text-xs text-slate-600 dark:text-slate-300 md:col-span-2">Description<textarea className="input mt-1 min-h-20" value={metadata.description} onChange={(event) => setMetadata({ ...metadata, description: event.target.value })} /></label>
+              <label className="text-xs text-slate-600 dark:text-slate-300">Category<select className="input mt-1" value={metadata.category} onChange={(event) => setMetadata({ ...metadata, category: event.target.value })}>{["ACADEMICS", "ADMINISTRATION", "COMMUNICATION", "FINANCE", "PRODUCTIVITY", "REPORTING", "SECURITY", "STUDENT_SERVICES", "THEMES", "OTHER"].map((category) => <option key={category}>{category}</option>)}</select></label>
+              <label className="text-xs text-slate-600 dark:text-slate-300">Tags<input className="input mt-1" value={metadata.tags} onChange={(event) => setMetadata({ ...metadata, tags: event.target.value })} placeholder="attendance, reporting" /></label>
+              <label className="text-xs text-slate-600 dark:text-slate-300">Locales<input className="input mt-1" value={metadata.locales} onChange={(event) => setMetadata({ ...metadata, locales: event.target.value })} placeholder="en, km-KH" /></label>
+              <label className="text-xs text-slate-600 dark:text-slate-300">Support URL<input type="url" className="input mt-1" value={metadata.supportUrl} onChange={(event) => setMetadata({ ...metadata, supportUrl: event.target.value })} placeholder="https://…" /></label>
+              <label className="text-xs text-slate-600 dark:text-slate-300 md:col-span-2">Privacy policy URL<input type="url" className="input mt-1" value={metadata.privacyPolicyUrl} onChange={(event) => setMetadata({ ...metadata, privacyPolicyUrl: event.target.value })} placeholder="https://…" /></label>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/60">
+              <label className="flex items-center gap-2 text-xs font-medium"><input type="checkbox" checked={metadata.collectsPersonalData} onChange={(event) => setMetadata({ ...metadata, collectsPersonalData: event.target.checked })} /> Collects personal data</label>
+              {metadata.collectsPersonalData && <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <label className="text-xs">Data categories<input className="input mt-1" value={metadata.dataCategories} onChange={(event) => setMetadata({ ...metadata, dataCategories: event.target.value })} placeholder="IDENTITY, ACADEMIC" /></label>
+                <label className="text-xs">Purposes<input className="input mt-1" value={metadata.purposes} onChange={(event) => setMetadata({ ...metadata, purposes: event.target.value })} placeholder="CORE_FUNCTIONALITY" /></label>
+                <label className="text-xs">Retention days<input type="number" min="1" max="36500" className="input mt-1" value={metadata.retentionDays} onChange={(event) => setMetadata({ ...metadata, retentionDays: event.target.value })} /></label>
+                <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={metadata.sharesWithThirdParties} onChange={(event) => setMetadata({ ...metadata, sharesWithThirdParties: event.target.checked })} /> Shares data with third parties</label>
+              </div>}
+            </div>
+            <button type="button" className="btn-primary btn-sm" disabled={busy} onClick={saveMetadata}>Save metadata</button>
+          </section>
           <div className="flex gap-2 items-end flex-wrap rounded-lg border border-slate-200 p-3 dark:border-slate-700">
             <label className="text-xs text-slate-600 dark:text-slate-300">
               Price (USD)

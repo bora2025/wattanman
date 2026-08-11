@@ -12,6 +12,10 @@ import { createHash } from "crypto";
 import { ExtensionValidationRunnerService } from "./extension-validation-runner.service";
 import { ExtensionSigningService } from "./extension-signing.service";
 import { dateIdPage, dateIdPageBy, decodeDateIdCursor, parsePageLimit } from "../common/cursor-pagination";
+import {
+  ExtensionCatalogMetadataInput,
+  normalizeCatalogMetadata,
+} from "./extension-catalog-metadata";
 
 const KEY_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
@@ -191,8 +195,7 @@ export class ExtensionsService {
       description?: string;
       runtimeType: string;
       commercialType: string;
-      category?: string;
-    },
+    } & ExtensionCatalogMetadataInput,
     actor: Actor,
   ) {
     const key = data.key?.trim().toUpperCase();
@@ -215,6 +218,7 @@ export class ExtensionsService {
         "Executable code extensions are not enabled for the initial internal release",
       );
     }
+    const metadata = normalizeCatalogMetadata(data);
 
     const existing = await this.prisma.extension.findUnique({ where: { key } });
     if (existing)
@@ -237,10 +241,9 @@ export class ExtensionsService {
       data: {
         key,
         name,
-        description: data.description?.trim() || undefined,
         runtimeType: data.runtimeType,
         commercialType: data.commercialType,
-        category: data.category?.trim() || undefined,
+        ...metadata,
         publisher: "WATTAMAN",
         publisherId: publisher.id,
       },
@@ -249,6 +252,45 @@ export class ExtensionsService {
       after: extension,
     });
     return extension;
+  }
+
+  async updateCatalogMetadata(
+    extensionId: string,
+    data: ExtensionCatalogMetadataInput,
+    actor: Actor,
+  ) {
+    const existing = await this.prisma.extension.findUnique({
+      where: { id: extensionId },
+    });
+    if (!existing) throw new NotFoundException("Extension not found");
+    await this.requirePublisherRole(existing.publisherId, actor, "MANAGE");
+    const metadata = normalizeCatalogMetadata(data);
+    const updated = await this.prisma.extension.update({
+      where: { id: extensionId },
+      data: metadata,
+    });
+    await this.log(
+      actor,
+      "CATALOG_METADATA_UPDATE",
+      "EXTENSION",
+      extensionId,
+      existing.name,
+      {
+        changes: {
+          before: {
+            description: existing.description,
+            category: existing.category,
+            tags: existing.tags,
+            locales: existing.locales,
+            supportUrl: existing.supportUrl,
+            privacyPolicyUrl: existing.privacyPolicyUrl,
+            dataUse: existing.dataUse,
+          },
+          after: metadata,
+        },
+      },
+    );
+    return updated;
   }
 
   async createVersion(
