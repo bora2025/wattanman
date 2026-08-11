@@ -186,8 +186,22 @@ export class SchoolExtensionsController {
   constructor(private installations: ExtensionInstallationsService) {}
 
   @Get("directory")
-  directory(@Query("cursor") cursor?: string, @Query("limit") limit?: string) {
-    return this.installations.schoolDirectory({ cursor, limit });
+  directory(
+    @Query("cursor") cursor?: string,
+    @Query("limit") limit?: string,
+    @Query("search") search?: string,
+    @Query("category") category?: string,
+    @Query("runtimeType") runtimeType?: string,
+    @Query("commercialType") commercialType?: string,
+    @Query("locale") locale?: string,
+    @Query("sort") sort?: string,
+  ) {
+    return this.installations.schoolDirectory({ cursor, limit, search, category, runtimeType, commercialType, locale, sort });
+  }
+
+  @Get("collections")
+  collections(@Query("locale") locale?: string) {
+    return this.installations.schoolCatalogCollections(locale);
   }
 
   @Roles(

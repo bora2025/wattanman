@@ -104,3 +104,25 @@ normal application rollback.
 Production API deployment `e11d5f09-03cf-40aa-ae82-bde057f49f57` and frontend
 deployment `b6a06117-ca06-4184-9f5a-dc2276bc42e6` completed successfully on
 2026-08-11.
+
+## Marketplace discovery and collections
+
+School discovery performs server-side search across name, key, description, and
+tags, with category, runtime, commercial type, and locale filters. Stable opaque
+cursors support featured, newest, name ascending, and name descending ordering;
+cursors are bound to their sort mode and fail closed if reused incorrectly. The
+school interface requests 24 records at a time and exposes **Load more** instead
+of loading the full marketplace into memory.
+
+Platform administrators can create locale-specific draft collections, order up
+to 100 catalog extensions, publish a non-empty collection, and archive it. The
+school API returns at most 20 published collections and 20 tenant-visible items
+per collection. Private items remain subject to school grants, while inactive,
+retired, unpublished, and unavailable extensions are excluded. Collection
+changes are audited.
+
+The migration is additive and defaults all existing extensions to the lowest
+featured priority. Application rollback can retain the collection tables and
+featured rank. Roll back application images first; do not drop collection data.
+A later contract migration may remove these structures only after a verified
+backup and after all deployed versions stop reading them.

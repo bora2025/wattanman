@@ -52,10 +52,41 @@ export class ExtensionInstallationsService {
     private signing: ExtensionSigningService,
   ) {}
 
-  async schoolDirectory(input: { cursor?: string; limit?: string } = {}) {
+  async schoolDirectory(input: {
+    cursor?: string;
+    limit?: string;
+    search?: string;
+    category?: string;
+    runtimeType?: string;
+    commercialType?: string;
+    locale?: string;
+    sort?: string;
+  } = {}) {
     const schoolId = getCurrentSchoolId();
     const limit = parsePageLimit(input.limit);
-    const cursor = decodeDateIdCursor(input.cursor);
+    const sort = ["FEATURED", "NEWEST", "NAME_ASC", "NAME_DESC"].includes(input.sort || "") ? input.sort! : "FEATURED";
+    const cursor = this.decodeCatalogCursor(input.cursor, sort);
+    const search = input.search?.trim().slice(0, 100);
+    const filters: Prisma.ExtensionWhereInput[] = [
+      ...(search ? [{ OR: [
+        { name: { contains: search, mode: "insensitive" as const } },
+        { key: { contains: search, mode: "insensitive" as const } },
+        { description: { contains: search, mode: "insensitive" as const } },
+        { tags: { has: search.toLowerCase() } },
+      ] }] : []),
+      ...(input.category ? [{ category: input.category.toUpperCase() }] : []),
+      ...(input.runtimeType ? [{ runtimeType: input.runtimeType.toUpperCase() }] : []),
+      ...(input.commercialType ? [{ commercialType: input.commercialType.toUpperCase() }] : []),
+      ...(input.locale ? [{ locales: { has: input.locale } }] : []),
+      ...(cursor ? [this.catalogCursorWhere(cursor, sort)] : []),
+    ];
+    const orderBy: Prisma.ExtensionOrderByWithRelationInput[] = sort === "NAME_ASC"
+      ? [{ name: "asc" }, { id: "asc" }]
+      : sort === "NAME_DESC"
+        ? [{ name: "desc" }, { id: "desc" }]
+        : sort === "NEWEST"
+          ? [{ createdAt: "desc" }, { id: "desc" }]
+          : [{ featuredRank: "asc" }, { createdAt: "desc" }, { id: "desc" }];
     const rows = await this.prisma.extension.findMany({
       where: {
         status: "ACTIVE",
@@ -64,7 +95,7 @@ export class ExtensionInstallationsService {
           { visibility: "LISTED" },
           { visibility: "PRIVATE", visibilityGrants: { some: { schoolId } } },
         ],
-        ...(cursor ? { AND: [{ OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] }] } : {}),
+        ...(filters.length ? { AND: filters } : {}),
       },
       include: {
         versions: {
@@ -73,10 +104,89 @@ export class ExtensionInstallationsService {
           take: 1,
         },
       },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      orderBy,
       take: limit + 1,
     });
-    return dateIdPage(rows, limit);
+    const items = rows.slice(0, limit);
+    return {
+      items,
+      nextCursor: rows.length > limit && items.length
+        ? this.encodeCatalogCursor(items[items.length - 1], sort)
+        : null,
+    };
+  }
+
+  async schoolCatalogCollections(localeValue?: string) {
+    const schoolId = getCurrentSchoolId();
+    const locale = localeValue?.trim() || "en";
+    return this.prisma.extensionCatalogCollection.findMany({
+      where: { status: "PUBLISHED", locale: { in: [...new Set([locale, "en"])] } },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+      take: 20,
+      include: {
+        items: {
+          where: {
+            extension: {
+              status: "ACTIVE",
+              versions: { some: { lifecycleStatus: "PUBLISHED" } },
+              OR: [
+                { visibility: "LISTED" },
+                { visibility: "PRIVATE", visibilityGrants: { some: { schoolId } } },
+              ],
+            },
+          },
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          take: 20,
+          include: {
+            extension: {
+              include: {
+                versions: {
+                  where: { lifecycleStatus: "PUBLISHED" },
+                  orderBy: { publishedAt: "desc" },
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  private decodeCatalogCursor(value: string | undefined, sort: string): any | null {
+    if (!value) return null;
+    try {
+      const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
+      if (parsed.sort !== sort || typeof parsed.id !== "string") throw new Error();
+      if (["FEATURED", "NEWEST"].includes(sort) && !parsed.createdAt) throw new Error();
+      if (["NAME_ASC", "NAME_DESC"].includes(sort) && typeof parsed.name !== "string") throw new Error();
+      if (sort === "FEATURED" && !Number.isInteger(parsed.featuredRank)) throw new Error();
+      return parsed;
+    } catch {
+      throw new BadRequestException("Invalid catalog cursor");
+    }
+  }
+
+  private encodeCatalogCursor(row: any, sort: string) {
+    return Buffer.from(JSON.stringify({
+      sort,
+      id: row.id,
+      ...(sort === "FEATURED" ? { featuredRank: row.featuredRank, createdAt: row.createdAt.toISOString() } : {}),
+      ...(sort === "NEWEST" ? { createdAt: row.createdAt.toISOString() } : {}),
+      ...(["NAME_ASC", "NAME_DESC"].includes(sort) ? { name: row.name } : {}),
+    })).toString("base64url");
+  }
+
+  private catalogCursorWhere(cursor: any, sort: string): Prisma.ExtensionWhereInput {
+    if (sort === "NAME_ASC") return { OR: [{ name: { gt: cursor.name } }, { name: cursor.name, id: { gt: cursor.id } }] };
+    if (sort === "NAME_DESC") return { OR: [{ name: { lt: cursor.name } }, { name: cursor.name, id: { lt: cursor.id } }] };
+    const createdAt = new Date(cursor.createdAt);
+    if (sort === "NEWEST") return { OR: [{ createdAt: { lt: createdAt } }, { createdAt, id: { lt: cursor.id } }] };
+    return { OR: [
+      { featuredRank: { gt: cursor.featuredRank } },
+      { featuredRank: cursor.featuredRank, createdAt: { lt: createdAt } },
+      { featuredRank: cursor.featuredRank, createdAt, id: { lt: cursor.id } },
+    ] };
   }
 
   async schoolInstallations(input: { cursor?: string; limit?: string } = {}) {

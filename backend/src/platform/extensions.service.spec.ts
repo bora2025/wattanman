@@ -26,6 +26,13 @@ describe("ExtensionsService", () => {
       create: jest.fn(),
       update: jest.fn(),
     },
+    extensionCatalogCollection: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    extensionCatalogCollectionItem: { deleteMany: jest.fn(), createMany: jest.fn() },
     extensionReview: { create: jest.fn(), findMany: jest.fn() },
     extensionSigningKey: {
       findMany: jest.fn(),
@@ -1052,6 +1059,34 @@ describe("ExtensionsService", () => {
     expect(result.currentKey.status).toBe("ACTIVE");
     expect(result.newKey.status).toBe("ACTIVE");
     expect(result.nextStep).toContain("EXTENSION_SIGNING_KEY_ID");
+  });
+
+  it("creates an audited draft catalog collection with ordered extensions", async () => {
+    prisma.extensionCatalogCollection.findUnique.mockResolvedValue(null);
+    prisma.extension.findMany.mockResolvedValue([{ id: "ext-1" }, { id: "ext-2" }]);
+    prisma.extensionCatalogCollection.create.mockResolvedValue({
+      id: "collection-1", title: "Back to school", status: "DRAFT", items: [],
+    });
+    const result = await service.createCatalogCollection({
+      slug: "back-to-school",
+      title: "Back to school",
+      extensionIds: ["ext-1", "ext-2"],
+    }, actor);
+    expect(result.status).toBe("DRAFT");
+    expect(prisma.extensionCatalogCollection.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ items: { create: [
+        { extensionId: "ext-1", position: 0 },
+        { extensionId: "ext-2", position: 1 },
+      ] } }),
+    }));
+  });
+
+  it("refuses to publish an empty catalog collection", async () => {
+    prisma.extensionCatalogCollection.findUnique.mockResolvedValue({
+      id: "collection-1", title: "Empty", status: "DRAFT", items: [],
+    });
+    await expect(service.updateCatalogCollection("collection-1", { status: "PUBLISHED" }, actor))
+      .rejects.toThrow("must contain at least one extension");
   });
 
   it("refuses to retire the signing key still configured for publication", async () => {

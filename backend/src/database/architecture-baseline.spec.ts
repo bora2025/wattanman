@@ -3,7 +3,8 @@ import { resolve } from 'path';
 
 const EXPECTED_MODELS = [
   'AuditCleanupSchedule', 'AuditLog', 'Extension', 'ExtensionAlert', 'ExtensionApiMetric',
-  'ExtensionAsset', 'ExtensionDependency', 'ExtensionInstallation', 'ExtensionMigrationBackup',
+  'ExtensionAsset', 'ExtensionCatalogCollection', 'ExtensionCatalogCollectionItem',
+  'ExtensionDependency', 'ExtensionInstallation', 'ExtensionMigrationBackup',
   'ExtensionMigrationRun', 'ExtensionPaymentSetting', 'ExtensionPermission', 'ExtensionPilotFeedback',
   'ExtensionPublisher', 'ExtensionPublisherMember', 'ExtensionRecord', 'ExtensionReview',
   'ExtensionSigningKey', 'ExtensionValidation', 'ExtensionVersion', 'ExtensionVisibilityGrant',

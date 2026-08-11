@@ -144,6 +144,16 @@ interface ExtensionAlert {
   occurrences: number;
   lastSeenAt: string;
 }
+interface CatalogCollectionRecord {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string | null;
+  locale: string;
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  sortOrder: number;
+  items: Array<{ id: string; position: number; extension: { id: string; key: string; name: string; status: string } }>;
+}
 
 const LIFECYCLE_GUIDANCE: Record<string, string> = {
   UPLOADED: "Upload a ZIP package",
@@ -1369,6 +1379,9 @@ function ExtensionsContent() {
   const [paymentQr, setPaymentQr] = useState<File | null>(null);
   const [savingPayment, setSavingPayment] = useState(false);
   const [showPublisherOnboarding, setShowPublisherOnboarding] = useState(false);
+  const [catalogCollections, setCatalogCollections] = useState<CatalogCollectionRecord[]>([]);
+  const [showCollectionCreate, setShowCollectionCreate] = useState(false);
+  const [collectionForm, setCollectionForm] = useState({ slug: "", title: "", description: "", locale: "en", sortOrder: "0", extensionKeys: "" });
   const [publisherForm, setPublisherForm] = useState({
     key: "",
     name: "",
@@ -1422,6 +1435,7 @@ function ExtensionsContent() {
         alertData,
         metricData,
         paymentData,
+        collectionData,
       ] = await Promise.all([
         apiCursorItems<ExtensionRecord>("/api/platform/extensions"),
         apiCursorItems<InstallationRecord>("/api/platform/extension-installations"),
@@ -1430,6 +1444,7 @@ function ExtensionsContent() {
         apiCursorItems<ExtensionAlert>("/api/platform/extensions/alerts"),
         responseJson(await apiFetch("/api/platform/extensions/api-metrics")),
         responseJson(await apiFetch("/api/platform/extension-installations/payment-settings")),
+        apiCursorItems<CatalogCollectionRecord>("/api/platform/extensions/catalog-collections"),
       ]);
       setExtensions(extensionData);
       setInstallations(installationData);
@@ -1438,6 +1453,7 @@ function ExtensionsContent() {
       setAlerts(alertData);
       setApiMetrics(metricData);
       setPaymentSettings(paymentData);
+      setCatalogCollections(collectionData);
       setError("");
     } catch (loadError: any) {
       setError(loadError.message || "Failed to load extensions");
@@ -1665,6 +1681,51 @@ function ExtensionsContent() {
       await load();
     } catch (createError: any) {
       setError(createError.message || "Could not create extension");
+    }
+  }
+
+  function extensionIdsFromKeys(value: string) {
+    const keys = value.split(",").map((key) => key.trim().toUpperCase()).filter(Boolean);
+    const ids = keys.map((key) => extensions.find((extension) => extension.key === key)?.id);
+    if (ids.some((id) => !id)) throw new Error("Every collection extension key must exist in the catalog");
+    return ids as string[];
+  }
+
+  async function createCatalogCollection(event: FormEvent) {
+    event.preventDefault();
+    try {
+      await responseJson(await apiFetch("/api/platform/extensions/catalog-collections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: collectionForm.slug,
+          title: collectionForm.title,
+          description: collectionForm.description,
+          locale: collectionForm.locale,
+          sortOrder: Number(collectionForm.sortOrder),
+          extensionIds: extensionIdsFromKeys(collectionForm.extensionKeys),
+        }),
+      }));
+      setCollectionForm({ slug: "", title: "", description: "", locale: "en", sortOrder: "0", extensionKeys: "" });
+      setShowCollectionCreate(false);
+      await load();
+    } catch (collectionError: any) {
+      setError(collectionError.message || "Could not create catalog collection");
+    }
+  }
+
+  async function editCatalogCollection(collection: CatalogCollectionRecord, status?: string) {
+    const extensionKeys = status ? null : window.prompt("Ordered extension keys (comma separated)", collection.items.map((item) => item.extension.key).join(", "));
+    if (!status && extensionKeys === null) return;
+    try {
+      await responseJson(await apiFetch(`/api/platform/extensions/catalog-collections/${collection.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(status ? { status } : { extensionIds: extensionIdsFromKeys(extensionKeys || "") }),
+      }));
+      await load();
+    } catch (collectionError: any) {
+      setError(collectionError.message || "Could not update catalog collection");
     }
   }
 
@@ -2066,6 +2127,19 @@ function ExtensionsContent() {
           )}
           {activeView === "catalog" && (
             <>
+              <section className="card space-y-4 p-5">
+                <div className="flex items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900 dark:text-white">Featured collections</h2><p className="text-xs text-slate-500">Curate ordered marketplace rows and publish them when ready.</p></div><button className="btn-primary btn-sm" onClick={() => setShowCollectionCreate((value) => !value)}>{showCollectionCreate ? "Cancel" : "New collection"}</button></div>
+                {showCollectionCreate && <form onSubmit={createCatalogCollection} className="grid gap-3 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50 md:grid-cols-2">
+                  <label className="text-xs">Slug<input required className="input mt-1" value={collectionForm.slug} onChange={(event) => setCollectionForm({ ...collectionForm, slug: event.target.value.toLowerCase() })} placeholder="back-to-school" /></label>
+                  <label className="text-xs">Title<input required className="input mt-1" value={collectionForm.title} onChange={(event) => setCollectionForm({ ...collectionForm, title: event.target.value })} /></label>
+                  <label className="text-xs md:col-span-2">Description<input className="input mt-1" value={collectionForm.description} onChange={(event) => setCollectionForm({ ...collectionForm, description: event.target.value })} /></label>
+                  <label className="text-xs">Locale<input className="input mt-1" value={collectionForm.locale} onChange={(event) => setCollectionForm({ ...collectionForm, locale: event.target.value })} /></label>
+                  <label className="text-xs">Sort order<input type="number" className="input mt-1" value={collectionForm.sortOrder} onChange={(event) => setCollectionForm({ ...collectionForm, sortOrder: event.target.value })} /></label>
+                  <label className="text-xs md:col-span-2">Ordered extension keys<input className="input mt-1" value={collectionForm.extensionKeys} onChange={(event) => setCollectionForm({ ...collectionForm, extensionKeys: event.target.value })} placeholder="CLASS_MANAGEMENT, SCHOOL_BUS" /></label>
+                  <button className="btn-primary md:col-span-2">Create draft collection</button>
+                </form>}
+                <div className="grid gap-3 lg:grid-cols-2">{catalogCollections.map((collection) => <article key={collection.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700"><div className="flex justify-between gap-3"><div><h3 className="font-semibold">{collection.title} <code className="text-xs text-slate-400">{collection.slug}</code></h3><p className="text-xs text-slate-500">{collection.status} · {collection.locale} · order {collection.sortOrder} · {collection.items.length} items</p></div><div className="flex gap-2"><button className="text-xs text-indigo-600" onClick={() => editCatalogCollection(collection)}>Edit items</button>{collection.status !== "PUBLISHED" && <button className="text-xs text-emerald-600" onClick={() => editCatalogCollection(collection, "PUBLISHED")}>Publish</button>}{collection.status === "PUBLISHED" && <button className="text-xs text-amber-600" onClick={() => editCatalogCollection(collection, "ARCHIVED")}>Archive</button>}</div></div><p className="mt-2 text-xs text-slate-500">{collection.items.map((item) => item.extension.key).join(" → ") || "No extensions selected"}</p></article>)}</div>
+              </section>
               <div className="card grid gap-3 p-4 md:grid-cols-[1fr_220px]">
                 <label className="text-xs font-medium text-slate-500">
                   Search catalog

@@ -1234,6 +1234,110 @@ export class ExtensionsService {
     return membership;
   }
 
+  async catalogCollections(cursorValue?: string, limitValue?: string) {
+    const limit = parsePageLimit(limitValue);
+    const cursor = decodeDateIdCursor(cursorValue);
+    const rows = await this.prisma.extensionCatalogCollection.findMany({
+      where: cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : undefined,
+      include: {
+        items: {
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          take: 100,
+          include: { extension: { select: { id: true, key: true, name: true, status: true } } },
+        },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
+    });
+    return dateIdPage(rows, limit);
+  }
+
+  async createCatalogCollection(
+    data: { slug?: string; title?: string; description?: string; locale?: string; sortOrder?: number; extensionIds?: string[] },
+    actor: Actor,
+  ) {
+    const slug = data.slug?.trim().toLowerCase();
+    const title = data.title?.trim();
+    const locale = data.locale?.trim() || "en";
+    if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))
+      throw new BadRequestException("Collection slug must use lowercase letters, numbers, and hyphens");
+    if (!title) throw new BadRequestException("Collection title is required");
+    if (!/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(locale))
+      throw new BadRequestException("Collection locale is invalid");
+    const duplicate = await this.prisma.extensionCatalogCollection.findUnique({ where: { slug } });
+    if (duplicate) throw new ConflictException(`Collection slug ${slug} already exists`);
+    const extensionIds = await this.validCatalogExtensionIds(data.extensionIds || []);
+    const created = await this.prisma.extensionCatalogCollection.create({
+      data: {
+        slug,
+        title,
+        description: data.description?.trim() || null,
+        locale,
+        sortOrder: Number.isInteger(data.sortOrder) ? data.sortOrder : 0,
+        items: { create: extensionIds.map((extensionId, position) => ({ extensionId, position })) },
+      },
+      include: { items: true },
+    });
+    await this.log(actor, "CREATE", "EXTENSION_CATALOG_COLLECTION", created.id, title, { after: created });
+    return created;
+  }
+
+  async updateCatalogCollection(
+    collectionId: string,
+    data: { title?: string; description?: string | null; locale?: string; sortOrder?: number; status?: string; extensionIds?: string[] },
+    actor: Actor,
+  ) {
+    const existing = await this.prisma.extensionCatalogCollection.findUnique({
+      where: { id: collectionId },
+      include: { items: true },
+    });
+    if (!existing) throw new NotFoundException("Catalog collection not found");
+    const status = data.status?.trim().toUpperCase();
+    if (status && !["DRAFT", "PUBLISHED", "ARCHIVED"].includes(status))
+      throw new BadRequestException("Collection status must be DRAFT, PUBLISHED, or ARCHIVED");
+    if (status === "PUBLISHED" && data.extensionIds === undefined && !existing.items.length)
+      throw new ConflictException("A published collection must contain at least one extension");
+    const extensionIds = data.extensionIds === undefined ? undefined : await this.validCatalogExtensionIds(data.extensionIds);
+    if (status === "PUBLISHED" && extensionIds && !extensionIds.length)
+      throw new ConflictException("A published collection must contain at least one extension");
+    const updated = await this.prisma.$transaction(async (transaction) => {
+      if (extensionIds) {
+        await transaction.extensionCatalogCollectionItem.deleteMany({ where: { collectionId } });
+        if (extensionIds.length) await transaction.extensionCatalogCollectionItem.createMany({
+          data: extensionIds.map((extensionId, position) => ({ collectionId, extensionId, position })),
+        });
+      }
+      return transaction.extensionCatalogCollection.update({
+        where: { id: collectionId },
+        data: {
+          ...(data.title !== undefined ? { title: data.title.trim() } : {}),
+          ...(data.description !== undefined ? { description: data.description?.trim() || null } : {}),
+          ...(data.locale !== undefined ? { locale: data.locale.trim() } : {}),
+          ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
+          ...(status ? { status } : {}),
+        },
+        include: { items: { orderBy: { position: "asc" }, include: { extension: true } } },
+      });
+    });
+    await this.log(actor, "UPDATE", "EXTENSION_CATALOG_COLLECTION", collectionId, updated.title, {
+      changes: { before: existing, after: updated },
+    });
+    return updated;
+  }
+
+  private async validCatalogExtensionIds(values: string[]) {
+    const extensionIds = [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+    if (extensionIds.length > 100) throw new BadRequestException("A collection supports at most 100 extensions");
+    if (!extensionIds.length) return extensionIds;
+    const extensions = await this.prisma.extension.findMany({
+      where: { id: { in: extensionIds }, status: { not: "RETIRED" } },
+      select: { id: true },
+    });
+    if (extensions.length !== extensionIds.length)
+      throw new BadRequestException("Collection contains an unknown or retired extension");
+    return extensionIds;
+  }
+
   async addPublisherMemberByEmail(
     publisherId: string,
     emailValue: string | undefined,

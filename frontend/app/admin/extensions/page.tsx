@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import AuthGuard from '../../../components/AuthGuard'
 import Sidebar from '../../../components/Sidebar'
@@ -48,6 +48,7 @@ interface Installation {
 }
 
 interface PilotCriterion { key: string; label: string }
+interface CatalogCollection { id: string; slug: string; title: string; description?: string | null; items: Array<{ id: string; extension: DirectoryExtension }> }
 
 async function json(res: Response) {
   const data = await res.json().catch(() => ({}))
@@ -57,12 +58,18 @@ async function json(res: Response) {
 
 function AdminExtensionsContent() {
   const [directory, setDirectory] = useState<DirectoryExtension[]>([])
+  const [directoryNextCursor, setDirectoryNextCursor] = useState<string | null>(null)
+  const [collections, setCollections] = useState<CatalogCollection[]>([])
   const [installations, setInstallations] = useState<Installation[]>([])
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [criteria, setCriteria] = useState<PilotCriterion[]>([])
   const [activeTab, setActiveTab] = useState<'DISCOVER' | 'MODULE' | 'THEME'>('DISCOVER')
+  const [category, setCategory] = useState('ALL')
+  const [locale, setLocale] = useState('ALL')
+  const [sort, setSort] = useState('FEATURED')
+  const directoryRequest = useRef(0)
   const [selectedExtension, setSelectedExtension] = useState<DirectoryExtension | null>(null)
   const [paymentExtension, setPaymentExtension] = useState<DirectoryExtension | null>(null)
   const [requestContext, setRequestContext] = useState<{ school: { name: string; subdomain: string }; admin: { name: string; email?: string | null; phone?: string | null }; payment: { bankName?: string | null; accountName?: string | null; accountNumber?: string | null; currency: string; instructions?: string | null; hasQr: boolean; updatedAt?: string } } | null>(null)
@@ -70,18 +77,38 @@ function AdminExtensionsContent() {
   const [paymentReference, setPaymentReference] = useState('')
   const [paymentNotes, setPaymentNotes] = useState('')
 
+  function directoryPath(cursor?: string | null) {
+    const query = new URLSearchParams({ limit: '24', sort })
+    if (search.trim()) query.set('search', search.trim())
+    if (category !== 'ALL') query.set('category', category)
+    if (locale !== 'ALL') query.set('locale', locale)
+    if (activeTab === 'MODULE') query.set('commercialType', 'MODULE')
+    if (activeTab === 'THEME') query.set('commercialType', 'THEME')
+    if (cursor) query.set('cursor', cursor)
+    return `/api/extensions/directory?${query.toString()}`
+  }
+
+  async function loadDirectory(append = false) {
+    const requestId = ++directoryRequest.current
+    const response = await apiFetch(directoryPath(append ? directoryNextCursor : null))
+    const page = await json(response)
+    if (requestId !== directoryRequest.current) return
+    setDirectory(current => append ? [...current, ...page.items] : page.items)
+    setDirectoryNextCursor(page.nextCursor || null)
+  }
+
   async function load() {
     try {
-      const [available, installed, pilotCriteria, context] = await Promise.all([
-        apiCursorItems<DirectoryExtension>('/api/extensions/directory'),
+      const [installed, pilotCriteria, context, catalogCollections] = await Promise.all([
         apiCursorItems<Installation>('/api/extensions/installations'),
         json(await apiFetch('/api/extensions/pilot-criteria')),
         json(await apiFetch('/api/extensions/request-context')),
+        json(await apiFetch('/api/extensions/collections?locale=en')),
       ])
-      setDirectory(available)
       setInstallations(installed)
       setCriteria(pilotCriteria)
       setRequestContext(context)
+      setCollections(catalogCollections)
       setError('')
     } catch (loadError: any) {
       setError(loadError.message || 'Failed to load extension directory')
@@ -110,6 +137,15 @@ function AdminExtensionsContent() {
   }
 
   useEffect(() => { load() }, [])
+  useEffect(() => {
+    const timer = window.setTimeout(() => loadDirectory(false).catch((loadError: any) => setError(loadError.message || 'Failed to load extension directory')), 250)
+    return () => window.clearTimeout(timer)
+  }, [search, activeTab, category, locale, sort])
+  useEffect(() => {
+    apiFetch(`/api/extensions/collections?locale=${encodeURIComponent(locale === 'ALL' ? 'en' : locale)}`).then(json)
+      .then(setCollections)
+      .catch((loadError: any) => setError(loadError.message || 'Failed to load featured collections'))
+  }, [locale])
 
   async function request(extensionId: string) {
     const extension = directory.find(item => item.id === extensionId)
@@ -121,7 +157,7 @@ function AdminExtensionsContent() {
     setBusy(extensionId)
     try {
       await json(await apiFetch(`/api/extensions/${extensionId}/request`, { method: 'POST' }))
-      await load()
+      await Promise.all([load(), loadDirectory(false)])
     } catch (requestError: any) {
       setError(requestError.message || 'Request failed')
     } finally {
@@ -143,7 +179,7 @@ function AdminExtensionsContent() {
       setInvoice(null)
       setPaymentReference('')
       setPaymentNotes('')
-      await load()
+      await Promise.all([load(), loadDirectory(false)])
     } catch (paymentError: any) {
       setError(paymentError.message || 'Could not submit payment request')
     } finally {
@@ -165,19 +201,15 @@ function AdminExtensionsContent() {
     }
   }
 
-  const normalizedSearch = search.trim().toLowerCase()
-  const filteredDirectory = directory.filter(extension => {
-    const matchesSearch = !normalizedSearch || `${extension.name} ${extension.key} ${extension.description || ''} ${extension.runtimeType} ${extension.commercialType}`.toLowerCase().includes(normalizedSearch)
-    const matchesTab = activeTab === 'DISCOVER' || extension.commercialType === activeTab || extension.runtimeType.includes(activeTab)
-    return matchesSearch && matchesTab
-  })
+  const filteredDirectory = directory
   const installedExtensions = filteredDirectory.filter(extension =>
     installations.some(item => item.extensionId === extension.id)
   )
+  const curatedExtensionIds = new Set(collections.flatMap(collection => collection.items.map(item => item.extension.id)))
   const availableExtensions = filteredDirectory.filter(extension =>
-    !installations.some(item => item.extensionId === extension.id)
+    !installations.some(item => item.extensionId === extension.id) && (activeTab !== 'DISCOVER' || !curatedExtensionIds.has(extension.id))
   )
-  const featuredExtension = availableExtensions[0] || installedExtensions[0]
+  const featuredExtension = collections.flatMap(collection => collection.items.map(item => item.extension))[0] || availableExtensions[0] || installedExtensions[0]
 
   function extensionState(installation?: Installation) {
     if (!installation) return null
@@ -240,13 +272,20 @@ function AdminExtensionsContent() {
             {([['DISCOVER', 'Discover'], ['MODULE', 'Extensions'], ['THEME', 'Themes']] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setActiveTab(value)} className={`border-b-2 px-1 pb-3 text-sm font-semibold transition ${activeTab === value ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}>{label}</button>)}
             <Link href="/admin/extensions/manage" className="ml-auto border-b-2 border-transparent px-1 pb-3 text-sm font-semibold text-slate-500 hover:text-blue-600">Manage extensions ({installations.length})</Link>
           </nav>
+          <div className="grid gap-3 pb-5 sm:grid-cols-3">
+            <label className="text-xs text-slate-500">Category<select className="input mt-1" value={category} onChange={event => setCategory(event.target.value)}><option value="ALL">All categories</option>{['ACADEMICS','ADMINISTRATION','COMMUNICATION','FINANCE','PRODUCTIVITY','REPORTING','SECURITY','STUDENT_SERVICES','THEMES','OTHER'].map(value => <option key={value}>{value.replaceAll('_', ' ')}</option>)}</select></label>
+            <label className="text-xs text-slate-500">Language<select className="input mt-1" value={locale} onChange={event => setLocale(event.target.value)}><option value="ALL">All languages</option><option value="en">English</option><option value="km-KH">Khmer</option></select></label>
+            <label className="text-xs text-slate-500">Sort<select className="input mt-1" value={sort} onChange={event => setSort(event.target.value)}><option value="FEATURED">Featured</option><option value="NEWEST">Newest</option><option value="NAME_ASC">Name A–Z</option><option value="NAME_DESC">Name Z–A</option></select></label>
+          </div>
         </div>
         <div className="page-body space-y-8">
           {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
           {activeTab === 'DISCOVER' && featuredExtension && <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-700 p-7 text-white shadow-xl md:p-10"><div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-blue-400/20 blur-3xl" /><div className="relative grid items-center gap-8 md:grid-cols-[1.2fr_.8fr]"><div><span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold">FEATURED EXTENSION</span><h2 className="mt-5 max-w-2xl text-3xl font-bold md:text-4xl">{featuredExtension.name}</h2><p className="mt-3 max-w-xl text-blue-100">{featuredExtension.description || 'Add powerful new capabilities to your Wattaman school workspace.'}</p><div className="mt-6 flex gap-3"><button type="button" className="rounded-lg bg-white px-6 py-2.5 font-semibold text-slate-900 hover:bg-blue-50" onClick={() => installations.some(item => item.extensionId === featuredExtension.id) ? setSelectedExtension(featuredExtension) : request(featuredExtension.id)}>{installations.some(item => item.extensionId === featuredExtension.id) ? 'View details' : 'Get extension'}</button><button type="button" className="rounded-lg border border-white/30 px-6 py-2.5 font-semibold hover:bg-white/10" onClick={() => setSelectedExtension(featuredExtension)}>Learn more</button></div></div><div className="flex items-center justify-center"><div className="flex h-40 w-40 rotate-3 items-center justify-center rounded-[2rem] bg-white text-5xl font-black text-indigo-700 shadow-2xl">{featuredExtension.name.slice(0, 2).toUpperCase()}</div></div></div></section>}
           {activeTab === 'DISCOVER' && <section className="grid gap-4 md:grid-cols-3"><button type="button" onClick={() => setActiveTab('MODULE')} className="card flex items-center gap-4 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-md"><span className="text-3xl">⚡</span><span><strong className="block text-slate-900 dark:text-white">Productivity</strong><small className="text-slate-500">Tools for daily school work</small></span></button><button type="button" onClick={() => setActiveTab('THEME')} className="card flex items-center gap-4 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-md"><span className="text-3xl">🎨</span><span><strong className="block text-slate-900 dark:text-white">Themes</strong><small className="text-slate-500">Personalize your school</small></span></button><Link href="/admin/extensions/manage" className="card flex items-center gap-4 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-md"><span className="text-3xl">✓</span><span><strong className="block text-slate-900 dark:text-white">Manage extensions</strong><small className="text-slate-500">Requests, installs, and updates</small></span></Link></section>}
+          {activeTab === 'DISCOVER' && collections.map(collection => collection.items.length > 0 && <section key={collection.id} className="space-y-4"><div><h2 className="text-xl font-bold text-slate-900 dark:text-white">{collection.title}</h2>{collection.description && <p className="text-sm text-slate-500">{collection.description}</p>}</div><div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{collection.items.map(item => <ExtensionRow key={`${collection.id}-${item.extension.id}`} extension={item.extension} />)}</div></section>)}
           {directory.length === 0 ? <div className="card p-10 text-center text-sm text-slate-400">No published extensions are available.</div> : filteredDirectory.length === 0 ? <div className="card p-10 text-center text-sm text-slate-400">No extensions match your search.</div> : <>
             {availableExtensions.length > 0 && <section className="space-y-4"><div><h2 className="text-xl font-bold text-slate-900 dark:text-white">{activeTab === 'DISCOVER' ? 'Recommended for your school' : activeTab === 'THEME' ? 'School themes' : 'School extensions'}</h2><p className="text-sm text-slate-500">Reviewed and published by Wattaman platform administrators.</p></div><div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{availableExtensions.map(extension => <ExtensionRow key={extension.id} extension={extension} />)}</div></section>}
+            {directoryNextCursor && <div className="text-center"><button className="btn-outline" onClick={() => loadDirectory(true)}>Load more</button></div>}
           </>}
         </div>
         {selectedExtension && (() => { const installation = installations.find(item => item.extensionId === selectedExtension.id); return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true"><div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl dark:bg-slate-900"><div className="bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-700 p-8 text-white"><div className="flex items-start justify-between"><div className="flex gap-5"><div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white text-2xl font-black text-indigo-700">{selectedExtension.name.slice(0, 2).toUpperCase()}</div><div><p className="text-xs font-semibold text-blue-200">{selectedExtension.runtimeType.replaceAll('_', ' ')}</p><h2 className="mt-1 text-2xl font-bold">{selectedExtension.name}</h2><p className="mt-1 text-sm text-blue-100">Version {selectedExtension.versions[0]?.version} · Wattaman reviewed</p></div></div><button type="button" onClick={() => setSelectedExtension(null)} className="text-2xl text-white/70 hover:text-white" aria-label="Close">×</button></div></div><div className="space-y-5 p-7"><p className="text-slate-600 dark:text-slate-300">{selectedExtension.description || 'A reviewed Wattaman extension designed to add capabilities to your school workspace.'}</p><div className="flex flex-wrap gap-2"><span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-200">{selectedExtension.category?.replaceAll('_', ' ')}</span>{selectedExtension.tags?.map(tag => <span key={tag} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">{tag}</span>)}</div><div className="grid grid-cols-3 gap-3 text-center"><div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800"><strong className="block text-slate-900 dark:text-white">★★★★★</strong><small className="text-slate-500">Reviewed</small></div><div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800"><strong className="block text-slate-900 dark:text-white">{selectedExtension.price ? `$${selectedExtension.price}` : 'Free'}</strong><small className="text-slate-500">Price</small></div><div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800"><strong className="block text-slate-900 dark:text-white">{extensionState(installation) || 'Available'}</strong><small className="text-slate-500">Status</small></div></div><section className="rounded-xl border border-slate-200 p-4 text-sm dark:border-slate-700"><h3 className="font-semibold text-slate-900 dark:text-white">Privacy and support</h3><dl className="mt-3 grid gap-2 text-slate-600 dark:text-slate-300"><div><dt className="inline font-medium">Languages: </dt><dd className="inline">{selectedExtension.locales?.join(', ') || 'en'}</dd></div><div><dt className="inline font-medium">Personal data: </dt><dd className="inline">{selectedExtension.dataUse?.collectsPersonalData ? `${selectedExtension.dataUse.dataCategories.join(', ')} for ${selectedExtension.dataUse.purposes.join(', ')}` : 'Not collected'}</dd></div>{selectedExtension.dataUse?.retentionDays && <div><dt className="inline font-medium">Retention: </dt><dd className="inline">{selectedExtension.dataUse.retentionDays} days</dd></div>}</dl><div className="mt-3 flex gap-4">{selectedExtension.supportUrl && <a href={selectedExtension.supportUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">Support</a>}{selectedExtension.privacyPolicyUrl && <a href={selectedExtension.privacyPolicyUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">Privacy policy</a>}</div></section>{installation?.installedAt && <div className="flex flex-wrap items-center gap-3"><label className="text-xs text-slate-500">Updates<select disabled={busy === installation.id} value={installation.updatePolicy} onChange={event => updatePolicy(installation.id, event.target.value)} className="input ml-2 py-1 text-xs"><option value="MANUAL">Manual</option><option value="NOTIFY">Notify admins</option><option value="AUTO_APPROVED">Automatic</option></select></label><button type="button" className="btn-outline btn-sm" onClick={() => submitFeedback(installation)}>Pilot feedback</button></div>}<div className="flex justify-end gap-3"><button type="button" className="btn-outline" onClick={() => setSelectedExtension(null)}>Close</button>{!installation && <button type="button" className="btn-primary" disabled={busy === selectedExtension.id} onClick={() => request(selectedExtension.id)}>{selectedExtension.price ? 'Request purchase' : 'Get extension'}</button>}</div></div></div></div> })()}

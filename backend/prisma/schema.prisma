@@ -168,6 +168,7 @@ model Extension {
   supportUrl       String?
   privacyPolicyUrl String?
   dataUse          Json               @default("{\"collectsPersonalData\":false,\"dataCategories\":[],\"purposes\":[],\"sharesWithThirdParties\":false,\"retentionDays\":null}")
+  featuredRank     Int                @default(1000000)
   publisher        String             @default("WATTAMAN")
   publisherId      String
   publisherEntity  ExtensionPublisher @relation(fields: [publisherId], references: [id], onDelete: Restrict)
@@ -181,14 +182,46 @@ model Extension {
   installations    ExtensionInstallation[]
   records          ExtensionRecord[]
   visibilityGrants ExtensionVisibilityGrant[]
-  dependencies     ExtensionDependency[]      @relation("ExtensionDependencies")
-  requiredBy       ExtensionDependency[]      @relation("RequiredExtensionDependencies")
+  dependencies     ExtensionDependency[]            @relation("ExtensionDependencies")
+  requiredBy       ExtensionDependency[]            @relation("RequiredExtensionDependencies")
+  collectionItems  ExtensionCatalogCollectionItem[]
 
   @@index([runtimeType, status])
   @@index([commercialType, isListed])
   @@index([category, status])
+  @@index([featuredRank, createdAt])
   @@index([visibility, status])
   @@index([publisherId, status])
+}
+
+model ExtensionCatalogCollection {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String?
+  locale      String   @default("en")
+  status      String   @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items ExtensionCatalogCollectionItem[]
+
+  @@index([status, sortOrder])
+}
+
+model ExtensionCatalogCollectionItem {
+  id           String                     @id @default(cuid())
+  collectionId String
+  collection   ExtensionCatalogCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  extensionId  String
+  extension    Extension                  @relation(fields: [extensionId], references: [id], onDelete: Cascade)
+  position     Int                        @default(0)
+  createdAt    DateTime                   @default(now())
+
+  @@unique([collectionId, extensionId])
+  @@index([collectionId, position])
+  @@index([extensionId])
 }
 
 model ExtensionVisibilityGrant {

@@ -43,6 +43,28 @@ export class ExtensionsController {
     return this.extensions.publishers(cursor, limit);
   }
 
+  @Get("catalog-collections")
+  catalogCollections(@Query("cursor") cursor?: string, @Query("limit") limit?: string) {
+    return this.extensions.catalogCollections(cursor, limit);
+  }
+
+  @Post("catalog-collections")
+  createCatalogCollection(
+    @Body() body: { slug?: string; title?: string; description?: string; locale?: string; sortOrder?: number; extensionIds?: string[] },
+    @Request() req,
+  ) {
+    return this.extensions.createCatalogCollection(body, req.user);
+  }
+
+  @Patch("catalog-collections/:collectionId")
+  updateCatalogCollection(
+    @Param("collectionId") collectionId: string,
+    @Body() body: { title?: string; description?: string | null; locale?: string; sortOrder?: number; status?: string; extensionIds?: string[] },
+    @Request() req,
+  ) {
+    return this.extensions.updateCatalogCollection(collectionId, body, req.user);
+  }
+
   @Post("publishers/onboard")
   onboardPublisher(
     @Body() body: {

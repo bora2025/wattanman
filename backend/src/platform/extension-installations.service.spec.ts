@@ -6,6 +6,7 @@ describe('ExtensionInstallationsService', () => {
   const prisma = {
     $transaction: jest.fn(),
     extension: { findMany: jest.fn(), findFirst: jest.fn() },
+    extensionCatalogCollection: { findMany: jest.fn() },
     extensionVersion: { findFirst: jest.fn() },
     extensionInstallation: {
       findMany: jest.fn(),
@@ -44,6 +45,48 @@ describe('ExtensionInstallationsService', () => {
     expect(prisma.extensionInstallation.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-1' }),
     });
+  });
+
+  it('filters and cursor-paginates the school catalog with stable featured ordering', async () => {
+    const first = { id: 'extension-1', name: 'Attendance', featuredRank: 1, createdAt: new Date('2026-08-01T00:00:00Z') };
+    const second = { id: 'extension-2', name: 'Bus', featuredRank: 2, createdAt: new Date('2026-07-01T00:00:00Z') };
+    prisma.extension.findMany.mockResolvedValue([first, second]);
+
+    const page = await tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () => service.schoolDirectory({
+      limit: '1', search: 'attendance', category: 'academics', locale: 'km-KH', sort: 'FEATURED',
+    }));
+
+    expect(page.items).toEqual([first]);
+    expect(page.nextCursor).toBeTruthy();
+    expect(prisma.extension.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      orderBy: [{ featuredRank: 'asc' }, { createdAt: 'desc' }, { id: 'desc' }],
+      take: 2,
+      where: expect.objectContaining({ status: 'ACTIVE', AND: expect.any(Array) }),
+    }));
+    prisma.extension.findMany.mockResolvedValue([]);
+    await tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () => service.schoolDirectory({
+      limit: '1', cursor: page.nextCursor!, search: 'attendance', category: 'academics', locale: 'km-KH', sort: 'FEATURED',
+    }));
+    expect(prisma.extension.findMany).toHaveBeenLastCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ AND: expect.arrayContaining([expect.objectContaining({ OR: expect.any(Array) })]) }),
+    }));
+  });
+
+  it('rejects a catalog cursor reused with a different sort', async () => {
+    const cursor = Buffer.from(JSON.stringify({ sort: 'NEWEST', id: 'extension-1', createdAt: new Date().toISOString() })).toString('base64url');
+    await expect(tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () =>
+      service.schoolDirectory({ cursor, sort: 'NAME_ASC' }),
+    )).rejects.toThrow('Invalid catalog cursor');
+  });
+
+  it('returns only bounded published collections with tenant-visible extensions', async () => {
+    prisma.extensionCatalogCollection.findMany.mockResolvedValue([{ id: 'collection-1', items: [] }]);
+    await tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () => service.schoolCatalogCollections('km-KH'));
+    expect(prisma.extensionCatalogCollection.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { status: 'PUBLISHED', locale: { in: ['km-KH', 'en'] } },
+      take: 20,
+      include: expect.objectContaining({ items: expect.objectContaining({ take: 20 }) }),
+    }));
   });
 
   it('publishes a complete pilot acceptance checklist', () => {
