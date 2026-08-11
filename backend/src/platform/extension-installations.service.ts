@@ -490,6 +490,8 @@ export class ExtensionInstallationsService {
       throw new ConflictException("Extension is already active for this school");
     const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
     const storageKey = `schools/${schoolId}/billing/extensions/${extensionId}/${Date.now()}-${safeName}`;
+    const checksum = createHash("sha256").update(file.buffer).digest("hex");
+    const submittedAt = new Date();
     await this.storage.putPrivate(storageKey, file.buffer, file.mimetype);
     const requestData = {
       installedVersionId: extension.versions[0].id,
@@ -510,22 +512,47 @@ export class ExtensionInstallationsService {
       invoiceStorageKey: storageKey,
       invoiceFileName: safeName,
       invoiceContentType: file.mimetype,
-      invoiceUploadedAt: new Date(),
-      paymentSubmittedAt: new Date(),
+      invoiceSize: file.size,
+      invoiceChecksum: checksum,
+      invoiceUploadedAt: submittedAt,
+      paymentSubmittedAt: submittedAt,
       uninstalledAt: null,
       purgeAfter: null,
       ...this.pricingSnapshot(extension),
     };
-    const installation = existing
-      ? await this.prisma.extensionInstallation.update({
-          where: { id: existing.id },
-          data: requestData,
-        })
-      : await this.prisma.extensionInstallation.create({
-          data: { schoolId, extensionId, ...requestData },
+    let installation;
+    try {
+      installation = await this.prisma.$transaction(async (transaction) => {
+        const saved = existing
+          ? await transaction.extensionInstallation.update({
+              where: { id: existing.id },
+              data: requestData,
+            })
+          : await transaction.extensionInstallation.create({
+              data: { schoolId, extensionId, ...requestData },
+            });
+        await transaction.extensionPaymentEvidence.create({
+          data: {
+            installationId: saved.id,
+            schoolId,
+            storageKey,
+            fileName: safeName,
+            contentType: file.mimetype,
+            size: file.size,
+            checksum,
+            status: "SUBMITTED",
+            uploadedAt: submittedAt,
+            submittedAt,
+            retainUntil: this.paymentEvidenceRetentionDate(submittedAt),
+            createdBy: actor.userId,
+          },
         });
-    if (existing?.invoiceStorageKey && existing.invoiceStorageKey !== storageKey)
-      await this.storage.deletePrivate(existing.invoiceStorageKey).catch(() => undefined);
+        return saved;
+      });
+    } catch (error) {
+      await this.storage.deletePrivate(storageKey).catch(() => undefined);
+      throw error;
+    }
     await this.log(actor, "PAID_REQUEST", installation.id, extension.name, {
       extensionId,
       schoolId,
@@ -618,9 +645,26 @@ export class ExtensionInstallationsService {
       purgeAfter: null,
       ...this.pricingSnapshot(extension),
     };
-    const installation = existing
-      ? await this.prisma.extensionInstallation.update({ where: { id: existing.id }, data: requestData })
-      : await this.prisma.extensionInstallation.create({ data: { schoolId, extensionId, ...requestData } });
+    const installation = await this.prisma.$transaction(async (transaction) => {
+      const saved = existing
+        ? await transaction.extensionInstallation.update({ where: { id: existing.id }, data: requestData })
+        : await transaction.extensionInstallation.create({ data: { schoolId, extensionId, ...requestData } });
+      await transaction.extensionPaymentEvidence.create({
+        data: {
+          installationId: saved.id,
+          schoolId,
+          storageKey,
+          fileName: safeName,
+          contentType,
+          size: size!,
+          checksum,
+          status: "PENDING",
+          retainUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          createdBy: actor.userId,
+        },
+      });
+      return saved;
+    });
     await this.log(actor, "PAYMENT_EVIDENCE_INITIATED", installation.id, extension.name, {
       extensionId, schoolId, size, checksum,
       toState: "REQUESTED",
@@ -656,9 +700,22 @@ export class ExtensionInstallationsService {
       throw new ConflictException("Uploaded payment evidence checksum verification failed");
     }
     const now = new Date();
-    const finalized = await this.prisma.extensionInstallation.update({
-      where: { id: installation.id },
-      data: { invoiceUploadedAt: now, paymentSubmittedAt: now, lifecycleState: "PAYMENT_REVIEW" },
+    const finalized = await this.prisma.$transaction(async (transaction) => {
+      const evidence = await transaction.extensionPaymentEvidence.updateMany({
+        where: { installationId: installation.id, storageKey: installation.invoiceStorageKey, status: "PENDING" },
+        data: {
+          status: "SUBMITTED",
+          uploadedAt: now,
+          submittedAt: now,
+          retainUntil: this.paymentEvidenceRetentionDate(now),
+        },
+      });
+      if (evidence.count !== 1)
+        throw new ConflictException("Pending payment evidence record is unavailable");
+      return transaction.extensionInstallation.update({
+        where: { id: installation.id },
+        data: { invoiceUploadedAt: now, paymentSubmittedAt: now, lifecycleState: "PAYMENT_REVIEW" },
+      });
     });
     await this.log(actor, "PAYMENT_EVIDENCE_SUBMITTED", installation.id, installation.extension.name, {
       checksum: installation.invoiceChecksum,
@@ -669,31 +726,80 @@ export class ExtensionInstallationsService {
     return finalized;
   }
 
-  async paymentEvidenceDownloadUrl(installationId: string) {
+  async paymentEvidenceDownloadUrl(installationId: string, actor: Actor) {
     const installation = await this.prisma.extensionInstallation.findUnique({
       where: { id: installationId },
-      select: { invoiceStorageKey: true, invoiceFileName: true, paymentSubmittedAt: true },
+      select: {
+        invoiceStorageKey: true,
+        invoiceFileName: true,
+        paymentSubmittedAt: true,
+        extension: { select: { name: true } },
+        paymentEvidence: {
+          where: { status: "SUBMITTED" },
+          orderBy: { submittedAt: "desc" },
+          take: 1,
+          select: { id: true, storageKey: true, fileName: true, retainUntil: true, purgedAt: true, legalHold: true },
+        },
+      },
     });
-    if (!installation?.invoiceStorageKey || !installation.paymentSubmittedAt)
+    const evidence = installation?.paymentEvidence[0];
+    if (!installation?.invoiceStorageKey || !installation.paymentSubmittedAt || !evidence?.storageKey || evidence.purgedAt)
       throw new NotFoundException("Payment evidence not found");
+    if (evidence.retainUntil <= new Date() && !evidence.legalHold)
+      throw new NotFoundException("Payment evidence retention period has expired");
+    await this.log(actor, "PAYMENT_EVIDENCE_ACCESS", installationId, installation.extension.name, {
+      evidenceId: evidence.id,
+      access: "SIGNED_DOWNLOAD_URL",
+    });
     return {
-      fileName: installation.invoiceFileName || "payment-evidence",
-      download: this.storage.presignPrivateDownload(installation.invoiceStorageKey),
+      fileName: evidence.fileName || installation.invoiceFileName || "payment-evidence",
+      download: this.storage.presignPrivateDownload(evidence.storageKey),
     };
   }
 
-  async paymentInvoice(installationId: string) {
+  async setPaymentEvidenceLegalHold(
+    installationId: string,
+    held: boolean,
+    reason: string | undefined,
+    actor: Actor,
+  ) {
+    if (!reason?.trim()) throw new BadRequestException("A legal hold reason is required");
     const installation = await this.prisma.extensionInstallation.findUnique({
       where: { id: installationId },
-      select: { invoiceStorageKey: true, invoiceFileName: true, invoiceContentType: true },
+      select: {
+        extension: { select: { name: true } },
+        paymentEvidence: {
+          where: { status: "SUBMITTED", purgedAt: null },
+          orderBy: { submittedAt: "desc" },
+          take: 1,
+        },
+      },
     });
-    if (!installation?.invoiceStorageKey)
-      throw new NotFoundException("Payment invoice not found");
-    return {
-      contents: await this.storage.getPrivate(installation.invoiceStorageKey),
-      fileName: installation.invoiceFileName || "invoice",
-      contentType: installation.invoiceContentType || "application/octet-stream",
-    };
+    const evidence = installation?.paymentEvidence[0];
+    if (!evidence) throw new NotFoundException("Payment evidence not found");
+    const updated = await this.prisma.extensionPaymentEvidence.update({
+      where: { id: evidence.id },
+      data: {
+        legalHold: held,
+        legalHoldReason: reason.trim(),
+        legalHoldAt: new Date(),
+        legalHoldBy: actor.userId,
+      },
+      select: {
+        id: true,
+        status: true,
+        retainUntil: true,
+        legalHold: true,
+        legalHoldReason: true,
+        legalHoldAt: true,
+        legalHoldBy: true,
+      },
+    });
+    await this.log(actor, held ? "PAYMENT_EVIDENCE_HOLD" : "PAYMENT_EVIDENCE_RELEASE", installationId, installation!.extension.name, {
+      evidenceId: evidence.id,
+      reason: reason.trim(),
+    });
+    return updated;
   }
 
   private pricingSnapshot(extension: {
@@ -712,6 +818,12 @@ export class ExtensionInstallationsService {
       requestContractReference: extension.contractReference ?? null,
       requestPriceNote: extension.priceNote ?? null,
     };
+  }
+
+  private paymentEvidenceRetentionDate(from: Date) {
+    const configured = Number.parseInt(process.env.EXTENSION_PAYMENT_EVIDENCE_RETENTION_DAYS || "", 10);
+    const days = Number.isInteger(configured) && configured >= 30 && configured <= 3650 ? configured : 2555;
+    return new Date(from.getTime() + days * 24 * 60 * 60 * 1000);
   }
 
   async platformInstallations(input: { schoolId?: string; cursor?: string; limit?: string } = {}) {
@@ -734,6 +846,22 @@ export class ExtensionInstallationsService {
         },
         installedVersion: true,
         pilotFeedback: { orderBy: { updatedAt: "desc" } },
+        paymentEvidence: {
+          where: { status: "SUBMITTED" },
+          orderBy: { submittedAt: "desc" },
+          take: 1,
+          select: {
+            id: true,
+            status: true,
+            submittedAt: true,
+            retainUntil: true,
+            purgedAt: true,
+            legalHold: true,
+            legalHoldReason: true,
+            legalHoldAt: true,
+            legalHoldBy: true,
+          },
+        },
       },
       orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       take: limit + 1,
@@ -1066,8 +1194,11 @@ export class ExtensionInstallationsService {
       throw new ConflictException(
         "Only an uninstalled extension can be removed from school history",
       );
-    if (installation.invoiceStorageKey)
-      await this.storage.deletePrivate(installation.invoiceStorageKey).catch(() => undefined);
+    const retainedEvidence = await this.prisma.extensionPaymentEvidence.count({
+      where: { installationId, storageKey: { not: null } },
+    });
+    if (retainedEvidence)
+      throw new ConflictException("Payment evidence must complete retention before installation history can be removed");
     await this.prisma.$transaction(async (transaction) => {
       await transaction.extensionRecord.deleteMany({
         where: {

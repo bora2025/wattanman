@@ -5,7 +5,7 @@ const TENANT_TABLES = [
   'AuditCleanupSchedule', 'SiteSetting', 'Post', 'ExtensionInstallation',
   'ExtensionVisibilityGrant', 'ExtensionAlert', 'ExtensionApiMetric',
   'ExtensionMigrationRun', 'ExtensionPilotFeedback', 'SchoolDomain',
-  'ExtensionRecord', 'SchoolDailyMetric', 'SchoolProvisioningJob',
+  'ExtensionRecord', 'ExtensionPaymentEvidence', 'SchoolDailyMetric', 'SchoolProvisioningJob',
 ];
 const RLS_LOCK_ID = 864_220_263;
 
@@ -37,7 +37,7 @@ async function main() {
     await verifyIdentity(runtime, 'wattaman_school_runtime', false);
     await verifyIdentity(control, 'wattaman_control_plane', true);
     await admin.$transaction(async (transaction) => {
-      await transaction.$queryRawUnsafe(`SELECT pg_advisory_xact_lock(${RLS_LOCK_ID})::text AS locked`);
+      await transaction.$executeRawUnsafe(`DO $$ BEGIN PERFORM pg_advisory_xact_lock(${RLS_LOCK_ID}); END $$`);
       for (const table of TENANT_TABLES) {
         const identifier = quoteIdentifier(table);
         await transaction.$executeRawUnsafe(`ALTER TABLE ${identifier} ENABLE ROW LEVEL SECURITY`);

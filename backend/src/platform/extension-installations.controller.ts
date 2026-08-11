@@ -71,23 +71,18 @@ export class PlatformExtensionInstallationsController {
     return new StreamableFile(qr.contents);
   }
 
-  @Get(":id/payment-invoice")
-  async paymentInvoice(
-    @Param("id") id: string,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const invoice = await this.installations.paymentInvoice(id);
-    response.setHeader("Content-Type", invoice.contentType);
-    response.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${invoice.fileName.replace(/"/g, "")}"`,
-    );
-    return new StreamableFile(invoice.contents);
+  @Get(":id/payment-evidence-url")
+  paymentEvidenceUrl(@Param("id") id: string, @Request() req) {
+    return this.installations.paymentEvidenceDownloadUrl(id, req.user);
   }
 
-  @Get(":id/payment-evidence-url")
-  paymentEvidenceUrl(@Param("id") id: string) {
-    return this.installations.paymentEvidenceDownloadUrl(id);
+  @Patch(":id/payment-evidence-hold")
+  paymentEvidenceHold(
+    @Param("id") id: string,
+    @Body() body: { held?: boolean; reason?: string },
+    @Request() req,
+  ) {
+    return this.installations.setPaymentEvidenceLegalHold(id, body.held === true, body.reason, req.user);
   }
 
   @Post(":id/approve")

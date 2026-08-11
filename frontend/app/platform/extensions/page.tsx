@@ -111,6 +111,17 @@ interface InstallationRecord {
   installedAt?: string | null;
   uninstalledAt?: string | null;
   purgeAfter?: string | null;
+  paymentEvidence?: Array<{
+    id: string;
+    status: string;
+    submittedAt?: string | null;
+    retainUntil: string;
+    purgedAt?: string | null;
+    legalHold: boolean;
+    legalHoldReason?: string | null;
+    legalHoldAt?: string | null;
+    legalHoldBy?: string | null;
+  }>;
   configuration?: { rollbackVersionId?: string } | null;
   school: { id: string; name: string; subdomain: string };
   extension: {
@@ -1215,6 +1226,18 @@ function InstallationCard({
     }
   }
 
+  async function changeEvidenceHold(held: boolean) {
+    const reason = window.prompt(
+      held ? "Reason for placing this payment evidence on legal hold:" : "Reason for releasing this legal hold:",
+    );
+    if (!reason?.trim()) return;
+    await action("payment-evidence-hold", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ held, reason: reason.trim() }),
+    });
+  }
+
   async function action(
     path: string,
     options: RequestInit = { method: "POST" },
@@ -1411,6 +1434,26 @@ function InstallationCard({
               <button type="button" disabled={busy} className="font-semibold text-blue-700 underline disabled:opacity-50 dark:text-blue-300" onClick={openPaymentEvidence}>View payment evidence</button>
               <span>Submitted {new Date(installation.paymentSubmittedAt).toLocaleString()}</span>
             </div>
+            {installation.paymentEvidence?.[0] && (
+              <div className="mt-2 flex flex-wrap items-center gap-3 border-t border-amber-200 pt-2 dark:border-amber-900">
+                <span>
+                  Retained until {new Date(installation.paymentEvidence[0].retainUntil).toLocaleDateString()}
+                </span>
+                {installation.paymentEvidence[0].legalHold && (
+                  <span className="font-semibold text-red-700 dark:text-red-300">
+                    Legal hold · {installation.paymentEvidence[0].legalHoldReason}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  disabled={busy}
+                  className="font-semibold text-blue-700 underline disabled:opacity-50 dark:text-blue-300"
+                  onClick={() => changeEvidenceHold(!installation.paymentEvidence![0].legalHold)}
+                >
+                  {installation.paymentEvidence[0].legalHold ? "Release hold" : "Place legal hold"}
+                </button>
+              </div>
+            )}
           </div>
         )}
         {installationPricingLabel(installation) && (

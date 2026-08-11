@@ -18,9 +18,68 @@ export class ExtensionCleanupService {
     const quarantineCutoff = new Date(now.getTime() - this.retentionDays('EXTENSION_QUARANTINE_RETENTION_DAYS', 7) * 24 * 60 * 60 * 1000);
     const rejectedCutoff = new Date(now.getTime() - this.retentionDays('EXTENSION_REJECTED_RETENTION_DAYS', 30) * 24 * 60 * 60 * 1000);
     const batchSize = this.batchSize();
+    const expiredEvidence = await this.prisma.extensionPaymentEvidence.findMany({
+      where: {
+        status: { in: ['PENDING', 'SUBMITTED'] },
+        legalHold: false,
+        retainUntil: { lte: now },
+        storageKey: { not: null },
+      },
+      select: { id: true, installationId: true, storageKey: true, status: true },
+      orderBy: [{ retainUntil: 'asc' }, { id: 'asc' }],
+      take: batchSize,
+    });
+    let purgedEvidence = 0;
+    for (const evidence of expiredEvidence) {
+      try {
+        const claimed = await this.prisma.extensionPaymentEvidence.updateMany({
+          where: {
+            id: evidence.id,
+            storageKey: evidence.storageKey,
+            status: evidence.status,
+            legalHold: false,
+            retainUntil: { lte: now },
+          },
+          data: { status: 'PURGING' },
+        });
+        if (claimed.count !== 1) continue;
+        await this.storage.deletePrivate(evidence.storageKey as string);
+        await this.prisma.$transaction(async (transaction) => {
+          const finalized = await transaction.extensionPaymentEvidence.updateMany({
+            where: {
+              id: evidence.id,
+              storageKey: evidence.storageKey,
+              status: 'PURGING',
+            },
+            data: { storageKey: null, status: 'PURGED', purgedAt: now },
+          });
+          if (finalized.count !== 1) return;
+          await transaction.extensionInstallation.updateMany({
+            where: { id: evidence.installationId, invoiceStorageKey: evidence.storageKey },
+            data: {
+              invoiceStorageKey: null,
+              invoiceFileName: null,
+              invoiceContentType: null,
+            },
+          });
+          purgedEvidence += 1;
+        });
+      } catch (error: any) {
+        await this.prisma.extensionPaymentEvidence.updateMany({
+          where: { id: evidence.id, storageKey: evidence.storageKey, status: 'PURGING' },
+          data: { status: evidence.status },
+        }).catch(() => undefined);
+        this.logger.warn(`Payment evidence cleanup failed for ${evidence.id}: ${error?.message || error}`);
+      }
+    }
     const expiredInstallations = await this.prisma.extensionInstallation.findMany({
-      where: { enabled: false, purgeAfter: { lte: now } },
+      where: {
+        enabled: false,
+        purgeAfter: { lte: now },
+        paymentEvidence: { none: { storageKey: { not: null } } },
+      },
       select: { id: true, schoolId: true, extensionId: true },
+      take: batchSize,
     });
     if (expiredInstallations.length) {
       await this.prisma.$transaction(async (transaction) => {
@@ -88,8 +147,8 @@ export class ExtensionCleanupService {
         this.logger.warn(`Extension package cleanup failed for ${version.id}: ${error?.message || error}`);
       }
     }
-    this.logger.log(`Extension cleanup: purged ${expiredInstallations.length} installations, expired ${expiredQuarantines} quarantines, and purged ${deletedPackages} rejected package objects.`);
-    return { installations: expiredInstallations.length, quarantines: expiredQuarantines, packages: deletedPackages };
+    this.logger.log(`Extension cleanup: purged ${purgedEvidence} payment evidence objects, ${expiredInstallations.length} installations, expired ${expiredQuarantines} quarantines, and purged ${deletedPackages} rejected package objects.`);
+    return { evidence: purgedEvidence, installations: expiredInstallations.length, quarantines: expiredQuarantines, packages: deletedPackages };
   }
 
   private retentionDays(name: string, fallback: number) {

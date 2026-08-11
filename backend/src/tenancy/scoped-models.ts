@@ -19,6 +19,7 @@ export const TENANT_SCOPED_MODELS = new Set<string>([
   'ExtensionApiMetric',
   'ExtensionMigrationRun',
   'ExtensionPilotFeedback',
+  'ExtensionPaymentEvidence',
   'SchoolDomain',
   'ExtensionRecord',
   'SchoolDailyMetric',

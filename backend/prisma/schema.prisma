@@ -48,6 +48,7 @@ model School {
   extensionRecords          ExtensionRecord[]
   extensionVisibilityGrants ExtensionVisibilityGrant[]
   extensionPilotFeedback    ExtensionPilotFeedback[]
+  extensionPaymentEvidence  ExtensionPaymentEvidence[]
   domains                   SchoolDomain[]
   provisioningJobs          SchoolProvisioningJob[]
 }
@@ -502,6 +503,7 @@ model ExtensionInstallation {
   updatedAt          DateTime                 @updatedAt
   migrationRuns      ExtensionMigrationRun[]
   pilotFeedback      ExtensionPilotFeedback[]
+  paymentEvidence    ExtensionPaymentEvidence[]
 
   @@unique([schoolId, extensionId])
   @@index([schoolId, enabled])
@@ -509,6 +511,35 @@ model ExtensionInstallation {
   @@index([extensionId, installedVersionId])
   @@index([purgeAfter])
   @@index([updatePolicy, availableVersionId])
+}
+
+model ExtensionPaymentEvidence {
+  id              String                @id @default(cuid())
+  schoolId        String
+  school          School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  installationId  String
+  installation    ExtensionInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  storageKey      String?               @unique
+  fileName        String
+  contentType     String
+  size            Int
+  checksum        String
+  status          String                @default("PENDING") // PENDING | SUBMITTED | PURGING | PURGED
+  uploadedAt      DateTime?
+  submittedAt     DateTime?
+  retainUntil     DateTime
+  purgedAt        DateTime?
+  legalHold       Boolean               @default(false)
+  legalHoldReason String?
+  legalHoldAt     DateTime?
+  legalHoldBy     String?
+  createdBy       String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([schoolId, createdAt])
+  @@index([installationId, createdAt])
+  @@index([status, legalHold, retainUntil])
 }
 
 model ExtensionPaymentSetting {

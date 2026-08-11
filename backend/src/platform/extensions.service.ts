@@ -1262,7 +1262,11 @@ export class ExtensionsService {
             enabled: true,
             installedAt: true,
             uninstalledAt: true,
-            invoiceStorageKey: true,
+            paymentEvidence: {
+              where: { storageKey: { not: null } },
+              select: { id: true },
+              take: 1,
+            },
           },
         },
         _count: { select: { records: true } },
@@ -1312,16 +1316,17 @@ export class ExtensionsService {
         "Uninstall this extension from every school before permanently deleting it",
       );
     }
+    if (existing.installations.some((installation) => installation.paymentEvidence?.length)) {
+      throw new ConflictException(
+        "Payment evidence must complete retention before permanently deleting this extension",
+      );
+    }
 
     const storageKeys = new Set<string>();
     for (const version of existing.versions) {
       if (version.packageStorageKey) storageKeys.add(version.packageStorageKey);
       for (const asset of version.assets) storageKeys.add(asset.storageKey);
     }
-    const invoiceStorageKeys = existing.installations
-      .map((installation: any) => installation.invoiceStorageKey)
-      .filter(Boolean) as string[];
-    for (const storageKey of invoiceStorageKeys) storageKeys.add(storageKey);
     let deletedStorageObjects = 0;
     for (const storageKey of storageKeys) {
       await this.storage.deletePrivate(storageKey);

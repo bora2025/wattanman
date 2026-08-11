@@ -1161,6 +1161,7 @@ describe("ExtensionsService", () => {
           enabled: false,
           installedAt: new Date(),
           uninstalledAt: new Date(),
+          paymentEvidence: [],
         },
       ],
       _count: { records: 4 },
@@ -1213,6 +1214,24 @@ describe("ExtensionsService", () => {
     await expect(service.deleteExtension("extension-purge", actor, "Cleanup"))
       .rejects.toThrow("R2 unavailable");
     expect(prisma.extension.delete).not.toHaveBeenCalled();
+  });
+
+  it("blocks extension purge while payment evidence is retained", async () => {
+    prisma.extension.findUnique.mockResolvedValueOnce({
+      id: "extension-purge", key: "PURGE", name: "Purge", runtimeType: "THEME", publisherId: "publisher-1",
+      status: "RETIRED", visibility: "UNLISTED", versions: [{
+        id: "version-1", version: "1.0.0", lifecycleStatus: "RETIRED", packageStorageKey: null, assets: [],
+      }],
+      installations: [{
+        id: "installation-1", schoolId: "school-1", enabled: false,
+        installedAt: new Date(), uninstalledAt: new Date(), paymentEvidence: [{ id: "evidence-1" }],
+      }],
+      _count: { records: 0 },
+    });
+
+    await expect(service.deleteExtension("extension-purge", actor, "Cleanup"))
+      .rejects.toThrow("Payment evidence must complete retention");
+    expect(storage.deletePrivate).not.toHaveBeenCalled();
   });
 
   it("reports version adoption, validation failures, storage, and lifecycle activity", async () => {

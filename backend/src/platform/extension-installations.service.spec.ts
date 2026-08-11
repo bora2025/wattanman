@@ -19,6 +19,12 @@ describe('ExtensionInstallationsService', () => {
       create: jest.fn(),
       update: jest.fn(),
     },
+    extensionPaymentEvidence: {
+      create: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+      count: jest.fn(),
+    },
     extensionRecord: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     extensionMigrationRun: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     extensionMigrationBackup: { create: jest.fn() },
@@ -38,6 +44,9 @@ describe('ExtensionInstallationsService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     prisma.$transaction.mockImplementation((callback) => callback(prisma));
+    prisma.extensionPaymentEvidence.create.mockResolvedValue({});
+    prisma.extensionPaymentEvidence.updateMany.mockResolvedValue({ count: 1 });
+    prisma.extensionPaymentEvidence.count.mockResolvedValue(0);
   });
 
   it('creates a request using the authoritative tenant school', async () => {
@@ -160,6 +169,44 @@ describe('ExtensionInstallationsService', () => {
       service.finalizePaymentEvidence('installation-1', actor),
     )).rejects.toThrow('does not match');
     expect(prisma.extensionInstallation.update).not.toHaveBeenCalled();
+  });
+
+  it('issues only an audited short-lived download for retained submitted evidence', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      invoiceStorageKey: 'billing/evidence.pdf',
+      invoiceFileName: 'receipt.pdf',
+      paymentSubmittedAt: new Date(),
+      extension: { name: 'Analytics Plus' },
+      paymentEvidence: [{
+        id: 'evidence-1', storageKey: 'billing/evidence.pdf',
+        retainUntil: new Date(Date.now() + 60_000), purgedAt: null,
+      }],
+    });
+
+    const result = await service.paymentEvidenceDownloadUrl('installation-1', actor);
+
+    expect(result.download.url).toBe('https://r2.test/download');
+    expect(storage.presignPrivateDownload).toHaveBeenCalledWith('billing/evidence.pdf');
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'PAYMENT_EVIDENCE_ACCESS', resourceId: 'installation-1',
+    }));
+  });
+
+  it('requires a reason and records payment evidence legal holds', async () => {
+    await expect(service.setPaymentEvidenceLegalHold('installation-1', true, '', actor))
+      .rejects.toThrow('legal hold reason');
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      extension: { name: 'Analytics Plus' },
+      paymentEvidence: [{ id: 'evidence-1' }],
+    });
+    prisma.extensionPaymentEvidence.update.mockResolvedValue({ id: 'evidence-1', legalHold: true });
+
+    await expect(service.setPaymentEvidenceLegalHold('installation-1', true, 'Tax review', actor))
+      .resolves.toEqual({ id: 'evidence-1', legalHold: true });
+    expect(prisma.extensionPaymentEvidence.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'evidence-1' },
+      data: expect.objectContaining({ legalHold: true, legalHoldReason: 'Tax review', legalHoldBy: 'admin-1' }),
+    }));
   });
 
   it('filters and cursor-paginates the school catalog with stable featured ordering', async () => {
