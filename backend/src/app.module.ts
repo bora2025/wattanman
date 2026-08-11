@@ -14,10 +14,13 @@ import { PlatformModule } from './platform/platform.module';
 import { TenancyModule } from './tenancy/tenancy.module';
 import { TenantDatabaseInterceptor } from './database/tenant-database.interceptor';
 import { distributedRateLimitOptions } from './security/rate-limit.config';
+import { SecurityModule } from './security/security.module';
+import { IdempotencyInterceptor } from './security/idempotency.interceptor';
 
 @Module({
   imports: [
     ThrottlerModule.forRoot(distributedRateLimitOptions()),
+    SecurityModule,
     // Needed directly here (not just transitively via feature modules) so
     // TenantHostMiddleware — registered as a provider below — can inject
     // PrismaService; Nest's DI doesn't resolve middleware dependencies through
@@ -36,6 +39,7 @@ import { distributedRateLimitOptions } from './security/rate-limit.config';
     AppService,
     TenantHostMiddleware,
     { provide: APP_INTERCEPTOR, useExisting: TenantDatabaseInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor },
     // Apply rate limiting globally to all endpoints
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],

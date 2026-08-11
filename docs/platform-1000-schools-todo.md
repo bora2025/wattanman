@@ -142,7 +142,7 @@ An item is complete only when implementation, automated tests, documentation, de
 
 - [x] Replace process-local throttling with Redis-backed rate limits.
 - [x] Rate limit by IP, user, school, extension, and sensitive action.
-- [ ] Add idempotency storage for mutating APIs.
+- [x] Add idempotency storage for mutating APIs.
 - [ ] Add request size and response size limits.
 - [ ] Add cursor pagination requirements.
 - [ ] Add circuit breakers for R2, email, SMS, and external integrations.
