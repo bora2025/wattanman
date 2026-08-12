@@ -88,6 +88,19 @@ export async function apiCursorItems<T>(path: string, maxPages = 100): Promise<T
   throw new Error(`Cursor page safety limit exceeded for ${path}`);
 }
 
+export async function waitForLifecycleJob(path: string, timeoutMs = 120_000): Promise<any> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const response = await apiFetch(path);
+    const job = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(job.message || `HTTP ${response.status}`);
+    if (job.status === 'SUCCEEDED') return job.result;
+    if (job.status === 'FAILED') throw new Error(job.errorMessage || `${job.command || 'Extension command'} failed`);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  throw new Error('Extension command is still running. Refresh to see its latest status.');
+}
+
 /** Helper to get the current user info from the access token cookie via /auth/me */
 export async function getCurrentUser(): Promise<{
   userId: string;

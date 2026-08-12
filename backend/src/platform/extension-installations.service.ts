@@ -1019,6 +1019,8 @@ export class ExtensionInstallationsService {
 
   async install(installationId: string, versionId: string, actor: Actor) {
     const existing = await this.requireInstallation(installationId);
+    if (this.installationLifecycleState(existing) === "INSTALLED" && existing.installedVersionId === versionId)
+      return existing;
     if (this.installationLifecycleState(existing) !== "APPROVED")
       throw new ConflictException(
         "Extension request must be approved before installation",
@@ -1260,11 +1262,12 @@ export class ExtensionInstallationsService {
     );
   }
 
-  async rollback(installationId: string, actor: Actor) {
+  async rollback(installationId: string, actor: Actor, targetVersionId?: string) {
     const existing = await this.requireInstallation(installationId);
+    if (targetVersionId && existing.installedVersionId === targetVersionId) return existing;
     const configuration =
       (existing.configuration as Record<string, any> | null) || {};
-    const rollbackVersionId = configuration.rollbackVersionId;
+    const rollbackVersionId = targetVersionId || configuration.rollbackVersionId;
     if (!rollbackVersionId)
       throw new ConflictException("No rollback version is available");
     const version = await this.prisma.extensionVersion.findFirst({

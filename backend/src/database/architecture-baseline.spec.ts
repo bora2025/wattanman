@@ -5,7 +5,7 @@ const EXPECTED_MODELS = [
   'AuditCleanupSchedule', 'AuditLog', 'Extension', 'ExtensionAlert', 'ExtensionApiMetric',
   'ExtensionAsset', 'ExtensionCatalogCollection', 'ExtensionCatalogCollectionItem',
   'ExtensionDependency', 'ExtensionInstallation', 'ExtensionMigrationBackup',
-  'ExtensionMigrationRun', 'ExtensionPaymentSetting', 'ExtensionPaymentSettingHistory',
+  'ExtensionLifecycleJob', 'ExtensionMigrationRun', 'ExtensionPaymentSetting', 'ExtensionPaymentSettingHistory',
   'ExtensionPaymentEvidence', 'ExtensionPermission', 'ExtensionPilotFeedback',
   'ExtensionPublisher', 'ExtensionPublisherMember', 'ExtensionRecord', 'ExtensionReview',
   'ExtensionSigningKey', 'ExtensionValidation', 'ExtensionVersion', 'ExtensionVisibilityGrant',

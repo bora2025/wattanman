@@ -20,6 +20,7 @@ export const TENANT_SCOPED_MODELS = new Set<string>([
   'ExtensionMigrationRun',
   'ExtensionPilotFeedback',
   'ExtensionPaymentEvidence',
+  'ExtensionLifecycleJob',
   'SchoolDomain',
   'ExtensionRecord',
   'SchoolDailyMetric',

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import AuthGuard from '../../../../components/AuthGuard'
 import Sidebar from '../../../../components/Sidebar'
 import { adminNav } from '../../../../lib/admin-nav'
-import { apiCursorItems, apiFetch } from '../../../../lib/api'
+import { apiCursorItems, apiFetch, waitForLifecycleJob } from '../../../../lib/api'
 
 interface Installation {
   id: string
@@ -105,7 +105,8 @@ function ManageExtensionsContent() {
 
     setBusy(item.id)
     try {
-      await json(await apiFetch(`/api/extensions/installations/${item.id}`, { method: 'DELETE' }))
+      const job = await json(await apiFetch(`/api/extensions/installations/${item.id}`, { method: 'DELETE' }))
+      if (job?.id && job?.command && job?.status) await waitForLifecycleJob(`/api/extensions/jobs/${job.id}`)
       await load()
     } catch (removeError: any) {
       setError(removeError.message || 'Could not remove extension')

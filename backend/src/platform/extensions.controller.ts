@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   Param,
   Patch,
@@ -24,7 +25,7 @@ import { ExtensionAlertService } from "./extension-alert.service";
 import { ExtensionApiMetricsService } from "./extension-api-metrics.service";
 import { ExtensionPlatformGuard } from "./extension-platform.guard";
 import { RequireIdempotencyKey } from "../security/require-idempotency-key.decorator";
-import { DistributedCommandLock } from "../security/distributed-command-lock.decorator";
+import { ExtensionLifecycleJobsService } from "./extension-lifecycle-jobs.service";
 
 @Controller("platform/extensions")
 @UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard, ExtensionPlatformGuard)
@@ -34,6 +35,7 @@ export class ExtensionsController {
     private extensions: ExtensionsService,
     private alerts: ExtensionAlertService,
     private apiMetrics: ExtensionApiMetricsService,
+    private lifecycleJobs: ExtensionLifecycleJobsService,
   ) {}
 
   @Get()
@@ -417,13 +419,13 @@ export class ExtensionsController {
 
   @Delete(":extensionId")
   @RequireIdempotencyKey()
-  @DistributedCommandLock("EXTENSION")
   deleteExtension(
     @Param("extensionId") extensionId: string,
     @Body() body: { reason?: string },
     @Request() req,
+    @Headers("idempotency-key") idempotencyKey: string,
   ) {
-    return this.extensions.deleteExtension(extensionId, req.user, body.reason);
+    return this.lifecycleJobs.submitExtension(extensionId, body, req.user, idempotencyKey);
   }
 
   @Get("versions/:versionId/preview")

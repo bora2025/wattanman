@@ -8,6 +8,7 @@ import { ExtensionsController } from './extensions.controller';
 import { ExtensionsService } from './extensions.service';
 import { ExtensionAlertService } from './extension-alert.service';
 import { ExtensionApiMetricsService } from './extension-api-metrics.service';
+import { ExtensionLifecycleJobsService } from './extension-lifecycle-jobs.service';
 
 class HeaderAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -39,6 +40,7 @@ describe('ExtensionsController authorization and upload', () => {
         { provide: ExtensionsService, useValue: extensions },
         { provide: ExtensionAlertService, useValue: { list: jest.fn(), scan: jest.fn(), setStatus: jest.fn() } },
         { provide: ExtensionApiMetricsService, useValue: { summary: jest.fn() } },
+        { provide: ExtensionLifecycleJobsService, useValue: { submitExtension: jest.fn(), get: jest.fn() } },
         RolesGuard,
         PlatformScopeGuard,
         JwtAuthGuard,

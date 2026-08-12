@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
@@ -24,13 +25,16 @@ import { PlatformScopeGuard } from "../tenancy/platform-scope.guard";
 import { ExtensionInstallationsService } from "./extension-installations.service";
 import { ExtensionPlatformGuard } from "./extension-platform.guard";
 import { RequireIdempotencyKey } from "../security/require-idempotency-key.decorator";
-import { DistributedCommandLock } from "../security/distributed-command-lock.decorator";
+import { ExtensionLifecycleJobsService } from "./extension-lifecycle-jobs.service";
 
 @Controller("platform/extension-installations")
 @UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard, ExtensionPlatformGuard)
 @Roles("PLATFORM_ADMIN")
 export class PlatformExtensionInstallationsController {
-  constructor(private installations: ExtensionInstallationsService) {}
+  constructor(
+    private installations: ExtensionInstallationsService,
+    private lifecycleJobs: ExtensionLifecycleJobsService,
+  ) {}
 
   @Get()
   list(@Query("schoolId") schoolId?: string, @Query("cursor") cursor?: string, @Query("limit") limit?: string) {
@@ -40,6 +44,11 @@ export class PlatformExtensionInstallationsController {
   @Get("pilot-criteria")
   pilotCriteria() {
     return this.installations.pilotAcceptanceCriteria();
+  }
+
+  @Get("jobs/:jobId")
+  lifecycleJob(@Param("jobId") jobId: string) {
+    return this.lifecycleJobs.get(jobId);
   }
 
   @Get("payment-settings")
@@ -103,28 +112,29 @@ export class PlatformExtensionInstallationsController {
 
   @Post(":id/install")
   @RequireIdempotencyKey()
-  @DistributedCommandLock("INSTALLATION")
   install(
     @Param("id") id: string,
     @Body() body: { versionId: string },
     @Request() req,
+    @Headers("idempotency-key") idempotencyKey: string,
   ) {
-    return this.installations.install(id, body.versionId, req.user);
+    return this.lifecycleJobs.submitInstallation(id, "INSTALL", { versionId: body.versionId }, req.user, idempotencyKey);
   }
 
   @Post(":id/upgrade")
   @RequireIdempotencyKey()
-  @DistributedCommandLock("INSTALLATION")
   upgrade(
     @Param("id") id: string,
     @Body() body: { versionId: string; acknowledgePermissions?: boolean },
     @Request() req,
+    @Headers("idempotency-key") idempotencyKey: string,
   ) {
-    return this.installations.upgrade(
+    return this.lifecycleJobs.submitInstallation(
       id,
-      body.versionId,
+      "UPGRADE",
+      { versionId: body.versionId, acknowledgePermissions: body.acknowledgePermissions === true },
       req.user,
-      body.acknowledgePermissions === true,
+      idempotencyKey,
     );
   }
 
@@ -146,9 +156,8 @@ export class PlatformExtensionInstallationsController {
 
   @Post(":id/rollback")
   @RequireIdempotencyKey()
-  @DistributedCommandLock("INSTALLATION")
-  rollback(@Param("id") id: string, @Request() req) {
-    return this.installations.rollback(id, req.user);
+  rollback(@Param("id") id: string, @Request() req, @Headers("idempotency-key") idempotencyKey: string) {
+    return this.lifecycleJobs.submitInstallation(id, "ROLLBACK", {}, req.user, idempotencyKey);
   }
 
   @Patch(":id/update-policy")
@@ -162,20 +171,19 @@ export class PlatformExtensionInstallationsController {
 
   @Patch(":id/activation")
   @RequireIdempotencyKey()
-  @DistributedCommandLock("INSTALLATION")
   activate(
     @Param("id") id: string,
     @Body() body: { enabled: boolean },
     @Request() req,
+    @Headers("idempotency-key") idempotencyKey: string,
   ) {
-    return this.installations.activate(id, body.enabled, req.user);
+    return this.lifecycleJobs.submitInstallation(id, body.enabled ? "ACTIVATE" : "DEACTIVATE", {}, req.user, idempotencyKey);
   }
 
   @Post(":id/uninstall")
   @RequireIdempotencyKey()
-  @DistributedCommandLock("INSTALLATION")
-  uninstall(@Param("id") id: string, @Request() req) {
-    return this.installations.uninstall(id, req.user);
+  uninstall(@Param("id") id: string, @Request() req, @Headers("idempotency-key") idempotencyKey: string) {
+    return this.lifecycleJobs.submitInstallation(id, "UNINSTALL", {}, req.user, idempotencyKey);
   }
 
   @Post(":id/pilot-feedback")
@@ -203,7 +211,10 @@ export class PlatformExtensionInstallationsController {
 @UseGuards(JwtAuthGuard, RolesGuard, ExtensionPlatformGuard)
 @Roles("ADMIN", "SUPER_ADMIN")
 export class SchoolExtensionsController {
-  constructor(private installations: ExtensionInstallationsService) {}
+  constructor(
+    private installations: ExtensionInstallationsService,
+    private lifecycleJobs: ExtensionLifecycleJobsService,
+  ) {}
 
   @Get("directory")
   directory(
@@ -217,6 +228,11 @@ export class SchoolExtensionsController {
     @Query("sort") sort?: string,
   ) {
     return this.installations.schoolDirectory({ cursor, limit, search, category, runtimeType, commercialType, locale, sort });
+  }
+
+  @Get("jobs/:jobId")
+  lifecycleJob(@Param("jobId") jobId: string) {
+    return this.lifecycleJobs.get(jobId);
   }
 
   @Get("collections")
@@ -313,9 +329,8 @@ export class SchoolExtensionsController {
 
   @Delete("installations/:id")
   @RequireIdempotencyKey()
-  @DistributedCommandLock("INSTALLATION")
-  removeUninstalled(@Param("id") id: string, @Request() req) {
-    return this.installations.removeUninstalled(id, req.user);
+  removeUninstalled(@Param("id") id: string, @Request() req, @Headers("idempotency-key") idempotencyKey: string) {
+    return this.lifecycleJobs.submitInstallation(id, "PURGE_INSTALLATION", {}, req.user, idempotencyKey);
   }
 
   @Post("installations/:id/pilot-feedback")

@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import AuthGuard from "../../../components/AuthGuard";
 import Sidebar from "../../../components/Sidebar";
-import { apiCursorItems, apiFetch } from "../../../lib/api";
+import { apiCursorItems, apiFetch, waitForLifecycleJob } from "../../../lib/api";
 import { buildThemePreviewDocument } from "../../../lib/themePreviewDocument";
 import { platformNav } from "../../../lib/platform-nav";
 
@@ -968,13 +968,16 @@ function ExtensionCard({
     setBusy(true);
     setError("");
     try {
-      await responseJson(
+      const job = await responseJson(
         await apiFetch(`/api/platform/extensions/${extension.id}`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason }),
         }),
       );
+      if (job?.id && job?.command && job?.status) {
+        await waitForLifecycleJob(`/api/platform/extension-installations/jobs/${job.id}`);
+      }
       await reload();
     } catch (deleteError: any) {
       setError(deleteError.message || "Could not delete extension");
@@ -1245,12 +1248,15 @@ function InstallationCard({
     setBusy(true);
     setError("");
     try {
-      await responseJson(
+      const job = await responseJson(
         await apiFetch(
           `/api/platform/extension-installations/${installation.id}/${path}`,
           options,
         ),
       );
+      if (job?.id && job?.command && job?.status) {
+        await waitForLifecycleJob(`/api/platform/extension-installations/jobs/${job.id}`);
+      }
       await reload();
     } catch (actionError: any) {
       setError(actionError.message || "Installation action failed");

@@ -49,6 +49,7 @@ model School {
   extensionVisibilityGrants ExtensionVisibilityGrant[]
   extensionPilotFeedback    ExtensionPilotFeedback[]
   extensionPaymentEvidence  ExtensionPaymentEvidence[]
+  extensionLifecycleJobs    ExtensionLifecycleJob[]
   domains                   SchoolDomain[]
   provisioningJobs          SchoolProvisioningJob[]
 }
@@ -540,6 +541,36 @@ model ExtensionPaymentEvidence {
   @@index([schoolId, createdAt])
   @@index([installationId, createdAt])
   @@index([status, legalHold, retainUntil])
+}
+
+model ExtensionLifecycleJob {
+  id             String   @id @default(cuid())
+  schoolId       String
+  school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  extensionId    String
+  installationId String?
+  command        String   // INSTALL | UPGRADE | ROLLBACK | ACTIVATE | DEACTIVATE | UNINSTALL | PURGE_INSTALLATION | PURGE_EXTENSION
+  status         String   @default("QUEUED") // QUEUED | RUNNING | SUCCEEDED | FAILED
+  idempotencyKey String
+  payload        Json?
+  result         Json?
+  errorCode      String?
+  errorMessage   String?
+  attempts       Int      @default(0)
+  actorId        String?
+  actorRole      String
+  actorName      String?
+  actorEmail     String?
+  queuedAt       DateTime @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([schoolId, idempotencyKey])
+  @@index([schoolId, status, updatedAt])
+  @@index([extensionId, status, updatedAt])
+  @@index([installationId, updatedAt])
 }
 
 model ExtensionPaymentSetting {
