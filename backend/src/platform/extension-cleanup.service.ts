@@ -3,12 +3,19 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { R2StorageService } from '../storage/r2-storage.service';
 import { ScheduledTaskGuardService } from '../security/scheduled-task-guard.service';
+import { ExtensionPurgeReportService } from './extension-purge-report.service';
+import { tenantContext } from '../tenancy/tenant-context';
 
 @Injectable()
 export class ExtensionCleanupService {
   private readonly logger = new Logger(ExtensionCleanupService.name);
 
-  constructor(private prisma: PrismaService, private storage: R2StorageService, private schedules: ScheduledTaskGuardService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storage: R2StorageService,
+    private schedules: ScheduledTaskGuardService,
+    private reports: ExtensionPurgeReportService,
+  ) {}
 
   @Cron('15 3 * * *')
   async run() {
@@ -81,17 +88,41 @@ export class ExtensionCleanupService {
       select: { id: true, schoolId: true, extensionId: true },
       take: batchSize,
     });
-    if (expiredInstallations.length) {
-      await this.prisma.$transaction(async (transaction) => {
-        for (const installation of expiredInstallations) {
-          await transaction.extensionRecord.deleteMany({
+    let purgedInstallations = 0;
+    for (const installation of expiredInstallations) {
+      try {
+        const summary = await this.prisma.$transaction(async (transaction) => {
+          const records = await transaction.extensionRecord.deleteMany({
             where: { schoolId: installation.schoolId, extensionId: installation.extensionId },
           });
-        }
-        await transaction.extensionInstallation.deleteMany({
-          where: { id: { in: expiredInstallations.map((installation) => installation.id) } },
+          const deleted = await transaction.extensionInstallation.deleteMany({
+            where: { id: installation.id, enabled: false, purgeAfter: { lte: now } },
+          });
+          return deleted.count === 1 ? { extensionRecords: records.count } : null;
         });
-      });
+        if (!summary) continue;
+        // Report generation needs a tenant context open so AuditService.log() can resolve
+        // schoolId (a bare cron tick has none) — the DB write itself doesn't need this,
+        // since schoolId is always passed explicitly, but the audit trail does.
+        await tenantContext.run({ schoolId: installation.schoolId, mode: 'scoped' }, () =>
+          this.reports.record({
+            schoolId: installation.schoolId,
+            extensionId: installation.extensionId,
+            installationId: installation.id,
+            scope: 'INSTALLATION',
+            trigger: 'SCHEDULED',
+            reason: 'Uninstall grace period elapsed',
+            dbSummary: { installations: 1, extensionRecords: summary.extensionRecords },
+          }),
+        );
+        purgedInstallations += 1;
+      } catch (error: any) {
+        // Known limitation: if the delete above committed but report generation then
+        // throws (signing misconfigured, R2 down), the row is already gone and can't be
+        // retried for reporting. Surfaces here as a purge-count vs report-count mismatch
+        // an operator can reconcile via audit logs, not a silently swallowed failure.
+        this.logger.warn(`Installation purge failed for ${installation.id}: ${error?.message || error}`);
+      }
     }
 
     const abandonedPackages = await this.prisma.extensionVersion.findMany({
@@ -147,8 +178,8 @@ export class ExtensionCleanupService {
         this.logger.warn(`Extension package cleanup failed for ${version.id}: ${error?.message || error}`);
       }
     }
-    this.logger.log(`Extension cleanup: purged ${purgedEvidence} payment evidence objects, ${expiredInstallations.length} installations, expired ${expiredQuarantines} quarantines, and purged ${deletedPackages} rejected package objects.`);
-    return { evidence: purgedEvidence, installations: expiredInstallations.length, quarantines: expiredQuarantines, packages: deletedPackages };
+    this.logger.log(`Extension cleanup: purged ${purgedEvidence} payment evidence objects, ${purgedInstallations} installations, expired ${expiredQuarantines} quarantines, and purged ${deletedPackages} rejected package objects.`);
+    return { evidence: purgedEvidence, installations: purgedInstallations, quarantines: expiredQuarantines, packages: deletedPackages };
   }
 
   private retentionDays(name: string, fallback: number) {

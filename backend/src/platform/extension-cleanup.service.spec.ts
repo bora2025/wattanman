@@ -12,7 +12,8 @@ describe('ExtensionCleanupService', () => {
   };
   const storage = { deletePrivate: jest.fn() };
   const schedules = { acquire: jest.fn().mockResolvedValue(true) };
-  const service = new ExtensionCleanupService(prisma as any, storage as any, schedules as any);
+  const reports = { record: jest.fn().mockResolvedValue({ id: 'report-1' }) };
+  const service = new ExtensionCleanupService(prisma as any, storage as any, schedules as any, reports as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -22,11 +23,14 @@ describe('ExtensionCleanupService', () => {
     prisma.extensionVersion.updateMany.mockResolvedValue({ count: 1 });
     prisma.extensionPaymentEvidence.findMany.mockResolvedValue([]);
     prisma.extensionPaymentEvidence.updateMany.mockResolvedValue({ count: 1 });
+    prisma.extensionRecord.deleteMany.mockResolvedValue({ count: 0 });
+    reports.record.mockResolvedValue({ id: 'report-1' });
   });
 
-  it('purges expired uninstall records and unreferenced rejected packages', async () => {
+  it('purges expired uninstall records, reports the purge, and cleans unreferenced rejected packages', async () => {
     prisma.extensionInstallation.findMany.mockResolvedValue([{ id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1' }]);
     prisma.extensionInstallation.deleteMany.mockResolvedValue({ count: 1 });
+    prisma.extensionRecord.deleteMany.mockResolvedValue({ count: 3 });
     prisma.extensionVersion.findMany
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ id: 'version-1', packageStorageKey: 'quarantine/version-1.zip', assets: [{ storageKey: 'assets/version-1/style.css' }] }]);
@@ -35,13 +39,33 @@ describe('ExtensionCleanupService', () => {
 
     const result = await service.run();
 
-    expect(prisma.extensionInstallation.deleteMany).toHaveBeenCalledWith({ where: { id: { in: ['installation-1'] } } });
+    expect(prisma.extensionInstallation.deleteMany).toHaveBeenCalledWith({
+      where: { id: 'installation-1', enabled: false, purgeAfter: { lte: expect.any(Date) } },
+    });
     expect(prisma.extensionRecord.deleteMany).toHaveBeenCalledWith({ where: { schoolId: 'school-a', extensionId: 'extension-1' } });
+    expect(reports.record).toHaveBeenCalledWith(expect.objectContaining({
+      schoolId: 'school-a', extensionId: 'extension-1', installationId: 'installation-1',
+      scope: 'INSTALLATION', trigger: 'SCHEDULED', dbSummary: { installations: 1, extensionRecords: 3 },
+    }));
     expect(storage.deletePrivate).toHaveBeenCalledWith('quarantine/version-1.zip');
     expect(storage.deletePrivate).toHaveBeenCalledWith('assets/version-1/style.css');
     expect(prisma.extensionAsset.deleteMany).toHaveBeenCalledWith({ where: { extensionVersionId: 'version-1' } });
     expect(prisma.extensionVersion.update).toHaveBeenCalledWith({ where: { id: 'version-1' }, data: { packageStorageKey: null } });
     expect(result).toEqual({ evidence: 0, installations: 1, quarantines: 0, packages: 1 });
+  });
+
+  it('isolates one failed installation purge from the rest of the batch', async () => {
+    prisma.extensionInstallation.findMany.mockResolvedValue([
+      { id: 'installation-bad', schoolId: 'school-a', extensionId: 'extension-1' },
+      { id: 'installation-good', schoolId: 'school-b', extensionId: 'extension-2' },
+    ]);
+    prisma.extensionInstallation.deleteMany.mockResolvedValue({ count: 1 });
+    reports.record.mockRejectedValueOnce(new Error('signing not configured')).mockResolvedValueOnce({ id: 'report-1' });
+
+    const result = await service.run();
+
+    expect(reports.record).toHaveBeenCalledTimes(2);
+    expect(result.installations).toBe(1);
   });
 
   it('expires abandoned quarantines while preserving their validation audit trail', async () => {

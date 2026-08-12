@@ -37,3 +37,49 @@ Install and rollback are idempotent no-ops when the installation is already
 at the target version; uninstall is a no-op when already `UNINSTALLED`. This
 is what makes it safe for BullMQ to retry a job whose underlying command
 already completed.
+
+## Progress visibility
+
+`schoolInstallations()` and `platformInstallations()` attach `lastJob` (the
+most recent `ExtensionLifecycleJob` per installation, batched via one
+`DISTINCT ON` query) so a page reload or a second operator can see an
+in-flight or failed command — `waitForLifecycleJob` on the frontend only
+covers the tab that submitted it. Both admin pages poll every 2 seconds
+while `lastJob.status` is `QUEUED`/`RUNNING`, reusing the same interval
+pattern already used for package validation progress. A cursor-paginated
+`GET .../:id/jobs` history endpoint exists on both the platform and school
+controllers for the full per-installation command history.
+
+## Signed purge reports
+
+`PURGE_INSTALLATION` and `PURGE_EXTENSION` generate a signed
+`ExtensionPurgeReport` on success (skipped on the already-purged retry
+branch, and skipped for a core-module retire, which isn't a physical
+delete). The scheduled uninstall-grace-period cron
+(`extension-cleanup.service.ts`) generates the same kind of report,
+`trigger: 'SCHEDULED'`, for each installation it purges.
+
+Reports are signed with a platform-owned Ed25519 key — `EXTENSION_PURGE_REPORT_KEY_ID`,
+`EXTENSION_PURGE_REPORT_PRIVATE_KEY_BASE64`, `EXTENSION_PURGE_REPORT_PUBLIC_KEY_BASE64` —
+deliberately separate from `EXTENSION_SIGNING_*` (publisher package-trust
+keys, a different trust domain with its own DB-tracked rotation and
+revocation table). This is intentionally a single static platform identity,
+not DB-tracked or rotatable-with-revocation-status: the point of a signed
+report is that a downloaded copy verifies standalone against the documented
+public key, with no API or database dependency. Rotate it manually by
+generating a new pair, updating the three env vars, and restarting; keep the
+old public key on file indefinitely so historical reports stay verifiable.
+
+To verify a downloaded report: `JSON.parse` it, `JSON.stringify(parsed.payload)`
+to reconstruct the exact bytes that were signed (V8 preserves key insertion
+order on both ends, so no separate canonicalization step is needed), then
+verify that buffer against `parsed.signature` (base64) with Node's
+`crypto.verify(null, buffer, publicKey, signature)` using the documented
+public key.
+
+Known limitation on the scheduled path: if the database delete for an
+installation succeeds but report generation then throws (signing
+misconfigured, R2 unavailable), the row is already gone and cannot be
+retried for reporting. This surfaces as a `WARN` log naming the installation
+and as a purge-count vs. report-count mismatch an operator can reconcile via
+audit logs — not a silently swallowed failure.
