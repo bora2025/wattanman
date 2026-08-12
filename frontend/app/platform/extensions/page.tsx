@@ -123,6 +123,13 @@ interface InstallationRecord {
     legalHoldBy?: string | null;
   }>;
   configuration?: { rollbackVersionId?: string } | null;
+  lastJob?: {
+    id: string;
+    command: string;
+    status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+    errorCode?: string | null;
+    errorMessage?: string | null;
+  } | null;
   school: { id: string; name: string; subdomain: string };
   extension: {
     id: string;
@@ -1209,6 +1216,13 @@ function InstallationCard({
   const [error, setError] = useState("");
   const newestVersion = installation.extension.versions[0];
   const lifecycleState = installationLifecycleState(installation);
+  const lastJobStatus = installation.lastJob?.status;
+
+  useEffect(() => {
+    if (!lastJobStatus || !["QUEUED", "RUNNING"].includes(lastJobStatus)) return;
+    const timer = window.setInterval(() => void reload(), 2_000);
+    return () => window.clearInterval(timer);
+  }, [reload, installation.id, lastJobStatus]);
 
   async function openPaymentEvidence() {
     const downloadWindow = window.open("about:blank", "_blank");
@@ -1422,6 +1436,17 @@ function InstallationCard({
           <p className="text-[11px] text-amber-600 dark:text-amber-400">
             Data purge scheduled{" "}
             {new Date(installation.purgeAfter).toLocaleString()}
+          </p>
+        )}
+        {lastJobStatus && ["QUEUED", "RUNNING"].includes(lastJobStatus) && (
+          <p className="text-[11px] text-sky-600 dark:text-sky-400">
+            {installation.lastJob!.command.toLowerCase()} in progress…
+          </p>
+        )}
+        {lastJobStatus === "FAILED" && (
+          <p className="text-[11px] text-red-600 dark:text-red-400">
+            {installation.lastJob!.command.toLowerCase()} failed:{" "}
+            {installation.lastJob!.errorMessage || installation.lastJob!.errorCode || "unknown error"}
           </p>
         )}
         {installation.paymentSubmittedAt && (

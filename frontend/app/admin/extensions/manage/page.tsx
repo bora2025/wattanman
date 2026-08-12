@@ -24,6 +24,13 @@ interface Installation {
   requestBillingInterval?: 'MONTHLY' | 'YEARLY' | null
   requestContractReference?: string | null
   requestPriceNote?: string | null
+  lastJob?: {
+    id: string
+    command: string
+    status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
+    errorCode?: string | null
+    errorMessage?: string | null
+  } | null
   extension: {
     key: string
     name: string
@@ -80,6 +87,13 @@ function ManageExtensionsContent() {
   useEffect(() => {
     load()
   }, [])
+
+  useEffect(() => {
+    const hasActiveJob = installations.some(item => item.lastJob && ['QUEUED', 'RUNNING'].includes(item.lastJob.status))
+    if (!hasActiveJob) return
+    const timer = window.setInterval(() => void load(), 2_000)
+    return () => window.clearInterval(timer)
+  }, [installations])
 
   async function updatePolicy(id: string, policy: string) {
     setBusy(id)
@@ -197,6 +211,16 @@ function ManageExtensionsContent() {
                         <p className="mt-2 text-xs text-slate-400">
                           v{item.installedVersion.version} · {item.extension.runtimeType.replaceAll('_', ' ')}
                         </p>
+                        {item.lastJob && ['QUEUED', 'RUNNING'].includes(item.lastJob.status) && (
+                          <p className="mt-1 text-[11px] text-sky-600 dark:text-sky-400">
+                            {item.lastJob.command.toLowerCase()} in progress…
+                          </p>
+                        )}
+                        {item.lastJob?.status === 'FAILED' && (
+                          <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">
+                            {item.lastJob.command.toLowerCase()} failed: {item.lastJob.errorMessage || item.lastJob.errorCode || 'unknown error'}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <span className={`relative h-7 w-12 rounded-full ${item.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`} title="Activation is managed by platform admin">
