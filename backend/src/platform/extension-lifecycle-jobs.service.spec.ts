@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { tenantContext } from '../tenancy/tenant-context';
 import { ExtensionLifecycleJobsService } from './extension-lifecycle-jobs.service';
 
@@ -16,7 +16,8 @@ describe('ExtensionLifecycleJobsService', () => {
     install: jest.fn(), upgrade: jest.fn(), rollback: jest.fn(), activate: jest.fn(), uninstall: jest.fn(), removeUninstalled: jest.fn(),
   };
   const extensions = { deleteExtension: jest.fn() };
-  const service = new ExtensionLifecycleJobsService(prisma as any, queues as any, locks as any, installations as any, extensions as any);
+  const reports = { record: jest.fn().mockResolvedValue({ id: 'report-1' }) };
+  const service = new ExtensionLifecycleJobsService(prisma as any, queues as any, locks as any, installations as any, extensions as any, reports as any);
   const actor = { userId: 'admin-1', role: 'PLATFORM_ADMIN', name: 'Admin' };
 
   beforeEach(() => {
@@ -83,6 +84,59 @@ describe('ExtensionLifecycleJobsService', () => {
     expect(prisma.extensionLifecycleJob.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ status: 'FAILED', errorCode: 'Error', errorMessage: 'R2 unavailable' }),
     }));
+  });
+
+  it('generates a signed purge report after a successful manual installation purge', async () => {
+    prisma.extensionLifecycleJob.findUnique.mockResolvedValue({
+      id: 'job-1', schoolId: 'school-a', extensionId: 'extension-1', installationId: 'installation-1',
+      command: 'PURGE_INSTALLATION', status: 'QUEUED', payload: { reason: 'no longer needed' },
+      actorId: 'admin-1', actorRole: 'PLATFORM_ADMIN', actorName: null, actorEmail: null,
+    });
+    installations.removeUninstalled.mockResolvedValue({ removed: true, installationId: 'installation-1', extensionRecords: 3 });
+
+    await service.execute('job-1', 1);
+
+    expect(reports.record).toHaveBeenCalledWith(expect.objectContaining({
+      schoolId: 'school-a', extensionId: 'extension-1', installationId: 'installation-1',
+      scope: 'INSTALLATION', trigger: 'MANUAL', reason: 'no longer needed',
+      dbSummary: { installations: 1, extensionRecords: 3 },
+    }));
+  });
+
+  it('generates a report for a real extension purge but skips it for a core-module retire', async () => {
+    prisma.extensionLifecycleJob.findUnique.mockResolvedValue({
+      id: 'job-1', schoolId: 'school-a', extensionId: 'extension-1', installationId: null,
+      command: 'PURGE_EXTENSION', status: 'QUEUED', payload: { reason: 'retired product' },
+      actorId: 'admin-1', actorRole: 'PLATFORM_ADMIN', actorName: null, actorEmail: null,
+    });
+    extensions.deleteExtension.mockResolvedValue({ deleted: true, extensionId: 'extension-1', versions: 2, installations: 0, records: 5, storageObjects: 2 });
+
+    await service.execute('job-1', 1);
+
+    expect(reports.record).toHaveBeenCalledWith(expect.objectContaining({
+      scope: 'EXTENSION', trigger: 'MANUAL', dbSummary: { versions: 2, installations: 0, records: 5, storageObjects: 2 },
+    }));
+
+    reports.record.mockClear();
+    extensions.deleteExtension.mockResolvedValue({ deleted: true, retired: true, extensionId: 'extension-1' });
+
+    await service.execute('job-1', 2);
+
+    expect(reports.record).not.toHaveBeenCalled();
+  });
+
+  it('does not generate a report when the target was already purged by a prior attempt', async () => {
+    prisma.extensionLifecycleJob.findUnique.mockResolvedValue({
+      id: 'job-1', schoolId: 'school-a', extensionId: 'extension-1', installationId: 'installation-1',
+      command: 'PURGE_INSTALLATION', status: 'QUEUED', payload: {},
+      actorId: 'admin-1', actorRole: 'PLATFORM_ADMIN', actorName: null, actorEmail: null,
+    });
+    installations.removeUninstalled.mockRejectedValue(new NotFoundException('Extension installation not found'));
+
+    const result = await service.execute('job-1', 1);
+
+    expect(result).toEqual({ purged: true, alreadyAbsent: true });
+    expect(reports.record).not.toHaveBeenCalled();
   });
 
   it('cursor-paginates job history for one installation, most recent first', async () => {

@@ -1231,8 +1231,8 @@ export class ExtensionInstallationsService {
     });
     if (retainedEvidence)
       throw new ConflictException("Payment evidence must complete retention before installation history can be removed");
-    await this.prisma.$transaction(async (transaction) => {
-      await transaction.extensionRecord.deleteMany({
+    const deleted = await this.prisma.$transaction(async (transaction) => {
+      const records = await transaction.extensionRecord.deleteMany({
         where: {
           schoolId: installation.schoolId,
           extensionId: installation.extensionId,
@@ -1241,12 +1241,13 @@ export class ExtensionInstallationsService {
       await transaction.extensionInstallation.delete({
         where: { id: installationId },
       });
+      return { extensionRecords: records.count };
     });
     await this.log(actor, "REMOVE_HISTORY", installationId, installation.extension.name, {
       schoolId: installation.schoolId,
       extensionId: installation.extensionId,
     });
-    return { removed: true, installationId };
+    return { removed: true, installationId, extensionRecords: deleted.extensionRecords };
   }
 
   async upgradeReview(installationId: string, versionId: string) {

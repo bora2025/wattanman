@@ -6,6 +6,7 @@ import { getCurrentSchoolId, getTenantStore } from '../tenancy/tenant-context';
 import { DistributedLockService } from '../security/distributed-lock.service';
 import { ExtensionInstallationsService } from './extension-installations.service';
 import { ExtensionsService } from './extensions.service';
+import { ExtensionPurgeReportService } from './extension-purge-report.service';
 import { dateIdPageBy, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
 
 interface Actor {
@@ -33,6 +34,7 @@ export class ExtensionLifecycleJobsService {
     private readonly locks: DistributedLockService,
     private readonly installations: ExtensionInstallationsService,
     private readonly extensions: ExtensionsService,
+    private readonly reports: ExtensionPurgeReportService,
   ) {}
 
   async submitInstallation(
@@ -148,10 +150,43 @@ export class ExtensionLifecycleJobsService {
             return this.installations.activate(job.installationId!, false, actor);
           case 'UNINSTALL':
             return this.installations.uninstall(job.installationId!, actor);
-          case 'PURGE_INSTALLATION':
-            return this.installations.removeUninstalled(job.installationId!, actor);
-          case 'PURGE_EXTENSION':
-            return this.extensions.deleteExtension(job.extensionId, actor, payload.reason);
+          case 'PURGE_INSTALLATION': {
+            const outcome = await this.installations.removeUninstalled(job.installationId!, actor);
+            await this.reports.record({
+              schoolId: job.schoolId,
+              extensionId: job.extensionId,
+              installationId: job.installationId,
+              scope: 'INSTALLATION',
+              trigger: 'MANUAL',
+              reason: (payload.reason as string) || null,
+              actor,
+              dbSummary: { installations: 1, extensionRecords: outcome.extensionRecords },
+            });
+            return outcome;
+          }
+          case 'PURGE_EXTENSION': {
+            const outcome = await this.extensions.deleteExtension(job.extensionId, actor, payload.reason);
+            // Core-module "purge" retires the extension instead of physically deleting
+            // it (see ExtensionsService.deleteExtension) — nothing was actually purged.
+            if (!outcome.retired) {
+              await this.reports.record({
+                schoolId: job.schoolId,
+                extensionId: job.extensionId,
+                installationId: null,
+                scope: 'EXTENSION',
+                trigger: 'MANUAL',
+                reason: (payload.reason as string) || null,
+                actor,
+                dbSummary: {
+                  versions: outcome.versions,
+                  installations: outcome.installations,
+                  records: outcome.records,
+                  storageObjects: outcome.storageObjects,
+                },
+              });
+            }
+            return outcome;
+          }
         }
       });
       await this.prisma.extensionLifecycleJob.update({
