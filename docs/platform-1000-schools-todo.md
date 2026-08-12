@@ -233,7 +233,8 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Installation workflow
 
-- [ ] Add installation command idempotency keys.
+- [x] Add installation command idempotency keys.
+  - Install, upgrade, rollback, activation, uninstall, school-history purge, and permanent extension purge now reject missing `Idempotency-Key` headers. Redis-backed, tenant/actor/route-scoped reservations prevent cross-replica duplication, reject payload-changing key reuse and concurrent processing, replay completed responses for 24 hours, and release failed commands for safe retry. The shared web client creates one safe key per mutation and preserves it across token-refresh retry. All 284 backend tests and both production builds passed; Railway deployments `07541492-7745-4821-9cd2-03ce0d3156a4` (API) and `07d8dc78-3c6d-4767-976b-d1f1ab414429` (frontend) succeeded on 2026-08-12.
 - [ ] Add distributed school/extension locks.
 - [ ] Convert install, update, rollback, uninstall, and purge to jobs.
 - [ ] Add progress and failure details to both admin interfaces.
