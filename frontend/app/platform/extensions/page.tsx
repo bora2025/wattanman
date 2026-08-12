@@ -188,6 +188,16 @@ interface ExtensionAlert {
   occurrences: number;
   lastSeenAt: string;
 }
+interface PurgeReportRecord {
+  id: string;
+  extensionId?: string | null;
+  installationId?: string | null;
+  scope: "INSTALLATION" | "EXTENSION";
+  trigger: "MANUAL" | "SCHEDULED";
+  reason?: string | null;
+  purgedAt: string;
+  reportChecksum: string;
+}
 interface CatalogCollectionRecord {
   id: string;
   slug: string;
@@ -1650,6 +1660,7 @@ function ExtensionsContent() {
   const [savingPayment, setSavingPayment] = useState(false);
   const [showPublisherOnboarding, setShowPublisherOnboarding] = useState(false);
   const [catalogCollections, setCatalogCollections] = useState<CatalogCollectionRecord[]>([]);
+  const [purgeReports, setPurgeReports] = useState<PurgeReportRecord[]>([]);
   const [showCollectionCreate, setShowCollectionCreate] = useState(false);
   const [collectionForm, setCollectionForm] = useState({ slug: "", title: "", description: "", locale: "en", sortOrder: "0", extensionKeys: "" });
   const [publisherForm, setPublisherForm] = useState({
@@ -1703,6 +1714,7 @@ function ExtensionsContent() {
         paymentData,
         paymentHistoryData,
         collectionData,
+        purgeReportData,
       ] = await Promise.all([
         apiCursorItems<ExtensionRecord>("/api/platform/extensions"),
         apiCursorItems<InstallationRecord>("/api/platform/extension-installations"),
@@ -1713,6 +1725,7 @@ function ExtensionsContent() {
         responseJson(await apiFetch("/api/platform/extension-installations/payment-settings")),
         apiCursorItems<any>("/api/platform/extension-installations/payment-settings/history?limit=20"),
         apiCursorItems<CatalogCollectionRecord>("/api/platform/extensions/catalog-collections"),
+        apiCursorItems<PurgeReportRecord>("/api/platform/extension-installations/purge-reports?limit=20"),
       ]);
       setExtensions(extensionData);
       setInstallations(installationData);
@@ -1723,11 +1736,27 @@ function ExtensionsContent() {
       setPaymentSettings(paymentData);
       setPaymentHistory(paymentHistoryData);
       setCatalogCollections(collectionData);
+      setPurgeReports(purgeReportData);
       setError("");
     } catch (loadError: any) {
       setError(loadError.message || "Failed to load extensions");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function downloadPurgeReport(report: PurgeReportRecord) {
+    const downloadWindow = window.open("about:blank", "_blank");
+    if (downloadWindow) downloadWindow.opener = null;
+    try {
+      const result = await responseJson(
+        await apiFetch(`/api/platform/extension-installations/purge-reports/${report.id}/download-url`),
+      );
+      if (downloadWindow) downloadWindow.location.replace(result.download.url);
+      else throw new Error("Allow pop-ups to open the purge report");
+    } catch (downloadError: any) {
+      downloadWindow?.close();
+      setError(downloadError.message || "Could not open purge report");
     }
   }
 
@@ -2392,6 +2421,46 @@ function ExtensionsContent() {
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="card p-5 space-y-3">
+                <div>
+                  <h2 className="font-bold text-slate-800 dark:text-slate-100">Signed purge reports</h2>
+                  <p className="text-xs text-slate-500">
+                    Every permanent extension-data purge — manual or grace-period scheduled — produces a signed, downloadable audit report.
+                  </p>
+                </div>
+                {purgeReports.length === 0 ? (
+                  <p className="text-xs text-slate-400">No purge reports yet.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-left text-slate-400">
+                          <th className="py-2">Purged</th>
+                          <th>Scope</th>
+                          <th>Trigger</th>
+                          <th>Reason</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {purgeReports.map((report) => (
+                          <tr key={report.id} className="border-t border-slate-100 dark:border-slate-800">
+                            <td className="py-2">{new Date(report.purgedAt).toLocaleString()}</td>
+                            <td>{report.scope}</td>
+                            <td>{report.trigger}</td>
+                            <td>{report.reason || "—"}</td>
+                            <td>
+                              <button type="button" className="text-indigo-600" onClick={() => downloadPurgeReport(report)}>
+                                Download signed report
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </>
           )}

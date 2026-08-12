@@ -27,6 +27,7 @@ import { ExtensionInstallationsService } from "./extension-installations.service
 import { ExtensionPlatformGuard } from "./extension-platform.guard";
 import { RequireIdempotencyKey } from "../security/require-idempotency-key.decorator";
 import { ExtensionLifecycleJobsService } from "./extension-lifecycle-jobs.service";
+import { ExtensionPurgeReportService } from "./extension-purge-report.service";
 
 @Controller("platform/extension-installations")
 @UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard, ExtensionPlatformGuard)
@@ -35,11 +36,22 @@ export class PlatformExtensionInstallationsController {
   constructor(
     private installations: ExtensionInstallationsService,
     private lifecycleJobs: ExtensionLifecycleJobsService,
+    private purgeReports: ExtensionPurgeReportService,
   ) {}
 
   @Get()
   list(@Query("schoolId") schoolId?: string, @Query("cursor") cursor?: string, @Query("limit") limit?: string) {
     return this.installations.platformInstallations({ schoolId, cursor, limit });
+  }
+
+  @Get("purge-reports")
+  purgeReportList(@Query("schoolId") schoolId?: string, @Query("cursor") cursor?: string, @Query("limit") limit?: string) {
+    return this.purgeReports.list({ schoolId, cursor, limit });
+  }
+
+  @Get("purge-reports/:id/download-url")
+  purgeReportDownloadUrl(@Param("id") id: string, @Request() req) {
+    return this.purgeReports.downloadUrl(id, req.user);
   }
 
   @Get("pilot-criteria")
