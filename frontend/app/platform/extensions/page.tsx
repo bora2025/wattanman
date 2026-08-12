@@ -1281,20 +1281,14 @@ function InstallationCard({
         ? `This upgrade requests new permissions:\n\n${added.join("\n")}\n\nApprove these permissions and continue?`
         : `Upgrade ${installation.extension.name} from v${review.fromVersion} to v${review.toVersion}?`;
       if (!window.confirm(message)) return;
-      await responseJson(
-        await apiFetch(
-          `/api/platform/extension-installations/${installation.id}/upgrade`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              versionId: newestVersion.id,
-              acknowledgePermissions: added.length > 0,
-            }),
-          },
-        ),
-      );
-      await reload();
+      await action("upgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          versionId: newestVersion.id,
+          acknowledgePermissions: added.length > 0,
+        }),
+      });
     } catch (upgradeError: any) {
       setError(upgradeError.message || "Upgrade failed");
     } finally {

@@ -419,6 +419,7 @@ export class ExtensionsController {
 
   @Delete(":extensionId")
   @RequireIdempotencyKey()
+  @HttpCode(202)
   deleteExtension(
     @Param("extensionId") extensionId: string,
     @Body() body: { reason?: string },

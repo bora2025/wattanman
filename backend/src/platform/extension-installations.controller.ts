@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Headers,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -112,6 +113,7 @@ export class PlatformExtensionInstallationsController {
 
   @Post(":id/install")
   @RequireIdempotencyKey()
+  @HttpCode(202)
   install(
     @Param("id") id: string,
     @Body() body: { versionId: string },
@@ -123,6 +125,7 @@ export class PlatformExtensionInstallationsController {
 
   @Post(":id/upgrade")
   @RequireIdempotencyKey()
+  @HttpCode(202)
   upgrade(
     @Param("id") id: string,
     @Body() body: { versionId: string; acknowledgePermissions?: boolean },
@@ -156,6 +159,7 @@ export class PlatformExtensionInstallationsController {
 
   @Post(":id/rollback")
   @RequireIdempotencyKey()
+  @HttpCode(202)
   rollback(@Param("id") id: string, @Request() req, @Headers("idempotency-key") idempotencyKey: string) {
     return this.lifecycleJobs.submitInstallation(id, "ROLLBACK", {}, req.user, idempotencyKey);
   }
@@ -171,6 +175,7 @@ export class PlatformExtensionInstallationsController {
 
   @Patch(":id/activation")
   @RequireIdempotencyKey()
+  @HttpCode(202)
   activate(
     @Param("id") id: string,
     @Body() body: { enabled: boolean },
@@ -182,6 +187,7 @@ export class PlatformExtensionInstallationsController {
 
   @Post(":id/uninstall")
   @RequireIdempotencyKey()
+  @HttpCode(202)
   uninstall(@Param("id") id: string, @Request() req, @Headers("idempotency-key") idempotencyKey: string) {
     return this.lifecycleJobs.submitInstallation(id, "UNINSTALL", {}, req.user, idempotencyKey);
   }
@@ -329,6 +335,7 @@ export class SchoolExtensionsController {
 
   @Delete("installations/:id")
   @RequireIdempotencyKey()
+  @HttpCode(202)
   removeUninstalled(@Param("id") id: string, @Request() req, @Headers("idempotency-key") idempotencyKey: string) {
     return this.lifecycleJobs.submitInstallation(id, "PURGE_INSTALLATION", {}, req.user, idempotencyKey);
   }
