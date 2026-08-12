@@ -23,6 +23,7 @@ import { RolesGuard } from "../auth/roles.guard";
 import { PlatformScopeGuard } from "../tenancy/platform-scope.guard";
 import { ExtensionInstallationsService } from "./extension-installations.service";
 import { ExtensionPlatformGuard } from "./extension-platform.guard";
+import { RequireIdempotencyKey } from "../security/require-idempotency-key.decorator";
 
 @Controller("platform/extension-installations")
 @UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard, ExtensionPlatformGuard)
@@ -100,6 +101,7 @@ export class PlatformExtensionInstallationsController {
   }
 
   @Post(":id/install")
+  @RequireIdempotencyKey()
   install(
     @Param("id") id: string,
     @Body() body: { versionId: string },
@@ -109,6 +111,7 @@ export class PlatformExtensionInstallationsController {
   }
 
   @Post(":id/upgrade")
+  @RequireIdempotencyKey()
   upgrade(
     @Param("id") id: string,
     @Body() body: { versionId: string; acknowledgePermissions?: boolean },
@@ -139,6 +142,7 @@ export class PlatformExtensionInstallationsController {
   }
 
   @Post(":id/rollback")
+  @RequireIdempotencyKey()
   rollback(@Param("id") id: string, @Request() req) {
     return this.installations.rollback(id, req.user);
   }
@@ -153,6 +157,7 @@ export class PlatformExtensionInstallationsController {
   }
 
   @Patch(":id/activation")
+  @RequireIdempotencyKey()
   activate(
     @Param("id") id: string,
     @Body() body: { enabled: boolean },
@@ -162,6 +167,7 @@ export class PlatformExtensionInstallationsController {
   }
 
   @Post(":id/uninstall")
+  @RequireIdempotencyKey()
   uninstall(@Param("id") id: string, @Request() req) {
     return this.installations.uninstall(id, req.user);
   }
@@ -300,6 +306,7 @@ export class SchoolExtensionsController {
   }
 
   @Delete("installations/:id")
+  @RequireIdempotencyKey()
   removeUninstalled(@Param("id") id: string, @Request() req) {
     return this.installations.removeUninstalled(id, req.user);
   }

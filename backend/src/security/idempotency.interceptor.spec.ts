@@ -1,4 +1,5 @@
-import { CallHandler, ConflictException, ExecutionContext } from '@nestjs/common';
+import { BadRequestException, CallHandler, ConflictException, ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { IdempotencyInterceptor } from './idempotency.interceptor';
 import { IdempotencyStore } from './idempotency.store';
@@ -11,11 +12,20 @@ describe('IdempotencyInterceptor', () => {
   function context(body: unknown, key = 'request-12345') {
     const request = { method: 'POST', body, originalUrl: '/schools', headers: { 'idempotency-key': key, 'x-tenant-host': 'platform.test' }, user: { userId: 'admin-1' } };
     const response = { statusCode: 201, status: jest.fn(function (code) { this.statusCode = code; return this; }), setHeader: jest.fn() };
-    return { execution: { switchToHttp: () => ({ getRequest: () => request, getResponse: () => response }) } as unknown as ExecutionContext, response };
+    return { execution: {
+      switchToHttp: () => ({ getRequest: () => request, getResponse: () => response }),
+      getHandler: () => function handler() {},
+      getClass: () => class Controller {},
+    } as unknown as ExecutionContext, response, request };
+  }
+
+  function createInterceptor(required = false) {
+    const reflector = { getAllAndOverride: jest.fn().mockReturnValue(required) };
+    return new IdempotencyInterceptor(new IdempotencyStore(), reflector as unknown as Reflector);
   }
 
   it('replays a completed mutation without invoking the handler twice', async () => {
-    const interceptor = new IdempotencyInterceptor(new IdempotencyStore());
+    const interceptor = createInterceptor();
     const first = context({ name: 'A' });
     const handler: CallHandler = { handle: jest.fn(() => of({ id: 'school-1' })) };
     await expect(lastValueFrom(interceptor.intercept(first.execution, handler))).resolves.toEqual({ id: 'school-1' });
@@ -26,15 +36,23 @@ describe('IdempotencyInterceptor', () => {
   });
 
   it('rejects key reuse with a different payload', async () => {
-    const interceptor = new IdempotencyInterceptor(new IdempotencyStore());
+    const interceptor = createInterceptor();
     await lastValueFrom(interceptor.intercept(context({ name: 'A' }).execution, { handle: () => of({ ok: true }) }));
     await expect(lastValueFrom(interceptor.intercept(context({ name: 'B' }).execution, { handle: () => of({ ok: true }) }))).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('releases reservations after handler failure so retries can run', async () => {
-    const interceptor = new IdempotencyInterceptor(new IdempotencyStore());
+    const interceptor = createInterceptor();
     const failed = context({ name: 'A' });
     await expect(lastValueFrom(interceptor.intercept(failed.execution, { handle: () => throwError(() => new Error('failed')) }))).rejects.toThrow('failed');
     await expect(lastValueFrom(interceptor.intercept(context({ name: 'A' }).execution, { handle: () => of({ ok: true }) }))).resolves.toEqual({ ok: true });
+  });
+
+  it('rejects a required lifecycle command without a key', async () => {
+    const lifecycle = context({ versionId: 'version-1' }, '');
+    expect(() => createInterceptor(true).intercept(
+      lifecycle.execution,
+      { handle: () => of({ ok: true }) },
+    )).toThrow(BadRequestException);
   });
 });

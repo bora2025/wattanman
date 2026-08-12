@@ -26,12 +26,15 @@ async function refreshAccessToken(): Promise<boolean> {
 
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
   const url = `${getApiBase()}${path}`;
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = new Headers(options.headers);
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !headers.has('Idempotency-Key')) {
+    headers.set('Idempotency-Key', createIdempotencyKey());
+  }
   const res = await fetch(url, {
     ...options,
     credentials: 'include',
-    headers: {
-      ...options.headers,
-    },
+    headers,
   });
 
   // If 401, try refreshing the access token once
@@ -49,9 +52,7 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
       return fetch(url, {
         ...options,
         credentials: 'include',
-        headers: {
-          ...options.headers,
-        },
+        headers,
       });
     }
 
@@ -62,6 +63,13 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
   }
 
   return res;
+}
+
+function createIdempotencyKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `web-${crypto.randomUUID()}`;
+  }
+  return `web-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
 }
 
 export async function apiCursorItems<T>(path: string, maxPages = 100): Promise<T[]> {

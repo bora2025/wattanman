@@ -23,6 +23,7 @@ import { ExtensionsService } from "./extensions.service";
 import { ExtensionAlertService } from "./extension-alert.service";
 import { ExtensionApiMetricsService } from "./extension-api-metrics.service";
 import { ExtensionPlatformGuard } from "./extension-platform.guard";
+import { RequireIdempotencyKey } from "../security/require-idempotency-key.decorator";
 
 @Controller("platform/extensions")
 @UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard, ExtensionPlatformGuard)
@@ -414,6 +415,7 @@ export class ExtensionsController {
   }
 
   @Delete(":extensionId")
+  @RequireIdempotencyKey()
   deleteExtension(
     @Param("extensionId") extensionId: string,
     @Body() body: { reason?: string },

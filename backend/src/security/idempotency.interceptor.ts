@@ -1,18 +1,26 @@
-import { CallHandler, ConflictException, ExecutionContext, Injectable, NestInterceptor, PayloadTooLargeException } from '@nestjs/common';
+import { BadRequestException, CallHandler, ConflictException, ExecutionContext, Injectable, NestInterceptor, PayloadTooLargeException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { createHash } from 'crypto';
 import { catchError, from, mergeMap, Observable, of, tap, throwError } from 'rxjs';
 import { IdempotencyStore } from './idempotency.store';
+import { REQUIRE_IDEMPOTENCY_KEY } from './require-idempotency-key.decorator';
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
-  constructor(private readonly store: IdempotencyStore) {}
+  constructor(private readonly store: IdempotencyStore, private readonly reflector: Reflector) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
     const rawKey = String(request.headers?.['idempotency-key'] || '').trim();
+    const required = this.reflector.getAllAndOverride<boolean>(REQUIRE_IDEMPOTENCY_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (MUTATING.has(request.method) && required && !rawKey)
+      throw new BadRequestException('Idempotency-Key is required for this command');
     if (!MUTATING.has(request.method) || !rawKey) return next.handle();
     if (!/^[A-Za-z0-9._:-]{8,200}$/.test(rawKey)) throw new ConflictException('Idempotency-Key must be 8-200 safe characters');
     const scope = `${request.school?.id || request.headers?.['x-tenant-host'] || 'platform'}:${request.user?.userId || 'anonymous'}:${request.method}:${request.originalUrl || request.url}`;
