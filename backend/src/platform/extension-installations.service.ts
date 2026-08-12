@@ -199,7 +199,36 @@ export class ExtensionInstallationsService {
       orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       take: limit + 1,
     });
-    return dateIdPageBy(rows, limit, (row) => row.updatedAt);
+    const page = dateIdPageBy(rows, limit, (row) => row.updatedAt);
+    return this.withLastJob(page);
+  }
+
+  /** Most recent lifecycle job per installation, batched (Postgres DISTINCT ON), not N+1. */
+  private async latestJobsByInstallation(installationIds: string[]) {
+    if (!installationIds.length) return new Map<string, unknown>();
+    const jobs = await this.prisma.extensionLifecycleJob.findMany({
+      where: { installationId: { in: installationIds } },
+      orderBy: [{ installationId: "asc" }, { updatedAt: "desc" }],
+      distinct: ["installationId"],
+      select: {
+        id: true,
+        installationId: true,
+        command: true,
+        status: true,
+        errorCode: true,
+        errorMessage: true,
+        queuedAt: true,
+        startedAt: true,
+        completedAt: true,
+        attempts: true,
+      },
+    });
+    return new Map(jobs.map((job) => [job.installationId as string, job]));
+  }
+
+  private async withLastJob<T extends { items: { id: string }[] }>(page: T) {
+    const jobs = await this.latestJobsByInstallation(page.items.map((row) => row.id));
+    return { ...page, items: page.items.map((row) => ({ ...row, lastJob: jobs.get(row.id) ?? null })) };
   }
 
   async schoolRequestContext(actor: Actor) {
@@ -866,7 +895,8 @@ export class ExtensionInstallationsService {
       orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       take: limit + 1,
     });
-    return dateIdPageBy(rows, limit, (row) => row.updatedAt);
+    const page = dateIdPageBy(rows, limit, (row) => row.updatedAt);
+    return this.withLastJob(page);
   }
 
   pilotAcceptanceCriteria() {

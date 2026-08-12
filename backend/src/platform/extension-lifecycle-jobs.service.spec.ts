@@ -7,7 +7,7 @@ describe('ExtensionLifecycleJobsService', () => {
     extension: { findUnique: jest.fn() },
     extensionInstallation: { findUnique: jest.fn() },
     extensionLifecycleJob: {
-      findUnique: jest.fn(), create: jest.fn(), delete: jest.fn(), update: jest.fn(), updateMany: jest.fn(),
+      findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn(), delete: jest.fn(), update: jest.fn(), updateMany: jest.fn(),
     },
   };
   const queues = { enqueue: jest.fn() };
@@ -83,5 +83,21 @@ describe('ExtensionLifecycleJobsService', () => {
     expect(prisma.extensionLifecycleJob.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ status: 'FAILED', errorCode: 'Error', errorMessage: 'R2 unavailable' }),
     }));
+  });
+
+  it('cursor-paginates job history for one installation, most recent first', async () => {
+    prisma.extensionLifecycleJob.findMany.mockResolvedValue([
+      { id: 'job-2', installationId: 'installation-1', command: 'UPGRADE', status: 'SUCCEEDED', updatedAt: new Date('2026-08-12') },
+      { id: 'job-1', installationId: 'installation-1', command: 'INSTALL', status: 'SUCCEEDED', updatedAt: new Date('2026-08-01') },
+    ]);
+
+    const page = await service.history('installation-1', {});
+
+    expect(prisma.extensionLifecycleJob.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { installationId: 'installation-1' },
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+    }));
+    expect(page.items.map((job) => job.id)).toEqual(['job-2', 'job-1']);
+    expect(page.nextCursor).toBeNull();
   });
 });

@@ -6,6 +6,7 @@ import { getCurrentSchoolId, getTenantStore } from '../tenancy/tenant-context';
 import { DistributedLockService } from '../security/distributed-lock.service';
 import { ExtensionInstallationsService } from './extension-installations.service';
 import { ExtensionsService } from './extensions.service';
+import { dateIdPageBy, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
 
 interface Actor {
   userId?: string;
@@ -82,6 +83,20 @@ export class ExtensionLifecycleJobsService {
     const job = await this.prisma.extensionLifecycleJob.findUnique({ where: { id: jobId } });
     if (!job) throw new NotFoundException('Extension lifecycle job not found');
     return job;
+  }
+
+  async history(installationId: string, input: { cursor?: string; limit?: string } = {}) {
+    const limit = parsePageLimit(input.limit);
+    const cursor = decodeDateIdCursor(input.cursor);
+    const rows = await this.prisma.extensionLifecycleJob.findMany({
+      where: {
+        installationId,
+        ...(cursor ? { OR: [{ updatedAt: { lt: cursor.createdAt } }, { updatedAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}),
+      },
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+    });
+    return dateIdPageBy(rows, limit, (row) => row.updatedAt);
   }
 
   async execute(jobId: string, attempt: number) {

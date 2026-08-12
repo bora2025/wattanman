@@ -29,6 +29,7 @@ describe('ExtensionInstallationsService', () => {
     extensionMigrationRun: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     extensionMigrationBackup: { create: jest.fn() },
     extensionPilotFeedback: { upsert: jest.fn() },
+    extensionLifecycleJob: { findMany: jest.fn() },
     siteSetting: { findUnique: jest.fn(), upsert: jest.fn(), update: jest.fn() },
   };
   const audit = { log: jest.fn().mockResolvedValue(undefined) };
@@ -631,5 +632,33 @@ describe('ExtensionInstallationsService', () => {
     expect(prisma.extensionRecord.update).toHaveBeenCalledWith({ where: { id: 'record-1' }, data: { data: { points: 10 }, byteSize: 13 } });
     expect(prisma.extensionMigrationRun.update).toHaveBeenCalledWith({ where: { id: 'migration-1' }, data: { status: 'ROLLED_BACK', rolledBackAt: expect.any(Date) } });
     expect((result.configuration as any).migrationRunId).toBeUndefined();
+  });
+
+  it('attaches the most recent lifecycle job to each school installation without fetching jobs for empty pages', async () => {
+    prisma.extensionInstallation.findMany.mockResolvedValue([
+      { id: 'installation-1', updatedAt: new Date() },
+      { id: 'installation-2', updatedAt: new Date() },
+    ]);
+    prisma.extensionLifecycleJob.findMany.mockResolvedValue([
+      { id: 'job-1', installationId: 'installation-1', command: 'UPGRADE', status: 'FAILED', errorCode: 'ConflictException', errorMessage: 'boom' },
+    ]);
+
+    const page = await service.schoolInstallations({});
+
+    expect(prisma.extensionLifecycleJob.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { installationId: { in: ['installation-1', 'installation-2'] } },
+      distinct: ['installationId'],
+    }));
+    expect(page.items[0].lastJob).toEqual(expect.objectContaining({ id: 'job-1', status: 'FAILED' }));
+    expect(page.items[1].lastJob).toBeNull();
+  });
+
+  it('skips the job lookup entirely for an empty installations page', async () => {
+    prisma.extensionInstallation.findMany.mockResolvedValue([]);
+
+    const page = await service.platformInstallations({});
+
+    expect(page.items).toEqual([]);
+    expect(prisma.extensionLifecycleJob.findMany).not.toHaveBeenCalled();
   });
 });

@@ -52,6 +52,15 @@ export class PlatformExtensionInstallationsController {
     return this.lifecycleJobs.get(jobId);
   }
 
+  @Get(":id/jobs")
+  lifecycleJobHistory(
+    @Param("id") id: string,
+    @Query("cursor") cursor?: string,
+    @Query("limit") limit?: string,
+  ) {
+    return this.lifecycleJobs.history(id, { cursor, limit });
+  }
+
   @Get("payment-settings")
   paymentSettings() {
     return this.installations.paymentSettings();
@@ -266,6 +275,15 @@ export class SchoolExtensionsController {
   @Get("installations")
   list(@Query("cursor") cursor?: string, @Query("limit") limit?: string) {
     return this.installations.schoolInstallations({ cursor, limit });
+  }
+
+  @Get("installations/:id/jobs")
+  lifecycleJobHistory(
+    @Param("id") id: string,
+    @Query("cursor") cursor?: string,
+    @Query("limit") limit?: string,
+  ) {
+    return this.lifecycleJobs.history(id, { cursor, limit });
   }
 
   @Get("pilot-criteria")
