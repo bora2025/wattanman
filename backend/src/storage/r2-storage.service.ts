@@ -61,6 +61,9 @@ export class R2StorageService {
     }
   }
 
+  // S3-compatible DeleteObject returns 2xx for a missing key (404 is a GET/HEAD-only
+  // concept), so this is already safe to retry after a partial failure elsewhere in a
+  // multi-step purge — do not add missing-key handling here, there is nothing to fix.
   async deletePrivate(storageKey: string): Promise<void> {
     await this.request('DELETE', storageKey, Buffer.alloc(0), 'application/octet-stream');
   }

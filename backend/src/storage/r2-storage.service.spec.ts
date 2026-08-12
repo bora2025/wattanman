@@ -114,6 +114,12 @@ describe('R2StorageService', () => {
     expect((global.fetch as jest.Mock).mock.calls[0][1]).not.toHaveProperty('body');
   });
 
+  it('treats deleting an already-absent object as success, matching the S3 DeleteObject contract', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 204 }) as any;
+
+    await expect(service().deletePrivate('quarantine/already-gone.zip')).resolves.toBeUndefined();
+  });
+
   it('downloads a private object through a signed request', async () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true, arrayBuffer: async () => Uint8Array.from([1, 2, 3]).buffer }) as any;
 
