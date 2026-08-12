@@ -1514,7 +1514,7 @@ export class ExtensionInstallationsService {
     }
     const uninstalledAt = new Date();
     const purgeAfter = new Date(
-      uninstalledAt.getTime() + 30 * 24 * 60 * 60 * 1000,
+      uninstalledAt.getTime() + this.uninstallGraceDays() * 24 * 60 * 60 * 1000,
     );
     const updated = await this.prisma.extensionInstallation.update({
       where: { id: installationId },
@@ -1528,6 +1528,11 @@ export class ExtensionInstallationsService {
       toState: "UNINSTALLED",
     });
     return updated;
+  }
+
+  private uninstallGraceDays() {
+    const parsed = Number.parseInt(process.env.EXTENSION_UNINSTALL_GRACE_DAYS || "", 10);
+    return Number.isInteger(parsed) && parsed >= 1 && parsed <= 3650 ? parsed : 30;
   }
 
   private async requireInstallation(id: string) {

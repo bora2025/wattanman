@@ -461,6 +461,25 @@ describe('ExtensionInstallationsService', () => {
     expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'UNINSTALL', resource: 'EXTENSION_INSTALLATION' }));
   });
 
+  it('honors an EXTENSION_UNINSTALL_GRACE_DAYS override', async () => {
+    const original = process.env.EXTENSION_UNINSTALL_GRACE_DAYS;
+    process.env.EXTENSION_UNINSTALL_GRACE_DAYS = '7';
+    try {
+      prisma.extensionInstallation.findUnique.mockResolvedValue({
+        id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedAt: new Date(),
+        extension: { name: 'Rewards' }, installedVersion: { lifecycleStatus: 'PUBLISHED' },
+      });
+      prisma.extensionInstallation.update.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
+
+      const result = await service.uninstall('installation-1', actor);
+
+      expect(result.purgeAfter.getTime() - result.uninstalledAt.getTime()).toBe(7 * 24 * 60 * 60 * 1000);
+    } finally {
+      if (original === undefined) delete process.env.EXTENSION_UNINSTALL_GRACE_DAYS;
+      else process.env.EXTENSION_UNINSTALL_GRACE_DAYS = original;
+    }
+  });
+
   it('upgrades an installed extension only to its own published version', async () => {
     prisma.extensionInstallation.findUnique.mockResolvedValue({
       id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-1',
