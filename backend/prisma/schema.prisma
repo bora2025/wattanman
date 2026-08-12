@@ -50,6 +50,7 @@ model School {
   extensionPilotFeedback    ExtensionPilotFeedback[]
   extensionPaymentEvidence  ExtensionPaymentEvidence[]
   extensionLifecycleJobs    ExtensionLifecycleJob[]
+  extensionPurgeReports     ExtensionPurgeReport[]
   domains                   SchoolDomain[]
   provisioningJobs          SchoolProvisioningJob[]
 }
@@ -571,6 +572,30 @@ model ExtensionLifecycleJob {
   @@index([schoolId, status, updatedAt])
   @@index([extensionId, status, updatedAt])
   @@index([installationId, updatedAt])
+}
+
+model ExtensionPurgeReport {
+  id             String   @id @default(cuid())
+  schoolId       String
+  school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  extensionId    String?
+  installationId String?
+  scope          String   // INSTALLATION | EXTENSION
+  trigger        String   // MANUAL | SCHEDULED
+  reason         String?
+  actorId        String?
+  actorRole      String?
+  actorName      String?
+  actorEmail     String?
+  purgedAt       DateTime @default(now())
+  storageKey     String   @unique
+  reportKeyId    String
+  reportChecksum String
+  createdAt      DateTime @default(now())
+
+  @@index([schoolId, purgedAt])
+  @@index([extensionId, purgedAt])
+  @@index([installationId, purgedAt])
 }
 
 model ExtensionPaymentSetting {

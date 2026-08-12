@@ -5,7 +5,7 @@ const TENANT_TABLES = [
   'AuditCleanupSchedule', 'SiteSetting', 'Post', 'ExtensionInstallation',
   'ExtensionVisibilityGrant', 'ExtensionAlert', 'ExtensionApiMetric',
   'ExtensionMigrationRun', 'ExtensionPilotFeedback', 'SchoolDomain',
-  'ExtensionRecord', 'ExtensionPaymentEvidence', 'ExtensionLifecycleJob', 'SchoolDailyMetric', 'SchoolProvisioningJob',
+  'ExtensionRecord', 'ExtensionPaymentEvidence', 'ExtensionLifecycleJob', 'ExtensionPurgeReport', 'SchoolDailyMetric', 'SchoolProvisioningJob',
 ];
 const RLS_LOCK_ID = 864_220_263;
 

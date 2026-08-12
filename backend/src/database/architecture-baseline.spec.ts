@@ -6,7 +6,7 @@ const EXPECTED_MODELS = [
   'ExtensionAsset', 'ExtensionCatalogCollection', 'ExtensionCatalogCollectionItem',
   'ExtensionDependency', 'ExtensionInstallation', 'ExtensionMigrationBackup',
   'ExtensionLifecycleJob', 'ExtensionMigrationRun', 'ExtensionPaymentSetting', 'ExtensionPaymentSettingHistory',
-  'ExtensionPaymentEvidence', 'ExtensionPermission', 'ExtensionPilotFeedback',
+  'ExtensionPaymentEvidence', 'ExtensionPermission', 'ExtensionPilotFeedback', 'ExtensionPurgeReport',
   'ExtensionPublisher', 'ExtensionPublisherMember', 'ExtensionRecord', 'ExtensionReview',
   'ExtensionSigningKey', 'ExtensionValidation', 'ExtensionVersion', 'ExtensionVisibilityGrant',
   'PasswordResetToken', 'Post', 'RefreshToken', 'School', 'SchoolDailyMetric', 'SchoolDomain',
