@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "name": "migration",
+  "fixtureRoot": "load-test/fixtures",
+  "steps": [
+    { "name": "submit-migration-upgrade", "method": "POST", "path": "/platform/extension-installations/${LOAD_TEST_MIGRATION_INSTALLATION_ID}/upgrade", "tokenEnv": "LOAD_TEST_OPERATOR_TOKEN", "json": { "versionId": "${LOAD_TEST_MIGRATION_VERSION_ID}", "acknowledgePermissions": true }, "expectedStatuses": [202], "capture": { "STEP_JOB_ID": "id" } },
+    { "name": "poll-migration", "method": "GET", "path": "/platform/extension-installations/jobs/${STEP_JOB_ID}", "tokenEnv": "LOAD_TEST_OPERATOR_TOKEN", "expectedStatuses": [200], "poll": { "path": "status", "values": ["COMPLETED"], "intervalMs": 1000, "timeoutMs": 600000 } }
+  ]
+}

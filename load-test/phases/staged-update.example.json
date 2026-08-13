@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "name": "staged-update",
+  "fixtureRoot": "load-test/fixtures",
+  "steps": [
+    { "name": "set-rollout", "method": "PATCH", "path": "/platform/extensions/versions/${LOAD_TEST_VERSION_ID}/rollout", "tokenEnv": "LOAD_TEST_OPERATOR_TOKEN", "json": { "stage": "PILOT", "reason": "Stage 6 synthetic rollout" }, "expectedStatuses": [200] },
+    { "name": "assign-pilot", "method": "PATCH", "path": "/platform/extension-installations/installations/${LOAD_TEST_INSTALLATION_ID}/rollout-group", "tokenEnv": "LOAD_TEST_OPERATOR_TOKEN", "json": { "group": "PILOT" }, "expectedStatuses": [200] },
+    { "name": "submit-upgrade", "method": "POST", "path": "/platform/extension-installations/${LOAD_TEST_INSTALLATION_ID}/upgrade", "tokenEnv": "LOAD_TEST_OPERATOR_TOKEN", "json": { "versionId": "${LOAD_TEST_VERSION_ID}", "acknowledgePermissions": true }, "expectedStatuses": [202], "capture": { "STEP_JOB_ID": "id" } },
+    { "name": "poll-upgrade", "method": "GET", "path": "/platform/extension-installations/jobs/${STEP_JOB_ID}", "tokenEnv": "LOAD_TEST_OPERATOR_TOKEN", "expectedStatuses": [200], "poll": { "path": "status", "values": ["COMPLETED"], "intervalMs": 1000, "timeoutMs": 600000 } }
+  ]
+}

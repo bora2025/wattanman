@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "name": "backup",
+  "fixtureRoot": "load-test/fixtures",
+  "steps": [
+    { "name": "request-export", "method": "POST", "path": "/backup/exports", "tokenEnv": "LOAD_TEST_SCHOOL_ADMIN_TOKEN", "expectedStatuses": [201], "capture": { "STEP_EXPORT_ID": "id" } },
+    { "name": "poll-export", "method": "GET", "path": "/backup/exports/${STEP_EXPORT_ID}", "tokenEnv": "LOAD_TEST_SCHOOL_ADMIN_TOKEN", "expectedStatuses": [200], "poll": { "path": "status", "values": ["AVAILABLE"], "intervalMs": 1000, "timeoutMs": 600000 } }
+  ]
+}

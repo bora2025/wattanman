@@ -22,3 +22,12 @@ export function approvedSyntheticOrigin(template: string, subdomain: string) {
   if (!(host === 'localhost' || host === '127.0.0.1' || /(loadtest|performance|perf|staging)/.test(host))) throw new Error('School origin is not an approved performance host');
   return url.origin;
 }
+
+export function assertLoadTestHttpTarget(raw: string) {
+  const url = new URL(raw);
+  const host = url.hostname.toLowerCase();
+  if (['wattaman.app', 'wattanman.app'].includes(host) || host.endsWith('.wattaman.app') || host.endsWith('.wattanman.app') || host.endsWith('.up.railway.app')) throw new Error('Production HTTP target is forbidden');
+  if (!(host === 'localhost' || host === '127.0.0.1' || /(loadtest|performance|perf|staging)/.test(host))) throw new Error('HTTP target is not an approved performance host');
+  if (process.env.LOAD_TEST_AUTHORIZATION !== 'I_ACKNOWLEDGE_NON_PRODUCTION_ONLY') throw new Error('LOAD_TEST_AUTHORIZATION acknowledgement is required');
+  return url.origin;
+}

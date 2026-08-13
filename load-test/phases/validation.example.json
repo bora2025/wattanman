@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "name": "validation",
+  "fixtureRoot": "load-test/fixtures",
+  "steps": [
+    { "name": "validation-report", "method": "GET", "path": "/platform/extensions/versions/${LOAD_TEST_VERSION_ID}/validations?limit=1", "tokenEnv": "LOAD_TEST_OPERATOR_TOKEN", "expectedStatuses": [200] }
+  ]
+}

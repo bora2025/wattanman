@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "name": "marketplace-publication",
+  "fixtureRoot": "load-test/fixtures",
+  "steps": [
+    { "name": "create-version", "method": "POST", "path": "/platform/extensions/${LOAD_TEST_EXTENSION_ID}/versions", "tokenEnv": "LOAD_TEST_PUBLISHER_TOKEN", "json": { "version": "${LOAD_TEST_RELEASE_VERSION}", "manifest": { "schemaVersion": 1 }, "compatibilityRange": ">=1.0.0 <2.0.0", "releaseNotes": "Stage 6 synthetic publication" }, "expectedStatuses": [201], "capture": { "STEP_VERSION_ID": "id" } },
+    { "name": "upload-package", "method": "POST", "path": "/platform/extensions/versions/${STEP_VERSION_ID}/package", "tokenEnv": "LOAD_TEST_PUBLISHER_TOKEN", "multipart": { "fileField": "file", "filePath": "synthetic-extension.zip", "contentType": "application/zip" }, "expectedStatuses": [202] },
+    { "name": "submit-review", "method": "POST", "path": "/platform/extensions/versions/${STEP_VERSION_ID}/transition", "tokenEnv": "LOAD_TEST_PUBLISHER_TOKEN", "json": { "status": "AWAITING_REVIEW" }, "expectedStatuses": [201] }
+  ]
+}
