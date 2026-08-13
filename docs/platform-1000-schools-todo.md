@@ -340,10 +340,11 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Stage 4 gate
 
-- [ ] A failing extension does not break core login or school administration.
-- [ ] Runtime cannot execute arbitrary JavaScript, SQL, shell, network, or filesystem operations.
-- [ ] Pilot extensions pass full lifecycle tests.
-- [ ] Resource limits and emergency controls are proven.
+- [x] A failing extension does not break core login or school administration.
+- [x] Runtime cannot execute arbitrary JavaScript, SQL, shell, network, or filesystem operations.
+- [x] Pilot extensions pass full lifecycle tests.
+- [x] Resource limits and emergency controls are proven.
+  - Stage 4 closes with a declarative-only runtime, immutable signed artifacts, independent per-extension circuits, fail-closed emergency controls, school and extension quotas, and complete module/theme pilot lifecycle coverage. Package validation rejects executable and undeclared content; runtime isolation and architecture tests protect core routes. The final pilot regression passed 329 backend tests, both production builds, and both real ZIP validators on 2026-08-13.
 
 ## Stage 5 — Observability, Backup, and Recovery
 
