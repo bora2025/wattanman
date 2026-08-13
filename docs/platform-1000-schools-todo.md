@@ -474,6 +474,11 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ## Stage 7 — Controlled Rollout
 
+`rollout:evidence:prepare` and `rollout:evidence:verify` now enforce ordered exact-size cohorts, non-overlap, seven-day
+holds, complete SLO/support/security/cost/rollback reviews, zero isolation failures or critical incidents, final HTTPS
+operating documentation, and independent product/reliability/security Ed25519 approvals. See
+`docs/controlled-rollout-evidence.md`. The gates below remain open until real production evidence verifies.
+
 - [ ] Roll out to internal schools.
 - [ ] Roll out to 10 pilot schools.
 - [ ] Hold seven stable days and review SLO, support, security, and cost.
