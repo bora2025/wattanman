@@ -322,9 +322,10 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Resource governance
 
-- [ ] Define request, concurrency, storage, record, export, and job quotas.
-- [ ] Add school-level and extension-level quota enforcement.
-- [ ] Add noisy-neighbor detection.
+- [x] Define request, concurrency, storage, record, export, and job quotas.
+- [x] Add school-level and extension-level quota enforcement.
+- [x] Add noisy-neighbor detection.
+  - Distributed Redis request/concurrency/export counters and serializable PostgreSQL storage/record/job reservations now enforce both school and extension boundaries. Counter integrity covers CRUD, migration, rollback, uninstall purge, scheduled purge, and extension purge; nonnegative database constraints and authoritative backfill protect rollout. Violations raise deduplicated `RESOURCE_QUOTA` alerts for noisy-neighbor investigation. Production preflight found zero negative or mismatched counters; Prisma validation, 322 backend tests, both production builds, and six browser tests passed. Railway deployments `869280d5-819b-42aa-adf4-ad7e7bd61f73` (API) and `3ea3782c-8e49-4c58-b047-826441f9d74d` (extension worker) succeeded with 46 migrations on 2026-08-13; frontend was correctly skipped because this slice changed no frontend files.
 - [ ] Add extension circuit breaker.
 - [ ] Add kill switches by publisher, extension, version, school, and capability.
 
