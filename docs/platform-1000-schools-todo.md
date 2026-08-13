@@ -312,12 +312,13 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Updates and migrations
 
-- [ ] Implement `MANUAL`, `NOTIFY_ADMINS`, and `AUTOMATIC` policies.
-- [ ] Implement internal, pilot, 5%, 25%, and 100% rollout waves.
-- [ ] Add automatic pause thresholds.
-- [ ] Add extension data migration backup.
-- [ ] Add migration timeout, retry, rollback, and operator intervention.
-- [ ] Add compatibility checks for dependencies and platform API versions.
+- [x] Implement `MANUAL`, `NOTIFY_ADMINS`, and `AUTOMATIC` policies.
+- [x] Implement internal, pilot, 5%, 25%, and 100% rollout waves.
+- [x] Add automatic pause thresholds.
+- [x] Add extension data migration backup.
+- [x] Add migration timeout, retry, rollback, and operator intervention.
+- [x] Add compatibility checks for dependencies and platform API versions.
+  - Automatic upgrades now enter idempotent lifecycle jobs; deterministic cohorts, failure-triggered rollout pauses, explicit operator resume, durable versioned backups, bounded migration transactions, retry/intervention states, exact rollback metadata, dependency checks, and platform-range enforcement fail closed. Production preflight found zero policy or backup orphans; Prisma validation, 315 backend tests, both production builds, and six browser tests passed. Railway deployments `5d1393f1-6183-48bc-b01d-026d2608a96e` (API), `b3368f59-3e7f-404a-9828-bc163cf5fbc3` (frontend), and `5ef0a846-254d-40cd-a25e-8f62f3d4b45b` (extension worker) succeeded with 45 migrations on 2026-08-13.
 
 ### Resource governance
 
