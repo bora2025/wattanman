@@ -26,4 +26,5 @@ export const TENANT_SCOPED_MODELS = new Set<string>([
   'ExtensionRecord',
   'SchoolDailyMetric',
   'SchoolProvisioningJob',
+  'BackupExport',
 ]);

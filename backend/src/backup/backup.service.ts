@@ -1,8 +1,12 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { TENANT_SCOPED_MODELS } from '../tenancy/scoped-models';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
+import { QueueInfrastructureService } from '../jobs/queue-infrastructure.service';
+import { R2StorageService } from '../storage/r2-storage.service';
+import { AuditService } from '../audit/audit.service';
 
 /**
  * Backup / restore service — scoped to the current school only.
@@ -42,7 +46,79 @@ const BACKUP_MODEL_NAMES = [...TENANT_SCOPED_MODELS].filter((m) => !BACKUP_EXCLU
 
 @Injectable()
 export class BackupService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private queues: QueueInfrastructureService,
+    private storage: R2StorageService,
+    private audit: AuditService,
+  ) {}
+
+  async requestExport(actor: { userId?: string; role?: string; name?: string; email?: string }, requestKey: string) {
+    const schoolId = getCurrentSchoolId();
+    const normalizedKey = requestKey?.trim();
+    if (!normalizedKey || normalizedKey.length > 200) throw new BadRequestException('A valid Idempotency-Key header is required');
+    const record = await this.prisma.backupExport.upsert({
+      where: { schoolId_requestKey: { schoolId, requestKey: normalizedKey } },
+      create: { schoolId, requestKey: normalizedKey, requestedBy: actor.userId, requestedRole: actor.role },
+      update: {},
+    });
+    if (record.status === 'FAILED') {
+      await this.prisma.backupExport.update({ where: { id: record.id }, data: { status: 'PENDING', errorMessage: null } });
+    }
+    if (['PENDING', 'FAILED'].includes(record.status)) {
+      await this.queues.enqueue('operations', {
+        type: 'backup.export',
+        tenant: { mode: 'SCOPED', schoolId },
+        actor: { id: actor.userId, role: actor.role || 'ADMIN', name: actor.name },
+        idempotencyKey: `backup-export:${record.id}`,
+        payload: { exportId: record.id },
+      });
+    }
+    await this.audit.log({ actorId: actor.userId, actorRole: actor.role, actorName: actor.name, actorEmail: actor.email, action: 'BACKUP_REQUESTED', resource: 'BACKUP_EXPORT', resourceId: record.id });
+    return this.getExport(record.id);
+  }
+
+  listExports() {
+    return this.prisma.backupExport.findMany({ orderBy: { createdAt: 'desc' }, take: 50 });
+  }
+
+  async getExport(id: string) {
+    const record = await this.prisma.backupExport.findUnique({ where: { id } });
+    if (!record) throw new NotFoundException('Backup export not found');
+    return record;
+  }
+
+  async downloadExport(id: string, actor: { userId?: string; role?: string; name?: string; email?: string }) {
+    const record = await this.getExport(id);
+    if (record.status !== 'AVAILABLE' || !record.storageKey || !record.checksum) throw new ConflictException('Backup export is not available');
+    if (record.expiresAt && record.expiresAt <= new Date()) throw new ConflictException('Backup export has expired');
+    await this.audit.log({ actorId: actor.userId, actorRole: actor.role, actorName: actor.name, actorEmail: actor.email, action: 'BACKUP_DOWNLOAD', resource: 'BACKUP_EXPORT', resourceId: id, metadata: { checksum: record.checksum } });
+    return { checksum: record.checksum, byteSize: record.byteSize, download: this.storage.presignPrivateDownload(record.storageKey, 300) };
+  }
+
+  async executeExport(id: string, attempt: number) {
+    const current = await this.getExport(id);
+    if (current.status === 'AVAILABLE') return current;
+    await this.prisma.backupExport.update({ where: { id }, data: { status: 'RUNNING', attempts: attempt, startedAt: current.startedAt || new Date(), errorMessage: null } });
+    try {
+      const snapshot = await this.exportAll();
+      const body = Buffer.from(JSON.stringify(snapshot));
+      const checksum = createHash('sha256').update(body).digest('hex');
+      const storageKey = `backups/schools/${current.schoolId}/${checksum}/${id}.json`;
+      await this.storage.putPrivateImmutable(storageKey, body, 'application/json', checksum);
+      const rowCount = Object.values(snapshot.data).reduce((sum, rows) => sum + rows.length, 0);
+      const completedAt = new Date();
+      const record = await this.prisma.backupExport.update({
+        where: { id },
+        data: { status: 'AVAILABLE', storageKey, checksum, byteSize: body.length, modelCount: snapshot.models.length, rowCount, completedAt, expiresAt: new Date(completedAt.getTime() + 7 * 24 * 60 * 60 * 1000) },
+      });
+      await this.audit.log({ actorId: current.requestedBy, actorRole: current.requestedRole, action: 'BACKUP_COMPLETED', resource: 'BACKUP_EXPORT', resourceId: id, metadata: { checksum, byteSize: body.length, rowCount } });
+      return record;
+    } catch (error: any) {
+      await this.prisma.backupExport.update({ where: { id }, data: { status: 'FAILED', attempts: attempt, errorMessage: String(error?.message || error).slice(0, 1000) } });
+      throw error;
+    }
+  }
 
   private camel(modelName: string): string {
     return modelName.charAt(0).toLowerCase() + modelName.slice(1);

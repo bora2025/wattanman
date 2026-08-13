@@ -367,8 +367,10 @@ An item is complete only when implementation, automated tests, documentation, de
 
 - [ ] Enable and verify PostgreSQL point-in-time recovery.
 - [ ] Add encrypted daily backup policy.
-- [ ] Make school exports asynchronous and checksummed.
-- [ ] Add short-lived signed export downloads.
+  - [x] Make school exports asynchronous and checksummed.
+    - Tenant-scoped, idempotent export requests now run on the durable operations queue, write immutable SHA-256-addressed private R2 objects, and persist size, row count, status, attempts, and bounded failures. PostgreSQL RLS and role grants cover the export metadata table. All 342 backend tests and both production builds passed on 2026-08-13.
+  - [x] Add short-lived signed export downloads.
+    - Available exports return five-minute private SigV4 download URLs with a separately auditable SHA-256 checksum and size. Request, completion, and download events are audited; the school admin UI polls durable status rather than streaming exports through the API. See `docs/school-backup-exports.md`.
 - [ ] Restore into isolated verification environment first.
 - [ ] Add school-scoped logical restore that cannot affect another tenant.
 - [ ] Add restore approval and audit workflow.

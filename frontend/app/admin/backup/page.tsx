@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Sidebar from '../../../components/Sidebar'
 import { adminNav } from '../../../lib/admin-nav'
 import { apiFetch } from '../../../lib/api'
@@ -14,10 +14,22 @@ interface BackupSummary {
   perModel: { name: string; rows: number }[]
 }
 
+interface BackupExport {
+  id: string
+  status: 'PENDING' | 'RUNNING' | 'AVAILABLE' | 'FAILED' | 'EXPIRED'
+  checksum?: string
+  byteSize?: number
+  rowCount?: number
+  errorMessage?: string
+  createdAt: string
+  expiresAt?: string
+}
+
 export default function BackupPage() {
   const { accentColor } = useAccentColor()
   const fileRef = useRef<HTMLInputElement | null>(null)
   const [downloading, setDownloading] = useState(false)
+  const [exports, setExports] = useState<BackupExport[]>([])
   const [summary, setSummary] = useState<BackupSummary | null>(null)
   const [pendingPayload, setPendingPayload] = useState<any | null>(null)
   const [restoring, setRestoring] = useState(false)
@@ -32,30 +44,41 @@ export default function BackupPage() {
     setTimeout(() => setMessage(''), 5000)
   }
 
+  async function loadExports() {
+    const response = await apiFetch('/api/backup/exports')
+    if (response.ok) setExports(await response.json())
+  }
+
+  useEffect(() => {
+    void loadExports()
+    const timer = window.setInterval(() => void loadExports(), 5000)
+    return () => window.clearInterval(timer)
+  }, [])
+
   async function handleDownload() {
     setDownloading(true)
     try {
-      const res = await apiFetch('/api/backup/export')
+      const res = await apiFetch('/api/backup/exports', {
+        method: 'POST',
+        headers: { 'Idempotency-Key': crypto.randomUUID() },
+      })
       if (!res.ok) {
-        showMessage('Failed to export: ' + res.status, 'error')
+        showMessage('Failed to queue export: ' + res.status, 'error')
         return
       }
-      const blob = await res.blob()
-      // Try to use the filename the server suggested.
-      const dispo = res.headers.get('Content-Disposition') || ''
-      const m = dispo.match(/filename="([^"]+)"/)
-      const filename = m?.[1] || `wattaman-backup-${new Date().toISOString().slice(0, 10)}.json`
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      a.click()
-      URL.revokeObjectURL(url)
-      showMessage('Backup downloaded.')
+      await loadExports()
+      showMessage('Backup export queued. You can leave this page while it runs.')
     } catch (e) {
       showMessage('Error exporting backup', 'error')
     }
     setDownloading(false)
+  }
+
+  async function downloadExport(item: BackupExport) {
+    const response = await apiFetch(`/api/backup/exports/${item.id}/download`)
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok || !payload.download?.url) return showMessage(payload.message || 'Download is unavailable', 'error')
+    window.location.assign(payload.download.url)
   }
 
   async function handleFileSelect(f: File | null) {
@@ -143,19 +166,29 @@ export default function BackupPage() {
 
           {/* Export */}
           <div className="card p-6">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-1">Download backup</h2>
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-1">School exports</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              Generates a single JSON file containing every row of every table — users,
-              classes, attendance, fees, exams, scores, timetables, card templates, etc.
-              Keep this file safe; it contains all sensitive data.
+              Exports run in the background, are checksummed, and remain private. Download links expire after five minutes.
             </p>
             <button
               onClick={handleDownload}
               disabled={downloading}
               className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
             >
-              {downloading ? 'Exporting…' : '⬇️ Download backup (.json)'}
+              {downloading ? 'Queuing…' : 'Create export'}
             </button>
+            <div className="mt-5 space-y-2">
+              {exports.map(item => (
+                <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-sm">
+                  <div>
+                    <div className="font-medium text-slate-800 dark:text-slate-100">{new Date(item.createdAt).toLocaleString()} · {item.status}</div>
+                    <div className="text-xs text-slate-500">{item.rowCount != null ? `${item.rowCount.toLocaleString()} rows · ` : ''}{item.byteSize != null ? `${(item.byteSize / 1024).toFixed(1)} KB · ` : ''}{item.checksum ? `SHA-256 ${item.checksum.slice(0, 16)}…` : item.errorMessage || 'Processing'}</div>
+                  </div>
+                  {item.status === 'AVAILABLE' && <button className="btn-outline" onClick={() => void downloadExport(item)}>Download</button>}
+                </div>
+              ))}
+              {exports.length === 0 && <p className="text-sm text-slate-500">No exports created yet.</p>}
+            </div>
           </div>
 
           {/* Restore */}

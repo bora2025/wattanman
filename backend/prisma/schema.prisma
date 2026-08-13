@@ -55,6 +55,33 @@ model School {
   extensionPurgeReports     ExtensionPurgeReport[]
   domains                   SchoolDomain[]
   provisioningJobs          SchoolProvisioningJob[]
+  backupExports             BackupExport[]
+}
+
+model BackupExport {
+  id            String    @id @default(cuid())
+  schoolId      String
+  school        School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  requestKey    String
+  status        String    @default("PENDING") // PENDING | RUNNING | AVAILABLE | FAILED | EXPIRED
+  storageKey    String?   @unique
+  checksum      String?
+  byteSize      Int?
+  modelCount    Int?
+  rowCount      Int?
+  requestedBy   String?
+  requestedRole String?
+  attempts      Int       @default(0)
+  errorMessage  String?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([schoolId, requestKey])
+  @@index([schoolId, createdAt])
+  @@index([status, createdAt])
 }
 
 model SchoolProvisioningJob {
