@@ -11,6 +11,6 @@ import { BackupWorkerProcessorService } from './backup-worker-processor.service'
   imports: [DatabaseModule, JobsModule, AuditModule],
   controllers: [BackupController],
   providers: [BackupService, R2StorageService, BackupWorkerProcessorService],
-  exports: [BackupService],
+  exports: [BackupService, R2StorageService],
 })
 export class BackupModule {}

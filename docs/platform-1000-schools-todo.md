@@ -377,7 +377,8 @@ An item is complete only when implementation, automated tests, documentation, de
   - Approved restores require an independent third operator, exact school confirmation, and a change ticket; bytes and references are revalidated, then a 30-day immutable safety export is persisted before mutation. Explicit dependency ordering, tenant middleware, PostgreSQL RLS, forced target `schoolId`, atomic transactions, session invalidation, and non-destructive identity upserts replace the legacy raw/constraint-disabled restore. Operational/routing/audit data is excluded. All 347 backend tests and both production builds passed on 2026-08-13.
 - [x] Add restore approval and audit workflow.
   - Durable restore states, tenant RLS, school request UI, platform recovery review UI, structured verification evidence, independent platform-admin approval, compare-and-set transitions, mandatory reasons, separation of duties, and target-school audit events are implemented. Execution remains deliberately locked until the next tenant-safe executor slice. All 345 backend tests and both production builds passed on 2026-08-13.
-- [ ] Add quarterly restore rehearsal.
+- [x] Add quarterly restore rehearsal.
+  - `db:restore:rehearse` creates a disposable tenant and marker, runs immutable export, mutation, isolated verification, independent approval, tenant restore, integrity validation, safety-export validation, and verified database/R2 cleanup; it records platform audit evidence and emits bounded JSON metrics. The production-equivalent run `restore-rehearsal-1786602564117` passed on 2026-08-13 with RPO 0 seconds, restore 5 seconds, total 10 seconds, and `cleanupVerified: true`. See `docs/quarterly-restore-rehearsal.md`.
 
 ### Data governance
 
