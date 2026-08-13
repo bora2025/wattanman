@@ -8,6 +8,7 @@ import { ExtensionInstallationsService } from './extension-installations.service
 import { ExtensionsService } from './extensions.service';
 import { ExtensionPurgeReportService } from './extension-purge-report.service';
 import { dateIdPageBy, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
+import { ExtensionResourceGovernorService } from './extension-resource-governor.service';
 
 interface Actor {
   userId?: string;
@@ -35,6 +36,7 @@ export class ExtensionLifecycleJobsService {
     private readonly installations: ExtensionInstallationsService,
     private readonly extensions: ExtensionsService,
     private readonly reports: ExtensionPurgeReportService,
+    private readonly governor: ExtensionResourceGovernorService,
   ) {}
 
   async submitInstallation(
@@ -236,8 +238,15 @@ export class ExtensionLifecycleJobsService {
         throw new ConflictException('Lifecycle idempotency key was already used for another command');
       return existing;
     }
-    const job = await this.prisma.extensionLifecycleJob.create({
-      data: {
+    const quotas = this.governor.jobQuotas();
+    const job = await this.prisma.$transaction(async (transaction) => {
+      const [schoolActive, extensionActive] = await Promise.all([
+        transaction.extensionLifecycleJob.count({ where: { schoolId: input.schoolId, status: { in: ['QUEUED', 'RUNNING'] } } }),
+        transaction.extensionLifecycleJob.count({ where: { extensionId: input.extensionId, status: { in: ['QUEUED', 'RUNNING'] } } }),
+      ]);
+      if (schoolActive >= quotas.school) throw new ConflictException('School extension lifecycle job quota exceeded');
+      if (extensionActive >= quotas.extension) throw new ConflictException('Extension lifecycle job quota exceeded');
+      return transaction.extensionLifecycleJob.create({ data: {
         schoolId: input.schoolId,
         extensionId: input.extensionId,
         installationId: input.installationId,
@@ -248,8 +257,8 @@ export class ExtensionLifecycleJobsService {
         actorRole: input.actor.role || 'PLATFORM_ADMIN',
         actorName: input.actor.name,
         actorEmail: input.actor.email,
-      },
-    });
+      } });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     try {
       await this.queues.enqueue('extensions', {
         type: 'extension.lifecycle.execute',

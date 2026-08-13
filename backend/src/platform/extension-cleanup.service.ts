@@ -86,7 +86,7 @@ export class ExtensionCleanupService {
         purgeAfter: { lte: now },
         paymentEvidence: { none: { storageKey: { not: null } } },
       },
-      select: { id: true, schoolId: true, extensionId: true },
+      select: { id: true, schoolId: true, extensionId: true, dataBytes: true, dataRecords: true },
       take: batchSize,
     });
     let purgedInstallations = 0;
@@ -101,6 +101,10 @@ export class ExtensionCleanupService {
             where: { id: installation.id, enabled: false, purgeAfter: { lte: now } },
           });
           if (deleted.count !== 1) return null;
+          await transaction.school.updateMany({
+            where: { id: installation.schoolId, extensionDataBytes: { gte: installation.dataBytes || 0 }, extensionDataRecords: { gte: installation.dataRecords || 0 } },
+            data: { extensionDataBytes: { decrement: installation.dataBytes || 0 }, extensionDataRecords: { decrement: installation.dataRecords || 0 } },
+          });
           const report = await this.reports.prepare({
             schoolId: installation.schoolId,
             extensionId: installation.extensionId,

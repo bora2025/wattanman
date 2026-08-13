@@ -1286,6 +1286,8 @@ export class ExtensionsService {
             enabled: true,
             installedAt: true,
             uninstalledAt: true,
+            dataBytes: true,
+            dataRecords: true,
             paymentEvidence: {
               where: { storageKey: { not: null } },
               select: { id: true },
@@ -1359,6 +1361,19 @@ export class ExtensionsService {
 
     const versionIds = existing.versions.map((version) => version.id);
     await this.prisma.$transaction(async (transaction) => {
+      const schoolUsage = new Map<string, { bytes: number; records: number }>();
+      for (const installation of existing.installations) {
+        const usage = schoolUsage.get(installation.schoolId) || { bytes: 0, records: 0 };
+        usage.bytes += installation.dataBytes || 0;
+        usage.records += installation.dataRecords || 0;
+        schoolUsage.set(installation.schoolId, usage);
+      }
+      for (const [schoolId, usage] of schoolUsage) {
+        await transaction.school.updateMany({
+          where: { id: schoolId, extensionDataBytes: { gte: usage.bytes }, extensionDataRecords: { gte: usage.records } },
+          data: { extensionDataBytes: { decrement: usage.bytes }, extensionDataRecords: { decrement: usage.records } },
+        });
+      }
       await transaction.extensionAlert.updateMany({
         where: {
           OR: [

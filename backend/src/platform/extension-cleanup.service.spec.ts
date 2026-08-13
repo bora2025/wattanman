@@ -6,6 +6,7 @@ describe('ExtensionCleanupService', () => {
     extensionInstallation: { findMany: jest.fn(), deleteMany: jest.fn(), updateMany: jest.fn() },
     extensionPaymentEvidence: { findMany: jest.fn(), updateMany: jest.fn() },
     extensionRecord: { deleteMany: jest.fn() },
+    school: { updateMany: jest.fn() },
     extensionVersion: { findMany: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
     extensionValidation: { updateMany: jest.fn() },
     extensionAsset: { deleteMany: jest.fn() },
@@ -28,6 +29,7 @@ describe('ExtensionCleanupService', () => {
     prisma.extensionPaymentEvidence.findMany.mockResolvedValue([]);
     prisma.extensionPaymentEvidence.updateMany.mockResolvedValue({ count: 1 });
     prisma.extensionRecord.deleteMany.mockResolvedValue({ count: 0 });
+    prisma.school.updateMany.mockResolvedValue({ count: 1 });
     reports.retryPending.mockResolvedValue(0);
     reports.prepare.mockResolvedValue({ id: 'report-1' });
     reports.finalize.mockResolvedValue({ id: 'report-1' });

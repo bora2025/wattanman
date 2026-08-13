@@ -5,15 +5,14 @@ import { AuditService } from '../audit/audit.service';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
 import { dateIdPage, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
 import { ExtensionSigningService } from './extension-signing.service';
+import { ExtensionResourceGovernorService } from './extension-resource-governor.service';
 
 interface RuntimeUser { userId?: string; role?: string }
-const DEFAULT_EXTENSION_DATA_QUOTA_BYTES = 100 * 1024 * 1024;
-const DEFAULT_EXTENSION_RECORD_QUOTA = 100_000;
 const MAX_RECORD_BYTES = 1024 * 1024;
 
 @Injectable()
 export class ExtensionRuntimeService {
-  constructor(private prisma: PrismaService, private audit: AuditService, private signing: ExtensionSigningService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService, private signing: ExtensionSigningService, private governor: ExtensionResourceGovernorService) {}
 
   async navigation(user: RuntimeUser) {
     const installations = await this.prisma.extensionInstallation.findMany({
@@ -130,6 +129,7 @@ export class ExtensionRuntimeService {
       const deleted = await transaction.extensionRecord.deleteMany({ where: { id: recordId, concurrencyVersion: expectedVersion } });
       if (deleted.count !== 1) throw new ConflictException('Extension record was modified by another request');
       await transaction.extensionInstallation.updateMany({ where: { id: installation.id, schoolId, dataRecords: { gt: 0 } }, data: { dataRecords: { decrement: 1 } } });
+      await transaction.school.updateMany({ where: { id: schoolId, extensionDataRecords: { gt: 0 } }, data: { extensionDataRecords: { decrement: 1 } } });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     await this.logMutation(user, 'DELETE', installation, resource, recordId, { concurrencyVersion: expectedVersion });
     return { deleted: true, id: recordId };
@@ -137,12 +137,13 @@ export class ExtensionRuntimeService {
 
   async exportRecords(extensionKey: string, resource: string, user: RuntimeUser) {
     const installation = await this.authorize(extensionKey, resource, 'read', user);
+    const exportLimit = this.governor.exportRecordLimit();
     const rows = await this.prisma.extensionRecord.findMany({
       where: { installationId: installation.id, extensionId: installation.extensionId, resource },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-      take: 10_001,
+      take: exportLimit + 1,
     });
-    if (rows.length > 10_000) throw new PayloadTooLargeException('Extension export exceeds the 10,000 record limit');
+    await this.governor.consumeExport(installation.schoolId, extensionKey, rows.length);
     await this.audit.log({
       actorId: user.userId, actorRole: user.role, action: 'EXPORT', resource: 'EXTENSION_RECORD',
       resourceId: installation.extension.key, resourceLabel: installation.extension.name,
@@ -156,13 +157,17 @@ export class ExtensionRuntimeService {
   }
 
   private async reserveCapacity(transaction: any, installationId: string, schoolId: string, bytes: number, records = 0) {
-    const byteQuota = this.quota('EXTENSION_DATA_QUOTA_BYTES', DEFAULT_EXTENSION_DATA_QUOTA_BYTES, 1024 * 1024, 10 * 1024 * 1024 * 1024);
-    const recordQuota = this.quota('EXTENSION_RECORD_QUOTA', DEFAULT_EXTENSION_RECORD_QUOTA, 100, 10_000_000);
+    const quotas = this.governor.storageQuotas();
     const reserved = await transaction.extensionInstallation.updateMany({
-      where: { id: installationId, schoolId, dataBytes: { lte: byteQuota - bytes }, dataRecords: { lte: recordQuota - records } },
+      where: { id: installationId, schoolId, dataBytes: { lte: quotas.installationBytes - bytes }, dataRecords: { lte: quotas.installationRecords - records } },
       data: { dataBytes: { increment: bytes }, ...(records ? { dataRecords: { increment: records } } : {}) },
     });
     if (reserved.count !== 1) throw new PayloadTooLargeException('Extension data or record quota exceeded');
+    const schoolReserved = await transaction.school.updateMany({
+      where: { id: schoolId, extensionDataBytes: { lte: quotas.schoolBytes - bytes }, extensionDataRecords: { lte: quotas.schoolRecords - records } },
+      data: { extensionDataBytes: { increment: bytes }, ...(records ? { extensionDataRecords: { increment: records } } : {}) },
+    });
+    if (schoolReserved.count !== 1) throw new PayloadTooLargeException('School extension data or record quota exceeded');
   }
 
   private async adjustBytes(transaction: any, installationId: string, schoolId: string, delta: number) {
@@ -171,6 +176,10 @@ export class ExtensionRuntimeService {
       await transaction.extensionInstallation.updateMany({
         where: { id: installationId, schoolId },
         data: { dataBytes: { decrement: -delta } },
+      });
+      await transaction.school.updateMany({
+        where: { id: schoolId, extensionDataBytes: { gte: -delta } },
+        data: { extensionDataBytes: { decrement: -delta } },
       });
     }
   }
@@ -199,11 +208,6 @@ export class ExtensionRuntimeService {
     const parsed = Number.parseInt(normalized || '', 10);
     if (!Number.isSafeInteger(parsed) || parsed < 1) throw new BadRequestException('If-Match must contain the current record concurrency version');
     return parsed;
-  }
-
-  private quota(name: string, fallback: number, minimum: number, maximum: number) {
-    const parsed = Number.parseInt(process.env[name] || '', 10);
-    return Number.isSafeInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
   }
 
   private logMutation(user: RuntimeUser, action: string, installation: any, resource: string, recordId: string, metadata: Record<string, unknown>) {

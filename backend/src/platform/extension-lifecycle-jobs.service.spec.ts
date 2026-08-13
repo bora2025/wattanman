@@ -4,10 +4,11 @@ import { ExtensionLifecycleJobsService } from './extension-lifecycle-jobs.servic
 
 describe('ExtensionLifecycleJobsService', () => {
   const prisma = {
+    $transaction: jest.fn(),
     extension: { findUnique: jest.fn() },
     extensionInstallation: { findUnique: jest.fn() },
     extensionLifecycleJob: {
-      findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn(), delete: jest.fn(), update: jest.fn(), updateMany: jest.fn(),
+      findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn(), delete: jest.fn(), update: jest.fn(), updateMany: jest.fn(), count: jest.fn(),
     },
   };
   const queues = { enqueue: jest.fn() };
@@ -17,14 +18,17 @@ describe('ExtensionLifecycleJobsService', () => {
   };
   const extensions = { deleteExtension: jest.fn() };
   const reports = { assertConfigured: jest.fn(), record: jest.fn().mockResolvedValue({ id: 'report-1' }) };
-  const service = new ExtensionLifecycleJobsService(prisma as any, queues as any, locks as any, installations as any, extensions as any, reports as any);
+  const governor = { jobQuotas: jest.fn(() => ({ school: 25, extension: 500 })) };
+  const service = new ExtensionLifecycleJobsService(prisma as any, queues as any, locks as any, installations as any, extensions as any, reports as any, governor as any);
   const actor = { userId: 'admin-1', role: 'PLATFORM_ADMIN', name: 'Admin' };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    prisma.$transaction.mockImplementation((callback) => callback(prisma));
     prisma.extensionInstallation.findUnique.mockResolvedValue({ schoolId: 'school-a', extensionId: 'extension-1', configuration: {} });
     prisma.extensionLifecycleJob.findUnique.mockResolvedValue(null);
     prisma.extensionLifecycleJob.create.mockImplementation(({ data }) => Promise.resolve({ id: 'job-1', status: 'QUEUED', ...data }));
+    prisma.extensionLifecycleJob.count.mockResolvedValue(0);
     prisma.extensionLifecycleJob.updateMany.mockResolvedValue({ count: 1 });
     prisma.extensionLifecycleJob.update.mockImplementation(({ data }) => Promise.resolve({ id: 'job-1', ...data }));
     queues.enqueue.mockResolvedValue({ id: 'queue-job-1' });
@@ -42,6 +46,16 @@ describe('ExtensionLifecycleJobsService', () => {
     expect(queues.enqueue).toHaveBeenCalledWith('extensions', expect.objectContaining({
       type: 'extension.lifecycle.execute', idempotencyKey: 'extension-lifecycle:job-1', payload: { jobId: 'job-1' },
     }));
+  });
+
+  it('rejects new work when the school active-job quota is exhausted', async () => {
+    prisma.extensionLifecycleJob.count.mockResolvedValueOnce(25).mockResolvedValueOnce(25);
+
+    await expect(tenantContext.run({ schoolId: 'platform-school', mode: 'unscoped' }, () =>
+      service.submitInstallation('installation-1', 'INSTALL', { versionId: 'version-1' }, actor, 'quota-key'),
+    )).rejects.toThrow('School extension lifecycle job quota exceeded');
+    expect(prisma.extensionLifecycleJob.create).not.toHaveBeenCalled();
+    expect(queues.enqueue).not.toHaveBeenCalled();
   });
 
   it('replays the same durable command and rejects payload-changing key reuse', async () => {

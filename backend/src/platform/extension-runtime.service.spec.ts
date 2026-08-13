@@ -33,6 +33,7 @@ describe('ExtensionRuntimeService', () => {
   const prisma = {
     $transaction: jest.fn(),
     extensionInstallation: { findMany: jest.fn(), findFirst: jest.fn(), updateMany: jest.fn() },
+    school: { updateMany: jest.fn() },
     extensionRecord: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
@@ -46,12 +47,19 @@ describe('ExtensionRuntimeService', () => {
   };
   const audit = { log: jest.fn() };
   const signing = { verifyForRuntime: jest.fn() };
-  const service = new ExtensionRuntimeService(prisma as any, audit as any, signing as any);
+  const governor = {
+    storageQuotas: jest.fn(() => ({ installationBytes: 104857600, installationRecords: 100000, schoolBytes: 1073741824, schoolRecords: 1000000 })),
+    exportRecordLimit: jest.fn(() => 10000),
+    consumeExport: jest.fn(),
+  };
+  const service = new ExtensionRuntimeService(prisma as any, audit as any, signing as any, governor as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
     prisma.$transaction.mockImplementation((callback) => callback(prisma));
     prisma.extensionInstallation.updateMany.mockResolvedValue({ count: 1 });
+    prisma.school.updateMany.mockResolvedValue({ count: 1 });
+    governor.consumeExport.mockResolvedValue(undefined);
     audit.log.mockResolvedValue(undefined);
     signing.verifyForRuntime.mockResolvedValue(true);
   });
@@ -161,7 +169,7 @@ describe('ExtensionRuntimeService', () => {
     });
   });
 
-  it('rejects a record when the school extension-data quota is exhausted', async () => {
+  it('rejects a record when the installation extension-data quota is exhausted', async () => {
     prisma.extensionInstallation.findFirst.mockResolvedValue(installation);
     prisma.extensionInstallation.updateMany.mockResolvedValue({ count: 0 });
 
@@ -169,6 +177,17 @@ describe('ExtensionRuntimeService', () => {
       { schoolId: 'school-a', mode: 'scoped' },
       () => service.createRecord('STUDENT_REWARDS', 'rewards', { studentName: 'Sokha', points: 10 }, { role: 'TEACHER' }),
     )).rejects.toThrow('Extension data or record quota exceeded');
+    expect(prisma.extensionRecord.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a record when the aggregate school extension-data quota is exhausted', async () => {
+    prisma.extensionInstallation.findFirst.mockResolvedValue(installation);
+    prisma.school.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(tenantContext.run(
+      { schoolId: 'school-a', mode: 'scoped' },
+      () => service.createRecord('STUDENT_REWARDS', 'rewards', { studentName: 'Sokha', points: 10 }, { role: 'TEACHER' }),
+    )).rejects.toThrow('School extension data or record quota exceeded');
     expect(prisma.extensionRecord.create).not.toHaveBeenCalled();
   });
 

@@ -9,7 +9,7 @@ describe('ExtensionInstallationsService', () => {
     extensionCatalogCollection: { findMany: jest.fn() },
     extensionPaymentSetting: { findUnique: jest.fn(), upsert: jest.fn() },
     extensionPaymentSettingHistory: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn() },
-    school: { findUnique: jest.fn() },
+    school: { findUnique: jest.fn(), updateMany: jest.fn() },
     user: { findUnique: jest.fn() },
     extensionVersion: { findFirst: jest.fn() },
     extensionInstallation: {
@@ -18,6 +18,8 @@ describe('ExtensionInstallationsService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
+      delete: jest.fn(),
     },
     extensionPaymentEvidence: {
       create: jest.fn(),
@@ -39,7 +41,8 @@ describe('ExtensionInstallationsService', () => {
     presignPrivateDownload: jest.fn().mockReturnValue({ url: 'https://r2.test/download', method: 'GET', headers: {}, expiresAt: new Date().toISOString() }),
   };
   const signing = { verifyPublished: jest.fn().mockResolvedValue(true) };
-  const service = new ExtensionInstallationsService(prisma as any, audit as any, storage as any, signing as any);
+  const governor = { storageQuotas: jest.fn(() => ({ installationBytes: 104857600, installationRecords: 100000, schoolBytes: 1073741824, schoolRecords: 1000000 })) };
+  const service = new ExtensionInstallationsService(prisma as any, audit as any, storage as any, signing as any, governor as any);
   const actor = { userId: 'admin-1', role: 'ADMIN' };
 
   beforeEach(() => {
@@ -49,6 +52,8 @@ describe('ExtensionInstallationsService', () => {
     prisma.extensionPaymentEvidence.updateMany.mockResolvedValue({ count: 1 });
     prisma.extensionPaymentEvidence.count.mockResolvedValue(0);
     prisma.extensionMigrationRun.findFirst.mockResolvedValue(null);
+    prisma.extensionInstallation.updateMany.mockResolvedValue({ count: 1 });
+    prisma.school.updateMany.mockResolvedValue({ count: 1 });
   });
 
   it('creates a request using the authoritative tenant school', async () => {

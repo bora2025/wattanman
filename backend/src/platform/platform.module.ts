@@ -34,6 +34,8 @@ import { QueueOperationsController } from './queue-operations.controller';
 import { AntivirusScannerService } from '../security/antivirus-scanner.service';
 import { ExtensionLifecycleJobsService } from './extension-lifecycle-jobs.service';
 import { ExtensionPurgeReportService } from './extension-purge-report.service';
+import { ExtensionResourceGovernorService } from './extension-resource-governor.service';
+import { ExtensionResourceGovernorInterceptor } from './extension-resource-governor.interceptor';
 
 @Module({
   imports: [
@@ -50,7 +52,7 @@ import { ExtensionPurgeReportService } from './extension-purge-report.service';
     }),
   ],
   controllers: [SchoolsController, PlatformAdminsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController, QueueOperationsController],
-  providers: [SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, AntivirusScannerService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionPlatformGuard, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
+  providers: [SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, AntivirusScannerService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionResourceGovernorService, ExtensionPlatformGuard, { provide: APP_INTERCEPTOR, useClass: ExtensionResourceGovernorInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
   exports: [ExtensionsService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionUpdateService, ExtensionAlertService],
 })
 export class PlatformModule {}

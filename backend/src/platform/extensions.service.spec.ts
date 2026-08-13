@@ -62,7 +62,7 @@ describe("ExtensionsService", () => {
     extensionInstallation: { updateMany: jest.fn(), deleteMany: jest.fn() },
     extensionDependency: { deleteMany: jest.fn() },
     extensionVisibilityGrant: { upsert: jest.fn(), deleteMany: jest.fn() },
-    school: { findUnique: jest.fn() },
+    school: { findUnique: jest.fn(), updateMany: jest.fn() },
     extensionAsset: { upsert: jest.fn() },
     extensionAlert: { updateMany: jest.fn() },
     auditLog: { groupBy: jest.fn() },

@@ -11,6 +11,7 @@ import { PrismaService } from "../database/prisma.service";
 import { getCurrentSchoolId } from "../tenancy/tenant-context";
 import { R2StorageService } from "../storage/r2-storage.service";
 import { ExtensionSigningService } from "./extension-signing.service";
+import { ExtensionResourceGovernorService } from "./extension-resource-governor.service";
 import { dateIdPage, dateIdPageBy, decodeDateIdCursor, parsePageLimit } from "../common/cursor-pagination";
 
 interface Actor {
@@ -51,6 +52,7 @@ export class ExtensionInstallationsService {
     private audit: AuditService,
     private storage: R2StorageService,
     private signing: ExtensionSigningService,
+    private governor: ExtensionResourceGovernorService,
   ) {}
 
   async schoolDirectory(input: {
@@ -1248,6 +1250,10 @@ export class ExtensionInstallationsService {
           extensionId: installation.extensionId,
         },
       });
+      await transaction.school.updateMany({
+        where: { id: installation.schoolId, extensionDataBytes: { gte: installation.dataBytes || 0 }, extensionDataRecords: { gte: installation.dataRecords || 0 } },
+        data: { extensionDataBytes: { decrement: installation.dataBytes || 0 }, extensionDataRecords: { decrement: installation.dataRecords || 0 } },
+      });
       await transaction.extensionInstallation.delete({
         where: { id: installationId },
       });
@@ -1842,11 +1848,11 @@ export class ExtensionInstallationsService {
               rollbackVersionId: existing.installedVersionId,
               migrationRunId: run.id,
             },
-            dataBytes: { increment: byteDelta },
             availableVersionId: null,
             updateNotifiedAt: null,
           },
         });
+        await this.adjustMigrationCapacity(transaction, existing.id, existing.schoolId, byteDelta);
         await transaction.extensionMigrationRun.update({ where: { id: run.id }, data: { status: "APPLIED", completedAt: new Date() } });
         return updated;
       },
@@ -1915,9 +1921,9 @@ export class ExtensionInstallationsService {
           data: {
             installedVersionId: version.id,
             configuration: rest,
-            dataBytes: { increment: byteDelta },
           },
         });
+        await this.adjustMigrationCapacity(transaction, existing.id, existing.schoolId, byteDelta);
         await transaction.extensionMigrationRun.update({
           where: { id: run.id },
           data: { status: "ROLLED_BACK", rolledBackAt: new Date(), completedAt: new Date() },
@@ -1945,6 +1951,20 @@ export class ExtensionInstallationsService {
   private migrationSetting(name: string, fallback: number, minimum: number, maximum: number) {
     const parsed = Number.parseInt(process.env[name] || "", 10);
     return Number.isInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
+  }
+
+  private async adjustMigrationCapacity(transaction: any, installationId: string, schoolId: string, delta: number) {
+    if (!delta) return;
+    const quotas = this.governor.storageQuotas();
+    if (delta > 0) {
+      const installation = await transaction.extensionInstallation.updateMany({ where: { id: installationId, schoolId, dataBytes: { lte: quotas.installationBytes - delta } }, data: { dataBytes: { increment: delta } } });
+      if (installation.count !== 1) throw new ConflictException("Extension migration exceeds installation storage quota");
+      const school = await transaction.school.updateMany({ where: { id: schoolId, extensionDataBytes: { lte: quotas.schoolBytes - delta } }, data: { extensionDataBytes: { increment: delta } } });
+      if (school.count !== 1) throw new ConflictException("Extension migration exceeds school storage quota");
+      return;
+    }
+    await transaction.extensionInstallation.updateMany({ where: { id: installationId, schoolId, dataBytes: { gte: -delta } }, data: { dataBytes: { decrement: -delta } } });
+    await transaction.school.updateMany({ where: { id: schoolId, extensionDataBytes: { gte: -delta } }, data: { extensionDataBytes: { decrement: -delta } } });
   }
 
   private async applyThemeVersion(
