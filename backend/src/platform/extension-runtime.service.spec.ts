@@ -27,7 +27,8 @@ describe('ExtensionRuntimeService', () => {
     schoolId: 'school-a',
     extensionId: 'extension-1',
     extension: { key: 'STUDENT_REWARDS', name: 'Student Rewards', runtimeType: 'DECLARATIVE_MODULE' },
-    installedVersion: { lifecycleStatus: 'PUBLISHED', manifest, signingKey: { status: 'ACTIVE' } },
+    installedVersionId: 'version-1',
+    installedVersion: { lifecycleStatus: 'PUBLISHED', manifestSchema: 1, manifest, signingKey: { status: 'ACTIVE' } },
   };
   const prisma = {
     $transaction: jest.fn(),
@@ -37,7 +38,10 @@ describe('ExtensionRuntimeService', () => {
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
+      deleteMany: jest.fn(),
+      findUnique: jest.fn(),
     },
   };
   const audit = { log: jest.fn() };
@@ -92,7 +96,7 @@ describe('ExtensionRuntimeService', () => {
 
     expect(result.schoolId).toBe('school-a');
     expect(prisma.extensionRecord.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ schoolId: 'school-a', extensionId: 'extension-1', byteSize: expect.any(Number), createdBy: 'teacher-1' }),
+      data: expect.objectContaining({ schoolId: 'school-a', extensionId: 'extension-1', installationId: 'installation-1', versionId: 'version-1', schemaVersion: 1, byteSize: expect.any(Number), createdBy: 'teacher-1' }),
     });
     expect(prisma.extensionInstallation.updateMany).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({ id: 'installation-1', schoolId: 'school-a', dataBytes: expect.any(Object) }),
@@ -150,10 +154,10 @@ describe('ExtensionRuntimeService', () => {
 
     await expect(tenantContext.run(
       { schoolId: 'school-a', mode: 'scoped' },
-      () => service.deleteRecord('STUDENT_REWARDS', 'rewards', 'other-record', { role: 'ADMIN' }),
+      () => service.deleteRecord('STUDENT_REWARDS', 'rewards', 'other-record', { role: 'ADMIN' }, '1'),
     )).rejects.toThrow(NotFoundException);
     expect(prisma.extensionRecord.findFirst).toHaveBeenCalledWith({
-      where: { id: 'other-record', schoolId: 'school-a', extensionId: 'extension-1', resource: 'rewards' },
+      where: { id: 'other-record', schoolId: 'school-a', installationId: 'installation-1', extensionId: 'extension-1', resource: 'rewards' },
     });
   });
 
@@ -164,7 +168,54 @@ describe('ExtensionRuntimeService', () => {
     await expect(tenantContext.run(
       { schoolId: 'school-a', mode: 'scoped' },
       () => service.createRecord('STUDENT_REWARDS', 'rewards', { studentName: 'Sokha', points: 10 }, { role: 'TEACHER' }),
-    )).rejects.toThrow('Extension data quota exceeded');
+    )).rejects.toThrow('Extension data or record quota exceeded');
     expect(prisma.extensionRecord.create).not.toHaveBeenCalled();
+  });
+
+  it('requires and atomically advances the record concurrency version', async () => {
+    prisma.extensionInstallation.findFirst.mockResolvedValue(installation);
+    prisma.extensionRecord.findFirst.mockResolvedValue({ id: 'record-1', byteSize: 20, concurrencyVersion: 3 });
+    prisma.extensionRecord.updateMany.mockResolvedValue({ count: 1 });
+    prisma.extensionRecord.findUnique.mockResolvedValue({ id: 'record-1', concurrencyVersion: 4 });
+
+    const updated = await tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () =>
+      service.updateRecord('STUDENT_REWARDS', 'rewards', 'record-1', { studentName: 'Sokha', points: 20 }, { userId: 'admin-1', role: 'ADMIN' }, '"3"'),
+    );
+
+    expect(prisma.extensionRecord.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'record-1', concurrencyVersion: 3 },
+      data: expect.objectContaining({ concurrencyVersion: { increment: 1 }, versionId: 'version-1', schemaVersion: 1 }),
+    }));
+    expect(updated.concurrencyVersion).toBe(4);
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'UPDATE', resource: 'EXTENSION_RECORD', resourceId: 'record-1' }));
+
+    prisma.extensionRecord.findFirst.mockResolvedValue({ id: 'record-1', byteSize: 20, concurrencyVersion: 4 });
+    await expect(tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () =>
+      service.updateRecord('STUDENT_REWARDS', 'rewards', 'record-1', { studentName: 'Sokha', points: 30 }, { role: 'ADMIN' }, '3'),
+    )).rejects.toThrow('modified by another request');
+  });
+
+  it('applies bounded typed JSON filters inside the installation scope', async () => {
+    prisma.extensionInstallation.findFirst.mockResolvedValue(installation);
+    prisma.extensionRecord.findMany.mockResolvedValue([]);
+
+    await service.records('STUDENT_REWARDS', 'rewards', { role: 'ADMIN' }, undefined, '20', JSON.stringify({ points: 10, studentName: 'Sokha' }));
+
+    expect(prisma.extensionRecord.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        installationId: 'installation-1',
+        AND: [{ data: { path: ['points'], equals: 10 } }, { data: { path: ['studentName'], equals: 'Sokha' } }],
+      }),
+    }));
+  });
+
+  it('exports a bounded installation-owned dataset and audits the privileged read', async () => {
+    prisma.extensionInstallation.findFirst.mockResolvedValue(installation);
+    prisma.extensionRecord.findMany.mockResolvedValue([{ id: 'record-1' }]);
+
+    const result = await service.exportRecords('STUDENT_REWARDS', 'rewards', { userId: 'admin-1', role: 'ADMIN' });
+
+    expect(result).toEqual(expect.objectContaining({ installationId: 'installation-1', versionId: 'version-1', records: [{ id: 'record-1' }] }));
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'EXPORT', resource: 'EXTENSION_RECORD' }));
   });
 });

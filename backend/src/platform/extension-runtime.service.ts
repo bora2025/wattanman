@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -7,7 +7,9 @@ import { dateIdPage, decodeDateIdCursor, parsePageLimit } from '../common/cursor
 import { ExtensionSigningService } from './extension-signing.service';
 
 interface RuntimeUser { userId?: string; role?: string }
-const EXTENSION_DATA_QUOTA_BYTES = 100 * 1024 * 1024;
+const DEFAULT_EXTENSION_DATA_QUOTA_BYTES = 100 * 1024 * 1024;
+const DEFAULT_EXTENSION_RECORD_QUOTA = 100_000;
+const MAX_RECORD_BYTES = 1024 * 1024;
 
 @Injectable()
 export class ExtensionRuntimeService {
@@ -46,14 +48,17 @@ export class ExtensionRuntimeService {
     };
   }
 
-  async records(extensionKey: string, resource: string, user: RuntimeUser, cursorValue?: string, limitValue?: string) {
+  async records(extensionKey: string, resource: string, user: RuntimeUser, cursorValue?: string, limitValue?: string, filtersValue?: string) {
     const installation = await this.authorize(extensionKey, resource, 'read', user);
     const limit = parsePageLimit(limitValue);
     const cursor = decodeDateIdCursor(cursorValue);
+    const filters = this.parseFilters((installation.installedVersion.manifest as any).resources[resource], filtersValue);
     const rows = await this.prisma.extensionRecord.findMany({
       where: {
+        installationId: installation.id,
         extensionId: installation.extensionId,
         resource,
+        ...(filters.length ? { AND: filters.map(([field, value]) => ({ data: { path: [field], equals: value } })) } : {}),
         ...(cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}),
       },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -68,67 +73,145 @@ export class ExtensionRuntimeService {
     this.validateData(manifest.resources[resource], data);
     const schoolId = getCurrentSchoolId();
     const byteSize = this.byteSize(data);
-    return this.prisma.$transaction(async (transaction) => {
-      await this.reserveBytes(transaction, installation.id, schoolId, byteSize);
+    if (byteSize > MAX_RECORD_BYTES) throw new PayloadTooLargeException('Extension record exceeds the 1MB limit');
+    const record = await this.prisma.$transaction(async (transaction) => {
+      await this.reserveCapacity(transaction, installation.id, schoolId, byteSize, 1);
       return transaction.extensionRecord.create({
         data: {
           schoolId,
           extensionId: installation.extensionId,
+          installationId: installation.id,
+          versionId: installation.installedVersionId,
           resource,
           data: data as any,
           byteSize,
+          schemaVersion: installation.installedVersion.manifestSchema || 1,
           createdBy: user.userId,
         },
       });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    await this.logMutation(user, 'CREATE', installation, resource, record.id, { byteSize, concurrencyVersion: record.concurrencyVersion });
+    return record;
   }
 
-  async updateRecord(extensionKey: string, resource: string, recordId: string, data: Record<string, unknown>, user: RuntimeUser) {
+  async updateRecord(extensionKey: string, resource: string, recordId: string, data: Record<string, unknown>, user: RuntimeUser, expectedVersionValue?: string) {
     const installation = await this.authorize(extensionKey, resource, 'write', user);
     const manifest = installation.installedVersion.manifest as Record<string, any>;
     this.validateData(manifest.resources[resource], data);
     const schoolId = getCurrentSchoolId();
     const byteSize = this.byteSize(data);
-    return this.prisma.$transaction(async (transaction) => {
-      const record = await transaction.extensionRecord.findFirst({ where: { id: recordId, schoolId, extensionId: installation.extensionId, resource } });
+    if (byteSize > MAX_RECORD_BYTES) throw new PayloadTooLargeException('Extension record exceeds the 1MB limit');
+    const expectedVersion = this.expectedVersion(expectedVersionValue);
+    const record = await this.prisma.$transaction(async (transaction) => {
+      const record = await transaction.extensionRecord.findFirst({ where: { id: recordId, schoolId, installationId: installation.id, extensionId: installation.extensionId, resource } });
       if (!record) throw new NotFoundException('Extension record not found');
+      if (record.concurrencyVersion !== expectedVersion) throw new ConflictException('Extension record was modified by another request');
       await this.adjustBytes(transaction, installation.id, schoolId, byteSize - record.byteSize);
-      return transaction.extensionRecord.update({ where: { id: recordId }, data: { data: data as any, byteSize, updatedBy: user.userId } });
+      const updated = await transaction.extensionRecord.updateMany({
+        where: { id: recordId, concurrencyVersion: expectedVersion },
+        data: { data: data as any, byteSize, versionId: installation.installedVersionId, schemaVersion: installation.installedVersion.manifestSchema || 1, concurrencyVersion: { increment: 1 }, updatedBy: user.userId },
+      });
+      if (updated.count !== 1) throw new ConflictException('Extension record was modified by another request');
+      return transaction.extensionRecord.findUnique({ where: { id: recordId } });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    await this.logMutation(user, 'UPDATE', installation, resource, recordId, { byteSize, concurrencyVersion: record.concurrencyVersion });
+    return record;
   }
 
-  async deleteRecord(extensionKey: string, resource: string, recordId: string, user: RuntimeUser) {
+  async deleteRecord(extensionKey: string, resource: string, recordId: string, user: RuntimeUser, expectedVersionValue?: string) {
     const installation = await this.authorize(extensionKey, resource, 'write', user);
     const schoolId = getCurrentSchoolId();
+    const expectedVersion = this.expectedVersion(expectedVersionValue);
     await this.prisma.$transaction(async (transaction) => {
-      const record = await transaction.extensionRecord.findFirst({ where: { id: recordId, schoolId, extensionId: installation.extensionId, resource } });
+      const record = await transaction.extensionRecord.findFirst({ where: { id: recordId, schoolId, installationId: installation.id, extensionId: installation.extensionId, resource } });
       if (!record) throw new NotFoundException('Extension record not found');
+      if (record.concurrencyVersion !== expectedVersion) throw new ConflictException('Extension record was modified by another request');
       await this.adjustBytes(transaction, installation.id, schoolId, -record.byteSize);
-      await transaction.extensionRecord.delete({ where: { id: recordId } });
+      const deleted = await transaction.extensionRecord.deleteMany({ where: { id: recordId, concurrencyVersion: expectedVersion } });
+      if (deleted.count !== 1) throw new ConflictException('Extension record was modified by another request');
+      await transaction.extensionInstallation.updateMany({ where: { id: installation.id, schoolId, dataRecords: { gt: 0 } }, data: { dataRecords: { decrement: 1 } } });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    await this.logMutation(user, 'DELETE', installation, resource, recordId, { concurrencyVersion: expectedVersion });
     return { deleted: true, id: recordId };
+  }
+
+  async exportRecords(extensionKey: string, resource: string, user: RuntimeUser) {
+    const installation = await this.authorize(extensionKey, resource, 'read', user);
+    const rows = await this.prisma.extensionRecord.findMany({
+      where: { installationId: installation.id, extensionId: installation.extensionId, resource },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      take: 10_001,
+    });
+    if (rows.length > 10_000) throw new PayloadTooLargeException('Extension export exceeds the 10,000 record limit');
+    await this.audit.log({
+      actorId: user.userId, actorRole: user.role, action: 'EXPORT', resource: 'EXTENSION_RECORD',
+      resourceId: installation.extension.key, resourceLabel: installation.extension.name,
+      metadata: { extensionId: installation.extensionId, installationId: installation.id, versionId: installation.installedVersionId, resource, records: rows.length },
+    });
+    return { extensionKey, installationId: installation.id, versionId: installation.installedVersionId, resource, exportedAt: new Date().toISOString(), records: rows };
   }
 
   private byteSize(data: Record<string, unknown>) {
     return Buffer.byteLength(JSON.stringify(data), 'utf8');
   }
 
-  private async reserveBytes(transaction: any, installationId: string, schoolId: string, bytes: number) {
+  private async reserveCapacity(transaction: any, installationId: string, schoolId: string, bytes: number, records = 0) {
+    const byteQuota = this.quota('EXTENSION_DATA_QUOTA_BYTES', DEFAULT_EXTENSION_DATA_QUOTA_BYTES, 1024 * 1024, 10 * 1024 * 1024 * 1024);
+    const recordQuota = this.quota('EXTENSION_RECORD_QUOTA', DEFAULT_EXTENSION_RECORD_QUOTA, 100, 10_000_000);
     const reserved = await transaction.extensionInstallation.updateMany({
-      where: { id: installationId, schoolId, dataBytes: { lte: EXTENSION_DATA_QUOTA_BYTES - bytes } },
-      data: { dataBytes: { increment: bytes } },
+      where: { id: installationId, schoolId, dataBytes: { lte: byteQuota - bytes }, dataRecords: { lte: recordQuota - records } },
+      data: { dataBytes: { increment: bytes }, ...(records ? { dataRecords: { increment: records } } : {}) },
     });
-    if (reserved.count !== 1) throw new PayloadTooLargeException('Extension data quota exceeded');
+    if (reserved.count !== 1) throw new PayloadTooLargeException('Extension data or record quota exceeded');
   }
 
   private async adjustBytes(transaction: any, installationId: string, schoolId: string, delta: number) {
-    if (delta > 0) return this.reserveBytes(transaction, installationId, schoolId, delta);
+    if (delta > 0) return this.reserveCapacity(transaction, installationId, schoolId, delta);
     if (delta < 0) {
       await transaction.extensionInstallation.updateMany({
         where: { id: installationId, schoolId },
         data: { dataBytes: { decrement: -delta } },
       });
     }
+  }
+
+  private parseFilters(schema: any, value?: string): Array<[string, string | number | boolean]> {
+    if (!value) return [];
+    let parsed: unknown;
+    try { parsed = JSON.parse(value); } catch { throw new BadRequestException('filters must be a JSON object'); }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new BadRequestException('filters must be a JSON object');
+    const entries = Object.entries(parsed as Record<string, unknown>);
+    if (entries.length > 5) throw new BadRequestException('At most five filters are allowed');
+    const fields = new Map((schema?.fields || []).map((field: any) => [field.key, field]));
+    for (const [key, filterValue] of entries) {
+      const field: any = fields.get(key);
+      if (!field) throw new BadRequestException(`Unknown filter field: ${key}`);
+      if (!['string', 'number', 'boolean'].includes(typeof filterValue)) throw new BadRequestException(`Invalid filter value: ${key}`);
+      if (field.type === 'number' && typeof filterValue !== 'number') throw new BadRequestException(`${key} filter must be a number`);
+      if (field.type === 'boolean' && typeof filterValue !== 'boolean') throw new BadRequestException(`${key} filter must be a boolean`);
+      if ((field.type === 'text' || field.type === 'date') && typeof filterValue !== 'string') throw new BadRequestException(`${key} filter must be text`);
+    }
+    return entries as Array<[string, string | number | boolean]>;
+  }
+
+  private expectedVersion(value?: string) {
+    const normalized = value?.replace(/^W\//, '').replace(/^"|"$/g, '');
+    const parsed = Number.parseInt(normalized || '', 10);
+    if (!Number.isSafeInteger(parsed) || parsed < 1) throw new BadRequestException('If-Match must contain the current record concurrency version');
+    return parsed;
+  }
+
+  private quota(name: string, fallback: number, minimum: number, maximum: number) {
+    const parsed = Number.parseInt(process.env[name] || '', 10);
+    return Number.isSafeInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
+  }
+
+  private logMutation(user: RuntimeUser, action: string, installation: any, resource: string, recordId: string, metadata: Record<string, unknown>) {
+    return this.audit.log({
+      actorId: user.userId, actorRole: user.role, action, resource: 'EXTENSION_RECORD', resourceId: recordId,
+      resourceLabel: `${installation.extension.key}:${resource}`,
+      metadata: { schoolId: installation.schoolId, extensionId: installation.extensionId, installationId: installation.id, versionId: installation.installedVersionId, resource, ...metadata },
+    });
   }
 
   private async authorize(extensionKey: string, resource: string, action: 'read' | 'write', user: RuntimeUser) {

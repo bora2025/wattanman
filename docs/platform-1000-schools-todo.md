@@ -295,13 +295,20 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Runtime APIs and data
 
-- [ ] Add capability-based extension API gateway.
-- [ ] Scope every operation by school, extension, version, and installation.
-- [ ] Add record schema version and optimistic concurrency version.
-- [ ] Add cursor pagination and query filters.
-- [ ] Add record and storage quotas.
-- [ ] Add audit events for data mutation and privileged reads.
-- [ ] Add retention, export, uninstall, and purge behavior.
+- [x] Add capability-based extension API gateway.
+  - Every runtime read/write resolves an active signed installation, requires the manifest's `<resource>:read|write` capability and an allowed page role, audits capability denial, and exposes no database or arbitrary service access.
+- [x] Scope every operation by school, extension, version, and installation.
+  - Records now persist authoritative `schoolId`, `extensionId`, `installationId`, and `versionId`; all collection and mutation predicates include the active installation plus extension/resource, while tenant middleware and RLS enforce school scope.
+- [x] Add record schema version and optimistic concurrency version.
+  - Records persist manifest `schemaVersion` and monotonic `concurrencyVersion`; PATCH/DELETE require `If-Match`, compare inside serializable transactions, and use conditional writes to reject stale clients without lost updates.
+- [x] Add cursor pagination and query filters.
+  - Existing bounded date/id cursors now combine with up to five typed, declared-field JSON equality filters inside the installation scope; malformed, unknown, and type-mismatched filters fail closed.
+- [x] Add record and storage quotas.
+  - Atomic installation counters enforce configurable byte and record-count quotas (`EXTENSION_DATA_QUOTA_BYTES`, `EXTENSION_RECORD_QUOTA`), individual records are capped at 1MB, and create/delete/update adjust counters transactionally.
+- [x] Add audit events for data mutation and privileged reads.
+  - CREATE, UPDATE, DELETE, capability denial, and bounded dataset EXPORT emit tenant audit events carrying extension, installation, version, resource, actor, size, and concurrency metadata.
+- [x] Add retention, export, uninstall, and purge behavior.
+  - Capability-checked exports are bounded to 10,000 installation-owned records; uninstall retains records through the configurable grace period, and scheduled/manual purge cascades installation data with signed purge evidence. Production preflight found zero orphan records; all 311 backend tests, both production builds, and six browser tests passed on 2026-08-13.
 
 ### Updates and migrations
 

@@ -333,6 +333,7 @@ model ExtensionVersion {
   validations   ExtensionValidation[]
   installations ExtensionInstallation[]
   reviews       ExtensionReview[]
+  records       ExtensionRecord[]
 
   @@unique([extensionId, version])
   @@index([extensionId, lifecycleStatus])
@@ -490,6 +491,7 @@ model ExtensionInstallation {
   requestContractReference String?
   requestPriceNote    String?
   dataBytes          Int                      @default(0)
+  dataRecords        Int                      @default(0)
   updatePolicy       String                   @default("MANUAL") // MANUAL | NOTIFY | AUTO_APPROVED
   availableVersionId String?
   updateNotifiedAt   DateTime?
@@ -506,6 +508,7 @@ model ExtensionInstallation {
   migrationRuns      ExtensionMigrationRun[]
   pilotFeedback      ExtensionPilotFeedback[]
   paymentEvidence    ExtensionPaymentEvidence[]
+  records            ExtensionRecord[]
 
   @@unique([schoolId, extensionId])
   @@index([schoolId, enabled])
@@ -702,9 +705,15 @@ model ExtensionRecord {
   school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   extensionId String
   extension   Extension @relation(fields: [extensionId], references: [id], onDelete: Cascade)
+  installationId String
+  installation   ExtensionInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  versionId      String
+  version        ExtensionVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
   resource    String
   data        Json
   byteSize    Int       @default(0)
+  schemaVersion Int     @default(1)
+  concurrencyVersion Int @default(1)
   createdBy   String?
   updatedBy   String?
   createdAt   DateTime  @default(now())
@@ -712,6 +721,8 @@ model ExtensionRecord {
 
   @@index([schoolId, extensionId, resource, createdAt])
   @@index([extensionId, resource])
+  @@index([installationId, resource, createdAt])
+  @@index([versionId])
   @@index([schoolId, byteSize])
 }
 

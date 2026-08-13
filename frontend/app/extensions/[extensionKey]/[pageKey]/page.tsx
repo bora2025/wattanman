@@ -17,7 +17,7 @@ type ComponentDefinition =
   | { type: 'chart'; title?: string; titleKey?: string; categoryField: string; valueField: string; aggregate?: 'sum' | 'average' }
 interface PageDefinition { key: string; title: string; titleKey?: string; ariaLabel?: string; resource: string; roles: string[]; fields: FieldDefinition[]; components?: ComponentDefinition[] }
 interface RuntimePage { extension: { key: string; name: string }; page: PageDefinition; defaultLocale?: string; translations?: Record<string, Record<string, string>> }
-interface RuntimeRecord { id: string; data: Record<string, any>; createdAt: string }
+interface RuntimeRecord { id: string; data: Record<string, any>; concurrencyVersion: number; createdAt: string }
 
 async function json(res: Response) {
   const data = await res.json().catch(() => ({}))
@@ -74,7 +74,7 @@ function DynamicExtensionPage({ extensionKey, pageKey }: { extensionKey: string;
       const path = `/api/extensions/${extensionKey}/resources/${definition.page.resource}${editingId ? `/${editingId}` : ''}`
       await json(await apiFetch(path, {
         method: editingId ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(editingId ? { 'If-Match': String(records.find(record => record.id === editingId)?.concurrencyVersion || '') } : {}) },
         body: JSON.stringify(form),
       }))
       setForm({})
@@ -90,7 +90,9 @@ function DynamicExtensionPage({ extensionKey, pageKey }: { extensionKey: string;
   async function remove(recordId: string) {
     if (!definition || !confirm('Delete this record?')) return
     try {
-      await json(await apiFetch(`/api/extensions/${extensionKey}/resources/${definition.page.resource}/${recordId}`, { method: 'DELETE' }))
+      const record = records.find(candidate => candidate.id === recordId)
+      if (!record) return
+      await json(await apiFetch(`/api/extensions/${extensionKey}/resources/${definition.page.resource}/${recordId}`, { method: 'DELETE', headers: { 'If-Match': String(record.concurrencyVersion) } }))
       if (selected?.id === recordId) setSelected(null)
       await load()
     } catch (removeError: any) {
