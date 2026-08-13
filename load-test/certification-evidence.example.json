@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "runId": "replace-stage6-run-id",
+  "commit": "replace-git-commit",
+  "target": "https://replace.performance.example",
+  "fixture": { "schools": 1000, "registeredUsers": 500000, "fingerprint": "replace-64-character-sha256" },
+  "performance": { "concurrentSessions": 10000, "sustained": { "rps": 1000, "durationSeconds": 7200, "availabilityPct": 99.9, "p95LatencyMs": 999, "tenantIsolationFailures": 0 }, "burst": { "rps": 3000, "recovered": true, "manualRepair": false } },
+  "trafficOperations": ["marketplace-publication", "staged-update", "backup", "validation", "migration"],
+  "failureTests": [],
+  "limits": { "databasePoolMaxPct": 0, "redisMemoryMaxPct": 0, "queueOldestJobSeconds": 0, "minimumWorkers": 1, "r2ErrorRatePct": 0 },
+  "autoscaling": { "matchesPolicy": false },
+  "cost": { "estimatedUsd": 0, "approvedBy": "" },
+  "nextScalingThresholds": ""
+}

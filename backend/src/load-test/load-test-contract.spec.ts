@@ -18,5 +18,8 @@ describe('load test contract', () => {
     expect(source).toContain("/(^|\\.)wattaman\\.app$/");
     expect(source).toContain('estimatedCostUsd');
     expect(source).toContain('LOAD_COST_PER_MILLION_REQUESTS_USD');
+    expect(source).toContain("'authenticated status is 200'");
+    expect(source).not.toContain('[200, 401, 403]');
+    expect(source).toContain('LOAD_TEST_SESSIONS || 10000');
   });
 });

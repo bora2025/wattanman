@@ -15,6 +15,8 @@ Use environment overrides only for bounded smoke fixtures. The manifest fingerpr
 
 The k6 thresholds require under 1% failures, p95 below one second, p99 below 2.5 seconds, over 99% checks, and zero dropped iterations. Publication, backup, validation, migration, dependency-failure, and abuse scenarios are separate Stage 6 orchestrations layered onto these profiles.
 
+`LOAD_TEST_IDENTITIES_FILE` must contain short-lived synthetic identities spanning the requested school and session counts. Each identity has an opaque school ID, approved non-production school origin, and bearer token. Traffic exercises authenticated school routes and treats 401/403 as failures; credentials are never committed or written to result reports.
+
 ## Production guard
 
 The script requires `LOAD_TEST_AUTHORIZATION=I_ACKNOWLEDGE_NON_PRODUCTION_ONLY`, a target hostname containing `loadtest`, `performance`, `perf`, or `staging` (or localhost), a healthy preflight, and a target that does not identify itself as production. It always rejects `wattaman.app` and Railway public domains. Use a dedicated isolated performance environment and database; never weaken the guard to test production.
@@ -22,3 +24,7 @@ The script requires `LOAD_TEST_AUTHORIZATION=I_ACKNOWLEDGE_NON_PRODUCTION_ONLY`,
 ## Cost evidence
 
 Set the approved environment-hour, request, and transfer rates. `handleSummary` writes request/byte/duration totals, input rates, and estimated USD cost to `results/<run-id>-cost.json`. Attach that report with infrastructure metrics and provider invoices to the capacity review; estimates do not replace invoices.
+
+## Certification evidence
+
+Populate a copy of `load-test/certification-evidence.example.json` only from measured non-production outputs, then run `npm.cmd run load:verify -- <path>`. The verifier fails unless all Stage 6 scale, sustained/burst, concurrent-session, traffic-operation, dependency-limit, failure-injection, tenant-isolation, automatic-recovery, autoscaling, cost-approval, and next-threshold requirements are present and within approved limits. A passing checksum is evidence integrity, not a substitute for attached source metrics.
