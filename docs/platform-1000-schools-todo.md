@@ -265,12 +265,18 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Manifest API
 
-- [ ] Freeze extension manifest v1.
-- [ ] Freeze theme manifest v1.
-- [ ] Publish compatibility and deprecation policy.
-- [ ] Define navigation, page, component, field, validation, action, and permission contracts.
-- [ ] Define locale and accessibility requirements.
-- [ ] Define extension-owned record schema rules.
+- [x] Freeze extension manifest v1.
+  - Strict JSON Schema draft 2020-12 plus semantic validation defines declarative module v1. A fixed SHA-256 contract test prevents silent edits to the frozen schema bytes and requires future breaking work to introduce a new schema version.
+- [x] Freeze theme manifest v1.
+  - Theme v1 has an independently fingerprinted, strict schema with standalone inheritance, closed mode/token values, approved assets, and scoped CSS safety rules.
+- [x] Publish compatibility and deprecation policy.
+  - `docs/extension-manifest-v1-contract.md` defines additive compatibility, breaking-change criteria, immutable release semantics, a 24-month successor support window, 180-day rejection notice, and audited emergency blocking.
+- [x] Define navigation, page, component, field, validation, action, and permission contracts.
+  - The v1 contract documents the closed component/action registry, cross-reference rules, typed fields, unknown-input rejection, server authorization boundary, and capability semantics already enforced by schema, package validator, runtime API, and renderer.
+- [x] Define locale and accessibility requirements.
+  - Locale fallback, plain-text translations, literal fallback labels, accessible names, semantic tables/forms, keyboard-native controls, focus/script/CSS restrictions, and responsive publisher testing are normative v1 requirements.
+- [x] Define extension-owned record schema rules.
+  - The contract fixes tenant/extension/version/installation/resource ownership, server-owned metadata, typed JSON validation, capability-only access, cursor bounds, quotas, migration backups, grace retention, and signed purge behavior. The focused contract suite passed 33 tests and the backend production build on 2026-08-13.
 
 ### Runtime UI
 

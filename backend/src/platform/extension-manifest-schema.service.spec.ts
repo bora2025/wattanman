@@ -1,4 +1,7 @@
 import { ExtensionManifestSchemaService } from './extension-manifest-schema.service';
+import { createHash } from 'crypto';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 describe('ExtensionManifestSchemaService', () => {
   const schemas = new ExtensionManifestSchemaService();
@@ -35,5 +38,13 @@ describe('ExtensionManifestSchemaService', () => {
     expect(schemas.validate('CODE_EXTENSION', { schemaVersion: 1 })).toEqual([
       expect.objectContaining({ keyword: 'runtimeType', message: expect.stringContaining('No manifest schema') }),
     ]);
+  });
+
+  it.each([
+    ['extension-manifest-v1.schema.json', 'f69df753743476c6bf079429336884cac6d203932d84c08b8ffe4ad109eadaeb'],
+    ['theme-manifest-v1.schema.json', 'ec6b53c0b25ae136fca7451ee1adc604c6fe8ff21a641311933c790e11b9b666'],
+  ])('keeps the frozen v1 schema bytes immutable: %s', (fileName, expectedChecksum) => {
+    const contents = readFileSync(join(__dirname, 'schemas', fileName));
+    expect(createHash('sha256').update(contents).digest('hex')).toBe(expectedChecksum);
   });
 });
