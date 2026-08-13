@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { createHash } from 'crypto';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { TENANT_SCOPED_MODELS } from '../tenancy/scoped-models';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
@@ -39,12 +40,21 @@ import { AuditService } from '../audit/audit.service';
 /** Live session/security artifacts — never worth exporting or restoring, even
  * scoped to one school. A backup is meant to preserve *data*, not active
  * sessions or in-flight password-reset links. */
-const BACKUP_EXCLUDED_MODELS = new Set<string>([
-  'RefreshToken', 'PasswordResetToken', 'AuditLog', 'BackupExport', 'BackupRestoreRequest',
-  'ExtensionLifecycleJob', 'ExtensionPurgeReport', 'SchoolProvisioningJob',
-]);
+const BACKUP_MODEL_NAMES = [
+  'User', 'AuditCleanupSchedule', 'SiteSetting', 'Post', 'ExtensionVisibilityGrant',
+  'ExtensionInstallation', 'ExtensionPaymentEvidence', 'ExtensionPilotFeedback', 'ExtensionRecord',
+] as const;
+const RESTORE_DELETE_ORDER = [
+  'ExtensionRecord', 'ExtensionPilotFeedback', 'ExtensionPaymentEvidence', 'ExtensionInstallation',
+  'ExtensionVisibilityGrant', 'Post', 'SiteSetting', 'AuditCleanupSchedule', 'PasswordResetToken',
+  'RefreshToken',
+] as const;
+const RESTORE_INSERT_ORDER = BACKUP_MODEL_NAMES.filter((model) => model !== 'User');
+const BACKUP_MODEL_SET = new Set<string>(BACKUP_MODEL_NAMES);
 
-const BACKUP_MODEL_NAMES = [...TENANT_SCOPED_MODELS].filter((m) => !BACKUP_EXCLUDED_MODELS.has(m));
+for (const model of BACKUP_MODEL_NAMES) {
+  if (!TENANT_SCOPED_MODELS.has(model)) throw new Error(`Backup model ${model} is not tenant scoped`);
+}
 
 @Injectable()
 export class BackupService {
@@ -193,15 +203,143 @@ export class BackupService {
     return this.getRestore(id);
   }
 
+  async submitRestoreExecution(id: string, input: { confirmSchoolId?: string; changeTicket?: string }, actor: { userId?: string; role?: string; name?: string; email?: string }) {
+    if (actor.role !== 'PLATFORM_ADMIN' || !actor.userId) throw new ConflictException('Platform administrator execution is required');
+    const request = await this.getRestore(id);
+    if (request.status !== 'APPROVED') throw new ConflictException('Only approved restore requests can execute');
+    if (input?.confirmSchoolId !== request.schoolId) throw new BadRequestException('School confirmation does not match restore target');
+    if (!input?.changeTicket?.trim() || input.changeTicket.trim().length < 10 || input.changeTicket.length > 200) throw new BadRequestException('Change ticket must be 10 to 200 characters');
+    if ([request.requestedBy, request.approvedBy].includes(actor.userId)) throw new ConflictException('Restore executor must be independent from requester and approver');
+    const transition = await this.prisma.backupRestoreRequest.updateMany({ where: { id, status: 'APPROVED' }, data: { status: 'EXECUTING', errorMessage: null } });
+    if (transition.count !== 1) throw new ConflictException('Restore request changed before execution');
+    await this.queues.enqueue('operations', {
+      type: 'backup.restore.execute', tenant: { mode: 'SCOPED', schoolId: request.schoolId },
+      actor: { id: actor.userId, role: actor.role, name: actor.name }, idempotencyKey: `backup-restore-execute:${id}`,
+      payload: { restoreId: id, changeTicket: input.changeTicket.trim() },
+    });
+    await this.auditForSchool(request.schoolId, { actorId: actor.userId, actorRole: actor.role, actorName: actor.name, actorEmail: actor.email, action: 'RESTORE_EXECUTION_QUEUED', resource: 'BACKUP_RESTORE', resourceId: id, metadata: { changeTicket: input.changeTicket.trim() } });
+    return this.getRestore(id);
+  }
+
+  async executeRestore(id: string, attempt: number, changeTicket: string) {
+    const request = await this.getRestore(id);
+    if (request.status === 'COMPLETED') return request;
+    if (request.status !== 'EXECUTING' || !request.approvedBy || !request.verifiedAt) throw new ConflictException('Restore execution is not authorized');
+    try {
+      const source = await this.prisma.backupExport.findFirst({ where: { id: request.exportId, schoolId: request.schoolId, status: 'AVAILABLE' } });
+      if (!source?.storageKey || !source.checksum) throw new Error('Source export is unavailable');
+      const body = await this.storage.getPrivate(source.storageKey);
+      const checksum = createHash('sha256').update(body).digest('hex');
+      if (checksum !== source.checksum) throw new Error('Source export checksum changed after approval');
+      const payload = JSON.parse(body.toString('utf8'));
+      this.verifySnapshot(payload, request.schoolId, checksum, body.length);
+      this.verifyRestoreReferences(payload);
+      await this.verifyCatalogReferences(payload);
+      const safetyExport = await this.persistSafetyExport(request, attempt);
+
+      const result = await this.prisma.$transaction(async (transaction) => {
+        for (const model of RESTORE_DELETE_ORDER) {
+          const delegate = (transaction as any)[this.camel(model)];
+          if (delegate?.deleteMany) await delegate.deleteMany({});
+        }
+        let inserted = 0;
+        for (const row of payload.data.User || []) {
+          const data = { ...this.parseDates('User', row), schoolId: request.schoolId };
+          const { id: userId, createdAt: _createdAt, ...mutable } = data;
+          await (transaction as any).user.upsert({ where: { id: userId }, create: data, update: mutable });
+          inserted += 1;
+        }
+        for (const model of RESTORE_INSERT_ORDER) {
+          const rows = payload.data[model] || [];
+          if (!rows.length) continue;
+          const delegate = (transaction as any)[this.camel(model)];
+          const parsed = rows.map((row: any) => ({ ...this.parseDates(model, row), schoolId: request.schoolId }));
+          for (let offset = 0; offset < parsed.length; offset += 250) {
+            const chunk = parsed.slice(offset, offset + 250);
+            const created = await delegate.createMany({ data: chunk });
+            inserted += created.count;
+          }
+        }
+        await (transaction as any).backupRestoreRequest.update({ where: { id }, data: { status: 'COMPLETED', attempts: attempt, executedAt: new Date(), errorMessage: null } });
+        return { inserted };
+      }, { timeout: 10 * 60 * 1000, maxWait: 60 * 1000 });
+      await this.auditForSchool(request.schoolId, { action: 'RESTORE_COMPLETED', resource: 'BACKUP_RESTORE', resourceId: id, metadata: { changeTicket, safetyExportId: safetyExport.id, inserted: result.inserted, sourceChecksum: checksum } });
+      return this.getRestore(id);
+    } catch (error: any) {
+      await this.prisma.backupRestoreRequest.updateMany({ where: { id, status: 'EXECUTING' }, data: { status: 'FAILED', attempts: attempt, errorMessage: String(error?.message || error).slice(0, 1000) } }).catch(() => undefined);
+      await this.auditForSchool(request.schoolId, { action: 'RESTORE_FAILED', resource: 'BACKUP_RESTORE', resourceId: id, success: false, errorMessage: String(error?.message || error).slice(0, 1000), metadata: { changeTicket } });
+      throw error;
+    }
+  }
+
+  private async persistSafetyExport(request: any, attempt: number) {
+    const snapshot = await this.exportAll();
+    const body = Buffer.from(JSON.stringify(snapshot));
+    const checksum = createHash('sha256').update(body).digest('hex');
+    const id = `safety-${request.id}`;
+    const storageKey = `backups/schools/${request.schoolId}/${checksum}/${id}.json`;
+    await this.storage.putPrivateImmutable(storageKey, body, 'application/json', checksum);
+    return this.prisma.backupExport.upsert({
+      where: { schoolId_requestKey: { schoolId: request.schoolId, requestKey: `pre-restore:${request.id}` } },
+      create: { schoolId: request.schoolId, requestKey: `pre-restore:${request.id}`, status: 'AVAILABLE', storageKey, checksum, byteSize: body.length, modelCount: snapshot.models.length, rowCount: Object.values(snapshot.data).reduce((sum, rows) => sum + rows.length, 0), requestedRole: 'SYSTEM', attempts: attempt, completedAt: new Date(), expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+      update: {},
+    });
+  }
+
+  private verifyRestoreReferences(payload: any) {
+    const installations = new Set((payload.data.ExtensionInstallation || []).map((row: any) => row.id));
+    for (const model of ['ExtensionPaymentEvidence', 'ExtensionPilotFeedback', 'ExtensionRecord']) {
+      for (const row of payload.data[model] || []) {
+        if (!installations.has(row.installationId)) throw new Error(`${model} references an installation absent from the snapshot`);
+      }
+    }
+    const users = payload.data.User || [];
+    if (!users.some((row: any) => ['ADMIN', 'SUPER_ADMIN'].includes(row.role))) throw new Error('Restore snapshot must retain at least one school administrator');
+  }
+
+  private async verifyCatalogReferences(payload: any) {
+    const extensionIds = new Set<string>();
+    const versionIds = new Set<string>();
+    for (const row of payload.data.ExtensionInstallation || []) {
+      extensionIds.add(row.extensionId);
+      versionIds.add(row.installedVersionId);
+      if (row.availableVersionId) versionIds.add(row.availableVersionId);
+    }
+    for (const row of payload.data.ExtensionVisibilityGrant || []) extensionIds.add(row.extensionId);
+    for (const row of payload.data.ExtensionRecord || []) {
+      extensionIds.add(row.extensionId);
+      versionIds.add(row.versionId);
+    }
+    const [extensions, versions] = await Promise.all([
+      this.prisma.extension.count({ where: { id: { in: [...extensionIds] } } }),
+      this.prisma.extensionVersion.count({ where: { id: { in: [...versionIds] } } }),
+    ]);
+    if (extensions !== extensionIds.size) throw new Error('Restore snapshot references unavailable extensions');
+    if (versions !== versionIds.size) throw new Error('Restore snapshot references unavailable extension versions');
+  }
+
+  private parseDates(modelName: string, row: any) {
+    const model = (Prisma.dmmf?.datamodel?.models ?? []).find((candidate: any) => candidate.name === modelName) as any;
+    const output = { ...row };
+    for (const field of model?.fields || []) {
+      if (field.kind === 'scalar' && field.type === 'DateTime' && typeof output[field.name] === 'string') {
+        const date = new Date(output[field.name]);
+        if (Number.isNaN(date.getTime())) throw new Error(`${modelName}.${field.name} contains an invalid date`);
+        output[field.name] = date;
+      }
+    }
+    return output;
+  }
+
   private verifySnapshot(payload: any, schoolId: string, checksum: string, byteSize: number) {
     if (!payload || payload.version !== 2 || !payload.data || typeof payload.data !== 'object') throw new Error('Unsupported or invalid backup format');
     const declared = Array.isArray(payload.models) ? payload.models : [];
-    const unknownModels = Object.keys(payload.data).filter((name) => !BACKUP_MODEL_NAMES.includes(name));
+    const unknownModels = Object.keys(payload.data).filter((name) => !BACKUP_MODEL_SET.has(name));
     if (unknownModels.length) throw new Error(`Backup contains unsupported models: ${unknownModels.join(', ')}`);
     let rowCount = 0;
     const perModel: Record<string, number> = {};
     for (const name of declared) {
-      if (!BACKUP_MODEL_NAMES.includes(name)) throw new Error(`Backup declares unsupported model: ${name}`);
+      if (!BACKUP_MODEL_SET.has(name)) throw new Error(`Backup declares unsupported model: ${name}`);
       const rows = payload.data[name];
       if (!Array.isArray(rows)) throw new Error(`Backup model ${name} is not an array`);
       for (const row of rows) {
@@ -233,19 +371,13 @@ export class BackupService {
     for (const name of BACKUP_MODEL_NAMES) {
       const delegate = (this.prisma as any)[this.camel(name)];
       if (delegate?.findMany) {
-        try {
-          data[name] = await delegate.findMany();
-        } catch (e) {
-          // Some Prisma helpers (e.g. internal models) may not be queryable —
-          // skip them rather than fail the whole export.
-          data[name] = [];
-        }
+        data[name] = await delegate.findMany();
       }
     }
     return {
       version: 2, // bumped: v1 files were whole-database dumps, not school-scoped — see importFromV1Warning below
       exportedAt: new Date().toISOString(),
-      models: BACKUP_MODEL_NAMES,
+      models: [...BACKUP_MODEL_NAMES],
       data,
     };
   }

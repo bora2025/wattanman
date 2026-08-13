@@ -11,6 +11,10 @@ export class BackupWorkerProcessorService implements OnModuleInit {
     this.queues.createWorker('operations', async (envelope) => {
       if (envelope.type === 'backup.export') return this.backups.executeExport((envelope.payload as { exportId: string }).exportId, envelope.attempt);
       if (envelope.type === 'backup.restore.verify') return this.backups.verifyRestore((envelope.payload as { restoreId: string }).restoreId, envelope.attempt);
+      if (envelope.type === 'backup.restore.execute') {
+        const payload = envelope.payload as { restoreId: string; changeTicket: string };
+        return this.backups.executeRestore(payload.restoreId, envelope.attempt, payload.changeTicket);
+      }
       throw new Error(`Unsupported operations job type: ${envelope.type}`);
     });
   }

@@ -18,4 +18,9 @@ export class BackupRestoresController {
   approve(@Param('id') id: string, @Body() body: { reason: string }, @Request() request: any) {
     return this.backups.approveRestore(id, body?.reason, request.user);
   }
+
+  @Post(':id/execute')
+  execute(@Param('id') id: string, @Body() body: { confirmSchoolId: string; changeTicket: string }, @Request() request: any) {
+    return this.backups.submitRestoreExecution(id, body, request.user);
+  }
 }
