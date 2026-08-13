@@ -397,19 +397,22 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Incident readiness
 
-- [ ] Update extension incident runbook.
-- [ ] Add database incident runbook.
-- [ ] Add Redis and queue incident runbook.
-- [ ] Add R2 incident runbook.
-- [ ] Add signing-key compromise runbook.
-- [ ] Add tenant-isolation incident runbook.
-- [ ] Run game-day exercises.
+- [x] Update extension incident runbook.
+- [x] Add database incident runbook.
+- [x] Add Redis and queue incident runbook.
+- [x] Add R2 incident runbook.
+- [x] Add signing-key compromise runbook.
+- [x] Add tenant-isolation incident runbook.
+  - Six role-owned runbooks now define severity, safe evidence, containment, recovery ordering, verification, and closure for extension, PostgreSQL, Redis/queues, R2, signing-key, and cross-tenant incidents. They explicitly prohibit destructive shortcuts such as flushing Redis, public buckets, mutating migration history, disabling RLS/constraints, or copying sensitive payloads into tickets.
+- [x] Run game-day exercises.
+  - `npm run incident:rehearse` executed five bounded technical scenarios (database, Redis, R2, queue worker loss, and API SLO breach) against the production alert evaluator and verified all six runbook contracts. The run passed on 2026-08-13 with every scenario producing a critical page. Human quarterly exercise requirements remain separate in `docs/incident-game-day.md` and the Stage 5 on-call gate remains open.
 
 ### Stage 5 gate
 
 - [ ] Demonstrate RPO at or below 15 minutes.
 - [ ] Demonstrate RTO at or below 60 minutes.
-- [ ] Alerts identify affected school and extension safely.
+- [x] Alerts identify affected school and extension safely.
+  - Alert and correlation contracts use opaque school, extension, version, installation, request, trace, and job identifiers while telemetry redaction excludes names, email, credentials, request bodies, package content, payment evidence, and extension record data. Runbooks preserve this boundary during incident handling.
 - [ ] On-call team completes recovery using documented runbooks.
 
 ## Stage 6 — 1,000-School Certification

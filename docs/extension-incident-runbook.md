@@ -1,5 +1,7 @@
 # Extension Compromise Response Runbook
 
+**Owner:** Runtime Engineering Owner, with Security Owner for compromise. **Page:** runtime circuit, critical validation, capability, or resource alerts. SEV-1 means confirmed malicious code, integrity failure, or cross-school impact; SEV-2 means one extension/version is degraded but contained.
+
 ## Trigger
 
 Use this runbook for malicious package content, leaked publisher credentials, unexpected capability use, integrity mismatch, or repeated extension failures.
@@ -11,6 +13,7 @@ Use this runbook for malicious package content, leaked publisher credentials, un
 3. If publisher credentials or multiple packages may be affected, suspend or revoke the publisher. This unlists its catalog and disables its active installations.
 4. Do not delete package objects, validation reports, versions, audit logs, or installation rows. They are incident evidence.
 5. Confirm the health dashboard reports zero active installations for each blocked version and export the affected-school list for communications.
+6. Preserve correlation IDs and alert IDs. Never copy extension records, package content, school names, or credentials into the incident ticket.
 
 ## Investigation
 
@@ -28,6 +31,6 @@ Use this runbook for malicious package content, leaked publisher credentials, un
 4. Reactivate installations only after the incident owner approves recovery.
 5. Reactivate a suspended publisher only when its credentials and release process are trusted again. Revoked publishers require a new identity.
 
-## Closure
+## Verification and closure
 
 Document root cause, affected schools, data impact, actions, timestamps, and follow-up controls. Confirm audit history contains block, publisher status, upgrade/rollback, and reactivation events. Add regression tests for the failure mode before closing the incident.
