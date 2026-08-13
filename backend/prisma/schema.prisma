@@ -56,6 +56,7 @@ model School {
   domains                   SchoolDomain[]
   provisioningJobs          SchoolProvisioningJob[]
   backupExports             BackupExport[]
+  backupRestoreRequests     BackupRestoreRequest[]
 }
 
 model BackupExport {
@@ -82,6 +83,33 @@ model BackupExport {
   @@unique([schoolId, requestKey])
   @@index([schoolId, createdAt])
   @@index([status, createdAt])
+}
+
+model BackupRestoreRequest {
+  id                 String    @id @default(cuid())
+  schoolId           String
+  school             School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  exportId           String
+  requestKey         String
+  status             String    @default("PENDING_VERIFICATION") // PENDING_VERIFICATION | VERIFYING | VERIFIED | REJECTED | APPROVED | EXECUTING | COMPLETED | FAILED
+  requestedBy        String?
+  requestedRole      String?
+  requestedAt        DateTime  @default(now())
+  verificationReport Json?
+  verifiedAt         DateTime?
+  approvedBy         String?
+  approvedAt         DateTime?
+  approvalReason     String?
+  executedAt         DateTime?
+  attempts           Int       @default(0)
+  errorMessage       String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([schoolId, requestKey])
+  @@index([schoolId, createdAt])
+  @@index([status, createdAt])
+  @@index([exportId])
 }
 
 model SchoolProvisioningJob {

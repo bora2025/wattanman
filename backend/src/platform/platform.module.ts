@@ -42,6 +42,8 @@ import { TelemetryModule } from '../telemetry/telemetry.module';
 import { ObservabilityController } from './observability.controller';
 import { ObservabilityService } from './observability.service';
 import { OperationalAlertService } from './operational-alert.service';
+import { BackupModule } from '../backup/backup.module';
+import { BackupRestoresController } from './backup-restores.controller';
 
 @Module({
   imports: [
@@ -53,12 +55,13 @@ import { OperationalAlertService } from './operational-alert.service';
     SecurityModule,
     JobsModule,
     TelemetryModule,
+    BackupModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'change-me-in-production-use-a-strong-random-key',
       signOptions: { expiresIn: '8h' },
     }),
   ],
-  controllers: [SchoolsController, PlatformAdminsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController, QueueOperationsController, ObservabilityController],
+  controllers: [SchoolsController, PlatformAdminsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController, QueueOperationsController, ObservabilityController, BackupRestoresController],
   providers: [SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, AntivirusScannerService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionResourceGovernorService, ExtensionControlService, ExtensionPlatformGuard, ObservabilityService, OperationalAlertService, { provide: APP_INTERCEPTOR, useClass: ExtensionResourceGovernorInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionCircuitBreakerInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
   exports: [ExtensionsService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionUpdateService, ExtensionAlertService],
 })

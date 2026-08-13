@@ -43,6 +43,8 @@ describeWithDatabase('extension-first tenant isolation E2E', () => {
   let installationBId: string;
   let postAId: string;
   let postBId: string;
+  let backupExportAId: string;
+  let backupExportBId: string;
 
   beforeAll(async () => {
     process.env.PLATFORM_HOST = 'platform.test.local';
@@ -125,10 +127,14 @@ describeWithDatabase('extension-first tenant isolation E2E', () => {
       { schoolId: schoolAId, siteName: 'Site A' },
       { schoolId: schoolBId, siteName: 'Site B' },
     ] });
-    await prisma.auditLog.createMany({ data: [
+      await prisma.auditLog.createMany({ data: [
       { schoolId: schoolAId, action: 'READ', resource: 'ISOLATION', resourceId: 'audit-a', resourceLabel: 'Audit A', success: true },
       { schoolId: schoolBId, action: 'READ', resource: 'ISOLATION', resourceId: 'audit-b', resourceLabel: 'Audit B', success: true },
-    ] });
+      ] });
+      const backupA = await prisma.backupExport.create({ data: { schoolId: schoolAId, requestKey: `${prefix}-backup-a`, status: 'AVAILABLE', storageKey: `backups/${prefix}-a.json`, checksum: 'a'.repeat(64) } });
+      const backupB = await prisma.backupExport.create({ data: { schoolId: schoolBId, requestKey: `${prefix}-backup-b`, status: 'AVAILABLE', storageKey: `backups/${prefix}-b.json`, checksum: 'b'.repeat(64) } });
+      backupExportAId = backupA.id;
+      backupExportBId = backupB.id;
   });
 
   afterAll(async () => {
@@ -207,13 +213,10 @@ describeWithDatabase('extension-first tenant isolation E2E', () => {
     expect(created.body.schoolId).not.toBe(schoolBId);
   });
 
-  it('exports only the caller school data', async () => {
-    const exported = await api.get('/backup/export').set(tenant(hostA)).set(auth(tokenA)).expect(200);
-    for (const rows of Object.values(exported.body.data || {}) as any[][]) {
-      for (const row of rows) {
-        if (row.schoolId !== undefined) expect(row.schoolId).toBe(schoolAId);
-      }
-    }
+    it('lists only the caller school backup exports', async () => {
+      const exported = await api.get('/backup/exports').set(tenant(hostA)).set(auth(tokenA)).expect(200);
+      expect(exported.body.map((item: any) => item.id)).toContain(backupExportAId);
+      expect(exported.body.map((item: any) => item.id)).not.toContain(backupExportBId);
   });
 
   it('fails closed for unknown domains', async () => {

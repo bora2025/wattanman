@@ -371,9 +371,11 @@ An item is complete only when implementation, automated tests, documentation, de
     - Tenant-scoped, idempotent export requests now run on the durable operations queue, write immutable SHA-256-addressed private R2 objects, and persist size, row count, status, attempts, and bounded failures. PostgreSQL RLS and role grants cover the export metadata table. All 342 backend tests and both production builds passed; Railway deployments `79cf3c32-39bb-45dd-bba2-1bd61645de70` (API), `31813100-ea36-4165-a4c0-3668dfc9c3a7` (frontend), and `da579bb7-38c5-4cf0-9ce3-6ba3f92e12f3` (extension worker) succeeded on 2026-08-13.
   - [x] Add short-lived signed export downloads.
     - Available exports return five-minute private SigV4 download URLs with a separately auditable SHA-256 checksum and size. Request, completion, and download events are audited; the school admin UI polls durable status rather than streaming exports through the API. See `docs/school-backup-exports.md`.
-- [ ] Restore into isolated verification environment first.
+- [x] Restore into isolated verification environment first.
+  - Restore requests now pass through a read-only operations-worker stage before approval. It recomputes immutable SHA-256, bounds bytes and rows, validates the version/model allowlist and row shapes, and rejects foreign tenant IDs without writing live application data. The arbitrary upload/direct-import path was removed. See `docs/restore-approval-workflow.md`.
 - [ ] Add school-scoped logical restore that cannot affect another tenant.
-- [ ] Add restore approval and audit workflow.
+- [x] Add restore approval and audit workflow.
+  - Durable restore states, tenant RLS, school request UI, platform recovery review UI, structured verification evidence, independent platform-admin approval, compare-and-set transitions, mandatory reasons, separation of duties, and target-school audit events are implemented. Execution remains deliberately locked until the next tenant-safe executor slice. All 345 backend tests and both production builds passed on 2026-08-13.
 - [ ] Add quarterly restore rehearsal.
 
 ### Data governance

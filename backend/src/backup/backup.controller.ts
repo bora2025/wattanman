@@ -22,9 +22,14 @@ export class BackupController {
   @Get('exports/:id/download')
   downloadExport(@Param('id') id: string, @Request() req: any) { return this.backup.downloadExport(id, req.user); }
 
-  /** Restore from a previously-exported JSON payload. WIPES existing data. */
-  @Post('import')
-  async import(@Body() body: any) {
-    return this.backup.restore(body);
+  @Post('restores')
+  requestRestore(@Body() body: { exportId: string }, @Request() req: any, @Headers('idempotency-key') requestKey: string) {
+    return this.backup.requestRestore(body?.exportId, req.user, requestKey);
   }
+
+  @Get('restores')
+  listRestores() { return this.backup.listRestores(); }
+
+  @Get('restores/:id')
+  getRestore(@Param('id') id: string) { return this.backup.getRestore(id); }
 }

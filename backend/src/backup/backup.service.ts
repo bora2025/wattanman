@@ -1,6 +1,5 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { createHash } from 'crypto';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { TENANT_SCOPED_MODELS } from '../tenancy/scoped-models';
 import { getCurrentSchoolId } from '../tenancy/tenant-context';
@@ -40,7 +39,10 @@ import { AuditService } from '../audit/audit.service';
 /** Live session/security artifacts — never worth exporting or restoring, even
  * scoped to one school. A backup is meant to preserve *data*, not active
  * sessions or in-flight password-reset links. */
-const BACKUP_EXCLUDED_MODELS = new Set<string>(['RefreshToken', 'PasswordResetToken']);
+const BACKUP_EXCLUDED_MODELS = new Set<string>([
+  'RefreshToken', 'PasswordResetToken', 'AuditLog', 'BackupExport', 'BackupRestoreRequest',
+  'ExtensionLifecycleJob', 'ExtensionPurgeReport', 'SchoolProvisioningJob',
+]);
 
 const BACKUP_MODEL_NAMES = [...TENANT_SCOPED_MODELS].filter((m) => !BACKUP_EXCLUDED_MODELS.has(m));
 
@@ -120,6 +122,104 @@ export class BackupService {
     }
   }
 
+  async requestRestore(exportId: string, actor: { userId?: string; role?: string; name?: string; email?: string }, requestKey: string) {
+    const schoolId = getCurrentSchoolId();
+    const normalizedKey = requestKey?.trim();
+    if (!normalizedKey || normalizedKey.length > 200) throw new BadRequestException('A valid Idempotency-Key header is required');
+    const source = await this.prisma.backupExport.findFirst({ where: { id: exportId, schoolId, status: 'AVAILABLE' } });
+    if (!source?.storageKey || !source.checksum) throw new NotFoundException('Available backup export not found');
+    const request = await this.prisma.backupRestoreRequest.upsert({
+      where: { schoolId_requestKey: { schoolId, requestKey: normalizedKey } },
+      create: { schoolId, exportId, requestKey: normalizedKey, requestedBy: actor.userId, requestedRole: actor.role },
+      update: {},
+    });
+    if (request.exportId !== exportId) throw new ConflictException('Idempotency key is already used for another export');
+    if (request.status === 'PENDING_VERIFICATION') {
+      await this.queues.enqueue('operations', {
+        type: 'backup.restore.verify',
+        tenant: { mode: 'SCOPED', schoolId },
+        actor: { id: actor.userId, role: actor.role || 'ADMIN', name: actor.name },
+        idempotencyKey: `backup-restore-verify:${request.id}`,
+        payload: { restoreId: request.id },
+      });
+    }
+    await this.audit.log({ actorId: actor.userId, actorRole: actor.role, actorName: actor.name, actorEmail: actor.email, action: 'RESTORE_REQUESTED', resource: 'BACKUP_RESTORE', resourceId: request.id, metadata: { exportId } });
+    return this.getRestore(request.id);
+  }
+
+  listRestores() { return this.prisma.backupRestoreRequest.findMany({ orderBy: { createdAt: 'desc' }, take: 50 }); }
+
+  async getRestore(id: string) {
+    const request = await this.prisma.backupRestoreRequest.findUnique({ where: { id } });
+    if (!request) throw new NotFoundException('Restore request not found');
+    return request;
+  }
+
+  async verifyRestore(id: string, attempt: number) {
+    const request = await this.getRestore(id);
+    if (['VERIFIED', 'APPROVED', 'EXECUTING', 'COMPLETED'].includes(request.status)) return request;
+    await this.prisma.backupRestoreRequest.update({ where: { id }, data: { status: 'VERIFYING', attempts: attempt, errorMessage: null } });
+    try {
+      const source = await this.prisma.backupExport.findFirst({ where: { id: request.exportId, schoolId: request.schoolId, status: 'AVAILABLE' } });
+      if (!source?.storageKey || !source.checksum) throw new Error('Source export is unavailable');
+      const body = await this.storage.getPrivate(source.storageKey);
+      if (body.length > 200 * 1024 * 1024) throw new Error('Backup exceeds the 200 MB verification limit');
+      const checksum = createHash('sha256').update(body).digest('hex');
+      if (checksum !== source.checksum) throw new Error('Backup checksum does not match immutable export metadata');
+      const payload = JSON.parse(body.toString('utf8'));
+      const report = this.verifySnapshot(payload, request.schoolId, checksum, body.length);
+      const verified = await this.prisma.backupRestoreRequest.update({ where: { id }, data: { status: 'VERIFIED', verificationReport: report as any, verifiedAt: new Date(), errorMessage: null } });
+      await this.audit.log({ actorId: request.requestedBy, actorRole: request.requestedRole, action: 'RESTORE_VERIFIED', resource: 'BACKUP_RESTORE', resourceId: id, metadata: report });
+      return verified;
+    } catch (error: any) {
+      await this.prisma.backupRestoreRequest.update({ where: { id }, data: { status: 'REJECTED', errorMessage: String(error?.message || error).slice(0, 1000) } });
+      throw error;
+    }
+  }
+
+  async approveRestore(id: string, reason: string, actor: { userId?: string; role?: string; name?: string; email?: string }) {
+    if (actor.role !== 'PLATFORM_ADMIN') throw new ConflictException('Platform administrator approval is required');
+    if (!actor.userId) throw new BadRequestException('Approver identity is required');
+    if (!reason?.trim() || reason.trim().length < 10 || reason.length > 500) throw new BadRequestException('Approval reason must be 10 to 500 characters');
+    const request = await this.getRestore(id);
+    if (request.status !== 'VERIFIED') throw new ConflictException('Only verified restore requests can be approved');
+    if (request.requestedBy === actor.userId) throw new ConflictException('Restore requester cannot approve the same restore');
+    const approved = await this.prisma.backupRestoreRequest.updateMany({
+      where: { id, status: 'VERIFIED' },
+      data: { status: 'APPROVED', approvedBy: actor.userId, approvedAt: new Date(), approvalReason: reason.trim() },
+    });
+    if (approved.count !== 1) throw new ConflictException('Restore request changed before approval');
+    await this.auditForSchool(request.schoolId, { actorId: actor.userId, actorRole: actor.role, actorName: actor.name, actorEmail: actor.email, action: 'RESTORE_APPROVED', resource: 'BACKUP_RESTORE', resourceId: id, metadata: { reason: reason.trim() } });
+    return this.getRestore(id);
+  }
+
+  private verifySnapshot(payload: any, schoolId: string, checksum: string, byteSize: number) {
+    if (!payload || payload.version !== 2 || !payload.data || typeof payload.data !== 'object') throw new Error('Unsupported or invalid backup format');
+    const declared = Array.isArray(payload.models) ? payload.models : [];
+    const unknownModels = Object.keys(payload.data).filter((name) => !BACKUP_MODEL_NAMES.includes(name));
+    if (unknownModels.length) throw new Error(`Backup contains unsupported models: ${unknownModels.join(', ')}`);
+    let rowCount = 0;
+    const perModel: Record<string, number> = {};
+    for (const name of declared) {
+      if (!BACKUP_MODEL_NAMES.includes(name)) throw new Error(`Backup declares unsupported model: ${name}`);
+      const rows = payload.data[name];
+      if (!Array.isArray(rows)) throw new Error(`Backup model ${name} is not an array`);
+      for (const row of rows) {
+        if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error(`Backup model ${name} contains an invalid row`);
+        if ('schoolId' in row && row.schoolId !== schoolId) throw new Error(`Backup model ${name} contains foreign tenant data`);
+      }
+      perModel[name] = rows.length;
+      rowCount += rows.length;
+      if (rowCount > 1_000_000) throw new Error('Backup exceeds the one million row verification limit');
+    }
+    return { schemaVersion: 1, snapshotVersion: 2, checksum, byteSize, modelCount: declared.length, rowCount, perModel, verifiedSchoolId: schoolId, isolation: 'READ_ONLY_WORKER', verifiedAt: new Date().toISOString() };
+  }
+
+  private async auditForSchool(schoolId: string, entry: Parameters<AuditService['log']>[0]) {
+    const { tenantContext } = await import('../tenancy/tenant-context');
+    return tenantContext.run({ schoolId, mode: 'scoped' }, () => this.audit.log(entry));
+  }
+
   private camel(modelName: string): string {
     return modelName.charAt(0).toLowerCase() + modelName.slice(1);
   }
@@ -150,98 +250,4 @@ export class BackupService {
     };
   }
 
-  async restore(payload: any) {
-    if (!payload || typeof payload !== 'object' || !payload.data || typeof payload.data !== 'object') {
-      throw new BadRequestException('Invalid backup file: expected { version, data: {...} }');
-    }
-    if (payload.version === 1) {
-      // A pre-multi-tenancy whole-database export. Restoring it here would
-      // silently drop every row's original schoolId in favor of the current
-      // tenant (see the schoolId-stripping below), which is almost certainly
-      // not what the operator intends for what was originally a full-DB
-      // snapshot. Refuse rather than guess.
-      throw new BadRequestException(
-        'This backup file predates multi-tenancy (version 1) and cannot be restored through this endpoint. Contact support.',
-      );
-    }
-
-    const schoolId = getCurrentSchoolId();
-
-    // Use a transaction with a generous timeout; large backups may take a while.
-    return this.prisma.$transaction(
-      async (tx) => {
-        // Disable FK enforcement for the duration — we delete/recreate a school's
-        // rows across many tables whose insert order would otherwise matter.
-        await tx.$executeRawUnsafe(`SET session_replication_role = 'replica'`);
-
-        // 1. Wipe this school's existing rows in every model being restored.
-        //    Each deleteMany() is auto-scoped to `schoolId` by the same
-        //    PrismaService middleware as everything else — no raw SQL, no
-        //    table-name interpolation, and structurally incapable of touching
-        //    another school's rows.
-        for (const name of BACKUP_MODEL_NAMES) {
-          const delegate = (tx as any)[this.camel(name)];
-          if (delegate?.deleteMany) {
-            await delegate.deleteMany({});
-          }
-        }
-
-        // 2. Re-insert, forcing every row's schoolId to the CURRENT tenant —
-        //    deliberately NOT trusting whatever schoolId (if any) is present in
-        //    the uploaded file. Without this, a backup file from a different
-        //    school (or a tampered one) could plant rows still tagged with a
-        //    foreign schoolId: invisible to this school afterward, but real
-        //    write-side contamination of another tenant's data. Stripping it
-        //    here means PrismaService's `create`/`createMany` middleware falls
-        //    back to its default (fill in the current tenant) exactly as it
-        //    would for any ordinary, schoolId-less call elsewhere in the app.
-        let inserted = 0;
-        for (const name of BACKUP_MODEL_NAMES) {
-          const rows = payload.data[name];
-          if (!Array.isArray(rows) || rows.length === 0) continue;
-          const delegate = (tx as any)[this.camel(name)];
-          if (!delegate?.createMany) continue;
-
-          const parsed = rows.map((r: any) => {
-            const { schoolId: _ignoredForeignSchoolId, ...rest } = this.parseDates(name, r);
-            return rest;
-          });
-
-          // createMany doesn't return inserted rows, just a count.
-          // Use chunks to avoid hitting parameter limits on huge tables.
-          const CHUNK = 500;
-          for (let i = 0; i < parsed.length; i += CHUNK) {
-            const chunk = parsed.slice(i, i + CHUNK);
-            await delegate.createMany({ data: chunk, skipDuplicates: true });
-            inserted += chunk.length;
-          }
-        }
-
-        await tx.$executeRawUnsafe(`SET session_replication_role = 'origin'`);
-
-        return { ok: true, schoolId, models: BACKUP_MODEL_NAMES.length, inserted };
-      },
-      { timeout: 5 * 60 * 1000, maxWait: 60 * 1000 },
-    );
-  }
-
-  /** JSON cannot represent Date — Prisma export emits ISO strings. Convert
-   *  fields that the schema declares as DateTime back into Date objects. */
-  private parseDates(modelName: string, row: any): any {
-    // @ts-ignore — runtime DMMF
-    const m = (Prisma.dmmf?.datamodel?.models ?? []).find((x: any) => x.name === modelName);
-    if (!m) return row;
-    const dateFields = ((m as any).fields as any[])
-      .filter(f => f.type === 'DateTime' && f.kind === 'scalar')
-      .map(f => f.name);
-    if (dateFields.length === 0) return row;
-    const out: any = { ...row };
-    for (const f of dateFields) {
-      if (out[f] != null && typeof out[f] === 'string') {
-        const d = new Date(out[f]);
-        if (!isNaN(d.getTime())) out[f] = d;
-      }
-    }
-    return out;
-  }
 }

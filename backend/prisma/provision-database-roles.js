@@ -12,7 +12,7 @@ const RUNTIME_TENANT_TABLES = [
   'SiteSetting', 'Post', 'ExtensionInstallation', 'ExtensionVisibilityGrant',
   'ExtensionAlert', 'ExtensionApiMetric', 'ExtensionMigrationRun',
   'ExtensionPilotFeedback', 'SchoolDomain', 'ExtensionRecord', 'SchoolDailyMetric',
-  'SchoolProvisioningJob', 'BackupExport',
+  'SchoolProvisioningJob', 'BackupExport', 'BackupRestoreRequest',
 ];
 const RUNTIME_CATALOG_TABLES = [
   'Extension', 'ExtensionVersion', 'ExtensionPublisher', 'ExtensionPermission',

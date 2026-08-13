@@ -6,6 +6,7 @@ const CLASSIFIED_CONTROLLERS = [
   'audit/audit.controller.ts',
   'auth/auth.controller.ts',
   'backup/backup.controller.ts',
+  'platform/backup-restores.controller.ts',
   'platform/extension-installations.controller.ts',
   'platform/extension-runtime.controller.ts',
   'platform/extensions.controller.ts',
@@ -37,7 +38,7 @@ describe('controller tenant-isolation registry', () => {
       expect(source).toContain('PlatformScopeGuard');
     }
     const e2e = require('fs').readFileSync(join(process.cwd(), 'test', 'tenant-isolation.e2e-spec.ts'), 'utf8');
-    for (const route of ['/audit/logs', '/auth/users', '/backup/export', '/posts', '/site-settings', '/extensions/installations', '/extensions/${extensionKey}/resources/rewards']) {
+    for (const route of ['/audit/logs', '/auth/users', '/backup/exports', '/posts', '/site-settings', '/extensions/installations', '/extensions/${extensionKey}/resources/rewards']) {
       expect(e2e).toContain(route);
     }
   });
