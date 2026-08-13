@@ -1,3 +1,4 @@
+import './telemetry/instrumentation';
 import { WorkerModule } from './worker.module';
 import { bootstrapWorker } from './worker-bootstrap';
 

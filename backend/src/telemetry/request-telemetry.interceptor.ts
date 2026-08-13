@@ -1,5 +1,6 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { context as otelContext, trace } from '@opentelemetry/api';
 import { Request, Response } from 'express';
 import { catchError, Observable, tap } from 'rxjs';
 import { tenantContext } from '../tenancy/tenant-context';
@@ -18,7 +19,8 @@ export class RequestTelemetryInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest<Request & { user?: { userId?: string } }>();
     const response = context.switchToHttp().getResponse<Response>();
     const requestId = header(request.headers['x-request-id']) || randomUUID();
-    const traceId = header(request.headers['x-trace-id']) || requestId;
+    const activeSpan = trace.getSpan(otelContext.active());
+    const traceId = activeSpan?.spanContext().traceId || header(request.headers['x-trace-id']) || requestId;
     const startedAt = Date.now();
     response.setHeader('x-request-id', requestId);
     response.setHeader('x-trace-id', traceId);
@@ -31,6 +33,14 @@ export class RequestTelemetryInterceptor implements NestInterceptor {
       versionId: header(request.params?.versionId),
       installationId: header(request.params?.id),
     };
+    activeSpan?.setAttributes({
+      'wattaman.request.id': requestId,
+      ...(telemetry.schoolId ? { 'wattaman.school.id': telemetry.schoolId } : {}),
+      ...(telemetry.userId ? { 'enduser.id': telemetry.userId } : {}),
+      ...(telemetry.extensionId ? { 'wattaman.extension.id': telemetry.extensionId } : {}),
+      ...(telemetry.versionId ? { 'wattaman.extension.version_id': telemetry.versionId } : {}),
+      ...(telemetry.installationId ? { 'wattaman.extension.installation_id': telemetry.installationId } : {}),
+    });
     return new Observable((subscriber) => telemetryContext.run(telemetry, () => next.handle().pipe(
         tap(() => this.logger.log({ event: 'http_request', method: request.method, path: request.route?.path || request.path, statusCode: response.statusCode, durationMs: Date.now() - startedAt, outcome: 'success' }, RequestTelemetryInterceptor.name)),
         catchError((error) => {

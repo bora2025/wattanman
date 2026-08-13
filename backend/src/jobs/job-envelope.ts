@@ -20,6 +20,7 @@ export interface JobEnvelope<T = unknown> {
   tenant: JobTenantScope;
   actor: JobActor;
   traceId: string;
+  traceparent?: string;
   idempotencyKey: string;
   attempt: number;
   createdAt: string;
@@ -31,6 +32,7 @@ export function createJobEnvelope<T>(input: {
   tenant: JobTenantScope;
   actor: JobActor;
   traceId?: string;
+  traceparent?: string;
   idempotencyKey: string;
   payload: T;
 }): JobEnvelope<T> {
@@ -45,6 +47,7 @@ export function createJobEnvelope<T>(input: {
     tenant: input.tenant,
     actor: input.actor,
     traceId: input.traceId?.trim() || randomUUID(),
+    traceparent: input.traceparent?.trim() || undefined,
     idempotencyKey: input.idempotencyKey.trim(),
     attempt: 0,
     createdAt: new Date().toISOString(),

@@ -6,6 +6,7 @@ import { tenantContext } from '../tenancy/tenant-context';
 import { assertJobEnvelope, createJobEnvelope, JobEnvelope, JobTenantScope, JobActor } from './job-envelope';
 import { assertProductionRedisUrl } from '../security/redis-url';
 import { telemetryContext } from '../telemetry/telemetry-context';
+import { context as otelContext, propagation, SpanStatusCode, trace } from '@opentelemetry/api';
 
 const DEFAULT_ATTEMPTS = 8;
 const DEFAULT_BACKOFF_MS = 1_000;
@@ -45,7 +46,14 @@ export class QueueInfrastructureService implements OnModuleDestroy {
     idempotencyKey: string;
     payload: T;
   }) {
-    const envelope = createJobEnvelope({ ...input, traceId: input.traceId || telemetryContext.current()?.traceId });
+    const activeSpan = trace.getSpan(otelContext.active())?.spanContext();
+    const carrier: Record<string, string> = {};
+    propagation.inject(otelContext.active(), carrier);
+    const envelope = createJobEnvelope({
+      ...input,
+      traceId: input.traceId || activeSpan?.traceId || telemetryContext.current()?.traceId,
+      traceparent: carrier.traceparent,
+    });
     const jobId = createHash('sha256').update(`${queueName}:${input.idempotencyKey}`).digest('hex');
     return this.queue(queueName).add(envelope.type, envelope, {
       jobId,
@@ -62,13 +70,35 @@ export class QueueInfrastructureService implements OnModuleDestroy {
       assertJobEnvelope(job.data);
       const envelope = { ...job.data, attempt: job.attemptsMade + 1 } as JobEnvelope;
       const scope = { schoolId: envelope.tenant.schoolId, mode: envelope.tenant.mode === 'PLATFORM' ? 'unscoped' as const : 'scoped' as const };
-      return tenantContext.run(scope, () => telemetryContext.run({
-        requestId: envelope.jobId,
-        traceId: envelope.traceId,
-        jobId: envelope.jobId,
-        schoolId: envelope.tenant.schoolId,
-        userId: envelope.actor.id,
-      }, () => handler(envelope)));
+      const parent = envelope.traceparent
+        ? propagation.extract(otelContext.active(), { traceparent: envelope.traceparent })
+        : otelContext.active();
+      return trace.getTracer('wattaman-jobs').startActiveSpan(`job ${envelope.type}`, {
+        attributes: {
+          'messaging.system': 'bullmq',
+          'messaging.destination.name': queueName,
+          'messaging.operation.name': 'process',
+          'wattaman.job.id': envelope.jobId,
+          'wattaman.school.id': envelope.tenant.schoolId,
+          'wattaman.job.attempt': envelope.attempt,
+        },
+      }, parent, async (span) => {
+        try {
+          return await tenantContext.run(scope, () => telemetryContext.run({
+            requestId: envelope.jobId,
+            traceId: span.spanContext().traceId || envelope.traceId,
+            jobId: envelope.jobId,
+            schoolId: envelope.tenant.schoolId,
+            userId: envelope.actor.id,
+          }, () => handler(envelope)));
+        } catch (error) {
+          span.recordException(error as Error);
+          span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error)?.message });
+          throw error;
+        } finally {
+          span.end();
+        }
+      });
     }, {
       connection,
       concurrency: Number(process.env.QUEUE_WORKER_CONCURRENCY || 5),

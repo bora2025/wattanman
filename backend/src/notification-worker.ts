@@ -1,3 +1,4 @@
+import './telemetry/instrumentation';
 import { NotificationWorkerModule } from './notification-worker.module';
 import { bootstrapWorker } from './worker-bootstrap';
 

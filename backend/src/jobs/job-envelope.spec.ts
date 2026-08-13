@@ -7,6 +7,7 @@ describe('job envelope', () => {
       tenant: { mode: 'SCOPED', schoolId: 'school-a' },
       actor: { id: 'admin-a', role: 'ADMIN' },
       traceId: 'trace-1',
+      traceparent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
       idempotencyKey: 'version-1',
       payload: { versionId: 'version-1' },
     });
@@ -14,6 +15,7 @@ describe('job envelope', () => {
       schemaVersion: JOB_ENVELOPE_VERSION,
       type: 'extension.validate',
       traceId: 'trace-1',
+      traceparent: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01',
       idempotencyKey: 'version-1',
       attempt: 0,
     }));

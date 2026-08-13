@@ -1,3 +1,4 @@
+import './telemetry/instrumentation';
 import { ExtensionWorkerModule } from './extension-worker.module';
 import { bootstrapWorker } from './worker-bootstrap';
 
