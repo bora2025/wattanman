@@ -388,7 +388,8 @@ An item is complete only when implementation, automated tests, documentation, de
   - One policy now assigns defaults, deletion ordering, legal-hold precedence, and accountable owners across every requested store. Audit configuration and both scheduled/manual cleanup paths enforce a 365-day minimum even for legacy shorter schedules.
 - [x] Add automated retention and legal-hold exceptions.
   - Tenant-scoped legal holds carry category, optional resource, case reference, reason, creator, and release evidence under RLS. Platform recovery controls create/list/release holds. Distributed daily cleanup deletes private export objects before tombstoning metadata, removes terminal restore history after 365 days, API metrics after 30 days, and school metrics after 730 days in bounded operations; audit, payment, installation, and extension-record cleanup all fail closed on applicable holds, including manual audit cleanup.
-- [ ] Redact secrets and sensitive payloads from telemetry.
+- [x] Redact secrets and sensitive payloads from telemetry.
+  - The structured logger recursively redacts authentication, cookie, password, token, private/API key, credential, MFA/OTP, session, signature, header, body, form, and raw payload fields. Free-form messages, errors, and stacks redact bearer values, sensitive query parameters, JSON secrets, private-key PEM blocks, and PostgreSQL/Redis URL credentials; request tracing logs route templates and dimensions but never bodies or query values.
 - [ ] Add school deletion workflow and signed deletion report.
 - [ ] Verify R2 and database data are both purged.
 
