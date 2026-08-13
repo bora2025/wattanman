@@ -164,6 +164,9 @@ a separate five-minute signed `GET` URL; R2 credentials and permanent object
 URLs never reach either browser.
 
 Cloudflare R2 requires bucket CORS for browser presigned URLs. Apply
+the policy with a scoped Cloudflare management token in `CLOUDFLARE_API_TOKEN` (preferred), or an R2 S3 credential
+that has bucket-policy permission. The management token is sent only to Cloudflare's authenticated
+`PUT /accounts/{account}/r2/buckets/{bucket}/cors` endpoint and is never stored in the policy.
 `docs/r2-browser-cors-policy.example.json`, replacing its origins with the exact
 production and staging frontend origins. Do not use a wildcard origin. The
 policy must allow `PUT` and the signed `Content-Type` and

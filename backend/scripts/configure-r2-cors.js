@@ -20,8 +20,10 @@ function configuration() {
   const bucket = process.env.R2_BUCKET?.trim();
   const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
   const origins = (process.env.R2_BROWSER_ORIGINS || '').split(',').map((value) => value.trim()).filter(Boolean);
-  if (!endpoint || !bucket || !accessKeyId || !secretAccessKey) throw new Error('R2 storage credentials are incomplete');
+  if (!accountId || !endpoint || !bucket) throw new Error('R2 account, endpoint, and bucket are required');
+  if (!apiToken && (!accessKeyId || !secretAccessKey)) throw new Error('CLOUDFLARE_API_TOKEN or complete R2 S3 credentials are required');
   if (!origins.length) throw new Error('R2_BROWSER_ORIGINS must contain exact comma-separated frontend origins');
   for (const origin of origins) {
     const parsed = new URL(origin);
@@ -29,7 +31,29 @@ function configuration() {
       throw new Error(`Unsafe R2 browser origin: ${origin}`);
     }
   }
-  return { endpoint, bucket, accessKeyId, secretAccessKey, origins };
+  return { accountId, endpoint, bucket, accessKeyId, secretAccessKey, apiToken, origins };
+}
+
+function corsRules(config) {
+  return [{
+    id: 'wattaman-browser-uploads',
+    allowed: {
+      origins: config.origins,
+      methods: ['GET', 'PUT', 'HEAD'],
+      headers: ['Content-Type', 'x-amz-meta-sha256'],
+    },
+    exposeHeaders: ['ETag', 'Content-Length', 'Content-Type', 'x-amz-meta-sha256'],
+    maxAgeSeconds: 3600,
+  }];
+}
+
+async function putCorsViaManagementApi(config) {
+  const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(config.accountId)}/r2/buckets/${encodeURIComponent(config.bucket)}/cors`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${config.apiToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rules: corsRules(config) }),
+  });
+  if (!response.ok) throw new Error(`Cloudflare R2 CORS API failed (${response.status}): ${(await response.text()).slice(0, 300)}`);
 }
 
 async function putCors(config) {
@@ -96,12 +120,17 @@ async function verifyCors(config) {
 
 async function main() {
   const config = configuration();
-  await putCors(config);
+  if (config.apiToken) await putCorsViaManagementApi(config);
+  else await putCors(config);
   await verifyCors(config);
-  console.log(`R2 browser CORS configured for ${config.origins.length} exact origin(s).`);
+  console.log(`R2 browser CORS configured for ${config.origins.length} exact origin(s) via ${config.apiToken ? 'Cloudflare management API' : 'S3 API'}.`);
 }
 
-main().catch((error) => {
-  console.error(error.message);
-  process.exit(1);
-});
+module.exports = { configuration, corsRules, putCorsViaManagementApi, putCors, verifyCors, main };
+
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(error.message);
+    process.exit(1);
+  });
+}
