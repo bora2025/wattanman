@@ -4,6 +4,15 @@ import { RequestTelemetryInterceptor } from './request-telemetry.interceptor';
 import { telemetryContext } from './telemetry-context';
 
 describe('RequestTelemetryInterceptor', () => {
+  it('supports health routes that intentionally bypass tenant resolution', async () => {
+    const response = { statusCode: 200, setHeader: jest.fn() };
+    const context = { switchToHttp: () => ({ getRequest: () => ({ method: 'GET', path: '/ready', route: { path: '/ready' }, headers: {}, params: {} }), getResponse: () => response }) };
+
+    await expect(lastValueFrom(new RequestTelemetryInterceptor().intercept(context as any, { handle: () => of({ status: 'ready' }) })))
+      .resolves.toEqual({ status: 'ready' });
+    expect(response.setHeader).toHaveBeenCalledWith('x-request-id', expect.any(String));
+  });
+
   it('accepts bounded IDs, returns them, and exposes dimensions downstream', async () => {
     const headers: Record<string, string> = {};
     const request = {

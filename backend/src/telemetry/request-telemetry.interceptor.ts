@@ -2,7 +2,7 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
 import { catchError, Observable, tap } from 'rxjs';
-import { getTenantStore } from '../tenancy/tenant-context';
+import { tenantContext } from '../tenancy/tenant-context';
 import { JsonLogger } from './json-logger';
 import { telemetryContext } from './telemetry-context';
 
@@ -25,7 +25,7 @@ export class RequestTelemetryInterceptor implements NestInterceptor {
     const telemetry = {
       requestId,
       traceId,
-      schoolId: getTenantStore()?.schoolId,
+      schoolId: tenantContext.getStore()?.schoolId,
       userId: request.user?.userId,
       extensionId: header(request.params?.extensionId),
       versionId: header(request.params?.versionId),
