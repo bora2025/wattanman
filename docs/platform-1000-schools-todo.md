@@ -332,10 +332,11 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Pilot extensions
 
-- [ ] Build one complete declarative business extension.
-- [ ] Build one complete theme extension.
-- [ ] Test install, activation, update, rollback, disable, uninstall, reinstall, and purge.
-- [ ] Test multiple installed extensions with navigation and permission conflicts.
+- [x] Build one complete declarative business extension.
+- [x] Build one complete theme extension.
+- [x] Test install, activation, update, rollback, disable, uninstall, reinstall, and purge.
+- [x] Test multiple installed extensions with navigation and permission conflicts.
+  - `STUDENT_REWARDS` exercises role-filtered navigation, accessible declarative components, tenant records, translations, and least-privilege capabilities; `AURORA_KHMER` exercises bounded tokens and scoped CSS across public and dashboard surfaces. Both release ZIPs pass the production validator. Focused lifecycle tests prove clean reinstall requests, grace-period uninstall, quota-reconciled purge, independent namespaced navigation, and manifest-owned capability denial in addition to the existing install, activation, upgrade, rollback, and disable coverage. Operating and rollback steps are documented in `docs/pilot-extensions.md`.
 
 ### Stage 4 gate
 

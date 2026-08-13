@@ -75,6 +75,40 @@ describe('ExtensionRuntimeService', () => {
     expect(signing.verifyForRuntime).toHaveBeenCalledWith(installation.installedVersion);
   });
 
+  it('keeps navigation and permissions isolated across multiple extensions', async () => {
+    const reportsInstallation = {
+      ...installation,
+      id: 'installation-2',
+      extensionId: 'extension-2',
+      extension: { key: 'REPORTS_PLUS', name: 'Reports Plus', runtimeType: 'DECLARATIVE_MODULE' },
+      installedVersionId: 'version-2',
+      installedVersion: {
+        ...installation.installedVersion,
+        manifest: {
+          permissions: ['reports:read'],
+          navigation: [{ label: 'Rewards', pageKey: 'reports', roles: ['ADMIN'] }],
+          pages: [{ key: 'reports', resource: 'reports', roles: ['ADMIN'] }],
+          resources: { reports: { fields: [] } },
+        },
+      },
+    };
+    prisma.extensionInstallation.findMany.mockResolvedValue([installation, reportsInstallation]);
+
+    const result = await service.navigation({ role: 'ADMIN' });
+
+    expect(result).toEqual(expect.arrayContaining([
+      expect.objectContaining({ href: '/extensions/STUDENT_REWARDS/rewards' }),
+      expect.objectContaining({ href: '/extensions/REPORTS_PLUS/reports' }),
+    ]));
+    expect(new Set(result.map((item) => item.href)).size).toBe(result.length);
+    expect(signing.verifyForRuntime).toHaveBeenCalledWith(installation.installedVersion);
+    expect(signing.verifyForRuntime).toHaveBeenCalledWith(reportsInstallation.installedVersion);
+
+    prisma.extensionInstallation.findFirst.mockResolvedValue(reportsInstallation);
+    await expect(service.createRecord('REPORTS_PLUS', 'reports', {}, { role: 'ADMIN' }))
+      .rejects.toThrow(ForbiddenException);
+  });
+
   it('fails closed when the installed package signature cannot be verified', async () => {
     prisma.extensionInstallation.findFirst.mockResolvedValue(installation);
     signing.verifyForRuntime.mockRejectedValue(new Error('Package signature verification failed'));

@@ -27,7 +27,7 @@ describe('ExtensionInstallationsService', () => {
       updateMany: jest.fn(),
       count: jest.fn(),
     },
-    extensionRecord: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+    extensionRecord: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn(), deleteMany: jest.fn() },
     extensionMigrationRun: { create: jest.fn(), findFirst: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     extensionMigrationBackup: { create: jest.fn() },
     extensionPilotFeedback: { upsert: jest.fn() },
@@ -77,6 +77,32 @@ describe('ExtensionInstallationsService', () => {
         schoolId: 'school-a', extensionId: 'extension-1', installedVersionId: 'version-1',
         billingStatus: 'ACTIVE', requestPricingModel: 'FREE', requestCurrency: 'USD',
         requestSchoolName: 'School A', requestAdminName: 'Admin One', requestAdminEmail: 'admin@school.test',
+      }),
+    });
+  });
+
+  it('reuses an uninstalled installation as a clean reinstall request', async () => {
+    prisma.extension.findFirst.mockResolvedValue({
+      id: 'extension-1', name: 'Rewards', pricingModel: 'FREE', priceMinor: null,
+      currency: 'USD', billingInterval: null, contractReference: null, priceNote: null,
+      versions: [{ id: 'version-2' }],
+    });
+    prisma.extensionInstallation.findFirst.mockResolvedValue({
+      id: 'installation-1', enabled: false, lifecycleState: 'UNINSTALLED',
+      uninstalledAt: new Date(), purgeAfter: new Date(),
+    });
+    prisma.school.findUnique.mockResolvedValue({ id: 'school-a', name: 'School A' });
+    prisma.user.findUnique.mockResolvedValue({ id: 'admin-1', name: 'Admin One', email: 'admin@school.test' });
+    prisma.extensionInstallation.update.mockImplementation(({ data }) => Promise.resolve({ id: 'installation-1', ...data }));
+
+    const result = await tenantContext.run({ schoolId: 'school-a', mode: 'scoped' }, () => service.request('extension-1', actor));
+
+    expect(result.lifecycleState).toBe('REQUESTED');
+    expect(prisma.extensionInstallation.update).toHaveBeenCalledWith({
+      where: { id: 'installation-1' },
+      data: expect.objectContaining({
+        lifecycleState: 'REQUESTED', enabled: false, approvedAt: null, installedAt: null,
+        uninstalledAt: null, purgeAfter: null,
       }),
     });
   });
@@ -486,6 +512,26 @@ describe('ExtensionInstallationsService', () => {
       if (original === undefined) delete process.env.EXTENSION_UNINSTALL_GRACE_DAYS;
       else process.env.EXTENSION_UNINSTALL_GRACE_DAYS = original;
     }
+  });
+
+  it('purges records and installation history only after uninstall', async () => {
+    prisma.extensionInstallation.findUnique.mockResolvedValue({
+      id: 'installation-1', schoolId: 'school-a', extensionId: 'extension-1', enabled: false,
+      uninstalledAt: new Date(), dataBytes: 256, dataRecords: 2,
+      extension: { name: 'Rewards' }, installedVersion: { lifecycleStatus: 'PUBLISHED' },
+    });
+    prisma.extensionRecord.deleteMany.mockResolvedValue({ count: 2 });
+    prisma.extensionInstallation.delete.mockResolvedValue({ id: 'installation-1' });
+
+    const result = await service.removeUninstalled('installation-1', actor);
+
+    expect(result).toEqual({ removed: true, installationId: 'installation-1', extensionRecords: 2 });
+    expect(prisma.extensionRecord.deleteMany).toHaveBeenCalledWith({ where: { schoolId: 'school-a', extensionId: 'extension-1' } });
+    expect(prisma.school.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ id: 'school-a' }),
+      data: { extensionDataBytes: { decrement: 256 }, extensionDataRecords: { decrement: 2 } },
+    }));
+    expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'REMOVE_HISTORY' }));
   });
 
   it('upgrades an installed extension only to its own published version', async () => {
