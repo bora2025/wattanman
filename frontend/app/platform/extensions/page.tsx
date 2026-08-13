@@ -188,6 +188,10 @@ interface ExtensionAlert {
   occurrences: number;
   lastSeenAt: string;
 }
+interface ExtensionKillSwitch {
+  id: string; scopeType: string; scopeId: string; capability: string; active: boolean;
+  reason: string; updatedAt: string;
+}
 interface PurgeReportRecord {
   id: string;
   extensionId?: string | null;
@@ -1646,6 +1650,8 @@ function ExtensionsContent() {
   const [health, setHealth] = useState<any>(null);
   const [publishers, setPublishers] = useState<PublisherRecord[]>([]);
   const [alerts, setAlerts] = useState<ExtensionAlert[]>([]);
+  const [killSwitches, setKillSwitches] = useState<ExtensionKillSwitch[]>([]);
+  const [killSwitchForm, setKillSwitchForm] = useState({ scopeType: "EXTENSION", scopeId: "", capability: "", reason: "" });
   const [apiMetrics, setApiMetrics] = useState<any>(null);
   const [activeView, setActiveView] = useState<
     "catalog" | "installations" | "operations"
@@ -1715,6 +1721,7 @@ function ExtensionsContent() {
         paymentHistoryData,
         collectionData,
         purgeReportData,
+        killSwitchData,
       ] = await Promise.all([
         apiCursorItems<ExtensionRecord>("/api/platform/extensions"),
         apiCursorItems<InstallationRecord>("/api/platform/extension-installations"),
@@ -1726,6 +1733,7 @@ function ExtensionsContent() {
         apiCursorItems<any>("/api/platform/extension-installations/payment-settings/history?limit=20"),
         apiCursorItems<CatalogCollectionRecord>("/api/platform/extensions/catalog-collections"),
         apiCursorItems<PurgeReportRecord>("/api/platform/extension-installations/purge-reports?limit=20"),
+        responseJson(await apiFetch("/api/platform/extensions/kill-switches")),
       ]);
       setExtensions(extensionData);
       setInstallations(installationData);
@@ -1737,12 +1745,26 @@ function ExtensionsContent() {
       setPaymentHistory(paymentHistoryData);
       setCatalogCollections(collectionData);
       setPurgeReports(purgeReportData);
+      setKillSwitches(killSwitchData);
       setError("");
     } catch (loadError: any) {
       setError(loadError.message || "Failed to load extensions");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function saveKillSwitch(event: React.FormEvent, existing?: ExtensionKillSwitch) {
+    event.preventDefault();
+    const input = existing || killSwitchForm;
+    try {
+      await responseJson(await apiFetch("/api/platform/extensions/kill-switches", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scopeType: input.scopeType, scopeId: input.scopeId, capability: input.capability || undefined, active: existing ? !existing.active : true, reason: existing ? window.prompt("Reason for changing this emergency control:", existing.reason) : input.reason }),
+      }));
+      setKillSwitchForm({ scopeType: "EXTENSION", scopeId: "", capability: "", reason: "" });
+      await load();
+    } catch (controlError: any) { setError(controlError.message || "Could not update emergency control"); }
   }
 
   async function downloadPurgeReport(report: PurgeReportRecord) {
@@ -2093,6 +2115,20 @@ function ExtensionsContent() {
           </div>
           {activeView === "operations" && (
             <>
+              <section className="card p-5 space-y-4">
+                <div><h2 className="font-bold text-slate-800 dark:text-slate-100">Emergency extension controls</h2><p className="text-xs text-slate-500">Immediately isolate a publisher, extension, version, school, or one declared capability. Every change is audited.</p></div>
+                <form onSubmit={saveKillSwitch} className="grid gap-3 md:grid-cols-5">
+                  <select className="input" value={killSwitchForm.scopeType} onChange={event => setKillSwitchForm({ ...killSwitchForm, scopeType: event.target.value, capability: event.target.value === "CAPABILITY" ? killSwitchForm.capability : "" })}>{["PUBLISHER", "EXTENSION", "VERSION", "SCHOOL", "CAPABILITY"].map(scope => <option key={scope}>{scope}</option>)}</select>
+                  <input className="input" required placeholder="Target database ID" value={killSwitchForm.scopeId} onChange={event => setKillSwitchForm({ ...killSwitchForm, scopeId: event.target.value })} />
+                  <input className="input" disabled={killSwitchForm.scopeType !== "CAPABILITY"} required={killSwitchForm.scopeType === "CAPABILITY"} placeholder="resource:read" value={killSwitchForm.capability} onChange={event => setKillSwitchForm({ ...killSwitchForm, capability: event.target.value })} />
+                  <input className="input" required placeholder="Incident reason" value={killSwitchForm.reason} onChange={event => setKillSwitchForm({ ...killSwitchForm, reason: event.target.value })} />
+                  <button className="btn-danger">Activate control</button>
+                </form>
+                <div className="space-y-2">
+                  {killSwitches.map(control => <div key={control.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-700"><div><span className={`mr-2 rounded-full px-2 py-1 text-xs font-semibold ${control.active ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600"}`}>{control.active ? "ACTIVE" : "INACTIVE"}</span><strong>{control.scopeType}</strong> · <code>{control.scopeId}</code>{control.capability ? <> · <code>{control.capability}</code></> : null}<p className="mt-1 text-xs text-slate-500">{control.reason}</p></div><button className={control.active ? "btn-secondary" : "btn-danger"} onClick={event => saveKillSwitch(event, control)}>{control.active ? "Deactivate" : "Reactivate"}</button></div>)}
+                  {!killSwitches.length && <p className="text-sm text-slate-500">No emergency controls configured.</p>}
+                </div>
+              </section>
               {health && (
                 <div className="card p-5 space-y-4">
                   <div>

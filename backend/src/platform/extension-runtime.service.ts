@@ -6,21 +6,25 @@ import { getCurrentSchoolId } from '../tenancy/tenant-context';
 import { dateIdPage, decodeDateIdCursor, parsePageLimit } from '../common/cursor-pagination';
 import { ExtensionSigningService } from './extension-signing.service';
 import { ExtensionResourceGovernorService } from './extension-resource-governor.service';
+import { ExtensionControlService } from './extension-control.service';
 
 interface RuntimeUser { userId?: string; role?: string }
 const MAX_RECORD_BYTES = 1024 * 1024;
 
 @Injectable()
 export class ExtensionRuntimeService {
-  constructor(private prisma: PrismaService, private audit: AuditService, private signing: ExtensionSigningService, private governor: ExtensionResourceGovernorService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService, private signing: ExtensionSigningService, private governor: ExtensionResourceGovernorService, private controls: ExtensionControlService) {}
 
   async navigation(user: RuntimeUser) {
     const installations = await this.prisma.extensionInstallation.findMany({
       where: { enabled: true, extension: { runtimeType: 'DECLARATIVE_MODULE', status: 'ACTIVE' } },
       include: { extension: true, installedVersion: { include: { signingKey: true } } },
     });
-    await Promise.all(installations.map((installation) => this.verifyInstallation(installation)));
-    return installations.flatMap((installation) => {
+    const available = (await Promise.all(installations.map(async (installation) => {
+      try { await this.controls.assertAllowed(installation); await this.verifyInstallation(installation); return installation; }
+      catch (error) { if (error instanceof ForbiddenException) return null; throw error; }
+    }))).filter(Boolean) as any[];
+    return available.flatMap((installation) => {
       const manifest = installation.installedVersion.manifest as Record<string, any>;
       return (manifest.navigation || [])
         .filter((item: any) => Array.isArray(item.roles) && item.roles.includes(user.role))
@@ -238,6 +242,7 @@ export class ExtensionRuntimeService {
     const roleAllowed = (manifest.pages || []).some((page: any) => page.resource === resource && page.roles?.includes(user.role));
     if (!roleAllowed) throw new ForbiddenException('Your role cannot access this extension resource');
     if (!manifest.resources?.[resource]) throw new NotFoundException('Extension resource not found');
+    await this.controls.assertAllowed(installation, `${resource}:${action}`);
     return installation;
   }
 
@@ -247,6 +252,7 @@ export class ExtensionRuntimeService {
       include: { extension: true, installedVersion: { include: { signingKey: true } } },
     });
     if (!installation || installation.installedVersion.lifecycleStatus !== 'PUBLISHED') throw new NotFoundException('Extension is not active for this school');
+    await this.controls.assertAllowed(installation);
     await this.verifyInstallation(installation);
     return installation;
   }

@@ -18,7 +18,7 @@ export class CircuitBreakerService implements OnModuleDestroy {
     this.redis = url ? new IORedis(url, { lazyConnect: true, enableReadyCheck: true, maxRetriesPerRequest: 1 }) : null;
   }
 
-  async execute<T>(dependency: string, operation: () => Promise<T>): Promise<T> {
+  async execute<T>(dependency: string, operation: () => Promise<T>, countsAsFailure: (error: unknown) => boolean = () => true): Promise<T> {
     const name = this.name(dependency);
     await this.assertRequestAllowed(name);
     try {
@@ -26,7 +26,7 @@ export class CircuitBreakerService implements OnModuleDestroy {
       await this.recordSuccess(name);
       return result;
     } catch (error) {
-      await this.recordFailure(name);
+      if (countsAsFailure(error)) await this.recordFailure(name);
       throw error;
     }
   }

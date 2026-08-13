@@ -386,6 +386,24 @@ model ExtensionAlert {
   @@index([extensionId, lastSeenAt])
 }
 
+model ExtensionKillSwitch {
+  id             String   @id @default(cuid())
+  scopeType      String   // PUBLISHER | EXTENSION | VERSION | SCHOOL | CAPABILITY
+  scopeId        String
+  capability     String   @default("")
+  active         Boolean  @default(true)
+  reason         String
+  activatedBy    String?
+  activatedAt    DateTime @default(now())
+  deactivatedBy  String?
+  deactivatedAt  DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([scopeType, scopeId, capability])
+  @@index([active, scopeType, scopeId])
+}
+
 model ExtensionApiMetric {
   id              String   @id @default(cuid())
   bucket          DateTime

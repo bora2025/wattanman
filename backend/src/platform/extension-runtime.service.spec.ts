@@ -52,7 +52,8 @@ describe('ExtensionRuntimeService', () => {
     exportRecordLimit: jest.fn(() => 10000),
     consumeExport: jest.fn(),
   };
-  const service = new ExtensionRuntimeService(prisma as any, audit as any, signing as any, governor as any);
+  const controls = { assertAllowed: jest.fn() };
+  const service = new ExtensionRuntimeService(prisma as any, audit as any, signing as any, governor as any, controls as any);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -60,6 +61,7 @@ describe('ExtensionRuntimeService', () => {
     prisma.extensionInstallation.updateMany.mockResolvedValue({ count: 1 });
     prisma.school.updateMany.mockResolvedValue({ count: 1 });
     governor.consumeExport.mockResolvedValue(undefined);
+    controls.assertAllowed.mockResolvedValue(undefined);
     audit.log.mockResolvedValue(undefined);
     signing.verifyForRuntime.mockResolvedValue(true);
   });

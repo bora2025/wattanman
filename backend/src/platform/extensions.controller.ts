@@ -26,6 +26,7 @@ import { ExtensionApiMetricsService } from "./extension-api-metrics.service";
 import { ExtensionPlatformGuard } from "./extension-platform.guard";
 import { RequireIdempotencyKey } from "../security/require-idempotency-key.decorator";
 import { ExtensionLifecycleJobsService } from "./extension-lifecycle-jobs.service";
+import { ExtensionControlService } from "./extension-control.service";
 
 @Controller("platform/extensions")
 @UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard, ExtensionPlatformGuard)
@@ -36,7 +37,16 @@ export class ExtensionsController {
     private alerts: ExtensionAlertService,
     private apiMetrics: ExtensionApiMetricsService,
     private lifecycleJobs: ExtensionLifecycleJobsService,
+    private controls: ExtensionControlService,
   ) {}
+
+  @Get("kill-switches")
+  killSwitches() { return this.controls.list(); }
+
+  @Patch("kill-switches")
+  setKillSwitch(@Body() body: { scopeType?: string; scopeId?: string; capability?: string; active?: boolean; reason?: string }, @Request() request: any) {
+    return this.controls.set(body, request.user);
+  }
 
   @Get()
   list(@Query("cursor") cursor?: string, @Query("limit") limit?: string, @Query("search") search?: string, @Query("lifecycleStatus") lifecycleStatus?: string) {

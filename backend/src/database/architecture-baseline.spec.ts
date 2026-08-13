@@ -4,7 +4,7 @@ import { resolve } from 'path';
 const EXPECTED_MODELS = [
   'AuditCleanupSchedule', 'AuditLog', 'Extension', 'ExtensionAlert', 'ExtensionApiMetric',
   'ExtensionAsset', 'ExtensionCatalogCollection', 'ExtensionCatalogCollectionItem',
-  'ExtensionDependency', 'ExtensionInstallation', 'ExtensionMigrationBackup',
+  'ExtensionDependency', 'ExtensionInstallation', 'ExtensionKillSwitch', 'ExtensionMigrationBackup',
   'ExtensionLifecycleJob', 'ExtensionMigrationRun', 'ExtensionPaymentSetting', 'ExtensionPaymentSettingHistory',
   'ExtensionPaymentEvidence', 'ExtensionPermission', 'ExtensionPilotFeedback', 'ExtensionPurgeReport',
   'ExtensionPublisher', 'ExtensionPublisherMember', 'ExtensionRecord', 'ExtensionReview',

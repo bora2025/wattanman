@@ -42,7 +42,8 @@ describe('ExtensionInstallationsService', () => {
   };
   const signing = { verifyPublished: jest.fn().mockResolvedValue(true) };
   const governor = { storageQuotas: jest.fn(() => ({ installationBytes: 104857600, installationRecords: 100000, schoolBytes: 1073741824, schoolRecords: 1000000 })) };
-  const service = new ExtensionInstallationsService(prisma as any, audit as any, storage as any, signing as any, governor as any);
+  const controls = { assertAllowed: jest.fn() };
+  const service = new ExtensionInstallationsService(prisma as any, audit as any, storage as any, signing as any, governor as any, controls as any);
   const actor = { userId: 'admin-1', role: 'ADMIN' };
 
   beforeEach(() => {
@@ -54,6 +55,7 @@ describe('ExtensionInstallationsService', () => {
     prisma.extensionMigrationRun.findFirst.mockResolvedValue(null);
     prisma.extensionInstallation.updateMany.mockResolvedValue({ count: 1 });
     prisma.school.updateMany.mockResolvedValue({ count: 1 });
+    controls.assertAllowed.mockResolvedValue(undefined);
   });
 
   it('creates a request using the authoritative tenant school', async () => {

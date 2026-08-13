@@ -12,6 +12,7 @@ import { getCurrentSchoolId } from "../tenancy/tenant-context";
 import { R2StorageService } from "../storage/r2-storage.service";
 import { ExtensionSigningService } from "./extension-signing.service";
 import { ExtensionResourceGovernorService } from "./extension-resource-governor.service";
+import { ExtensionControlService } from "./extension-control.service";
 import { dateIdPage, dateIdPageBy, decodeDateIdCursor, parsePageLimit } from "../common/cursor-pagination";
 
 interface Actor {
@@ -53,6 +54,7 @@ export class ExtensionInstallationsService {
     private storage: R2StorageService,
     private signing: ExtensionSigningService,
     private governor: ExtensionResourceGovernorService,
+    private controls: ExtensionControlService,
   ) {}
 
   async schoolDirectory(input: {
@@ -1069,6 +1071,7 @@ export class ExtensionInstallationsService {
       throw new NotFoundException(
         "Published extension version not found for this extension",
       );
+    await this.controls.assertAllowed({ ...existing, installedVersionId: version.id });
     this.assertPlatformCompatibility(version);
     if (existing.extension.runtimeType === "DECLARATIVE_MODULE")
       await this.assertDependencies(
@@ -1123,6 +1126,7 @@ export class ExtensionInstallationsService {
       throw new NotFoundException(
         "Published upgrade version not found for this extension",
       );
+    await this.controls.assertAllowed({ ...existing, installedVersionId: version.id });
     this.assertPlatformCompatibility(version);
     if (existing.extension.runtimeType === "DECLARATIVE_MODULE")
       await this.assertDependencies(
@@ -1369,6 +1373,7 @@ export class ExtensionInstallationsService {
 
   async activate(installationId: string, enabled: boolean, actor: Actor) {
     const existing = await this.requireInstallation(installationId);
+    if (enabled) await this.controls.assertAllowed(existing);
     const state = this.installationLifecycleState(existing);
     if (enabled && state === "ACTIVE") return existing;
     if (!enabled && state === "INSTALLED") return existing;

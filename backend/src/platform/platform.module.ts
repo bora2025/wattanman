@@ -36,6 +36,8 @@ import { ExtensionLifecycleJobsService } from './extension-lifecycle-jobs.servic
 import { ExtensionPurgeReportService } from './extension-purge-report.service';
 import { ExtensionResourceGovernorService } from './extension-resource-governor.service';
 import { ExtensionResourceGovernorInterceptor } from './extension-resource-governor.interceptor';
+import { ExtensionControlService } from './extension-control.service';
+import { ExtensionCircuitBreakerInterceptor } from './extension-circuit-breaker.interceptor';
 
 @Module({
   imports: [
@@ -52,7 +54,7 @@ import { ExtensionResourceGovernorInterceptor } from './extension-resource-gover
     }),
   ],
   controllers: [SchoolsController, PlatformAdminsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController, QueueOperationsController],
-  providers: [SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, AntivirusScannerService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionResourceGovernorService, ExtensionPlatformGuard, { provide: APP_INTERCEPTOR, useClass: ExtensionResourceGovernorInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
+  providers: [SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, AntivirusScannerService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionResourceGovernorService, ExtensionControlService, ExtensionPlatformGuard, { provide: APP_INTERCEPTOR, useClass: ExtensionResourceGovernorInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionCircuitBreakerInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
   exports: [ExtensionsService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionUpdateService, ExtensionAlertService],
 })
 export class PlatformModule {}
