@@ -405,6 +405,7 @@ export class AuditController {
   // ── Audit Log Cleanup Schedules ──────────────────────────────────────────
 
   private static readonly VALID_FREQUENCIES = ['HOURLY', 'DAILY', 'WEEKLY', 'MONTHLY'];
+  private static readonly MIN_RETENTION_DAYS = 365;
 
   /** List all cleanup schedules. */
   @Get('cleanup-schedules')
@@ -422,7 +423,7 @@ export class AuditController {
       throw new BadRequestException(`frequency must be one of: ${AuditController.VALID_FREQUENCIES.join(', ')}`);
     }
     const retain = Number(body.retainDays);
-    if (!retain || retain < 1) throw new BadRequestException('retainDays must be a positive integer');
+    if (!Number.isInteger(retain) || retain < AuditController.MIN_RETENTION_DAYS) throw new BadRequestException(`retainDays must be at least ${AuditController.MIN_RETENTION_DAYS}`);
     return this.prisma.auditCleanupSchedule.create({
       data: {
         schoolId: getCurrentSchoolId(),
@@ -457,7 +458,8 @@ export class AuditController {
   async runCleanupNow(@Param('id') id: string) {
     const schedule = await this.prisma.auditCleanupSchedule.findUnique({ where: { id } });
     if (!schedule) throw new HttpException('Not found', HttpStatus.NOT_FOUND);
-    const cutoff = new Date(Date.now() - schedule.retainDays * 24 * 60 * 60 * 1000);
+    const retainDays = Math.max(schedule.retainDays, AuditController.MIN_RETENTION_DAYS);
+    const cutoff = new Date(Date.now() - retainDays * 24 * 60 * 60 * 1000);
     const result = await this.prisma.auditLog.deleteMany({ where: { createdAt: { lt: cutoff } } });
     await this.prisma.auditCleanupSchedule.update({
       where: { id },

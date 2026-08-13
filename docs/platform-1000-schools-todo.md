@@ -382,8 +382,10 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Data governance
 
-- [ ] Classify core and extension data by sensitivity.
-- [ ] Define retention for logs, audits, payments, packages, backups, and extension records.
+- [x] Classify core and extension data by sensitivity.
+  - Restricted, confidential, internal, and public classes now cover authentication, payments, school content, extension records, packages, telemetry, backups, and published data with mandatory controls and stricter-category inheritance. See `docs/data-classification-retention.md`.
+- [x] Define retention for logs, audits, payments, packages, backups, and extension records.
+  - One policy now assigns defaults, deletion ordering, legal-hold precedence, and accountable owners across every requested store. Audit configuration and both scheduled/manual cleanup paths enforce a 365-day minimum even for legacy shorter schedules.
 - [ ] Add automated retention and legal-hold exceptions.
 - [ ] Redact secrets and sensitive payloads from telemetry.
 - [ ] Add school deletion workflow and signed deletion report.
