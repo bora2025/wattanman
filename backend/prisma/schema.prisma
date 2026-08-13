@@ -591,11 +591,17 @@ model ExtensionPurgeReport {
   storageKey     String   @unique
   reportKeyId    String
   reportChecksum String
+  deliveryStatus String   @default("AVAILABLE") // PENDING | AVAILABLE
+  reportPayload  Json?
+  reportSignature String?
+  deliveryError  String?
+  deliveredAt    DateTime?
   createdAt      DateTime @default(now())
 
   @@index([schoolId, purgedAt])
   @@index([extensionId, purgedAt])
   @@index([installationId, purgedAt])
+  @@index([deliveryStatus, createdAt])
 }
 
 model ExtensionPaymentSetting {

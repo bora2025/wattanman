@@ -16,7 +16,7 @@ describe('ExtensionLifecycleJobsService', () => {
     install: jest.fn(), upgrade: jest.fn(), rollback: jest.fn(), activate: jest.fn(), uninstall: jest.fn(), removeUninstalled: jest.fn(),
   };
   const extensions = { deleteExtension: jest.fn() };
-  const reports = { record: jest.fn().mockResolvedValue({ id: 'report-1' }) };
+  const reports = { assertConfigured: jest.fn(), record: jest.fn().mockResolvedValue({ id: 'report-1' }) };
   const service = new ExtensionLifecycleJobsService(prisma as any, queues as any, locks as any, installations as any, extensions as any, reports as any);
   const actor = { userId: 'admin-1', role: 'PLATFORM_ADMIN', name: 'Admin' };
 

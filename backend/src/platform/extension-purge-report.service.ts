@@ -41,18 +41,16 @@ export class ExtensionPurgeReportService {
   ) {}
 
   async record(input: RecordPurgeInput) {
-    const keyId = process.env.EXTENSION_PURGE_REPORT_KEY_ID?.trim();
-    const privateKeyBase64 = process.env.EXTENSION_PURGE_REPORT_PRIVATE_KEY_BASE64?.trim();
-    if (!keyId || !privateKeyBase64) {
-      throw new ServiceUnavailableException('Extension purge report signing is not configured');
-    }
-    let privateKey;
-    try {
-      privateKey = createPrivateKey(Buffer.from(privateKeyBase64, 'base64').toString('utf8'));
-    } catch {
-      throw new ServiceUnavailableException('Extension purge report private key is invalid');
-    }
+    const report = await this.prepare(input);
+    return this.finalize(report.id, input.actor);
+  }
 
+  assertConfigured() {
+    this.signingKey();
+  }
+
+  async prepare(input: RecordPurgeInput, client: any = this.prisma) {
+    const { keyId, privateKey } = this.signingKey();
     const purgedAt = new Date();
     const payload = {
       schoolId: input.schoolId,
@@ -68,18 +66,13 @@ export class ExtensionPurgeReportService {
       dbSummary: input.dbSummary,
       keyId,
     };
-    // Canonical bytes for signing are exactly this JSON.stringify output. A verifier
-    // reconstructs it the same way (JSON.parse the downloaded report's `payload`, then
-    // JSON.stringify it again) — V8 preserves object key insertion order on both ends,
-    // so no separate canonicalization step is needed.
     const canonical = Buffer.from(JSON.stringify(payload));
     const signature = sign(null, canonical, privateKey).toString('base64');
     const body = Buffer.from(JSON.stringify({ payload, signature }));
     const reportChecksum = createHash('sha256').update(body).digest('hex');
     const storageKey = `reports/extensions/purge/${input.schoolId}/${purgedAt.getTime()}-${reportChecksum.slice(0, 12)}.json`;
 
-    await this.storage.putPrivate(storageKey, body, 'application/json');
-    const report = await this.prisma.extensionPurgeReport.create({
+    return client.extensionPurgeReport.create({
       data: {
         schoolId: input.schoolId,
         extensionId: input.extensionId ?? null,
@@ -95,14 +88,75 @@ export class ExtensionPurgeReportService {
         storageKey,
         reportKeyId: keyId,
         reportChecksum,
+        deliveryStatus: 'PENDING',
+        reportPayload: payload,
+        reportSignature: signature,
       },
     });
-    await this.log(input.actor, 'PURGE_REPORT_GENERATED', report.id, input.scope, {
-      trigger: input.trigger,
-      installationId: input.installationId ?? undefined,
-      extensionId: input.extensionId ?? undefined,
+  }
+
+  private signingKey() {
+    const keyId = process.env.EXTENSION_PURGE_REPORT_KEY_ID?.trim();
+    const privateKeyBase64 = process.env.EXTENSION_PURGE_REPORT_PRIVATE_KEY_BASE64?.trim();
+    if (!keyId || !privateKeyBase64) {
+      throw new ServiceUnavailableException('Extension purge report signing is not configured');
+    }
+    let privateKey;
+    try {
+      privateKey = createPrivateKey(Buffer.from(privateKeyBase64, 'base64').toString('utf8'));
+    } catch {
+      throw new ServiceUnavailableException('Extension purge report private key is invalid');
+    }
+
+    return { keyId, privateKey };
+  }
+
+  async finalize(reportId: string, actor?: Actor) {
+    const report = await this.prisma.extensionPurgeReport.findUnique({ where: { id: reportId } });
+    if (!report) throw new NotFoundException('Extension purge report not found');
+    if (report.deliveryStatus === 'AVAILABLE') return report;
+    if (!report.reportPayload || !report.reportSignature) {
+      throw new ServiceUnavailableException('Pending extension purge report payload is unavailable');
+    }
+    const body = Buffer.from(JSON.stringify({ payload: report.reportPayload, signature: report.reportSignature }));
+    try {
+      await this.storage.putPrivate(report.storageKey, body, 'application/json');
+      const delivered = await this.prisma.extensionPurgeReport.update({
+        where: { id: report.id },
+        data: { deliveryStatus: 'AVAILABLE', deliveredAt: new Date(), deliveryError: null },
+      });
+      await this.log(actor, 'PURGE_REPORT_GENERATED', report.id, report.scope, {
+        trigger: report.trigger,
+        installationId: report.installationId ?? undefined,
+        extensionId: report.extensionId ?? undefined,
+      });
+      return delivered;
+    } catch (error: any) {
+      await this.prisma.extensionPurgeReport.updateMany({
+        where: { id: report.id, deliveryStatus: 'PENDING' },
+        data: { deliveryError: String(error?.message || error).slice(0, 1000) },
+      }).catch(() => undefined);
+      throw error;
+    }
+  }
+
+  async retryPending(limit = 100) {
+    const pending = await this.prisma.extensionPurgeReport.findMany({
+      where: { deliveryStatus: 'PENDING' },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      take: limit,
+      select: { id: true },
     });
-    return report;
+    let delivered = 0;
+    for (const report of pending) {
+      try {
+        await this.finalize(report.id);
+        delivered += 1;
+      } catch {
+        // Keep the durable payload pending for the next scheduled retry.
+      }
+    }
+    return delivered;
   }
 
   async list(input: { schoolId?: string; cursor?: string; limit?: string } = {}) {
@@ -110,6 +164,7 @@ export class ExtensionPurgeReportService {
     const cursor = decodeDateIdCursor(input.cursor);
     const rows = await this.prisma.extensionPurgeReport.findMany({
       where: {
+        deliveryStatus: 'AVAILABLE',
         ...(input.schoolId ? { schoolId: input.schoolId } : {}),
         ...(cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}),
       },
@@ -122,9 +177,9 @@ export class ExtensionPurgeReportService {
   async downloadUrl(reportId: string, actor: Actor) {
     const report = await this.prisma.extensionPurgeReport.findUnique({
       where: { id: reportId },
-      select: { storageKey: true, scope: true },
+      select: { storageKey: true, scope: true, deliveryStatus: true },
     });
-    if (!report) throw new NotFoundException('Extension purge report not found');
+    if (!report || report.deliveryStatus !== 'AVAILABLE') throw new NotFoundException('Extension purge report not found');
     await this.log(actor, 'PURGE_REPORT_ACCESS', reportId, report.scope, { access: 'SIGNED_DOWNLOAD_URL' });
     return { download: this.storage.presignPrivateDownload(report.storageKey) };
   }

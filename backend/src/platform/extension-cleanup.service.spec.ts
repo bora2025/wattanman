@@ -12,7 +12,11 @@ describe('ExtensionCleanupService', () => {
   };
   const storage = { deletePrivate: jest.fn() };
   const schedules = { acquire: jest.fn().mockResolvedValue(true) };
-  const reports = { record: jest.fn().mockResolvedValue({ id: 'report-1' }) };
+  const reports = {
+    retryPending: jest.fn().mockResolvedValue(0),
+    prepare: jest.fn().mockResolvedValue({ id: 'report-1' }),
+    finalize: jest.fn().mockResolvedValue({ id: 'report-1' }),
+  };
   const service = new ExtensionCleanupService(prisma as any, storage as any, schedules as any, reports as any);
 
   beforeEach(() => {
@@ -24,7 +28,9 @@ describe('ExtensionCleanupService', () => {
     prisma.extensionPaymentEvidence.findMany.mockResolvedValue([]);
     prisma.extensionPaymentEvidence.updateMany.mockResolvedValue({ count: 1 });
     prisma.extensionRecord.deleteMany.mockResolvedValue({ count: 0 });
-    reports.record.mockResolvedValue({ id: 'report-1' });
+    reports.retryPending.mockResolvedValue(0);
+    reports.prepare.mockResolvedValue({ id: 'report-1' });
+    reports.finalize.mockResolvedValue({ id: 'report-1' });
   });
 
   it('purges expired uninstall records, reports the purge, and cleans unreferenced rejected packages', async () => {
@@ -43,10 +49,11 @@ describe('ExtensionCleanupService', () => {
       where: { id: 'installation-1', enabled: false, purgeAfter: { lte: expect.any(Date) } },
     });
     expect(prisma.extensionRecord.deleteMany).toHaveBeenCalledWith({ where: { schoolId: 'school-a', extensionId: 'extension-1' } });
-    expect(reports.record).toHaveBeenCalledWith(expect.objectContaining({
+    expect(reports.prepare).toHaveBeenCalledWith(expect.objectContaining({
       schoolId: 'school-a', extensionId: 'extension-1', installationId: 'installation-1',
       scope: 'INSTALLATION', trigger: 'SCHEDULED', dbSummary: { installations: 1, extensionRecords: 3 },
-    }));
+    }), prisma);
+    expect(reports.finalize).toHaveBeenCalledWith('report-1');
     expect(storage.deletePrivate).toHaveBeenCalledWith('quarantine/version-1.zip');
     expect(storage.deletePrivate).toHaveBeenCalledWith('assets/version-1/style.css');
     expect(prisma.extensionAsset.deleteMany).toHaveBeenCalledWith({ where: { extensionVersionId: 'version-1' } });
@@ -60,11 +67,11 @@ describe('ExtensionCleanupService', () => {
       { id: 'installation-good', schoolId: 'school-b', extensionId: 'extension-2' },
     ]);
     prisma.extensionInstallation.deleteMany.mockResolvedValue({ count: 1 });
-    reports.record.mockRejectedValueOnce(new Error('signing not configured')).mockResolvedValueOnce({ id: 'report-1' });
+    reports.prepare.mockRejectedValueOnce(new Error('signing not configured')).mockResolvedValueOnce({ id: 'report-1' });
 
     const result = await service.run();
 
-    expect(reports.record).toHaveBeenCalledTimes(2);
+    expect(reports.prepare).toHaveBeenCalledTimes(2);
     expect(result.installations).toBe(1);
   });
 

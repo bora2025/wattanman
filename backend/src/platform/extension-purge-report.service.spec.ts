@@ -3,7 +3,7 @@ import { generateKeyPairSync, verify } from 'crypto';
 import { ExtensionPurgeReportService } from './extension-purge-report.service';
 
 describe('ExtensionPurgeReportService', () => {
-  const prisma = { extensionPurgeReport: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn() } };
+  const prisma = { extensionPurgeReport: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn(), updateMany: jest.fn() } };
   const storage = {
     putPrivate: jest.fn().mockResolvedValue(undefined),
     presignPrivateDownload: jest.fn().mockReturnValue({ url: 'https://r2.test/download', method: 'GET', headers: {}, expiresAt: new Date().toISOString() }),
@@ -20,7 +20,16 @@ describe('ExtensionPurgeReportService', () => {
     jest.clearAllMocks();
     process.env.EXTENSION_PURGE_REPORT_KEY_ID = 'wattaman-purge-1';
     process.env.EXTENSION_PURGE_REPORT_PRIVATE_KEY_BASE64 = Buffer.from(privateKeyPem).toString('base64');
-    prisma.extensionPurgeReport.create.mockImplementation(({ data }) => Promise.resolve({ id: 'report-1', ...data }));
+    prisma.extensionPurgeReport.create.mockImplementation(({ data }) => {
+      const report = { id: 'report-1', ...data };
+      prisma.extensionPurgeReport.findUnique.mockResolvedValue(report);
+      return Promise.resolve(report);
+    });
+    prisma.extensionPurgeReport.update.mockImplementation(async ({ data }) => ({
+      ...(await prisma.extensionPurgeReport.findUnique.mock.results.at(-1)?.value),
+      id: 'report-1',
+      ...data,
+    }));
   });
 
   afterAll(() => {
@@ -60,7 +69,7 @@ describe('ExtensionPurgeReportService', () => {
   });
 
   it('audits a signed download URL and 404s an unknown report', async () => {
-    prisma.extensionPurgeReport.findUnique.mockResolvedValue({ storageKey: 'reports/extensions/purge/school-a/1.json', scope: 'INSTALLATION' });
+    prisma.extensionPurgeReport.findUnique.mockResolvedValue({ storageKey: 'reports/extensions/purge/school-a/1.json', scope: 'INSTALLATION', deliveryStatus: 'AVAILABLE' });
 
     const result = await service.downloadUrl('report-1', actor);
 

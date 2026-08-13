@@ -25,6 +25,7 @@ export class ExtensionCleanupService {
     const quarantineCutoff = new Date(now.getTime() - this.retentionDays('EXTENSION_QUARANTINE_RETENTION_DAYS', 7) * 24 * 60 * 60 * 1000);
     const rejectedCutoff = new Date(now.getTime() - this.retentionDays('EXTENSION_REJECTED_RETENTION_DAYS', 30) * 24 * 60 * 60 * 1000);
     const batchSize = this.batchSize();
+    await this.reports.retryPending(batchSize);
     const expiredEvidence = await this.prisma.extensionPaymentEvidence.findMany({
       where: {
         status: { in: ['PENDING', 'SUBMITTED'] },
@@ -91,36 +92,31 @@ export class ExtensionCleanupService {
     let purgedInstallations = 0;
     for (const installation of expiredInstallations) {
       try {
-        const summary = await this.prisma.$transaction(async (transaction) => {
+        const outcome = await tenantContext.run({ schoolId: installation.schoolId, mode: 'scoped' }, () =>
+          this.prisma.$transaction(async (transaction) => {
           const records = await transaction.extensionRecord.deleteMany({
             where: { schoolId: installation.schoolId, extensionId: installation.extensionId },
           });
           const deleted = await transaction.extensionInstallation.deleteMany({
             where: { id: installation.id, enabled: false, purgeAfter: { lte: now } },
           });
-          return deleted.count === 1 ? { extensionRecords: records.count } : null;
-        });
-        if (!summary) continue;
-        // Report generation needs a tenant context open so AuditService.log() can resolve
-        // schoolId (a bare cron tick has none) — the DB write itself doesn't need this,
-        // since schoolId is always passed explicitly, but the audit trail does.
-        await tenantContext.run({ schoolId: installation.schoolId, mode: 'scoped' }, () =>
-          this.reports.record({
+          if (deleted.count !== 1) return null;
+          const report = await this.reports.prepare({
             schoolId: installation.schoolId,
             extensionId: installation.extensionId,
             installationId: installation.id,
             scope: 'INSTALLATION',
             trigger: 'SCHEDULED',
             reason: 'Uninstall grace period elapsed',
-            dbSummary: { installations: 1, extensionRecords: summary.extensionRecords },
-          }),
+            dbSummary: { installations: 1, extensionRecords: records.count },
+          }, transaction);
+          return { reportId: report.id };
+        }),
         );
+        if (!outcome) continue;
+        await tenantContext.run({ schoolId: installation.schoolId, mode: 'scoped' }, () => this.reports.finalize(outcome.reportId));
         purgedInstallations += 1;
       } catch (error: any) {
-        // Known limitation: if the delete above committed but report generation then
-        // throws (signing misconfigured, R2 down), the row is already gone and can't be
-        // retried for reporting. Surfaces here as a purge-count vs report-count mismatch
-        // an operator can reconcile via audit logs, not a silently swallowed failure.
         this.logger.warn(`Installation purge failed for ${installation.id}: ${error?.message || error}`);
       }
     }

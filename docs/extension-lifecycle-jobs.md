@@ -77,9 +77,8 @@ verify that buffer against `parsed.signature` (base64) with Node's
 `crypto.verify(null, buffer, publicKey, signature)` using the documented
 public key.
 
-Known limitation on the scheduled path: if the database delete for an
-installation succeeds but report generation then throws (signing
-misconfigured, R2 unavailable), the row is already gone and cannot be
-retried for reporting. This surfaces as a `WARN` log naming the installation
-and as a purge-count vs. report-count mismatch an operator can reconcile via
-audit logs — not a silently swallowed failure.
+Purge reports are retry-safe. The signed payload is persisted as `PENDING`
+inside the same database transaction as a scheduled installation purge, then
+uploaded to private R2 and marked `AVAILABLE`. The cleanup worker retries any
+pending delivery on later runs. Manual purge jobs validate signing before
+destructive work and retain a pending payload when R2 delivery fails.

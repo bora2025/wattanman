@@ -151,6 +151,7 @@ export class ExtensionLifecycleJobsService {
           case 'UNINSTALL':
             return this.installations.uninstall(job.installationId!, actor);
           case 'PURGE_INSTALLATION': {
+            this.reports.assertConfigured();
             const outcome = await this.installations.removeUninstalled(job.installationId!, actor);
             await this.reports.record({
               schoolId: job.schoolId,
@@ -165,6 +166,7 @@ export class ExtensionLifecycleJobsService {
             return outcome;
           }
           case 'PURGE_EXTENSION': {
+            this.reports.assertConfigured();
             const outcome = await this.extensions.deleteExtension(job.extensionId, actor, payload.reason);
             // Core-module "purge" retires the extension instead of physically deleting
             // it (see ExtensionsService.deleteExtension) — nothing was actually purged.
