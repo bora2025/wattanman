@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
 const EXPECTED_MODELS = [
-  'AuditCleanupSchedule', 'AuditLog', 'BackupExport', 'BackupRestoreRequest', 'Extension', 'ExtensionAlert', 'ExtensionApiMetric',
+  'AuditCleanupSchedule', 'AuditLog', 'BackupExport', 'BackupRestoreRequest', 'DataLegalHold', 'Extension', 'ExtensionAlert', 'ExtensionApiMetric',
   'ExtensionAsset', 'ExtensionCatalogCollection', 'ExtensionCatalogCollectionItem',
   'ExtensionDependency', 'ExtensionInstallation', 'ExtensionKillSwitch', 'ExtensionMigrationBackup',
   'ExtensionLifecycleJob', 'ExtensionMigrationRun', 'ExtensionPaymentSetting', 'ExtensionPaymentSettingHistory',

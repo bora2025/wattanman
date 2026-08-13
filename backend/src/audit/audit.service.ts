@@ -160,6 +160,8 @@ export class AuditService {
     for (const s of schedules) {
       if (!this.isDue(s)) continue;
       try {
+        const hold = await this.prisma.dataLegalHold.findFirst({ where: { schoolId: s.schoolId, category: 'AUDIT_LOG', active: true, resourceId: '' } });
+        if (hold) continue;
         const retainDays = Math.max(s.retainDays, 365);
         const cutoff = new Date(Date.now() - retainDays * 24 * 60 * 60 * 1000);
         const result = await this.prisma.auditLog.deleteMany({

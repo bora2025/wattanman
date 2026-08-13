@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -23,4 +23,13 @@ export class BackupRestoresController {
   execute(@Param('id') id: string, @Body() body: { confirmSchoolId: string; changeTicket: string }, @Request() request: any) {
     return this.backups.submitRestoreExecution(id, body, request.user);
   }
+
+  @Get('legal-holds/list')
+  holds(@Query('schoolId') schoolId?: string, @Query('active') active?: string) { return this.backups.listLegalHolds({ schoolId, active }); }
+
+  @Post('legal-holds')
+  createHold(@Body() body: any, @Request() request: any) { return this.backups.createLegalHold(body, request.user); }
+
+  @Post('legal-holds/:id/release')
+  releaseHold(@Param('id') id: string, @Body() body: { reason: string }, @Request() request: any) { return this.backups.releaseLegalHold(id, body?.reason, request.user); }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, Query, Body, UseGuards, Res, HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Query, Body, UseGuards, Res, HttpException, HttpStatus, BadRequestException, ConflictException } from '@nestjs/common';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -458,6 +458,8 @@ export class AuditController {
   async runCleanupNow(@Param('id') id: string) {
     const schedule = await this.prisma.auditCleanupSchedule.findUnique({ where: { id } });
     if (!schedule) throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+    const hold = await this.prisma.dataLegalHold.findFirst({ where: { schoolId: schedule.schoolId, category: 'AUDIT_LOG', active: true, resourceId: '' } });
+    if (hold) throw new ConflictException('Audit cleanup is blocked by an active legal hold');
     const retainDays = Math.max(schedule.retainDays, AuditController.MIN_RETENTION_DAYS);
     const cutoff = new Date(Date.now() - retainDays * 24 * 60 * 60 * 1000);
     const result = await this.prisma.auditLog.deleteMany({ where: { createdAt: { lt: cutoff } } });

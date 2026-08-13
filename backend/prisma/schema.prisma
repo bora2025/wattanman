@@ -57,6 +57,7 @@ model School {
   provisioningJobs          SchoolProvisioningJob[]
   backupExports             BackupExport[]
   backupRestoreRequests     BackupRestoreRequest[]
+  dataLegalHolds            DataLegalHold[]
 }
 
 model BackupExport {
@@ -110,6 +111,27 @@ model BackupRestoreRequest {
   @@index([schoolId, createdAt])
   @@index([status, createdAt])
   @@index([exportId])
+}
+
+model DataLegalHold {
+  id          String    @id @default(cuid())
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  category    String    // AUDIT_LOG | BACKUP_EXPORT | RESTORE_HISTORY | TELEMETRY | METRICS | PAYMENT_EVIDENCE | EXTENSION_RECORD
+  resourceId  String    @default("") // empty means every resource in category for this school
+  caseReference String
+  reason      String
+  active      Boolean   @default(true)
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  releasedBy  String?
+  releasedAt  DateTime?
+  releaseReason String?
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([schoolId, category, resourceId])
+  @@index([schoolId, active, category])
+  @@index([caseReference])
 }
 
 model SchoolProvisioningJob {

@@ -10,6 +10,7 @@ describe('ExtensionCleanupService', () => {
     extensionVersion: { findMany: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
     extensionValidation: { updateMany: jest.fn() },
     extensionAsset: { deleteMany: jest.fn() },
+    dataLegalHold: { findFirst: jest.fn().mockResolvedValue(null) },
   };
   const storage = { deletePrivate: jest.fn() };
   const schedules = { acquire: jest.fn().mockResolvedValue(true) };

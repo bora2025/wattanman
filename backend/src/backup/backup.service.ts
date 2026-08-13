@@ -272,6 +272,67 @@ export class BackupService {
     }
   }
 
+  async createLegalHold(input: { schoolId?: string; category?: string; resourceId?: string; caseReference?: string; reason?: string }, actor: { userId?: string; role?: string; name?: string; email?: string }) {
+    if (actor.role !== 'PLATFORM_ADMIN' || !actor.userId) throw new ConflictException('Platform administrator is required');
+    const schoolId = input?.schoolId?.trim();
+    const category = input?.category?.trim().toUpperCase();
+    const allowed = ['AUDIT_LOG', 'BACKUP_EXPORT', 'RESTORE_HISTORY', 'TELEMETRY', 'METRICS', 'PAYMENT_EVIDENCE', 'EXTENSION_RECORD'];
+    if (!schoolId || !(await this.prisma.school.findUnique({ where: { id: schoolId }, select: { id: true } }))) throw new NotFoundException('School not found');
+    if (!category || !allowed.includes(category)) throw new BadRequestException(`category must be one of: ${allowed.join(', ')}`);
+    if (!input.caseReference?.trim() || input.caseReference.trim().length < 3 || input.caseReference.length > 100) throw new BadRequestException('caseReference must be 3 to 100 characters');
+    if (!input.reason?.trim() || input.reason.trim().length < 10 || input.reason.length > 500) throw new BadRequestException('reason must be 10 to 500 characters');
+    const resourceId = input.resourceId?.trim() || '';
+    const hold = await this.prisma.dataLegalHold.upsert({
+      where: { schoolId_category_resourceId: { schoolId, category, resourceId } },
+      create: { schoolId, category, resourceId, caseReference: input.caseReference.trim(), reason: input.reason.trim(), createdBy: actor.userId },
+      update: { active: true, caseReference: input.caseReference.trim(), reason: input.reason.trim(), createdBy: actor.userId, createdAt: new Date(), releasedBy: null, releasedAt: null, releaseReason: null },
+    });
+    await this.auditForSchool(schoolId, { actorId: actor.userId, actorRole: actor.role, actorName: actor.name, actorEmail: actor.email, action: 'LEGAL_HOLD_CREATED', resource: 'DATA_LEGAL_HOLD', resourceId: hold.id, metadata: { category, resourceId, caseReference: hold.caseReference } });
+    return hold;
+  }
+
+  listLegalHolds(input: { schoolId?: string; active?: string }) {
+    return this.prisma.dataLegalHold.findMany({ where: { ...(input.schoolId ? { schoolId: input.schoolId } : {}), ...(input.active === 'true' ? { active: true } : input.active === 'false' ? { active: false } : {}) }, orderBy: { createdAt: 'desc' }, take: 200 });
+  }
+
+  async releaseLegalHold(id: string, reason: string, actor: { userId?: string; role?: string; name?: string; email?: string }) {
+    if (actor.role !== 'PLATFORM_ADMIN' || !actor.userId) throw new ConflictException('Platform administrator is required');
+    if (!reason?.trim() || reason.trim().length < 10 || reason.length > 500) throw new BadRequestException('release reason must be 10 to 500 characters');
+    const hold = await this.prisma.dataLegalHold.findUnique({ where: { id } });
+    if (!hold || !hold.active) throw new NotFoundException('Active legal hold not found');
+    const released = await this.prisma.dataLegalHold.update({ where: { id }, data: { active: false, releasedBy: actor.userId, releasedAt: new Date(), releaseReason: reason.trim() } });
+    await this.auditForSchool(hold.schoolId, { actorId: actor.userId, actorRole: actor.role, actorName: actor.name, actorEmail: actor.email, action: 'LEGAL_HOLD_RELEASED', resource: 'DATA_LEGAL_HOLD', resourceId: id, metadata: { category: hold.category, resourceId: hold.resourceId, reason: reason.trim() } });
+    return released;
+  }
+
+  async runRetention(now = new Date()) {
+    const expiredExports = await this.prisma.backupExport.findMany({ where: { status: 'AVAILABLE', expiresAt: { lte: now } }, orderBy: { expiresAt: 'asc' }, take: 100 });
+    let exportsExpired = 0;
+    for (const item of expiredExports) {
+      if (await this.hasLegalHold(item.schoolId, 'BACKUP_EXPORT', item.id)) continue;
+      if (item.storageKey) await this.storage.deletePrivate(item.storageKey);
+      const updated = await this.prisma.backupExport.updateMany({ where: { id: item.id, status: 'AVAILABLE', storageKey: item.storageKey }, data: { status: 'EXPIRED', storageKey: null } });
+      exportsExpired += updated.count;
+    }
+    const terminalCutoff = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+    const restoreHeldSchools = await this.heldSchools('RESTORE_HISTORY');
+    const telemetryHeldSchools = await this.heldSchools('TELEMETRY');
+    const metricHeldSchools = await this.heldSchools('METRICS');
+    const restores = await this.prisma.backupRestoreRequest.deleteMany({ where: { status: { in: ['COMPLETED', 'FAILED', 'REJECTED'] }, updatedAt: { lt: terminalCutoff }, schoolId: { notIn: restoreHeldSchools } } });
+    const apiMetrics = await this.prisma.extensionApiMetric.deleteMany({ where: { bucket: { lt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) }, ...(telemetryHeldSchools.length ? { OR: [{ schoolId: null }, { schoolId: { notIn: telemetryHeldSchools } }] } : {}) } });
+    const dailyMetrics = await this.prisma.schoolDailyMetric.deleteMany({ where: { date: { lt: new Date(now.getTime() - 730 * 24 * 60 * 60 * 1000) }, schoolId: { notIn: metricHeldSchools } } });
+    return { exportsExpired, restoreRequestsDeleted: restores.count, apiMetricsDeleted: apiMetrics.count, schoolMetricsDeleted: dailyMetrics.count, completedAt: now.toISOString() };
+  }
+
+  private hasLegalHold(schoolId: string, category: string, resourceId: string) {
+    return this.prisma.dataLegalHold.findFirst({ where: { schoolId, category, active: true, resourceId: { in: ['', resourceId] } } }).then(Boolean);
+  }
+
+  private async heldSchools(category: string) {
+    const rows = await this.prisma.dataLegalHold.findMany({ where: { category, active: true, resourceId: '' }, select: { schoolId: true }, distinct: ['schoolId'] });
+    return rows.map((row) => row.schoolId);
+  }
+
   private async persistSafetyExport(request: any, attempt: number) {
     const snapshot = await this.exportAll();
     const body = Buffer.from(JSON.stringify(snapshot));

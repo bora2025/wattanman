@@ -37,6 +37,8 @@ Manifest-declared extension data categories inherit the stricter of `Confidentia
 
 A hold records target school, category, optional resource, reason, case reference, creator, and release identity/timestamps. Cleanup must query active holds before destructive database or R2 operations. Holds do not grant data access; ordinary authorization still applies. Releasing a hold never deletes synchronously—it only permits the next audited retention run.
 
+Platform recovery controls expose active-hold creation, listing, and release. General holds protect audit cleanup, school exports, restore history, telemetry, school metrics, payment evidence, and extension records; payment evidence's record-level hold remains an additional independent safeguard.
+
 ## Ownership
 
 - Platform reliability owns logs, traces, metrics, exports, restores, and provider backups.

@@ -1,10 +1,12 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { QueueInfrastructureService } from '../jobs/queue-infrastructure.service';
 import { BackupService } from './backup.service';
+import { Cron } from '@nestjs/schedule';
+import { ScheduledTaskGuardService } from '../security/scheduled-task-guard.service';
 
 @Injectable()
 export class BackupWorkerProcessorService implements OnModuleInit {
-  constructor(private readonly queues: QueueInfrastructureService, private readonly backups: BackupService) {}
+  constructor(private readonly queues: QueueInfrastructureService, private readonly backups: BackupService, private readonly schedules: ScheduledTaskGuardService) {}
 
   onModuleInit() {
     if (process.env.WORKER_ROLE !== 'extension') return;
@@ -17,5 +19,12 @@ export class BackupWorkerProcessorService implements OnModuleInit {
       }
       throw new Error(`Unsupported operations job type: ${envelope.type}`);
     });
+  }
+
+  @Cron('30 2 * * *')
+  async retain() {
+    if (process.env.WORKER_ROLE !== 'extension') return;
+    if (!(await this.schedules.acquire('backup-data-retention', 24 * 60 * 60_000))) return;
+    return this.backups.runRetention();
   }
 }

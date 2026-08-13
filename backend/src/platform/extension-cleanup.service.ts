@@ -33,13 +33,15 @@ export class ExtensionCleanupService {
         retainUntil: { lte: now },
         storageKey: { not: null },
       },
-      select: { id: true, installationId: true, storageKey: true, status: true },
+      select: { id: true, schoolId: true, installationId: true, storageKey: true, status: true },
       orderBy: [{ retainUntil: 'asc' }, { id: 'asc' }],
       take: batchSize,
     });
     let purgedEvidence = 0;
     for (const evidence of expiredEvidence) {
       try {
+        const generalizedHold = await this.prisma.dataLegalHold.findFirst({ where: { schoolId: evidence.schoolId, category: 'PAYMENT_EVIDENCE', active: true, resourceId: { in: ['', evidence.id] } } });
+        if (generalizedHold) continue;
         const claimed = await this.prisma.extensionPaymentEvidence.updateMany({
           where: {
             id: evidence.id,
@@ -92,6 +94,8 @@ export class ExtensionCleanupService {
     let purgedInstallations = 0;
     for (const installation of expiredInstallations) {
       try {
+        const generalizedHold = await this.prisma.dataLegalHold.findFirst({ where: { schoolId: installation.schoolId, category: 'EXTENSION_RECORD', active: true, resourceId: { in: ['', installation.id, installation.extensionId] } } });
+        if (generalizedHold) continue;
         const outcome = await tenantContext.run({ schoolId: installation.schoolId, mode: 'scoped' }, () =>
           this.prisma.$transaction(async (transaction) => {
           const records = await transaction.extensionRecord.deleteMany({

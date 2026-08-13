@@ -9,14 +9,18 @@ describe('BackupService asynchronous exports', () => {
       findUnique: jest.fn(),
       findMany: jest.fn(),
       findFirst: jest.fn(),
+      updateMany: jest.fn(),
     },
     backupRestoreRequest: { upsert: jest.fn(), update: jest.fn(), updateMany: jest.fn(), findUnique: jest.fn(), findMany: jest.fn() },
     extension: { count: jest.fn() },
     extensionVersion: { count: jest.fn() },
+    dataLegalHold: { findFirst: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), upsert: jest.fn(), update: jest.fn() },
+    extensionApiMetric: { deleteMany: jest.fn() },
+    schoolDailyMetric: { deleteMany: jest.fn() },
     $transaction: jest.fn(),
   };
   const queues: any = { enqueue: jest.fn() };
-  const storage: any = { putPrivateImmutable: jest.fn(), presignPrivateDownload: jest.fn(), getPrivate: jest.fn() };
+  const storage: any = { putPrivateImmutable: jest.fn(), presignPrivateDownload: jest.fn(), getPrivate: jest.fn(), deletePrivate: jest.fn() };
   const audit: any = { log: jest.fn() };
   const service = new BackupService(prisma, queues, storage, audit);
 
@@ -122,5 +126,24 @@ describe('BackupService asynchronous exports', () => {
     expect(storage.putPrivateImmutable.mock.invocationCallOrder[0]).toBeLessThan(prisma.$transaction.mock.invocationCallOrder[0]);
     expect(transaction.user.upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'user-1' }, create: expect.objectContaining({ schoolId: 'school-1' }) }));
     expect(transactionUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'COMPLETED' }) }));
+  });
+
+  it('expires private exports while preserving legal holds', async () => {
+    const now = new Date('2026-08-13T00:00:00.000Z');
+    prisma.backupExport.findMany.mockResolvedValue([
+      { id: 'held', schoolId: 'school-1', status: 'AVAILABLE', storageKey: 'held.json' },
+      { id: 'expired', schoolId: 'school-2', status: 'AVAILABLE', storageKey: 'expired.json' },
+    ]);
+    prisma.dataLegalHold.findFirst.mockImplementation(({ where }: any) => Promise.resolve(where.schoolId === 'school-1' ? { id: 'hold-1' } : null));
+    prisma.dataLegalHold.findMany.mockResolvedValue([]);
+    prisma.backupExport.updateMany.mockResolvedValue({ count: 1 });
+    prisma.backupRestoreRequest.deleteMany = jest.fn().mockResolvedValue({ count: 2 });
+    prisma.extensionApiMetric.deleteMany.mockResolvedValue({ count: 3 });
+    prisma.schoolDailyMetric.deleteMany.mockResolvedValue({ count: 4 });
+    const result = await service.runRetention(now);
+    expect(storage.deletePrivate).toHaveBeenCalledTimes(1);
+    expect(storage.deletePrivate).toHaveBeenCalledWith('expired.json');
+    expect(storage.deletePrivate).not.toHaveBeenCalledWith('held.json');
+    expect(result).toEqual(expect.objectContaining({ exportsExpired: 1, restoreRequestsDeleted: 2, apiMetricsDeleted: 3, schoolMetricsDeleted: 4 }));
   });
 });
