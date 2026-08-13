@@ -503,6 +503,13 @@ Coding for Stage 1 must not start until:
 - [ ] A production database backup is verified.
 - [ ] A staging environment is available.
 - [ ] The obsolete-model inventory is reviewed.
-- [ ] Redis and queue choices are recorded.
-- [ ] Tenant domain and RLS approaches are recorded.
-- [ ] Rollback ownership is assigned.
+- [x] Redis and queue choices are recorded.
+  - Accepted ADR 0003 selects managed TLS Redis, BullMQ, PostgreSQL-authoritative job state, bounded retries, dead letters,
+    replay, and failure monitoring.
+- [x] Tenant domain and RLS approaches are recorded.
+  - Accepted ADRs 0001 and 0002 require exact verified domain resolution, JWT/host tenant agreement, scoped database
+    transactions, separate database identities, and forced PostgreSQL row-level security.
+- [x] Rollback ownership is assigned.
+  - `docs/architecture-governance.md` assigns accountable platform, marketplace, runtime, infrastructure, security, and
+    reliability roles, while each accepted ADR records its rollback procedure. Production releases still fail closed
+    until those roles resolve to named on-call people.
