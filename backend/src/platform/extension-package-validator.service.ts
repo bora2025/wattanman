@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import { ExtensionManifestSchemaService } from './extension-manifest-schema.service';
+import { EXTENSION_COMPONENT_ACTIONS, EXTENSION_COMPONENT_PROPERTIES, EXTENSION_FIELD_TYPES, EXTENSION_UI_COMPONENTS, EXTENSION_UI_ROLES } from './extension-ui-registry';
 
 const MAX_FILES = 200;
 const MAX_ENTRIES = 250;
@@ -18,8 +19,8 @@ const THEME_RADII = ['sharp', 'soft', 'round'];
 const THEME_SPACING = ['compact', 'comfortable', 'spacious'];
 const THEME_SHADOWS = ['none', 'soft', 'elevated'];
 const THEME_SURFACES = ['flat', 'bordered', 'glass'];
-const MODULE_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'ACCOUNTANT', 'REPORTER', 'EMPLOYEE', 'PARENT', 'STUDENT']);
-const MODULE_COMPONENTS = new Set(['stats', 'form', 'table', 'details', 'chart']);
+const MODULE_ROLES = new Set<string>(EXTENSION_UI_ROLES);
+const MODULE_COMPONENTS = new Set<string>(EXTENSION_UI_COMPONENTS);
 const APPROVED_THEME_SELECTORS = new Set([
   ':root', 'body', '.dark body', '.card', '.stat-card', '.dark .card', '.dark .stat-card',
   '.btn-primary', '.btn-primary:hover', '.btn-outline', '.btn-outline:hover', '.page-shell',
@@ -299,13 +300,18 @@ export class ExtensionPackageValidatorService {
         }
         if (!manifest.resources?.[page.resource]) error('MODULE_PAGE_RESOURCE', `Page ${page.key} references an undeclared resource`);
         for (const field of page.fields || []) {
-          if (!field?.key || !field?.label || !['text', 'number', 'date', 'boolean'].includes(field?.type)) error('MODULE_FIELD', `Page ${page.key} contains an invalid field`);
+          if (!field?.key || !field?.label || !EXTENSION_FIELD_TYPES.includes(field?.type)) error('MODULE_FIELD', `Page ${page.key} contains an invalid field`);
         }
         for (const component of page.components || []) {
           if (!component || !MODULE_COMPONENTS.has(component.type)) {
             error('MODULE_COMPONENT', `Page ${page.key} uses an unapproved component`);
             continue;
           }
+          const approvedProperties = EXTENSION_COMPONENT_PROPERTIES[component.type as keyof typeof EXTENSION_COMPONENT_PROPERTIES];
+          const unknownProperty = Object.keys(component).find((key) => !approvedProperties.includes(key));
+          if (unknownProperty) error('MODULE_COMPONENT_PROPERTY', `Page ${page.key} component ${component.type} has unknown property ${unknownProperty}`);
+          const approvedActions = EXTENSION_COMPONENT_ACTIONS[component.type as keyof typeof EXTENSION_COMPONENT_ACTIONS];
+          if (component.actions?.some((action: string) => !approvedActions.includes(action))) error('MODULE_COMPONENT_ACTION', `Page ${page.key} component ${component.type} has an invalid action`);
           if (component.type === 'stats' && (!Array.isArray(component.metrics) || component.metrics.some((metric: any) => !metric?.key || !metric?.label || !['count', 'sum', 'average'].includes(metric.aggregate) || (metric.aggregate !== 'count' && !page.fields.some((field: any) => field.key === metric.field && field.type === 'number'))))) error('MODULE_STATS', `Page ${page.key} has invalid stats metrics`);
           if (component.type === 'form' && component.actions?.some((action: string) => !['create', 'update'].includes(action))) error('MODULE_FORM', `Page ${page.key} has invalid form actions`);
           if (component.type === 'table' && component.columns?.some((key: string) => !page.fields.some((field: any) => field.key === key))) error('MODULE_COLUMNS', `Page ${page.key} references an unknown column`);

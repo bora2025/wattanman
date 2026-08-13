@@ -6,7 +6,14 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: 'line',
+  webServer: {
+    command: 'node node_modules/next/dist/bin/next dev --hostname 127.0.0.1 --port 3100',
+    url: 'http://127.0.0.1:3100',
+    reuseExistingServer: true,
+    timeout: 120_000,
+  },
   use: {
+    baseURL: 'http://127.0.0.1:3100',
     browserName: 'chromium',
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,

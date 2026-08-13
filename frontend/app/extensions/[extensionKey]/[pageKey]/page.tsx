@@ -34,6 +34,7 @@ function DynamicExtensionPage({ extensionKey, pageKey }: { extensionKey: string;
   const [selected, setSelected] = useState<RuntimeRecord | null>(null)
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
+  const [state, setState] = useState<'loading' | 'ready' | 'error' | 'denied' | 'offline'>('loading')
   const [busy, setBusy] = useState(false)
 
   const translate = (key: string | undefined, fallback: string) => {
@@ -44,13 +45,22 @@ function DynamicExtensionPage({ extensionKey, pageKey }: { extensionKey: string;
   }
 
   async function load() {
+    setState('loading')
     try {
-      const page = await json(await apiFetch(`/api/extensions/${extensionKey}/pages/${pageKey}`))
+      const pageResponse = await apiFetch(`/api/extensions/${extensionKey}/pages/${pageKey}`)
+      if (pageResponse.status === 401 || pageResponse.status === 403) {
+        setState('denied')
+        setError('You do not have permission to use this extension page.')
+        return
+      }
+      const page = await json(pageResponse)
       setDefinition(page)
       setRecords(await apiCursorItems<RuntimeRecord>(`/api/extensions/${extensionKey}/resources/${page.page.resource}`))
       setError('')
+      setState('ready')
     } catch (loadError: any) {
       setError(loadError.message || 'Extension page unavailable')
+      setState(typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'error')
     }
   }
 
@@ -128,8 +138,9 @@ function DynamicExtensionPage({ extensionKey, pageKey }: { extensionKey: string;
       <div className="h-14 lg:hidden" />
       <div className="page-header"><h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{definition ? translate(definition.page.titleKey, definition.page.title) : 'Extension'}</h1><p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{definition?.extension.name}</p></div>
       <div className="page-body space-y-5">
-        {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
-        {definition && components.map((component, index) => <div key={`${component.type}-${index}`}>{component.type === 'form' ? renderForm(component) : component.type === 'table' ? renderTable(component) : component.type === 'stats' ? renderStats(component) : component.type === 'chart' ? renderChart(component) : component.type === 'details' && selected ? <section className="card p-5" aria-label={translate(component.titleKey, component.title || 'Record details')}><div className="flex justify-between"><h2 className="font-semibold">{translate(component.titleKey, component.title || 'Record details')}</h2><button onClick={() => setSelected(null)} aria-label="Close record details">×</button></div><dl className="grid md:grid-cols-2 gap-3 mt-4">{(component.fields || definition.page.fields.map(item => item.key)).map(key => { const item = field(key); return item ? <div key={key}><dt className="text-xs text-slate-500">{translate(item.labelKey, item.label)}</dt><dd>{String(selected.data[key] ?? '')}</dd></div> : null })}</dl></section> : null}</div>)}
+        {state === 'loading' && <div role="status" aria-live="polite" className="card p-8 text-center text-sm text-slate-500">Loading extension…</div>}
+        {state !== 'loading' && error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"><p className="font-medium">{state === 'denied' ? 'Permission denied' : state === 'offline' ? 'You are offline' : 'Extension unavailable'}</p><p className="mt-1">{error}</p>{state !== 'denied' && <button type="button" className="btn-outline mt-3" onClick={load}>Try again</button>}</div>}
+        {state === 'ready' && definition && components.map((component, index) => <div key={`${component.type}-${index}`}>{component.type === 'form' ? renderForm(component) : component.type === 'table' ? renderTable(component) : component.type === 'stats' ? renderStats(component) : component.type === 'chart' ? renderChart(component) : component.type === 'details' && selected ? <section className="card p-5" aria-label={translate(component.titleKey, component.title || 'Record details')}><div className="flex justify-between"><h2 className="font-semibold">{translate(component.titleKey, component.title || 'Record details')}</h2><button onClick={() => setSelected(null)} aria-label="Close record details">×</button></div><dl className="grid md:grid-cols-2 gap-3 mt-4">{(component.fields || definition.page.fields.map(item => item.key)).map(key => { const item = field(key); return item ? <div key={key}><dt className="text-xs text-slate-500">{translate(item.labelKey, item.label)}</dt><dd>{String(selected.data[key] ?? '')}</dd></div> : null })}</dl></section> : null}</div>)}
       </div>
     </main>
   </div>

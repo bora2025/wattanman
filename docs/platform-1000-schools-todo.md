@@ -280,12 +280,18 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Runtime UI
 
-- [ ] Build approved component registry.
-- [ ] Deny unknown components and properties.
-- [ ] Enforce safe links, images, CSS, and content.
-- [ ] Add loading, empty, error, permission-denied, and offline states.
-- [ ] Add responsive and keyboard-accessibility tests.
-- [ ] Add theme preview and runtime isolation tests.
+- [x] Build approved component registry.
+  - `extension-ui-registry.ts` is the server authority for the closed v1 component, property, action, role, and field-type sets used by package validation; the renderer implements the same five typed components.
+- [x] Deny unknown components and properties.
+  - Strict manifest JSON Schema denies unknown properties, while semantic validation checks every component against its registry-specific property and action allowlists before publication.
+- [x] Enforce safe links, images, CSS, and content.
+  - V1 components expose no arbitrary link, image, HTML, or script properties; React escapes record/translation content, package MIME/path rules protect assets, and theme CSS is selector/declaration allowlisted and namespace-scoped.
+- [x] Add loading, empty, error, permission-denied, and offline states.
+  - The live extension route now has explicit polite loading, table-empty, retryable error, distinct 401/403 permission denial, and offline messaging rather than collapsing all failures into one alert.
+- [x] Add responsive and keyboard-accessibility tests.
+  - Playwright exercises the real Next.js extension route with mocked authenticated APIs at 390×844 and 1280×720, asserts no horizontal overflow and an empty state, and verifies keyboard focus order across labeled fields and the primary action.
+- [x] Add theme preview and runtime isolation tests.
+  - Deterministic Chromium pixel baselines continue to verify dashboard/public surfaces in light/dark modes, alongside the new route-level state tests. All 19 focused backend tests, six Playwright tests, and both production builds passed on 2026-08-13.
 
 ### Runtime APIs and data
 
