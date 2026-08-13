@@ -194,6 +194,16 @@ export class PlatformExtensionInstallationsController {
     return this.installations.setUpdatePolicy(id, body.policy, req.user);
   }
 
+  @Patch("installations/:id/rollout-group")
+  rolloutGroup(@Param("id") id: string, @Body() body: { group: string }, @Request() req) {
+    return this.installations.setRolloutGroup(id, body.group, req.user);
+  }
+
+  @Patch("migrations/:migrationRunId/intervention")
+  migrationIntervention(@Param("migrationRunId") migrationRunId: string, @Body() body: { action: string; reason: string }, @Request() req) {
+    return this.installations.interveneMigration(migrationRunId, body.action, body.reason, req.user);
+  }
+
   @Patch(":id/activation")
   @RequireIdempotencyKey()
   @HttpCode(202)

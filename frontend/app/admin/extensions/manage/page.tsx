@@ -238,8 +238,8 @@ function ManageExtensionsContent() {
                         onChange={event => updatePolicy(item.id, event.target.value)}
                       >
                         <option value="MANUAL">Manual</option>
-                        <option value="NOTIFY">Notify admins</option>
-                        <option value="AUTO_APPROVED">Automatic</option>
+                        <option value="NOTIFY_ADMINS">Notify admins</option>
+                        <option value="AUTOMATIC">Automatic</option>
                       </select>
                     </label>
                     {requestPricingLabel(item) && (

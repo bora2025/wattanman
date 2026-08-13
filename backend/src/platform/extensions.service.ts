@@ -493,6 +493,30 @@ export class ExtensionsService {
     return updated;
   }
 
+  async setRollout(versionId: string, data: { stage?: string; resume?: boolean; reason?: string }, actor: Actor) {
+    const stages = ["INTERNAL", "PILOT", "PERCENT_5", "PERCENT_25", "FULL"];
+    if (!data.stage || !stages.includes(data.stage)) throw new BadRequestException("Rollout stage must be INTERNAL, PILOT, PERCENT_5, PERCENT_25, or FULL");
+    const existing = await this.prisma.extensionVersion.findUnique({ where: { id: versionId }, include: { extension: true } });
+    if (!existing) throw new NotFoundException("Extension version not found");
+    if (existing.lifecycleStatus !== "PUBLISHED") throw new ConflictException("Only a published version can be rolled out");
+    await this.requirePublisherRole(existing.extension.publisherId, actor, "PUBLISH");
+    if (existing.rolloutPausedAt && !data.resume) throw new ConflictException("Rollout is paused; explicitly resume it to change stage");
+    if (data.resume && !data.reason?.trim()) throw new BadRequestException("A reason is required to resume a paused rollout");
+    const updated = await this.prisma.extensionVersion.update({
+      where: { id: versionId },
+      data: {
+        rolloutStage: data.stage,
+        ...(data.resume ? { rolloutPausedAt: null, rolloutPauseReason: null } : {}),
+      },
+    });
+    await this.log(actor, data.resume ? "ROLLOUT_RESUME" : "ROLLOUT_STAGE", "EXTENSION_VERSION", versionId, `${existing.extension.key}@${existing.version}`, {
+      before: { stage: existing.rolloutStage, pausedAt: existing.rolloutPausedAt },
+      after: { stage: updated.rolloutStage, pausedAt: updated.rolloutPausedAt },
+      reason: data.reason?.trim() || null,
+    });
+    return updated;
+  }
+
   async uploadPackage(
     versionId: string,
     file: Express.Multer.File,

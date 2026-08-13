@@ -325,6 +325,9 @@ model ExtensionVersion {
   signingKey         ExtensionSigningKey? @relation(fields: [signingKeyId], references: [id], onDelete: Restrict)
   packageSignature   String?
   signedAt           DateTime?
+  rolloutStage       String               @default("INTERNAL") // INTERNAL | PILOT | PERCENT_5 | PERCENT_25 | FULL
+  rolloutPausedAt    DateTime?
+  rolloutPauseReason String?
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 
@@ -340,6 +343,7 @@ model ExtensionVersion {
   @@index([lifecycleStatus, createdAt])
   @@index([packageChecksum])
   @@index([signingKeyId])
+  @@index([rolloutStage, rolloutPausedAt])
 }
 
 model ExtensionReview {
@@ -492,7 +496,8 @@ model ExtensionInstallation {
   requestPriceNote    String?
   dataBytes          Int                      @default(0)
   dataRecords        Int                      @default(0)
-  updatePolicy       String                   @default("MANUAL") // MANUAL | NOTIFY | AUTO_APPROVED
+  updatePolicy       String                   @default("MANUAL") // MANUAL | NOTIFY_ADMINS | AUTOMATIC
+  rolloutGroup       String                   @default("GENERAL") // INTERNAL | PILOT | GENERAL
   availableVersionId String?
   updateNotifiedAt   DateTime?
   requestedBy        String?
@@ -516,6 +521,7 @@ model ExtensionInstallation {
   @@index([extensionId, installedVersionId])
   @@index([purgeAfter])
   @@index([updatePolicy, availableVersionId])
+  @@index([rolloutGroup, updatePolicy])
 }
 
 model ExtensionPaymentEvidence {
@@ -673,9 +679,16 @@ model ExtensionMigrationRun {
   extensionId    String
   fromVersionId  String
   toVersionId    String
-  status         String                     @default("APPLIED") // APPLIED | ROLLED_BACK
+  status         String                     @default("PENDING") // PENDING | APPLIED | FAILED | INTERVENTION_REQUIRED | ABANDONED | ROLLED_BACK
+  attempts       Int                        @default(1)
   operations     Json
   createdAt      DateTime                   @default(now())
+  startedAt      DateTime                   @default(now())
+  completedAt    DateTime?
+  errorCode      String?
+  errorMessage   String?
+  interventionAt DateTime?
+  interventionBy String?
   rolledBackAt   DateTime?
   backups        ExtensionMigrationBackup[]
 
@@ -691,6 +704,9 @@ model ExtensionMigrationBackup {
   resource       String
   data           Json
   byteSize       Int
+  versionId      String
+  schemaVersion  Int
+  concurrencyVersion Int
   createdAt      DateTime              @default(now())
 
   @@unique([migrationRunId, recordId])

@@ -345,6 +345,15 @@ export class ExtensionsController {
     return this.extensions.updateDraft(versionId, body, req.user);
   }
 
+  @Patch("versions/:versionId/rollout")
+  rollout(
+    @Param("versionId") versionId: string,
+    @Body() body: { stage?: string; resume?: boolean; reason?: string },
+    @Request() req,
+  ) {
+    return this.extensions.setRollout(versionId, body, req.user);
+  }
+
   @Post("versions/:versionId/package")
   @HttpCode(202)
   @UseInterceptors(

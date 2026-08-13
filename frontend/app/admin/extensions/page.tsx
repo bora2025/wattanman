@@ -46,7 +46,7 @@ interface Installation {
   approvedAt?: string | null
   installedAt?: string | null
   uninstalledAt?: string | null
-  updatePolicy: 'MANUAL' | 'NOTIFY' | 'AUTO_APPROVED'
+  updatePolicy: 'MANUAL' | 'NOTIFY_ADMINS' | 'AUTOMATIC'
   availableVersionId?: string | null
   installedVersion?: { id: string; version: string }
   extension?: DirectoryExtension

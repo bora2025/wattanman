@@ -1067,6 +1067,7 @@ export class ExtensionInstallationsService {
       throw new NotFoundException(
         "Published extension version not found for this extension",
       );
+    this.assertPlatformCompatibility(version);
     if (existing.extension.runtimeType === "DECLARATIVE_MODULE")
       await this.assertDependencies(
         existing.schoolId,
@@ -1120,6 +1121,7 @@ export class ExtensionInstallationsService {
       throw new NotFoundException(
         "Published upgrade version not found for this extension",
       );
+    this.assertPlatformCompatibility(version);
     if (existing.extension.runtimeType === "DECLARATIVE_MODULE")
       await this.assertDependencies(
         existing.schoolId,
@@ -1195,9 +1197,9 @@ export class ExtensionInstallationsService {
   }
 
   async setUpdatePolicy(installationId: string, policy: string, actor: Actor) {
-    if (!["MANUAL", "NOTIFY", "AUTO_APPROVED"].includes(policy)) {
+    if (!["MANUAL", "NOTIFY_ADMINS", "AUTOMATIC"].includes(policy)) {
       throw new BadRequestException(
-        "Update policy must be MANUAL, NOTIFY, or AUTO_APPROVED",
+        "Update policy must be MANUAL, NOTIFY_ADMINS, or AUTOMATIC",
       );
     }
     const existing = await this.requireInstallation(installationId);
@@ -1217,6 +1219,14 @@ export class ExtensionInstallationsService {
         after: policy,
       },
     );
+    return updated;
+  }
+
+  async setRolloutGroup(installationId: string, group: string, actor: Actor) {
+    if (!["INTERNAL", "PILOT", "GENERAL"].includes(group)) throw new BadRequestException("Rollout group must be INTERNAL, PILOT, or GENERAL");
+    const existing = await this.requireInstallation(installationId);
+    const updated = await this.prisma.extensionInstallation.update({ where: { id: installationId }, data: { rolloutGroup: group } });
+    await this.log(actor, "ROLLOUT_GROUP", updated.id, existing.extension.name, { schoolId: existing.schoolId, extensionId: existing.extensionId, before: existing.rolloutGroup, after: group });
     return updated;
   }
 
@@ -1707,6 +1717,18 @@ export class ExtensionInstallationsService {
     });
   }
 
+  private assertPlatformCompatibility(version: { compatibilityRange?: string | null }) {
+    const platformVersion = process.env.PLATFORM_VERSION || "1.0.0";
+    if (
+      version.compatibilityRange?.trim() &&
+      !this.versionMatches(platformVersion, version.compatibilityRange)
+    ) {
+      throw new ConflictException(
+        `Extension requires platform ${version.compatibilityRange}; current platform is ${platformVersion}`,
+      );
+    }
+  }
+
   private findMigration(
     fromVersion: string,
     targetVersion: { version: string; manifest: unknown },
@@ -1733,7 +1755,17 @@ export class ExtensionInstallationsService {
     actor: Actor,
     configuration: Record<string, any>,
   ) {
-    return this.prisma.$transaction(
+    const maxAttempts = this.migrationSetting("EXTENSION_MIGRATION_MAX_ATTEMPTS", 3, 1, 10);
+    const previous = await this.prisma.extensionMigrationRun.findFirst({
+      where: { installationId: existing.id, fromVersionId: existing.installedVersionId, toVersionId: version.id, status: { in: ["FAILED", "INTERVENTION_REQUIRED"] } },
+      orderBy: { createdAt: "desc" },
+    });
+    if (previous?.status === "INTERVENTION_REQUIRED") throw new ConflictException("Migration requires platform operator intervention");
+    const run = previous
+      ? await this.prisma.extensionMigrationRun.update({ where: { id: previous.id }, data: { status: "PENDING", attempts: { increment: 1 }, startedAt: new Date(), completedAt: null, errorCode: null, errorMessage: null } })
+      : await this.prisma.extensionMigrationRun.create({ data: { installationId: existing.id, schoolId: existing.schoolId, extensionId: existing.extensionId, fromVersionId: existing.installedVersionId, toVersionId: version.id, operations: migration.operations as Prisma.InputJsonValue } });
+    try {
+      return await this.prisma.$transaction(
       async (transaction) => {
         const resources = [
           ...new Set(
@@ -1745,16 +1777,6 @@ export class ExtensionInstallationsService {
             schoolId: existing.schoolId,
             extensionId: existing.extensionId,
             resource: { in: resources },
-          },
-        });
-        const run = await transaction.extensionMigrationRun.create({
-          data: {
-            installationId: existing.id,
-            schoolId: existing.schoolId,
-            extensionId: existing.extensionId,
-            fromVersionId: existing.installedVersionId,
-            toVersionId: version.id,
-            operations: migration.operations as Prisma.InputJsonValue,
           },
         });
         let byteDelta = 0;
@@ -1792,6 +1814,9 @@ export class ExtensionInstallationsService {
               resource: record.resource,
               data: original as Prisma.InputJsonValue,
               byteSize: record.byteSize,
+              versionId: record.versionId,
+              schemaVersion: record.schemaVersion,
+              concurrencyVersion: record.concurrencyVersion,
             },
           });
           await transaction.extensionRecord.update({
@@ -1799,11 +1824,14 @@ export class ExtensionInstallationsService {
             data: {
               data: migrated as Prisma.InputJsonValue,
               byteSize,
+              versionId: version.id,
+              schemaVersion: version.manifestSchema || 1,
+              concurrencyVersion: { increment: 1 },
               updatedBy: actor.userId,
             },
           });
         }
-        return transaction.extensionInstallation.update({
+        const updated = await transaction.extensionInstallation.update({
           where: { id: existing.id },
           data: {
             installedVersionId: version.id,
@@ -1819,9 +1847,28 @@ export class ExtensionInstallationsService {
             updateNotifiedAt: null,
           },
         });
+        await transaction.extensionMigrationRun.update({ where: { id: run.id }, data: { status: "APPLIED", completedAt: new Date() } });
+        return updated;
       },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        maxWait: this.migrationSetting("EXTENSION_MIGRATION_MAX_WAIT_MS", 5_000, 1_000, 60_000),
+        timeout: this.migrationSetting("EXTENSION_MIGRATION_TIMEOUT_MS", 60_000, 1_000, 300_000),
+      },
+      );
+    } catch (error: any) {
+      const attempts = previous ? previous.attempts + 1 : 1;
+      await this.prisma.extensionMigrationRun.update({
+        where: { id: run.id },
+        data: {
+          status: attempts >= maxAttempts ? "INTERVENTION_REQUIRED" : "FAILED",
+          completedAt: new Date(),
+          errorCode: String(error?.code || error?.name || "MIGRATION_FAILED").slice(0, 120),
+          errorMessage: String(error?.message || error).slice(0, 2000),
+        },
+      }).catch(() => undefined);
+      throw error;
+    }
   }
 
   private async rollbackMigration(
@@ -1859,7 +1906,7 @@ export class ExtensionInstallationsService {
           byteDelta += backup.byteSize - record.byteSize;
           await transaction.extensionRecord.update({
             where: { id: backup.recordId },
-            data: { data: backup.data, byteSize: backup.byteSize },
+            data: { data: backup.data, byteSize: backup.byteSize, versionId: backup.versionId, schemaVersion: backup.schemaVersion, concurrencyVersion: backup.concurrencyVersion },
           });
         }
         const { migrationRunId: ignored, ...rest } = configuration;
@@ -1873,12 +1920,31 @@ export class ExtensionInstallationsService {
         });
         await transaction.extensionMigrationRun.update({
           where: { id: run.id },
-          data: { status: "ROLLED_BACK", rolledBackAt: new Date() },
+          data: { status: "ROLLED_BACK", rolledBackAt: new Date(), completedAt: new Date() },
         });
         return updated;
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
+  }
+
+  async interveneMigration(migrationRunId: string, action: string, reason: string, actor: Actor) {
+    if (!["RETRY", "ABANDON"].includes(action)) throw new BadRequestException("Migration intervention action must be RETRY or ABANDON");
+    if (!reason?.trim()) throw new BadRequestException("Migration intervention reason is required");
+    const run = await this.prisma.extensionMigrationRun.findUnique({ where: { id: migrationRunId }, include: { installation: { include: { extension: true } } } });
+    if (!run) throw new NotFoundException("Extension migration run not found");
+    if (run.status !== "INTERVENTION_REQUIRED") throw new ConflictException("Migration does not require intervention");
+    const updated = await this.prisma.extensionMigrationRun.update({
+      where: { id: migrationRunId },
+      data: { status: action === "RETRY" ? "FAILED" : "ABANDONED", ...(action === "RETRY" ? { attempts: 0 } : {}), interventionAt: new Date(), interventionBy: actor.userId, errorMessage: `${run.errorMessage || ""}\nOperator: ${reason.trim()}`.trim() },
+    });
+    await this.log(actor, `MIGRATION_${action}`, run.installationId, run.installation.extension.name, { schoolId: run.schoolId, extensionId: run.extensionId, migrationRunId, reason: reason.trim() });
+    return updated;
+  }
+
+  private migrationSetting(name: string, fallback: number, minimum: number, maximum: number) {
+    const parsed = Number.parseInt(process.env[name] || "", 10);
+    return Number.isInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
   }
 
   private async applyThemeVersion(
