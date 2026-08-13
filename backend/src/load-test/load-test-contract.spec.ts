@@ -22,4 +22,15 @@ describe('load test contract', () => {
     expect(source).not.toContain('[200, 401, 403]');
     expect(source).toContain('LOAD_TEST_SESSIONS || 10000');
   });
+
+  it('guards provisioning and cleanup independently from runtime DATABASE_URL', () => {
+    const provisioner = readFileSync(resolve(process.cwd(), 'src', 'cli', 'provision-load-database.ts'), 'utf8');
+    const cleanup = readFileSync(resolve(process.cwd(), 'src', 'cli', 'cleanup-load-database.ts'), 'utf8');
+    expect(provisioner).toContain('LOAD_TEST_DATABASE_URL');
+    expect(provisioner).toContain('assertSyntheticOnlySchools');
+    expect(provisioner).toContain("mode: 0o600");
+    expect(provisioner).toContain("expiresAt = Math.floor(Date.now() / 1000) + 3 * 60 * 60");
+    expect(cleanup).toContain("LOAD_TEST_CLEANUP_CONFIRMATION !== 'DELETE_ALL_SYNTHETIC_LOAD_DATA'");
+    expect(cleanup).toContain("startsWith: 'load-school-'");
+  });
 });

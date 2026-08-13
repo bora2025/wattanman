@@ -17,6 +17,12 @@ The k6 thresholds require under 1% failures, p95 below one second, p99 below 2.5
 
 `LOAD_TEST_IDENTITIES_FILE` must contain short-lived synthetic identities spanning the requested school and session counts. Each identity has an opaque school ID, approved non-production school origin, and bearer token. Traffic exercises authenticated school routes and treats 401/403 as failures; credentials are never committed or written to result reports.
 
+## Isolated database provisioning
+
+Build the backend, set `LOAD_TEST_DATABASE_URL` to a dedicated database whose host or database name contains `loadtest`, `performance`, `perf`, or `staging`, set `LOAD_TEST_DATABASE_AUTHORIZATION=I_AUTHORIZE_DESTRUCTIVE_ISOLATED_LOAD_DATA`, and set `LOAD_TEST_JWT_SECRET` equal to that environment's `JWT_SECRET`. `LOAD_TEST_SCHOOL_ORIGIN_TEMPLATE` must contain `{subdomain}` and resolve to the isolated application. Then run `npm.cmd run load:provision`.
+
+Provisioning aborts under `NODE_ENV=production`, against unmarked/Railway production databases, or when any non-platform/non-synthetic school exists. It creates verified domain mappings, realistic settings/assets, users, published synthetic extensions, installations, extension records, and audits in bounded batches, emits progress without credentials, verifies counts, and writes 10,000 three-hour JWT identities with owner-only permissions and exclusive creation. After evidence collection, set `LOAD_TEST_CLEANUP_CONFIRMATION=DELETE_ALL_SYNTHETIC_LOAD_DATA` and run `npm.cmd run load:cleanup`; cleanup uses the same guards and verifies no synthetic schools remain.
+
 ## Production guard
 
 The script requires `LOAD_TEST_AUTHORIZATION=I_ACKNOWLEDGE_NON_PRODUCTION_ONLY`, a target hostname containing `loadtest`, `performance`, `perf`, or `staging` (or localhost), a healthy preflight, and a target that does not identify itself as production. It always rejects `wattaman.app` and Railway public domains. Use a dedicated isolated performance environment and database; never weaken the guard to test production.
