@@ -250,11 +250,16 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Stage 3 gate
 
-- [ ] Lifecycle retries create no duplicate release or installation.
-- [ ] Malicious ZIP test suite passes.
-- [ ] Signing and key-revocation tests pass.
-- [ ] Marketplace request appears reliably for platform administrators.
-- [ ] Security review approves package handling.
+- [x] Lifecycle retries create no duplicate release or installation.
+  - Idempotency-key replay returns the existing durable job, payload-changing reuse fails, completed-job replay returns the stored result without invoking installation work, and canonical distributed locks serialize school/extension commands.
+- [x] Malicious ZIP test suite passes.
+  - Validator tests reject traversal, excessive entries, symlinks, ZIP bombs, oversized expansion, executable files, MIME spoofing, unsafe CSS, unsafe Markdown, and malformed manifests.
+- [x] Signing and key-revocation tests pass.
+  - Publication, immutable checksums, standalone Ed25519 verification, tamper rejection, key retirement/revocation, rotation, and affected-installation blocking are covered.
+- [x] Marketplace request appears reliably for platform administrators.
+  - Request creation snapshots the authoritative tenant school/admin and billing terms; the unfiltered platform installation queue explicitly retains `REQUESTED` rows. The focused Stage 3 gate suite passed 123 tests on 2026-08-13.
+- [x] Security review approves package handling.
+  - `docs/stage-3-package-security-review.md` approves internal declarative modules/themes against the current threat model while explicitly withholding approval for executable extensions and public external-publisher launch.
 
 ## Stage 4 — Declarative Extension Runtime V1
 

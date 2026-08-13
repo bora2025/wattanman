@@ -73,6 +73,16 @@ describe('ExtensionLifecycleJobsService', () => {
     }));
   });
 
+  it('returns a completed job result without repeating installation work', async () => {
+    prisma.extensionLifecycleJob.findUnique.mockResolvedValue({
+      id: 'job-1', status: 'SUCCEEDED', result: { id: 'installation-1', lifecycleState: 'INSTALLED' },
+    });
+
+    await expect(service.execute('job-1', 2)).resolves.toEqual({ id: 'installation-1', lifecycleState: 'INSTALLED' });
+    expect(installations.install).not.toHaveBeenCalled();
+    expect(prisma.extensionLifecycleJob.updateMany).not.toHaveBeenCalled();
+  });
+
   it('records retryable failure details', async () => {
     prisma.extensionLifecycleJob.findUnique.mockResolvedValue({
       id: 'job-1', schoolId: 'school-a', extensionId: 'extension-1', installationId: 'installation-1',

@@ -680,4 +680,23 @@ describe('ExtensionInstallationsService', () => {
     expect(page.items).toEqual([]);
     expect(prisma.extensionLifecycleJob.findMany).not.toHaveBeenCalled();
   });
+
+  it('includes requested school installations in the platform queue', async () => {
+    const requested = {
+      id: 'installation-requested', schoolId: 'school-a', extensionId: 'extension-1',
+      lifecycleState: 'REQUESTED', billingStatus: 'PENDING', updatedAt: new Date(),
+      school: { id: 'school-a', name: 'School A' },
+      extension: { id: 'extension-1', name: 'Analytics Plus', versions: [] },
+      installedVersion: null, pilotFeedback: [], paymentEvidence: [],
+    };
+    prisma.extensionInstallation.findMany.mockResolvedValue([requested]);
+    prisma.extensionLifecycleJob.findMany.mockResolvedValue([]);
+
+    const page = await service.platformInstallations({});
+
+    expect(prisma.extensionInstallation.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {}, orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+    }));
+    expect(page.items).toEqual([expect.objectContaining({ id: 'installation-requested', lifecycleState: 'REQUESTED' })]);
+  });
 });
