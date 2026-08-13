@@ -359,7 +359,7 @@ An item is complete only when implementation, automated tests, documentation, de
 - [x] Add API latency, errors, saturation, and availability dashboards.
 - [x] Add database, Redis, queue, worker, and R2 dashboards.
 - [x] Add per-school and per-extension usage dashboards.
-  - `/platform/observability` combines distributed minute-bucket API RED metrics, process saturation, PostgreSQL connection capacity, Redis and R2 probes, BullMQ depth/age/failures, worker registration, and top school/extension resource consumers. It complements the durable school usage trends and extension-specific telemetry already available to operators. Metrics fail soft with bounded local fallback and expire after two hours; architecture and rollback guidance are documented in `docs/observability-dashboard.md`.
+  - `/platform/observability` combines distributed minute-bucket API RED metrics, process saturation, PostgreSQL connection capacity, Redis and R2 probes, BullMQ depth/age/failures, worker registration, and top school/extension resource consumers. It complements the durable school usage trends and extension-specific telemetry already available to operators. Metrics fail soft with bounded local fallback and expire after two hours; architecture and rollback guidance are documented in `docs/observability-dashboard.md`. All 336 backend tests, both production builds, and six browser tests passed; Railway deployments `7c53f753-60c4-4a06-9eba-7e77b93c5ace` (API), `1f26dd8e-0f5e-441f-8ee6-bcc10ae4da2c` (frontend), and `3468d712-790b-4e11-b425-5a69a83e6687` (extension worker) succeeded on 2026-08-13.
 - [ ] Define paging and ticket alerts.
 
 ### Backup and restore
