@@ -46,10 +46,15 @@
                         "name":  "limits",
                         "executable":  "node",
                         "args":  [
-                                     "replace-with-limit-collector.js"
+                                     "backend/dist/cli/collect-load-capacity-limits.js",
+                                     "load-test/results/replace-stage6-run-id/capacity-limits.json"
                                  ],
-                        "timeoutMs":  300000,
-                        "evidenceFile":  "limits-command.json"
+                        "timeoutMs":  7500000,
+                        "evidenceFile":  "limits-command.json",
+                        "env":  {
+                                    "LOAD_LIMIT_SAMPLES":  "720",
+                                    "LOAD_LIMIT_INTERVAL_MS":  "10000"
+                                }
                     }
                 ],
     "concurrentTraffic":  {

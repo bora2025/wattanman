@@ -65,8 +65,18 @@ export class TelemetryMetricsService implements OnModuleDestroy {
     if (!this.redis) return { configured: false, status: 'unconfigured', latencyMs: null };
     const started = Date.now();
     try {
-      await this.redis.ping();
-      return { configured: true, status: 'healthy', latencyMs: Date.now() - started };
+      const [, memory] = await Promise.all([this.redis.ping(), this.redis.info('memory')]);
+      const values = Object.fromEntries(memory.split(/\r?\n/).map((line) => line.split(':', 2)).filter((parts) => parts.length === 2));
+      const usedMemoryBytes = Number(values.used_memory || 0);
+      const maxMemoryBytes = Number(values.maxmemory || 0);
+      return {
+        configured: true,
+        status: 'healthy',
+        latencyMs: Date.now() - started,
+        usedMemoryBytes,
+        maxMemoryBytes,
+        memoryUtilizationPct: maxMemoryBytes > 0 ? Number(((usedMemoryBytes / maxMemoryBytes) * 100).toFixed(3)) : null,
+      };
     } catch (error: any) {
       return { configured: true, status: 'unhealthy', latencyMs: Date.now() - started, error: error?.message || 'Redis probe failed' };
     }

@@ -26,4 +26,13 @@ describe('TelemetryMetricsService', () => {
     await finish(500, 1000);
     expect((await service.summary()).requests).toBe(1);
   });
+
+  it('reports Redis memory utilization when a maximum is configured', async () => {
+    const service = new TelemetryMetricsService();
+    (service as any).redis = {
+      ping: jest.fn().mockResolvedValue('PONG'),
+      info: jest.fn().mockResolvedValue('used_memory:250\r\nmaxmemory:1000\r\n'),
+    };
+    await expect(service.redisHealth()).resolves.toEqual(expect.objectContaining({ status: 'healthy', usedMemoryBytes: 250, maxMemoryBytes: 1000, memoryUtilizationPct: 25 }));
+  });
 });

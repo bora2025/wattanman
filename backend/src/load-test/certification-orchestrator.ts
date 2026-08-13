@@ -87,7 +87,14 @@ export async function runCertificationManifest(input: CertificationManifest) {
   const context = { ...validated, runId: input.runId };
   const evidence: any = { schemaVersion: 1, runId: input.runId, target: validated.target, startedAt: new Date().toISOString(), fixture: null, traffic: [], concurrentTraffic: null, failures: [] };
   evidence.fixture = await runStep(input.fixture, context);
-  for (const step of input.traffic) evidence.traffic.push(await runStep(step, context));
+  const sustained = input.traffic.find((step) => step.name === 'sustained')!;
+  const limits = input.traffic.find((step) => step.name === 'limits')!;
+  const trafficResults = new Map<string, unknown>();
+  const [sustainedResult, limitsResult] = await Promise.all([runStep(sustained, context), runStep(limits, context)]);
+  trafficResults.set('sustained', sustainedResult);
+  trafficResults.set('limits', limitsResult);
+  for (const step of input.traffic.filter((candidate) => !['sustained', 'limits'].includes(candidate.name))) trafficResults.set(step.name, await runStep(step, context));
+  evidence.traffic = input.traffic.map((step) => trafficResults.get(step.name));
   const concurrent = await Promise.all([
     runStep(input.concurrentTraffic.workload, context),
     ...input.concurrentTraffic.operations.map((step) => runStep(step, context)),

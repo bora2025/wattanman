@@ -33,6 +33,9 @@ function decodeXml(value: string): string {
 
 @Injectable()
 export class R2StorageService {
+  private operationRequests = 0;
+  private operationErrors = 0;
+
   constructor(private readonly circuits: CircuitBreakerService) {}
 
   private config(): R2Config {
@@ -109,9 +112,9 @@ export class R2StorageService {
     const started = Date.now();
     try {
       await this.request('HEAD', '.wattaman-health-probe', Buffer.alloc(0), 'application/octet-stream', {}, [404]);
-      return { configured: true, status: 'healthy', latencyMs: Date.now() - started };
+      return { configured: true, status: 'healthy', latencyMs: Date.now() - started, requests: this.operationRequests, errors: this.operationErrors, errorRatePct: this.errorRatePct() };
     } catch (error: any) {
-      return { configured: !String(error?.message || '').includes('not configured'), status: 'unhealthy', latencyMs: Date.now() - started, error: error?.message || 'R2 probe failed' };
+      return { configured: !String(error?.message || '').includes('not configured'), status: 'unhealthy', latencyMs: Date.now() - started, requests: this.operationRequests, errors: this.operationErrors, errorRatePct: this.errorRatePct(), error: error?.message || 'R2 probe failed' };
     }
   }
 
@@ -208,22 +211,31 @@ export class R2StorageService {
     const signature = createHmac('sha256', signingKey).update(stringToSign).digest('hex');
     const authorization = `AWS4-HMAC-SHA256 Credential=${config.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
-    return this.circuits.execute('r2', async () => {
-      const response = await fetch(`${config.endpoint}${canonicalUri}`, {
-        method,
-        headers: {
-          Authorization: authorization,
-          ...Object.fromEntries(Object.entries(requestHeaders).filter(([name]) => name !== 'host')),
-        },
-        ...(method === 'PUT' ? { body: body as unknown as BodyInit } : {}),
+    this.operationRequests += 1;
+    let recordedError = false;
+    try {
+      return await this.circuits.execute('r2', async () => {
+        const response = await fetch(`${config.endpoint}${canonicalUri}`, {
+          method,
+          headers: {
+            Authorization: authorization,
+            ...Object.fromEntries(Object.entries(requestHeaders).filter(([name]) => name !== 'host')),
+          },
+          ...(method === 'PUT' ? { body: body as unknown as BodyInit } : {}),
+        });
+        if (!response.ok && !acceptedStatuses.includes(response.status)) {
+          const detail = await response.text().catch(() => '');
+          const operation = method === 'PUT' ? 'upload' : method === 'GET' ? 'download' : 'delete';
+          recordedError = true;
+          this.operationErrors += 1;
+          throw new ServiceUnavailableException(`R2 ${operation} failed (${response.status})${detail ? `: ${detail.slice(0, 200)}` : ''}`);
+        }
+        return response;
       });
-      if (!response.ok && !acceptedStatuses.includes(response.status)) {
-        const detail = await response.text().catch(() => '');
-        const operation = method === 'PUT' ? 'upload' : method === 'GET' ? 'download' : 'delete';
-        throw new ServiceUnavailableException(`R2 ${operation} failed (${response.status})${detail ? `: ${detail.slice(0, 200)}` : ''}`);
-      }
-      return response;
-    });
+    } catch (error) {
+      if (!recordedError) this.operationErrors += 1;
+      throw error;
+    }
   }
 
   private async requestBucket(method: 'GET', query: Record<string, string>): Promise<Response> {
@@ -244,10 +256,21 @@ export class R2StorageService {
     const signingKey = hmac(hmac(hmac(dateKey, 'auto'), 's3'), 'aws4_request');
     const signature = createHmac('sha256', signingKey).update(stringToSign).digest('hex');
     const authorization = `AWS4-HMAC-SHA256 Credential=${config.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-    return this.circuits.execute('r2', async () => {
-      const response = await fetch(`${config.endpoint}${canonicalUri}?${canonicalQuery}`, { headers: { Authorization: authorization, 'x-amz-content-sha256': payloadHash, 'x-amz-date': amzDate } });
-      if (!response.ok) throw new ServiceUnavailableException(`R2 list failed (${response.status})`);
-      return response;
-    });
+    this.operationRequests += 1;
+    let recordedError = false;
+    try {
+      return await this.circuits.execute('r2', async () => {
+        const response = await fetch(`${config.endpoint}${canonicalUri}?${canonicalQuery}`, { headers: { Authorization: authorization, 'x-amz-content-sha256': payloadHash, 'x-amz-date': amzDate } });
+        if (!response.ok) { recordedError = true; this.operationErrors += 1; throw new ServiceUnavailableException(`R2 list failed (${response.status})`); }
+        return response;
+      });
+    } catch (error) {
+      if (!recordedError) this.operationErrors += 1;
+      throw error;
+    }
+  }
+
+  private errorRatePct() {
+    return this.operationRequests ? Number(((this.operationErrors / this.operationRequests) * 100).toFixed(3)) : 0;
   }
 }

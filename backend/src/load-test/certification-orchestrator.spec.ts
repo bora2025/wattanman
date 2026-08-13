@@ -40,6 +40,18 @@ describe('certification orchestrator', () => {
     rmSync(root, { recursive: true, force: true });
   }, 30000);
 
+  it('samples limits concurrently with sustained traffic', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'wattaman-cert-'));
+    const input = manifest(root);
+    input.traffic[0] = step('sustained', 'sustained.json', 'setTimeout(() => {}, 200)');
+    input.traffic[2] = step('limits', 'limits.json', 'setTimeout(() => {}, 200)');
+    const result = await runCertificationManifest(input);
+    const sustainedStarted = Date.parse(result.traffic[0].startedAt);
+    const limitsStarted = Date.parse(result.traffic[2].startedAt);
+    expect(Math.abs(sustainedStarted - limitsStarted)).toBeLessThan(100);
+    rmSync(root, { recursive: true, force: true });
+  }, 30000);
+
   it('always executes recovery when a failure workload exits unsuccessfully', async () => {
     const root = mkdtempSync(join(tmpdir(), 'wattaman-cert-'));
     const input = manifest(root);

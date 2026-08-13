@@ -102,6 +102,15 @@ describe('R2StorageService', () => {
     await expect(service().putPrivate('test.zip', Buffer.from('zip'), 'application/zip')).rejects.toThrow('R2 upload failed (503)');
   });
 
+  it('exposes operation error rate through the health probe', async () => {
+    const storage = service();
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce({ ok: false, status: 503, text: async () => 'unavailable' })
+      .mockResolvedValueOnce({ ok: false, status: 404 }) as any;
+    await expect(storage.putPrivate('test.zip', Buffer.from('zip'), 'application/zip')).rejects.toThrow('R2 upload failed');
+    await expect(storage.health()).resolves.toEqual(expect.objectContaining({ status: 'healthy', requests: 2, errors: 1, errorRatePct: 50 }));
+  });
+
   it('signs private object deletion without sending a body', async () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true }) as any;
 
