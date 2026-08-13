@@ -1,0 +1,16 @@
+{
+    "schemaVersion":  1,
+    "name":  "abusive-school-extension",
+    "fault":  "SYNTHETIC_TENANT_AND_EXTENSION_ABUSE",
+    "scope":  {
+                  "environment":  "ISOLATED_PERFORMANCE",
+                  "maxAffectedSchools":  1,
+                  "syntheticOnly":  true
+              },
+    "timeoutMs":  300000,
+    "terminalStates":  {
+                           "inject":  "INJECTED",
+                           "recover":  "RECOVERED",
+                           "verify":  "VERIFIED"
+                       }
+}

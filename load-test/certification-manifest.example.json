@@ -137,7 +137,10 @@
                                         "name":  "database-failover-inject",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-db-failover-inject.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/database-failover.json",
+                                                     "inject",
+                                                     "load-test/results/replace-stage6-run-id/database-failover-inject-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "db-inject.json"
@@ -159,7 +162,10 @@
                                          "name":  "database-failover-recover",
                                          "executable":  "node",
                                          "args":  [
-                                                      "replace-db-failover-recover.js"
+                                                      "backend/dist/cli/run-load-chaos-action.js",
+                                                      "load-test/chaos-scenarios/database-failover.json",
+                                                      "recover",
+                                                      "load-test/results/replace-stage6-run-id/database-failover-recover-chaos.json"
                                                   ],
                                          "timeoutMs":  300000,
                                          "evidenceFile":  "db-recover.json"
@@ -168,7 +174,10 @@
                                         "name":  "database-failover-verify",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-db-failover-verify.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/database-failover.json",
+                                                     "verify",
+                                                     "load-test/results/replace-stage6-run-id/database-failover-verify-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "db-verify.json"
@@ -180,7 +189,10 @@
                                         "name":  "redis-interruption-inject",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-redis-inject.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/redis-interruption.json",
+                                                     "inject",
+                                                     "load-test/results/replace-stage6-run-id/redis-interruption-inject-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "redis-inject.json"
@@ -202,7 +214,10 @@
                                          "name":  "redis-interruption-recover",
                                          "executable":  "node",
                                          "args":  [
-                                                      "replace-redis-recover.js"
+                                                      "backend/dist/cli/run-load-chaos-action.js",
+                                                      "load-test/chaos-scenarios/redis-interruption.json",
+                                                      "recover",
+                                                      "load-test/results/replace-stage6-run-id/redis-interruption-recover-chaos.json"
                                                   ],
                                          "timeoutMs":  300000,
                                          "evidenceFile":  "redis-recover.json"
@@ -211,7 +226,10 @@
                                         "name":  "redis-interruption-verify",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-redis-verify.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/redis-interruption.json",
+                                                     "verify",
+                                                     "load-test/results/replace-stage6-run-id/redis-interruption-verify-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "redis-verify.json"
@@ -223,7 +241,10 @@
                                         "name":  "queue-backlog-worker-loss-inject",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-queue-inject.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/queue-backlog-worker-loss.json",
+                                                     "inject",
+                                                     "load-test/results/replace-stage6-run-id/queue-backlog-worker-loss-inject-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "queue-inject.json"
@@ -245,7 +266,10 @@
                                          "name":  "queue-backlog-worker-loss-recover",
                                          "executable":  "node",
                                          "args":  [
-                                                      "replace-queue-recover.js"
+                                                      "backend/dist/cli/run-load-chaos-action.js",
+                                                      "load-test/chaos-scenarios/queue-backlog-worker-loss.json",
+                                                      "recover",
+                                                      "load-test/results/replace-stage6-run-id/queue-backlog-worker-loss-recover-chaos.json"
                                                   ],
                                          "timeoutMs":  300000,
                                          "evidenceFile":  "queue-recover.json"
@@ -254,7 +278,10 @@
                                         "name":  "queue-backlog-worker-loss-verify",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-queue-verify.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/queue-backlog-worker-loss.json",
+                                                     "verify",
+                                                     "load-test/results/replace-stage6-run-id/queue-backlog-worker-loss-verify-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "queue-verify.json"
@@ -266,7 +293,10 @@
                                         "name":  "r2-latency-failure-inject",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-r2-inject.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/r2-latency-failure.json",
+                                                     "inject",
+                                                     "load-test/results/replace-stage6-run-id/r2-latency-failure-inject-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "r2-inject.json"
@@ -288,7 +318,10 @@
                                          "name":  "r2-latency-failure-recover",
                                          "executable":  "node",
                                          "args":  [
-                                                      "replace-r2-recover.js"
+                                                      "backend/dist/cli/run-load-chaos-action.js",
+                                                      "load-test/chaos-scenarios/r2-latency-failure.json",
+                                                      "recover",
+                                                      "load-test/results/replace-stage6-run-id/r2-latency-failure-recover-chaos.json"
                                                   ],
                                          "timeoutMs":  300000,
                                          "evidenceFile":  "r2-recover.json"
@@ -297,7 +330,10 @@
                                         "name":  "r2-latency-failure-verify",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-r2-verify.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/r2-latency-failure.json",
+                                                     "verify",
+                                                     "load-test/results/replace-stage6-run-id/r2-latency-failure-verify-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "r2-verify.json"
@@ -309,7 +345,10 @@
                                         "name":  "bad-extension-release-inject",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-bad-release-inject.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/bad-extension-release.json",
+                                                     "inject",
+                                                     "load-test/results/replace-stage6-run-id/bad-extension-release-inject-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "release-inject.json"
@@ -331,7 +370,10 @@
                                          "name":  "bad-extension-release-recover",
                                          "executable":  "node",
                                          "args":  [
-                                                      "replace-bad-release-recover.js"
+                                                      "backend/dist/cli/run-load-chaos-action.js",
+                                                      "load-test/chaos-scenarios/bad-extension-release.json",
+                                                      "recover",
+                                                      "load-test/results/replace-stage6-run-id/bad-extension-release-recover-chaos.json"
                                                   ],
                                          "timeoutMs":  300000,
                                          "evidenceFile":  "release-recover.json"
@@ -340,7 +382,10 @@
                                         "name":  "bad-extension-release-verify",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-bad-release-verify.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/bad-extension-release.json",
+                                                     "verify",
+                                                     "load-test/results/replace-stage6-run-id/bad-extension-release-verify-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "release-verify.json"
@@ -352,7 +397,10 @@
                                         "name":  "signing-key-revocation-inject",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-key-revoke-inject.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/signing-key-revocation.json",
+                                                     "inject",
+                                                     "load-test/results/replace-stage6-run-id/signing-key-revocation-inject-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "key-inject.json"
@@ -374,7 +422,10 @@
                                          "name":  "signing-key-revocation-recover",
                                          "executable":  "node",
                                          "args":  [
-                                                      "replace-key-recover.js"
+                                                      "backend/dist/cli/run-load-chaos-action.js",
+                                                      "load-test/chaos-scenarios/signing-key-revocation.json",
+                                                      "recover",
+                                                      "load-test/results/replace-stage6-run-id/signing-key-revocation-recover-chaos.json"
                                                   ],
                                          "timeoutMs":  300000,
                                          "evidenceFile":  "key-recover.json"
@@ -383,7 +434,10 @@
                                         "name":  "signing-key-revocation-verify",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-key-verify.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/signing-key-revocation.json",
+                                                     "verify",
+                                                     "load-test/results/replace-stage6-run-id/signing-key-revocation-verify-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "key-verify.json"
@@ -395,7 +449,10 @@
                                         "name":  "abusive-school-extension-inject",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-abuse-inject.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/abusive-school-extension.json",
+                                                     "inject",
+                                                     "load-test/results/replace-stage6-run-id/abusive-school-extension-inject-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "abuse-inject.json"
@@ -417,7 +474,10 @@
                                          "name":  "abusive-school-extension-recover",
                                          "executable":  "node",
                                          "args":  [
-                                                      "replace-abuse-recover.js"
+                                                      "backend/dist/cli/run-load-chaos-action.js",
+                                                      "load-test/chaos-scenarios/abusive-school-extension.json",
+                                                      "recover",
+                                                      "load-test/results/replace-stage6-run-id/abusive-school-extension-recover-chaos.json"
                                                   ],
                                          "timeoutMs":  300000,
                                          "evidenceFile":  "abuse-recover.json"
@@ -426,7 +486,10 @@
                                         "name":  "abusive-school-extension-verify",
                                         "executable":  "node",
                                         "args":  [
-                                                     "replace-abuse-verify.js"
+                                                     "backend/dist/cli/run-load-chaos-action.js",
+                                                     "load-test/chaos-scenarios/abusive-school-extension.json",
+                                                     "verify",
+                                                     "load-test/results/replace-stage6-run-id/abusive-school-extension-verify-chaos.json"
                                                  ],
                                         "timeoutMs":  300000,
                                         "evidenceFile":  "abuse-verify.json"

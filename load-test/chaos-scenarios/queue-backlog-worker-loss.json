@@ -1,0 +1,16 @@
+{
+    "schemaVersion":  1,
+    "name":  "queue-backlog-worker-loss",
+    "fault":  "QUEUE_WORKER_DRAIN_AND_BACKLOG",
+    "scope":  {
+                  "environment":  "ISOLATED_PERFORMANCE",
+                  "maxAffectedSchools":  1000,
+                  "syntheticOnly":  true
+              },
+    "timeoutMs":  300000,
+    "terminalStates":  {
+                           "inject":  "INJECTED",
+                           "recover":  "RECOVERED",
+                           "verify":  "VERIFIED"
+                       }
+}
