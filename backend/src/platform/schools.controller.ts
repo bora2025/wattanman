@@ -1,15 +1,16 @@
-import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { PlatformScopeGuard } from '../tenancy/platform-scope.guard';
 import { SchoolsService } from './schools.service';
+import { SchoolDeletionService } from './school-deletion.service';
 
 @Controller('platform/schools')
 @UseGuards(JwtAuthGuard, RolesGuard, PlatformScopeGuard)
 @Roles('PLATFORM_ADMIN')
 export class SchoolsController {
-  constructor(private schools: SchoolsService) {}
+  constructor(private schools: SchoolsService, private deletions: SchoolDeletionService) {}
 
   @Get()
   list(@Query('cursor') cursor?: string, @Query('limit') limit?: string, @Query('search') search?: string, @Query('status') status?: string) {
@@ -26,6 +27,9 @@ export class SchoolsController {
     return this.schools.stats();
   }
 
+  @Get('deletion-requests')
+  deletionRequests() { return this.deletions.list(); }
+
   @Get(':id')
   getOne(@Param('id') id: string) {
     return this.schools.getOne(id);
@@ -41,9 +45,24 @@ export class SchoolsController {
     return this.schools.update(id, body);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string, @Body() body: { confirmName: string }) {
-    return this.schools.remove(id, body?.confirmName || '');
+  @Post(':id/deletion-requests')
+  requestDeletion(@Param('id') id: string, @Body() body: { reason: string }, @Request() req: any) {
+    return this.deletions.request(id, body?.reason || '', req.user);
+  }
+
+  @Post('deletion-requests/:requestId/approve')
+  approveDeletion(@Param('requestId') requestId: string, @Body() body: { reason: string }, @Request() req: any) {
+    return this.deletions.approve(requestId, body?.reason || '', req.user);
+  }
+
+  @Post('deletion-requests/:requestId/execute')
+  executeDeletion(@Param('requestId') requestId: string, @Body() body: { confirmSchoolId: string; changeTicket: string }, @Request() req: any) {
+    return this.deletions.execute(requestId, body?.confirmSchoolId || '', body?.changeTicket || '', req.user);
+  }
+
+  @Get('deletion-requests/:requestId/report-url')
+  deletionReport(@Param('requestId') requestId: string) {
+    return this.deletions.download(requestId);
   }
 
   @Post(':id/impersonate')

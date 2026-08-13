@@ -129,6 +129,17 @@ describe('R2StorageService', () => {
     expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/validated/style.css'), expect.objectContaining({ method: 'GET' }));
   });
 
+  it('lists every page under a private prefix with signed continuation tokens', async () => {
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce({ ok: true, text: async () => '<ListBucketResult><IsTruncated>true</IsTruncated><Contents><Key>schools/a/one.pdf</Key></Contents><NextContinuationToken>next&amp;page</NextContinuationToken></ListBucketResult>' })
+      .mockResolvedValueOnce({ ok: true, text: async () => '<ListBucketResult><IsTruncated>false</IsTruncated><Contents><Key>schools/a/two.pdf</Key></Contents></ListBucketResult>' }) as any;
+
+    await expect(service().listPrivatePrefix('schools/a/')).resolves.toEqual(['schools/a/one.pdf', 'schools/a/two.pdf']);
+    expect((global.fetch as jest.Mock).mock.calls[0][0]).toContain('list-type=2');
+    expect((global.fetch as jest.Mock).mock.calls[1][0]).toContain('continuation-token=next%26page');
+    expect((global.fetch as jest.Mock).mock.calls[0][1].headers.Authorization).toContain('AWS4-HMAC-SHA256');
+  });
+
   it('creates a short-lived upload URL constrained by content type and checksum metadata', () => {
     const checksum = 'a'.repeat(64);
 

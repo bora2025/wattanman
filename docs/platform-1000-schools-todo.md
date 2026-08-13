@@ -390,8 +390,10 @@ An item is complete only when implementation, automated tests, documentation, de
   - Tenant-scoped legal holds carry category, optional resource, case reference, reason, creator, and release evidence under RLS. Platform recovery controls create/list/release holds. Distributed daily cleanup deletes private export objects before tombstoning metadata, removes terminal restore history after 365 days, API metrics after 30 days, and school metrics after 730 days in bounded operations; audit, payment, installation, and extension-record cleanup all fail closed on applicable holds, including manual audit cleanup.
 - [x] Redact secrets and sensitive payloads from telemetry.
   - The structured logger recursively redacts authentication, cookie, password, token, private/API key, credential, MFA/OTP, session, signature, header, body, form, and raw payload fields. Free-form messages, errors, and stacks redact bearer values, sensitive query parameters, JSON secrets, private-key PEM blocks, and PostgreSQL/Redis URL credentials; request tracing logs route templates and dimensions but never bodies or query values.
-- [ ] Add school deletion workflow and signed deletion report.
-- [ ] Verify R2 and database data are both purged.
+- [x] Add school deletion workflow and signed deletion report.
+  - Platform recovery now enforces requester/approver/executor separation, legal-hold checks, exact school-ID confirmation, a change ticket, durable queue execution, and an Ed25519-signed surviving deletion report. The former direct `DELETE /platform/schools/:id` path was removed. See `docs/school-deletion-workflow.md`.
+- [x] Verify R2 and database data are both purged.
+  - Execution discovers every paginated object under the school billing, backup, and extension-purge-report prefixes, deletes and relists each prefix, then cascade-deletes the tenant and counts every tenant-scoped Prisma model to prove zero remaining rows before issuing signed evidence. All 358 backend tests and both production builds passed locally on 2026-08-13.
 
 ### Incident readiness
 

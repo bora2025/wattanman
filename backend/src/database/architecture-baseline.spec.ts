@@ -9,7 +9,7 @@ const EXPECTED_MODELS = [
   'ExtensionPaymentEvidence', 'ExtensionPermission', 'ExtensionPilotFeedback', 'ExtensionPurgeReport',
   'ExtensionPublisher', 'ExtensionPublisherMember', 'ExtensionRecord', 'ExtensionReview',
   'ExtensionSigningKey', 'ExtensionValidation', 'ExtensionVersion', 'ExtensionVisibilityGrant',
-  'PasswordResetToken', 'Post', 'RefreshToken', 'School', 'SchoolDailyMetric', 'SchoolDomain',
+  'PasswordResetToken', 'Post', 'RefreshToken', 'School', 'SchoolDailyMetric', 'SchoolDeletionRequest', 'SchoolDomain',
   'SchoolProvisioningJob', 'SiteSetting', 'User',
 ].sort();
 

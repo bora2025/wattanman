@@ -44,6 +44,8 @@ import { ObservabilityService } from './observability.service';
 import { OperationalAlertService } from './operational-alert.service';
 import { BackupModule } from '../backup/backup.module';
 import { BackupRestoresController } from './backup-restores.controller';
+import { SchoolDeletionService } from './school-deletion.service';
+import { SchoolDeletionWorkerService } from './school-deletion-worker.service';
 
 @Module({
   imports: [
@@ -62,7 +64,7 @@ import { BackupRestoresController } from './backup-restores.controller';
     }),
   ],
   controllers: [SchoolsController, PlatformAdminsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController, QueueOperationsController, ObservabilityController, BackupRestoresController],
-  providers: [SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, AntivirusScannerService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionResourceGovernorService, ExtensionControlService, ExtensionPlatformGuard, ObservabilityService, OperationalAlertService, { provide: APP_INTERCEPTOR, useClass: ExtensionResourceGovernorInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionCircuitBreakerInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
+  providers: [SchoolDeletionService, SchoolDeletionWorkerService, SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, AntivirusScannerService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionResourceGovernorService, ExtensionControlService, ExtensionPlatformGuard, ObservabilityService, OperationalAlertService, { provide: APP_INTERCEPTOR, useClass: ExtensionResourceGovernorInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionCircuitBreakerInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
   exports: [ExtensionsService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionUpdateService, ExtensionAlertService],
 })
 export class PlatformModule {}

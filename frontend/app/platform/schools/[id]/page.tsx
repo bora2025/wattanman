@@ -284,21 +284,23 @@ function SchoolDetailContent() {
 
   async function handleDelete() {
     if (!school || confirmName !== school.name) return;
+    const reason = window.prompt("Deletion reason (minimum 10 characters). This creates an approval request; it does not delete immediately.");
+    if (!reason) return;
     setDeleting(true);
     setDeleteError("");
     try {
-      const res = await apiFetch(`/api/platform/schools/${school.id}`, {
-        method: "DELETE",
+      const res = await apiFetch(`/api/platform/schools/${school.id}/deletion-requests`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmName }),
+        body: JSON.stringify({ reason }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || `HTTP ${res.status}`);
       }
-      router.push("/platform/schools");
+      router.push("/platform/recovery");
     } catch (e: any) {
-      setDeleteError(e.message || "Failed to delete school");
+      setDeleteError(e.message || "Failed to request school deletion");
       setDeleting(false);
     }
   }
@@ -732,15 +734,14 @@ function SchoolDetailContent() {
 
                     <div className="card p-5 border-2 border-red-100 dark:border-red-900">
                       <h3 className="text-sm font-semibold text-red-700 dark:text-red-300 mb-1">
-                        Delete school
+                        Request school deletion
                       </h3>
                       <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
                         <strong className="text-red-700 dark:text-red-300">
-                          Irreversible.
+                          Controlled and irreversible.
                         </strong>{" "}
-                        Permanently deletes {school.name} and every record it
-                        owns — students, staff, attendance, fees, everything.
-                        Type the school's exact name to confirm.
+                        A separate approver and executor are required. Active legal holds block the request.
+                        Type the school's exact name to continue.
                       </p>
                       {deleteError && (
                         <div className="text-xs text-red-600 dark:text-red-400 mb-2">
@@ -760,7 +761,7 @@ function SchoolDetailContent() {
                           disabled={confirmName !== school.name || deleting}
                           className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
                         >
-                          {deleting ? "Deleting…" : "Delete School"}
+                          {deleting ? "Requesting…" : "Request Deletion"}
                         </button>
                       </div>
                     </div>

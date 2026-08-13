@@ -134,6 +134,37 @@ model DataLegalHold {
   @@index([caseReference])
 }
 
+model SchoolDeletionRequest {
+  id                 String    @id @default(cuid())
+  deletedSchoolId    String
+  schoolName         String
+  schoolSubdomain    String
+  status             String    @default("PENDING_APPROVAL") // PENDING_APPROVAL | APPROVED | QUEUED | EXECUTING | COMPLETED | FAILED
+  reason             String
+  requestedBy        String
+  requestedAt        DateTime  @default(now())
+  approvedBy         String?
+  approvedAt         DateTime?
+  approvalReason     String?
+  executedBy         String?
+  changeTicket       String?
+  attempts           Int       @default(0)
+  errorMessage       String?
+  dbSummary          Json?
+  storageSummary     Json?
+  reportStorageKey   String?   @unique
+  reportChecksum     String?
+  reportKeyId        String?
+  reportPayload      Json?
+  reportSignature    String?
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([deletedSchoolId, createdAt])
+  @@index([status, createdAt])
+}
+
 model SchoolProvisioningJob {
   id          String    @id @default(cuid())
   schoolId    String
