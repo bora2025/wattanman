@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "decision": "APPROVED",
+  "findings": {
+    "criticalOpen": 0,
+    "highOpen": 0
+  },
+  "residualRisks": [
+    "Replace with reviewed residual risks and their tracked owners."
+  ],
+  "reviewedAt": "2026-08-13T00:00:00.000Z"
+}

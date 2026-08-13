@@ -43,6 +43,7 @@ An item is complete only when implementation, automated tests, documentation, de
 - [x] Extension lifecycle tests pass.
 - [x] No unexplained legacy runtime file or database model remains.
 - [ ] Architecture and security review is approved.
+  - `architecture:review:prepare`, `architecture:review:sign`, and `architecture:review:verify` now bind two independent Ed25519 approvals to the exact commit and required architecture/security artifact hashes. Verification rejects stale reviews, changed files, open critical/high findings, untrusted or duplicate reviewers, and invalid signatures. See `docs/architecture-security-review.md`. This gate remains open until the real architecture and security owners sign and the protected registry verifies both approvals.
 
 ## Stage 1 — Tenant Safety and Provisioning
 

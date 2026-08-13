@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "reviewers": [
+    {
+      "id": "replace-architecture-reviewer",
+      "role": "ARCHITECTURE_OWNER",
+      "status": "ACTIVE",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nREPLACE\n-----END PUBLIC KEY-----"
+    },
+    {
+      "id": "replace-security-reviewer",
+      "role": "SECURITY_OWNER",
+      "status": "ACTIVE",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nREPLACE\n-----END PUBLIC KEY-----"
+    }
+  ]
+}
