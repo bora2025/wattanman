@@ -356,9 +356,10 @@ An item is complete only when implementation, automated tests, documentation, de
   - OpenTelemetry initializes before application dependencies, exports OTLP protobuf spans when configured, auto-instruments HTTP, PostgreSQL, Redis, and supported libraries, and creates explicit BullMQ consumer spans. W3C `traceparent` crosses the durable job envelope while request IDs and active trace IDs remain searchable in JSON logs. Safe sampling, TLS collector configuration, disabled-mode startup, and emergency rollback are documented in `docs/distributed-tracing.md`. All 333 backend tests and the production build passed; Railway deployments `13111f1a-09f6-40e0-a149-d1ef29eedf2a` (API) and `f673e646-eb19-49ad-a761-fa7165d1b11b` (extension worker) succeeded on 2026-08-13.
 - [x] Include school, user, extension, version, installation, release, and outcome dimensions where safe.
   - API and worker bootstraps now use a secret-redacting one-line JSON logger. Bounded request and trace headers are returned to clients, safe request dimensions are restored through async context, queue producers inherit the current trace ID, and workers restore trace, job, school, and actor context before handling work. The contract and rollback guidance are documented in `docs/telemetry-correlation.md`. The full 331-test backend suite and production build passed; Railway deployments `5918dd49-b01c-45b4-aee1-c86020c3cf8c` (API) and `c9f9b644-b955-492e-8a30-967eab092541` (extension worker) succeeded on 2026-08-13 after a health-route failure injection exposed and verified the tenantless correlation fallback.
-- [ ] Add API latency, errors, saturation, and availability dashboards.
-- [ ] Add database, Redis, queue, worker, and R2 dashboards.
-- [ ] Add per-school and per-extension usage dashboards.
+- [x] Add API latency, errors, saturation, and availability dashboards.
+- [x] Add database, Redis, queue, worker, and R2 dashboards.
+- [x] Add per-school and per-extension usage dashboards.
+  - `/platform/observability` combines distributed minute-bucket API RED metrics, process saturation, PostgreSQL connection capacity, Redis and R2 probes, BullMQ depth/age/failures, worker registration, and top school/extension resource consumers. It complements the durable school usage trends and extension-specific telemetry already available to operators. Metrics fail soft with bounded local fallback and expire after two hours; architecture and rollback guidance are documented in `docs/observability-dashboard.md`.
 - [ ] Define paging and ticket alerts.
 
 ### Backup and restore

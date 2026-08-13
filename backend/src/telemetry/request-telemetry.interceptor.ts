@@ -6,6 +6,7 @@ import { catchError, Observable, tap } from 'rxjs';
 import { tenantContext } from '../tenancy/tenant-context';
 import { JsonLogger } from './json-logger';
 import { telemetryContext } from './telemetry-context';
+import { TelemetryMetricsService } from './telemetry-metrics.service';
 
 function header(value: unknown) {
   return typeof value === 'string' && /^[a-zA-Z0-9._:-]{1,128}$/.test(value) ? value : undefined;
@@ -15,6 +16,8 @@ function header(value: unknown) {
 export class RequestTelemetryInterceptor implements NestInterceptor {
   private readonly logger = new JsonLogger();
 
+  constructor(private readonly metrics?: TelemetryMetricsService) {}
+
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<Request & { user?: { userId?: string } }>();
     const response = context.switchToHttp().getResponse<Response>();
@@ -22,6 +25,7 @@ export class RequestTelemetryInterceptor implements NestInterceptor {
     const activeSpan = trace.getSpan(otelContext.active());
     const traceId = activeSpan?.spanContext().traceId || header(request.headers['x-trace-id']) || requestId;
     const startedAt = Date.now();
+    const finishMetrics = this.metrics?.begin();
     response.setHeader('x-request-id', requestId);
     response.setHeader('x-trace-id', traceId);
     const telemetry = {
@@ -42,9 +46,16 @@ export class RequestTelemetryInterceptor implements NestInterceptor {
       ...(telemetry.installationId ? { 'wattaman.extension.installation_id': telemetry.installationId } : {}),
     });
     return new Observable((subscriber) => telemetryContext.run(telemetry, () => next.handle().pipe(
-        tap(() => this.logger.log({ event: 'http_request', method: request.method, path: request.route?.path || request.path, statusCode: response.statusCode, durationMs: Date.now() - startedAt, outcome: 'success' }, RequestTelemetryInterceptor.name)),
+        tap(() => {
+          const durationMs = Date.now() - startedAt;
+          void finishMetrics?.(response.statusCode, durationMs);
+          this.logger.log({ event: 'http_request', method: request.method, path: request.route?.path || request.path, statusCode: response.statusCode, durationMs, outcome: 'success' }, RequestTelemetryInterceptor.name);
+        }),
         catchError((error) => {
-          this.logger.error({ event: 'http_request', method: request.method, path: request.route?.path || request.path, statusCode: error?.status || 500, durationMs: Date.now() - startedAt, outcome: 'error', error: { name: error?.name, message: error?.message } }, undefined, RequestTelemetryInterceptor.name);
+          const statusCode = error?.status || 500;
+          const durationMs = Date.now() - startedAt;
+          void finishMetrics?.(statusCode, durationMs);
+          this.logger.error({ event: 'http_request', method: request.method, path: request.route?.path || request.path, statusCode, durationMs, outcome: 'error', error: { name: error?.name, message: error?.message } }, undefined, RequestTelemetryInterceptor.name);
           throw error;
         }),
       ).subscribe(subscriber)));

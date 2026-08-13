@@ -82,6 +82,16 @@ export class R2StorageService {
     };
   }
 
+  async health() {
+    const started = Date.now();
+    try {
+      await this.request('HEAD', '.wattaman-health-probe', Buffer.alloc(0), 'application/octet-stream', {}, [404]);
+      return { configured: true, status: 'healthy', latencyMs: Date.now() - started };
+    } catch (error: any) {
+      return { configured: !String(error?.message || '').includes('not configured'), status: 'unhealthy', latencyMs: Date.now() - started, error: error?.message || 'R2 probe failed' };
+    }
+  }
+
   presignPrivateUpload(storageKey: string, contentType: string, checksum: string, expiresSeconds = 300) {
     return this.presign('PUT', storageKey, expiresSeconds, {
       'content-type': contentType,

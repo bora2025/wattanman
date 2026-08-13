@@ -146,13 +146,18 @@ export class QueueInfrastructureService implements OnModuleDestroy {
 
   async health(name: string) {
     const queue = this.queue(name);
-    const counts = await queue.getJobCounts('waiting', 'active', 'delayed', 'failed', 'prioritized');
-    const oldest = (await queue.getJobs(['waiting', 'delayed', 'prioritized'], 0, 0, true))[0];
+    const [counts, jobs, workers] = await Promise.all([
+      queue.getJobCounts('waiting', 'active', 'delayed', 'failed', 'prioritized'),
+      queue.getJobs(['waiting', 'delayed', 'prioritized'], 0, 0, true),
+      queue.getWorkers(),
+    ]);
+    const oldest = jobs[0];
     return {
       queue: name,
       counts,
       depth: counts.waiting + counts.active + counts.delayed + counts.prioritized,
       oldestJobAgeMs: oldest?.timestamp ? Math.max(0, Date.now() - oldest.timestamp) : 0,
+      workers: workers.length,
       checkedAt: new Date().toISOString(),
     };
   }

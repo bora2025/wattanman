@@ -9,6 +9,7 @@ const CLASSIFIED_CONTROLLERS = [
   'platform/extension-installations.controller.ts',
   'platform/extension-runtime.controller.ts',
   'platform/extensions.controller.ts',
+  'platform/observability.controller.ts',
   'platform/platform-admins.controller.ts',
   'platform/queue-operations.controller.ts',
   'platform/school-metrics.controller.ts',

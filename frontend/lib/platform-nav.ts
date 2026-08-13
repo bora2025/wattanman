@@ -7,6 +7,7 @@ export const platformNav = [
   },
   { label: "Schools", href: "/platform/schools", icon: "globe" },
   { label: "Usage Metrics", href: "/platform/usage", icon: "chart" },
+  { label: "Observability", href: "/platform/observability", icon: "pulse" },
   { label: "Extensions", href: "/platform/extensions", icon: "design" },
   {
     label: "Platform Admins",
