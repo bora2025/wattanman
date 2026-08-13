@@ -426,6 +426,10 @@ An item is complete only when implementation, automated tests, documentation, de
 - [x] Alerts identify affected school and extension safely.
   - Alert and correlation contracts use opaque school, extension, version, installation, request, trace, and job identifiers while telemetry redaction excludes names, email, credentials, request bodies, package content, payment evidence, and extension record data. Runbooks preserve this boundary during incident handling.
 - [ ] On-call team completes recovery using documented runbooks.
+  - `game-day:evidence:prepare` and `game-day:evidence:verify` now require four independent human responder roles,
+    staging-only runbook execution, ordered detection/containment/recovery measurements, expected alerts observed,
+    verified cleanup, approved RPO/RTO, resolved critical/high findings, and independent incident-commander/observer
+    Ed25519 signatures. This gate remains open until the real quarterly exercise produces verified evidence.
 
 ## Stage 6 — 1,000-School Certification
 
