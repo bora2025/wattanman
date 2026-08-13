@@ -21,6 +21,10 @@ describe('load test contract', () => {
     expect(source).toContain("'authenticated status is 200'");
     expect(source).not.toContain('[200, 401, 403]');
     expect(source).toContain('LOAD_TEST_SESSIONS || 10000');
+    expect(source).toContain("new Counter('tenant_isolation_failures')");
+    expect(source).toContain("new Rate('burst_recovery_failures')");
+    expect(source).toContain('configuredRps');
+    expect(source).toContain('achievedRps');
   });
 
   it('guards provisioning and cleanup independently from runtime DATABASE_URL', () => {

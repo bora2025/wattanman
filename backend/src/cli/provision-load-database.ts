@@ -31,6 +31,7 @@ async function main() {
   const originTemplate = process.env.LOAD_TEST_SCHOOL_ORIGIN_TEMPLATE?.trim();
   if (!originTemplate) throw new Error('LOAD_TEST_SCHOOL_ORIGIN_TEMPLATE is required');
   const output = resolve(process.env.LOAD_TEST_IDENTITIES_OUTPUT || 'load-fixtures/identities.json');
+  const evidenceOutput = process.argv[2] ? resolve(process.argv[2]) : null;
   const seed = process.env.LOAD_FIXTURE_SEED?.trim() || 'wattaman-certification-v1';
   const schoolCount = integer('LOAD_FIXTURE_SCHOOLS', 1000, 1, 1000);
   const usersPerSchool = integer('LOAD_FIXTURE_USERS_PER_SCHOOL', 500, 1, 1000);
@@ -79,7 +80,12 @@ async function main() {
     try { chmodSync(output, 0o600); } catch {}
     const counts = { schools: await prisma.school.count({ where: { id: { startsWith: 'load-school-' } } }), users: await prisma.user.count({ where: { schoolId: { startsWith: 'load-school-' } } }), installations: await prisma.extensionInstallation.count({ where: { schoolId: { startsWith: 'load-school-' } } }), records: await prisma.extensionRecord.count({ where: { schoolId: { startsWith: 'load-school-' } } }), audits: await prisma.auditLog.count({ where: { schoolId: { startsWith: 'load-school-' } } }), identities: identities.length };
     const fingerprint = createHash('sha256').update(JSON.stringify({ seed, scale, counts })).digest('hex');
-    process.stdout.write(`${JSON.stringify({ outcome: 'PROVISIONED', counts, fingerprint, durationMs: Date.now() - startedAt, identitiesFile: output })}\n`);
+    const evidence = { schemaVersion: 1, runId: process.env.LOAD_TEST_RUN_ID || null, outcome: 'PROVISIONED', counts, fingerprint, durationMs: Date.now() - startedAt, completedAt: new Date().toISOString() };
+    if (evidenceOutput) {
+      mkdirSync(dirname(evidenceOutput), { recursive: true });
+      writeFileSync(evidenceOutput, `${JSON.stringify(evidence, null, 2)}\n`, { flag: 'wx', mode: 0o600 });
+    }
+    process.stdout.write(`${JSON.stringify(evidence)}\n`);
   } finally { await prisma.$disconnect(); }
 }
 

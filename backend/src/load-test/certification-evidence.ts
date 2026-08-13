@@ -20,7 +20,7 @@ export function verifyCertificationEvidence(input: any) {
   assert(input.performance?.concurrentSessions >= 10_000, 'At least 10,000 concurrent sessions are required');
   const sustained = input.performance?.sustained;
   assert(sustained?.rps >= 1000 && sustained?.durationSeconds >= 7200, 'Sustained test must run 1,000 RPS for two hours');
-  assert(sustained?.availabilityPct >= 99.9 && sustained?.p95LatencyMs < 1000 && sustained?.tenantIsolationFailures === 0, 'Sustained test failed SLO or isolation gates');
+  assert(sustained?.achievedRps >= 990 && sustained?.droppedIterations === 0 && sustained?.availabilityPct >= 99.9 && sustained?.p95LatencyMs < 1000 && sustained?.tenantIsolationFailures === 0, 'Sustained test failed throughput, SLO, or isolation gates');
   const burst = input.performance?.burst;
   assert(burst?.rps >= 3000 && burst?.recovered === true && burst?.manualRepair === false, 'Burst must reach 3,000 RPS and recover automatically');
   for (const operation of REQUIRED_TRAFFIC_OPERATIONS) assert(input.trafficOperations?.includes(operation), `Missing traffic operation ${operation}`);

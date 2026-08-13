@@ -57,6 +57,7 @@ export class TenantHostMiddleware implements NestMiddleware {
     }
 
     (req as any).tenantSchool = school;
+    res.setHeader('X-Wattaman-School-Id', school.id);
 
     return tenantContext.run({ schoolId: school.id, mode: 'scoped' }, () => next());
   }

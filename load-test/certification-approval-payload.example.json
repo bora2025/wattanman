@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "runId": "replace-stage6-run-id",
+  "commit": "replace-git-commit",
+  "autoscaling": {
+    "matchesPolicy": true,
+    "policyReference": "replace-immutable-autoscaling-report-reference"
+  },
+  "cost": {
+    "approvedBy": "replace-reliability-owner",
+    "approvedAt": "2026-08-13T00:00:00.000Z"
+  },
+  "nextScalingThresholds": "Replace with approved database, Redis, worker, R2, and API scaling thresholds.",
+  "evidenceReferences": [
+    "replace-immutable-metrics-dashboard-or-report-reference"
+  ]
+}

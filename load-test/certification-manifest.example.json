@@ -7,11 +7,12 @@
                     "name":  "fixture",
                     "executable":  "node",
                     "args":  [
-                                 "backend/dist/cli/generate-load-fixture.js"
+                                 "backend/dist/cli/provision-load-database.js",
+                                 "load-test/results/replace-stage6-run-id/provisioning.json"
                              ],
-                    "timeoutMs":  3600000,
+                    "timeoutMs":  10800000,
                     "env":  {
-                                "LOAD_FIXTURE_OUTPUT":  "load-fixtures"
+                                "LOAD_TEST_IDENTITIES_OUTPUT":  "load-test/results/replace-stage6-run-id/identities.json"
                             },
                     "evidenceFile":  "fixture-command.json"
                 },
@@ -25,7 +26,9 @@
                                  ],
                         "timeoutMs":  9000000,
                         "env":  {
-                                    "LOAD_TEST_PROFILE":  "peak"
+                                    "LOAD_TEST_PROFILE":  "peak",
+                                    "LOAD_TEST_RESULT_FILE":  "load-test/results/replace-stage6-run-id/sustained.json",
+                                    "LOAD_TEST_IDENTITIES_FILE":  "load-test/results/replace-stage6-run-id/identities.json"
                                 },
                         "evidenceFile":  "sustained-command.json"
                     },
@@ -38,7 +41,9 @@
                                  ],
                         "timeoutMs":  1800000,
                         "env":  {
-                                    "LOAD_TEST_PROFILE":  "burst"
+                                    "LOAD_TEST_PROFILE":  "burst",
+                                    "LOAD_TEST_RESULT_FILE":  "load-test/results/replace-stage6-run-id/burst.json",
+                                    "LOAD_TEST_IDENTITIES_FILE":  "load-test/results/replace-stage6-run-id/identities.json"
                                 },
                         "evidenceFile":  "burst-command.json"
                     },
@@ -68,7 +73,9 @@
                                                         ],
                                                "timeoutMs":  3600000,
                                                "env":  {
-                                                           "LOAD_TEST_PROFILE":  "normal"
+                                                           "LOAD_TEST_PROFILE":  "normal",
+                                                           "LOAD_TEST_RESULT_FILE":  "load-test/results/replace-stage6-run-id/operations-workload.json",
+                                                           "LOAD_TEST_IDENTITIES_FILE":  "load-test/results/replace-stage6-run-id/identities.json"
                                                        },
                                                "evidenceFile":  "operations-workload-command.json"
                                            },
@@ -154,7 +161,9 @@
                                                    ],
                                           "timeoutMs":  1800000,
                                           "env":  {
-                                                      "LOAD_TEST_PROFILE":  "failure"
+                                                      "LOAD_TEST_PROFILE":  "failure",
+                                                      "LOAD_TEST_RESULT_FILE":  "load-test/results/replace-stage6-run-id/database-failover-workload.json",
+                                                      "LOAD_TEST_IDENTITIES_FILE":  "load-test/results/replace-stage6-run-id/identities.json"
                                                   },
                                           "evidenceFile":  "db-workload.json"
                                       },
@@ -206,7 +215,9 @@
                                                    ],
                                           "timeoutMs":  1800000,
                                           "env":  {
-                                                      "LOAD_TEST_PROFILE":  "failure"
+                                                      "LOAD_TEST_PROFILE":  "failure",
+                                                      "LOAD_TEST_RESULT_FILE":  "load-test/results/replace-stage6-run-id/redis-interruption-workload.json",
+                                                      "LOAD_TEST_IDENTITIES_FILE":  "load-test/results/replace-stage6-run-id/identities.json"
                                                   },
                                           "evidenceFile":  "redis-workload.json"
                                       },
@@ -258,7 +269,9 @@
                                                    ],
                                           "timeoutMs":  1800000,
                                           "env":  {
-                                                      "LOAD_TEST_PROFILE":  "failure"
+                                                      "LOAD_TEST_PROFILE":  "failure",
+                                                      "LOAD_TEST_RESULT_FILE":  "load-test/results/replace-stage6-run-id/queue-backlog-worker-loss-workload.json",
+                                                      "LOAD_TEST_IDENTITIES_FILE":  "load-test/results/replace-stage6-run-id/identities.json"
                                                   },
                                           "evidenceFile":  "queue-workload.json"
                                       },
@@ -310,7 +323,9 @@
                                                    ],
                                           "timeoutMs":  1800000,
                                           "env":  {
-                                                      "LOAD_TEST_PROFILE":  "failure"
+                                                      "LOAD_TEST_PROFILE":  "failure",
+                                                      "LOAD_TEST_RESULT_FILE":  "load-test/results/replace-stage6-run-id/r2-latency-failure-workload.json",
+                                                      "LOAD_TEST_IDENTITIES_FILE":  "load-test/results/replace-stage6-run-id/identities.json"
                                                   },
                                           "evidenceFile":  "r2-workload.json"
                                       },
@@ -362,7 +377,9 @@
                                                    ],
                                           "timeoutMs":  1800000,
                                           "env":  {
-                                                      "LOAD_TEST_PROFILE":  "failure"
+                                                      "LOAD_TEST_PROFILE":  "failure",
+                                                      "LOAD_TEST_RESULT_FILE":  "load-test/results/replace-stage6-run-id/bad-extension-release-workload.json",
+                                                      "LOAD_TEST_IDENTITIES_FILE":  "load-test/results/replace-stage6-run-id/identities.json"
                                                   },
                                           "evidenceFile":  "release-workload.json"
                                       },
@@ -414,7 +431,9 @@
                                                    ],
                                           "timeoutMs":  1800000,
                                           "env":  {
-                                                      "LOAD_TEST_PROFILE":  "failure"
+                                                      "LOAD_TEST_PROFILE":  "failure",
+                                                      "LOAD_TEST_RESULT_FILE":  "load-test/results/replace-stage6-run-id/signing-key-revocation-workload.json",
+                                                      "LOAD_TEST_IDENTITIES_FILE":  "load-test/results/replace-stage6-run-id/identities.json"
                                                   },
                                           "evidenceFile":  "key-workload.json"
                                       },
@@ -466,7 +485,9 @@
                                                    ],
                                           "timeoutMs":  1800000,
                                           "env":  {
-                                                      "LOAD_TEST_PROFILE":  "failure"
+                                                      "LOAD_TEST_PROFILE":  "failure",
+                                                      "LOAD_TEST_RESULT_FILE":  "load-test/results/replace-stage6-run-id/abusive-school-extension-workload.json",
+                                                      "LOAD_TEST_IDENTITIES_FILE":  "load-test/results/replace-stage6-run-id/identities.json"
                                                   },
                                           "evidenceFile":  "abuse-workload.json"
                                       },

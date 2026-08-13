@@ -59,7 +59,7 @@ export async function runApiPhase(phase: ApiPhase, targetRaw: string) {
   const fixtureRoot = resolve(phase.fixtureRoot);
   const runtime = new Map<string, string>();
   const runId = process.env.LOAD_TEST_RUN_ID || randomUUID();
-  const evidence: { schemaVersion: number; phase: string; target: string; startedAt: string; completedAt?: string; steps: Array<Record<string, unknown>> } = { schemaVersion: 1, phase: phase.name, target, startedAt: new Date().toISOString(), steps: [] };
+  const evidence: { schemaVersion: number; runId: string; phase: string; target: string; startedAt: string; completedAt?: string; steps: Array<Record<string, unknown>> } = { schemaVersion: 1, runId, phase: phase.name, target, startedAt: new Date().toISOString(), steps: [] };
   for (const step of phase.steps) {
     const token = process.env[step.tokenEnv];
     if (!token) throw new Error(`Missing token ${step.tokenEnv}`);

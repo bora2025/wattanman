@@ -26,11 +26,13 @@ describe('TenantHostMiddleware', () => {
     const school = { id: 'school-a', status: 'ACTIVE' };
     const { middleware } = createMiddleware(school);
     const request: any = { headers: { host: 'alpha.example.com' } };
+    const response = { setHeader: jest.fn() } as any;
     const next = jest.fn();
 
-    await middleware.use(request, {} as any, next);
+    await middleware.use(request, response, next);
 
     expect(request.tenantSchool).toBe(school);
+    expect(response.setHeader).toHaveBeenCalledWith('X-Wattaman-School-Id', 'school-a');
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -73,7 +75,7 @@ describe('TenantHostMiddleware', () => {
           'x-tenant-host': 'forged.example.com',
         },
       } as any,
-      {} as any,
+      { setHeader: jest.fn() } as any,
       jest.fn(),
     );
 
