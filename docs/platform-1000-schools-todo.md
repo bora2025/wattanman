@@ -419,11 +419,15 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Load-test preparation
 
-- [ ] Build deterministic synthetic-school generator.
-- [ ] Generate realistic user, extension, record, audit, and asset distributions.
-- [ ] Define normal, peak, burst, and failure test profiles.
-- [ ] Protect production from accidental load-test execution.
-- [ ] Add cost measurement to load tests.
+- [x] Build deterministic synthetic-school generator.
+- [x] Generate realistic user, extension, record, audit, and asset distributions.
+  - `npm run load:fixtures` streams deterministic sharded NDJSON for the approved default scale: 1,000 schools, 500,000 role-weighted users, 8,000 extension installations, 320,000 varied extension records, 200,000 audit events, and 12,000 asset descriptors. Fixed seed/scale manifests have reproducible fingerprints and every tenant-owned row carries its explicit synthetic school ID. Two independent smoke generations produced the same manifest hash on 2026-08-13.
+- [x] Define normal, peak, burst, and failure test profiles.
+  - Guarded k6 profiles define 250 RPS normal, two-hour 1,000 RPS peak, 3,000 RPS burst, and 500 RPS failure traffic with approved availability/latency/check/drop thresholds.
+- [x] Protect production from accidental load-test execution.
+  - The runner requires an explicit non-production acknowledgement and approved performance/staging hostname, performs a health preflight, honors an explicit target rejection, and always rejects `wattaman.app` and Railway public domains. Contract tests fail if these controls disappear.
+- [x] Add cost measurement to load tests.
+  - Each k6 summary records run/profile/target, requests, transfer bytes, duration, configured unit rates, and estimated USD cost in an untracked machine-readable report. See `docs/load-test-preparation.md`.
 
 ### Performance tests
 
