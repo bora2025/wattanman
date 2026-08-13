@@ -27,6 +27,7 @@
     "incident:rehearse": "node dist/cli/rehearse-incident-response.js",
     "load:fixtures": "node dist/cli/generate-load-fixture.js",
     "load:verify": "node dist/cli/verify-stage6-certification.js",
+    "load:run": "node dist/cli/run-stage6-certification.js",
     "storage:r2:cors": "node scripts/configure-r2-cors.js",
     "db:seed": "ts-node prisma/seed.ts",
     "extension:validate": "ts-node src/cli/validate-extension-package.ts",

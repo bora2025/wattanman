@@ -28,3 +28,7 @@ Set the approved environment-hour, request, and transfer rates. `handleSummary` 
 ## Certification evidence
 
 Populate a copy of `load-test/certification-evidence.example.json` only from measured non-production outputs, then run `npm.cmd run load:verify -- <path>`. The verifier fails unless all Stage 6 scale, sustained/burst, concurrent-session, traffic-operation, dependency-limit, failure-injection, tenant-isolation, automatic-recovery, autoscaling, cost-approval, and next-threshold requirements are present and within approved limits. A passing checksum is evidence integrity, not a substitute for attached source metrics.
+
+## Orchestration
+
+Copy `load-test/certification-manifest.example.json`, replace every explicit driver placeholder, and add all seven failure phases. Run `npm.cmd run load:run -- <manifest>`. The runner accepts only allowlisted executables, never invokes a shell, bounds every timeout and output, restricts environment overrides to `LOAD_*`, rejects production targets, requires every workload/failure phase, runs lifecycle operations concurrently with traffic, and writes exclusive-create SHA-256 command evidence. Every injected failure has mandatory `inject`, `workload`, `recover`, and `verify` steps; recovery executes in `finally` even when workload fails. A manifest is execution configuration, not proof of a passing certification.

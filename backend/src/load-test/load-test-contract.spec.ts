@@ -15,7 +15,7 @@ describe('load test contract', () => {
     const source = readFileSync(resolve(root, 'wattaman.js'), 'utf8');
     expect(source).toContain("LOAD_TEST_AUTHORIZATION !== 'I_ACKNOWLEDGE_NON_PRODUCTION_ONLY'");
     expect(source).toContain("host.endsWith('.up.railway.app')");
-    expect(source).toContain("/(^|\\.)wattaman\\.app$/");
+    expect(source).toContain("host.endsWith('.wattaman.app')");
     expect(source).toContain('estimatedCostUsd');
     expect(source).toContain('LOAD_COST_PER_MILLION_REQUESTS_USD');
     expect(source).toContain("'authenticated status is 200'");

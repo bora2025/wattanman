@@ -25,7 +25,7 @@ function target() {
   const url = new URL(raw);
   const host = url.hostname.toLowerCase();
   const approvedHost = host === 'localhost' || host === '127.0.0.1' || /(loadtest|performance|perf|staging)/.test(host);
-  if (!approvedHost || /(^|\.)wattaman\.app$/.test(host) || host.endsWith('.up.railway.app')) throw new Error(`Refusing load test target ${host}`);
+  if (!approvedHost || ['wattaman.app', 'wattanman.app'].includes(host) || host.endsWith('.wattaman.app') || host.endsWith('.wattanman.app') || host.endsWith('.up.railway.app')) throw new Error(`Refusing load test target ${host}`);
   if (__ENV.LOAD_TEST_AUTHORIZATION !== 'I_ACKNOWLEDGE_NON_PRODUCTION_ONLY') throw new Error('LOAD_TEST_AUTHORIZATION acknowledgement is required');
   return url.origin;
 }
@@ -34,7 +34,7 @@ function approvedOrigin(raw) {
   const url = new URL(raw);
   const host = url.hostname.toLowerCase();
   if (!(host === 'localhost' || host === '127.0.0.1' || /(loadtest|performance|perf|staging)/.test(host))) throw new Error(`Unapproved identity origin ${host}`);
-  if (/(^|\.)wattaman\.app$/.test(host) || host.endsWith('.up.railway.app')) throw new Error(`Refusing identity origin ${host}`);
+  if (['wattaman.app', 'wattanman.app'].includes(host) || host.endsWith('.wattaman.app') || host.endsWith('.wattanman.app') || host.endsWith('.up.railway.app')) throw new Error(`Refusing identity origin ${host}`);
   return url.origin;
 }
 

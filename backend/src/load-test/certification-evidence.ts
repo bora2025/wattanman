@@ -12,7 +12,7 @@ export function verifyCertificationEvidence(input: any) {
   assert(typeof input.runId === 'string' && input.runId.length >= 8, 'runId is required');
   assert(typeof input.commit === 'string' && /^[a-f0-9]{7,40}$/.test(input.commit), 'A git commit is required');
   const host = new URL(input.target).hostname.toLowerCase();
-  assert(!/(^|\.)wattaman\.app$/.test(host) && !host.endsWith('.up.railway.app'), 'Production and Railway public targets are forbidden');
+  assert(!['wattaman.app', 'wattanman.app'].includes(host) && !host.endsWith('.wattaman.app') && !host.endsWith('.wattanman.app') && !host.endsWith('.up.railway.app'), 'Production and Railway public targets are forbidden');
   assert(/(loadtest|performance|perf|staging)|localhost|127\.0\.0\.1/.test(host), 'Evidence target is not an approved performance environment');
   assert(input.fixture?.schools >= 1000, 'At least 1,000 schools must be provisioned');
   assert(input.fixture?.registeredUsers >= 500_000, 'At least 500,000 users must be registered');
