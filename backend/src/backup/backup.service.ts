@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { TENANT_SCOPED_MODELS } from '../tenancy/scoped-models';
-import { getCurrentSchoolId } from '../tenancy/tenant-context';
+import { getCurrentSchoolId, tenantContext } from '../tenancy/tenant-context';
 import { QueueInfrastructureService } from '../jobs/queue-infrastructure.service';
 import { R2StorageService } from '../storage/r2-storage.service';
 import { AuditService } from '../audit/audit.service';
@@ -64,6 +64,70 @@ export class BackupService {
     private storage: R2StorageService,
     private audit: AuditService,
   ) {}
+
+  async scheduleDailyExports(now = new Date()) {
+    const backupDate = now.toISOString().slice(0, 10);
+    const requestKey = `daily-backup:${backupDate}`;
+    let cursor: string | undefined;
+    let scheduled = 0;
+    let failed = 0;
+    const failedSchoolIds: string[] = [];
+
+    do {
+      const schools = await this.prisma.school.findMany({
+        where: { status: 'ACTIVE', subdomain: { not: 'platform' } },
+        select: { id: true },
+        orderBy: { id: 'asc' },
+        take: 100,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      for (const school of schools) {
+        try {
+          await tenantContext.run({ schoolId: school.id, mode: 'scoped' }, () =>
+            this.requestExport({ role: 'SYSTEM', name: 'Daily backup policy' }, requestKey),
+          );
+          scheduled += 1;
+        } catch {
+          failed += 1;
+          if (failedSchoolIds.length < 20) failedSchoolIds.push(school.id);
+        }
+      }
+      cursor = schools.length === 100 ? schools[schools.length - 1].id : undefined;
+    } while (cursor);
+
+    if (failed) {
+      throw new Error(`Daily backup scheduling failed for ${failed} school(s); first IDs: ${failedSchoolIds.join(',')}`);
+    }
+    return { backupDate, requestKey, scheduled, completedAt: new Date().toISOString() };
+  }
+
+  async dailyPolicyStatus(now = new Date()) {
+    const backupDate = now.toISOString().slice(0, 10);
+    const requestKey = `daily-backup:${backupDate}`;
+    const [activeSchools, states] = await Promise.all([
+      this.prisma.school.count({ where: { status: 'ACTIVE', subdomain: { not: 'platform' } } }),
+      this.prisma.backupExport.groupBy({
+        by: ['status'],
+        where: { requestKey, school: { status: 'ACTIVE', subdomain: { not: 'platform' } } },
+        _count: { _all: true },
+      }),
+    ]);
+    const byStatus = Object.fromEntries(states.map((state) => [state.status, state._count._all]));
+    const requested = states.reduce((sum, state) => sum + state._count._all, 0);
+    return {
+      backupDate,
+      requestKey,
+      activeSchools,
+      requested,
+      available: byStatus.AVAILABLE || 0,
+      failed: byStatus.FAILED || 0,
+      pending: (byStatus.PENDING || 0) + (byStatus.RUNNING || 0),
+      coveragePct: activeSchools === 0 ? 100 : Number(((requested / activeSchools) * 100).toFixed(2)),
+      encryption: 'CLOUDFLARE_R2_SERVER_SIDE_AES_256',
+      healthy: requested === activeSchools && !byStatus.FAILED,
+      checkedAt: now.toISOString(),
+    };
+  }
 
   async requestExport(actor: { userId?: string; role?: string; name?: string; email?: string }, requestKey: string) {
     const schoolId = getCurrentSchoolId();

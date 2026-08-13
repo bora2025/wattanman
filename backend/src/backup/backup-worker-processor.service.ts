@@ -27,4 +27,11 @@ export class BackupWorkerProcessorService implements OnModuleInit {
     if (!(await this.schedules.acquire('backup-data-retention', 24 * 60 * 60_000))) return;
     return this.backups.runRetention();
   }
+
+  @Cron('15 1-3 * * *', { timeZone: 'UTC' })
+  async scheduleDailyBackups() {
+    if (process.env.WORKER_ROLE !== 'extension' || process.env.DAILY_BACKUP_ENABLED === 'false') return;
+    if (!(await this.schedules.acquire('daily-school-backups', 60 * 60_000))) return;
+    return this.backups.scheduleDailyExports();
+  }
 }

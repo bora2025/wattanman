@@ -17,6 +17,7 @@ describe('BackupService asynchronous exports', () => {
     dataLegalHold: { findFirst: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), upsert: jest.fn(), update: jest.fn() },
     extensionApiMetric: { deleteMany: jest.fn() },
     schoolDailyMetric: { deleteMany: jest.fn() },
+    school: { findMany: jest.fn(), count: jest.fn() },
     $transaction: jest.fn(),
   };
   const queues: any = { enqueue: jest.fn() };
@@ -25,6 +26,21 @@ describe('BackupService asynchronous exports', () => {
   const service = new BackupService(prisma, queues, storage, audit);
 
   beforeEach(() => jest.clearAllMocks());
+
+  it('queues one idempotent daily export for every active school', async () => {
+    prisma.school.findMany.mockResolvedValueOnce([{ id: 'school-1' }, { id: 'school-2' }]);
+    prisma.backupExport.upsert
+      .mockResolvedValueOnce({ id: 'export-1', schoolId: 'school-1', status: 'PENDING' })
+      .mockResolvedValueOnce({ id: 'export-2', schoolId: 'school-2', status: 'PENDING' });
+    prisma.backupExport.findUnique
+      .mockResolvedValueOnce({ id: 'export-1', schoolId: 'school-1', status: 'PENDING' })
+      .mockResolvedValueOnce({ id: 'export-2', schoolId: 'school-2', status: 'PENDING' });
+    const result = await tenantContext.run({ schoolId: 'PLATFORM', mode: 'unscoped' }, () =>
+      service.scheduleDailyExports(new Date('2026-08-13T01:15:00.000Z')),
+    );
+    expect(result).toEqual(expect.objectContaining({ requestKey: 'daily-backup:2026-08-13', scheduled: 2 }));
+    expect(queues.enqueue).toHaveBeenCalledTimes(2);
+  });
 
   it('creates one tenant-scoped idempotent export job', async () => {
     const record = { id: 'export-1', schoolId: 'school-1', requestKey: 'request-1', status: 'PENDING' };

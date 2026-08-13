@@ -14,6 +14,9 @@ export class BackupRestoresController {
   @Get()
   list() { return this.backups.listRestores(); }
 
+  @Get('daily-policy')
+  dailyPolicy() { return this.backups.dailyPolicyStatus(); }
+
   @Post(':id/approve')
   approve(@Param('id') id: string, @Body() body: { reason: string }, @Request() request: any) {
     return this.backups.approveRestore(id, body?.reason, request.user);

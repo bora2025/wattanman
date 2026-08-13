@@ -369,6 +369,11 @@ An item is complete only when implementation, automated tests, documentation, de
 
 - [ ] Enable and verify PostgreSQL point-in-time recovery.
 - [ ] Add encrypted daily backup policy.
+  - The extension worker now claims distributed hourly windows at 01:15, 02:15, and 03:15 UTC, cursor-pages active
+    schools, and creates one tenant-scoped idempotent export request per school. Platform administrators can inspect same-day coverage and
+    failures at `GET /platform/backup-restores/daily-policy`. Objects remain private and immutable in Cloudflare R2,
+    which encrypts all objects at rest. Set `DAILY_BACKUP_ENABLED=false` only during an approved maintenance window.
+    This gate remains open until a production daily run reports 100% coverage and its restore sample is verified.
   - [x] Make school exports asynchronous and checksummed.
     - Tenant-scoped, idempotent export requests now run on the durable operations queue, write immutable SHA-256-addressed private R2 objects, and persist size, row count, status, attempts, and bounded failures. PostgreSQL RLS and role grants cover the export metadata table. All 342 backend tests and both production builds passed; Railway deployments `79cf3c32-39bb-45dd-bba2-1bd61645de70` (API), `31813100-ea36-4165-a4c0-3668dfc9c3a7` (frontend), and `da579bb7-38c5-4cf0-9ce3-6ba3f92e12f3` (extension worker) succeeded on 2026-08-13.
   - [x] Add short-lived signed export downloads.
