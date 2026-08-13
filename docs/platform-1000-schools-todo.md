@@ -368,6 +368,11 @@ An item is complete only when implementation, automated tests, documentation, de
 ### Backup and restore
 
 - [ ] Enable and verify PostgreSQL point-in-time recovery.
+  - `recovery:evidence:prepare`, independent Ed25519 infrastructure/reliability approvals, and
+    `recovery:evidence:verify` now reject disabled/stale PITR, unverified or unencrypted backups, stale recovery points,
+    RPO over 15 minutes, RTO over 60 minutes, non-isolated restores, and failed integrity or cleanup. See
+    `docs/provider-recovery-evidence.md`. This gate remains open until Railway PITR is enabled and fresh production
+    evidence verifies.
 - [ ] Add encrypted daily backup policy.
   - The extension worker now claims distributed hourly windows at 01:15, 02:15, and 03:15 UTC, cursor-pages active
     schools, and creates one tenant-scoped idempotent export request per school. Platform administrators can inspect same-day coverage and
