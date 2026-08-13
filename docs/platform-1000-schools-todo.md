@@ -21,6 +21,7 @@ An item is complete only when implementation, automated tests, documentation, de
   - No export is required: the product owner explicitly requested deletion of all legacy module data.
 - [x] Remove obsolete feature models from `prisma/schema.prisma`.
 - [ ] Create and rehearse the destructive cleanup migration against a production-sized backup.
+  - `db:cleanup:rehearse` now fails closed unless given an explicit isolated target and authorization, validates a PostgreSQL archive, restores it, applies the complete migration chain, verifies obsolete-table removal and every retained row count, restores the archive again as rollback proof, verifies all original table counts, and removes all copied data. It emits independently verifiable Ed25519-signed evidence without rows, credentials, or SQL output. See `docs/destructive-cleanup-rehearsal.md`. This item remains open until an authorized production-sized backup produces a verified report and independent review.
 - [x] Remove obsolete dependencies, environment variables, scripts, and documentation.
 - [x] Update the root architecture documentation and directory map.
 

@@ -24,6 +24,8 @@
     "db:rls:activate": "node prisma/activate-tenant-rls.js",
     "db:provisioning:rehearse": "node prisma/rehearse-school-provisioning.js",
     "db:restore:rehearse": "node dist/cli/rehearse-school-restore.js",
+    "db:cleanup:rehearse": "node dist/cli/rehearse-destructive-migration.js",
+    "db:cleanup:verify": "node dist/cli/verify-destructive-migration-rehearsal.js",
     "incident:rehearse": "node dist/cli/rehearse-incident-response.js",
     "load:fixtures": "node dist/cli/generate-load-fixture.js",
     "load:verify": "node dist/cli/verify-stage6-certification.js",
