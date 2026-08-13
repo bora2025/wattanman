@@ -41,6 +41,7 @@ import { ExtensionCircuitBreakerInterceptor } from './extension-circuit-breaker.
 import { TelemetryModule } from '../telemetry/telemetry.module';
 import { ObservabilityController } from './observability.controller';
 import { ObservabilityService } from './observability.service';
+import { OperationalAlertService } from './operational-alert.service';
 
 @Module({
   imports: [
@@ -58,7 +59,7 @@ import { ObservabilityService } from './observability.service';
     }),
   ],
   controllers: [SchoolsController, PlatformAdminsController, SchoolMetricsController, ExtensionsController, PlatformExtensionInstallationsController, SchoolExtensionsController, ExtensionRuntimeController, QueueOperationsController, ObservabilityController],
-  providers: [SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, AntivirusScannerService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionResourceGovernorService, ExtensionControlService, ExtensionPlatformGuard, ObservabilityService, { provide: APP_INTERCEPTOR, useClass: ExtensionResourceGovernorInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionCircuitBreakerInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
+  providers: [SchoolsService, PlatformAdminsService, RailwayDomainService, ExtensionsService, R2StorageService, ExtensionPackageValidatorService, ExtensionValidationRunnerService, AntivirusScannerService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionRuntimeService, ExtensionSigningService, ExtensionUpdateService, ExtensionAlertService, ExtensionApiMetricsService, ExtensionResourceGovernorService, ExtensionControlService, ExtensionPlatformGuard, ObservabilityService, OperationalAlertService, { provide: APP_INTERCEPTOR, useClass: ExtensionResourceGovernorInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionCircuitBreakerInterceptor }, { provide: APP_INTERCEPTOR, useClass: ExtensionApiMetricsInterceptor }],
   exports: [ExtensionsService, ExtensionInstallationsService, ExtensionLifecycleJobsService, ExtensionPurgeReportService, ExtensionCleanupService, ExtensionUpdateService, ExtensionAlertService],
 })
 export class PlatformModule {}

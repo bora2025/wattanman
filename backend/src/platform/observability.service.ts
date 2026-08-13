@@ -15,7 +15,7 @@ export class ObservabilityService {
 
   async snapshot(minutes = 60) {
     const queueNames = (process.env.QUEUE_MONITORED_NAMES || 'operations,extensions,notifications').split(',').map((name) => name.trim()).filter(Boolean);
-    const [api, database, redis, r2, queueResults, schoolUsage, extensionUsage] = await Promise.all([
+    const [api, database, redis, r2, queueResults, schoolUsage, extensionUsage, alerts] = await Promise.all([
       this.telemetry.summary(minutes),
       this.databaseHealth(),
       this.telemetry.redisHealth(),
@@ -32,8 +32,11 @@ export class ObservabilityService {
         orderBy: { dataBytes: 'desc' }, take: 10,
         select: { id: true, schoolId: true, dataBytes: true, dataRecords: true, extension: { select: { id: true, key: true, name: true } } },
       })),
+      this.prisma.runInControlPlane((client) => client.extensionAlert.findMany({
+        where: { status: { in: ['OPEN', 'ACKNOWLEDGED'] } }, orderBy: [{ severity: 'desc' }, { lastSeenAt: 'desc' }], take: 20,
+      })),
     ]);
-    return { api, dependencies: { database, redis, r2 }, queues: queueResults, usage: { schools: schoolUsage, extensions: extensionUsage }, generatedAt: new Date().toISOString() };
+    return { api, dependencies: { database, redis, r2 }, queues: queueResults, usage: { schools: schoolUsage, extensions: extensionUsage }, alerts, generatedAt: new Date().toISOString() };
   }
 
   private async databaseHealth() {

@@ -11,6 +11,7 @@ type Snapshot = {
   dependencies: Record<string, { status: string; latencyMs: number | null; activeConnections?: number; totalConnections?: number; maxConnections?: number }>
   queues: Array<{ queue: string; status?: string; depth?: number; oldestJobAgeMs?: number; workers?: number; counts?: Record<string, number>; error?: string }>
   usage: { schools: Array<{ id: string; subdomain: string; extensionDataBytes: number; extensionDataRecords: number }>; extensions: Array<{ id: string; schoolId: string; dataBytes: number; dataRecords: number; extension: { key: string; name: string } }> }
+  alerts: Array<{ id: string; type: string; severity: string; status: string; message: string; occurrences: number; lastSeenAt: string; details?: { route?: string } }>
   generatedAt: string
 }
 
@@ -60,6 +61,7 @@ function ObservabilityContent() {
             <div className="card p-5"><h2 className="font-bold text-lg mb-4">Top schools by extension data</h2>{snapshot.usage.schools.map(school => <div key={school.id} className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800"><span>{school.subdomain}</span><span className="text-sm text-slate-500">{bytes(school.extensionDataBytes)} · {school.extensionDataRecords} records</span></div>)}</div>
             <div className="card p-5"><h2 className="font-bold text-lg mb-4">Top extension installations</h2>{snapshot.usage.extensions.map(item => <div key={item.id} className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800"><span>{item.extension.name} <small className="text-slate-400">{item.extension.key}</small></span><span className="text-sm text-slate-500">{bytes(item.dataBytes)} · {item.dataRecords} records</span></div>)}</div>
           </section>
+          <section className="card p-5"><h2 className="font-bold text-lg mb-4">Open alerts</h2>{snapshot.alerts.length === 0 ? <p className="text-sm text-slate-500">No open operational alerts.</p> : <div className="space-y-3">{snapshot.alerts.map(alert => <div key={alert.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3"><div><p className="font-semibold">{alert.message}</p><p className="text-xs text-slate-500">{alert.type} · {alert.occurrences} occurrences · last seen {new Date(alert.lastSeenAt).toLocaleString()}</p></div><span className={`text-xs font-bold rounded-full px-2 py-1 ${alert.severity === 'CRITICAL' ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'}`}>{alert.details?.route || alert.severity}</span></div>)}</div>}</section>
           <p className="text-xs text-slate-400">60-minute distributed window · refreshed {new Date(snapshot.generatedAt).toLocaleString()}</p>
         </>}
       </div>

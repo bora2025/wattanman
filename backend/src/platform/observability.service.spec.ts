@@ -6,6 +6,7 @@ describe('ObservabilityService', () => {
       $queryRaw: jest.fn().mockResolvedValue([{ active: 2n, total: 5n, max_connections: 100 }]),
       school: { findMany: jest.fn().mockResolvedValue([{ id: 'school-1', subdomain: 'aurora', extensionDataBytes: 100, extensionDataRecords: 2 }]) },
       extensionInstallation: { findMany: jest.fn().mockResolvedValue([{ id: 'installation-1', schoolId: 'school-1', dataBytes: 100, dataRecords: 2, extension: { id: 'extension-1', key: 'REWARDS', name: 'Rewards' } }]) },
+      extensionAlert: { findMany: jest.fn().mockResolvedValue([]) },
     };
     const prisma = { runInControlPlane: jest.fn((callback) => callback(client)) };
     const queues = { health: jest.fn().mockResolvedValue({ queue: 'extensions', depth: 0, workers: 1 }) };

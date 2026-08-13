@@ -92,6 +92,40 @@ export class ExtensionAlertService {
     });
   }
 
+  async raiseOperational(input: {
+    fingerprint: string; type: 'API_SLO' | 'DEPENDENCY_HEALTH' | 'QUEUE_HEALTH'; severity: 'WARNING' | 'CRITICAL';
+    message: string; details: Prisma.InputJsonObject;
+  }) {
+    const existing = await this.prisma.extensionAlert.findUnique({ where: { fingerprint: input.fingerprint } });
+    const notify = !existing || existing.status === 'RESOLVED' || (existing.severity === 'WARNING' && input.severity === 'CRITICAL') || existing.occurrences % 6 === 0;
+    const alert = await this.prisma.extensionAlert.upsert({
+      where: { fingerprint: input.fingerprint },
+      create: { ...input, schoolId: 'PLATFORM', occurrences: 1 },
+      update: {
+        type: input.type,
+        severity: input.severity,
+        status: notify ? 'OPEN' : existing!.status,
+        message: input.message,
+        details: input.details,
+        occurrences: { increment: 1 },
+        lastSeenAt: new Date(),
+        ...(notify ? { acknowledgedBy: null, acknowledgedAt: null, resolvedBy: null, resolvedAt: null } : {}),
+      },
+    });
+    return { alert, notify };
+  }
+
+  async resolveRecoveredOperational(activeFingerprints: string[]) {
+    return this.prisma.extensionAlert.updateMany({
+      where: {
+        type: { in: ['API_SLO', 'DEPENDENCY_HEALTH', 'QUEUE_HEALTH'] },
+        status: { in: ['OPEN', 'ACKNOWLEDGED'] },
+        ...(activeFingerprints.length ? { fingerprint: { notIn: activeFingerprints } } : {}),
+      },
+      data: { status: 'RESOLVED', resolvedAt: new Date(), resolvedBy: 'SYSTEM' },
+    });
+  }
+
   private raise(input: {
     fingerprint: string; type: string; severity: string; extensionId?: string; versionId?: string;
     schoolId?: string; message: string; occurrences: number; details: Prisma.InputJsonObject;
