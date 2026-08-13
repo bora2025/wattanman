@@ -350,10 +350,11 @@ An item is complete only when implementation, automated tests, documentation, de
 
 ### Telemetry
 
-- [ ] Add structured JSON logs.
-- [ ] Add request and job correlation IDs.
+- [x] Add structured JSON logs.
+- [x] Add request and job correlation IDs.
 - [ ] Add distributed tracing.
-- [ ] Include school, user, extension, version, installation, release, and outcome dimensions where safe.
+- [x] Include school, user, extension, version, installation, release, and outcome dimensions where safe.
+  - API and worker bootstraps now use a secret-redacting one-line JSON logger. Bounded request and trace headers are returned to clients, safe request dimensions are restored through async context, queue producers inherit the current trace ID, and workers restore trace, job, school, and actor context before handling work. The contract and rollback guidance are documented in `docs/telemetry-correlation.md`.
 - [ ] Add API latency, errors, saturation, and availability dashboards.
 - [ ] Add database, Redis, queue, worker, and R2 dashboards.
 - [ ] Add per-school and per-extension usage dashboards.

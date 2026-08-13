@@ -7,6 +7,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import express from 'express';
+import { JsonLogger } from './telemetry/json-logger';
 
 /**
  * Cached set of verified, routed custom domains, refreshed on
@@ -34,9 +35,7 @@ async function refreshCustomDomainCache(prisma: PrismaService) {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bodyParser: false,
-    logger: process.env.NODE_ENV === 'production'
-      ? ['error', 'warn']
-      : ['log', 'error', 'warn'],
+    logger: process.env.NODE_ENV === 'test' ? false : new JsonLogger(),
   });
 
   const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS || 1);
@@ -125,6 +124,6 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port, '0.0.0.0');
-  console.log(`API server running on port ${port}`);
+  new JsonLogger().log({ event: 'service_ready', port }, 'Bootstrap');
 }
 bootstrap();

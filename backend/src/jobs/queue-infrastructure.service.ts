@@ -5,6 +5,7 @@ import IORedis from 'ioredis';
 import { tenantContext } from '../tenancy/tenant-context';
 import { assertJobEnvelope, createJobEnvelope, JobEnvelope, JobTenantScope, JobActor } from './job-envelope';
 import { assertProductionRedisUrl } from '../security/redis-url';
+import { telemetryContext } from '../telemetry/telemetry-context';
 
 const DEFAULT_ATTEMPTS = 8;
 const DEFAULT_BACKOFF_MS = 1_000;
@@ -44,7 +45,7 @@ export class QueueInfrastructureService implements OnModuleDestroy {
     idempotencyKey: string;
     payload: T;
   }) {
-    const envelope = createJobEnvelope(input);
+    const envelope = createJobEnvelope({ ...input, traceId: input.traceId || telemetryContext.current()?.traceId });
     const jobId = createHash('sha256').update(`${queueName}:${input.idempotencyKey}`).digest('hex');
     return this.queue(queueName).add(envelope.type, envelope, {
       jobId,
@@ -61,7 +62,13 @@ export class QueueInfrastructureService implements OnModuleDestroy {
       assertJobEnvelope(job.data);
       const envelope = { ...job.data, attempt: job.attemptsMade + 1 } as JobEnvelope;
       const scope = { schoolId: envelope.tenant.schoolId, mode: envelope.tenant.mode === 'PLATFORM' ? 'unscoped' as const : 'scoped' as const };
-      return tenantContext.run(scope, () => handler(envelope));
+      return tenantContext.run(scope, () => telemetryContext.run({
+        requestId: envelope.jobId,
+        traceId: envelope.traceId,
+        jobId: envelope.jobId,
+        schoolId: envelope.tenant.schoolId,
+        userId: envelope.actor.id,
+      }, () => handler(envelope)));
     }, {
       connection,
       concurrency: Number(process.env.QUEUE_WORKER_CONCURRENCY || 5),

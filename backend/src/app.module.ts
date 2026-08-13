@@ -18,6 +18,8 @@ import { SecurityModule } from './security/security.module';
 import { IdempotencyInterceptor } from './security/idempotency.interceptor';
 import { ResponseSizeInterceptor } from './security/response-size.interceptor';
 import { DistributedCommandLockInterceptor } from './security/distributed-command-lock.interceptor';
+import { TelemetryModule } from './telemetry/telemetry.module';
+import { RequestTelemetryInterceptor } from './telemetry/request-telemetry.interceptor';
 
 @Module({
   imports: [
@@ -35,11 +37,13 @@ import { DistributedCommandLockInterceptor } from './security/distributed-comman
     SiteSettingsModule,
     PostsModule,
     PlatformModule,
+    TelemetryModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     TenantHostMiddleware,
+    { provide: APP_INTERCEPTOR, useExisting: RequestTelemetryInterceptor },
     { provide: APP_INTERCEPTOR, useExisting: TenantDatabaseInterceptor },
     { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor },
     { provide: APP_INTERCEPTOR, useClass: DistributedCommandLockInterceptor },
