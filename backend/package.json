@@ -34,6 +34,7 @@
     "load:limits": "node dist/cli/collect-load-capacity-limits.js",
     "load:chaos": "node dist/cli/run-load-chaos-action.js",
     "load:assemble": "node dist/cli/assemble-stage6-certification.js",
+    "load:chaos-controller": "node dist/cli/run-load-chaos-controller.js",
     "storage:r2:cors": "node scripts/configure-r2-cors.js",
     "db:seed": "ts-node prisma/seed.ts",
     "extension:validate": "ts-node src/cli/validate-extension-package.ts",

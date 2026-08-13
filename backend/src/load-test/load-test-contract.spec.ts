@@ -37,4 +37,14 @@ describe('load test contract', () => {
     expect(cleanup).toContain("LOAD_TEST_CLEANUP_CONFIRMATION !== 'DELETE_ALL_SYNTHETIC_LOAD_DATA'");
     expect(cleanup).toContain("startsWith: 'load-school-'");
   });
+
+  it('keeps the chaos controller isolated from application Redis and production targets', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src', 'load-test', 'chaos-controller.ts'), 'utf8');
+    const entry = readFileSync(resolve(process.cwd(), 'src', 'cli', 'run-load-chaos-controller.ts'), 'utf8');
+    expect(source).toContain("url === process.env.REDIS_URL");
+    expect(source).toContain('assertLoadTestHttpTarget');
+    expect(source).toContain('claimNonce');
+    expect(entry).toContain('I_AUTHORIZE_ISOLATED_CHAOS_CONTROL');
+    expect(entry).toContain("LOAD_CHAOS_ENVIRONMENT !== 'ISOLATED_PERFORMANCE'");
+  });
 });
