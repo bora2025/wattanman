@@ -354,7 +354,7 @@ An item is complete only when implementation, automated tests, documentation, de
 - [x] Add request and job correlation IDs.
 - [ ] Add distributed tracing.
 - [x] Include school, user, extension, version, installation, release, and outcome dimensions where safe.
-  - API and worker bootstraps now use a secret-redacting one-line JSON logger. Bounded request and trace headers are returned to clients, safe request dimensions are restored through async context, queue producers inherit the current trace ID, and workers restore trace, job, school, and actor context before handling work. The contract and rollback guidance are documented in `docs/telemetry-correlation.md`.
+  - API and worker bootstraps now use a secret-redacting one-line JSON logger. Bounded request and trace headers are returned to clients, safe request dimensions are restored through async context, queue producers inherit the current trace ID, and workers restore trace, job, school, and actor context before handling work. The contract and rollback guidance are documented in `docs/telemetry-correlation.md`. The full 331-test backend suite and production build passed; Railway deployments `5918dd49-b01c-45b4-aee1-c86020c3cf8c` (API) and `c9f9b644-b955-492e-8a30-967eab092541` (extension worker) succeeded on 2026-08-13 after a health-route failure injection exposed and verified the tenantless correlation fallback.
 - [ ] Add API latency, errors, saturation, and availability dashboards.
 - [ ] Add database, Redis, queue, worker, and R2 dashboards.
 - [ ] Add per-school and per-extension usage dashboards.
