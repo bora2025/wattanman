@@ -501,7 +501,10 @@ Coding for Stage 1 must not start until:
 
 - [ ] Stage 0 architecture decisions are approved.
 - [ ] A production database backup is verified.
-- [ ] A staging environment is available.
+- [x] A staging environment is available.
+  - Railway staging uses isolated empty PostgreSQL and Redis volumes, staging-specific application/signing keys,
+    fail-closed external integration placeholders, one API replica, and healthy API/frontend/worker deployments. The
+    migrated database contains zero schools, users, and extensions. See `docs/staging-environment.md`.
 - [ ] The obsolete-model inventory is reviewed.
 - [x] Redis and queue choices are recorded.
   - Accepted ADR 0003 selects managed TLS Redis, BullMQ, PostgreSQL-authoritative job state, bounded retries, dead letters,
